@@ -35,6 +35,29 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # Foundational platform packages (EP-01-02).
+  # Exact version pins keep the dependency ecosystem reproducible.
+  # Boundaries are defined in ARCHITECTURE.md and the approved EP-01-02 plan §5.1.
+  # No package is initialized in application code by this task.
+
+  # HTTP transport for lib/core/api/ and approved integration adapters.
+  dio: 5.11.0
+
+  # Deep links, route configuration, and SEO-friendly URLs for lib/app/router/.
+  go_router: 17.5.0
+
+  # Application and data state propagation for lib/app/ and lib/data/providers/.
+  provider: 6.1.5
+
+  # Supabase Auth, PostgreSQL, RPC, Realtime, and Storage for core API/auth/data.
+  supabase_flutter: 2.17.2
+
+  # Secure platform storage wrappers for lib/core/storage/ and lib/core/security/.
+  flutter_secure_storage: 11.0.0
+
+  # Error reporting and performance telemetry for lib/core/logging/ and lib/core/monitoring/.
+  sentry_flutter: 9.27.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

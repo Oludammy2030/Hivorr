@@ -1,28 +1,36 @@
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
+# EP-01-02: Strict analyzer configuration.
 #
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
-
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
+# Extends the Flutter recommended lint set (package:flutter_lints/flutter.yaml,
+# which inherits package:lints/recommended.yaml) with strict language settings
+# and additional maintainability rules approved in EP-01-02 §5.4.
+#
+# Rules are not enabled indiscriminately: only rules that do not conflict with
+# Flutter framework patterns or the approved infrastructure boundaries are
+# enabled. Any future exception must be narrow, justified, and local.
 include: package:flutter_lints/flutter.yaml
 
-linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
-  rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+analyzer:
+  language:
+    # Strict casts: flag implicit casts.
+    strict-casts: true
+    # Strict inference: flag implicit dynamic inference.
+    strict-inference: true
+    # Strict raw types: flag raw generic types without type parameters.
+    strict-raw-types: true
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+linter:
+  rules:
+    # Explicit return types where appropriate.
+    always_declare_return_types: true
+    # Directive consistency: keep import/export directives ordered.
+    directives_ordering: true
+    # Override consistency is already enforced by annotate_overrides, inherited
+    # from package:lints/recommended.yaml.
+    # Avoidance of unnecessary dynamic calls.
+    avoid_dynamic_calls: true
+    # Safe handling of asynchronous resources.
+    unawaited_futures: true
+    discarded_futures: true
+    avoid_slow_async_io: true
+    # Prohibition of print in production code is already inherited via
+    # package:flutter_lints/flutter.yaml (avoid_print).
