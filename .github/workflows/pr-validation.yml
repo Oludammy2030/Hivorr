@@ -1,0 +1,35 @@
+# PR Validation — EP-01-04
+#
+# Automated quality gate for pull requests targeting the protected master
+# branch. Runs formatting, analysis, tests, secret scanning, and cross-platform
+# build validation using safe test-only configuration values (EP-01-04 §5.3).
+#
+# No Staging or Production secrets are used. The reusable workflow ensures
+# the same quality standard as Staging and Production pipelines (EP-01-04 §5.2).
+
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-build:
+    name: PR Validation
+    uses: ./.github/workflows/reusable-validation.yml
+    with:
+      flutter-version: '3.44.7'
+      environment-name: 'development'
+      supabase-url: 'https://dev.hivorr.supabase.co'
+      config-schema-version: '1'
+      upload-artifacts: false
+    secrets:
+      supabase-anon-key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwMDAwMDAwMH0.sig9876543210abcdef'

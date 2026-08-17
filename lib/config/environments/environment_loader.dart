@@ -44,8 +44,10 @@ class EnvironmentLoader {
     _validateAnonKey(anonKey);
 
     // 4. Configuration schema version — must be supported.
-    final schemaVersionStr =
-        _require(source, AppConstants.envConfigSchemaVersion);
+    final schemaVersionStr = _require(
+      source,
+      AppConstants.envConfigSchemaVersion,
+    );
     final schemaVersion = _validateSchemaVersion(schemaVersionStr);
 
     // 5. Feature flags — strict boolean parsing, safe defaults.

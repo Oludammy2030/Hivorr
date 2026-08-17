@@ -23,11 +23,11 @@ enum AppEnvironment {
       'staging' => AppEnvironment.staging,
       'production' => AppEnvironment.production,
       _ => throw EnvironmentConfigException(
-          variableName: AppConstants.envEnvironment,
-          reason:
-              'Unknown environment identifier. '
-              'Supported values: development, staging, production.',
-        ),
+        variableName: AppConstants.envEnvironment,
+        reason:
+            'Unknown environment identifier. '
+            'Supported values: development, staging, production.',
+      ),
     };
   }
 

@@ -20,24 +20,29 @@ import 'package:hivorr/config/environments/environment_loader.dart';
 /// tests are skipped because the compile-time values are absent.
 void main() {
   // Detect whether --dart-define values were supplied at compile time.
-  final envDefined =
-      const String.fromEnvironment(AppConstants.envEnvironment).isNotEmpty;
+  final envDefined = const String.fromEnvironment(
+    AppConstants.envEnvironment,
+  ).isNotEmpty;
 
-  group('Compile-time define loading', skip: envDefined ? false : 'Run with --dart-define flags', () {
-    test('loads configuration from compile-time defines', () {
-      final config = EnvironmentLoader.load();
+  group(
+    'Compile-time define loading',
+    skip: envDefined ? false : 'Run with --dart-define flags',
+    () {
+      test('loads configuration from compile-time defines', () {
+        final config = EnvironmentLoader.load();
 
-      expect(config.environment, AppEnvironment.development);
-      expect(config.supabaseConfig.url, 'https://dev.hivorr.supabase.co');
-      expect(config.schemaVersion, 1);
-    });
+        expect(config.environment, AppEnvironment.development);
+        expect(config.supabaseConfig.url, 'https://dev.hivorr.supabase.co');
+        expect(config.schemaVersion, 1);
+      });
 
-    test('environment-derived metadata is correct', () {
-      final config = EnvironmentLoader.load();
+      test('environment-derived metadata is correct', () {
+        final config = EnvironmentLoader.load();
 
-      expect(config.isDevelopment, isTrue);
-      expect(config.isProduction, isFalse);
-      expect(config.isStaging, isFalse);
-    });
-  });
+        expect(config.isDevelopment, isTrue);
+        expect(config.isProduction, isFalse);
+        expect(config.isStaging, isFalse);
+      });
+    },
+  );
 }

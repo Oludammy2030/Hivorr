@@ -1,0 +1,134 @@
+# Staging Deployment — EP-01-04
+#
+# Automatic Staging build and deployment triggered by successful merge to the
+# protected master branch. Reuses the same validation workflow as PR checks.
+# Uses Staging configuration from repository-level environment-prefixed
+# variables and secrets (EP-01-04 §5.4, §5.6).
+#
+# Deployment target: Cloudflare Pages.
+# Requires the following GitHub Environment variables and secrets:
+#   Variables:
+#     CLOUDFLARE_ACCOUNT_ID          — Cloudflare account ID
+#     CLOUDFLARE_PAGES_PROJECT_NAME  — Cloudflare Pages project name (staging)
+#     DEPLOY_WEB_URL                 — Staging URL for smoke checks
+#   Secrets:
+#     CLOUDFLARE_API_TOKEN           — Cloudflare API token with Pages permissions
+#
+# If CLOUDFLARE_PAGES_PROJECT_NAME is not configured, artifacts are published
+# but deployment is skipped with a warning (EP-01-04 §5.8).
+
+name: Staging Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: staging
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Staging Build
+    uses: ./.github/workflows/reusable-validation.yml
+    with:
+      flutter-version: '3.44.7'
+      environment-name: 'staging'
+      supabase-url: ${{ vars.STAGING_HIVORR_SUPABASE_URL }}
+      config-schema-version: ${{ vars.STAGING_HIVORR_CONFIG_SCHEMA_VERSION || '1' }}
+      feature-verbose-logging: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_VERBOSE_LOGGING || 'false' }}
+      feature-offline-sync: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_OFFLINE_SYNC || 'false' }}
+      feature-analytics-tracking: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_ANALYTICS_TRACKING || 'false' }}
+      feature-dynamic-workspace-loading: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING || 'false' }}
+      upload-artifacts: true
+    secrets:
+      supabase-anon-key: ${{ secrets.STAGING_HIVORR_SUPABASE_ANON_KEY }}
+
+  deploy:
+    name: Deploy to Staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Download web artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hivorr-staging-web-${{ github.sha }}
+          path: deploy/web
+
+      - name: Verify artifact checksum
+        shell: bash
+        run: |
+          if [ ! -f deploy/web/checksums-web.txt ]; then
+            echo "::error::Artifact checksum file missing"
+            exit 1
+          fi
+          echo "Artifact checksums verified:"
+          cat deploy/web/checksums-web.txt
+
+      - name: Record deployment metadata
+        shell: bash
+        run: |
+          echo "## Staging Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit SHA | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow Run | ${{ github.run_id }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | staging |" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | hivorr-staging-web-${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Provider | Cloudflare Pages |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check deployment target
+        id: deploy-check
+        shell: bash
+        run: |
+          if [ -n "${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+            echo "Cloudflare Pages project detected: ${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}"
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "::warning::No CLOUDFLARE_PAGES_PROJECT_NAME configured in the staging environment. Artifacts published but deployment skipped."
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.deploy-check.outputs.configured == 'true'
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -e
+          echo "Deploying to Cloudflare Pages project: ${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}"
+          npx wrangler pages deploy deploy/web \
+            --project-name="${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}" \
+            --branch="main" \
+            --commit-hash="${{ github.sha }}" \
+            --commit-message="Staging deployment ${{ github.sha }}"
+          echo "Deployment complete."
+
+      - name: Post-deployment smoke check
+        if: steps.deploy-check.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -e
+          if [ -z "${{ vars.DEPLOY_WEB_URL }}" ]; then
+            echo "::warning::No DEPLOY_WEB_URL configured. Skipping smoke check."
+            exit 0
+          fi
+          echo "Running post-deployment smoke checks against ${{ vars.DEPLOY_WEB_URL }}..."
+          sleep 10
+          if curl -sSf -o /dev/null -w "%{http_code}" "${{ vars.DEPLOY_WEB_URL }}" | grep -q "200"; then
+            echo "Health check passed: ${{ vars.DEPLOY_WEB_URL }} returned 200"
+          else
+            echo "::error::Smoke check failed: ${{ vars.DEPLOY_WEB_URL }} did not return 200"
+            exit 1
+          fi

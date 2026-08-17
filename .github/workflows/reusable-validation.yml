@@ -1,0 +1,211 @@
+# Reusable Flutter Validation — EP-01-04
+#
+# Shared validation and build logic called by PR, Staging, and Production
+# pipelines. Ensures one consistent quality standard across all environments
+# (EP-01-04 §5.2).
+#
+# Actions are pinned to immutable commit SHAs for supply-chain security
+# (EP-01-04 §12).
+
+name: Reusable Flutter Validation
+
+on:
+  workflow_call:
+    inputs:
+      flutter-version:
+        description: Flutter SDK version compatible with Dart SDK ^3.12.2
+        required: true
+        type: string
+      environment-name:
+        description: Target environment (development, staging, production)
+        required: true
+        type: string
+      supabase-url:
+        description: Supabase project HTTPS URL for --dart-define
+        required: true
+        type: string
+      config-schema-version:
+        description: Configuration schema version for --dart-define
+        required: true
+        type: string
+      feature-verbose-logging:
+        description: Feature flag — verbose logging
+        required: false
+        type: string
+        default: 'false'
+      feature-offline-sync:
+        description: Feature flag — offline sync
+        required: false
+        type: string
+        default: 'false'
+      feature-analytics-tracking:
+        description: Feature flag — analytics tracking
+        required: false
+        type: string
+        default: 'false'
+      feature-dynamic-workspace-loading:
+        description: Feature flag — dynamic workspace loading
+        required: false
+        type: string
+        default: 'false'
+      upload-artifacts:
+        description: Whether to upload build artifacts
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      supabase-anon-key:
+        description: Supabase public client (anon) key for --dart-define
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Format, Analyze, Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ inputs.flutter-version }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Format check
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Secret scan
+        shell: bash
+        run: |
+          set -e
+          echo "Scanning for potential secrets..."
+          FOUND=0
+
+          # Check for private key files
+          if find . -path ./.git -prune -o -path ./.dart_tool -prune -o -path ./build -prune \
+              -o \( -name "*.pem" -o -name "*.key" -o -name "*.p12" -o -name "*.pfx" \) -print \
+              | grep -v '^$'; then
+            echo "::error::Private key file detected in repository"
+            FOUND=1
+          fi
+
+          # Check for credential files
+          if find . -path ./.git -prune -o -path ./.dart_tool -prune -o -path ./build -prune \
+              -o \( -name "serviceAccount*.json" -o -name "supabase_secrets.json" \
+                    -o -name "google-services.json" -o -name "GoogleService-Info.plist" \
+                    -o -name "key.properties" \) -print \
+              | grep -v '^$'; then
+            echo "::error::Credential file detected in repository"
+            FOUND=1
+          fi
+
+          # Check for real .env files (not .env.example)
+          if find . -path ./.git -prune -o -path ./.dart_tool -prune -o -path ./build -prune \
+              -o \( -name ".env" -o -name ".env.*" \) -print \
+              | grep -v '\.example$' | grep -v '^$'; then
+            echo "::error::Real .env file detected (only .env.example templates are allowed)"
+            FOUND=1
+          fi
+
+          # Check for service_role references in non-test Dart source
+          if grep -r --line-number --include="*.dart" "service_role" . \
+              | grep -v '/test/' | grep -v '/.dart_tool/'; then
+            echo "::error::service_role reference detected in non-test Dart source"
+            FOUND=1
+          fi
+
+          if [ "$FOUND" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "No secrets detected."
+
+  build:
+    name: Build (${{ matrix.target }})
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: web
+            os: ubuntu-latest
+            build-cmd: flutter build web --release
+            artifact-path: build/web
+          - target: android
+            os: ubuntu-latest
+            build-cmd: flutter build apk --release
+            artifact-path: build/app/outputs/flutter-apk
+          - target: ios
+            os: macos-latest
+            build-cmd: flutter build ios --release --no-codesign
+            artifact-path: build/ios/iphoneos
+          - target: windows
+            os: windows-latest
+            build-cmd: flutter build windows --release
+            artifact-path: build/windows/x64/runner/Release
+    runs-on: ${{ matrix.os }}
+    env:
+      HIVORR_ENV: ${{ inputs.environment-name }}
+      HIVORR_SUPABASE_URL: ${{ inputs.supabase-url }}
+      HIVORR_SUPABASE_ANON_KEY: ${{ secrets.supabase-anon-key }}
+      HIVORR_CONFIG_SCHEMA_VERSION: ${{ inputs.config-schema-version }}
+      HIVORR_FEATURE_ENABLE_VERBOSE_LOGGING: ${{ inputs.feature-verbose-logging }}
+      HIVORR_FEATURE_ENABLE_OFFLINE_SYNC: ${{ inputs.feature-offline-sync }}
+      HIVORR_FEATURE_ENABLE_ANALYTICS_TRACKING: ${{ inputs.feature-analytics-tracking }}
+      HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING: ${{ inputs.feature-dynamic-workspace-loading }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ inputs.flutter-version }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build ${{ matrix.target }}
+        shell: bash
+        run: |
+          set -e
+          ${{ matrix.build-cmd }} \
+            --dart-define=HIVORR_ENV="$HIVORR_ENV" \
+            --dart-define=HIVORR_SUPABASE_URL="$HIVORR_SUPABASE_URL" \
+            --dart-define=HIVORR_SUPABASE_ANON_KEY="$HIVORR_SUPABASE_ANON_KEY" \
+            --dart-define=HIVORR_CONFIG_SCHEMA_VERSION="$HIVORR_CONFIG_SCHEMA_VERSION" \
+            --dart-define=HIVORR_FEATURE_ENABLE_VERBOSE_LOGGING="$HIVORR_FEATURE_ENABLE_VERBOSE_LOGGING" \
+            --dart-define=HIVORR_FEATURE_ENABLE_OFFLINE_SYNC="$HIVORR_FEATURE_ENABLE_OFFLINE_SYNC" \
+            --dart-define=HIVORR_FEATURE_ENABLE_ANALYTICS_TRACKING="$HIVORR_FEATURE_ENABLE_ANALYTICS_TRACKING" \
+            --dart-define=HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING="$HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING"
+
+      - name: Generate checksum
+        if: inputs.upload-artifacts == true
+        shell: bash
+        run: |
+          cd "${{ matrix.artifact-path }}"
+          find . -type f -exec sha256sum {} \; > checksums-${{ matrix.target }}.txt
+          echo "Checksums generated:"
+          cat checksums-${{ matrix.target }}.txt
+
+      - name: Upload artifact
+        if: inputs.upload-artifacts == true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hivorr-${{ inputs.environment-name }}-${{ matrix.target }}-${{ github.sha }}
+          path: ${{ matrix.artifact-path }}
+          retention-days: 30
