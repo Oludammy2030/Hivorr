@@ -34,6 +34,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   deployments: write
 
 concurrency:
