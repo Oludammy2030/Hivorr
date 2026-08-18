@@ -120,9 +120,12 @@ jobs:
             FOUND=1
           fi
 
-          # Check for service_role references in non-test Dart source
+          # Check for service_role key patterns in non-test Dart source.
+          # Excludes environment_loader.dart which contains the validation
+          # logic that rejects service-role keys (security code, not secrets).
           if grep -r --line-number --include="*.dart" "service_role" . \
-              | grep -v '/test/' | grep -v '/.dart_tool/'; then
+              | grep -v '/test/' | grep -v '/.dart_tool/' \
+              | grep -v 'environment_loader.dart'; then
             echo "::error::service_role reference detected in non-test Dart source"
             FOUND=1
           fi
