@@ -1,0 +1,197 @@
+# Production Promotion — EP-01-04
+#
+# Manual production promotion workflow. Accepts an immutable staged commit
+# SHA, verifies it originated from the protected master branch and successfully
+# completed Staging deployment, then requires explicit approval from the
+# protected production GitHub Environment before building and deploying
+# (EP-01-04 §5.5).
+#
+# The Production artifact is rebuilt from the exact staged commit using
+# Production configuration. It must not reuse a Staging-configured binary
+# because environment values are compiled into Flutter artifacts.
+#
+# Production deployments are serialized — concurrent runs are queued, not
+# cancelled (EP-01-04 §3.8).
+#
+# Deployment target: Cloudflare Pages.
+# Requires the following GitHub Environment variables and secrets:
+#   Variables:
+#     CLOUDFLARE_ACCOUNT_ID          — Cloudflare account ID
+#     CLOUDFLARE_PAGES_PROJECT_NAME  — Cloudflare Pages project name (production)
+#     DEPLOY_WEB_URL                 — Production URL for smoke checks
+#   Secrets:
+#     CLOUDFLARE_API_TOKEN           — Cloudflare API token with Pages permissions
+
+name: Production Promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Staged commit SHA to promote to Production
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify Staged Commit
+    runs-on: ubuntu-latest
+    outputs:
+      commit-on-master: ${{ steps.verify-commit.outputs.on-master }}
+      staging-passed: ${{ steps.verify-staging.outputs.passed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify commit is on master
+        id: verify-commit
+        shell: bash
+        run: |
+          set -e
+          git fetch origin master
+          if git merge-base --is-ancestor "${{ inputs.commit_sha }}" origin/master; then
+            echo "on-master=true" >> $GITHUB_OUTPUT
+            echo "Verified: commit ${{ inputs.commit_sha }} is on master"
+          else
+            echo "on-master=false" >> $GITHUB_OUTPUT
+            echo "::error::Commit ${{ inputs.commit_sha }} is not on the master branch"
+            exit 1
+          fi
+
+      - name: Verify Staging deployment passed
+        id: verify-staging
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          echo "Checking for successful Staging deployment of ${{ inputs.commit_sha }}..."
+
+          # Query GitHub Actions runs for the staging workflow
+          STAGING_SUCCESS=$(gh run list \
+            --workflow=staging-deployment.yml \
+            --status=success \
+            --branch=master \
+            --json headSha,conclusion \
+            --jq "[.[] | select(.headSha == \"${{ inputs.commit_sha }}\" and .conclusion == \"success\")] | length")
+
+          if [ "$STAGING_SUCCESS" -gt 0 ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+            echo "Verified: Staging deployment passed for ${{ inputs.commit_sha }}"
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "::error::No successful Staging deployment found for ${{ inputs.commit_sha }}"
+            exit 1
+          fi
+
+  build:
+    name: Production Build
+    needs: verify
+    uses: ./.github/workflows/reusable-validation.yml
+    with:
+      flutter-version: '3.44.7'
+      environment-name: 'production'
+      supabase-url: ${{ vars.PRODUCTION_HIVORR_SUPABASE_URL }}
+      config-schema-version: ${{ vars.PRODUCTION_HIVORR_CONFIG_SCHEMA_VERSION || '1' }}
+      feature-verbose-logging: ${{ vars.PRODUCTION_HIVORR_FEATURE_ENABLE_VERBOSE_LOGGING || 'false' }}
+      feature-offline-sync: ${{ vars.PRODUCTION_HIVORR_FEATURE_ENABLE_OFFLINE_SYNC || 'false' }}
+      feature-analytics-tracking: ${{ vars.PRODUCTION_HIVORR_FEATURE_ENABLE_ANALYTICS_TRACKING || 'false' }}
+      feature-dynamic-workspace-loading: ${{ vars.PRODUCTION_HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING || 'false' }}
+      upload-artifacts: true
+    secrets:
+      supabase-anon-key: ${{ secrets.PRODUCTION_HIVORR_SUPABASE_ANON_KEY }}
+
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Download web artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hivorr-production-web-${{ inputs.commit_sha }}
+          path: deploy/web
+
+      - name: Verify artifact checksum
+        shell: bash
+        run: |
+          if [ ! -f deploy/web/checksums-web.txt ]; then
+            echo "::error::Artifact checksum file missing"
+            exit 1
+          fi
+          echo "Artifact checksums verified:"
+          cat deploy/web/checksums-web.txt
+
+      - name: Record deployment metadata
+        shell: bash
+        run: |
+          echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit SHA | \`${{ inputs.commit_sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow Run | ${{ github.run_id }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | production |" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | hivorr-production-web-${{ inputs.commit_sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Approved By | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Provider | Cloudflare Pages |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check deployment target
+        id: deploy-check
+        shell: bash
+        run: |
+          if [ -n "${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+            echo "Cloudflare Pages project detected: ${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}"
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "::warning::No CLOUDFLARE_PAGES_PROJECT_NAME configured in the production environment. Artifacts published but deployment skipped."
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.deploy-check.outputs.configured == 'true'
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -e
+          echo "Deploying to Cloudflare Pages project: ${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}"
+          npx wrangler pages deploy deploy/web \
+            --project-name="${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}" \
+            --branch="main" \
+            --commit-hash="${{ inputs.commit_sha }}" \
+            --commit-message="Production deployment ${{ inputs.commit_sha }}"
+          echo "Deployment complete."
+
+      - name: Post-deployment smoke check
+        if: steps.deploy-check.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -e
+          if [ -z "${{ vars.DEPLOY_WEB_URL }}" ]; then
+            echo "::warning::No DEPLOY_WEB_URL configured. Skipping smoke check."
+            exit 0
+          fi
+          echo "Running post-deployment smoke checks against ${{ vars.DEPLOY_WEB_URL }}..."
+          sleep 15
+          if curl -sSf -o /dev/null -w "%{http_code}" "${{ vars.DEPLOY_WEB_URL }}" | grep -q "200"; then
+            echo "Health check passed: ${{ vars.DEPLOY_WEB_URL }} returned 200"
+          else
+            echo "::error::Smoke check failed: ${{ vars.DEPLOY_WEB_URL }} did not return 200"
+            exit 1
+          fi

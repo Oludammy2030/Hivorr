@@ -8,10 +8,7 @@ import 'package:hivorr/config/feature_flags/feature_flags.dart';
 /// rejected during loading and never appear in this model (EP-01-03 §5.4,
 /// §12).
 class SupabaseConfig {
-  const SupabaseConfig({
-    required this.url,
-    required this.anonKey,
-  });
+  const SupabaseConfig({required this.url, required this.anonKey});
 
   /// The validated HTTPS Supabase project URL.
   final String url;

@@ -77,10 +77,9 @@ class FeatureFlags {
       'true' => true,
       'false' => false,
       _ => throw EnvironmentConfigException(
-          variableName: key,
-          reason:
-              'Malformed feature-flag value. Accepted values: true, false.',
-        ),
+        variableName: key,
+        reason: 'Malformed feature-flag value. Accepted values: true, false.',
+      ),
     };
   }
 

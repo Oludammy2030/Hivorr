@@ -28,25 +28,32 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
   @override
   String? read(String key) {
     final value = switch (key) {
-      AppConstants.envEnvironment =>
-        const String.fromEnvironment(AppConstants.envEnvironment),
-      AppConstants.envSupabaseUrl =>
-        const String.fromEnvironment(AppConstants.envSupabaseUrl),
-      AppConstants.envSupabaseAnonKey =>
-        const String.fromEnvironment(AppConstants.envSupabaseAnonKey),
-      AppConstants.envConfigSchemaVersion =>
-        const String.fromEnvironment(AppConstants.envConfigSchemaVersion),
-      AppConstants.featureEnableVerboseLogging =>
-        const String.fromEnvironment(
-            AppConstants.featureEnableVerboseLogging),
-      AppConstants.featureEnableOfflineSync =>
-        const String.fromEnvironment(AppConstants.featureEnableOfflineSync),
+      AppConstants.envEnvironment => const String.fromEnvironment(
+        AppConstants.envEnvironment,
+      ),
+      AppConstants.envSupabaseUrl => const String.fromEnvironment(
+        AppConstants.envSupabaseUrl,
+      ),
+      AppConstants.envSupabaseAnonKey => const String.fromEnvironment(
+        AppConstants.envSupabaseAnonKey,
+      ),
+      AppConstants.envConfigSchemaVersion => const String.fromEnvironment(
+        AppConstants.envConfigSchemaVersion,
+      ),
+      AppConstants.featureEnableVerboseLogging => const String.fromEnvironment(
+        AppConstants.featureEnableVerboseLogging,
+      ),
+      AppConstants.featureEnableOfflineSync => const String.fromEnvironment(
+        AppConstants.featureEnableOfflineSync,
+      ),
       AppConstants.featureEnableAnalyticsTracking =>
         const String.fromEnvironment(
-            AppConstants.featureEnableAnalyticsTracking),
+          AppConstants.featureEnableAnalyticsTracking,
+        ),
       AppConstants.featureEnableDynamicWorkspaceLoading =>
         const String.fromEnvironment(
-            AppConstants.featureEnableDynamicWorkspaceLoading),
+          AppConstants.featureEnableDynamicWorkspaceLoading,
+        ),
       _ => '',
     };
     return value.isEmpty ? null : value;

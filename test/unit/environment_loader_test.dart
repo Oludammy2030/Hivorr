@@ -12,7 +12,8 @@ import 'package:hivorr/config/feature_flags/feature_flags.dart';
 const _validDev = {
   AppConstants.envEnvironment: 'development',
   AppConstants.envSupabaseUrl: 'https://dev.hivorr.supabase.co',
-  AppConstants.envSupabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
+  AppConstants.envSupabaseAnonKey:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
       'eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwMDAwMDAwMH0.'
       'sig9876543210abcdef',
   AppConstants.envConfigSchemaVersion: '1',
@@ -21,7 +22,8 @@ const _validDev = {
 const _validStaging = {
   AppConstants.envEnvironment: 'staging',
   AppConstants.envSupabaseUrl: 'https://staging.hivorr.supabase.co',
-  AppConstants.envSupabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
+  AppConstants.envSupabaseAnonKey:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
       'eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwMDAwMDAwMH0.'
       'sig9876543210abcdef',
   AppConstants.envConfigSchemaVersion: '1',
@@ -30,7 +32,8 @@ const _validStaging = {
 const _validProd = {
   AppConstants.envEnvironment: 'production',
   AppConstants.envSupabaseUrl: 'https://prod.hivorr.supabase.co',
-  AppConstants.envSupabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
+  AppConstants.envSupabaseAnonKey:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
       'eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYwMDAwMDAwMH0.'
       'sig9876543210abcdef',
   AppConstants.envConfigSchemaVersion: '1',
@@ -91,9 +94,7 @@ void main() {
         ..remove(AppConstants.envEnvironment);
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -103,9 +104,7 @@ void main() {
         ..remove(AppConstants.envSupabaseUrl);
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -115,9 +114,7 @@ void main() {
         ..remove(AppConstants.envSupabaseAnonKey);
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -127,9 +124,7 @@ void main() {
         ..remove(AppConstants.envConfigSchemaVersion);
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -141,9 +136,7 @@ void main() {
         ..[AppConstants.envEnvironment] = 'qa';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -153,9 +146,7 @@ void main() {
         ..[AppConstants.envEnvironment] = 'Development';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -167,9 +158,7 @@ void main() {
         ..[AppConstants.envSupabaseUrl] = 'not-a-url';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -179,9 +168,7 @@ void main() {
         ..[AppConstants.envSupabaseUrl] = 'http://dev.hivorr.supabase.co';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -191,9 +178,7 @@ void main() {
         ..[AppConstants.envSupabaseUrl] = 'https://your-project.supabase.co';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -205,9 +190,7 @@ void main() {
         ..[AppConstants.envSupabaseAnonKey] = 'your-public-anon-key';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -217,9 +200,7 @@ void main() {
         ..[AppConstants.envSupabaseAnonKey] = 'service_role_secret_key_12345';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -230,9 +211,7 @@ void main() {
         ..[AppConstants.envSupabaseAnonKey] = serviceRoleKey;
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -256,9 +235,7 @@ void main() {
         ..[AppConstants.envConfigSchemaVersion] = '99';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -268,9 +245,7 @@ void main() {
         ..[AppConstants.envConfigSchemaVersion] = 'abc';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -307,9 +282,7 @@ void main() {
         ..[AppConstants.featureEnableVerboseLogging] = 'yes';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -319,9 +292,7 @@ void main() {
         ..[AppConstants.featureEnableVerboseLogging] = 'True';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -333,18 +304,15 @@ void main() {
         ..remove(AppConstants.envSupabaseUrl);
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
 
     test('empty map does not silently select any environment', () {
       expect(
-        () => EnvironmentLoader.load(
-          source: const MapEnvironmentValueSource({}),
-        ),
+        () =>
+            EnvironmentLoader.load(source: const MapEnvironmentValueSource({})),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -441,9 +409,7 @@ void main() {
 
     test('throws when configuration is invalid', () {
       expect(
-        () => AppConfig.load(
-          source: const MapEnvironmentValueSource({}),
-        ),
+        () => AppConfig.load(source: const MapEnvironmentValueSource({})),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -455,9 +421,7 @@ void main() {
         ..[AppConstants.envEnvironment] = '   ';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -467,9 +431,7 @@ void main() {
         ..[AppConstants.envSupabaseUrl] = '   ';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -479,9 +441,7 @@ void main() {
         ..[AppConstants.envSupabaseUrl] = 'https://';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -491,9 +451,7 @@ void main() {
         ..[AppConstants.envSupabaseAnonKey] = 'changeme';
 
       expect(
-        () => EnvironmentLoader.load(
-          source: MapEnvironmentValueSource(values),
-        ),
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
         throwsA(isA<EnvironmentConfigException>()),
       );
     });
@@ -519,8 +477,10 @@ void main() {
         source: const MapEnvironmentValueSource(_validStaging),
       );
 
-      expect(devConfig.supabaseConfig.url,
-          isNot(equals(stagingConfig.supabaseConfig.url)));
+      expect(
+        devConfig.supabaseConfig.url,
+        isNot(equals(stagingConfig.supabaseConfig.url)),
+      );
       expect(devConfig.environment, isNot(equals(stagingConfig.environment)));
     });
 
@@ -532,8 +492,10 @@ void main() {
         source: const MapEnvironmentValueSource(_validProd),
       );
 
-      expect(stagingConfig.supabaseConfig.url,
-          isNot(equals(prodConfig.supabaseConfig.url)));
+      expect(
+        stagingConfig.supabaseConfig.url,
+        isNot(equals(prodConfig.supabaseConfig.url)),
+      );
       expect(stagingConfig.environment, isNot(equals(prodConfig.environment)));
     });
   });
