@@ -108,6 +108,7 @@ jobs:
       feature-offline-sync: ${{ vars.PRODUCTION_HIVORR_FEATURE_ENABLE_OFFLINE_SYNC || 'false' }}
       feature-analytics-tracking: ${{ vars.PRODUCTION_HIVORR_FEATURE_ENABLE_ANALYTICS_TRACKING || 'false' }}
       feature-dynamic-workspace-loading: ${{ vars.PRODUCTION_HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING || 'false' }}
+      commit-sha: ${{ inputs.commit_sha }}
       upload-artifacts: true
     secrets:
       supabase-anon-key: ${{ secrets.PRODUCTION_HIVORR_SUPABASE_ANON_KEY }}

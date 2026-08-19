@@ -53,6 +53,11 @@ on:
         required: false
         type: boolean
         default: false
+      commit-sha:
+        description: Commit SHA to build and label artifacts with (defaults to workflow SHA)
+        required: false
+        type: string
+        default: ''
     secrets:
       supabase-anon-key:
         description: Supabase public client (anon) key for --dart-define
@@ -172,6 +177,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.commit-sha != '' && inputs.commit-sha || github.sha }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -209,6 +216,6 @@ jobs:
         if: inputs.upload-artifacts == true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: hivorr-${{ inputs.environment-name }}-${{ matrix.target }}-${{ github.sha }}
+          name: hivorr-${{ inputs.environment-name }}-${{ matrix.target }}-${{ inputs.commit-sha != '' && inputs.commit-sha || github.sha }}
           path: ${{ matrix.artifact-path }}
           retention-days: 30
