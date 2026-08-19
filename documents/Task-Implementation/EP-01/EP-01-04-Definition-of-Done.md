@@ -964,9 +964,10 @@ The task EP-01-04 can be marked as **COMPLETED** only when ALL of the following 
 
 **Completion Notes (2026-08-19):**
 - Production Promotion run `32199885418` succeeded: verify → production build (web/android/ios/windows) → Cloudflare Pages deploy → smoke check 200.
-- Rollback validated: prior promoted commit `0d9a461` re-promoted successfully, per §7.8.
+- Rollback validated (§7.8): production promoted to `84e519c` (run `32203062973`, success), then rolled back to prior approved artifact `0d9a461` (run `32203842214`, success). Production restored to the prior approved artifact — rollback path proven end-to-end.
+- Edge case exercised (§7.9): dispatch with an abbreviated commit SHA (`84e519c`) was rejected by the verify job (run `32202966413`, failed closed) — invalid staging reference cannot be promoted.
 - Staging (https://hivorr-staging.pages.dev) and Production (https://hivorr.pages.dev) both return HTTP 200.
-- Two intermediate Production runs failed safely (HTTP 403 on verify at `447d8c0`; artifact name mismatch at `76ce8bc`) — both produced the documented fixes (D-04/D-05), confirming fail-closed behavior.
+- Two earlier Production runs failed safely (HTTP 403 on verify at `447d8c0`; artifact name mismatch at `76ce8bc`) — both produced the documented fixes (D-04/D-05), confirming fail-closed behavior.
 - Timeouts added across all jobs (`timeout-minutes`); unsupported `timeout-minutes` on reusable-job callers removed after GitHub rejected the YAML (commit `7732542` → `bf8bd97`).
 
 ---
