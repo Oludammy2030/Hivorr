@@ -1,0 +1,31 @@
+# Supabase local development configuration — EP-01-05
+#
+# This file configures the LOCAL Supabase instance used by developers and by
+# the database RLS test workflow. It contains no secrets: project credentials
+# (access token, database passwords, service-role keys) are supplied through
+# environment variables / secret stores only (EP-01-05 Plan §5.1, §5.2).
+
+project_id = "hivorr"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+enabled = true
+port = 54322
+major_version = 15
+
+[db.extensions]
+pgcrypto = { schema = "extensions" }
+pgtap = { schema = "extensions" }
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true

@@ -65,3 +65,7 @@ serviceAccount*.json
 supabase_secrets.json
 google-services.json
 GoogleService-Info.plist
+
+# Supabase CLI local artifacts (machine-specific; project ref is per-link)
+supabase/.temp/
+supabase/.branches/

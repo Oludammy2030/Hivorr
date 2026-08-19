@@ -1,0 +1,86 @@
+# Database RLS & RPC Tests — EP-01-05
+#
+# Additive workflow file. Existing EP-01-04 workflows are NOT modified.
+#
+# Runs the pgTAP enforcement suite (RLS leakage matrix, RPC auth
+# enforcement, validation/error contract, security posture audit) against a
+# clean local Supabase instance rebuilt from the versioned migrations.
+# No environment credentials are used (EP-01-05 Plan §15).
+#
+# Actions are pinned to immutable commit SHAs for supply-chain security
+# (matching EP-01-04 §12 convention).
+
+name: Database RLS & RPC Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  db-tests:
+    name: RLS & RPC Enforcement Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.115.0
+
+      - name: Verify pinned CLI version
+        run: supabase --version
+
+      - name: Start local Supabase instance
+        run: supabase start
+
+      - name: Rebuild clean database from migrations
+        run: supabase db reset
+
+      - name: Run pgTAP enforcement suite
+        run: supabase test db
+
+      - name: Migration secret scan
+        shell: bash
+        run: |
+          set -e
+          echo "Scanning migration sources for secrets..."
+          FOUND=0
+
+          # JWT-shaped service-role / anon key material
+          if grep -rn --include="*.sql" -E "eyJhbGciOiJIUzI1NiIs" supabase/migrations > /dev/null; then
+            echo "::error::JWT credential material detected in supabase/migrations"
+            FOUND=1
+          fi
+
+          # 'service_role' role identifiers are expected in grants/revokes,
+          # but 'service_role' *keys* (the secret suffix pattern) are not.
+          if grep -rn --include="*.sql" -E "service_role.*(SERVICE|_ROLE|eyJ)" supabase/migrations > /dev/null; then
+            echo "::error::service_role secret pattern detected in supabase/migrations"
+            FOUND=1
+          fi
+
+          # Live project URLs / passwords in committed config
+          if grep -rn -E "(db\.|project-ref|ref_)?" supabase/config.toml | grep -E "\.[a-z0-9-]+\.supabase\.(co|in)" > /dev/null; then
+            echo "::error::live Supabase URL detected in supabase/config.toml"
+            FOUND=1
+          fi
+
+          if [ "$FOUND" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "No secrets detected."
