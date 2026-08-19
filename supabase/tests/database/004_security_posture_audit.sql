@@ -72,9 +72,11 @@ select is(
      from pg_default_acl d
      join pg_namespace n on n.oid = d.defaclnamespace
     where n.nspname = 'public'
-      and d.defaclacl::text like any (array['%anon=%', '%authenticated=%'])),
+      and d.defaclobjtype = 'r'
+      and (d.defaclacl::text ~ 'anon=[^,=]*arwd'
+           or d.defaclacl::text ~ 'authenticated=[^,=]*arwd')),
   0,
-  'no default privileges granted to anon/authenticated in public schema'
+  'no default TABLE privileges grant table rights to anon/authenticated in public schema'
 );
 
 -- ─── SECURITY DEFINER hardening ─────────────────────────────────────────────

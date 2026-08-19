@@ -49,6 +49,10 @@ alter table public.platform_demo_records enable row level security;
 -- Minimal grants for the approved RLS flow. No DELETE, no anon access.
 grant select, insert, update on table public.platform_demo_records to authenticated;
 
+-- Service tooling bypasses RLS but still requires explicit table grants.
+grant select on table public.platform_demo_records to service_role;
+grant select on table public.platform_audit_log to service_role;
+
 -- Policy naming convention: <table>_<role>_<op>
 create policy platform_demo_records_authenticated_select
   on public.platform_demo_records

@@ -39,28 +39,28 @@ select set_config('request.jwt.claim.sub', '', true);
 select throws_ok(
   'select public.platform_demo_records_create(''x'', ''{}''::jsonb)',
   'P0001',
-  'PLT001: Authentication required\.',
+  'PLT001: Authentication required.',
   'authenticated without identity: create raises PLT001'
 );
 
 select throws_ok(
   'select public.platform_demo_records_get(''00000000-0000-0000-0000-000000000000''::uuid)',
   'P0001',
-  'PLT001: Authentication required\.',
+  'PLT001: Authentication required.',
   'authenticated without identity: get raises PLT001'
 );
 
 select throws_ok(
   'select public.platform_demo_records_update(''00000000-0000-0000-0000-000000000000''::uuid, ''{}''::jsonb)',
   'P0001',
-  'PLT001: Authentication required\.',
+  'PLT001: Authentication required.',
   'authenticated without identity: update raises PLT001'
 );
 
 select throws_ok(
   'select public.platform_audit_log_add(''a'', ''b'')',
   'P0001',
-  'PLT001: Authentication required\.',
+  'PLT001: Authentication required.',
   'authenticated without identity: audit add raises PLT001'
 );
 
@@ -71,7 +71,7 @@ select set_config('request.jwt.claim.sub', '', true);
 select throws_ok(
   'select public.platform_demo_records_get(''00000000-0000-0000-0000-000000000000''::uuid)',
   'P0001',
-  'PLT001: Authentication required\.',
+  'PLT001: Authentication required.',
   'service_role without identity: get raises PLT001 (auth gate applies)'
 );
 
@@ -134,14 +134,14 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   'select public.platform_demo_records_get((select id from public.platform_demo_records where title = ''zeta''))',
   'P0001',
-  'PLT003: Record id is required\.',
+  'PLT003: Record id is required.',
   'user B cannot read user A record zeta (RLS hides it, PLT003)'
 );
 
 select throws_ok(
   'select public.platform_demo_records_update((select id from public.platform_demo_records where title = ''zeta''), ''{"owned": false}''::jsonb)',
   'P0001',
-  'PLT003: Record id is required\.',
+  'PLT003: Record id is required.',
   'user B cannot update user A record zeta (RLS hides it, PLT003)'
 );
 
