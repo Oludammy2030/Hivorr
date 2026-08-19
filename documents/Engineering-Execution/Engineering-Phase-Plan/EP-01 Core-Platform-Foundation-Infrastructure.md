@@ -264,7 +264,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 | **Engineering Purpose** | **Most architecturally significant item in EP-01.** Establishes the Database-First Zero-Trust Architecture that every future phase operates under. |
 | **Dependencies** | EP-01-03 |
 | **Expected Outcome** | 3 Supabase projects connected. SQL migrations in repo. RLS default-deny. Foundational RPC functions (authenticated read, authenticated write, validation, error handling). RLS test suite confirms zero data leakage. |
-| **Priority** | Critical | **Status** | Implemented (CI-Verified) — Environment Application Pending (projects/credentials) |
+| **Priority** | Critical | **Status** | Completed |
 | **Planning Reasoning** | **Extremely High** | **Coding Reasoning** | **Extremely High** |
 
 ### EP-01-06: Universal Entity Data Model & Core Schema Design
@@ -442,7 +442,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 | EP-01-02 | Dependency Integration & Package Config | Critical | High | Medium | 01 | Completed |
 | EP-01-03 | Multi-Environment Configuration | Critical | High | High | 01 | Completed |
 | EP-01-04 | CI/CD Pipeline & Deployment Framework | High | High | High | 01, 03 | Completed |
-| EP-01-05 | Supabase Server-Side Enforcement (RPC+RLS) | Critical | **Extremely High** | **Extremely High** | 03 | Implemented (CI-Verified) — Env Application Pending |
+| EP-01-05 | Supabase Server-Side Enforcement (RPC+RLS) | Critical | **Extremely High** | **Extremely High** | 03 | Completed |
 | EP-01-06 | Universal Entity Data Model & Schema | Critical | **Extremely High** | **Extremely High** | 05 | Not Started |
 | EP-01-07 | Core API Layer & HTTP Client | Critical | Very High | Very High | 02, 03 | Not Started |
 | EP-01-08 | Unified Data Access Layer | High | Very High | Very High | 06, 07 | Not Started |
