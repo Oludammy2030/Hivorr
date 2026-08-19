@@ -17,16 +17,22 @@ Operational runbook for the Database-First Zero-Trust enforcement layer
 
 ## 2. Environment Mapping
 
-| Environment | Supabase Project | Config Source (EP-01-03) | Tooling Access |
-|---|---|---|---|
-| Development | `hivorr-dev` (+ local `supabase start`) | Dev URL/anon key | Local CLI + dev DB password |
-| Staging | `hivorr-staging` | Staging URL/anon key | CLI via secret-env (lead approval) |
-| Production | `hivorr-prod` | Prod URL/anon key | CLI via secret-env (lead approval) |
+| Environment | Supabase Project | Project Ref / Region | Config Source (EP-01-03) | Tooling Access |
+|---|---|---|---|---|
+| Development | local `supabase start` (Docker); cloud `hivorr-dev` NOT provisioned (2-project free-plan limit — mapping decision pending lead) | — | Dev URL/anon key | Local CLI + dev DB password |
+| Staging | `hivorr-staging` | `cgxkiczmwzydhoroclvf` / eu-west-2 | Staging URL/anon key | CLI via secret-env (lead approval) |
+| Production | `hivorr-prod` | `fxpcgtetvzlexbptqiwp` / eu-west-1 | Prod URL/anon key | CLI via secret-env (lead approval) |
+
+Migrated 2026-08-19 (both; see Section 6). Staging and Prod are verified at the
+post-migration reference state: 10 `platform_*` functions, 0 demo rows, 0 audit
+rows, no test extensions.
 
 Credentials (project refs, database passwords, `SUPABASE_ACCESS_TOKEN`) must
 exist **only** in environment variables / secret stores. They are never
 committed. The service-role key is used exclusively by server-side tooling and
-operators, never by client artifacts.
+operators, never by client artifacts. Rotate the two project Postgres passwords
+if they were ever surfaced in a chat/session (they were during the 2026-08-19
+promotion).
 
 ## 3. Repository Layout
 
@@ -72,17 +78,28 @@ gate before every non-local environment.
 
 ```powershell
 # Development (after local verification)
-supabase link --project-ref <hivorr-dev-ref>
-supabase db push
+supabase start
+supabase db reset
+supabase test db
 
-# Staging — requires lead approval
-supabase link --project-ref <hivorr-staging-ref>
-supabase db push
+# Staging — requires lead approval. Used 2026-08-19:
+supabase db push --db-url "postgresql://postgres.<staging-ref>:<pw>@aws-0-eu-west-2.pooler.supabase.com:6543/postgres" --dry-run   # gate: review summary
+supabase db push --db-url "postgresql://postgres.<staging-ref>:<pw>@aws-0-eu-west-2.pooler.supabase.com:6543/postgres"         # gate: lead approval
 
-# Production — requires lead approval
-supabase link --project-ref <hivorr-prod-ref>
-supabase db push
+# Production — requires lead approval. Used 2026-08-19:
+supabase db push --db-url "postgresql://postgres.<prod-ref>:<pw>@aws-1-eu-west-1.pooler.supabase.com:6543/postgres" --dry-run   # gate: review summary
+supabase db push --db-url "postgresql://postgres.<prod-ref>:<pw>@aws-1-eu-west-1.pooler.supabase.com:6543/postgres"           # gate: lead approval
 ```
+
+Notes on the pooler path:
+
+- Always use the **session pooler (port 6543)** for `db push` and tests — the
+  transaction pooler (5432) can break multi-statement operations.
+- `supabase link` / `projects list` require Management-API scopes
+  (Projects/Databases) on `SUPABASE_ACCESS_TOKEN`; with a scoped-down token use
+  `--db-url` as above.
+- Verify application with a follow-up `supabase db push --db-url ... --dry-run`
+  → expected output `Remote database is up to date.`
 
 If a push fails midway, do not hand-edit the database. Re-run `supabase db push`
 after fixing forward (new migration), or rebuild via a fresh branch as approved.
@@ -92,8 +109,7 @@ after fixing forward (new migration), or rebuild via a fresh branch as approved.
 No Dart code is involved (client integration is EP-01-07).
 
 ```powershell
-supabase projects list                         # CLI can reach the account
-supabase db push --dry-run                     # per linked project
+supabase db push --db-url "<session pooler>" --dry-run     # per project: none/up-to-date
 ```
 
 Health probe per environment (PostgREST, anon key from the EP-01-03 contract):
@@ -104,8 +120,25 @@ curl -X POST "https://<project-ref>.supabase.co/rest/v1/rpc/platform_health" `
   -H "Content-Type: application/json" -d "{}"
 ```
 
+Database-level probe (no anon key needed; callable via pooler directly):
+
+```powershell
+psql "<session pooler url>" -c "select * from public.platform_health()"
+```
+
 Expected: `{"success": true, "code": "PLT000", "message": "Platform connected.", "data": {...}}`.
 Each environment must respond only through its own project.
+
+**Running the pgTAP suite against a Cloud project** (verified 2026-08-19 on
+Staging, 69/69): execute each test file statement-by-statement (as `psql` does)
+through the session pooler, after `discard all` per file. Two Cloud-only
+pitfalls: (1) the pooler recycles backends without dropping temp state, so
+pgTAP's per-backend `tap` state leaks between sessions — `discard all` is
+mandatory; (2) `commit; begin;` sent within a single multi-statement message
+reuses one transaction timestamp, making the 002 trigger assertion fail — send
+statements individually. Never run the suite against Production (002's mid-file
+commit persists one fixture row; clean it with a `delete` afterwards if run) —
+the suite's authority is CI.
 
 ## 8. RPC Surface & Error Contract
 
