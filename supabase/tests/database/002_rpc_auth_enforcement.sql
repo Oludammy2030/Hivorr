@@ -159,6 +159,12 @@ select is(
   'user A updates own record zeta (PLT000)'
 );
 
+-- pgTAP runs the whole file in one transaction, so now() is frozen at the
+-- transaction start and the trigger's timestamp would equal created_at.
+-- Commit so wall-clock time advances before verifying the trigger.
+commit;
+begin;
+
 select is(
   (select
      (updated_at > created_at)

@@ -72,6 +72,7 @@ select is(
      from pg_default_acl d
      join pg_namespace n on n.oid = d.defaclnamespace
     where n.nspname = 'public'
+      and d.defaclrole = 'postgres'::regrole
       and d.defaclobjtype = 'r'
       and (d.defaclacl::text ~ 'anon=[^,=]*arwd'
            or d.defaclacl::text ~ 'authenticated=[^,=]*arwd')),
