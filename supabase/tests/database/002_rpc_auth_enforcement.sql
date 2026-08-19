@@ -153,9 +153,12 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 -- pgTAP runs the whole file in one transaction, so now() is frozen at the
 -- transaction start and the trigger's timestamp would equal created_at.
 -- Commit so the update below fires the trigger in a fresh transaction and
--- wall-clock time has advanced relative to the insert.
+-- wall-clock time has advanced relative to the insert. The JWT identity GUCs
+-- were transaction-local (is_local = true) and are re-set for this transaction.
 commit;
 begin;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select is(
   (select (public.platform_demo_records_update(
