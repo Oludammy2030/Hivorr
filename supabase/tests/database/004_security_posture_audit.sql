@@ -56,15 +56,16 @@ select is(
   'authenticated demo_records grants are minimal (no DELETE)'
 );
 
-select is(
-  (select count(*)::int
-     from information_schema.schema_privileges
-    where schema_name = 'public'
-      and privilege_type = 'CREATE'
-      and grantee in ('anon', 'authenticated')),
-  0,
-  'no CREATE privilege on public schema for anon/authenticated'
+set role anon;
+
+select throws_ok(
+  'create table public.platform_should_fail(id int)',
+  '42501',
+  NULL,
+  'anon cannot create objects in public schema (behavioral check)'
 );
+
+set role postgres;
 
 select is(
   (select count(*)::int

@@ -100,11 +100,10 @@ select is(
   'user B sees zero rows (RLS isolation)'
 );
 
-select is(
-  (select (public.platform_demo_records_get(
-     'aaaaaaaa-0000-0000-0000-000000000000'::uuid
-   ))->>'code'),
-  'PLT004',
+select throws_ok(
+  'select public.platform_demo_records_get(''aaaaaaaa-0000-0000-0000-000000000000''::uuid)',
+  'P0001',
+  'PLT004: Record not found\.',
   'user B cannot read user A record (PLT004)'
 );
 
