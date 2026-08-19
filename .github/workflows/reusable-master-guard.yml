@@ -14,9 +14,11 @@ name: Reusable Master Guard
 on:
   workflow_call:
 
-permissions:
-  contents: read
-  pull-requests: read
+# NOTE: No `permissions` block here. GitHub rejects `pull-requests: read`
+# inside a called workflow (startup_failure); a called workflow without a
+# permissions block inherits the caller's GITHUB_TOKEN permissions, so the
+# callers (protect-master.yml, staging-deployment.yml) must grant
+# `pull-requests: read` themselves.
 
 jobs:
   guard:
