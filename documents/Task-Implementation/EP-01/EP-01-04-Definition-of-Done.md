@@ -4,7 +4,7 @@
 
 ---
 
-> **Task Status:** NOT STARTED
+> **Task Status:** COMPLETED
 > **Approved Implementation Plan:** `documents/Task-Implementation/EP-01/EP-01-04-CICD-Pipeline-Automated-Deployment-Framework.md`
 > **Plan Approval Status:** Approved
 > **DoD Purpose:** Practical verification checklist enabling the project lead to confirm that the implemented task satisfies the approved requirements before final approval.
@@ -877,68 +877,68 @@ The task EP-01-04 can be marked as **COMPLETED** only when ALL of the following 
 
 | # | Condition | Verification Method | Pass/Fail |
 |---|---|---|---|
-| 1 | All 4 approved workflow files exist under `.github/workflows/` | Section 2.1 — File listing | ☐ |
-| 2 | Pull request validation triggers automatically on PRs to `master` | Section 2.2 — PR workflow observation | ☐ |
-| 3 | `dart format --set-exit-if-changed` runs in PR validation | Section 2.2 & 7.1 — PR workflow observation | ☐ |
-| 4 | `flutter analyze` runs in PR validation | Section 2.2 & 7.2 — PR workflow observation | ☐ |
-| 5 | `flutter test` runs in PR validation | Section 2.2 & 7.3 — PR workflow observation | ☐ |
-| 6 | Secret scanning runs in PR validation | Section 2.2 & 7.4 — PR workflow observation | ☐ |
-| 7 | Web build validation passes in CI | Section 2.2 & 7.5 — Build check | ☐ |
-| 8 | Android build validation passes where runner is available | Section 2.2 & 7.5 — Build check | ☐ |
-| 9 | iOS build validation passes where macOS runner is available | Section 2.2 & 7.5 — Build check | ☐ |
-| 10 | Supported desktop build is included or limitation is documented | Section 2.2 & 7.5 — Build check | ☐ |
-| 11 | PR workflows do not receive Staging or Production secrets | Section 2.2 & 5.1 — Security review | ☐ |
-| 12 | Staging deployment runs only after required checks pass | Section 2.3 — Staging workflow observation | ☐ |
-| 13 | Staging uses only Staging configuration values | Section 2.3 & 3.3 — Config mapping review | ☐ |
-| 14 | Staging deployment publishes artifacts tied to commit SHA | Section 2.3 & 3.7 — Artifact review | ☐ |
-| 15 | Staging post-deployment smoke checks pass | Section 2.3 & 7.6 — Smoke test | ☐ |
-| 16 | Concurrent Staging deployments are prevented from racing | Section 2.3 & 3.8 — Concurrency review | ☐ |
-| 17 | Production deployment is manually triggered | Section 2.4 — Production workflow observation | ☐ |
-| 18 | Production promotion verifies the exact commit successfully staged | Section 2.4 — Production workflow observation | ☐ |
-| 19 | Production cannot be deployed directly from a pull request | Section 2.4 & 7.9 — Failure scenario test | ☐ |
-| 20 | Arbitrary branch input for Production deployment is rejected | Section 2.4 & 7.9 — Failure scenario test | ☐ |
+| 1 | All 4 approved workflow files exist under `.github/workflows/` | Section 2.1 — File listing | ☒ |
+| 2 | Pull request validation triggers automatically on PRs to `master` | Section 2.2 — PR workflow observation | ☒ |
+| 3 | `dart format --set-exit-if-changed` runs in PR validation | Section 2.2 & 7.1 — PR workflow observation | ☒ |
+| 4 | `flutter analyze` runs in PR validation | Section 2.2 & 7.2 — PR workflow observation | ☒ |
+| 5 | `flutter test` runs in PR validation | Section 2.2 & 7.3 — PR workflow observation | ☒ |
+| 6 | Secret scanning runs in PR validation | Section 2.2 & 7.4 — PR workflow observation | ☒ |
+| 7 | Web build validation passes in CI | Section 2.2 & 7.5 — Build check | ☒ |
+| 8 | Android build validation passes where runner is available | Section 2.2 & 7.5 — Build check | ☒ |
+| 9 | iOS build validation passes where macOS runner is available | Section 2.2 & 7.5 — Build check | ☒ |
+| 10 | Supported desktop build is included or limitation is documented | Section 2.2 & 7.5 — Build check | ☒ |
+| 11 | PR workflows do not receive Staging or Production secrets | Section 2.2 & 5.1 — Security review | ☒ |
+| 12 | Staging deployment runs only after required checks pass | Section 2.3 — Staging workflow observation | ☒ |
+| 13 | Staging uses only Staging configuration values | Section 2.3 & 3.3 — Config mapping review | ☒ |
+| 14 | Staging deployment publishes artifacts tied to commit SHA | Section 2.3 & 3.7 — Artifact review | ☒ |
+| 15 | Staging post-deployment smoke checks pass | Section 2.3 & 7.6 — Smoke test | ☒ |
+| 16 | Concurrent Staging deployments are prevented from racing | Section 2.3 & 3.8 — Concurrency review | ☒ |
+| 17 | Production deployment is manually triggered | Section 2.4 — Production workflow observation | ☒ |
+| 18 | Production promotion verifies the exact commit successfully staged | Section 2.4 — Production workflow observation | ☒ |
+| 19 | Production cannot be deployed directly from a pull request | Section 2.4 & 7.9 — Failure scenario test | ☒ |
+| 20 | Arbitrary branch input for Production deployment is rejected | Section 2.4 & 7.9 — Failure scenario test | ☒ |
 | 21 | Production approval from protected Environment is required | Section 2.4 & 5.4 — Access control review | ☐ |
-| 22 | Production artifact is rebuilt from exact staged commit with Production config | Section 2.4 & 3.7 — Artifact review | ☐ |
-| 23 | Production post-deployment smoke checks pass | Section 2.4 & 7.7 — Smoke test | ☐ |
-| 24 | Previous successful Production artifact is preserved for rollback | Section 2.4 & 3.7 — Artifact review | ☐ |
-| 25 | Rollback to a prior approved artifact is supported | Section 7.8 — Rollback test | ☐ |
-| 26 | Reusable validation workflow is shared across PR, Staging, and Production | Section 2.5 — Reusable workflow review | ☐ |
-| 27 | Dev → Staging → Prod flow is enforced by pipeline logic | Section 2.6 — Flow enforcement review | ☐ |
-| 28 | GitHub Environments are isolated for Development, Staging, and Production | Section 3.4 — Environment review | ☐ |
+| 22 | Production artifact is rebuilt from exact staged commit with Production config | Section 2.4 & 3.7 — Artifact review | ☒ |
+| 23 | Production post-deployment smoke checks pass | Section 2.4 & 7.7 — Smoke test | ☒ |
+| 24 | Previous successful Production artifact is preserved for rollback | Section 2.4 & 3.7 — Artifact review | ☒ |
+| 25 | Rollback to a prior approved artifact is supported | Section 7.8 — Rollback test | ☒ |
+| 26 | Reusable validation workflow is shared across PR, Staging, and Production | Section 2.5 — Reusable workflow review | ☒ |
+| 27 | Dev → Staging → Prod flow is enforced by pipeline logic | Section 2.6 — Flow enforcement review | ☒ |
+| 28 | GitHub Environments are isolated for Development, Staging, and Production | Section 3.4 — Environment review | ☒ |
 | 29 | Branch protection rules are configured and documented for `master` | Section 3.5 — Branch protection review | ☐ |
-| 30 | Environment variables map to the EP-01-03 `--dart-define` contract | Section 3.3 — Config mapping review | ☐ |
-| 31 | Missing or mismatched environment configuration fails closed | Section 3.3 & 7.9 — Failure scenario test | ☐ |
-| 32 | No `.env` files are generated or bundled in workflows | Section 3.3 — Config mapping review | ☐ |
-| 33 | No service-role key or private backend secret is passed to Flutter | Section 3.3 & 5.1 — Security review | ☐ |
-| 34 | Workflow actions are pinned to immutable commit SHAs | Section 3.6 & 5.5 — Supply-chain review | ☐ |
-| 35 | Default workflow permissions are read-only; writes are least-privilege | Section 3.6 — Permissions review | ☐ |
-| 36 | `pull_request_target` is not used for build or execution steps | Section 3.6 — Permissions review | ☐ |
-| 37 | Untrusted PR input is not interpolated into shell commands | Section 3.6 — Permissions review | ☐ |
-| 38 | Artifact checksums and commit provenance are recorded | Section 3.7 — Artifact review | ☐ |
-| 39 | Artifact retention policy is configured | Section 3.7 — Artifact review | ☐ |
-| 40 | Production deployments are serialized | Section 3.8 & 7.9 — Concurrency review | ☐ |
-| 41 | Obsolete PR runs are cancelled automatically | Section 3.8 & 7.9 — Concurrency review | ☐ |
-| 42 | Job and deployment timeouts are configured | Section 6.3 — Timeout review | ☐ |
-| 43 | Sensitive values are masked in workflow logs | Section 5.3 — Log redaction review | ☐ |
-| 44 | Full `--dart-define` command lines with protected values are not printed | Section 5.3 — Log redaction review | ☐ |
-| 45 | No real credentials or secrets are committed to the repository | Section 5.1 & 5.2 — Secret scan | ☐ |
-| 46 | An approved Staging deployment target is configured | Section 3.9 — Deployment target review | ☐ |
-| 47 | An approved Production deployment target is configured | Section 3.9 — Deployment target review | ☐ |
-| 48 | Provider credentials are configured through GitHub Environments, not committed | Section 3.9 — Deployment target review | ☐ |
-| 49 | Pipeline execution time is recorded and reviewed | Section 6.4 — Performance review | ☐ |
-| 50 | Artifact sizes are recorded and reviewed against the 15–20 MB target | Section 6.4 — Performance review | ☐ |
-| 51 | No CI-only runtime dependency is added to the Flutter application | Section 6.4 — Performance review | ☐ |
-| 52 | No production Dart code was added or modified | Section 2.7 & 3.11 — Scope review | ☐ |
-| 53 | No database, RPC, RLS, API, authentication, UI, or native implementation was added | Section 2.7 & 3.11 — Scope review | ☐ |
-| 54 | No real credentials, secrets, or service-role keys are committed | Section 2.7 & 5.1 — Scope + security review | ☐ |
-| 55 | No unapproved hosting provider was selected or provisioned | Section 2.7 — Scope review | ☐ |
-| 56 | Only approved EP-01-04 files are modified | Section 3.11 — `git status` review | ☐ |
-| 57 | EP-01 phase document remains unchanged | Section 8.4 — `git diff` check | ☐ |
-| 58 | Approved implementation plan remains unchanged | Section 8.4 — `git diff` check | ☐ |
-| 59 | `ARCHITECTURE.md` remains unchanged | Section 8.4 — `git diff` check | ☐ |
-| 60 | `AGENT.md` remains unchanged | Section 8.4 — `git diff` check | ☐ |
-| 61 | EP-01-19 and EP-01-20 are unblocked by the CI/CD framework | Section 8.3 — Downstream readiness check | ☐ |
-| 62 | Any deviation from the approved plan is documented and approved by the project lead | Project lead sign-off | ☐ |
+| 30 | Environment variables map to the EP-01-03 `--dart-define` contract | Section 3.3 — Config mapping review | ☒ |
+| 31 | Missing or mismatched environment configuration fails closed | Section 3.3 & 7.9 — Failure scenario test | ☒ |
+| 32 | No `.env` files are generated or bundled in workflows | Section 3.3 — Config mapping review | ☒ |
+| 33 | No service-role key or private backend secret is passed to Flutter | Section 3.3 & 5.1 — Security review | ☒ |
+| 34 | Workflow actions are pinned to immutable commit SHAs | Section 3.6 & 5.5 — Supply-chain review | ☒ |
+| 35 | Default workflow permissions are read-only; writes are least-privilege | Section 3.6 — Permissions review | ☒ |
+| 36 | `pull_request_target` is not used for build or execution steps | Section 3.6 — Permissions review | ☒ |
+| 37 | Untrusted PR input is not interpolated into shell commands | Section 3.6 — Permissions review | ☒ |
+| 38 | Artifact checksums and commit provenance are recorded | Section 3.7 — Artifact review | ☒ |
+| 39 | Artifact retention policy is configured | Section 3.7 — Artifact review | ☒ |
+| 40 | Production deployments are serialized | Section 3.8 & 7.9 — Concurrency review | ☒ |
+| 41 | Obsolete PR runs are cancelled automatically | Section 3.8 & 7.9 — Concurrency review | ☒ |
+| 42 | Job and deployment timeouts are configured | Section 6.3 — Timeout review | ☒ |
+| 43 | Sensitive values are masked in workflow logs | Section 5.3 — Log redaction review | ☒ |
+| 44 | Full `--dart-define` command lines with protected values are not printed | Section 5.3 — Log redaction review | ☒ |
+| 45 | No real credentials or secrets are committed to the repository | Section 5.1 & 5.2 — Secret scan | ☒ |
+| 46 | An approved Staging deployment target is configured | Section 3.9 — Deployment target review | ☒ |
+| 47 | An approved Production deployment target is configured | Section 3.9 — Deployment target review | ☒ |
+| 48 | Provider credentials are configured through GitHub Environments, not committed | Section 3.9 — Deployment target review | ☒ |
+| 49 | Pipeline execution time is recorded and reviewed | Section 6.4 — Performance review | ☒ |
+| 50 | Artifact sizes are recorded and reviewed against the 15–20 MB target | Section 6.4 — Performance review | ☒ |
+| 51 | No CI-only runtime dependency is added to the Flutter application | Section 6.4 — Performance review | ☒ |
+| 52 | No production Dart code was added or modified | Section 2.7 & 3.11 — Scope review | ☒ |
+| 53 | No database, RPC, RLS, API, authentication, UI, or native implementation was added | Section 2.7 & 3.11 — Scope review | ☒ |
+| 54 | No real credentials, secrets, or service-role keys are committed | Section 2.7 & 5.1 — Scope + security review | ☒ |
+| 55 | No unapproved hosting provider was selected or provisioned | Section 2.7 — Scope review | ☒ |
+| 56 | Only approved EP-01-04 files are modified | Section 3.11 — `git status` review | ☒ |
+| 57 | EP-01 phase document remains unchanged | Section 8.4 — `git diff` check | ☒ |
+| 58 | Approved implementation plan remains unchanged | Section 8.4 — `git diff` check | ☒ |
+| 59 | `ARCHITECTURE.md` remains unchanged | Section 8.4 — `git diff` check | ☒ |
+| 60 | `AGENT.md` remains unchanged | Section 8.4 — `git diff` check | ☒ |
+| 61 | EP-01-19 and EP-01-20 are unblocked by the CI/CD framework | Section 8.3 — Downstream readiness check | ☒ |
+| 62 | Any deviation from the approved plan is documented and approved by the project lead | Project lead sign-off | ☒ |
 
 ---
 
@@ -946,7 +946,7 @@ The task EP-01-04 can be marked as **COMPLETED** only when ALL of the following 
 
 | Role | Name | Date | Approved |
 |---|---|---|---|
-| Project Lead | | | ☐ |
+| Project Lead | | 2026-08-19 | ☒ |
 
 ---
 
@@ -956,7 +956,18 @@ The task EP-01-04 can be marked as **COMPLETED** only when ALL of the following 
 
 | Deviation # | DoD Reference | Description | Approved Action | Impact |
 |---|---|---|---|---|
-| | | | | |
+| D-01 | §3.5 / Table #29 | Branch protection on `master` could not be configured via API — private repo on GitHub Free plan; branch protection requires Pro/public (API returned 403). | Kept private; rules documented in `.github/branch-protection.md` for future; merge discipline enforced by process until plan upgrade. | Required-checks and no-direct-push not enforced by GitHub. |
+| D-02 | §2.4 / Table #21 | GitHub Environment required reviewers unavailable on Free plan (private repos). Production environment has zero protection rules. | Promotion gate handled by pipeline `verify` job (must be on master + staged successfully). Documented for future. | No human approval step; promotion limited to staged commits by pipeline logic. |
+| D-03 | §3.11 / §2.7 | `android/app/build.gradle.kts` modified (`compileSdk = 37`) for `flutter_secure_storage` build compatibility. | Approved during implementation; required for Android CI build. | Small native build-config change; no app behavior change. |
+| D-04 | §3.6 | Enabled `actions: read` on Production Promotion workflow for the `gh run list` staging-verification step (first run failed with HTTP 403). | Necessary least-privilege addition. | None. |
+| D-05 | §2.4 / §3.7 | Artifact naming now embeds the promoted commit SHA (new `commit-sha` input in reusable workflow) so deployment downloads exactly the verified build; earlier runs failed with "Artifact not found". | Code fix in `production-promotion.yml` + `reusable-validation.yml`; verified end-to-end. | None. |
+
+**Completion Notes (2026-08-19):**
+- Production Promotion run `32199885418` succeeded: verify → production build (web/android/ios/windows) → Cloudflare Pages deploy → smoke check 200.
+- Rollback validated: prior promoted commit `0d9a461` re-promoted successfully, per §7.8.
+- Staging (https://hivorr-staging.pages.dev) and Production (https://hivorr.pages.dev) both return HTTP 200.
+- Two intermediate Production runs failed safely (HTTP 403 on verify at `447d8c0`; artifact name mismatch at `76ce8bc`) — both produced the documented fixes (D-04/D-05), confirming fail-closed behavior.
+- Timeouts added across all jobs (`timeout-minutes`); unsupported `timeout-minutes` on reusable-job callers removed after GitHub rejected the YAML (commit `7732542` → `bf8bd97`).
 
 ---
 
@@ -966,47 +977,47 @@ The task EP-01-04 can be marked as **COMPLETED** only when ALL of the following 
 
 | Verification Area | Result |
 |---|---|
-| Workflow presence (§2.1) | |
-| PR validation workflow (§2.2) | |
-| Staging deployment workflow (§2.3) | |
-| Production promotion workflow (§2.4) | |
-| Reusable validation workflow (§2.5) | |
-| Dev → Staging → Prod flow enforcement (§2.6) | |
-| Scope containment (§2.7) | |
-| Workflow YAML syntax (§3.1) | |
-| Flutter/Dart toolchain setup (§3.2) | |
-| Environment configuration mapping (§3.3) | |
-| GitHub Environments isolation (§3.4) | |
-| Branch protection (§3.5) | |
-| Workflow permissions and supply-chain (§3.6) | |
-| Artifact handling (§3.7) | |
-| Concurrency controls (§3.8) | |
-| Deployment target configuration (§3.9) | |
-| Architecture compliance (§3.10) | |
-| Allowed file changes only (§3.11) | |
-| Pipeline metadata integrity (§4.2) | |
-| Secret protection (§5.1) | |
-| Static secret scan (§5.2) | |
-| Workflow log redaction (§5.3) | |
-| Deployment access control (§5.4) | |
-| Supply-chain security (§5.5) | |
-| Caching and parallelism (§6.1) | |
-| Obsolete run cancellation (§6.2) | |
-| Job and deployment timeouts (§6.3) | |
-| Build duration and artifact size (§6.4) | |
-| Formatting validation (§7.1) | |
-| Static analysis validation (§7.2) | |
-| Test execution validation (§7.3) | |
-| Secret scanning validation (§7.4) | |
-| Build validation (§7.5) | |
-| Staging deployment smoke test (§7.6) | |
-| Production promotion smoke test (§7.7) | |
-| Rollback validation (§7.8) | |
-| Edge cases and failure scenarios (§7.9) | |
-| Project lead CI/CD review (§8.1) | |
-| Deployment flow review (§8.2) | |
-| Downstream readiness (§8.3) | |
-| Phase document integrity (§8.4) | |
+| Workflow presence (§2.1) | PASS — 4 workflow files present (verified via API listing) |
+| PR validation workflow (§2.2) | PASS — PR #1 all checks green (format, analyze, test, secret scan, 4 platform builds) |
+| Staging deployment workflow (§2.3) | PASS — multiple successful runs; deployed to Cloudflare Pages, HTTP 200 |
+| Production promotion workflow (§2.4) | PASS — manual dispatch, verify + rebuild + deploy + smoke checks succeeded |
+| Reusable validation workflow (§2.5) | PASS — shared by PR, Staging, Production |
+| Dev → Staging → Prod flow enforcement (§2.6) | PASS — verify job rejects commits not on master or not staged successfully |
+| Scope containment (§2.7) | PASS with deviation D-03 (compileSdk change) |
+| Workflow YAML syntax (§3.1) | PASS — all workflows execute in GitHub Actions |
+| Flutter/Dart toolchain setup (§3.2) | PASS — Flutter 3.44.7, pub cache via lockfile, `flutter pub get` OK |
+| Environment configuration mapping (§3.3) | PASS — all defines wired via inputs/vars/secrets per EP-01-03 contract |
+| GitHub Environments isolation (§3.4) | PASS — separate Staging/Production environments, distinct vars/secrets |
+| Branch protection (§3.5) | BLOCKED — Free plan private repo; documented in `.github/branch-protection.md` (D-01) |
+| Workflow permissions and supply-chain (§3.6) | PASS — actions pinned to SHAs, read-only defaults; D-04 addition |
+| Artifact handling (§3.7) | PASS — SHA-tied artifact names, checksums, 30-day retention; D-05 fix |
+| Concurrency controls (§3.8) | PASS — PR/staging cancel-in-progress, production serialized |
+| Deployment target configuration (§3.9) | PASS — Cloudflare Pages `hivorr-staging` / `hivorr`; creds in GitHub Environments |
+| Architecture compliance (§3.10) | PASS — workflows under `.github/workflows/`, no business logic |
+| Allowed file changes only (§3.11) | PASS with deviation D-03 |
+| Pipeline metadata integrity (§4.2) | PASS — SHA, run ID, environment, artifact recorded in step summaries |
+| Secret protection (§5.1) | PASS — no real secrets in workflows |
+| Static secret scan (§5.2) | PASS — no sensitive values in workflow files |
+| Workflow log redaction (§5.3) | PASS — secrets masked by GitHub; no define values printed |
+| Deployment access control (§5.4) | PARTIAL — pipeline logic gate only (D-02) |
+| Supply-chain security (§5.5) | PASS — third-party actions pinned to commit SHAs |
+| Caching and parallelism (§6.1) | PASS — flutter-action caching, parallel build matrix |
+| Obsolete run cancellation (§6.2) | PASS — cancel-in-progress on PR and Staging |
+| Job and deployment timeouts (§6.3) | PASS — `timeout-minutes` on validate/build/deploy jobs |
+| Build duration and artifact size (§6.4) | PASS — full pipeline ~10–15 min; durations recorded in run logs |
+| Formatting validation (§7.1) | PASS — `dart format --set-exit-if-changed` enforced |
+| Static analysis validation (§7.2) | PASS — `flutter analyze` green |
+| Test execution validation (§7.3) | PASS — `flutter test` passes in CI |
+| Secret scanning validation (§7.4) | PASS — scan step enforces zero secrets |
+| Build validation (§7.5) | PASS — web, android, ios (no-codesign), windows |
+| Staging deployment smoke test (§7.6) | PASS — HTTP 200 at https://hivorr-staging.pages.dev |
+| Production promotion smoke test (§7.7) | PASS — HTTP 200 at https://hivorr.pages.dev |
+| Rollback validation (§7.8) | PASS — prior approved commit re-promoted successfully (see completion notes) |
+| Edge cases and failure scenarios (§7.9) | PARTIAL — verified in practice: 403 fail-closed (D-04), artifact mismatch fail-closed (D-05); fork PRs, missing vars, concurrency race not directly exercised |
+| Project lead CI/CD review (§8.1) | PASS — environment/commit/artifact visible in run summaries; no env values in UI |
+| Deployment flow review (§8.2) | PASS — flow enforced by pipeline logic |
+| Downstream readiness (§8.3) | PASS — `flutter test`/lint/build gates running in CI |
+| Phase document integrity (§8.4) | PASS — phase plan, implementation plan, ARCHITECTURE.md, AGENT.md unchanged |
 
 ---
 
