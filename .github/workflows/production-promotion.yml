@@ -101,7 +101,7 @@ jobs:
     needs: verify
     uses: ./.github/workflows/reusable-validation.yml
     with:
-      flutter-version: '3.44.7'
+      flutter-version: '3.47.0'
       environment-name: 'production'
       supabase-url: ${{ vars.PRODUCTION_HIVORR_SUPABASE_URL }}
       config-schema-version: ${{ vars.PRODUCTION_HIVORR_CONFIG_SCHEMA_VERSION || '1' }}
