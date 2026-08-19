@@ -1,0 +1,29 @@
+# Protect Master — EP-01-04
+#
+# Pipeline-level enforcement of the protected master branch for the GitHub
+# Free plan, where real branch protection is unavailable for private
+# repositories (deviation D-01).
+#
+# Runs on every push to master and fails loudly if the pushed commit did not
+# originate from a merged pull request. Combined with reusable-master-guard.yml
+# used by Staging Deployment, a direct push cannot be staged and therefore can
+# never reach Production.
+
+name: Protect Master
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: protect-master
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: Protect Master
+    uses: ./.github/workflows/reusable-master-guard.yml

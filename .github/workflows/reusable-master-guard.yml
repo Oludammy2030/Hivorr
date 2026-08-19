@@ -1,0 +1,43 @@
+# Reusable Master Guard — EP-01-04
+#
+# Fail-closed pipeline guard that verifies a push to master originated from a
+# merged pull request. Works on the GitHub Free plan where real branch
+# protection is unavailable for private repositories (deviation D-01).
+#
+# The guard cannot physically block a direct push, but it fails CI loudly and,
+# because the Staging workflow depends on this guard, a direct push can never
+# be staged and therefore can never be promoted to Production by the verify
+# job in production-promotion.yml.
+
+name: Reusable Master Guard
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    name: Guard master push origin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify commit arrived via a merged pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="${{ github.sha }}"
+          echo "Verifying origin of commit ${SHA} on master..."
+          COUNT=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" \
+            --jq '[.[] | select(.merged_at != null)] | length')
+          echo "Merged pull requests containing ${SHA}: ${COUNT}"
+          if [ "${COUNT}" -ge 1 ]; then
+            echo "Verified: commit ${SHA} arrived via a merged pull request."
+          else
+            echo "::error::Direct push to master detected. All changes to master must arrive via a merged pull request."
+            echo "::error::Reference: .github/branch-protection.md — protected branch requirements."
+            exit 1
+          fi

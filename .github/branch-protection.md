@@ -150,3 +150,36 @@ Three isolated GitHub Environments must be configured:
 - The `CLOUDFLARE_PAGES_PROJECT_NAME` variable is required for deployment. If not set, the workflow publishes artifacts but skips deployment with a warning.
 - The `DEPLOY_WEB_URL` variable is optional but recommended. If set, the workflow runs a post-deployment HTTP 200 smoke check. If not set, the smoke check is skipped with a warning.
 - Cloudflare Pages deploys to the `main` branch within each Pages project, which maps to the production deployment in Cloudflare's model. Preview deployments are not used in this CI/CD framework.
+
+---
+
+## 5. Enforcement Status on the GitHub Free Plan
+
+This private repository runs on the GitHub Free plan, where branch protection rules **cannot be enforced** on private repositories (DoD deviation D-01). Until the account is upgraded to GitHub Pro or the repository is made public, the following pipeline-level guards substitute for real branch protection:
+
+### 5.1 Protect Master Workflow
+
+- File: `.github/workflows/protect-master.yml` (uses `.github/workflows/reusable-master-guard.yml`)
+- Runs on every push to `master`.
+- Fails loudly if the pushed commit did not originate from a merged pull request (direct push detected).
+
+### 5.2 Staging Guard
+
+- The Staging Deployment workflow runs the same guard (`.github/workflows/reusable-master-guard.yml`) as its first job.
+- A direct push to `master` therefore fails the Staging guard, so the commit is never staged — and the Production Promotion verify job (which requires a successful Staging run) will never accept it.
+- Net effect: **a commit that did not arrive via a merged PR can never reach Production**, even without GitHub-enforced branch protection.
+
+### 5.3 Branch Protection Reminder
+
+- File: `.github/workflows/branch-protection-reminder.yml`
+- Runs every Monday 09:00 UTC (and manually via `workflow_dispatch`).
+- If branch protection for `master` is not configured, it opens (or keeps open) a reminder issue: *"Branch protection is not enforced on master"*.
+- Once protection is detected (after a plan upgrade or public visibility change), the issue is closed automatically.
+
+### 5.4 Enabling Real Protection Later
+
+When the plan is upgraded (or the repository is made public):
+
+1. Apply the rules in §1 and §2 of this document (Settings → Branches / Environments).
+2. Re-run the `Branch Protection Reminder` workflow — the reminder issue closes automatically.
+3. The `protect-master` and staging guards remain active as defense-in-depth; they pass for any merged-PR commit, so they do not conflict with GitHub's own enforcement.

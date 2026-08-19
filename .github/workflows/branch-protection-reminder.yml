@@ -1,0 +1,81 @@
+# Branch Protection Reminder — EP-01-04
+#
+# Weekly self-reminder for the project lead. While this private repository is
+# on the GitHub Free plan, branch protection rules cannot be enforced
+# (deviation D-01). This workflow checks the API every Monday and, if
+# protection is still not configured, opens (or reopens) a reminder issue so
+# the enforcement cannot be forgotten once the plan is upgraded.
+#
+# When protection is detected, any open reminder issue is closed automatically.
+
+name: Branch Protection Reminder
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  remind:
+    name: Remind if branch protection missing
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check branch protection status
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${{ github.repository }}/branches/master/protection" >/dev/null 2>&1; then
+            echo "enforced=true" >> "$GITHUB_OUTPUT"
+            echo "Branch protection for master is ENFORCED."
+          else
+            echo "enforced=false" >> "$GITHUB_OUTPUT"
+            echo "Branch protection for master is NOT enforced."
+          fi
+
+      - name: Open or keep reminder issue
+        if: steps.check.outputs.enforced == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TITLE="Branch protection is not enforced on master"
+          EXISTING=$(gh api "repos/${{ github.repository }}/issues?state=open&per_page=100" \
+            --jq '[.[] | select(.title == "'"$TITLE"'")] | length')
+          if [ "$EXISTING" -eq 0 ]; then
+            gh api "repos/${{ github.repository }}/issues" \
+              -f title="$TITLE" \
+              -f body="Branch protection for \`master\` is not enforced because this private repository is on the GitHub Free plan (DoD deviation D-01).
+
+When you upgrade to GitHub Pro (or make the repository public), apply the rules documented in \`.github/branch-protection.md\`, then re-run this workflow or wait for next Monday — the issue closes automatically once protection is detected.
+
+> This issue was opened automatically by the \`Branch Protection Reminder\` workflow."
+            echo "Reminder issue opened."
+          else
+            echo "Reminder issue already open."
+          fi
+
+      - name: Close reminder issue if now enforced
+        if: steps.check.outputs.enforced == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TITLE="Branch protection is not enforced on master"
+          NUMBERS=$(gh api "repos/${{ github.repository }}/issues?state=open&per_page=100" \
+            --jq '.[] | select(.title == "'"$TITLE"'") | .number')
+          if [ -n "$NUMBERS" ]; then
+            for N in $NUMBERS; do
+              gh api -X PATCH "repos/${{ github.repository }}/issues/$N" \
+                -f state=closed -f state_reason=completed >/dev/null
+              echo "Closed reminder issue #$N — branch protection is now enforced."
+            done
+          else
+            echo "No open reminder issue — good."
+          fi

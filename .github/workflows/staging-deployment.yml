@@ -33,8 +33,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  guard:
+    name: Staging Guard
+    uses: ./.github/workflows/reusable-master-guard.yml
+
   build:
     name: Staging Build
+    needs: guard
     uses: ./.github/workflows/reusable-validation.yml
     with:
       flutter-version: '3.44.7'
