@@ -150,6 +150,13 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- pgTAP runs the whole file in one transaction, so now() is frozen at the
+-- transaction start and the trigger's timestamp would equal created_at.
+-- Commit so the update below fires the trigger in a fresh transaction and
+-- wall-clock time has advanced relative to the insert.
+commit;
+begin;
+
 select is(
   (select (public.platform_demo_records_update(
      (select id from public.platform_demo_records where title = 'zeta'),
@@ -158,12 +165,6 @@ select is(
   'PLT000',
   'user A updates own record zeta (PLT000)'
 );
-
--- pgTAP runs the whole file in one transaction, so now() is frozen at the
--- transaction start and the trigger's timestamp would equal created_at.
--- Commit so wall-clock time advances before verifying the trigger.
-commit;
-begin;
 
 select is(
   (select
