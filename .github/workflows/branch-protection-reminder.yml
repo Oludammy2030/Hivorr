@@ -46,16 +46,13 @@ jobs:
         run: |
           set -euo pipefail
           TITLE="Branch protection is not enforced on master"
+          BODY="Branch protection for master is not enforced because this private repository is on the GitHub Free plan (DoD deviation D-01). Upgrade to GitHub Pro, apply the rules in .github/branch-protection.md, then re-run this workflow — this issue closes automatically once protection is detected. Opened automatically by the Branch Protection Reminder workflow."
           EXISTING=$(gh api "repos/${{ github.repository }}/issues?state=open&per_page=100" \
             --jq '[.[] | select(.title == "'"$TITLE"'")] | length')
           if [ "$EXISTING" -eq 0 ]; then
             gh api "repos/${{ github.repository }}/issues" \
               -f title="$TITLE" \
-              -f body="Branch protection for \`master\` is not enforced because this private repository is on the GitHub Free plan (DoD deviation D-01).
-
-When you upgrade to GitHub Pro (or make the repository public), apply the rules documented in \`.github/branch-protection.md\`, then re-run this workflow or wait for next Monday — the issue closes automatically once protection is detected.
-
-> This issue was opened automatically by the \`Branch Protection Reminder\` workflow."
+              -f body="$BODY"
             echo "Reminder issue opened."
           else
             echo "Reminder issue already open."
