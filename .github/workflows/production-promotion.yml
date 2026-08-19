@@ -100,7 +100,6 @@ jobs:
     name: Production Build
     needs: verify
     uses: ./.github/workflows/reusable-validation.yml
-    timeout-minutes: 45
     with:
       flutter-version: '3.44.7'
       environment-name: 'production'

@@ -25,7 +25,6 @@ jobs:
   validate-and-build:
     name: PR Validation
     uses: ./.github/workflows/reusable-validation.yml
-    timeout-minutes: 45
     with:
       flutter-version: '3.44.7'
       environment-name: 'development'
