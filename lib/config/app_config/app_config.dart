@@ -65,6 +65,16 @@ class AppConfig {
   /// Centralized immutable application constants.
   AppConstants get constants => _config.constants;
 
+  // ─── Raw configuration access ───────────────────────────────────────
+
+  /// The underlying [EnvironmentConfig] wrapped by this façade.
+  ///
+  /// Exposed so downstream foundation tasks (e.g. EP-01-07/EP-01-15) can pass
+  /// the validated configuration contract directly to modules that require
+  /// the raw [EnvironmentConfig] (such as [ApiInitializer.initializeApi]).
+  /// Consumers should prefer the typed façade getters above whenever possible.
+  EnvironmentConfig get environmentConfig => _config;
+
   // ─── Schema version ─────────────────────────────────────────────────
 
   /// The validated configuration schema version.
