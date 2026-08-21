@@ -7,7 +7,7 @@
 | Task ID | EP-01-08 |
 | Task Name | Unified Data Access Layer |
 | Related Phase | EP-01: Core Platform Foundation & Infrastructure |
-| Status | Ready for Approval |
+| Status | Completed (implemented 2026-08-21; unit tests passing; DoD verified) |
 | Dependencies | EP-01-06 (Universal Entity schema + RPC contract — completed), EP-01-07 (Core API layer `BaseApiService`/`ApiException`/Supabase+Dio clients — completed) |
 | Priority | High |
 | Planning Reasoning | Very High |

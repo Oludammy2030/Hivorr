@@ -16,7 +16,7 @@
 | **Task Name** | Core API Layer & HTTP Client Architecture |
 | **Related Phase** | EP-01: Core Platform Foundation & Infrastructure |
 | **Reference Implementation Plan** | `documents/Task-Implementation/EP-01/EP-01-07-Core API Layer & HTTP Client Architecture.md` |
-| **Phase Plan Status** | Not Started → In Progress (pending implementation approval) |
+| **Phase Plan Status** | Completed (implemented 2026-08-21; full test suite passing; DoD verified) |
 | **Dependencies** | EP-01-02 (packages pinned), EP-01-03 (config contract) — both Completed; EP-01-05 (RPC error contract `PLT001`–`PLT999`) consumed |
 
 ---
