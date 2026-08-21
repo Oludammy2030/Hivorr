@@ -4,7 +4,7 @@
 
 ---
 
-> **Task Status:** COMPLETED — CI-VERIFIED AND ENVIRONMENT-APPLIED (Staging + Prod, verified 2026-08-19). Dev environment mapping pending lead decision (2-project plan limit; CI covers the dev-stage suite).
+> **Task Status:** COMPLETED — CI-VERIFIED AND ENVIRONMENT-APPLIED (Local Dev + Staging + Prod; cloud envs verified 2026-08-19, local dev verified 2026-08-21). Dev runs as a local Supabase instance (Docker) per Deviation 3 — lead sign-off pending.
 > **Approved Implementation Plan:** `documents/Task-Implementation/EP-01/EP-01-05-Supabase-Server-Side-Enforcement-Architecture.md`
 > **Plan Approval Status:** Approved
 > **DoD Purpose:** Practical verification checklist enabling the project lead to confirm that the implemented task satisfies the approved requirements before final approval.
@@ -605,7 +605,7 @@ The task EP-01-05 can be marked as **COMPLETED** only when ALL of the following 
 
 | # | Condition | Verification Method | Pass/Fail |
 |---|---|---|---|
-| 1 | Three isolated Supabase projects provisioned and connected | Section 2.1 — Connectivity check | ☑ Pass — Staging (`cgxkiczmwzydhoroclvf`, eu-west-2) and Prod (`fxpcgtetvzlexbptqiwp`, eu-west-1) provisioned, migrated, `platform_health()` PLT000 on both; Dev project cannot be provisioned (2-project free-plan limit) — Dev-stage coverage runs in CI/local (lead decision pending on mapping; see completion notes) |
+| 1 | Three isolated Supabase projects provisioned and connected | Section 2.1 — Connectivity check | ☑ Pass — Staging (`cgxkiczmwzydhoroclvf`, eu-west-2) and Prod (`fxpcgtetvzlexbptqiwp`, eu-west-1) provisioned, migrated, `platform_health()` PLT000 on both; Dev project cannot be provisioned (2-project free-plan limit) — Dev = local Supabase instance (Docker): migrations applied via `db reset`, `platform_health()` PLT000, pgTAP 69/69 green locally (2026-08-21; see Deviation 3) |
 | 2 | Versioned, reproducible SQL migrations in repository | Section 2.2 — `db reset` | ☑ Pass — clean rebuild in CI (`supabase db reset`) |
 | 3 | RLS enabled and default-deny on every created table | Section 2.3 — Policy review | ☑ Pass — 004 posture audit, CI green |
 | 4 | No table-level GRANT to anon | Section 5.2 — Grant audit | ☑ Pass — 004 test 4, CI green |
@@ -617,7 +617,7 @@ The task EP-01-05 can be marked as **COMPLETED** only when ALL of the following 
 | 10 | `SECURITY DEFINER` minimal, search-path-pinned, narrowly granted | Section 5.4 — Posture audit | ☑ Pass — 004 tests 9-10, CI green |
 | 11 | No dynamic SQL from user input (injection resistance) | Section 5.4 — Code review | ☑ Pass — code review, parameterized only |
 | 12 | Audit columns and `updated_at` trigger convention established | Section 3.3 — Schema review | ☑ Pass — 002 trigger test, CI green |
-| 13 | pgTAP suite (4 files) passes locally | Section 7.6 — Local execution | ☐ **BLOCKED** — Docker not installed; identical suite passes via CI (see Deviation 2) AND live on Cloud Staging (69/69, see completion notes) |
+| 13 | pgTAP suite (4 files) passes locally | Section 7.6 — Local execution | ☑ Pass — Docker installed; full suite executed against the local stack (`supabase start`, CLI 2.115.0): **69/69** (001: 17/17, 002: 18/18, 003: 15/15, 004: 19/19) on 2026-08-21; DB reset to pristine state afterwards. Also green in CI and live on Cloud Staging |
 | 14 | pgTAP suite passes in CI | Section 7.6 — CI execution | ☑ Pass — 69/69, run #32233909037 |
 | 15 | `database-rls-tests.yml` exists and is additive | Section 3.6 — Workflow review | ☑ Pass — new file only; see Deviation 1 for toolchain pin bumps |
 | 16 | Migrations applied Dev → Staging → Prod with lead approval gates | Section 8.1 — Promotion review | ☑ Pass — Staging then Prod; per-env `--dry-run` + explicit approval gate before each push (2026-08-19); both ledgers verified (`Remote database is up to date`) |
@@ -633,7 +633,7 @@ The task EP-01-05 can be marked as **COMPLETED** only when ALL of the following 
 | 26 | Approved implementation plan and phase document unchanged | Section 8.3 — `git diff` | ☑ Pass — plan/DoD/phase docs authored, not modified post-approval |
 | 27 | `ARCHITECTURE.md` and `AGENT.md` unchanged | Section 8.3 — `git diff` | ☑ Pass |
 | 28 | Enforcement patterns ready for EP-01-06, EP-01-07, EP-01-09 | Section 8.2 — Readiness | ☑ Pass — helpers, contract, conventions in place |
-| 29 | Any deviation from the approved plan documented and approved | Project lead sign-off | ☐ Pending lead review of Deviations 1-2 below |
+| 29 | Any deviation from the approved plan documented and approved | Project lead sign-off | ☐ Pending lead review of Deviations 1-3 below |
 
 ---
 
@@ -652,7 +652,7 @@ The task EP-01-05 can be marked as **COMPLETED** only when ALL of the following 
 | Deviation # | DoD Reference | Description | Approved Action | Impact |
 |---|---|---|---|---|
 | 1 | §9 #15, #25 | EP-01-04 caller workflows (`pr-validation.yml`, `staging-deployment.yml`, `production-promotion.yml`) had `flutter-version` pins bumped 3.44.7 → 3.47.0 in a **separate** `chore(toolchain)` commit (Flutter upgrade). No workflow logic, permissions, or branch protection changed. The EP-01-05 diff itself did not modify any EP-01-04 file. | ☐ Lead approval requested: accept as toolchain alignment | Toolchain consistency only; CI on 3.47.0 validated (all workflows green) |
-| 2 | §9 #13 | pgTAP suite was executed via CI instead of a local Docker instance (Docker not installed on the workstation). CI executes the identical command sequence (`supabase start` → `db reset` → `test db`) on every push/PR and is green (69/69). | ☐ Lead approval requested, or local run when Docker is installed | Verification source of truth is CI; local run remains reproducible later |
+| 2 | §9 #13 | pgTAP suite was executed via CI instead of a local Docker instance (Docker not installed on the workstation). CI executes the identical command sequence (`supabase start` → `db reset` → `test db`) on every push/PR and is green (69/69). | ☐ Lead approval requested — local run completed 2026-08-21 (see Deviation 3) | Verification source of truth is CI; local Docker run completed and green (69/69) |
 
 **Completion notes:**
 
@@ -664,17 +664,19 @@ The task EP-01-05 can be marked as **COMPLETED** only when ALL of the following 
 - **Live cloud verification on Staging (2026-08-19):** `platform_health()` returned `PLT000/ok` on both environments. The full pgTAP suite was executed directly against Cloud Staging through the session pooler: **69/69 assertions green** (001: 17/17, 002: 18/18, 003: 15/15, 004: 19/19), behaviorally identical to CI run #32233909037. Production was never run against — only migrations and health probe touched it.
 - **Pooler-specific execution notes (why the same suite failed twice against Cloud before passing):** (1) the Supabase pooler (both 5432 and 6543) reuses physical backends without discarding temp state, so pgTAP's per-backend `tap` state leaks between sessions — the harness must `discard all` before each test file; (2) PostgreSQL reuses a single transaction timestamp for `commit; begin;` issued in one multi-statement message, so the 002 trigger assertion (`updated_at > created_at`) only holds when statements are sent individually (as `psql` does; the CLI harness does this, a naive multi-statement driver does not).
 - **Cloud hygiene (2026-08-19):** `pgtap` was temporarily created on Staging for the live run and dropped afterwards; the one fixture row persisted by 002's mid-file commit (`zeta`) and audit rows were deleted. Both environments re-verified at exactly post-migration state (10 `platform_*` functions, 0 demo rows, 0 audit rows, no pgtap). Production remained pristine throughout.
+| 3 | §9 #1, §9 #13, §11 2.1 | Dev environment cannot be a third cloud project (free-plan 2-project limit). Development now runs as a **local Supabase instance** (Docker Desktop; standalone WSL 2.7.12; `.wslconfig` requires `virtio=false` on this workstation — its Windows build's Host Compute Service rejects virtio VM configs with HCS_E_INVALID_JSON). Applied 2026-08-21: `supabase start` — `db reset` applied all three migrations cleanly — full pgTAP suite **69/69** green — DB reset back to pristine post-migration state (`platform_health()` PLT000 re-verified). | ☐ Lead approval requested: accept local-instance dev mapping | Dev-stage verification reproducible on-workstation in addition to CI; cloud staging/prod untouched |
+
 - **Credentials note:** the otherwise-required `SUPABASE_ACCESS_TOKEN` lacked Projects/Databases Management-API scopes (403 on project endpoints), so promotion used direct pooler `--db-url` instead. Optionally rotate the two project Postgres passwords (they were surfaced in a chat session during this work).
 
 ---
 
 ## 11. Verification Summary
 
-> Completed at implementation time (2026-08-19). Results below reflect run #32233909037 (CI), the live Cloud application/verification, plus local static checks.
+> Completed at implementation time (2026-08-19). Results below reflect run #32233909037 (CI), the live Cloud application/verification, local static checks, and the local Dev instance verification (2026-08-21).
 
 | Verification Area | Result |
 |---|---|
-| 2.1 Environment projects & isolation | **PASS (2 of 3)** — Staging + Prod provisioned, migrated, `platform_health()` PLT000 both; Dev provisioning constrained by 2-project free-plan limit (mapping decision pending lead) |
+| 2.1 Environment projects & isolation | **PASS (3 of 3)** — Staging + Prod provisioned, migrated, `platform_health()` PLT000 both; Dev = local Supabase instance (Docker), migrated + health-verified + pgTAP 69/69 (Deviation 3, lead approval requested) |
 | 2.2 Migration strategy & reproducibility | **PASS** — clean `db reset` rebuild in CI on every run |
 | 2.3 RLS default-deny posture | **PASS** — 004 audit (3 policies, zero anon grants, Realtime excluded) |
 | 2.4 Foundational RPC patterns | **PASS** — 5 RPCs + 5 helpers; auth gate on every non-health RPC |
@@ -694,8 +696,8 @@ The task EP-01-05 can be marked as **COMPLETED** only when ALL of the following 
 | 5.3 Sensitive data & secrets | **PASS** — CI migration scan + local static scan clean |
 | 5.4 Security rules & posture | **PASS** — 004 audit (19/19) |
 | 6 Performance | **PASS** — minimal surface, indexed policies, CI suite ~4 min |
-| 7 Testing | **PASS** — 69/69 pgTAP in CI; **69/69 live on Cloud Staging**; analyze/test regression green |
-| 8.1 Lead manual review | **PENDING** — lead sign-off incl. deviations 1-2 and Dev-environment mapping |
+| 7 Testing | **PASS** — 69/69 pgTAP in CI; **69/69 live on Cloud Staging**; **69/69 on local Dev stack**; analyze/test regression green |
+| 8.1 Lead manual review | **PENDING** — lead sign-off incl. deviations 1-3 (dev = local-instance mapping) |
 | 8.2 Downstream readiness | **PASS** — EP-01-06/07/09 patterns ready |
 | 8.3 Document integrity | **PASS** — AGENT/ARCHITECTURE/phase-plan unchanged; plan/DoD authored as approved |
 
