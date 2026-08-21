@@ -36,8 +36,10 @@ class EnvironmentLoader {
     final environment = AppEnvironment.fromName(envName);
 
     // 2. Supabase URL — must be valid HTTPS, not a placeholder.
+    //    Development additionally accepts plain-HTTP loopback URLs so the
+    //    app can target a local `supabase start` stack (EP-01-05).
     final url = _require(source, AppConstants.envSupabaseUrl);
-    _validateUrl(url);
+    _validateUrl(url, environment);
 
     // 3. Supabase anon key — must be public, not service-role, not placeholder.
     final anonKey = _require(source, AppConstants.envSupabaseAnonKey);
@@ -80,9 +82,20 @@ class EnvironmentLoader {
 
   // ─── URL validation ─────────────────────────────────────────────────
 
+  /// Loopback hosts permitted to use plain HTTP in Development only.
+  static const Set<String> _loopbackHosts = {
+    '127.0.0.1',
+    'localhost',
+    '::1',
+  };
+
   /// Validates that [url] is a valid HTTPS URL with a host and is not a
   /// known placeholder.
-  static void _validateUrl(String url) {
+  ///
+  /// Development builds may target a local Supabase stack (`supabase start`)
+  /// over plain HTTP, but only on loopback hosts. Staging and Production
+  /// remain HTTPS-only.
+  static void _validateUrl(String url, AppEnvironment environment) {
     if (_isPlaceholder(url)) {
       throw EnvironmentConfigException(
         variableName: AppConstants.envSupabaseUrl,
@@ -101,10 +114,14 @@ class EnvironmentLoader {
     }
 
     if (!uri.hasScheme || uri.scheme != 'https') {
-      throw EnvironmentConfigException(
-        variableName: AppConstants.envSupabaseUrl,
-        reason: 'Supabase URL must use HTTPS.',
-      );
+      final isLoopbackHttp =
+          uri.scheme == 'http' && _loopbackHosts.contains(uri.host);
+      if (!(environment.isDevelopment && isLoopbackHttp)) {
+        throw EnvironmentConfigException(
+          variableName: AppConstants.envSupabaseUrl,
+          reason: 'Supabase URL must use HTTPS.',
+        );
+      }
     }
 
     if (uri.host.isEmpty) {

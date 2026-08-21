@@ -173,6 +173,37 @@ void main() {
       );
     });
 
+    test('Development accepts plain-HTTP loopback URL', () {
+      final values = Map<String, String>.from(_validDev)
+        ..[AppConstants.envSupabaseUrl] = 'http://127.0.0.1:54321';
+
+      final config = EnvironmentLoader.load(
+        source: MapEnvironmentValueSource(values),
+      );
+
+      expect(config.supabaseConfig.url, 'http://127.0.0.1:54321');
+    });
+
+    test('Staging rejects plain-HTTP loopback URL', () {
+      final values = Map<String, String>.from(_validStaging)
+        ..[AppConstants.envSupabaseUrl] = 'http://127.0.0.1:54321';
+
+      expect(
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
+        throwsA(isA<EnvironmentConfigException>()),
+      );
+    });
+
+    test('Production rejects plain-HTTP loopback URL', () {
+      final values = Map<String, String>.from(_validProd)
+        ..[AppConstants.envSupabaseUrl] = 'http://127.0.0.1:54321';
+
+      expect(
+        () => EnvironmentLoader.load(source: MapEnvironmentValueSource(values)),
+        throwsA(isA<EnvironmentConfigException>()),
+      );
+    });
+
     test('throws for placeholder URL', () {
       final values = Map<String, String>.from(_validDev)
         ..[AppConstants.envSupabaseUrl] = 'https://your-project.supabase.co';
