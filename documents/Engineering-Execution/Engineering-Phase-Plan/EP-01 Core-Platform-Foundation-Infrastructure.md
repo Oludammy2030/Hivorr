@@ -275,7 +275,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 | **Engineering Purpose** | **Most critical data architecture decision.** Must support multi-role fluid-shift operation and scale across all future phases without redesign. |
 | **Dependencies** | EP-01-05 |
 | **Expected Outcome** | Tables: `entities`, `entity_profiles`, `entity_roles`, `entity_credentials`, `industries`, `professions`, `entity_professions`, `entity_settings`, `entity_devices`. Audit columns on all tables. All RLS-protected. Validated against EP-02 requirements. |
-| **Priority** | Critical | **Status** | Not Started |
+| **Priority** | Critical | **Status** | Completed (schema implemented + Staging promoted 2026-08-21; Prod promotion gated on EP-01-07/08/09 app validation) |
 | **Planning Reasoning** | **Extremely High** | **Coding Reasoning** | **Extremely High** |
 
 ### EP-01-07: Core API Layer & HTTP Client Architecture
@@ -443,7 +443,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 | EP-01-03 | Multi-Environment Configuration | Critical | High | High | 01 | Completed |
 | EP-01-04 | CI/CD Pipeline & Deployment Framework | High | High | High | 01, 03 | Completed |
 | EP-01-05 | Supabase Server-Side Enforcement (RPC+RLS) | Critical | **Extremely High** | **Extremely High** | 03 | Completed |
-| EP-01-06 | Universal Entity Data Model & Schema | Critical | **Extremely High** | **Extremely High** | 05 | Not Started |
+| EP-01-06 | Universal Entity Data Model & Schema | Critical | **Extremely High** | **Extremely High** | 05 | Completed |
 | EP-01-07 | Core API Layer & HTTP Client | Critical | Very High | Very High | 02, 03 | Not Started |
 | EP-01-08 | Unified Data Access Layer | High | Very High | Very High | 06, 07 | Not Started |
 | EP-01-09 | Authentication & Authorization Framework | Critical | **Extremely High** | **Extremely High** | 05, 07 | Not Started |

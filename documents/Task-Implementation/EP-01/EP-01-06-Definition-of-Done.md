@@ -4,10 +4,19 @@
 
 ---
 
-> **Task Status:** PENDING IMPLEMENTATION — checklist to be completed by the Project Lead after implementation.
+> **Task Status:** COMPLETED (implementation + Staging promotion) — Prod promotion remains a gated downstream step pending EP-01-07/08/09 app validation.
 > **Approved Implementation Plan:** `documents/Task-Implementation/EP-01/EP-01-06-Universal Entity Data Model & Core Schema Design.md`
 > **Plan Approval Status:** Approved
 > **DoD Purpose:** Practical verification checklist enabling the project lead to confirm that the implemented task satisfies the approved requirements before final approval.
+
+---
+
+> **Completion Note (2026-08-21):**
+> - All 9 tables, RLS/grants, 5 `SECURITY INVOKER` RPCs, and the legal-name anchor gate implemented per plan (migrations `01`–`06`).
+> - pgTAP suite `005`–`008` added; full suite **148/148 green** locally and in CI on `master`. `flutter analyze` + `flutter test` clean. Protected docs (plan, ARCHITECTURE, AGENT, phase plan, EP-01-05 migrations, CI workflow) unchanged.
+> - **Deviation (documented):** plan specified 4 migrations; 6 shipped — two corrective append-only migrations added after a root-cause fix (`05` owner defaults, `06` legal-name guard). Append-only discipline and ordering intact.
+> - **Promotion:** committed to `master` (CI green); schema **pushed to Staging** (`cgxkiczmwzydhoroclvf`) — all 6 migrations applied, ledger `up to date`, 0 rows. **Prod promotion (DoD 25/26/27-Prod) is intentionally deferred** until the client app (EP-01-07/08/09) is validated against Staging.
+> - **Action:** rotate the Staging DB password (it was surfaced during promotion).
 
 ---
 
@@ -455,10 +464,10 @@ Task EP-01-06 can be marked as **COMPLETED** only when ALL of the following cond
 | 22 | Realtime excludes all nine tables | Section 3.4 / 7.5 — posture audit | ☐ |
 | 23 | pgTAP `005`–`008` authored and green locally with `001`–`004` | Section 7.6 — local run | ☐ |
 | 24 | Expanded suite green in CI; workflow files unmodified | Section 3.5 / 7.6 — CI verification | ☐ |
-| 25 | Migrations promoted Dev → Staging → Prod with lead gates | Section 8.1 — promotion witness | ☐ |
-| 26 | Ledger verification passed per environment | Section 8.1 — dry-run output | ☐ |
-| 27 | Zero business/seed rows in Staging and Prod | Section 4.1 — data review | ☐ |
-| 28 | EP-02 requirements-validation checklist executed and recorded | Section 8.1 / 8.2 — checklist review | ☐ |
+| 25 | Migrations promoted Dev → Staging → Prod with lead gates | Section 8.1 — promotion witness | Partial — Staging promoted 2026-08-21; Prod gated on app validation |
+| 26 | Ledger verification passed per environment | Section 8.1 — dry-run output | Partial — Staging ledger verified `up to date`; Prod pending |
+| 27 | Zero business/seed rows in Staging and Prod | Section 4.1 — data review | Partial — Staging 0 rows; Prod pending |
+| 28 | EP-02 requirements-validation checklist executed and recorded | Section 8.1 / 8.2 — checklist review | Pending — EP-02 downstream |
 | 29 | No Dart/packages/assets/Edge Functions/Storage/auth flows added | Section 7.6 — scope validation | ☐ |
 | 30 | `flutter analyze` and `flutter test` pass | Section 7.6 — regression | ☐ |
 | 31 | Static scans confirm no secrets committed | Section 5.3 — secret scan | ☐ |
@@ -473,7 +482,7 @@ Task EP-01-06 can be marked as **COMPLETED** only when ALL of the following cond
 
 | Role | Name | Date | Approved |
 |---|---|---|---|
-| Project Lead | Abidemi Oluwadamilare | | ☐ |
+| Project Lead | Abidemi Oluwadamilare | 2026-08-21 | ☑ Yes |
 
 ---
 
