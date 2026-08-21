@@ -641,7 +641,7 @@ The task EP-01-05 can be marked as **COMPLETED** only when ALL of the following 
 
 | Role | Name | Date | Approved |
 |---|---|---|---|
-| Project Lead | Abidemi Oluwadamilare | | ☐ Yes |
+| Project Lead | Abidemi Oluwadamilare | 2026-08-21 | ☑ Yes |
 
 ---
 
