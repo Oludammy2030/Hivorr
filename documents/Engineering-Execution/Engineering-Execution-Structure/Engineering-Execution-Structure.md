@@ -44,9 +44,9 @@ EP-01 (Foundation)
 |---|---|
 | **Phase ID** | EP-02 |
 | **Phase Name** | Trust, Identity & Financial Integrity Engine |
-| **Engineering Objective** | Build the universal trust, identity verification, and financial infrastructure that makes safe marketplace transactions possible. |
-| **Business Capability Enabled** | Business Phase 1 — Trust Foundation and Supply Seeding. Enables entity registration, credential verification, KYC compliance, escrow protection, and bound payout channels. |
-| **Major Systems / Functional Areas** | Entity registration & onboarding system; two-tier taxonomy framework (Industry → Profession registry); trade verification workflow with admin review gate; KYC integration framework; escrow & milestone payment infrastructure; bound payout account system with KYC-driven cashout limits; name-matching deposit verification; dispute resolution framework; professional profile & credential display system. |
+| **Engineering Objective** | Build the universal trust, identity verification, and provider-agnostic, multi-currency financial infrastructure that makes safe marketplace transactions possible. |
+| **Business Capability Enabled** | Business Phase 1 — Trust Foundation and Supply Seeding. Enables entity registration, credential verification, KYC compliance, a unified multi-currency financial profile with currency-specific receiving accounts and balances, provider-agnostic escrow protection, and bound payout channels. |
+| **Major Systems / Functional Areas** | Entity registration & onboarding system; two-tier taxonomy framework (Industry → Profession registry); trade verification workflow with admin review gate; KYC integration framework; unified multi-currency financial profile with currency-specific receiving accounts and balances; provider-agnostic, multi-currency escrow & milestone payment infrastructure; currency conversion between supported balances; bound payout account system with KYC-driven cashout limits; name-matching deposit verification; dispute resolution framework; professional profile & credential display system. |
 | **Dependencies** | EP-01 (requires Universal Entity data model, authentication framework, server-side architecture, database infrastructure) |
 | **Expected Outcome** | A fully operational trust and identity engine where entities can register, verify credentials, pass trade verification, and operate within a secure financial infrastructure — all before any marketplace transactions are enabled. |
 | **Priority** | Critical — blocks all marketplace phases |
@@ -154,7 +154,7 @@ EP-01 (Foundation)
 | **Phase Name** | Global Scale & Multi-Region Infrastructure |
 | **Engineering Objective** | Scale the platform for multi-region, multi-language, multi-currency, and multi-regulatory operation — enabling geographic replication and global expansion. |
 | **Business Capability Enabled** | Business Phase 7 — Geographic Expansion and Global Scale. Enables the proven Hivorr model to replicate in new markets. |
-| **Major Systems / Functional Areas** | Multi-region data architecture with geographic isolation; localization engines (language, currency, regulatory, cultural); cross-border payment processing & currency conversion; regional compliance framework per jurisdiction; multi-region infrastructure & deployment architecture; scalable trust & verification adaptable to national identity frameworks; regional analytics & comparative market intelligence; cross-border professional services & commerce capabilities. |
+| **Major Systems / Functional Areas** | Multi-region data architecture with geographic isolation; localization engines (language, currency, regulatory, cultural); cross-border payment processing, multi-currency receiving accounts, currency conversion, and provider-agnostic international financial infrastructure (with Thunes and other regulated providers under due diligence); regional compliance framework per jurisdiction; multi-region infrastructure & deployment architecture; scalable trust & verification adaptable to national identity frameworks; regional analytics & comparative market intelligence; cross-border professional services & commerce capabilities. |
 | **Dependencies** | EP-01 through EP-07 (requires fully proven model in the initial market — every capability, workflow, and operational pattern must be transferable to new contexts) |
 | **Expected Outcome** | A globally scalable platform architecture capable of replicating the proven Hivorr model in new geographic markets with full regulatory compliance, localized experiences, and cross-border connectivity. |
 | **Priority** | Long-term — culmination of all previous phases |
@@ -191,7 +191,7 @@ EP-01 (Foundation)
 
 5. **Deterministic Core Supremacy:** Deterministic engines (matching, ranking, routing, financial splits) are built and proven before the AI layer is introduced. AI enhances but never overrides.
 
-6. **Scalability Without Redesign:** The Universal Entity data model, two-tier taxonomy framework, and modular architecture are designed to absorb new industries, geographies, and capabilities without structural reinvention.
+6. **Scalability Without Redesign:** The Universal Entity data model, two-tier taxonomy framework, and modular architecture are designed to absorb new industries, geographies, and capabilities without structural reinvention — including the provider-agnostic financial infrastructure that adds new countries, currencies, providers, and rails without redesign.
 
 ---
 

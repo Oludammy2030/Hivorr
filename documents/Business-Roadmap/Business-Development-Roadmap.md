@@ -26,7 +26,7 @@ Hivorr pursues a **compound ecosystem growth** model. Rather than acquiring user
 
 ### Market Entry Strategy
 
-**Supply-first, demand-following, geography-concentrated.** Hivorr enters any market by first seeding verified supply—professionals and merchants who will serve the demand side once activated. Geographic concentration in a single metropolitan area creates the density necessary for 3-party commerce and hyper-local logistics to function efficiently. The payment infrastructure alignment (Paystack, Flutterwave, NIBSS) positions the initial market in Nigeria—a large informal economy with mobile-first populations, fragmented service markets, and growing digital adoption.
+**Supply-first, demand-following, geography-concentrated.** Hivorr enters any market by first seeding verified supply—professionals and merchants who will serve the demand side once activated. Geographic concentration in a single metropolitan area creates the density necessary for 3-party commerce and hyper-local logistics to function efficiently. The initial market is Nigeria—a large informal economy with mobile-first populations, fragmented service markets, and growing digital adoption. Local and regional payment capabilities are initially supported through providers such as Paystack, Flutterwave, and NIBSS, while the long-term financial ecosystem is designed to be provider-agnostic and multi-currency (see Financial Infrastructure Strategy).
 
 Market entry follows a strict sequence:
 1. Seed verified supply in the target geography.
@@ -55,7 +55,7 @@ Retention in Hivorr is architectural, not incentive-driven:
 
 - **Multi-role entanglement:** Users operating in two or more roles exhibit fundamentally different retention curves than single-role users. The platform becomes harder to leave as roles multiply.
 - **Trust investment lock-in:** Verified profiles, accumulated reviews, transaction history, and portfolio entries represent sunk reputation capital that cannot transfer to competitors.
-- **Financial integration:** Wallet balances, escrow holdings, and bound payout accounts create financial stickiness.
+- **Financial integration:** A unified multi-currency financial profile—currency balances, escrow holdings, and bound payout accounts—creates financial stickiness without requiring separate accounts per currency.
 - **AI personalization deepening:** Memory-driven AI that learns user preferences creates increasingly tailored experiences that degrade if the user switches to a generic platform.
 - **Ecosystem dependency:** Workflow automations, recurring contracts, and third-party integrations embed Hivorr into daily operational routines.
 
@@ -114,7 +114,7 @@ The AI layer never decides marketplace rankings, financial splits, or operationa
 
 | Partnership Category | Strategic Value |
 |---|---|
-| Payment infrastructure (Paystack, Flutterwave, NIBSS) | Financial operations, regulatory compliance, local payment methods |
+| Payment and financial infrastructure (provider-agnostic: Paystack, Flutterwave, NIBSS, Thunes, and other regulated providers) | Financial operations, regulatory compliance, multi-currency receiving accounts, escrow, settlement, FX, and local/international payment methods |
 | Cloud and storage providers | Scalable infrastructure without capital expenditure |
 | Communication services (SMS, email, social) | Transactional notifications, OTP verification, marketing channels |
 | Maps and location providers | Spatial operations, delivery routing, proximity matching |
@@ -122,6 +122,23 @@ The AI layer never decides marketplace rankings, financial splits, or operationa
 | Regulatory authorities | Licensing, compliance, financial services authorization |
 | Logistics networks | Delivery capacity scaling, fleet management partnerships |
 | Technology and AI providers | Model capabilities, analytics, monitoring infrastructure |
+
+### Financial Infrastructure Strategy
+
+Hivorr's financial ecosystem must be designed as a **provider-agnostic, multi-currency infrastructure** rather than a dependency on any single payment provider. The following strategic principles govern the long-term financial direction and are treated as business-capability requirements, not implementation tasks.
+
+- **Provider-agnostic foundation:** No single provider (including Paystack, Flutterwave, or any international provider) should become the permanent foundation or single point of dependency for the Hivorr financial ecosystem. Hivorr owns its financial business concepts—financial profile, currency account, currency balance, payment, transaction, escrow, payout, settlement, currency conversion, refund, commission, reconciliation, provider transaction, and financial audit trail—while relying on appropriately regulated third-party infrastructure for regulated activities.
+- **International financial infrastructure candidate:** Thunes is the primary candidate for the international financial infrastructure layer, subject to validation across technical, commercial, regulatory, compliance, country-coverage, settlement, FX, reliability, and due-diligence dimensions. Thunes is not assumed to be the final or permanent provider; Hivorr must remain free to adopt alternative or additional providers.
+- **Local and regional providers retained:** Paystack, Flutterwave, NIBSS, and other appropriate providers may continue to be used for specific local or regional payment, collection, and payout capabilities where they are the most appropriate option.
+- **Unified multi-currency financial profile:** Each eligible Hivorr user must have a single unified financial profile that can hold multiple currency-specific receiving accounts and balances (for example, NGN, GHS, USD, GBP, and other supported currencies) without requiring separate Hivorr accounts per currency. The user must not create multiple Hivorr identities to operate across currencies or countries.
+- **Virtual and receiving-account capability:** Where supported by the financial infrastructure, Hivorr must be capable of providing currency-specific receiving accounts to eligible users (for example, a Nigerian user holding NGN, GHS, and USD receiving accounts under one profile). If a provider cannot supply a local virtual account for a particular country or currency, Hivorr must be capable of using another appropriate provider or supported payment rail rather than being blocked from that market.
+- **Multi-currency receiving and escrow:** Payments must be received and held in the transaction's funding currency where infrastructure supports it, rather than being automatically converted at receipt. Escrow must maintain the funded currency and amount (for example, GH₵3,000 held as GHS) until release conditions are satisfied, after which funds enter the professional's appropriate currency balance.
+- **User-controlled currency conversion:** The infrastructure should support conversion between supported currency balances (for example, GHS↔NGN, USD↔NGN, GBP↔NGN) where legally, technically, and commercially possible. Conversion must not be assumed to occur automatically; the user should be able to hold foreign-currency balances and decide when conversion occurs, subject to applicable rules, limits, fees, and provider capabilities.
+- **Protected transactions and payout:** Hivorr's payment flow must keep client funds in protected/escrow states rather than passing them directly to a professional's personal bank account, reducing the need to expose personal financial details between strangers. After release, funds reach the professional's appropriate currency balance, optionally convert, and withdraw to a bound payout destination.
+- **Escrow lifecycle and protection:** The escrow capability should eventually support release conditions such as client acceptance, professional completion, delivery confirmation, required evidence, inspection or verification where applicable, expiration of an agreed review period, and dispute resolution—alongside refunds, disputes, reversals, partial releases, cancellation handling, payment failures, chargebacks where applicable, financial reconciliation, and transaction auditability. Detailed implementation rules are out of scope at this stage.
+- **Alternative payment rails and stablecoin future option:** Where traditional infrastructure cannot provide appropriate receiving or payment capability in a supported market, Hivorr may consider alternative regulated rails—including international or USD receiving accounts, mobile-money infrastructure, local payment networks, and stablecoins such as USDT where legally permitted and supported by compliant infrastructure. Stablecoin support is a potential future capability and alternative rail only; it must not be the primary payment method, Hivorr must not custody cryptocurrency, and availability is not assumed in every country.
+- **Country expansion principle:** "One provider's country coverage must not define Hivorr's country coverage." The financial ecosystem must be designed to add new countries, currencies, receiving-account types, providers, payout methods, and rails without fundamental redesign.
+- **Regulatory and structural boundaries:** Hivorr must not assume it directly performs regulated financial activities, holds customer funds outside an appropriate regulated structure, or provides banking, FX, remittance, or cryptocurrency services without the appropriate legal and regulatory framework.
 
 ### Long-Term Competitive Positioning
 
@@ -157,7 +174,7 @@ Establish the trust infrastructure and verified supply base that makes all subse
 **User Value Created:**
 - Professionals gain a verified digital identity with credibility signals visible to future clients.
 - Consumers gain the assurance that every provider has passed structured verification.
-- All users gain a secure financial infrastructure—escrow protection, KYC-validated accounts, and bound payout channels.
+- All users gain a secure financial infrastructure—escrow protection, a unified multi-currency financial profile, KYC-validated accounts, and bound payout channels.
 - Early adopters earn "founding verified" status that provides lasting competitive advantage.
 
 **Business Impact:**
@@ -170,9 +187,10 @@ Establish the trust infrastructure and verified supply base that makes all subse
 - Entity registration and identity verification system
 - Two-tier taxonomy classification (Industry → Profession)
 - Trade verification process with administrative review
-- KYC integration for financial account management
-- Escrow and milestone payment infrastructure
-- Bound payout account system with cashout limits
+  - KYC integration for financial account management
+  - Unified multi-currency financial profile with currency-specific receiving accounts and balances
+  - Provider-agnostic escrow and milestone payment infrastructure
+  - Bound payout account system with cashout limits
 - Dispute resolution framework and governance policies
 - Professional profile, portfolio, and credential display
 
@@ -438,7 +456,7 @@ Replicate the proven Hivorr model into new geographic markets, adapting to local
 - Localization engines for language, currency, regulatory, and cultural adaptation
 - Regional partnership development with local payment providers, logistics networks, and professional bodies
 - Regulatory compliance frameworks per jurisdiction covering financial services, data protection, and marketplace operations
-- Cross-border payment processing, currency conversion, and international financial infrastructure
+- Cross-border payment processing, multi-currency receiving accounts, currency conversion, and provider-agnostic international financial infrastructure (with Thunes and other regulated providers under due diligence)
 - Regional marketing strategies and localized user acquisition programs
 - Local operations teams, support infrastructure, and market-specific governance
 - Multi-region analytics, performance monitoring, and comparative market intelligence
