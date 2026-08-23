@@ -7,6 +7,8 @@ import 'package:hivorr/config/environments/environment_config_exception.dart';
 import 'package:hivorr/config/environments/environment_value_source.dart';
 import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
+import 'package:hivorr/core/cache/cache_config.dart';
+import 'package:hivorr/core/database/database_config.dart';
 
 /// Loads and validates environment configuration from a value source.
 ///
@@ -59,11 +61,17 @@ class EnvironmentLoader {
     // 6. Security configuration — pinning + KDF parameters (opt-in defaults).
     final securityConfig = SecurityConfig.fromSource(source);
 
+    // 7. Local storage + cache configuration (EP-01-11; opt-in defaults).
+    final databaseConfig = DatabaseConfig.fromSource(source);
+    final cacheConfig = CacheConfig.fromSource(source);
+
     return EnvironmentConfig(
       environment: environment,
       supabaseConfig: SupabaseConfig(url: url, anonKey: anonKey),
       featureFlags: featureFlags,
       securityConfig: securityConfig,
+      databaseConfig: databaseConfig,
+      cacheConfig: cacheConfig,
       constants: const AppConstants(),
       schemaVersion: schemaVersion,
     );

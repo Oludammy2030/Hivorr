@@ -5,6 +5,8 @@ import 'package:hivorr/config/environments/environment_loader.dart';
 import 'package:hivorr/config/environments/environment_value_source.dart';
 import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
+import 'package:hivorr/core/cache/cache_config.dart';
+import 'package:hivorr/core/database/database_config.dart';
 
 /// Application-facing configuration façade.
 ///
@@ -58,6 +60,12 @@ class AppConfig {
 
   /// Validated security configuration (pinning, KDF parameters).
   SecurityConfig get securityConfig => _config.securityConfig;
+
+  /// Validated local storage configuration (driver, at-rest encryption).
+  DatabaseConfig get databaseConfig => _config.databaseConfig;
+
+  /// Validated in-memory cache configuration (capacity, TTL).
+  CacheConfig get cacheConfig => _config.cacheConfig;
 
   // ─── Feature flags ──────────────────────────────────────────────────
 

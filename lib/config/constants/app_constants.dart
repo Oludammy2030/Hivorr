@@ -68,6 +68,34 @@ class AppConstants {
   /// Derived encryption key length in bytes (16/24/32 for AES).
   static const String securityKdfKeyLength = 'HIVORR_SECURITY_KDF_KEY_LENGTH';
 
+  // ─── Local storage & cache configuration (EP-01-11) ────────────────
+
+  /// Selected local storage driver: `hive` (default), `sqlite`, or `isar`.
+  static const String envStorageDriver = 'HIVORR_STORAGE_DRIVER';
+
+  /// Whether persisted local data is encrypted at rest.
+  static const String envStorageEncryptAtRest =
+      'HIVORR_STORAGE_ENCRYPT_AT_REST';
+
+  /// Base directory name (under the app documents dir) for local storage.
+  static const String envStorageBaseDir = 'HIVORR_STORAGE_BASE_DIR';
+
+  /// Maximum number of in-memory cache entries before LRU eviction.
+  static const String envCacheMaxEntries = 'HIVORR_CACHE_MAX_ENTRIES';
+
+  /// Default cache entry TTL in seconds.
+  static const String envCacheDefaultTtlSeconds =
+      'HIVORR_CACHE_DEFAULT_TTL_SECONDS';
+
+  /// Default local storage base directory name.
+  static const String defaultStorageBaseDir = 'hivorr_local';
+
+  /// Default maximum in-memory cache entries.
+  static const int defaultCacheMaxEntries = 100;
+
+  /// Default cache entry TTL in seconds (5 minutes).
+  static const int defaultCacheDefaultTtlSeconds = 300;
+
   // ─── Security configuration safe defaults (EP-01-10) ────────────────
 
   /// Default PBKDF2 salt when not supplied (non-secret, environment-stable).

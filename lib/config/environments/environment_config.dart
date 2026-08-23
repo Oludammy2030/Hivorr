@@ -2,6 +2,8 @@ import 'package:hivorr/config/constants/app_constants.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
+import 'package:hivorr/core/cache/cache_config.dart';
+import 'package:hivorr/core/database/database_config.dart';
 
 /// Immutable Supabase endpoint configuration.
 ///
@@ -33,6 +35,8 @@ class EnvironmentConfig {
     required this.supabaseConfig,
     required this.featureFlags,
     required this.securityConfig,
+    required this.databaseConfig,
+    required this.cacheConfig,
     required this.constants,
     required this.schemaVersion,
   });
@@ -48,6 +52,12 @@ class EnvironmentConfig {
 
   /// Validated security configuration (pinning, KDF parameters).
   final SecurityConfig securityConfig;
+
+  /// Validated local storage configuration (driver, at-rest encryption).
+  final DatabaseConfig databaseConfig;
+
+  /// Validated in-memory cache configuration (capacity, TTL).
+  final CacheConfig cacheConfig;
 
   /// Centralized immutable application constants.
   final AppConstants constants;
@@ -72,4 +82,7 @@ class EnvironmentConfig {
         'environment: $environment, '
         'schemaVersion: $schemaVersion)';
   }
+
+  /// Whether local data is encrypted at rest for this environment.
+  bool get isStorageEncryptedAtRest => databaseConfig.encryptAtRest;
 }
