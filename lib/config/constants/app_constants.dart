@@ -48,6 +48,37 @@ class AppConstants {
   static const String featureEnableDynamicWorkspaceLoading =
       'HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING';
 
+  // ─── Security configuration variable names (EP-01-10) ───────────────
+
+  /// Whether SSL certificate pinning is enabled for the environment.
+  static const String securityPinningEnabled =
+      'HIVORR_SECURITY_PINNING_ENABLED';
+
+  /// Comma-separated list of SPKI SHA-256 (base64) certificate pins.
+  static const String securityPinnedSpkiHashes =
+      'HIVORR_SECURITY_PINNED_SPKI_HASHES';
+
+  /// PBKDF2 salt (non-secret) for deriving encryption keys at rest.
+  static const String securityKdfSalt = 'HIVORR_SECURITY_KDF_SALT';
+
+  /// PBKDF2 iteration count for deriving encryption keys at rest.
+  static const String securityKdfIterations =
+      'HIVORR_SECURITY_KDF_ITERATIONS';
+
+  /// Derived encryption key length in bytes (16/24/32 for AES).
+  static const String securityKdfKeyLength = 'HIVORR_SECURITY_KDF_KEY_LENGTH';
+
+  // ─── Security configuration safe defaults (EP-01-10) ────────────────
+
+  /// Default PBKDF2 salt when not supplied (non-secret, environment-stable).
+  static const String defaultKdfSalt = 'hivorr-security-kdf-salt-v1';
+
+  /// Default PBKDF2 iteration count (resistant to offline attacks).
+  static const int defaultKdfIterations = 100000;
+
+  /// Default derived key length in bytes (AES-256).
+  static const int defaultKdfKeyLength = 32;
+
   // ─── Application identifiers ────────────────────────────────────────
 
   /// Human-readable application name.

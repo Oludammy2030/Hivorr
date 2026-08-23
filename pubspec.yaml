@@ -58,6 +58,10 @@ dependencies:
   # Error reporting and performance telemetry for lib/core/logging/ and lib/core/monitoring/.
   sentry_flutter: 9.27.0
 
+  # Client-side cryptography (AES-GCM, PBKDF2, SHA-256) for lib/core/security/
+  # encryption and pinning (EP-01-10, D1 — `cryptography` selected).
+  cryptography: ^2.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

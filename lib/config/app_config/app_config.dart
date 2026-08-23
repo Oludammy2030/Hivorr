@@ -3,6 +3,7 @@ import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/config/environments/environment_config.dart';
 import 'package:hivorr/config/environments/environment_loader.dart';
 import 'package:hivorr/config/environments/environment_value_source.dart';
+import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
 
 /// Application-facing configuration façade.
@@ -54,6 +55,9 @@ class AppConfig {
 
   /// The validated public Supabase client (anon) key.
   String get supabaseAnonKey => _config.supabaseConfig.anonKey;
+
+  /// Validated security configuration (pinning, KDF parameters).
+  SecurityConfig get securityConfig => _config.securityConfig;
 
   // ─── Feature flags ──────────────────────────────────────────────────
 

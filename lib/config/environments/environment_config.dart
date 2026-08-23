@@ -1,5 +1,6 @@
 import 'package:hivorr/config/constants/app_constants.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
+import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
 
 /// Immutable Supabase endpoint configuration.
@@ -31,6 +32,7 @@ class EnvironmentConfig {
     required this.environment,
     required this.supabaseConfig,
     required this.featureFlags,
+    required this.securityConfig,
     required this.constants,
     required this.schemaVersion,
   });
@@ -43,6 +45,9 @@ class EnvironmentConfig {
 
   /// Typed, environment-specific feature flags.
   final FeatureFlags featureFlags;
+
+  /// Validated security configuration (pinning, KDF parameters).
+  final SecurityConfig securityConfig;
 
   /// Centralized immutable application constants.
   final AppConstants constants;

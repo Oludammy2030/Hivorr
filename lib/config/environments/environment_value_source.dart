@@ -54,6 +54,16 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
         const String.fromEnvironment(
           AppConstants.featureEnableDynamicWorkspaceLoading,
         ),
+      AppConstants.securityPinningEnabled =>
+        const String.fromEnvironment(AppConstants.securityPinningEnabled),
+      AppConstants.securityPinnedSpkiHashes =>
+        const String.fromEnvironment(AppConstants.securityPinnedSpkiHashes),
+      AppConstants.securityKdfSalt =>
+        const String.fromEnvironment(AppConstants.securityKdfSalt),
+      AppConstants.securityKdfIterations =>
+        const String.fromEnvironment(AppConstants.securityKdfIterations),
+      AppConstants.securityKdfKeyLength =>
+        const String.fromEnvironment(AppConstants.securityKdfKeyLength),
       _ => '',
     };
     return value.isEmpty ? null : value;

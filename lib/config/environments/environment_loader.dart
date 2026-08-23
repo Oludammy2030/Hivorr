@@ -5,6 +5,7 @@ import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/config/environments/environment_config.dart';
 import 'package:hivorr/config/environments/environment_config_exception.dart';
 import 'package:hivorr/config/environments/environment_value_source.dart';
+import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
 
 /// Loads and validates environment configuration from a value source.
@@ -55,10 +56,14 @@ class EnvironmentLoader {
     // 5. Feature flags — strict boolean parsing, safe defaults.
     final featureFlags = FeatureFlags.fromSource(source);
 
+    // 6. Security configuration — pinning + KDF parameters (opt-in defaults).
+    final securityConfig = SecurityConfig.fromSource(source);
+
     return EnvironmentConfig(
       environment: environment,
       supabaseConfig: SupabaseConfig(url: url, anonKey: anonKey),
       featureFlags: featureFlags,
+      securityConfig: securityConfig,
       constants: const AppConstants(),
       schemaVersion: schemaVersion,
     );
