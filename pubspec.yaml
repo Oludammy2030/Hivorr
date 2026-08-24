@@ -64,6 +64,12 @@ dependencies:
   hive: ^2.2.3
   path_provider: ^2.1.6
 
+  # Connectivity detection for lib/core/sync/ (EP-01-12, D1).
+  connectivity_plus: ^6.1.0
+
+  # RFC 4122 v4 UUID generation for sync action IDs (EP-01-12, D1).
+  uuid: ^4.5.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

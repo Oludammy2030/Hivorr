@@ -64,6 +64,20 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
         const String.fromEnvironment(AppConstants.securityKdfIterations),
       AppConstants.securityKdfKeyLength =>
         const String.fromEnvironment(AppConstants.securityKdfKeyLength),
+      AppConstants.envSyncMaxQueueDepth =>
+        const String.fromEnvironment(AppConstants.envSyncMaxQueueDepth),
+      AppConstants.envSyncMaxRetries =>
+        const String.fromEnvironment(AppConstants.envSyncMaxRetries),
+      AppConstants.envSyncBaseDelayMs =>
+        const String.fromEnvironment(AppConstants.envSyncBaseDelayMs),
+      AppConstants.envSyncMaxDelayMs =>
+        const String.fromEnvironment(AppConstants.envSyncMaxDelayMs),
+      AppConstants.envSyncJitterMaxMs =>
+        const String.fromEnvironment(AppConstants.envSyncJitterMaxMs),
+      AppConstants.envSyncDefaultPriority =>
+        const String.fromEnvironment(AppConstants.envSyncDefaultPriority),
+      AppConstants.envSyncDrainBatchSize =>
+        const String.fromEnvironment(AppConstants.envSyncDrainBatchSize),
       _ => '',
     };
     return value.isEmpty ? null : value;

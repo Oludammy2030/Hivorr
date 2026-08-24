@@ -96,6 +96,50 @@ class AppConstants {
   /// Default cache entry TTL in seconds (5 minutes).
   static const int defaultCacheDefaultTtlSeconds = 300;
 
+  // ─── Offline sync configuration (EP-01-12) ─────────────────────────
+
+  /// Maximum number of pending sync actions before the queue rejects new ones.
+  static const String envSyncMaxQueueDepth = 'HIVORR_SYNC_MAX_QUEUE_DEPTH';
+
+  /// Default per-action retry ceiling before dead-lettering.
+  static const String envSyncMaxRetries = 'HIVORR_SYNC_MAX_RETRIES';
+
+  /// Base delay (in milliseconds) for exponential backoff.
+  static const String envSyncBaseDelayMs = 'HIVORR_SYNC_BASE_DELAY_MS';
+
+  /// Maximum delay (in milliseconds) for exponential backoff.
+  static const String envSyncMaxDelayMs = 'HIVORR_SYNC_MAX_DELAY_MS';
+
+  /// Maximum random jitter (in milliseconds) added to each backoff delay.
+  static const String envSyncJitterMaxMs = 'HIVORR_SYNC_JITTER_MAX_MS';
+
+  /// Default priority assigned to sync actions (lower = higher priority).
+  static const String envSyncDefaultPriority = 'HIVORR_SYNC_DEFAULT_PRIORITY';
+
+  /// Maximum number of actions processed per drain cycle.
+  static const String envSyncDrainBatchSize = 'HIVORR_SYNC_DRAIN_BATCH_SIZE';
+
+  /// Default maximum queue depth.
+  static const int defaultSyncMaxQueueDepth = 500;
+
+  /// Default per-action retry ceiling.
+  static const int defaultSyncMaxRetries = 5;
+
+  /// Default base delay for exponential backoff (1 second).
+  static const int defaultSyncBaseDelayMs = 1000;
+
+  /// Default maximum delay for exponential backoff (60 seconds).
+  static const int defaultSyncMaxDelayMs = 60000;
+
+  /// Default maximum random jitter (1 second).
+  static const int defaultSyncJitterMaxMs = 1000;
+
+  /// Default action priority (lower = higher priority).
+  static const int defaultSyncDefaultPriority = 10;
+
+  /// Default drain batch size.
+  static const int defaultSyncDrainBatchSize = 50;
+
   // ─── Security configuration safe defaults (EP-01-10) ────────────────
 
   /// Default PBKDF2 salt when not supplied (non-secret, environment-stable).

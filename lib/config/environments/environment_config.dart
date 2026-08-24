@@ -4,6 +4,7 @@ import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
 import 'package:hivorr/core/cache/cache_config.dart';
 import 'package:hivorr/core/database/database_config.dart';
+import 'package:hivorr/core/sync/sync_config.dart';
 
 /// Immutable Supabase endpoint configuration.
 ///
@@ -37,6 +38,7 @@ class EnvironmentConfig {
     required this.securityConfig,
     required this.databaseConfig,
     required this.cacheConfig,
+    required this.syncConfig,
     required this.constants,
     required this.schemaVersion,
   });
@@ -58,6 +60,9 @@ class EnvironmentConfig {
 
   /// Validated in-memory cache configuration (capacity, TTL).
   final CacheConfig cacheConfig;
+
+  /// Validated offline sync configuration (retry policy, backoff, queue depth).
+  final SyncConfig syncConfig;
 
   /// Centralized immutable application constants.
   final AppConstants constants;
