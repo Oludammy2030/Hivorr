@@ -9,6 +9,7 @@ import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
 import 'package:hivorr/core/cache/cache_config.dart';
 import 'package:hivorr/core/database/database_config.dart';
+import 'package:hivorr/core/network/network_config.dart';
 import 'package:hivorr/core/sync/sync_config.dart';
 
 /// Loads and validates environment configuration from a value source.
@@ -69,6 +70,9 @@ class EnvironmentLoader {
     // 8. Offline sync configuration (EP-01-12; opt-in defaults).
     final syncConfig = SyncConfig.fromSource(source);
 
+    // 9. Network management configuration (EP-01-13; opt-in defaults).
+    final networkConfig = NetworkConfig.fromSource(source);
+
     return EnvironmentConfig(
       environment: environment,
       supabaseConfig: SupabaseConfig(url: url, anonKey: anonKey),
@@ -77,6 +81,7 @@ class EnvironmentLoader {
       databaseConfig: databaseConfig,
       cacheConfig: cacheConfig,
       syncConfig: syncConfig,
+      networkConfig: networkConfig,
       constants: const AppConstants(),
       schemaVersion: schemaVersion,
     );

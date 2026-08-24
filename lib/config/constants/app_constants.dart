@@ -151,6 +151,60 @@ class AppConstants {
   /// Default derived key length in bytes (AES-256).
   static const int defaultKdfKeyLength = 32;
 
+  // ─── Network management configuration (EP-01-13) ──────────────────
+
+  /// Connectivity change debounce interval in milliseconds (0 = no debounce).
+  static const String envNetworkDebounceMs = 'HIVORR_NETWORK_DEBOUNCE_MS';
+
+  /// Default image quality on mobile connections (`low`, `medium`, `high`).
+  static const String envNetworkMobileImageQuality =
+      'HIVORR_NETWORK_MOBILE_IMAGE_QUALITY';
+
+  /// Default image quality on WiFi connections (`low`, `medium`, `high`).
+  static const String envNetworkWifiImageQuality =
+      'HIVORR_NETWORK_WIFI_IMAGE_QUALITY';
+
+  /// Default pagination page size on mobile connections.
+  static const String envNetworkMobilePageSize =
+      'HIVORR_NETWORK_MOBILE_PAGE_SIZE';
+
+  /// Default pagination page size on WiFi connections.
+  static const String envNetworkWifiPageSize =
+      'HIVORR_NETWORK_WIFI_PAGE_SIZE';
+
+  /// Advisory maximum upload size in MB on mobile connections.
+  static const String envNetworkMaxUploadMbMobile =
+      'HIVORR_NETWORK_MAX_UPLOAD_MB_MOBILE';
+
+  /// Advisory maximum upload size in MB on WiFi connections.
+  static const String envNetworkMaxUploadMbWifi =
+      'HIVORR_NETWORK_MAX_UPLOAD_MB_WIFI';
+
+  /// Feature flag: enables payload optimization advisories.
+  static const String featureEnablePayloadOptimization =
+      'HIVORR_FEATURE_ENABLE_PAYLOAD_OPTIMIZATION';
+
+  /// Default connectivity change debounce (0 = no debounce).
+  static const int defaultNetworkDebounceMs = 0;
+
+  /// Default image quality on mobile connections.
+  static const String defaultNetworkMobileImageQuality = 'low';
+
+  /// Default image quality on WiFi connections.
+  static const String defaultNetworkWifiImageQuality = 'medium';
+
+  /// Default pagination page size on mobile connections.
+  static const int defaultNetworkMobilePageSize = 15;
+
+  /// Default pagination page size on WiFi connections.
+  static const int defaultNetworkWifiPageSize = 30;
+
+  /// Default advisory maximum upload size in MB on mobile connections.
+  static const double defaultNetworkMaxUploadMbMobile = 5.0;
+
+  /// Default advisory maximum upload size in MB on WiFi connections.
+  static const double defaultNetworkMaxUploadMbWifi = 25.0;
+
   // ─── Application identifiers ────────────────────────────────────────
 
   /// Human-readable application name.

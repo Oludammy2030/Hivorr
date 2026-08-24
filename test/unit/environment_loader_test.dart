@@ -419,6 +419,7 @@ void main() {
         enableOfflineSync: false,
         enableAnalyticsTracking: false,
         enableDynamicWorkspaceLoading: false,
+        enablePayloadOptimization: false,
       );
       expect(flags.enableVerboseLogging, isFalse);
     });

@@ -15,6 +15,7 @@ class FeatureFlags {
     required this.enableOfflineSync,
     required this.enableAnalyticsTracking,
     required this.enableDynamicWorkspaceLoading,
+    required this.enablePayloadOptimization,
   });
 
   /// Whether verbose structured logging is enabled.
@@ -40,6 +41,12 @@ class FeatureFlags {
   /// loader is implemented (EP-01-15+).
   final bool enableDynamicWorkspaceLoading;
 
+  /// Whether payload optimization advisories are enabled.
+  ///
+  /// Safe default: `false`. Enable per environment after the network
+  /// management layer is rolled out (EP-01-13).
+  final bool enablePayloadOptimization;
+
   /// Parses feature flags from [source] using strict boolean rules.
   ///
   /// Accepted values are exactly `true` or `false` (case-sensitive).
@@ -62,6 +69,10 @@ class FeatureFlags {
       enableDynamicWorkspaceLoading: _parseBool(
         source,
         AppConstants.featureEnableDynamicWorkspaceLoading,
+      ),
+      enablePayloadOptimization: _parseBool(
+        source,
+        AppConstants.featureEnablePayloadOptimization,
       ),
     );
   }
@@ -89,6 +100,7 @@ class FeatureFlags {
         'enableVerboseLogging: $enableVerboseLogging, '
         'enableOfflineSync: $enableOfflineSync, '
         'enableAnalyticsTracking: $enableAnalyticsTracking, '
-        'enableDynamicWorkspaceLoading: $enableDynamicWorkspaceLoading)';
+        'enableDynamicWorkspaceLoading: $enableDynamicWorkspaceLoading, '
+        'enablePayloadOptimization: $enablePayloadOptimization)';
   }
 }

@@ -78,6 +78,32 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
         const String.fromEnvironment(AppConstants.envSyncDefaultPriority),
       AppConstants.envSyncDrainBatchSize =>
         const String.fromEnvironment(AppConstants.envSyncDrainBatchSize),
+      AppConstants.envNetworkDebounceMs =>
+        const String.fromEnvironment(AppConstants.envNetworkDebounceMs),
+      AppConstants.envNetworkMobileImageQuality =>
+        const String.fromEnvironment(
+          AppConstants.envNetworkMobileImageQuality,
+        ),
+      AppConstants.envNetworkWifiImageQuality =>
+        const String.fromEnvironment(
+          AppConstants.envNetworkWifiImageQuality,
+        ),
+      AppConstants.envNetworkMobilePageSize =>
+        const String.fromEnvironment(AppConstants.envNetworkMobilePageSize),
+      AppConstants.envNetworkWifiPageSize =>
+        const String.fromEnvironment(AppConstants.envNetworkWifiPageSize),
+      AppConstants.envNetworkMaxUploadMbMobile =>
+        const String.fromEnvironment(
+          AppConstants.envNetworkMaxUploadMbMobile,
+        ),
+      AppConstants.envNetworkMaxUploadMbWifi =>
+        const String.fromEnvironment(
+          AppConstants.envNetworkMaxUploadMbWifi,
+        ),
+      AppConstants.featureEnablePayloadOptimization =>
+        const String.fromEnvironment(
+          AppConstants.featureEnablePayloadOptimization,
+        ),
       _ => '',
     };
     return value.isEmpty ? null : value;
