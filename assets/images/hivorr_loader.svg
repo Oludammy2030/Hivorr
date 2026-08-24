@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Hivorr loader">
+  <title>Hivorr loader</title>
+  <!-- Monochrome node-network, single color, transparent background. Nodes are
+       filled to match the brand mark (logo.svg); connectors are strokes.
+       The three outer nodes breathe in a staggered wave via CSS keyframes
+       (no 360deg spin). For the in-app Flutter component see HivorrLoader. -->
+  <style>
+    .link { fill: none; stroke: currentColor; stroke-width: 12; stroke-linecap: round; }
+    .node { fill: currentColor; stroke: none; }
+    @keyframes breathe {
+      0%, 100% { opacity: 0.3; }
+      50%      { opacity: 1; }
+    }
+    .p1 { animation: breathe 1.8s ease-in-out infinite; }
+    .p2 { animation: breathe 1.8s ease-in-out infinite; animation-delay: 0.6s; }
+    .p3 { animation: breathe 1.8s ease-in-out infinite; animation-delay: 1.2s; }
+  </style>
+  <g class="link">
+    <line x1="128" y1="128" x2="128" y2="62" />
+    <line x1="128" y1="128" x2="66" y2="180" />
+    <line x1="128" y1="128" x2="190" y2="180" />
+  </g>
+  <circle class="node p1" cx="128" cy="62" r="17" />
+  <circle class="node p2" cx="66" cy="180" r="17" />
+  <circle class="node p3" cx="190" cy="180" r="17" />
+  <circle class="node" cx="128" cy="128" r="24" />
+</svg>

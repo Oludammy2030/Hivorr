@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Hivorr logo">
+  <title>Hivorr</title>
+  <rect x="16" y="16" width="224" height="224" rx="56" ry="56" fill="#0B6E99"/>
+  <!-- connectors: the Universal Entity linking life roles -->
+  <g stroke="#C0C0C0" stroke-width="12" stroke-linecap="round">
+    <line x1="128" y1="128" x2="128" y2="62"/>
+    <line x1="128" y1="128" x2="66" y2="180"/>
+    <line x1="128" y1="128" x2="190" y2="180"/>
+  </g>
+  <!-- role nodes -->
+  <circle cx="128" cy="62" r="17" fill="#C0C0C0"/>
+  <circle cx="66" cy="180" r="17" fill="#C0C0C0"/>
+  <circle cx="190" cy="180" r="17" fill="#C0C0C0"/>
+  <!-- the Universal Entity (central node) -->
+  <circle cx="128" cy="128" r="24" fill="#C0C0C0"/>
+</svg>

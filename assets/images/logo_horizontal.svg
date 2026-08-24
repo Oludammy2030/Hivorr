@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80" role="img" aria-label="Hivorr">
+  <title>Hivorr</title>
+  <!-- Transparent background (no tile). Intended for dark/colored headers where
+       the silver mark reads against the surface. For light surfaces use
+       logo_wordmark.svg (which carries the cerulean tile). -->
+  <g transform="translate(8,16) scale(0.1875)" stroke="#C0C0C0" stroke-width="12" stroke-linecap="round">
+    <line x1="128" y1="128" x2="128" y2="62"/>
+    <line x1="128" y1="128" x2="66" y2="180"/>
+    <line x1="128" y1="128" x2="190" y2="180"/>
+  </g>
+  <g transform="translate(8,16) scale(0.1875)" fill="#C0C0C0">
+    <circle cx="128" cy="62" r="17"/>
+    <circle cx="66" cy="180" r="17"/>
+    <circle cx="190" cy="180" r="17"/>
+    <circle cx="128" cy="128" r="24"/>
+  </g>
+  <text x="70" y="53" font-family="Inter, sans-serif" font-size="40" font-weight="700" letter-spacing="-0.5" fill="#0B6E99">Hivorr</text>
+</svg>
