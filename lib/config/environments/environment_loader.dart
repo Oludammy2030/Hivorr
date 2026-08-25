@@ -9,7 +9,6 @@ import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
 import 'package:hivorr/core/cache/cache_config.dart';
 import 'package:hivorr/core/database/database_config.dart';
-import 'package:hivorr/core/monitoring/monitoring_config.dart';
 import 'package:hivorr/core/network/network_config.dart';
 import 'package:hivorr/core/sync/sync_config.dart';
 
@@ -74,9 +73,6 @@ class EnvironmentLoader {
     // 9. Network management configuration (EP-01-13; opt-in defaults).
     final networkConfig = NetworkConfig.fromSource(source);
 
-    // 10. Monitoring configuration (EP-01-14; opt-in defaults).
-    final monitoringConfig = MonitoringConfig.fromSource(source);
-
     return EnvironmentConfig(
       environment: environment,
       supabaseConfig: SupabaseConfig(url: url, anonKey: anonKey),
@@ -86,7 +82,6 @@ class EnvironmentLoader {
       cacheConfig: cacheConfig,
       syncConfig: syncConfig,
       networkConfig: networkConfig,
-      monitoringConfig: monitoringConfig,
       constants: const AppConstants(),
       schemaVersion: schemaVersion,
     );

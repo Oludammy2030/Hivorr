@@ -4,7 +4,6 @@ import 'package:hivorr/config/environments/security_config.dart';
 import 'package:hivorr/config/feature_flags/feature_flags.dart';
 import 'package:hivorr/core/cache/cache_config.dart';
 import 'package:hivorr/core/database/database_config.dart';
-import 'package:hivorr/core/monitoring/monitoring_config.dart';
 import 'package:hivorr/core/network/network_config.dart';
 import 'package:hivorr/core/sync/sync_config.dart';
 
@@ -42,7 +41,6 @@ class EnvironmentConfig {
     required this.cacheConfig,
     required this.syncConfig,
     required this.networkConfig,
-    required this.monitoringConfig,
     required this.constants,
     required this.schemaVersion,
   });
@@ -70,9 +68,6 @@ class EnvironmentConfig {
 
   /// Validated network management configuration (debounce, payload optimization).
   final NetworkConfig networkConfig;
-
-  /// Validated monitoring/telemetry configuration (Sentry, log levels, redaction).
-  final MonitoringConfig monitoringConfig;
 
   /// Centralized immutable application constants.
   final AppConstants constants;
