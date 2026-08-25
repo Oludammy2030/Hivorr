@@ -104,6 +104,30 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
         const String.fromEnvironment(
           AppConstants.featureEnablePayloadOptimization,
         ),
+      AppConstants.envMonitoringSentryDsn =>
+        const String.fromEnvironment(AppConstants.envMonitoringSentryDsn),
+      AppConstants.envMonitoringEnvironment =>
+        const String.fromEnvironment(AppConstants.envMonitoringEnvironment),
+      AppConstants.envMonitoringRelease =>
+        const String.fromEnvironment(AppConstants.envMonitoringRelease),
+      AppConstants.envMonitoringTraceSampleRate =>
+        const String.fromEnvironment(
+          AppConstants.envMonitoringTraceSampleRate,
+        ),
+      AppConstants.envMonitoringProfileSampleRate =>
+        const String.fromEnvironment(
+          AppConstants.envMonitoringProfileSampleRate,
+        ),
+      AppConstants.envMonitoringEnableSentry =>
+        const String.fromEnvironment(AppConstants.envMonitoringEnableSentry),
+      AppConstants.envMonitoringMinLogLevel =>
+        const String.fromEnvironment(AppConstants.envMonitoringMinLogLevel),
+      AppConstants.envMonitoringEnablePiiRedaction =>
+        const String.fromEnvironment(
+          AppConstants.envMonitoringEnablePiiRedaction,
+        ),
+      AppConstants.envMonitoringMaxBreadcrumbs =>
+        const String.fromEnvironment(AppConstants.envMonitoringMaxBreadcrumbs),
       _ => '',
     };
     return value.isEmpty ? null : value;

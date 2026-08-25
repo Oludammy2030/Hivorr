@@ -205,6 +205,68 @@ class AppConstants {
   /// Default advisory maximum upload size in MB on WiFi connections.
   static const double defaultNetworkMaxUploadMbWifi = 25.0;
 
+  // ─── Monitoring configuration (EP-01-14) ──────────────────────────
+
+  /// Sentry project DSN.
+  static const String envMonitoringSentryDsn = 'HIVORR_MONITORING_SENTRY_DSN';
+
+  /// Sentry environment tag (`development`, `staging`, `production`).
+  static const String envMonitoringEnvironment = 'HIVORR_MONITORING_ENVIRONMENT';
+
+  /// Sentry release tag (app version).
+  static const String envMonitoringRelease = 'HIVORR_MONITORING_RELEASE';
+
+  /// Performance trace sample rate (0.0–1.0).
+  static const String envMonitoringTraceSampleRate =
+      'HIVORR_MONITORING_TRACE_SAMPLE_RATE';
+
+  /// Profiling sample rate (0.0–1.0).
+  static const String envMonitoringProfileSampleRate =
+      'HIVORR_MONITORING_PROFILE_SAMPLE_RATE';
+
+  /// Master enable for the Sentry SDK.
+  static const String envMonitoringEnableSentry =
+      'HIVORR_MONITORING_ENABLE_SENTRY';
+
+  /// Minimum log level name.
+  static const String envMonitoringMinLogLevel =
+      'HIVORR_MONITORING_MIN_LOG_LEVEL';
+
+  /// Master enable for PII redaction.
+  static const String envMonitoringEnablePiiRedaction =
+      'HIVORR_MONITORING_ENABLE_PII_REDACTION';
+
+  /// Maximum breadcrumbs retained by the Sentry SDK.
+  static const String envMonitoringMaxBreadcrumbs =
+      'HIVORR_MONITORING_MAX_BREADCRUMBS';
+
+  /// Default Sentry environment tag.
+  static const String defaultMonitoringEnvironment = 'development';
+
+  /// Default Sentry release tag.
+  static const String defaultMonitoringRelease = 'unknown';
+
+  /// Default Sentry DSN (empty disables Sentry).
+  static const String defaultMonitoringSentryDsn = '';
+
+  /// Default performance trace sample rate.
+  static const double defaultMonitoringTraceSampleRate = 0.0;
+
+  /// Default profiling sample rate.
+  static const double defaultMonitoringProfileSampleRate = 0.0;
+
+  /// Default Sentry enable flag (disabled until explicitly enabled).
+  static const bool defaultMonitoringEnableSentry = false;
+
+  /// Default minimum log level name.
+  static const String defaultMonitoringMinLogLevel = 'debug';
+
+  /// Default PII redaction enable flag (on by default).
+  static const bool defaultMonitoringEnablePiiRedaction = true;
+
+  /// Default maximum breadcrumb count.
+  static const int defaultMonitoringMaxBreadcrumbs = 100;
+
   // ─── Application identifiers ────────────────────────────────────────
 
   /// Human-readable application name.
