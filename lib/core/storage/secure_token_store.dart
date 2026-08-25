@@ -20,11 +20,7 @@ import 'secure_storage.dart';
 /// a key (e.g. before EP-01-09 provisions one) — existing plaintext callers
 /// are unaffected (EP-01-10 §5.6, §12 R3).
 class SecureTokenStore {
-  const SecureTokenStore(
-    this.storage, {
-    this.cipher,
-    this.deriveKey,
-  });
+  const SecureTokenStore(this.storage, {this.cipher, this.deriveKey});
 
   /// The platform secure-storage backend.
   final SecureStorage storage;
@@ -97,8 +93,10 @@ class SecureTokenStore {
       await storage.writeString(key, value);
       return;
     }
-    final EncryptedPayload payload =
-        await cipher!.encryptString(value, await deriveKey!());
+    final EncryptedPayload payload = await cipher!.encryptString(
+      value,
+      await deriveKey!(),
+    );
     await storage.writeString(key, jsonEncode(payload.toJson()));
   }
 }

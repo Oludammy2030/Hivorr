@@ -32,12 +32,10 @@ class RetryPolicy {
       DioExceptionType.receiveTimeout ||
       DioExceptionType.transformTimeout ||
       DioExceptionType.connectionError ||
-      DioExceptionType.unknown =>
-        retryOnTransient,
+      DioExceptionType.unknown => retryOnTransient,
       DioExceptionType.badCertificate ||
       DioExceptionType.badResponse ||
-      DioExceptionType.cancel =>
-        false,
+      DioExceptionType.cancel => false,
     };
   }
 }
@@ -72,7 +70,10 @@ class RetryInterceptor extends Interceptor {
   final Duration maxDelay;
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     final options = err.requestOptions;
     final attempt = _readAttempt(options);
 

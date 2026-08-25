@@ -21,16 +21,20 @@ class LogoIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SvgPicture.asset(
-        'assets/images/logo_icon.svg',
-        width: size,
-        height: size,
-        fit: fit,
-      );
+    'assets/images/logo_icon.svg',
+    width: size,
+    height: size,
+    fit: fit,
+  );
 }
 
 /// Horizontal lockup: emblem to the left of the "Hivorr" wordmark.
 class LogoHorizontal extends StatelessWidget {
-  const LogoHorizontal({super.key, this.height = 40, this.fit = BoxFit.contain});
+  const LogoHorizontal({
+    super.key,
+    this.height = 40,
+    this.fit = BoxFit.contain,
+  });
 
   /// Rendered height; width derives from the 256:80 (3.2:1) aspect ratio.
   final double height;
@@ -39,10 +43,10 @@ class LogoHorizontal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SvgPicture.asset(
-        'assets/images/logo_horizontal.svg',
-        height: height,
-        fit: fit,
-      );
+    'assets/images/logo_horizontal.svg',
+    height: height,
+    fit: fit,
+  );
 }
 
 /// Stacked lockup: emblem above the "Hivorr" wordmark.
@@ -56,10 +60,10 @@ class LogoStacked extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SvgPicture.asset(
-        'assets/images/logo_stacked.svg',
-        height: height,
-        fit: fit,
-      );
+    'assets/images/logo_stacked.svg',
+    height: height,
+    fit: fit,
+  );
 }
 
 /// Monochrome lockup: single-color wordmark + emblem (no tile, no cerulean),
@@ -83,9 +87,9 @@ class LogoMonochrome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SvgPicture.asset(
-        'assets/images/logo_monochrome.svg',
-        height: height,
-        fit: fit,
-        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-      );
+    'assets/images/logo_monochrome.svg',
+    height: height,
+    fit: fit,
+    colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+  );
 }

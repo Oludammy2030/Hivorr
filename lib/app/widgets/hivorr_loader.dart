@@ -154,11 +154,15 @@ class _HivorrLoaderPainter extends CustomPainter {
   }
 
   void _drawNode(Canvas canvas, Offset c, double r, Color nodeColor) {
-    final Paint p = Paint()..color = nodeColor..style = PaintingStyle.fill;
+    final Paint p = Paint()
+      ..color = nodeColor
+      ..style = PaintingStyle.fill;
     canvas.drawCircle(c, r, p);
   }
 
   @override
   bool shouldRepaint(covariant _HivorrLoaderPainter old) =>
-      old.progress != progress || old.color != color || old.strokeWidth != strokeWidth;
+      old.progress != progress ||
+      old.color != color ||
+      old.strokeWidth != strokeWidth;
 }

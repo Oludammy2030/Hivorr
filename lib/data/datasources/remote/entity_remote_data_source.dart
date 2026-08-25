@@ -19,10 +19,7 @@ abstract class EntityRemoteDataSource {
   });
 
   /// Activates a role via the EP-01-06 `entity_roles_activate` RPC.
-  Future<void> activateRole({
-    required String entityId,
-    required String role,
-  });
+  Future<void> activateRole({required String entityId, required String role});
 
   /// Fetches the self-scoped role bindings for [entityId].
   Future<List<EntityRoleDto>> getRoles(String entityId);

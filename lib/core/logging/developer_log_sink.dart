@@ -5,12 +5,8 @@ import 'package:hivorr/core/logging/log_level.dart';
 import 'package:hivorr/core/logging/log_sink.dart';
 
 /// Signature of the underlying log function used by [DeveloperLogSink].
-typedef DevLogHandler = void Function(
-  String message, {
-  int level,
-  String name,
-  DateTime? time,
-});
+typedef DevLogHandler =
+    void Function(String message, {int level, String name, DateTime? time});
 
 /// Log sink backed by `dart:developer` `developer.log()`.
 ///
@@ -49,12 +45,12 @@ class DeveloperLogSink implements LogSink {
       context.entries.map((e) => '${e.key}=${e.value}').join(' ');
 
   static int _toDeveloperLevel(LogLevel level) => switch (level) {
-        LogLevel.debug => 500,
-        LogLevel.info => 800,
-        LogLevel.warning => 900,
-        LogLevel.error => 1000,
-        LogLevel.fatal => 1200,
-      };
+    LogLevel.debug => 500,
+    LogLevel.info => 800,
+    LogLevel.warning => 900,
+    LogLevel.error => 1000,
+    LogLevel.fatal => 1200,
+  };
 
   @override
   void dispose() {}

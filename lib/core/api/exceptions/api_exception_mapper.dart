@@ -30,54 +30,55 @@ class ApiExceptionMapper {
 
     return switch (statusCode) {
       401 => ApiException(
-          kind: ApiExceptionKind.auth,
-          message: platformMessage ?? 'Authentication required.',
-          code: platformCode ?? 'PLT001',
-          statusCode: statusCode,
-        ),
+        kind: ApiExceptionKind.auth,
+        message: platformMessage ?? 'Authentication required.',
+        code: platformCode ?? 'PLT001',
+        statusCode: statusCode,
+      ),
       403 => ApiException(
-          kind: ApiExceptionKind.forbidden,
-          message: platformMessage ?? 'Operation not permitted.',
-          code: platformCode ?? 'PLT002',
-          statusCode: statusCode,
-        ),
+        kind: ApiExceptionKind.forbidden,
+        message: platformMessage ?? 'Operation not permitted.',
+        code: platformCode ?? 'PLT002',
+        statusCode: statusCode,
+      ),
       404 => ApiException(
-          kind: ApiExceptionKind.notFound,
-          message: platformMessage ?? 'Resource not found.',
-          code: platformCode ?? 'PLT004',
-          statusCode: statusCode,
-        ),
+        kind: ApiExceptionKind.notFound,
+        message: platformMessage ?? 'Resource not found.',
+        code: platformCode ?? 'PLT004',
+        statusCode: statusCode,
+      ),
       409 => ApiException(
-          kind: ApiExceptionKind.conflict,
-          message: platformMessage ?? 'Conflict with current state.',
-          code: platformCode ?? 'PLT005',
-          statusCode: statusCode,
-        ),
-      400 || 422 => platformCode == 'PLT003'
-          ? ApiException(
-              kind: ApiExceptionKind.validation,
-              message: platformMessage ?? 'Validation failed.',
-              code: 'PLT003',
-              statusCode: statusCode,
-            )
-          : ApiException(
-              kind: ApiExceptionKind.validation,
-              message: platformMessage ?? 'The request was rejected.',
-              code: platformCode ?? 'PLT003',
-              statusCode: statusCode,
-            ),
+        kind: ApiExceptionKind.conflict,
+        message: platformMessage ?? 'Conflict with current state.',
+        code: platformCode ?? 'PLT005',
+        statusCode: statusCode,
+      ),
+      400 || 422 =>
+        platformCode == 'PLT003'
+            ? ApiException(
+                kind: ApiExceptionKind.validation,
+                message: platformMessage ?? 'Validation failed.',
+                code: 'PLT003',
+                statusCode: statusCode,
+              )
+            : ApiException(
+                kind: ApiExceptionKind.validation,
+                message: platformMessage ?? 'The request was rejected.',
+                code: platformCode ?? 'PLT003',
+                statusCode: statusCode,
+              ),
       _ when statusCode >= 500 && statusCode <= 599 => ApiException(
-          kind: ApiExceptionKind.server,
-          message: platformMessage ?? 'A server error occurred.',
-          code: platformCode ?? 'PLT999',
-          statusCode: statusCode,
-        ),
+        kind: ApiExceptionKind.server,
+        message: platformMessage ?? 'A server error occurred.',
+        code: platformCode ?? 'PLT999',
+        statusCode: statusCode,
+      ),
       _ => ApiException(
-          kind: ApiExceptionKind.unknown,
-          message: platformMessage ?? 'An unexpected error occurred.',
-          code: platformCode,
-          statusCode: statusCode,
-        ),
+        kind: ApiExceptionKind.unknown,
+        message: platformMessage ?? 'An unexpected error occurred.',
+        code: platformCode,
+        statusCode: statusCode,
+      ),
     };
   }
 
@@ -87,31 +88,31 @@ class ApiExceptionMapper {
         DioExceptionType.sendTimeout ||
         DioExceptionType.receiveTimeout ||
         DioExceptionType.transformTimeout => const ApiException(
-            kind: ApiExceptionKind.timeout,
-            message: 'The request timed out.',
-            code: 'PLT999',
-          ),
+          kind: ApiExceptionKind.timeout,
+          message: 'The request timed out.',
+          code: 'PLT999',
+        ),
         DioExceptionType.connectionError ||
         DioExceptionType.unknown => const ApiException(
-            kind: ApiExceptionKind.network,
-            message: 'A network error occurred.',
-            code: 'PLT999',
-          ),
+          kind: ApiExceptionKind.network,
+          message: 'A network error occurred.',
+          code: 'PLT999',
+        ),
         DioExceptionType.badCertificate => const ApiException(
-            kind: ApiExceptionKind.unknown,
-            message: 'An insecure connection was rejected.',
-            code: 'PLT999',
-          ),
+          kind: ApiExceptionKind.unknown,
+          message: 'An insecure connection was rejected.',
+          code: 'PLT999',
+        ),
         DioExceptionType.cancel => const ApiException(
-            kind: ApiExceptionKind.unknown,
-            message: 'The request was cancelled.',
-            code: 'PLT999',
-          ),
+          kind: ApiExceptionKind.unknown,
+          message: 'The request was cancelled.',
+          code: 'PLT999',
+        ),
         DioExceptionType.badResponse => const ApiException(
-            kind: ApiExceptionKind.server,
-            message: 'An unexpected response was received.',
-            code: 'PLT999',
-          ),
+          kind: ApiExceptionKind.server,
+          message: 'An unexpected response was received.',
+          code: 'PLT999',
+        ),
       };
 
   String? _extractPlatformCode(dynamic body) {

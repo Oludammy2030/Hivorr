@@ -31,16 +31,16 @@ class SupabaseEntityRemoteDataSource extends BaseApiService
 
   @override
   Future<EntityProfileDto?> getProfile(String entityId) => _guard(() async {
-        final Map<String, dynamic>? row = await supabase
-            .from('entity_profiles')
-            .select()
-            .eq('entity_id', entityId)
-            .maybeSingle();
-        if (row == null) {
-          return null;
-        }
-        return EntityProfileDto.fromJson(row);
-      });
+    final Map<String, dynamic>? row = await supabase
+        .from('entity_profiles')
+        .select()
+        .eq('entity_id', entityId)
+        .maybeSingle();
+    if (row == null) {
+      return null;
+    }
+    return EntityProfileDto.fromJson(row);
+  });
 
   @override
   Future<EntityProfileDto> updateProfile({
@@ -48,47 +48,41 @@ class SupabaseEntityRemoteDataSource extends BaseApiService
     required String legalName,
     required String displayName,
     String? bio,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{
-          'p_legal_name': legalName,
-          'p_display_name': displayName,
-          'p_bio': bio,
-        };
-        await supabase.rpc<void>('entity_profile_update', params: params);
-        final Map<String, dynamic>? row = await supabase
-            .from('entity_profiles')
-            .select()
-            .eq('entity_id', entityId)
-            .maybeSingle();
-        if (row == null) {
-          throw const ApiException(
-            kind: ApiExceptionKind.notFound,
-            message: 'Profile not found.',
-            code: 'PLT004',
-          );
-        }
-        return EntityProfileDto.fromJson(row);
-      });
+  }) => _guard(() async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'p_legal_name': legalName,
+      'p_display_name': displayName,
+      'p_bio': bio,
+    };
+    await supabase.rpc<void>('entity_profile_update', params: params);
+    final Map<String, dynamic>? row = await supabase
+        .from('entity_profiles')
+        .select()
+        .eq('entity_id', entityId)
+        .maybeSingle();
+    if (row == null) {
+      throw const ApiException(
+        kind: ApiExceptionKind.notFound,
+        message: 'Profile not found.',
+        code: 'PLT004',
+      );
+    }
+    return EntityProfileDto.fromJson(row);
+  });
 
   @override
-  Future<void> activateRole({
-    required String entityId,
-    required String role,
-  }) =>
+  Future<void> activateRole({required String entityId, required String role}) =>
       _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{
-          'p_role': role,
-        };
+        final Map<String, dynamic> params = <String, dynamic>{'p_role': role};
         await supabase.rpc<void>('entity_roles_activate', params: params);
       });
 
   @override
   Future<List<EntityRoleDto>> getRoles(String entityId) => _guard(() async {
-        final List<Map<String, dynamic>> rows = await supabase
-            .from('entity_roles')
-            .select()
-            .eq('entity_id', entityId);
-        return rows.map(EntityRoleDto.fromJson).toList();
-      });
+    final List<Map<String, dynamic>> rows = await supabase
+        .from('entity_roles')
+        .select()
+        .eq('entity_id', entityId);
+    return rows.map(EntityRoleDto.fromJson).toList();
+  });
 }

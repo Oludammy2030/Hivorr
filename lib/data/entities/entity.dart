@@ -6,19 +6,15 @@ import 'package:hivorr/data/entities/entity_role.dart';
 /// Mirrors the `entities.status` CHECK vocabulary defined in EP-01-06
 /// (`active`, `suspended`, `deactivated`, `deleted`). The client only models
 /// the values; all transitions are enforced server-side via RPC + RLS.
-enum EntityStatus {
-  active,
-  suspended,
-  deactivated,
-  deleted,
-}
+enum EntityStatus { active, suspended, deactivated, deleted }
 
 /// Parsing helpers for [EntityStatus].
 extension EntityStatusX on EntityStatus {
   /// Parses a server string into [EntityStatus], defaulting to [active].
   ///
   /// The server remains the authority; this only maps stored values safely.
-  static EntityStatus fromString(String value) => EntityStatus.values.firstWhere(
+  static EntityStatus fromString(String value) =>
+      EntityStatus.values.firstWhere(
         (EntityStatus e) => e.name == value,
         orElse: () => EntityStatus.active,
       );

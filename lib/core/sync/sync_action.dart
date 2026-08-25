@@ -5,11 +5,7 @@ import 'package:hivorr/core/sync/sync_action_status.dart';
 /// Used for diagnostics and dead-letter inspection; the sync engine itself
 /// does not branch on the type — it replays all actions the same way through
 /// the API layer (EP-01-12 §5.3).
-enum SyncActionType {
-  create,
-  update,
-  delete,
-}
+enum SyncActionType { create, update, delete }
 
 /// A serializable record describing a pending offline mutation.
 ///
@@ -134,7 +130,8 @@ class SyncAction {
       endpoint: json['endpoint'] as String,
       method: json['method'] as String,
       payload: json['payload'] as Map<String, dynamic>?,
-      headers: (json['headers'] as Map<String, dynamic>?)?.cast<String, String>(),
+      headers: (json['headers'] as Map<String, dynamic>?)
+          ?.cast<String, String>(),
       priority: json['priority'] as int,
       status: SyncActionStatus.values.byName(json['status'] as String),
       retryCount: json['retryCount'] as int,

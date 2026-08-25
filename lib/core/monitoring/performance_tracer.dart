@@ -14,7 +14,8 @@ class PerformanceTracer {
   final FeatureFlags _flags;
 
   /// Whether tracing is active.
-  bool get isEnabled => _config.isSentryActive && _flags.enableAnalyticsTracking;
+  bool get isEnabled =>
+      _config.isSentryActive && _flags.enableAnalyticsTracking;
 
   /// Starts a Sentry transaction; returns `null` when disabled.
   ISentrySpan? startTransaction(String name, String operation) {
@@ -27,14 +28,10 @@ class PerformanceTracer {
     ISentrySpan parent,
     String description,
     String operation,
-  ) =>
-      parent.startChild(operation, description: description);
+  ) => parent.startChild(operation, description: description);
 
   /// Finishes [span] with the given [status]. Null spans are ignored.
-  Future<void> finishSpan(
-    ISentrySpan? span, {
-    SpanStatus? status,
-  }) async {
+  Future<void> finishSpan(ISentrySpan? span, {SpanStatus? status}) async {
     if (span == null) return;
     await span.finish(status: status ?? SpanStatus.ok());
   }

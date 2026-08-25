@@ -3,17 +3,15 @@
 /// [regex] is applied to the input text and every match is replaced with
 /// [replacement] (EP-01-14 §5.5).
 class PiiPattern {
-  const PiiPattern({
-    required this.regex,
-    required this.replacement,
-    this.name,
-  });
+  const PiiPattern({required this.regex, required this.replacement, this.name});
 
   /// Compiled pattern matched against log text.
   final RegExp regex;
 
   /// Replacement string emitted for every match.
-  final String replacement;  /// Optional identifier for diagnostics/tests.
+  final String replacement;
+
+  /// Optional identifier for diagnostics/tests.
   final String? name;
 }
 
@@ -129,7 +127,8 @@ class PiiRedactor {
       _redactNamed(<String>{'phoneNigerian', 'phoneGeneric'}, text);
 
   /// Redacts bearer tokens and JWTs.
-  String redactToken(String text) => _redactNamed(<String>{'bearer', 'jwt'}, text);
+  String redactToken(String text) =>
+      _redactNamed(<String>{'bearer', 'jwt'}, text);
 
   /// Redacts 10-digit account numbers.
   String redactAccountNumber(String text) =>

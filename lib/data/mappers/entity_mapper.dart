@@ -14,11 +14,10 @@ class EntityMapper {
     required EntityDto dto,
     EntityProfile? profile,
     List<EntityRole> roles = const <EntityRole>[],
-  }) =>
-      Entity(
-        id: dto.id,
-        status: EntityStatusX.fromString(dto.status),
-        profile: profile,
-        roles: roles,
-      );
+  }) => Entity(
+    id: dto.id,
+    status: EntityStatusX.fromString(dto.status),
+    profile: profile,
+    roles: roles,
+  );
 }

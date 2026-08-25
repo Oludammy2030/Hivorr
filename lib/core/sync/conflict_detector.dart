@@ -19,10 +19,7 @@ class ConflictDetector {
   /// Conservative: if [responseData] is `null` or does not contain a version,
   /// the action is still flagged as conflicted — the server's 409 is
   /// authoritative regardless of whether version info is present.
-  SyncAction detect(
-    SyncAction action,
-    Map<String, dynamic>? responseData,
-  ) {
+  SyncAction detect(SyncAction action, Map<String, dynamic>? responseData) {
     final int? serverVersion = _extractVersion(responseData);
     final int? clientVersion = action.lastKnownVersion;
 

@@ -13,17 +13,18 @@ import 'certificate_pinner.dart';
 /// is `false` it delegates to the default behavior (EP-01-10 §5.4).
 class SslSecurityAdapter implements HttpClientAdapter {
   SslSecurityAdapter({required this.pinner, required this.enablePinning})
-      : _delegate = IOHttpClientAdapter(
-          validateCertificate:
-              enablePinning ? _validateCertificate(pinner) : null,
-        );
+    : _delegate = IOHttpClientAdapter(
+        validateCertificate: enablePinning
+            ? _validateCertificate(pinner)
+            : null,
+      );
 
   final CertificatePinner pinner;
   final bool enablePinning;
   final HttpClientAdapter _delegate;
 
   static bool Function(X509Certificate? cert, String host, int port)
-      _validateCertificate(CertificatePinner pinner) {
+  _validateCertificate(CertificatePinner pinner) {
     return (X509Certificate? cert, String host, int port) {
       final Uint8List? der = cert?.der;
       if (der == null) {

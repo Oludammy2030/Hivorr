@@ -16,7 +16,8 @@ class EntityProfileDto {
   });
 
   /// Factory parsing a self-scoped PostgREST row.
-  factory EntityProfileDto.fromJson(Map<String, dynamic> json) => EntityProfileDto(
+  factory EntityProfileDto.fromJson(Map<String, dynamic> json) =>
+      EntityProfileDto(
         entityId: json['entity_id'] as String,
         legalName: json['legal_name'] as String,
         displayName: json['display_name'] as String,
@@ -44,11 +45,11 @@ class EntityProfileDto {
 
   /// Serializes the mutable fields for RPC/update payloads.
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'entity_id': entityId,
-        'legal_name': legalName,
-        'display_name': displayName,
-        if (bio != null) 'bio': bio,
-        if (avatarPath != null) 'avatar_path': avatarPath,
-        if (countryCode != null) 'country_code': countryCode,
-      };
+    'entity_id': entityId,
+    'legal_name': legalName,
+    'display_name': displayName,
+    if (bio != null) 'bio': bio,
+    if (avatarPath != null) 'avatar_path': avatarPath,
+    if (countryCode != null) 'country_code': countryCode,
+  };
 }

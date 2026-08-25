@@ -49,12 +49,13 @@ class FlutterSecureStorageImpl implements SecureStorage {
   FlutterSecureStorageImpl({
     required this.config,
     FlutterSecureStorage? backend,
-  }) : _backend = backend ??
-      FlutterSecureStorage(
-        webOptions: config.webOptions,
-        aOptions: config.androidOptions,
-        iOptions: config.iosOptions,
-      );
+  }) : _backend =
+           backend ??
+           FlutterSecureStorage(
+             webOptions: config.webOptions,
+             aOptions: config.androidOptions,
+             iOptions: config.iosOptions,
+           );
 
   final SecureStorageConfig config;
   final FlutterSecureStorage _backend;

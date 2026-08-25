@@ -62,8 +62,7 @@ class AppConstants {
   static const String securityKdfSalt = 'HIVORR_SECURITY_KDF_SALT';
 
   /// PBKDF2 iteration count for deriving encryption keys at rest.
-  static const String securityKdfIterations =
-      'HIVORR_SECURITY_KDF_ITERATIONS';
+  static const String securityKdfIterations = 'HIVORR_SECURITY_KDF_ITERATIONS';
 
   /// Derived encryption key length in bytes (16/24/32 for AES).
   static const String securityKdfKeyLength = 'HIVORR_SECURITY_KDF_KEY_LENGTH';
@@ -169,8 +168,7 @@ class AppConstants {
       'HIVORR_NETWORK_MOBILE_PAGE_SIZE';
 
   /// Default pagination page size on WiFi connections.
-  static const String envNetworkWifiPageSize =
-      'HIVORR_NETWORK_WIFI_PAGE_SIZE';
+  static const String envNetworkWifiPageSize = 'HIVORR_NETWORK_WIFI_PAGE_SIZE';
 
   /// Advisory maximum upload size in MB on mobile connections.
   static const String envNetworkMaxUploadMbMobile =
@@ -211,7 +209,8 @@ class AppConstants {
   static const String envMonitoringSentryDsn = 'HIVORR_MONITORING_SENTRY_DSN';
 
   /// Sentry environment tag (`development`, `staging`, `production`).
-  static const String envMonitoringEnvironment = 'HIVORR_MONITORING_ENVIRONMENT';
+  static const String envMonitoringEnvironment =
+      'HIVORR_MONITORING_ENVIRONMENT';
 
   /// Sentry release tag (app version).
   static const String envMonitoringRelease = 'HIVORR_MONITORING_RELEASE';

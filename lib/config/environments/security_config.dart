@@ -49,7 +49,8 @@ class SecurityConfig {
     );
     final List<String> hashes = _parseHashes(source);
     final String salt =
-        source.read(AppConstants.securityKdfSalt) ?? AppConstants.defaultKdfSalt;
+        source.read(AppConstants.securityKdfSalt) ??
+        AppConstants.defaultKdfSalt;
     final int iterations = _parseInt(
       source,
       AppConstants.securityKdfIterations,
@@ -100,7 +101,11 @@ class SecurityConfig {
   }
 
   /// Integer parse with a safe fallback; malformed → throws.
-  static int _parseInt(EnvironmentValueSource source, String key, int fallback) {
+  static int _parseInt(
+    EnvironmentValueSource source,
+    String key,
+    int fallback,
+  ) {
     final String? raw = source.read(key);
     if (raw == null) {
       return fallback;

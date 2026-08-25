@@ -33,8 +33,8 @@ class InMemoryEntityLocalDataSource implements EntityLocalDataSource {
   InMemoryEntityLocalDataSource({
     Map<String, EntityProfileDto>? profiles,
     Map<String, List<EntityRoleDto>>? roles,
-  })  : _profiles = profiles ?? <String, EntityProfileDto>{},
-        _roles = roles ?? <String, List<EntityRoleDto>>{};
+  }) : _profiles = profiles ?? <String, EntityProfileDto>{},
+       _roles = roles ?? <String, List<EntityRoleDto>>{};
 
   final Map<String, EntityProfileDto> _profiles;
   final Map<String, List<EntityRoleDto>> _roles;

@@ -46,7 +46,10 @@ class DatabaseConfig {
   static DatabaseConfig fromSource(EnvironmentValueSource source) {
     final String driverName =
         source.read(AppConstants.envStorageDriver) ?? 'hive';
-    final bool encrypt = _parseBool(source, AppConstants.envStorageEncryptAtRest);
+    final bool encrypt = _parseBool(
+      source,
+      AppConstants.envStorageEncryptAtRest,
+    );
     final String baseDir =
         source.read(AppConstants.envStorageBaseDir) ??
         AppConstants.defaultStorageBaseDir;

@@ -49,14 +49,12 @@ class EntityProvider extends ChangeNotifier {
   ApiException? get error => _error;
 
   /// Loads the profile for [entityId].
-  Future<void> loadProfile(String entityId) => _run(
-        () async => _profile = await repository.getProfile(entityId),
-      );
+  Future<void> loadProfile(String entityId) =>
+      _run(() async => _profile = await repository.getProfile(entityId));
 
   /// Loads the role bindings for [entityId].
-  Future<void> loadRoles(String entityId) => _run(
-        () async => _roles = await repository.getRoles(entityId),
-      );
+  Future<void> loadRoles(String entityId) =>
+      _run(() async => _roles = await repository.getRoles(entityId));
 
   /// Updates the profile and refreshes local state.
   Future<void> updateProfile({
@@ -64,27 +62,21 @@ class EntityProvider extends ChangeNotifier {
     required String legalName,
     required String displayName,
     String? bio,
-  }) =>
-      _run(
-        () async =>           _profile = await repository.updateProfile(
-          entityId: entityId,
-          legalName: legalName,
-          displayName: displayName,
-          bio: bio,
-        ),
-      );
+  }) => _run(
+    () async => _profile = await repository.updateProfile(
+      entityId: entityId,
+      legalName: legalName,
+      displayName: displayName,
+      bio: bio,
+    ),
+  );
 
   /// Activates a role and refreshes the role list.
-  Future<void> activateRole({
-    required String entityId,
-    required String role,
-  }) =>
-      _run(
-        () async {
-          await repository.activateRole(entityId: entityId, role: role);
-          _roles = await repository.getRoles(entityId);
-        },
-      );
+  Future<void> activateRole({required String entityId, required String role}) =>
+      _run(() async {
+        await repository.activateRole(entityId: entityId, role: role);
+        _roles = await repository.getRoles(entityId);
+      });
 
   Future<void> _run(Future<void> Function() action) async {
     _state = EntityProviderState.loading;

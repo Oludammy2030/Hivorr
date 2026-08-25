@@ -4,15 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 ///
 /// Mapped from `connectivity_plus`'s `ConnectivityResult` with priority-based
 /// selection when multiple interfaces are active (EP-01-13 §5.3).
-enum NetworkType {
-  wifi,
-  mobile,
-  ethernet,
-  vpn,
-  bluetooth,
-  none,
-  other,
-}
+enum NetworkType { wifi, mobile, ethernet, vpn, bluetooth, none, other }
 
 /// Maps a single `ConnectivityResult` to a [NetworkType].
 NetworkType mapConnectivityResult(ConnectivityResult result) {
