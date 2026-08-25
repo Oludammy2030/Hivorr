@@ -54,80 +54,96 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
         const String.fromEnvironment(
           AppConstants.featureEnableDynamicWorkspaceLoading,
         ),
-      AppConstants.securityPinningEnabled =>
-        const String.fromEnvironment(AppConstants.securityPinningEnabled),
-      AppConstants.securityPinnedSpkiHashes =>
-        const String.fromEnvironment(AppConstants.securityPinnedSpkiHashes),
-      AppConstants.securityKdfSalt =>
-        const String.fromEnvironment(AppConstants.securityKdfSalt),
-      AppConstants.securityKdfIterations =>
-        const String.fromEnvironment(AppConstants.securityKdfIterations),
-      AppConstants.securityKdfKeyLength =>
-        const String.fromEnvironment(AppConstants.securityKdfKeyLength),
-      AppConstants.envSyncMaxQueueDepth =>
-        const String.fromEnvironment(AppConstants.envSyncMaxQueueDepth),
-      AppConstants.envSyncMaxRetries =>
-        const String.fromEnvironment(AppConstants.envSyncMaxRetries),
-      AppConstants.envSyncBaseDelayMs =>
-        const String.fromEnvironment(AppConstants.envSyncBaseDelayMs),
-      AppConstants.envSyncMaxDelayMs =>
-        const String.fromEnvironment(AppConstants.envSyncMaxDelayMs),
-      AppConstants.envSyncJitterMaxMs =>
-        const String.fromEnvironment(AppConstants.envSyncJitterMaxMs),
-      AppConstants.envSyncDefaultPriority =>
-        const String.fromEnvironment(AppConstants.envSyncDefaultPriority),
-      AppConstants.envSyncDrainBatchSize =>
-        const String.fromEnvironment(AppConstants.envSyncDrainBatchSize),
-      AppConstants.envNetworkDebounceMs =>
-        const String.fromEnvironment(AppConstants.envNetworkDebounceMs),
-      AppConstants.envNetworkMobileImageQuality =>
-        const String.fromEnvironment(
-          AppConstants.envNetworkMobileImageQuality,
-        ),
-      AppConstants.envNetworkWifiImageQuality =>
-        const String.fromEnvironment(
-          AppConstants.envNetworkWifiImageQuality,
-        ),
-      AppConstants.envNetworkMobilePageSize =>
-        const String.fromEnvironment(AppConstants.envNetworkMobilePageSize),
-      AppConstants.envNetworkWifiPageSize =>
-        const String.fromEnvironment(AppConstants.envNetworkWifiPageSize),
-      AppConstants.envNetworkMaxUploadMbMobile =>
-        const String.fromEnvironment(
-          AppConstants.envNetworkMaxUploadMbMobile,
-        ),
-      AppConstants.envNetworkMaxUploadMbWifi =>
-        const String.fromEnvironment(
-          AppConstants.envNetworkMaxUploadMbWifi,
-        ),
+      AppConstants.securityPinningEnabled => const String.fromEnvironment(
+        AppConstants.securityPinningEnabled,
+      ),
+      AppConstants.securityPinnedSpkiHashes => const String.fromEnvironment(
+        AppConstants.securityPinnedSpkiHashes,
+      ),
+      AppConstants.securityKdfSalt => const String.fromEnvironment(
+        AppConstants.securityKdfSalt,
+      ),
+      AppConstants.securityKdfIterations => const String.fromEnvironment(
+        AppConstants.securityKdfIterations,
+      ),
+      AppConstants.securityKdfKeyLength => const String.fromEnvironment(
+        AppConstants.securityKdfKeyLength,
+      ),
+      AppConstants.envSyncMaxQueueDepth => const String.fromEnvironment(
+        AppConstants.envSyncMaxQueueDepth,
+      ),
+      AppConstants.envSyncMaxRetries => const String.fromEnvironment(
+        AppConstants.envSyncMaxRetries,
+      ),
+      AppConstants.envSyncBaseDelayMs => const String.fromEnvironment(
+        AppConstants.envSyncBaseDelayMs,
+      ),
+      AppConstants.envSyncMaxDelayMs => const String.fromEnvironment(
+        AppConstants.envSyncMaxDelayMs,
+      ),
+      AppConstants.envSyncJitterMaxMs => const String.fromEnvironment(
+        AppConstants.envSyncJitterMaxMs,
+      ),
+      AppConstants.envSyncDefaultPriority => const String.fromEnvironment(
+        AppConstants.envSyncDefaultPriority,
+      ),
+      AppConstants.envSyncDrainBatchSize => const String.fromEnvironment(
+        AppConstants.envSyncDrainBatchSize,
+      ),
+      AppConstants.envNetworkDebounceMs => const String.fromEnvironment(
+        AppConstants.envNetworkDebounceMs,
+      ),
+      AppConstants.envNetworkMobileImageQuality => const String.fromEnvironment(
+        AppConstants.envNetworkMobileImageQuality,
+      ),
+      AppConstants.envNetworkWifiImageQuality => const String.fromEnvironment(
+        AppConstants.envNetworkWifiImageQuality,
+      ),
+      AppConstants.envNetworkMobilePageSize => const String.fromEnvironment(
+        AppConstants.envNetworkMobilePageSize,
+      ),
+      AppConstants.envNetworkWifiPageSize => const String.fromEnvironment(
+        AppConstants.envNetworkWifiPageSize,
+      ),
+      AppConstants.envNetworkMaxUploadMbMobile => const String.fromEnvironment(
+        AppConstants.envNetworkMaxUploadMbMobile,
+      ),
+      AppConstants.envNetworkMaxUploadMbWifi => const String.fromEnvironment(
+        AppConstants.envNetworkMaxUploadMbWifi,
+      ),
       AppConstants.featureEnablePayloadOptimization =>
         const String.fromEnvironment(
           AppConstants.featureEnablePayloadOptimization,
         ),
-      AppConstants.envMonitoringSentryDsn =>
-        const String.fromEnvironment(AppConstants.envMonitoringSentryDsn),
-      AppConstants.envMonitoringEnvironment =>
-        const String.fromEnvironment(AppConstants.envMonitoringEnvironment),
-      AppConstants.envMonitoringRelease =>
-        const String.fromEnvironment(AppConstants.envMonitoringRelease),
-      AppConstants.envMonitoringTraceSampleRate =>
-        const String.fromEnvironment(
-          AppConstants.envMonitoringTraceSampleRate,
-        ),
+      AppConstants.envMonitoringSentryDsn => const String.fromEnvironment(
+        AppConstants.envMonitoringSentryDsn,
+      ),
+      AppConstants.envMonitoringEnvironment => const String.fromEnvironment(
+        AppConstants.envMonitoringEnvironment,
+      ),
+      AppConstants.envMonitoringRelease => const String.fromEnvironment(
+        AppConstants.envMonitoringRelease,
+      ),
+      AppConstants.envMonitoringTraceSampleRate => const String.fromEnvironment(
+        AppConstants.envMonitoringTraceSampleRate,
+      ),
       AppConstants.envMonitoringProfileSampleRate =>
         const String.fromEnvironment(
           AppConstants.envMonitoringProfileSampleRate,
         ),
-      AppConstants.envMonitoringEnableSentry =>
-        const String.fromEnvironment(AppConstants.envMonitoringEnableSentry),
-      AppConstants.envMonitoringMinLogLevel =>
-        const String.fromEnvironment(AppConstants.envMonitoringMinLogLevel),
+      AppConstants.envMonitoringEnableSentry => const String.fromEnvironment(
+        AppConstants.envMonitoringEnableSentry,
+      ),
+      AppConstants.envMonitoringMinLogLevel => const String.fromEnvironment(
+        AppConstants.envMonitoringMinLogLevel,
+      ),
       AppConstants.envMonitoringEnablePiiRedaction =>
         const String.fromEnvironment(
           AppConstants.envMonitoringEnablePiiRedaction,
         ),
-      AppConstants.envMonitoringMaxBreadcrumbs =>
-        const String.fromEnvironment(AppConstants.envMonitoringMaxBreadcrumbs),
+      AppConstants.envMonitoringMaxBreadcrumbs => const String.fromEnvironment(
+        AppConstants.envMonitoringMaxBreadcrumbs,
+      ),
       _ => '',
     };
     return value.isEmpty ? null : value;

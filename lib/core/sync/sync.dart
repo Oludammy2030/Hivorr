@@ -25,10 +25,7 @@ export 'package:hivorr/core/sync/sync_status_provider.dart';
 /// Returned by [initializeSyncEngine] so consumers (bootstrap, repositories)
 /// obtain the [SyncEngine] and [SyncStatusProvider] together.
 class SyncLayer {
-  const SyncLayer({
-    required this.engine,
-    required this.statusProvider,
-  });
+  const SyncLayer({required this.engine, required this.statusProvider});
 
   /// The wired sync engine singleton.
   final SyncEngine engine;
@@ -65,10 +62,7 @@ Future<SyncLayer> initializeSyncEngine(
   final SyncEngine engine = SyncEngine(
     enabled: enabled,
     config: config.syncConfig,
-    queue: ActionQueue(
-      engine: storageEngine,
-      config: config.syncConfig,
-    ),
+    queue: ActionQueue(engine: storageEngine, config: config.syncConfig),
     dio: dio,
     connectivityProvider: provider,
     conflictDetector: const ConflictDetector(),

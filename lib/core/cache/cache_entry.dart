@@ -22,9 +22,6 @@ class CacheEntry<T> {
   bool isExpired(DateTime now) => now.isAfter(expiresAt);
 
   /// Returns a copy with [lastAccessedAt] refreshed to [now].
-  CacheEntry<T> touched(DateTime now) => CacheEntry<T>(
-        value: value,
-        expiresAt: expiresAt,
-        lastAccessedAt: now,
-      );
+  CacheEntry<T> touched(DateTime now) =>
+      CacheEntry<T>(value: value, expiresAt: expiresAt, lastAccessedAt: now);
 }

@@ -21,7 +21,10 @@ class LoggingInterceptor extends Interceptor {
   }
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
     _logOutcome(response.requestOptions, response.statusCode, null);
     handler.next(response);
   }
@@ -32,11 +35,7 @@ class LoggingInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  void _logOutcome(
-    RequestOptions options,
-    int? statusCode,
-    String? errorType,
-  ) {
+  void _logOutcome(RequestOptions options, int? statusCode, String? errorType) {
     final start = options.extra[_startTimeKey] as int?;
     final duration = start == null
         ? '?'

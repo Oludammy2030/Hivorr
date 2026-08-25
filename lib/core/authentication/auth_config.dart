@@ -23,7 +23,6 @@ class AuthConfig {
   ///
   /// Production is treated as confirmation-required; development and staging
   /// may run with autoconfirm enabled (env-driven).
-  factory AuthConfig.fromEnvironment(EnvironmentConfig config) => AuthConfig(
-        emailConfirmationRequired: config.isProduction,
-      );
+  factory AuthConfig.fromEnvironment(EnvironmentConfig config) =>
+      AuthConfig(emailConfirmationRequired: config.isProduction);
 }

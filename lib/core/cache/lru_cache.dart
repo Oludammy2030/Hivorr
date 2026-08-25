@@ -11,7 +11,7 @@ import 'package:hivorr/core/cache/cache_entry.dart';
 /// and evicted on access. This keeps the hot path allocation-light.
 class LruCache<T> {
   LruCache({required this.maxEntries, required this.defaultTtl})
-      : _store = <String, CacheEntry<T>>{};
+    : _store = <String, CacheEntry<T>>{};
 
   /// Maximum number of entries before eviction.
   final int maxEntries;

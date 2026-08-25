@@ -10,10 +10,7 @@ import 'package:hivorr/core/monitoring/monitoring_config.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 /// Sensitive request header names stripped by [sentryBeforeSend].
-const Set<String> _sensitiveHeaderNames = <String>{
-  'authorization',
-  'cookie',
-};
+const Set<String> _sensitiveHeaderNames = <String>{'authorization', 'cookie'};
 
 /// Sensitive extra keys stripped by [sentryBeforeSend].
 const Set<String> _sensitiveExtraKeys = <String>{
@@ -61,8 +58,9 @@ SentryEvent? sentryBeforeSend(SentryEvent event, Hint hint) {
 
   final extra = event.extra;
   if (extra != null && extra.isNotEmpty) {
-    final containsSensitive =
-        extra.keys.any((k) => _sensitiveExtraKeys.contains(k.toLowerCase()));
+    final containsSensitive = extra.keys.any(
+      (k) => _sensitiveExtraKeys.contains(k.toLowerCase()),
+    );
     if (containsSensitive) {
       modified = modified.copyWith(
         extra: <String, dynamic>{
@@ -79,14 +77,16 @@ SentryEvent? sentryBeforeSend(SentryEvent event, Hint hint) {
   // rather than risk transmitting PII (EP-01-14 §5.13, §12).
   final remainingHeaders = modified.request?.headers;
   if (remainingHeaders != null &&
-      remainingHeaders.keys
-          .any((k) => _sensitiveHeaderNames.contains(k.toLowerCase()))) {
+      remainingHeaders.keys.any(
+        (k) => _sensitiveHeaderNames.contains(k.toLowerCase()),
+      )) {
     return null;
   }
   final remainingExtra = modified.extra;
   if (remainingExtra != null &&
-      remainingExtra.keys
-          .any((k) => _sensitiveExtraKeys.contains(k.toLowerCase()))) {
+      remainingExtra.keys.any(
+        (k) => _sensitiveExtraKeys.contains(k.toLowerCase()),
+      )) {
     return null;
   }
 
@@ -107,9 +107,7 @@ class SentryInitializer {
   /// to verify initialization without loading the real SDK.
   static Future<void> initialize(
     MonitoringConfig config, {
-    Future<void> Function(
-      FutureOr<void> Function(SentryFlutterOptions),
-    )? init,
+    Future<void> Function(FutureOr<void> Function(SentryFlutterOptions))? init,
   }) async {
     if (!config.isSentryActive) return;
     final initFn = init ?? SentryFlutter.init;

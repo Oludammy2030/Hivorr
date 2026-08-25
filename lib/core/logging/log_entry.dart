@@ -13,8 +13,9 @@ class LogEntry {
     Map<String, Object?>? context,
     this.error,
     this.stackTrace,
-  }) : context =
-            context == null ? const <String, Object?>{} : Map.unmodifiable(context);
+  }) : context = context == null
+           ? const <String, Object?>{}
+           : Map.unmodifiable(context);
 
   /// Severity of the entry.
   final LogLevel level;

@@ -111,11 +111,7 @@ class EnvironmentLoader {
   // ─── URL validation ─────────────────────────────────────────────────
 
   /// Loopback hosts permitted to use plain HTTP in Development only.
-  static const Set<String> _loopbackHosts = {
-    '127.0.0.1',
-    'localhost',
-    '::1',
-  };
+  static const Set<String> _loopbackHosts = {'127.0.0.1', 'localhost', '::1'};
 
   /// Validates that [url] is a valid HTTPS URL with a host and is not a
   /// known placeholder.

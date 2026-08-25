@@ -15,11 +15,8 @@ import 'package:uuid/uuid.dart';
 /// ASC)` — lower priority number = higher priority; within the same priority,
 /// FIFO by `createdAt` (EP-01-12 §5.4).
 class ActionQueue {
-  ActionQueue({
-    required this._engine,
-    required this._config,
-    Uuid? uuid,
-  }) : _uuid = uuid ?? const Uuid();
+  ActionQueue({required this._engine, required this._config, Uuid? uuid})
+    : _uuid = uuid ?? const Uuid();
 
   final StorageEngine _engine;
   final SyncConfig _config;
@@ -58,10 +55,9 @@ class ActionQueue {
     );
 
     try {
-      await _engine.writeBatch(
-        _box,
-        <WriteOp>[PutOp(queued.id, queued.toJson())],
-      );
+      await _engine.writeBatch(_box, <WriteOp>[
+        PutOp(queued.id, queued.toJson()),
+      ]);
     } on StorageException catch (e) {
       throw SyncException(e.message);
     }

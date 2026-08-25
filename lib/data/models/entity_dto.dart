@@ -12,15 +12,15 @@ class EntityDto {
 
   /// Factory parsing a self-scoped PostgREST row.
   factory EntityDto.fromJson(Map<String, dynamic> json) => EntityDto(
-        id: json['id'] as String,
-        status: json['status'] as String,
-        createdAt: json['created_at'] == null
-            ? null
-            : DateTime.parse(json['created_at'] as String),
-        updatedAt: json['updated_at'] == null
-            ? null
-            : DateTime.parse(json['updated_at'] as String),
-      );
+    id: json['id'] as String,
+    status: json['status'] as String,
+    createdAt: json['created_at'] == null
+        ? null
+        : DateTime.parse(json['created_at'] as String),
+    updatedAt: json['updated_at'] == null
+        ? null
+        : DateTime.parse(json['updated_at'] as String),
+  );
 
   final String id;
   final String status;
@@ -29,7 +29,7 @@ class EntityDto {
 
   /// Serializes the minimal root fields.
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'id': id,
-        'status': status,
-      };
+    'id': id,
+    'status': status,
+  };
 }

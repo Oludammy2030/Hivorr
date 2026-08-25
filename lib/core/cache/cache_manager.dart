@@ -33,8 +33,12 @@ class CacheManager {
   int _evictions = 0;
 
   /// Snapshot of cache statistics.
-  CacheStats get stats =>
-      CacheStats(size: _cache.length, hits: _hits, misses: _misses, evictions: _evictions);
+  CacheStats get stats => CacheStats(
+    size: _cache.length,
+    hits: _hits,
+    misses: _misses,
+    evictions: _evictions,
+  );
 
   /// Initializes the cache manager for [config]. Idempotent.
   static Future<CacheManager> initialize(CacheConfig config) async {
@@ -82,8 +86,9 @@ class CacheManager {
   /// For example, `invalidatePrefix('entity:')` clears only entity-scoped
   /// entries, leaving other prefixes intact (plan §5.4).
   void invalidatePrefix(String prefix) {
-    final List<String> toRemove =
-        _cache.keys.where((String k) => k.startsWith(prefix)).toList();
+    final List<String> toRemove = _cache.keys
+        .where((String k) => k.startsWith(prefix))
+        .toList();
     for (final String key in toRemove) {
       _cache.remove(key);
     }

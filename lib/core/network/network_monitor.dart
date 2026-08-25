@@ -122,8 +122,8 @@ class ConnectivityPlusNetworkMonitor extends NetworkMonitor {
 /// relying on platform connectivity APIs (EP-01-13 §5.5).
 class FakeNetworkMonitor extends NetworkMonitor {
   FakeNetworkMonitor({NetworkStatus? initial})
-      : _current = initial ?? NetworkStatus.disconnected(),
-        _controller = StreamController<NetworkStatus>.broadcast() {
+    : _current = initial ?? NetworkStatus.disconnected(),
+      _controller = StreamController<NetworkStatus>.broadcast() {
     _controller.onListen = () {
       _controller.add(_current);
     };

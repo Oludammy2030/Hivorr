@@ -11,13 +11,13 @@ class EntityRoleDto {
 
   /// Factory parsing a self-scoped PostgREST row.
   factory EntityRoleDto.fromJson(Map<String, dynamic> json) => EntityRoleDto(
-        entityId: json['entity_id'] as String,
-        role: json['role'] as String,
-        isActive: json['is_active'] as bool,
-        activatedAt: json['activated_at'] == null
-            ? null
-            : DateTime.parse(json['activated_at'] as String),
-      );
+    entityId: json['entity_id'] as String,
+    role: json['role'] as String,
+    isActive: json['is_active'] as bool,
+    activatedAt: json['activated_at'] == null
+        ? null
+        : DateTime.parse(json['activated_at'] as String),
+  );
 
   final String entityId;
   final String role;
@@ -26,9 +26,9 @@ class EntityRoleDto {
 
   /// Serializes the binding for payloads.
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'entity_id': entityId,
-        'role': role,
-        'is_active': isActive,
-        if (activatedAt != null) 'activated_at': activatedAt!.toIso8601String(),
-      };
+    'entity_id': entityId,
+    'role': role,
+    'is_active': isActive,
+    if (activatedAt != null) 'activated_at': activatedAt!.toIso8601String(),
+  };
 }

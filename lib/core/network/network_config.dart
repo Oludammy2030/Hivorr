@@ -5,11 +5,7 @@ import 'package:hivorr/config/environments/environment_value_source.dart';
 /// Image quality levels recommended by the payload optimizer.
 ///
 /// Mapped from [NetworkType] + [NetworkConfig] thresholds (EP-01-13 §5.8).
-enum ImageQuality {
-  low,
-  medium,
-  high,
-}
+enum ImageQuality { low, medium, high }
 
 /// Immutable network management configuration for the Hivorr client.
 ///
@@ -76,9 +72,11 @@ class NetworkConfig {
         source,
         AppConstants.featureEnablePayloadOptimization,
       ),
-      mobileImageQuality: source.read(AppConstants.envNetworkMobileImageQuality) ??
+      mobileImageQuality:
+          source.read(AppConstants.envNetworkMobileImageQuality) ??
           AppConstants.defaultNetworkMobileImageQuality,
-      wifiImageQuality: source.read(AppConstants.envNetworkWifiImageQuality) ??
+      wifiImageQuality:
+          source.read(AppConstants.envNetworkWifiImageQuality) ??
           AppConstants.defaultNetworkWifiImageQuality,
       mobilePageSize: _parseInt(
         source,
@@ -108,8 +106,7 @@ class NetworkConfig {
       _parseImageQuality(mobileImageQuality);
 
   /// Parses an [ImageQuality] from the WiFi image quality string.
-  ImageQuality get wifiImageQualityEnum =>
-      _parseImageQuality(wifiImageQuality);
+  ImageQuality get wifiImageQualityEnum => _parseImageQuality(wifiImageQuality);
 
   /// Strict boolean parse; absent → `false`, malformed → throws.
   static bool _parseBool(EnvironmentValueSource source, String key) {
@@ -121,10 +118,9 @@ class NetworkConfig {
       'true' => true,
       'false' => false,
       _ => throw EnvironmentConfigException(
-          variableName: key,
-          reason:
-              'Malformed network feature flag. Accepted values: true, false.',
-        ),
+        variableName: key,
+        reason: 'Malformed network feature flag. Accepted values: true, false.',
+      ),
     };
   }
 

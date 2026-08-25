@@ -28,8 +28,9 @@ class LocalStore {
     if (raw == null) {
       return null;
     }
-    final Map<String, dynamic> json =
-        cipher == null ? raw : await cipher!.decrypt(raw);
+    final Map<String, dynamic> json = cipher == null
+        ? raw
+        : await cipher!.decrypt(raw);
     return fromJson(json);
   }
 
@@ -41,8 +42,9 @@ class LocalStore {
     Map<String, dynamic> Function(T value) toJson,
   ) async {
     final Map<String, dynamic> json = toJson(value);
-    final Map<String, dynamic> stored =
-        cipher == null ? json : await cipher!.encrypt(json);
+    final Map<String, dynamic> stored = cipher == null
+        ? json
+        : await cipher!.encrypt(json);
     await _engine.put(box, key, stored);
   }
 

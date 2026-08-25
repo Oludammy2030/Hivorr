@@ -33,14 +33,13 @@ class HivorrLogger {
     Object? error,
     StackTrace? stackTrace,
     Map<String, Object?>? context,
-  }) =>
-      _log(
-        LogLevel.error,
-        message,
-        error: error,
-        stackTrace: stackTrace,
-        context: context,
-      );
+  }) => _log(
+    LogLevel.error,
+    message,
+    error: error,
+    stackTrace: stackTrace,
+    context: context,
+  );
 
   /// Logs at [LogLevel.fatal] with optional error and stack trace.
   void fatal(
@@ -48,14 +47,13 @@ class HivorrLogger {
     Object? error,
     StackTrace? stackTrace,
     Map<String, Object?>? context,
-  }) =>
-      _log(
-        LogLevel.fatal,
-        message,
-        error: error,
-        stackTrace: stackTrace,
-        context: context,
-      );
+  }) => _log(
+    LogLevel.fatal,
+    message,
+    error: error,
+    stackTrace: stackTrace,
+    context: context,
+  );
 
   void _log(
     LogLevel level,
@@ -65,8 +63,9 @@ class HivorrLogger {
     Map<String, Object?>? context,
   }) {
     final redactedMessage = _redactor.redact(message);
-    final redactedContext =
-        context == null ? null : _redactor.redactContext(context);
+    final redactedContext = context == null
+        ? null
+        : _redactor.redactContext(context);
     _router.write(
       LogEntry(
         level: level,

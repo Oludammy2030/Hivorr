@@ -132,14 +132,28 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     return AppThemeExtension(
       success: Color.lerp(success, other.success, t)!,
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
-      successContainer: Color.lerp(successContainer, other.successContainer, t)!,
-      onSuccessContainer:
-          Color.lerp(onSuccessContainer, other.onSuccessContainer, t)!,
+      successContainer: Color.lerp(
+        successContainer,
+        other.successContainer,
+        t,
+      )!,
+      onSuccessContainer: Color.lerp(
+        onSuccessContainer,
+        other.onSuccessContainer,
+        t,
+      )!,
       warning: Color.lerp(warning, other.warning, t)!,
       onWarning: Color.lerp(onWarning, other.onWarning, t)!,
-      warningContainer: Color.lerp(warningContainer, other.warningContainer, t)!,
-      onWarningContainer:
-          Color.lerp(onWarningContainer, other.onWarningContainer, t)!,
+      warningContainer: Color.lerp(
+        warningContainer,
+        other.warningContainer,
+        t,
+      )!,
+      onWarningContainer: Color.lerp(
+        onWarningContainer,
+        other.onWarningContainer,
+        t,
+      )!,
       info: Color.lerp(info, other.info, t)!,
       onInfo: Color.lerp(onInfo, other.onInfo, t)!,
       infoContainer: Color.lerp(infoContainer, other.infoContainer, t)!,
@@ -160,18 +174,18 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme => ThemeData(
-        brightness: Brightness.light,
-        colorScheme: AppColors.lightColorScheme,
-        textTheme: AppTextTheme.textTheme,
-        scaffoldBackgroundColor: AppColors.lightBackground,
-        extensions: const <ThemeExtension<dynamic>>[AppThemeExtension.light],
-      );
+    brightness: Brightness.light,
+    colorScheme: AppColors.lightColorScheme,
+    textTheme: AppTextTheme.textTheme,
+    scaffoldBackgroundColor: AppColors.lightBackground,
+    extensions: const <ThemeExtension<dynamic>>[AppThemeExtension.light],
+  );
 
   static ThemeData get darkTheme => ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: AppColors.darkColorScheme,
-        textTheme: AppTextTheme.textTheme,
-        scaffoldBackgroundColor: AppColors.darkBackground,
-        extensions: const <ThemeExtension<dynamic>>[AppThemeExtension.dark],
-      );
+    brightness: Brightness.dark,
+    colorScheme: AppColors.darkColorScheme,
+    textTheme: AppTextTheme.textTheme,
+    scaffoldBackgroundColor: AppColors.darkBackground,
+    extensions: const <ThemeExtension<dynamic>>[AppThemeExtension.dark],
+  );
 }

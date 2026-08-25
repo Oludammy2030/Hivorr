@@ -10,7 +10,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 /// §5.12, §12).
 class MonitoringService {
   MonitoringService(this._config, {PiiRedactor? redactor})
-      : _redactor = redactor ?? PiiRedactor(enabled: _config.enablePiiRedaction);
+    : _redactor = redactor ?? PiiRedactor(enabled: _config.enablePiiRedaction);
 
   final MonitoringConfig _config;
   final PiiRedactor _redactor;
@@ -52,8 +52,7 @@ class MonitoringService {
     Map<String, Object?>? data,
   }) async {
     if (!isEnabled) return;
-    final redactedData =
-        data == null ? null : _redactor.redactContext(data);
+    final redactedData = data == null ? null : _redactor.redactContext(data);
     await Sentry.addBreadcrumb(
       Breadcrumb(
         category: category,

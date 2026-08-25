@@ -1,10 +1,7 @@
 import 'dart:async';
 
 /// The connectivity state observed by the sync engine.
-enum ConnectivityStatus {
-  online,
-  offline,
-}
+enum ConnectivityStatus { online, offline }
 
 /// Abstraction over platform connectivity detection.
 ///
@@ -28,9 +25,10 @@ abstract class ConnectivityProvider {
 /// Allows unit tests to deterministically toggle between [online] and
 /// [offline] without relying on platform connectivity APIs (EP-01-12 §5.7).
 class ManualConnectivityProvider implements ConnectivityProvider {
-  ManualConnectivityProvider({ConnectivityStatus initial = ConnectivityStatus.online})
-      : _controller = StreamController<ConnectivityStatus>.broadcast(),
-        _current = initial {
+  ManualConnectivityProvider({
+    ConnectivityStatus initial = ConnectivityStatus.online,
+  }) : _controller = StreamController<ConnectivityStatus>.broadcast(),
+       _current = initial {
     // Emit the initial status to new subscribers.
     _controller.onListen = () {
       _controller.add(_current);
@@ -44,8 +42,7 @@ class ManualConnectivityProvider implements ConnectivityProvider {
   Stream<ConnectivityStatus> get onConnectivityChanged => _controller.stream;
 
   @override
-  Future<bool> get isConnected async =>
-      _current == ConnectivityStatus.online;
+  Future<bool> get isConnected async => _current == ConnectivityStatus.online;
 
   /// Sets the status to [online] and emits to all subscribers.
   void setOnline() {

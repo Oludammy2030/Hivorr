@@ -11,8 +11,7 @@ import 'package:hivorr/core/network/network_type.dart';
 /// current [NetworkStatus] plus convenience accessors for downstream
 /// consumers (EP-01-15 router, EP-01-16 UI, EP-02+ features).
 class NetworkStatusProvider extends ChangeNotifier {
-  NetworkStatusProvider(this._monitor)
-      : _status = _monitor.lastKnownStatus {
+  NetworkStatusProvider(this._monitor) : _status = _monitor.lastKnownStatus {
     _subscription = _monitor.onStatusChanged.listen(
       _onStatusChanged,
       onError: (Object error) {

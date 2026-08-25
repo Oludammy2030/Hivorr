@@ -114,9 +114,7 @@ class CertificatePinner {
 
   static void _expectTag(_Tlv tlv, int expected) {
     if (tlv.tag != expected) {
-      throw const FormatException(
-        'Unexpected DER tag while extracting SPKI.',
-      );
+      throw const FormatException('Unexpected DER tag while extracting SPKI.');
     }
   }
 }

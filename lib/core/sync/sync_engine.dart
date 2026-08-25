@@ -50,21 +50,21 @@ class SyncEngine {
     // Wire connectivity-triggered drain.
     _connectivitySubscription = _connectivityProvider.onConnectivityChanged
         .listen(
-      (ConnectivityStatus status) async {
-        if (!_enabled) return;
-        if (status == ConnectivityStatus.online) {
-          _statusProvider.setStatus(SyncStatus.syncing);
-          await drain();
-        } else {
-          _statusProvider.setStatus(SyncStatus.offline);
-        }
-      },
-      onError: (Object error) {
-        _statusProvider.setError(
-          SyncException('Connectivity stream error: $error'),
+          (ConnectivityStatus status) async {
+            if (!_enabled) return;
+            if (status == ConnectivityStatus.online) {
+              _statusProvider.setStatus(SyncStatus.syncing);
+              await drain();
+            } else {
+              _statusProvider.setStatus(SyncStatus.offline);
+            }
+          },
+          onError: (Object error) {
+            _statusProvider.setError(
+              SyncException('Connectivity stream error: $error'),
+            );
+          },
         );
-      },
-    );
   }
 
   final bool _enabled;
@@ -75,8 +75,7 @@ class SyncEngine {
   final ConflictDetector _conflictDetector;
   final SyncStatusProvider _statusProvider;
 
-  late final StreamSubscription<ConnectivityStatus>
-      _connectivitySubscription;
+  late final StreamSubscription<ConnectivityStatus> _connectivitySubscription;
 
   final math.Random _random = math.Random();
 
@@ -140,10 +139,7 @@ class SyncEngine {
         await _dio.request<void>(
           inFlight.endpoint,
           data: inFlight.payload,
-          options: Options(
-            method: inFlight.method,
-            headers: inFlight.headers,
-          ),
+          options: Options(method: inFlight.method, headers: inFlight.headers),
         );
 
         // Success (2xx): dequeue.
@@ -178,8 +174,7 @@ class SyncEngine {
               final SyncAction deadLettered = inFlight.copyWith(
                 status: SyncActionStatus.deadLettered,
                 retryCount: newRetryCount,
-                errorMessage:
-                    'Max retries exhausted: ${_safeErrorMessage(e)}',
+                errorMessage: 'Max retries exhausted: ${_safeErrorMessage(e)}',
               );
               await _queue.update(deadLettered);
               await _updateCounts();
@@ -194,7 +189,7 @@ class SyncEngine {
               retryCount: newRetryCount,
               errorMessage: _safeErrorMessage(e),
             );
-            // Loop back to retry.
+          // Loop back to retry.
         }
       }
     }

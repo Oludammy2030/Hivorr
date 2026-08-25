@@ -21,9 +21,9 @@ class SupabaseAuthService implements AuthService {
     required GoTrueClient authClient,
     required SupabaseClient supabaseClient,
     required AuthConfig config,
-  })  : _authClient = authClient,
-        _supabaseClient = supabaseClient,
-        _config = config;
+  }) : _authClient = authClient,
+       _supabaseClient = supabaseClient,
+       _config = config;
 
   final GoTrueClient _authClient;
   final SupabaseClient _supabaseClient;
@@ -125,9 +125,9 @@ class SupabaseAuthService implements AuthService {
       );
     }
     try {
-      await _supabaseClient
-          .from('entities')
-          .upsert(<String, dynamic>{'id': user.id});
+      await _supabaseClient.from('entities').upsert(<String, dynamic>{
+        'id': user.id,
+      });
       await _supabaseClient.rpc<void>(
         'entity_roles_activate',
         params: <String, dynamic>{'p_role': 'consumer'},
@@ -156,8 +156,7 @@ class SupabaseAuthService implements AuthService {
 
   void _handleAuthState(AuthState state) {
     final Session? session = state.session;
-    final bool hasSession =
-        session != null && session.user.id.isNotEmpty;
+    final bool hasSession = session != null && session.user.id.isNotEmpty;
 
     switch (state.event) {
       case AuthChangeEvent.signedOut:
@@ -218,12 +217,12 @@ class SupabaseAuthService implements AuthService {
   }
 
   AuthSession _toAuthSession(Session session) => AuthSession(
-        entityId: session.user.id,
-        expiresAt: session.expiresAt == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000),
-        provider: session.user.appMetadata['provider'] as String?,
-      );
+    entityId: session.user.id,
+    expiresAt: session.expiresAt == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000),
+    provider: session.user.appMetadata['provider'] as String?,
+  );
 
   ApiException _mapError(Object error) {
     if (error is ApiException) {

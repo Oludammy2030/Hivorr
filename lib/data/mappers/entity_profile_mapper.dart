@@ -10,12 +10,12 @@ class EntityProfileMapper {
 
   /// Maps a server DTO into the domain entity.
   static EntityProfile toEntity(EntityProfileDto dto) => EntityProfile(
-        legalName: dto.legalName,
-        displayName: dto.displayName,
-        bio: dto.bio,
-        avatarPath: dto.avatarPath,
-        countryCode: dto.countryCode,
-      );
+    legalName: dto.legalName,
+    displayName: dto.displayName,
+    bio: dto.bio,
+    avatarPath: dto.avatarPath,
+    countryCode: dto.countryCode,
+  );
 
   /// Maps a domain entity into a DTO bound to [entityId].
   static EntityProfileDto fromEntity(EntityProfile profile, String entityId) =>

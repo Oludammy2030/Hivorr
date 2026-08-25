@@ -11,10 +11,10 @@ class EntityRoleMapper {
 
   /// Maps a server DTO into the domain entity.
   static EntityRole toEntity(EntityRoleDto dto) => EntityRole(
-        role: EntityRoleValue.fromString(dto.role),
-        isActive: dto.isActive,
-        activatedAt: dto.activatedAt,
-      );
+    role: EntityRoleValue.fromString(dto.role),
+    isActive: dto.isActive,
+    activatedAt: dto.activatedAt,
+  );
 
   /// Maps a domain entity into a DTO bound to [entityId].
   static EntityRoleDto fromEntity(EntityRole role, String entityId) =>

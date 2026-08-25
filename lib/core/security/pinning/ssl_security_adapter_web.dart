@@ -9,7 +9,7 @@ import 'certificate_pinner.dart';
 /// browser. The adapter is a pass-through (R3 — accepted residual risk).
 class SslSecurityAdapter implements HttpClientAdapter {
   SslSecurityAdapter({required this.pinner, required this.enablePinning})
-      : _delegate = BrowserHttpClientAdapter();
+    : _delegate = BrowserHttpClientAdapter();
 
   final CertificatePinner pinner;
   final bool enablePinning;

@@ -63,12 +63,12 @@ class SentryLogSink implements LogSink {
   }
 
   static SentryLevel _toSentryLevel(LogLevel level) => switch (level) {
-        LogLevel.debug => SentryLevel.debug,
-        LogLevel.info => SentryLevel.info,
-        LogLevel.warning => SentryLevel.warning,
-        LogLevel.error => SentryLevel.error,
-        LogLevel.fatal => SentryLevel.fatal,
-      };
+    LogLevel.debug => SentryLevel.debug,
+    LogLevel.info => SentryLevel.info,
+    LogLevel.warning => SentryLevel.warning,
+    LogLevel.error => SentryLevel.error,
+    LogLevel.fatal => SentryLevel.fatal,
+  };
 
   @override
   void dispose() {}

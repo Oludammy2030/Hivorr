@@ -24,10 +24,5 @@ class AppBoxes {
   static const String misc = 'misc';
 
   /// All pre-registered box names.
-  static const List<String> all = <String>[
-    cache,
-    syncQueue,
-    entityCache,
-    misc,
-  ];
+  static const List<String> all = <String>[cache, syncQueue, entityCache, misc];
 }

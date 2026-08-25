@@ -11,18 +11,18 @@ import 'package:hivorr/core/sync/connectivity_provider.dart';
 /// hooks that replaces this default (EP-01-12 §5.7).
 class ConnectivityPlusProvider implements ConnectivityProvider {
   ConnectivityPlusProvider()
-      : _connectivity = Connectivity(),
-        _controller = StreamController<ConnectivityStatus>.broadcast() {
+    : _connectivity = Connectivity(),
+      _controller = StreamController<ConnectivityStatus>.broadcast() {
     _current = _mapResult(_connectivity.checkConnectivity());
-    _subscription = _connectivity.onConnectivityChanged.listen(
-      (List<ConnectivityResult> results) {
-        final ConnectivityStatus status = _mapResultsSync(results);
-        if (status != _currentSync) {
-          _currentSync = status;
-          _controller.add(status);
-        }
-      },
-    );
+    _subscription = _connectivity.onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) {
+      final ConnectivityStatus status = _mapResultsSync(results);
+      if (status != _currentSync) {
+        _currentSync = status;
+        _controller.add(status);
+      }
+    });
   }
 
   final Connectivity _connectivity;

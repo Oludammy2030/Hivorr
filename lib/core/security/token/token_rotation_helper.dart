@@ -32,8 +32,7 @@ class TokenRotationHelper {
   /// Rotates the token if [expiry] is within [expiryBuffer], or immediately
   /// when [expiry] is `null`. Returns the (possibly refreshed) current token.
   Future<String?> rotateIfNeeded(DateTime? expiry) {
-    if (expiry != null &&
-        expiry.isAfter(DateTime.now().add(expiryBuffer))) {
+    if (expiry != null && expiry.isAfter(DateTime.now().add(expiryBuffer))) {
       return Future<String?>.value(accessTokenProvider.currentToken);
     }
     return _refreshOnce();

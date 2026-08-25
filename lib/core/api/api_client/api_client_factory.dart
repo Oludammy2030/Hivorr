@@ -22,9 +22,7 @@ class ApiClientFactory {
         connectTimeout: config.connectTimeout,
         receiveTimeout: config.receiveTimeout,
         sendTimeout: config.sendTimeout,
-        headers: <String, String>{
-          'Accept': 'application/json',
-        },
+        headers: <String, String>{'Accept': 'application/json'},
       ),
     );
     dio.interceptors.addAll(interceptors);

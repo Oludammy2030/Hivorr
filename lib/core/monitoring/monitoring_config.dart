@@ -67,7 +67,8 @@ class MonitoringConfig {
     final environment =
         source.read(AppConstants.envMonitoringEnvironment) ??
         AppConstants.defaultMonitoringEnvironment;
-    final release = source.read(AppConstants.envMonitoringRelease) ??
+    final release =
+        source.read(AppConstants.envMonitoringRelease) ??
         AppConstants.defaultMonitoringRelease;
     final traceSampleRate = _parseDouble(
       source,
@@ -156,9 +157,9 @@ class MonitoringConfig {
       'true' => true,
       'false' => false,
       _ => throw EnvironmentConfigException(
-          variableName: key,
-          reason: 'Malformed monitoring flag. Accepted values: true, false.',
-        ),
+        variableName: key,
+        reason: 'Malformed monitoring flag. Accepted values: true, false.',
+      ),
     };
   }
 

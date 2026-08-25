@@ -62,9 +62,7 @@ class NetworkLayer {
 NetworkLayer initializeNetwork(EnvironmentConfig config) {
   final networkConfig = config.networkConfig;
 
-  final monitor = ConnectivityPlusNetworkMonitor(
-    config: networkConfig,
-  );
+  final monitor = ConnectivityPlusNetworkMonitor(config: networkConfig);
 
   final statusProvider = NetworkStatusProvider(monitor);
 
