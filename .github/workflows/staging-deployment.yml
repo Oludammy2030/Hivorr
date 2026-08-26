@@ -52,6 +52,7 @@ jobs:
       feature-analytics-tracking: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_ANALYTICS_TRACKING || 'false' }}
       feature-dynamic-workspace-loading: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_DYNAMIC_WORKSPACE_LOADING || 'false' }}
       upload-artifacts: true
+      build-targets: 'web'
     secrets:
       supabase-anon-key: ${{ secrets.STAGING_HIVORR_SUPABASE_ANON_KEY }}
 
