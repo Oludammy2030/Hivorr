@@ -59,10 +59,10 @@ on:
         type: string
         default: ''
       build-targets:
-        description: Comma-separated list of build targets (web,android,ios,windows). Defaults to all.
+        description: JSON array of build targets, e.g. '["web","android","ios","windows"]'. Defaults to all.
         required: false
         type: string
-        default: 'web,android,ios,windows'
+        default: '["web","android","ios","windows"]'
     secrets:
       supabase-anon-key:
         description: Supabase public client (anon) key for --dart-define
@@ -154,10 +154,10 @@ jobs:
   build:
     name: Build (${{ matrix.target }})
     needs: validate
-    if: contains(inputs.build-targets, matrix.target)
     strategy:
       fail-fast: false
       matrix:
+        target: ${{ fromJson(inputs.build-targets) }}
         include:
           - target: web
             os: ubuntu-latest
