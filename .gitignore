@@ -45,6 +45,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Generated native build outputs (not source/config)
+/android/build/
+
 # Environment variables & secrets (Hivorr zero-trust / ENV-006)
 .env
 .env.*
