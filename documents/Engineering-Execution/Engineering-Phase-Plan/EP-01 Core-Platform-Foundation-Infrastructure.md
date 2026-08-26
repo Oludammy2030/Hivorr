@@ -374,7 +374,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 | **Engineering Purpose** | Orchestration layer wiring all core systems at startup. GoRouter supports deep-linking, web SEO URLs, and route guarding. |
 | **Dependencies** | EP-01-09, EP-01-03 |
 | **Expected Outcome** | `app.dart` with all core providers. GoRouter with public/protected routes + auth redirects. Splash screen + init sequence. Lifecycle observer. SEO URLs (`/p/:slug/:id`). |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | Very High | **Coding Reasoning** | Very High |
 
 ### EP-01-16: Design System & Shared UI Foundation
@@ -452,7 +452,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 | EP-01-12 | Offline Sync Engine & Action Queue | High | Very High | Very High | 07, 11 | Completed |
 | EP-01-13 | Network Management & Connectivity | Medium | High | High | 07 | Completed |
 | EP-01-14 | Monitoring, Logging & Telemetry | High | High | High | 02, 03 | Not Started |
-| EP-01-15 | App Bootstrap, Lifecycle & Routing | High | Very High | Very High | 09, 03 | Not Started |
+| EP-01-15 | App Bootstrap, Lifecycle & Routing | High | Very High | Very High | 09, 03 | Completed |
 | EP-01-16 | Design System & Shared UI Foundation | High | High | High | 02 | Not Started |
 | EP-01-17 | Localization & Internationalization | Medium | High | High | 02, 16 | Not Started |
 | EP-01-18 | Notification Engine Foundation | Medium | High | High | 02, 09 | Not Started |
