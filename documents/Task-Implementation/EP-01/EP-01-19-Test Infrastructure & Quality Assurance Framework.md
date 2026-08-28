@@ -7,7 +7,7 @@
 | Task ID | EP-01-19 |
 | Task Name | Test Infrastructure & Quality Assurance Framework |
 | Related Phase | EP-01: Core Platform Foundation & Infrastructure |
-| Status | Not Started (plan for approval) |
+| Status | Done (implemented & verified — 2026-08-28) |
 | Dependencies | EP-01-04 (CI/CD Pipeline — completed; provides GitHub Actions workflows running `flutter test` as a blocking gate). EP-01-07 (Core API Layer — completed; provides `BaseApiService`, `Dio` interceptors, `SupabaseClient`, `ApiExceptionMapper`, `AccessTokenProvider` requiring mock factories). Consumed downstream by EP-01-20 (Phase Integration Validation). |
 | Priority | High |
 | Planning Reasoning | High (approved EP-01 matrix) |
