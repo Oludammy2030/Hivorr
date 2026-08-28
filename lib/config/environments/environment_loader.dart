@@ -11,6 +11,7 @@ import 'package:hivorr/core/cache/cache_config.dart';
 import 'package:hivorr/core/database/database_config.dart';
 import 'package:hivorr/core/monitoring/monitoring_config.dart';
 import 'package:hivorr/core/network/network_config.dart';
+import 'package:hivorr/core/notifications/notification_config.dart';
 import 'package:hivorr/core/sync/sync_config.dart';
 
 /// Loads and validates environment configuration from a value source.
@@ -77,6 +78,9 @@ class EnvironmentLoader {
     // 10. Monitoring configuration (EP-01-14; opt-in defaults).
     final monitoringConfig = MonitoringConfig.fromSource(source);
 
+    // 11. Notification configuration (EP-01-18; opt-in defaults).
+    final notificationConfig = NotificationConfig.fromSource(source);
+
     return EnvironmentConfig(
       environment: environment,
       supabaseConfig: SupabaseConfig(url: url, anonKey: anonKey),
@@ -87,6 +91,7 @@ class EnvironmentLoader {
       syncConfig: syncConfig,
       networkConfig: networkConfig,
       monitoringConfig: monitoringConfig,
+      notificationConfig: notificationConfig,
       constants: const AppConstants(),
       schemaVersion: schemaVersion,
     );

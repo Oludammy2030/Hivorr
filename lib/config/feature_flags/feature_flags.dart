@@ -16,6 +16,7 @@ class FeatureFlags {
     required this.enableAnalyticsTracking,
     required this.enableDynamicWorkspaceLoading,
     required this.enablePayloadOptimization,
+    required this.enablePushNotifications,
   });
 
   /// Whether verbose structured logging is enabled.
@@ -47,6 +48,13 @@ class FeatureFlags {
   /// management layer is rolled out (EP-01-13).
   final bool enablePayloadOptimization;
 
+  /// Whether push notification reception is enabled.
+  ///
+  /// Safe default: `false`. Enable per environment after the push
+  /// transport (Supabase Realtime) is provisioned for that environment
+  /// (EP-01-18). Gated together with [NotificationConfig.enablePushNotifications].
+  final bool enablePushNotifications;
+
   /// Parses feature flags from [source] using strict boolean rules.
   ///
   /// Accepted values are exactly `true` or `false` (case-sensitive).
@@ -73,6 +81,10 @@ class FeatureFlags {
       enablePayloadOptimization: _parseBool(
         source,
         AppConstants.featureEnablePayloadOptimization,
+      ),
+      enablePushNotifications: _parseBool(
+        source,
+        AppConstants.featureEnablePushNotifications,
       ),
     );
   }
@@ -101,6 +113,7 @@ class FeatureFlags {
         'enableOfflineSync: $enableOfflineSync, '
         'enableAnalyticsTracking: $enableAnalyticsTracking, '
         'enableDynamicWorkspaceLoading: $enableDynamicWorkspaceLoading, '
-        'enablePayloadOptimization: $enablePayloadOptimization)';
+        'enablePayloadOptimization: $enablePayloadOptimization, '
+        'enablePushNotifications: $enablePushNotifications)';
   }
 }

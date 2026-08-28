@@ -420,6 +420,7 @@ void main() {
         enableAnalyticsTracking: false,
         enableDynamicWorkspaceLoading: false,
         enablePayloadOptimization: false,
+        enablePushNotifications: false,
       );
       expect(flags.enableVerboseLogging, isFalse);
     });

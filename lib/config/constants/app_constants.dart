@@ -182,6 +182,10 @@ class AppConstants {
   static const String featureEnablePayloadOptimization =
       'HIVORR_FEATURE_ENABLE_PAYLOAD_OPTIMIZATION';
 
+  /// Feature flag: enables the push notification receiver (Supabase Realtime).
+  static const String featureEnablePushNotifications =
+      'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS';
+
   /// Default connectivity change debounce (0 = no debounce).
   static const int defaultNetworkDebounceMs = 0;
 
@@ -265,6 +269,61 @@ class AppConstants {
 
   /// Default maximum breadcrumb count.
   static const int defaultMonitoringMaxBreadcrumbs = 100;
+
+  // ─── Notification configuration (EP-01-18) ─────────────────────────
+
+  /// Default Android notification channel id.
+  static const String envNotificationDefaultChannelId =
+      'HIVORR_NOTIFICATION_DEFAULT_CHANNEL_ID';
+
+  /// User-visible default channel name.
+  static const String envNotificationDefaultChannelName =
+      'HIVORR_NOTIFICATION_DEFAULT_CHANNEL_NAME';
+
+  /// Default channel description.
+  static const String envNotificationDefaultChannelDesc =
+      'HIVORR_NOTIFICATION_DEFAULT_CHANNEL_DESC';
+
+  /// Master enable for push notification reception.
+  static const String envNotificationEnablePush =
+      'HIVORR_NOTIFICATION_ENABLE_PUSH';
+
+  /// Master enable for local notification dispatch.
+  static const String envNotificationEnableLocal =
+      'HIVORR_NOTIFICATION_ENABLE_LOCAL';
+
+  /// Supabase Realtime channel/table name for push events.
+  static const String envNotificationPushChannelName =
+      'HIVORR_NOTIFICATION_PUSH_CHANNEL_NAME';
+
+  /// Android notification small icon resource.
+  static const String envNotificationIconResource =
+      'HIVORR_NOTIFICATION_ICON_RESOURCE';
+
+  /// Default notification channel id.
+  static const String defaultNotificationDefaultChannelId = 'hivorr_default';
+
+  /// Default notification channel name.
+  static const String defaultNotificationDefaultChannelName =
+      'Hivorr Notifications';
+
+  /// Default notification channel description.
+  static const String defaultNotificationDefaultChannelDesc =
+      'General notifications from Hivorr';
+
+  /// Default push enable flag (disabled until explicitly enabled).
+  static const bool defaultNotificationEnablePush = false;
+
+  /// Default local notification enable flag.
+  static const bool defaultNotificationEnableLocal = true;
+
+  /// Default Supabase Realtime push channel name.
+  static const String defaultNotificationPushChannelName =
+      'notification_events';
+
+  /// Default Android notification icon resource.
+  static const String defaultNotificationIconResource =
+      '@mipmap/ic_launcher';
 
   // ─── Application identifiers ────────────────────────────────────────
 

@@ -19,6 +19,7 @@ FeatureFlags _flags({required bool analytics}) => FeatureFlags(
       enableAnalyticsTracking: analytics,
       enableDynamicWorkspaceLoading: false,
       enablePayloadOptimization: false,
+      enablePushNotifications: false,
     );
 
 void main() {

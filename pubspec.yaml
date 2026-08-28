@@ -80,6 +80,11 @@ dependencies:
     sdk: flutter
   intl: ^0.20.0
 
+  # Local & push notification engine for lib/core/notifications/ (EP-01-18).
+  # Android/iOS/Web local notification rendering + pending-request queries.
+  # Version confirmed compatible with Dart SDK ^3.12.2 at implementation time.
+  flutter_local_notifications: ^18.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
