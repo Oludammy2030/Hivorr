@@ -95,8 +95,7 @@ class FlutterLocalNotificationsBackend implements LocalNotificationBackend {
     required String body,
     required NotificationDetails details,
     String? payload,
-  }) =>
-      _plugin.show(id, title, body, details, payload: payload);
+  }) => _plugin.show(id, title, body, details, payload: payload);
 
   @override
   Future<void> cancel(int id) => _plugin.cancel(id);
@@ -145,11 +144,7 @@ class FlutterLocalNotificationsBackend implements LocalNotificationBackend {
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >();
-    return impl?.requestPermissions(
-          alert: alert,
-          badge: badge,
-          sound: sound,
-        ) ??
+    return impl?.requestPermissions(alert: alert, badge: badge, sound: sound) ??
         Future<bool?>.value(null);
   }
 }
@@ -166,8 +161,8 @@ class LocalNotificationService implements NotificationService {
     LocalNotificationBackend? backend,
     this.logger,
     Map<String, NotificationChannel>? knownChannels,
-  })  : _backend = backend ?? FlutterLocalNotificationsBackend(_config),
-        _knownChannels = knownChannels ?? <String, NotificationChannel>{};
+  }) : _backend = backend ?? FlutterLocalNotificationsBackend(_config),
+       _knownChannels = knownChannels ?? <String, NotificationChannel>{};
 
   final NotificationConfig _config;
   final LocalNotificationBackend _backend;

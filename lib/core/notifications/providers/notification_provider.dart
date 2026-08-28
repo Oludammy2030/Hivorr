@@ -85,10 +85,9 @@ class NotificationProvider extends ChangeNotifier {
       await _service.show(notification);
     } on Object catch (e) {
       _lastError = e.toString();
-      logger?.warning(
-        'Failed to show local notification',
-        <String, Object?>{'error': e.toString()},
-      );
+      logger?.warning('Failed to show local notification', <String, Object?>{
+        'error': e.toString(),
+      });
     }
   }
 
@@ -120,9 +119,7 @@ class NotificationProvider extends ChangeNotifier {
   void _listen() {
     final receiver = pushReceiver;
     if (receiver != null) {
-      _subscriptions.add(
-        receiver.onMessage.listen(_handlePushMessage),
-      );
+      _subscriptions.add(receiver.onMessage.listen(_handlePushMessage));
     }
     _subscriptions.add(_service.onNotificationTapped.listen(_handleTap));
   }

@@ -86,8 +86,7 @@ class FakeLocalNotificationBackend implements LocalNotificationBackend {
     required bool alert,
     required bool badge,
     required bool sound,
-  }) =>
-      Future<bool?>.value(iosPermissionResult);
+  }) => Future<bool?>.value(iosPermissionResult);
 }
 
 /// Fake [NotificationPermissionPlatform] with canned responses.
@@ -168,7 +167,8 @@ class FakePushNotificationReceiver implements PushNotificationReceiver {
   @override
   bool get isSubscribed => subscribed;
 
-  void emitMessage(HivorrNotification notification) => _message.add(notification);
+  void emitMessage(HivorrNotification notification) =>
+      _message.add(notification);
 
   @override
   void dispose() {
@@ -216,20 +216,18 @@ class FakeNotificationService implements NotificationService {
 
 /// Builds a [NotificationConfig] from overrides, filling safe defaults.
 NotificationConfig buildConfig([Map<String, String>? overrides]) {
-  final source = MapEnvironmentValueSource(<String, String>{
-    ...?overrides,
-  });
+  final source = MapEnvironmentValueSource(<String, String>{...?overrides});
   return NotificationConfig.fromSource(source);
 }
 
 /// Example serialized notification payload for tap round-trips.
 String exampleTapPayload() => jsonEncode(
-      HivorrNotification(
-        id: 1,
-        title: 't',
-        body: 'b',
-        channelId: 'hivorr_default',
-        priority: NotificationPriority.high,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(1000),
-      ).toJson(),
-    );
+  HivorrNotification(
+    id: 1,
+    title: 't',
+    body: 'b',
+    channelId: 'hivorr_default',
+    priority: NotificationPriority.high,
+    timestamp: DateTime.fromMillisecondsSinceEpoch(1000),
+  ).toJson(),
+);

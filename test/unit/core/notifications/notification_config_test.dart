@@ -26,7 +26,10 @@ void main() {
     final config = buildConfig();
     expect(config.defaultChannelId, 'hivorr_default');
     expect(config.defaultChannelName, 'Hivorr Notifications');
-    expect(config.defaultChannelDescription, 'General notifications from Hivorr');
+    expect(
+      config.defaultChannelDescription,
+      'General notifications from Hivorr',
+    );
     expect(config.enablePushNotifications, isFalse);
     expect(config.enableLocalNotifications, isTrue);
     expect(config.pushChannelName, 'notification_events');

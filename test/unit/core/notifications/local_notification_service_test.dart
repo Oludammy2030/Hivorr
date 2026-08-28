@@ -8,13 +8,13 @@ import 'package:hivorr/core/notifications/services/local_notification_service.da
 import 'notification_test_helpers.dart';
 
 HivorrNotification _n(int id) => HivorrNotification(
-      id: id,
-      title: 'Title $id',
-      body: 'Body',
-      channelId: 'hivorr_default',
-      priority: NotificationPriority.normal,
-      timestamp: DateTime.fromMillisecondsSinceEpoch(id),
-    );
+  id: id,
+  title: 'Title $id',
+  body: 'Body',
+  channelId: 'hivorr_default',
+  priority: NotificationPriority.normal,
+  timestamp: DateTime.fromMillisecondsSinceEpoch(id),
+);
 
 void main() {
   test('initialize delegates to backend and toggles state', () async {
@@ -57,14 +57,16 @@ void main() {
         3,
         'p',
         'b',
-        jsonEncode(HivorrNotification(
-          id: 3,
-          title: 'p',
-          body: 'b',
-          channelId: 'hivorr_default',
-          priority: NotificationPriority.normal,
-          timestamp: DateTime.fromMillisecondsSinceEpoch(3),
-        ).toJson()),
+        jsonEncode(
+          HivorrNotification(
+            id: 3,
+            title: 'p',
+            body: 'b',
+            channelId: 'hivorr_default',
+            priority: NotificationPriority.normal,
+            timestamp: DateTime.fromMillisecondsSinceEpoch(3),
+          ).toJson(),
+        ),
       ),
     ];
     final service = LocalNotificationService(buildConfig(), backend: backend);

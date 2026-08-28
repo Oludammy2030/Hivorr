@@ -6,12 +6,12 @@ import 'package:hivorr/core/notifications/providers/notification_provider.dart';
 import 'notification_test_helpers.dart';
 
 HivorrNotification _n(int id) => HivorrNotification(
-      id: id,
-      title: 'a',
-      body: 'b',
-      channelId: 'hivorr_default',
-      timestamp: DateTime.fromMillisecondsSinceEpoch(id),
-    );
+  id: id,
+  title: 'a',
+  body: 'b',
+  channelId: 'hivorr_default',
+  timestamp: DateTime.fromMillisecondsSinceEpoch(id),
+);
 
 void main() {
   test('initialize subscribes push when permission granted', () async {

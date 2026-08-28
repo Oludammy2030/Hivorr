@@ -29,15 +29,14 @@ class NotificationChannelManager {
       Map<String, NotificationChannel>.unmodifiable(_channels);
 
   /// Creates the app's default channel using [config] values.
-  Future<void> createDefaultChannel(NotificationConfig config) =>
-      createChannel(
-        NotificationChannel(
-          id: config.defaultChannelId,
-          name: config.defaultChannelName,
-          description: config.defaultChannelDescription,
-          importance: NotificationPriority.normal,
-        ),
-      );
+  Future<void> createDefaultChannel(NotificationConfig config) => createChannel(
+    NotificationChannel(
+      id: config.defaultChannelId,
+      name: config.defaultChannelName,
+      description: config.defaultChannelDescription,
+      importance: NotificationPriority.normal,
+    ),
+  );
 
   /// Creates a custom notification channel.
   Future<void> createChannel(NotificationChannel channel) async {

@@ -322,8 +322,7 @@ class AppConstants {
       'notification_events';
 
   /// Default Android notification icon resource.
-  static const String defaultNotificationIconResource =
-      '@mipmap/ic_launcher';
+  static const String defaultNotificationIconResource = '@mipmap/ic_launcher';
 
   // ─── Application identifiers ────────────────────────────────────────
 

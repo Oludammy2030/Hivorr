@@ -144,12 +144,14 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
       AppConstants.envMonitoringMaxBreadcrumbs => const String.fromEnvironment(
         AppConstants.envMonitoringMaxBreadcrumbs,
       ),
-      AppConstants.featureEnablePushNotifications => const String.fromEnvironment(
-        AppConstants.featureEnablePushNotifications,
-      ),
-      AppConstants.envNotificationDefaultChannelId => const String.fromEnvironment(
-        AppConstants.envNotificationDefaultChannelId,
-      ),
+      AppConstants.featureEnablePushNotifications =>
+        const String.fromEnvironment(
+          AppConstants.featureEnablePushNotifications,
+        ),
+      AppConstants.envNotificationDefaultChannelId =>
+        const String.fromEnvironment(
+          AppConstants.envNotificationDefaultChannelId,
+        ),
       AppConstants.envNotificationDefaultChannelName =>
         const String.fromEnvironment(
           AppConstants.envNotificationDefaultChannelName,
@@ -164,9 +166,10 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
       AppConstants.envNotificationEnableLocal => const String.fromEnvironment(
         AppConstants.envNotificationEnableLocal,
       ),
-      AppConstants.envNotificationPushChannelName => const String.fromEnvironment(
-        AppConstants.envNotificationPushChannelName,
-      ),
+      AppConstants.envNotificationPushChannelName =>
+        const String.fromEnvironment(
+          AppConstants.envNotificationPushChannelName,
+        ),
       AppConstants.envNotificationIconResource => const String.fromEnvironment(
         AppConstants.envNotificationIconResource,
       ),

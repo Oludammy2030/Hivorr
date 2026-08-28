@@ -142,8 +142,7 @@ class SupabasePushRealtimeGateway implements PushRealtimeGateway {
     required String entityId,
     required void Function(Map<String, dynamic> payload) onEvent,
   }) async {
-    final name =
-        channelName.isEmpty ? _config.pushChannelName : channelName;
+    final name = channelName.isEmpty ? _config.pushChannelName : channelName;
     final channel = _channel = _client.channel(name);
     channel.onPostgresChanges(
       event: PostgresChangeEvent.insert,

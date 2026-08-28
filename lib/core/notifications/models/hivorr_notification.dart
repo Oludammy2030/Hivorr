@@ -77,8 +77,9 @@ class HivorrNotification {
         : DateTime.tryParse(timestampRaw) ?? DateTime.now();
 
     final payloadRaw = json['payload'];
-    final Map<String, dynamic>? payload =
-        payloadRaw is Map<String, dynamic> ? payloadRaw : null;
+    final Map<String, dynamic>? payload = payloadRaw is Map<String, dynamic>
+        ? payloadRaw
+        : null;
 
     return HivorrNotification(
       id: json['id'] as int,

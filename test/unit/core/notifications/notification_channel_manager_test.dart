@@ -22,11 +22,13 @@ void main() {
   test('createChannel maps importance to AndroidImportance', () async {
     final backend = FakeLocalNotificationBackend();
     final manager = NotificationChannelManager(backend);
-    await manager.createChannel(NotificationChannel(
-      id: 'custom',
-      name: 'Custom',
-      importance: NotificationPriority.high,
-    ));
+    await manager.createChannel(
+      NotificationChannel(
+        id: 'custom',
+        name: 'Custom',
+        importance: NotificationPriority.high,
+      ),
+    );
     expect(manager.channels['custom']!.importance, NotificationPriority.high);
     expect(backend.createdChannels.first.importance, Importance.high);
   });
@@ -34,11 +36,13 @@ void main() {
   test('invalid channel id is rejected', () async {
     final backend = FakeLocalNotificationBackend();
     final manager = NotificationChannelManager(backend);
-    await manager.createChannel(NotificationChannel(
-      id: 'bad id!',
-      name: 'x',
-      importance: NotificationPriority.normal,
-    ));
+    await manager.createChannel(
+      NotificationChannel(
+        id: 'bad id!',
+        name: 'x',
+        importance: NotificationPriority.normal,
+      ),
+    );
     expect(backend.createdChannels, isEmpty);
     expect(manager.channels, isEmpty);
   });
@@ -46,11 +50,13 @@ void main() {
   test('deleteChannel removes from registry and forwards', () async {
     final backend = FakeLocalNotificationBackend();
     final manager = NotificationChannelManager(backend);
-    await manager.createChannel(NotificationChannel(
-      id: 'c1',
-      name: 'C1',
-      importance: NotificationPriority.normal,
-    ));
+    await manager.createChannel(
+      NotificationChannel(
+        id: 'c1',
+        name: 'C1',
+        importance: NotificationPriority.normal,
+      ),
+    );
     await manager.deleteChannel('c1');
     expect(manager.channels.containsKey('c1'), isFalse);
     expect(backend.deletedChannels, contains('c1'));

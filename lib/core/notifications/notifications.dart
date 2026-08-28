@@ -93,7 +93,10 @@ NotificationLayer initializeNotifications(
   if (notificationConfig.enablePushNotifications &&
       config.featureFlags.enablePushNotifications &&
       entityId != null) {
-    final gateway = SupabasePushRealtimeGateway(supabaseClient, notificationConfig);
+    final gateway = SupabasePushRealtimeGateway(
+      supabaseClient,
+      notificationConfig,
+    );
     pushReceiver = SupabasePushReceiver(
       notificationConfig,
       gateway,

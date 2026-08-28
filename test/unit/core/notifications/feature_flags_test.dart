@@ -10,24 +10,30 @@ void main() {
   });
 
   test('enablePushNotifications true', () {
-    final flags = FeatureFlags.fromSource(MapEnvironmentValueSource(
-      {'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'true'},
-    ));
+    final flags = FeatureFlags.fromSource(
+      MapEnvironmentValueSource({
+        'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'true',
+      }),
+    );
     expect(flags.enablePushNotifications, isTrue);
   });
 
   test('enablePushNotifications false', () {
-    final flags = FeatureFlags.fromSource(MapEnvironmentValueSource(
-      {'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'false'},
-    ));
+    final flags = FeatureFlags.fromSource(
+      MapEnvironmentValueSource({
+        'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'false',
+      }),
+    );
     expect(flags.enablePushNotifications, isFalse);
   });
 
   test('malformed value throws', () {
     expect(
-      () => FeatureFlags.fromSource(MapEnvironmentValueSource(
-        {'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'maybe'},
-      )),
+      () => FeatureFlags.fromSource(
+        MapEnvironmentValueSource({
+          'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'maybe',
+        }),
+      ),
       throwsA(isA<EnvironmentConfigException>()),
     );
   });

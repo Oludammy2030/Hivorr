@@ -12,18 +12,21 @@ void main() {
     expect(await manager.checkStatus(), NotificationPermissionStatus.granted);
   });
 
-  test('requestPermission delegates and updates canRequestPermission', () async {
-    final platform = FakeNotificationPermissionPlatform(
-      nextStatus: NotificationPermissionStatus.denied,
-      canRequest: true,
-    );
-    final manager = NotificationPermissionManager(platform: platform);
-    expect(
-      await manager.requestPermission(),
-      NotificationPermissionStatus.denied,
-    );
-    expect(manager.canRequestPermission, isTrue);
-  });
+  test(
+    'requestPermission delegates and updates canRequestPermission',
+    () async {
+      final platform = FakeNotificationPermissionPlatform(
+        nextStatus: NotificationPermissionStatus.denied,
+        canRequest: true,
+      );
+      final manager = NotificationPermissionManager(platform: platform);
+      expect(
+        await manager.requestPermission(),
+        NotificationPermissionStatus.denied,
+      );
+      expect(manager.canRequestPermission, isTrue);
+    },
+  );
 
   test('canRequestPermission false when granted', () async {
     final platform = FakeNotificationPermissionPlatform(
