@@ -9,9 +9,15 @@ import 'package:hivorr/core/api/api_initializer.dart';
 import 'package:hivorr/core/api/auth/access_token_provider.dart';
 import 'package:hivorr/core/api/exceptions/api_exception_mapper.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
-import 'package:hivorr/core/database/storage_engine.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'support/fakes/fake_auth.dart';
+import 'support/fakes/fake_storage.dart';
+
+export 'support/fakes/fake_auth.dart';
+export 'support/fakes/fake_storage.dart';
+export 'support/harnesses/widget_harness.dart';
 
 /// Non-secret, non-service-role fake anon key for tests.
 const String fakeAnonKey = 'public-anon-key-abcdef123456';
@@ -51,119 +57,6 @@ AuthLayer fakeInitializeAuthLayer(
   AuthConfig _,
 ) =>
     AuthLayer(service: FakeAuthService(), provider: FakeAuthProvider());
-
-/// Inert [AuthService] for bootstrap tests.
-class FakeAuthService implements AuthService {
-  @override
-  AuthStatus get status => AuthStatus.unauthenticated;
-
-  @override
-  String? get currentEntityId => null;
-
-  @override
-  AuthSession? get currentSession => null;
-
-  @override
-  bool get isSignedIn => false;
-
-  @override
-  Stream<AuthStatus> get onStatusChanged =>
-      const Stream<AuthStatus>.empty();
-
-  @override
-  Future<AuthResult> signUp(AuthCredentials credentials) async =>
-      AuthResult(status: AuthStatus.unauthenticated);
-
-  @override
-  Future<AuthResult> signIn(AuthCredentials credentials) async =>
-      AuthResult(status: AuthStatus.unauthenticated);
-
-  @override
-  Future<void> signOut() async {}
-
-  @override
-  Future<void> initialize() async {}
-
-  @override
-  Future<void> ensureEntityExists() async {}
-
-  @override
-  Future<void> dispose() async {}
-}
-
-/// [AuthProvider] whose [status] is directly controllable for routing tests.
-class FakeAuthProvider extends AuthProvider {
-  FakeAuthProvider({AuthStatus initialStatus = AuthStatus.unauthenticated})
-      : _status = initialStatus,
-        super(service: FakeAuthService());
-
-  AuthStatus _status;
-
-  @override
-  AuthStatus get status => _status;
-
-  @override
-  bool get isSignedIn => _status == AuthStatus.authenticated;
-
-  /// Drives the provider's reported status (and notifies listeners).
-  void setStatus(AuthStatus status) {
-    _status = status;
-    notifyListeners();
-  }
-
-  @override
-  Future<void> initialize() async {}
-}
-
-/// In-memory [StorageEngine] for bootstrap and locale-provider tests.
-///
-/// Stores values as nested maps keyed by `box` then `key`, matching the
-/// [StorageEngine] contract without touching the filesystem.
-class FakeStorageEngine implements StorageEngine {
-  final Map<String, Map<String, dynamic>> _data =
-      <String, Map<String, dynamic>>{};
-
-  @override
-  Future<void> put(String box, String key, Map<String, dynamic> value) async {
-    _data.putIfAbsent(box, () => <String, dynamic>{});
-    _data[box]![key] = Map<String, dynamic>.from(value);
-  }
-
-  @override
-  Future<Map<String, dynamic>?> get(String box, String key) async {
-    final Map<String, dynamic>? boxData = _data[box];
-    if (boxData == null) {
-      return null;
-    }
-    final dynamic value = boxData[key];
-    return value == null ? null : Map<String, dynamic>.from(value as Map);
-  }
-
-  @override
-  Future<void> delete(String box, String key) async {
-    _data[box]?.remove(key);
-  }
-
-  @override
-  Future<void> clearBox(String box) async {
-    _data.remove(box);
-  }
-
-  @override
-  Future<List<String>> keys(String box) async =>
-      (_data[box]?.keys ?? <String>[]).toList();
-
-  @override
-  Future<void> writeBatch(String box, List<WriteOp> ops) async {
-    for (final WriteOp op in ops) {
-      if (op is PutOp) {
-        await put(box, op.key, op.value);
-      } else if (op is DeleteOp) {
-        await delete(box, op.key);
-      }
-    }
-  }
-}
 
 /// [LocaleProvider] backed by [FakeStorageEngine], for app shell tests.
 class FakeLocaleProvider extends LocaleProvider {

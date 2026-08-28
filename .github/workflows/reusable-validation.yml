@@ -99,8 +99,19 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Test
-        run: flutter test
+      - name: Test with coverage
+        # EP-01-19: generate an LCOV coverage report for downstream quality
+        # gates. Coverage is captured even when individual tests fail so the
+        # artifact is always available for inspection.
+        run: flutter test --coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-report-${{ github.run_number }}
+          path: coverage
+          retention-days: 14
 
       - name: Secret scan
         shell: bash
