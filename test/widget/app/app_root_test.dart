@@ -15,7 +15,11 @@ void main() {
     final observer = AppLifecycleObserver();
 
     await tester.pumpWidget(
-      HivorrApp(authProvider: provider, lifecycleObserver: observer),
+      HivorrApp(
+        authProvider: provider,
+        localeProvider: FakeLocaleProvider(),
+        lifecycleObserver: observer,
+      ),
     );
     await tester.pumpAndSettle();
 

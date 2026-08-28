@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:hivorr/app/lifecycle/app_lifecycle_observer.dart';
 import 'package:hivorr/app/router/app_router.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/core/localization/localization.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -17,10 +18,12 @@ class HivorrApp extends StatefulWidget {
   const HivorrApp({
     super.key,
     required this.authProvider,
+    required this.localeProvider,
     required this.lifecycleObserver,
   });
 
   final AuthProvider authProvider;
+  final LocaleProvider localeProvider;
   final AppLifecycleObserver lifecycleObserver;
 
   @override
@@ -50,13 +53,31 @@ class _HivorrAppState extends State<HivorrApp> {
         ChangeNotifierProvider<AuthProvider>.value(
           value: widget.authProvider,
         ),
+        ChangeNotifierProvider<LocaleProvider>.value(
+          value: widget.localeProvider,
+        ),
       ],
-      child: MaterialApp.router(
-        title: 'Hivorr',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        routerConfig: _router,
-        debugShowCheckedModeBanner: false,
+      child: Builder(
+        builder: (BuildContext context) {
+          final LocaleProvider localeProvider =
+              context.watch<LocaleProvider>();
+          return MaterialApp.router(
+            title: 'Hivorr',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            routerConfig: _router,
+            locale: localeProvider.currentLocale,
+            supportedLocales: HivorrSupportedLocales.supported,
+            localeResolutionCallback: HivorrSupportedLocales.resolve,
+            localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+              HivorrLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

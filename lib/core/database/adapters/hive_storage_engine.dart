@@ -18,10 +18,18 @@ class HiveStorageEngine implements StorageEngine {
   final Map<String, Box<dynamic>> _openBoxCache = <String, Box<dynamic>>{};
   bool _initialized = false;
 
+  // Hive is process-global: re-initializing with a different path throws
+  // "already initialized". Guarded so repeated [initialize] calls (e.g. across
+  // bootstrap/test steps) are idempotent.
+  static bool _hiveInitialized = false;
+
   /// Initializes Hive against [basePath] (resolved by the initializer via
   /// `path_provider`). Safe to call once before any read/write.
   Future<void> initialize({required String basePath}) async {
-    Hive.init(basePath);
+    if (!_hiveInitialized) {
+      Hive.init(basePath);
+      _hiveInitialized = true;
+    }
     _initialized = true;
   }
 

@@ -76,6 +76,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
         ),
       InitializationReady() => HivorrApp(
           authProvider: _result!.authLayer.provider,
+          localeProvider: _result!.localeProvider,
           lifecycleObserver: widget.lifecycleObserver,
         ),
       _ => const MaterialApp(home: SplashScreen()),
