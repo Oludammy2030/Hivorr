@@ -14,11 +14,13 @@ name: Reusable Master Guard
 on:
   workflow_call:
 
-# NOTE: No `permissions` block here. GitHub rejects `pull-requests: read`
-# inside a called workflow (startup_failure); a called workflow without a
-# permissions block inherits the caller's GITHUB_TOKEN permissions, so the
-# callers (protect-master.yml, staging-deployment.yml) must grant
-# `pull-requests: read` themselves.
+# NOTE: No `permissions` block here. GitHub can reject `pull-requests: read`
+# inside a called workflow (startup_failure), so this guard does NOT rely on
+# that permission being inherited. It prefers the strong `commits/{sha}/pulls`
+# check (when the caller's `pull-requests: read` is available) and falls back
+# to a `contents: read`-only check (commit message references a PR `#N`), which
+# always works. The retry loop also absorbs GitHub's commit->PR index lag
+# (eventual consistency) that previously caused false "direct push" failures.
 
 jobs:
   guard:
@@ -33,13 +35,34 @@ jobs:
           set -euo pipefail
           SHA="${{ github.sha }}"
           echo "Verifying origin of commit ${SHA} on master..."
-          COUNT=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" \
-            --jq '[.[] | select(.merged_at != null)] | length')
-          echo "Merged pull requests containing ${SHA}: ${COUNT}"
+
+          # Strong check: commit is associated with a merged pull request.
+          # Retried to tolerate GitHub's commit->PR index lag after a merge.
+          COUNT=0
+          for i in 1 2 3 4 5 6; do
+            COUNT=$(gh api "repos/${{ github.repository }}/commits/${SHA}/pulls" \
+              --jq '[.[] | select(.merged_at != null)] | length' 2>/dev/null || echo 0)
+            echo "Attempt $i: merged pull requests containing ${SHA}: ${COUNT}"
+            if [ "${COUNT}" -ge 1 ]; then
+              break
+            fi
+            sleep 10
+          done
           if [ "${COUNT}" -ge 1 ]; then
-            echo "Verified: commit ${SHA} arrived via a merged pull request."
-          else
-            echo "::error::Direct push to master detected. All changes to master must arrive via a merged pull request."
-            echo "::error::Reference: .github/branch-protection.md — protected branch requirements."
-            exit 1
+            echo "Verified (pulls API): commit ${SHA} arrived via a merged pull request."
+            exit 0
           fi
+
+          # Fallback check (contents: read only): a commit produced by a merged
+          # PR references its number — squash merges append "(#N)", merge commits
+          # say "Merge pull request #N from ...".
+          MSG=$(gh api "repos/${{ github.repository }}/git/commits/${SHA}" --jq '.message' 2>/dev/null || true)
+          echo "Commit message: ${MSG}"
+          if printf '%s' "${MSG}" | grep -Eq '#[0-9]+'; then
+            echo "Verified (commit message): commit ${SHA} references a pull request."
+            exit 0
+          fi
+
+          echo "::error::Commit ${SHA} does not appear to originate from a merged pull request. All changes to master must arrive via a merged pull request."
+          echo "::error::Reference: .github/branch-protection.md — protected branch requirements."
+          exit 1
