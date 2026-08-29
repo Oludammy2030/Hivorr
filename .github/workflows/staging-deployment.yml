@@ -37,28 +37,14 @@ jobs:
     name: Staging Guard
     uses: ./.github/workflows/reusable-master-guard.yml
 
-  prepare:
-    name: Stage Supabase config
-    needs: guard
-    environment: staging
-    runs-on: ubuntu-latest
-    outputs:
-      supabase-url: ${{ steps.cfg.outputs.supabase-url }}
-      supabase-anon-key: ${{ steps.cfg.outputs.supabase-anon-key }}
-    steps:
-      - id: cfg
-        run: |
-          echo "supabase-url=${{ vars.STAGING_HIVORR_SUPABASE_URL }}" >> "$GITHUB_OUTPUT"
-          echo "supabase-anon-key=${{ secrets.STAGING_HIVORR_SUPABASE_ANON_KEY }}" >> "$GITHUB_OUTPUT"
-
   build:
     name: Staging Build
-    needs: [guard, prepare]
+    needs: guard
     uses: ./.github/workflows/reusable-validation.yml
     with:
       flutter-version: '3.47.0'
       environment-name: 'staging'
-      supabase-url: ${{ needs.prepare.outputs.supabase-url }}
+      supabase-url: ${{ vars.STAGING_HIVORR_SUPABASE_URL }}
       config-schema-version: ${{ vars.STAGING_HIVORR_CONFIG_SCHEMA_VERSION || '1' }}
       feature-verbose-logging: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_VERBOSE_LOGGING || 'false' }}
       feature-offline-sync: ${{ vars.STAGING_HIVORR_FEATURE_ENABLE_OFFLINE_SYNC || 'false' }}
@@ -67,7 +53,7 @@ jobs:
       upload-artifacts: true
       build-targets: '["web"]'
     secrets:
-      supabase-anon-key: ${{ needs.prepare.outputs.supabase-anon-key }}
+      supabase-anon-key: ${{ secrets.STAGING_HIVORR_SUPABASE_ANON_KEY }}
 
   deploy:
     name: Deploy to Staging
