@@ -14,14 +14,15 @@ name: Reusable Master Guard
 on:
   workflow_call:
 
-# NOTE: No `permissions` block here. The guard intentionally avoids the GitHub
-# API entirely (the called workflow's GITHUB_TOKEN cannot call the pulls API,
-# and adding `pull-requests: read` triggers startup_failure). Instead it checks
-# the commit message locally via `git` after checkout. A commit produced by a
-# merged pull request always references its number — squash merges append
-# "(#N)", merge commits say "Merge pull request #N from ...". This is
-# best-effort (deviation D-01: real branch protection is unavailable on the
-# GitHub Free plan), but it no longer hard-fails legitimate merged-PR pushes.
+# NOTE: No `permissions` block here. GitHub rejects `pull-requests: read` inside
+# a called workflow (startup_failure) — and the caller's guard job must NOT grant
+# it either, or it is inherited and still triggers startup_failure. The guard
+# therefore avoids the GitHub API entirely and checks the commit message locally
+# via `git` after checkout (only `contents: read` needed). A commit produced by a
+# merged pull request always references its number — squash merges append "(#N)",
+# merge commits say "Merge pull request #N from ...". This is best-effort
+# (deviation D-01: real branch protection is unavailable on the GitHub Free plan),
+# but it no longer hard-fails legitimate merged-PR pushes.
 
 jobs:
   guard:
