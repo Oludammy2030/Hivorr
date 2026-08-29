@@ -144,6 +144,35 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
       AppConstants.envMonitoringMaxBreadcrumbs => const String.fromEnvironment(
         AppConstants.envMonitoringMaxBreadcrumbs,
       ),
+      AppConstants.featureEnablePushNotifications =>
+        const String.fromEnvironment(
+          AppConstants.featureEnablePushNotifications,
+        ),
+      AppConstants.envNotificationDefaultChannelId =>
+        const String.fromEnvironment(
+          AppConstants.envNotificationDefaultChannelId,
+        ),
+      AppConstants.envNotificationDefaultChannelName =>
+        const String.fromEnvironment(
+          AppConstants.envNotificationDefaultChannelName,
+        ),
+      AppConstants.envNotificationDefaultChannelDesc =>
+        const String.fromEnvironment(
+          AppConstants.envNotificationDefaultChannelDesc,
+        ),
+      AppConstants.envNotificationEnablePush => const String.fromEnvironment(
+        AppConstants.envNotificationEnablePush,
+      ),
+      AppConstants.envNotificationEnableLocal => const String.fromEnvironment(
+        AppConstants.envNotificationEnableLocal,
+      ),
+      AppConstants.envNotificationPushChannelName =>
+        const String.fromEnvironment(
+          AppConstants.envNotificationPushChannelName,
+        ),
+      AppConstants.envNotificationIconResource => const String.fromEnvironment(
+        AppConstants.envNotificationIconResource,
+      ),
       _ => '',
     };
     return value.isEmpty ? null : value;

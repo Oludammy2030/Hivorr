@@ -11,18 +11,18 @@ select plan(15);
 -- ─── Anon + authenticated can read taxonomy ─────────────────────────────────
 set role anon;
 select is(
-  (select count(*)::int from public.industries), 0, 'anon can read industries (empty now)');
+  (select count(*)::int from public.industries), 8, 'anon can read 8 seeded industries');
 select is(
-  (select count(*)::int from public.professions), 0, 'anon can read professions (empty now)');
+  (select count(*)::int from public.professions), 46, 'anon can read 46 seeded professions');
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select is(
-  (select count(*)::int from public.industries), 0, 'authenticated can read industries');
+  (select count(*)::int from public.industries), 8, 'authenticated can read 8 seeded industries');
 select is(
-  (select count(*)::int from public.professions), 0, 'authenticated can read professions');
+  (select count(*)::int from public.professions), 46, 'authenticated can read 46 seeded professions');
 
 -- ─── No client write path to taxonomy ───────────────────────────────────────
 select throws_ok(
@@ -41,16 +41,16 @@ insert into public.industries (id, slug, name)
 values ('aaaaaaaa-0000-0000-0000-000000000002', 'food', 'Food');
 
 insert into public.professions (id, industry_id, slug, name)
-values ('bbbbbbbb-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'chef', 'Chef');
+values ('bbbbbbbb-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'test-chef', 'Chef');
 insert into public.professions (id, industry_id, slug, name)
-values ('bbbbbbbb-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', 'electrician', 'Electrician');
+values ('bbbbbbbb-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', 'test-electrician', 'Electrician');
 
 -- ─── Slug uniqueness ─────────────────────────────────────────────────────────
 select throws_ok(
   $$ insert into public.industries (slug, name) values ('tech', 'Duplicate Tech') $$,
   '23505', null, 'duplicate industry slug rejected');
 select throws_ok(
-  $$ insert into public.professions (industry_id, slug, name) values ('aaaaaaaa-0000-0000-0000-000000000001', 'chef', 'Dup Chef') $$,
+  $$ insert into public.professions (industry_id, slug, name) values ('aaaaaaaa-0000-0000-0000-000000000001', 'test-chef', 'Dup Chef') $$,
   '23505', null, 'duplicate profession slug rejected');
 
 -- ─── Slug format enforcement ─────────────────────────────────────────────────
@@ -68,8 +68,9 @@ select throws_ok(
 
 -- ─── Referential integrity holds ─────────────────────────────────────────────
 select is(
-  (select count(*)::int from public.professions p join public.industries i on i.id = p.industry_id),
-  2, 'every profession references an existing industry');
+  (select count(*)::int from public.professions p
+   where not exists (select 1 from public.industries i where i.id = p.industry_id)),
+   0, 'every profession references an existing industry');
 
 -- ─── Cascade behavior from entity deletion ──────────────────────────────────
 insert into auth.users (id, email) values ('cccccccc-0000-0000-0000-000000000001', 'c@example.com') on conflict (id) do nothing;

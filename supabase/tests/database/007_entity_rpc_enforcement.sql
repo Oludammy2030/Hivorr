@@ -20,11 +20,11 @@ insert into public.entities (id, status) values ('22222222-2222-2222-2222-222222
 insert into public.entity_profiles (entity_id, legal_name, display_name)
 values ('22222222-2222-2222-2222-222222222222', 'Legal B', 'Display B');
 
-insert into public.industries (id, slug, name) values ('aaaaaaaa-0000-0000-0000-000000000001', 'tech', 'Technology');
+insert into public.industries (id, slug, name) values ('aaaaaaaa-0000-0000-0000-000000000001', 'fx-tech', 'Technology');
 insert into public.professions (id, industry_id, slug, name, is_active)
-values ('bbbbbbbb-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'chef', 'Chef', true);
+values ('bbbbbbbb-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'fx-chef', 'Chef', true);
 insert into public.professions (id, industry_id, slug, name, is_active)
-values ('bbbbbbbb-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', 'plumber', 'Plumber', false);
+values ('bbbbbbbb-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', 'fx-plumber', 'Plumber', false);
 
 -- ─── A. Anon has NO execute grant on entity RPCs (42501) ────────────────────
 set role anon;

@@ -6,6 +6,7 @@ import 'package:hivorr/core/cache/cache_config.dart';
 import 'package:hivorr/core/database/database_config.dart';
 import 'package:hivorr/core/monitoring/monitoring_config.dart';
 import 'package:hivorr/core/network/network_config.dart';
+import 'package:hivorr/core/notifications/notification_config.dart';
 import 'package:hivorr/core/sync/sync_config.dart';
 
 /// Immutable Supabase endpoint configuration.
@@ -43,6 +44,7 @@ class EnvironmentConfig {
     required this.syncConfig,
     required this.networkConfig,
     required this.monitoringConfig,
+    required this.notificationConfig,
     required this.constants,
     required this.schemaVersion,
   });
@@ -74,6 +76,9 @@ class EnvironmentConfig {
   /// Validated monitoring/telemetry configuration (Sentry, log levels, redaction).
   final MonitoringConfig monitoringConfig;
 
+  /// Validated notification engine configuration (channels, push, icon).
+  final NotificationConfig notificationConfig;
+
   /// Centralized immutable application constants.
   final AppConstants constants;
 
@@ -95,7 +100,8 @@ class EnvironmentConfig {
   String toString() {
     return 'EnvironmentConfig('
         'environment: $environment, '
-        'schemaVersion: $schemaVersion)';
+        'schemaVersion: $schemaVersion, '
+        'notificationConfig: $notificationConfig)';
   }
 
   /// Whether local data is encrypted at rest for this environment.

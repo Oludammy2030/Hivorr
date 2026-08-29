@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart' show Locale, LocalizationsDelegate;
 
 import 'package:hivorr/config/app_config/app_config.dart';
 import 'package:hivorr/config/constants/app_constants.dart';
@@ -8,7 +9,15 @@ import 'package:hivorr/core/api/api_initializer.dart';
 import 'package:hivorr/core/api/auth/access_token_provider.dart';
 import 'package:hivorr/core/api/exceptions/api_exception_mapper.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
+import 'package:hivorr/core/localization/localization.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'support/fakes/fake_auth.dart';
+import 'support/fakes/fake_storage.dart';
+
+export 'support/fakes/fake_auth.dart';
+export 'support/fakes/fake_storage.dart';
+export 'support/harnesses/widget_harness.dart';
 
 /// Non-secret, non-service-role fake anon key for tests.
 const String fakeAnonKey = 'public-anon-key-abcdef123456';
@@ -49,65 +58,40 @@ AuthLayer fakeInitializeAuthLayer(
 ) =>
     AuthLayer(service: FakeAuthService(), provider: FakeAuthProvider());
 
-/// Inert [AuthService] for bootstrap tests.
-class FakeAuthService implements AuthService {
-  @override
-  AuthStatus get status => AuthStatus.unauthenticated;
-
-  @override
-  String? get currentEntityId => null;
-
-  @override
-  AuthSession? get currentSession => null;
-
-  @override
-  bool get isSignedIn => false;
-
-  @override
-  Stream<AuthStatus> get onStatusChanged =>
-      const Stream<AuthStatus>.empty();
-
-  @override
-  Future<AuthResult> signUp(AuthCredentials credentials) async =>
-      AuthResult(status: AuthStatus.unauthenticated);
-
-  @override
-  Future<AuthResult> signIn(AuthCredentials credentials) async =>
-      AuthResult(status: AuthStatus.unauthenticated);
-
-  @override
-  Future<void> signOut() async {}
-
-  @override
-  Future<void> initialize() async {}
-
-  @override
-  Future<void> ensureEntityExists() async {}
-
-  @override
-  Future<void> dispose() async {}
+/// [LocaleProvider] backed by [FakeStorageEngine], for app shell tests.
+class FakeLocaleProvider extends LocaleProvider {
+  FakeLocaleProvider()
+      : super(
+          config: defaultLocalizationConfig,
+          storage: FakeStorageEngine(),
+        );
 }
 
-/// [AuthProvider] whose [status] is directly controllable for routing tests.
-class FakeAuthProvider extends AuthProvider {
-  FakeAuthProvider({AuthStatus initialStatus = AuthStatus.unauthenticated})
-      : _status = initialStatus,
-        super(service: FakeAuthService());
-
-  AuthStatus _status;
-
-  @override
-  AuthStatus get status => _status;
+/// [LocalizationsDelegate] that returns pre-loaded [HivorrLocalizations] without
+/// touching [rootBundle], so widget tests avoid the test-binding quirk where
+/// `rootBundle.loadString` hangs on the second `testWidgets` in a file.
+class FakeLocalizationsDelegate
+    extends LocalizationsDelegate<HivorrLocalizations> {
+  const FakeLocalizationsDelegate();
 
   @override
-  bool get isSignedIn => _status == AuthStatus.authenticated;
-
-  /// Drives the provider's reported status (and notifies listeners).
-  void setStatus(AuthStatus status) {
-    _status = status;
-    notifyListeners();
-  }
+  bool isSupported(Locale locale) => true;
 
   @override
-  Future<void> initialize() async {}
+  Future<HivorrLocalizations> load(Locale locale) async =>
+      HivorrLocalizations(
+        <String, String>{
+          'common.ok': locale.languageCode == 'fr' ? 'DACCORD' : 'OK',
+          'common.cancel': 'Cancel',
+          'validation.required': '{field} is required',
+          'common.itemCount.zero': 'No items',
+          'common.itemCount.one': '1 item',
+          'common.itemCount.other': '{count} items',
+        },
+        <String, String>{},
+        locale,
+      );
+
+  @override
+  bool shouldReload(FakeLocalizationsDelegate old) => true;
 }

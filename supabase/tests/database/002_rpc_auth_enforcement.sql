@@ -11,6 +11,12 @@
 
 begin;
 set search_path to extensions, public;
+
+-- This file commits a fixture row mid-way (see the commit; begin; below, required
+-- to advance the wall-clock for the updated_at trigger assertion). Remove any
+-- leftover 'zeta' row from a prior run so the happy-path create is idempotent.
+delete from public.platform_demo_records where title = 'zeta';
+
 select plan(18);
 
 -- ─── anon: only the public health probe ────────────────────────────────────
@@ -188,4 +194,9 @@ select is(
 );
 
 select * from finish();
-rollback;
+
+-- The mid-file commit; begin; left the 'zeta' fixture row committed. Remove it so
+-- it does not leak into other test files (e.g. 001) or subsequent runs.
+set role postgres;
+delete from public.platform_demo_records where title = 'zeta';
+commit;

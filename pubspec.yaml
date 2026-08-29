@@ -73,6 +73,18 @@ dependencies:
   # SVG rendering for the bundled Hivorr logo (EP-01-16 visual identity).
   flutter_svg: ^2.0.10
 
+  # Localization & internationalization engine (EP-01-17).
+  # flutter_localizations is an SDK package providing material/cupertino
+  # locale delegates. intl provides ICU/CLDR plural rules via Intl.pluralLogic.
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.0
+
+  # Local & push notification engine for lib/core/notifications/ (EP-01-18).
+  # Android/iOS/Web local notification rendering + pending-request queries.
+  # Version confirmed compatible with Dart SDK ^3.12.2 at implementation time.
+  flutter_local_notifications: ^18.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -101,6 +113,7 @@ flutter:
   # Bundled visual-identity assets (EP-01-16): logo SVGs + offline Inter font.
   assets:
     - assets/images/
+    - assets/translations/
 
   # Custom typography: Inter bundled offline as a variable TTF, exposed via
   # weight entries so TextTheme fontWeight maps to the `wght` variation.

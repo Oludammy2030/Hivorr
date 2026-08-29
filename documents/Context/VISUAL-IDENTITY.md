@@ -18,6 +18,8 @@ This document defines:
 
 It does **not** define component-level UI (buttons, cards, etc.) — that lives in the EP-01-16 Design System implementation, which consumes these tokens.
 
+§9 defines the **premium visual finish & experience bar** — how these tokens are combined to feel *intelligent, professional, modern, and human-centered*. §2–§5 govern *what* the tokens are; §9 governs *how they look and feel* and is binding alongside the rest of this document.
+
 ---
 
 ## 2. Brand Color
@@ -186,9 +188,61 @@ Text colors come from `colorScheme.onSurface` / `onSurfaceVariant` — never har
 - `documents/Context/AGENT.md` Rule: *"All UI MUST use `AppTheme` tokens defined in `VISUAL-IDENTITY.md`; never hardcode colors or fonts."*
 - Tests assert `ColorScheme.primary == #0B6E99` and `TextTheme.bodyMedium.fontFamily == 'Inter'`.
 - Any UI task (EP-02+) that hardcodes a color/font fails its Definition of Done.
+- Any UI task (EP-02+) that uses **non-token** spacing, border radius, elevation/shadow, or motion — or ships an unmindful/off-brand empty, loading, error, or success state — fails its Definition of Done under §9 (the finish & experience standard).
 
 ---
 
 ## 8. Change Process
 
 To change a brand color, font, or the logo: update this document FIRST, then update `lib/app/theme/*` and the asset files to match, then bump the relevant test expectations. Never edit code tokens without updating this source of truth.
+
+---
+
+## 9. Visual Finish & Experience Standard
+
+**Status:** Active — binding across the entire project (EP-01 → EP-08). Every UI task and agent MUST conform alongside §2–§7.
+
+### 9.1 Design personality (the bar)
+
+Every Hivorr surface must feel like an **intelligent professional ecosystem**: premium, modern, and human-centered. That means calm confidence, trust and financial integrity conveyed through restraint — **not** flashy glass, neon, or gimmick. If a screen feels busy, aggressive, or generic, it fails this standard.
+
+### 9.2 Principles
+
+- **Calm & uncluttered** — generous whitespace; one primary action per view; content breathes.
+- **Trust-forward** — soft depth over hard edges; subtle, predictable; nothing harsh.
+- **Consistency over cleverness** — every screen reads as the same product.
+- **Human warmth** — friendly microcopy, smooth (never frantic) motion, warm empty/success/error states.
+
+### 9.3 Spacing & layout rhythm
+
+Token source: `AppThemeExtension.spacing`.
+
+- 8pt grid base. Use the token spacings; never ad-hoc `EdgeInsets`.
+- Border radius via tokens: cards/standard surfaces **16dp**; modal bottom sheets **24dp top corners**.
+- Screen padding: 16dp mobile / 24dp on web content panes; section gaps follow the spacing scale.
+
+### 9.4 Depth & elevation
+
+- Elevation is token-driven and **soft/subtle** — cards lift gently over the background; no hard drop shadows, no heavy contrast.
+- Prefer elevation for interactive/modal surfaces; prefer borders (token `outline`) for static containment.
+
+### 9.5 Motion & micro-interactions
+
+- Token-driven durations & curves (target **150–300ms**, standard easing). Prefer fade + slide transitions.
+- Animate only to communicate: button press, list feedback, state changes. No gratuitous animation.
+- Loader: use `HivorrLoader` (breathing pulse, not a spin) for brand moments.
+
+### 9.6 Component finish (uses EP-01-16 primitives)
+
+- **Buttons** — clear hierarchy: primary = cerulean; financial-action CTA = emerald (secondary); outline/text for low-emphasis. Confident padding; ≥48dp tap targets.
+- **Text fields** — calm filled/outlined states; clear focus ring (primary); legible error text using `error` tokens.
+- **Cards** — token radius + soft elevation; consistent internal padding; subtle hover lift on web.
+- **Empty / loading / error / success states** — always use the branded illustrated-slot widgets (`HivorrEmptyState`, `HivorrLoadingState`, `HivorrErrorState`, `HivorrSnackbar`). Never a bare spinner or a dead-end: provide guidance or a next action.
+
+### 9.7 Accessibility ceiling (premium = universally usable)
+
+- WCAG AA contrast (the existing floor) **plus** comfortable touch targets (≥48dp), readable line-heights, and visible focus in both light and dark themes.
+
+### 9.8 Enforcement
+
+Extends §7. A UI task fails its Definition of Done if it uses **non-token** spacing, border radius, elevation/shadow, or motion, **or** ships an unmindful/off-brand empty, loading, error, or success state — not only when it hardcodes a color or font.
