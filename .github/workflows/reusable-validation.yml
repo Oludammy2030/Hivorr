@@ -162,30 +162,37 @@ jobs:
 
           echo "No secrets detected."
 
+  setup:
+    name: Plan build matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - name: Generate matrix
+        id: gen
+        shell: bash
+        env:
+          TARGETS: ${{ inputs.build-targets }}
+        run: |
+          node -e '
+            const targets = JSON.parse(process.env.TARGETS);
+            const map = {
+              web:     { os: "ubuntu-latest", cmd: "flutter build web --release",      path: "build/web" },
+              android: { os: "ubuntu-latest", cmd: "flutter build apk --release",      path: "build/app/outputs/flutter-apk" },
+              ios:     { os: "macos-latest",  cmd: "flutter build ios --release --no-codesign", path: "build/ios/iphoneos" },
+              windows: { os: "windows-latest", cmd: "flutter build windows --release", path: "build/windows/x64/runner/Release" },
+            };
+            const include = targets.filter(t => map[t]).map(t => ({ target: t, ...map[t] }));
+            require("fs").appendFileSync(process.env.GITHUB_OUTPUT, "matrix=" + JSON.stringify({ include }) + "\n");
+          '
+
   build:
     name: Build (${{ matrix.target }})
-    needs: validate
+    needs: [validate, setup]
     strategy:
       fail-fast: false
-      matrix:
-        target: ${{ fromJson(inputs.build-targets) }}
-        include:
-          - target: web
-            os: ubuntu-latest
-            build-cmd: flutter build web --release
-            artifact-path: build/web
-          - target: android
-            os: ubuntu-latest
-            build-cmd: flutter build apk --release
-            artifact-path: build/app/outputs/flutter-apk
-          - target: ios
-            os: macos-latest
-            build-cmd: flutter build ios --release --no-codesign
-            artifact-path: build/ios/iphoneos
-          - target: windows
-            os: windows-latest
-            build-cmd: flutter build windows --release
-            artifact-path: build/windows/x64/runner/Release
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     env:
@@ -216,7 +223,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          ${{ matrix.build-cmd }} \
+          ${{ matrix.cmd }} \
             --dart-define=HIVORR_ENV="$HIVORR_ENV" \
             --dart-define=HIVORR_SUPABASE_URL="$HIVORR_SUPABASE_URL" \
             --dart-define=HIVORR_SUPABASE_ANON_KEY="$HIVORR_SUPABASE_ANON_KEY" \
@@ -230,7 +237,7 @@ jobs:
         if: inputs.upload-artifacts == true
         shell: bash
         run: |
-          cd "${{ matrix.artifact-path }}"
+          cd "${{ matrix.path }}"
           find . -type f -exec sha256sum {} \; > checksums-${{ matrix.target }}.txt
           echo "Checksums generated:"
           cat checksums-${{ matrix.target }}.txt
@@ -240,5 +247,5 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hivorr-${{ inputs.environment-name }}-${{ matrix.target }}-${{ inputs.commit-sha != '' && inputs.commit-sha || github.sha }}
-          path: ${{ matrix.artifact-path }}
+          path: ${{ matrix.path }}
           retention-days: 30
