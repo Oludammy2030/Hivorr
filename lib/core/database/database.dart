@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:hivorr/config/environments/environment_config.dart';
 import 'package:hivorr/core/database/adapters/hive_storage_engine.dart';
 import 'package:hivorr/core/database/database_config.dart';
@@ -56,9 +58,15 @@ class Database {
       return existing;
     }
 
-    final Directory documents = await getApplicationDocumentsDirectory();
-    final String basePath =
-        '${documents.path}/${config.databaseConfig.baseDirectoryName}';
+    final String basePath;
+    if (kIsWeb) {
+      // Web has no filesystem; Hive uses the name as the IndexedDB prefix
+      // and `path_provider` is unsupported on the browser.
+      basePath = config.databaseConfig.baseDirectoryName;
+    } else {
+      final Directory documents = await getApplicationDocumentsDirectory();
+      basePath = '${documents.path}/${config.databaseConfig.baseDirectoryName}';
+    }
 
     final HiveStorageEngine hive = HiveStorageEngine();
     await hive.initialize(basePath: basePath);
