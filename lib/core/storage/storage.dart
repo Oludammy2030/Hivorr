@@ -1,4 +1,10 @@
 export 'secure_storage.dart';
 export 'secure_storage_config.dart';
 export 'secure_token_store.dart';
+export 'storage_config.dart';
+export 'storage_exceptions.dart';
+export 'storage_paths.dart';
+export 'storage_service.dart';
+export 'storage_validators.dart';
 export 'supabase_secure_local_storage.dart';
+export 'supabase_storage_service.dart';
