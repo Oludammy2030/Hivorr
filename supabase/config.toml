@@ -29,3 +29,21 @@ port = 54323
 
 [auth]
 enabled = true
+
+[storage]
+enabled = true
+
+[storage.buckets.credential-documents]
+public = false
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+
+[storage.buckets.profile-avatars]
+public = true
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
+
+[storage.buckets.portfolio-items]
+public = true
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
