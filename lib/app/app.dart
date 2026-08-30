@@ -6,13 +6,15 @@ import 'package:hivorr/app/router/app_router.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/data/providers/taxonomy_provider.dart';
+import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 /// Root application widget for the Hivorr platform.
 ///
-/// Composes [MultiProvider] (auth + future core providers) with
-/// [MaterialApp.router] bound to the GoRouter instance. Theming is sourced
+/// Composes [MultiProvider] (auth, locale, taxonomy + future core providers)
+/// with [MaterialApp.router] bound to the GoRouter instance. Theming is sourced
 /// exclusively from [AppTheme] tokens (AGENT.md Rule 5).
 class HivorrApp extends StatefulWidget {
   const HivorrApp({
@@ -20,11 +22,15 @@ class HivorrApp extends StatefulWidget {
     required this.authProvider,
     required this.localeProvider,
     required this.lifecycleObserver,
+    required this.taxonomyRepository,
+    required this.taxonomyProvider,
   });
 
   final AuthProvider authProvider;
   final LocaleProvider localeProvider;
   final AppLifecycleObserver lifecycleObserver;
+  final TaxonomyRepository taxonomyRepository;
+  final TaxonomyProvider taxonomyProvider;
 
   @override
   State<HivorrApp> createState() => _HivorrAppState();
@@ -55,6 +61,10 @@ class _HivorrAppState extends State<HivorrApp> {
         ),
         ChangeNotifierProvider<LocaleProvider>.value(
           value: widget.localeProvider,
+        ),
+        Provider<TaxonomyRepository>.value(value: widget.taxonomyRepository),
+        ChangeNotifierProvider<TaxonomyProvider>.value(
+          value: widget.taxonomyProvider,
         ),
       ],
       child: Builder(

@@ -78,6 +78,8 @@ class _InitializationScreenState extends State<InitializationScreen> {
           authProvider: _result!.authLayer.provider,
           localeProvider: _result!.localeProvider,
           lifecycleObserver: widget.lifecycleObserver,
+          taxonomyRepository: _result!.taxonomyRepository,
+          taxonomyProvider: _result!.taxonomyProvider,
         ),
       _ => const MaterialApp(home: SplashScreen()),
     };

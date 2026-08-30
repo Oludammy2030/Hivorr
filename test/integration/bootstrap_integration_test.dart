@@ -16,9 +16,11 @@ import 'package:hivorr/core/authentication/auth_config.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../support/fakes/fake_taxonomy.dart';
 import '../test_helpers.dart';
 
 void main() {
@@ -77,12 +79,16 @@ void main() {
             FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
         final FakeLocaleProvider localeProvider = FakeLocaleProvider();
         final AppLifecycleObserver observer = AppLifecycleObserver();
+        final taxonomyRepository = FakeTaxonomyRepository();
+        final taxonomyProvider = TaxonomyProvider(repository: taxonomyRepository);
 
         await tester.pumpWidget(
           HivorrApp(
             authProvider: authProvider,
             localeProvider: localeProvider,
             lifecycleObserver: observer,
+            taxonomyRepository: taxonomyRepository,
+            taxonomyProvider: taxonomyProvider,
           ),
         );
         await tester.pumpAndSettle();
@@ -108,12 +114,16 @@ void main() {
             FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
         final FakeLocaleProvider localeProvider = FakeLocaleProvider();
         final AppLifecycleObserver observer = AppLifecycleObserver();
+        final taxonomyRepository = FakeTaxonomyRepository();
+        final taxonomyProvider = TaxonomyProvider(repository: taxonomyRepository);
 
         await tester.pumpWidget(
           HivorrApp(
             authProvider: authProvider,
             localeProvider: localeProvider,
             lifecycleObserver: observer,
+            taxonomyRepository: taxonomyRepository,
+            taxonomyProvider: taxonomyProvider,
           ),
         );
         await tester.pumpAndSettle();
@@ -220,6 +230,8 @@ void main() {
             authProvider: authProvider,
             localeProvider: result.localeProvider,
             lifecycleObserver: observer,
+            taxonomyRepository: result.taxonomyRepository,
+            taxonomyProvider: result.taxonomyProvider,
           ),
         );
         await tester.pumpAndSettle();
