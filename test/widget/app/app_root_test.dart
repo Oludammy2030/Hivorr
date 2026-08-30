@@ -5,20 +5,26 @@ import 'package:hivorr/app/app.dart';
 import 'package:hivorr/app/lifecycle/app_lifecycle_observer.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
+import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:provider/provider.dart';
 
+import '../../support/fakes/fake_taxonomy.dart';
 import '../../test_helpers.dart';
 
 void main() {
   testWidgets('HivorrApp mounts and exposes the AuthProvider', (tester) async {
     final provider = FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
     final observer = AppLifecycleObserver();
+    final taxonomyRepository = FakeTaxonomyRepository();
+    final taxonomyProvider = TaxonomyProvider(repository: taxonomyRepository);
 
     await tester.pumpWidget(
       HivorrApp(
         authProvider: provider,
         localeProvider: FakeLocaleProvider(),
         lifecycleObserver: observer,
+        taxonomyRepository: taxonomyRepository,
+        taxonomyProvider: taxonomyProvider,
       ),
     );
     await tester.pumpAndSettle();
