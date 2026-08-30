@@ -8,6 +8,7 @@ import 'package:hivorr/core/api/api_initializer.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/data/data_layer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Result of a successful bootstrap initialization sequence.
@@ -19,12 +20,20 @@ class BootstrapResult {
     required this.apiLayer,
     required this.authLayer,
     required this.localeProvider,
+    required this.taxonomyRepository,
+    required this.taxonomyProvider,
   });
 
   final AppConfig appConfig;
   final ApiLayer apiLayer;
   final AuthLayer authLayer;
   final LocaleProvider localeProvider;
+
+  /// Cache-first taxonomy repository (EP-02-07).
+  final TaxonomyRepository taxonomyRepository;
+
+  /// Taxonomy provider surfaced to the widget tree (EP-02-07).
+  final TaxonomyProvider taxonomyProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -67,11 +76,15 @@ class AppBootstrap {
       storage: storage,
     );
     await localeProvider.initialize();
+    final ({TaxonomyRepository repository, TaxonomyProvider provider})
+    taxonomy = registerTaxonomyLayer(apiLayer);
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
       authLayer: authLayer,
       localeProvider: localeProvider,
+      taxonomyRepository: taxonomy.repository,
+      taxonomyProvider: taxonomy.provider,
     );
   }
 
