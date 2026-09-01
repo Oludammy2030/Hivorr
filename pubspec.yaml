@@ -59,8 +59,10 @@ dependencies:
   sentry_flutter: 9.27.0
 
   # Client-side cryptography (AES-GCM, PBKDF2, SHA-256) for lib/core/security/
-  # encryption and pinning (EP-01-10, D1 — `cryptography` selected).
+  # encryption and pinning (EP-01-10, D1 - `cryptography` selected).
   cryptography: ^2.7.0
+  # HMAC-SHA512/SHA256 for payment webhook signature verification (EP-02-09).
+  crypto: ^3.0.3
   hive: ^2.2.3
   path_provider: ^2.1.6
 

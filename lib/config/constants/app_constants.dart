@@ -324,6 +324,36 @@ class AppConstants {
   /// Default Android notification icon resource.
   static const String defaultNotificationIconResource = '@mipmap/ic_launcher';
 
+  // ─── Payment gateway configuration (EP-02-09) ───────────────────────
+
+  /// Paystack public (publishable) key.
+  static const String envPaystackPublicKey = 'HIVORR_PAYSTACK_PUBLIC_KEY';
+
+  /// Paystack secret key — live money-movement secret, never logged.
+  static const String envPaystackSecretKey = 'HIVORR_PAYSTACK_SECRET_KEY';
+
+  /// Flutterwave public (publishable) key.
+  static const String envFlutterwavePublicKey =
+      'HIVORR_FLUTTERWAVE_PUBLIC_KEY';
+
+  /// Flutterwave secret key — live money-movement secret, never logged.
+  static const String envFlutterwaveSecretKey =
+      'HIVORR_FLUTTERWAVE_SECRET_KEY';
+
+  /// NIBSS name-enquiry base URL (HTTPS), when a direct credential exists.
+  static const String envNibssBaseUrl = 'HIVORR_NIBSS_BASE_URL';
+
+  /// NIBSS name-enquiry API key.
+  static const String envNibssApiKey = 'HIVORR_NIBSS_API_KEY';
+
+  /// Default payment provider selected per environment:
+  /// `paystack` | `flutterwave`.
+  static const String envPaymentDefaultProvider =
+      'HIVORR_PAYMENT_DEFAULT_PROVIDER';
+
+  /// Default fallback payment provider.
+  static const String defaultPaymentProvider = 'paystack';
+
   // ─── Application identifiers ────────────────────────────────────────
 
   /// Human-readable application name.
