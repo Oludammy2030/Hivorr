@@ -80,6 +80,8 @@ class _InitializationScreenState extends State<InitializationScreen> {
           lifecycleObserver: widget.lifecycleObserver,
           taxonomyRepository: _result!.taxonomyRepository,
           taxonomyProvider: _result!.taxonomyProvider,
+          verificationRepository: _result!.verificationRepository,
+          verificationProvider: _result!.verificationProvider,
         ),
       _ => const MaterialApp(home: SplashScreen()),
     };

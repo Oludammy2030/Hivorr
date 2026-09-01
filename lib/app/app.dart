@@ -7,7 +7,9 @@ import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
+import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
+import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -24,6 +26,8 @@ class HivorrApp extends StatefulWidget {
     required this.lifecycleObserver,
     required this.taxonomyRepository,
     required this.taxonomyProvider,
+    this.verificationRepository,
+    this.verificationProvider,
   });
 
   final AuthProvider authProvider;
@@ -31,6 +35,12 @@ class HivorrApp extends StatefulWidget {
   final AppLifecycleObserver lifecycleObserver;
   final TaxonomyRepository taxonomyRepository;
   final TaxonomyProvider taxonomyProvider;
+
+  /// Identity-verification repository (EP-02-10). Optional for testability.
+  final VerificationRepository? verificationRepository;
+
+  /// Identity-verification provider surfaced to the widget tree (EP-02-10).
+  final VerificationProvider? verificationProvider;
 
   @override
   State<HivorrApp> createState() => _HivorrAppState();
@@ -54,6 +64,10 @@ class _HivorrAppState extends State<HivorrApp> {
 
   @override
   Widget build(BuildContext context) {
+    final VerificationRepository? verificationRepository =
+        widget.verificationRepository;
+    final VerificationProvider? verificationProvider =
+        widget.verificationProvider;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(
@@ -66,6 +80,12 @@ class _HivorrAppState extends State<HivorrApp> {
         ChangeNotifierProvider<TaxonomyProvider>.value(
           value: widget.taxonomyProvider,
         ),
+        if (verificationRepository != null)
+          Provider<VerificationRepository>.value(value: verificationRepository),
+        if (verificationProvider != null)
+          ChangeNotifierProvider<VerificationProvider>.value(
+            value: verificationProvider,
+          ),
       ],
       child: Builder(
         builder: (BuildContext context) {

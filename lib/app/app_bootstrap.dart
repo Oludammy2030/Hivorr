@@ -22,6 +22,8 @@ class BootstrapResult {
     required this.localeProvider,
     required this.taxonomyRepository,
     required this.taxonomyProvider,
+    required this.verificationRepository,
+    required this.verificationProvider,
   });
 
   final AppConfig appConfig;
@@ -34,6 +36,12 @@ class BootstrapResult {
 
   /// Taxonomy provider surfaced to the widget tree (EP-02-07).
   final TaxonomyProvider taxonomyProvider;
+
+  /// Identity-verification repository (EP-02-10).
+  final VerificationRepository verificationRepository;
+
+  /// Identity-verification provider surfaced to the widget tree (EP-02-10).
+  final VerificationProvider verificationProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -78,6 +86,8 @@ class AppBootstrap {
     await localeProvider.initialize();
     final ({TaxonomyRepository repository, TaxonomyProvider provider})
     taxonomy = registerTaxonomyLayer(apiLayer);
+    final ({VerificationRepository repository, VerificationProvider provider})
+    verification = registerVerificationLayer(apiLayer);
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -85,6 +95,8 @@ class AppBootstrap {
       localeProvider: localeProvider,
       taxonomyRepository: taxonomy.repository,
       taxonomyProvider: taxonomy.provider,
+      verificationRepository: verification.repository,
+      verificationProvider: verification.provider,
     );
   }
 

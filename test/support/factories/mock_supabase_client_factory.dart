@@ -25,7 +25,13 @@ class ScriptedSupabaseClient extends SupabaseClient {
         );
 
   /// Controllable auth client for state assertions.
+  ///
+  /// This is surfaced through [auth] so repository code that reads
+  /// `supabase.auth.currentUser` observes the seeded session.
   final FakeGoTrueClient goTrue;
+
+  @override
+  GoTrueClient get auth => goTrue;
 
   /// Scripted RPC handlers keyed by function name.
   final Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers;
