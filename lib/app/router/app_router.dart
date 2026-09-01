@@ -5,12 +5,18 @@ import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/systems/verification/screens/identity_document_upload_screen.dart';
+import 'package:hivorr/systems/verification/screens/verification_status_screen.dart';
 
 /// Builds the application [GoRouter] with the full route tree.
 ///
 /// Route protection is delegated to [RouteGuard] (which wraps the EP-01-09
 /// [AuthGuard]). [refreshListenable] is bound to [AuthProvider] so route
 /// re-evaluation fires on every auth-state change.
+///
+/// The EP-02-10 verification screens are registered here and consume a
+/// [VerificationProvider] supplied by the app shell (`HivorrApp` MultiProvider,
+/// mirroring `TaxonomyProvider`) — the router never constructs providers.
 class AppRouter {
   const AppRouter._();
 
@@ -81,6 +87,18 @@ class AppRouter {
               PlaceholderScreen(
                 title: 'Store — ${state.pathParameters['storeId'] ?? ''}',
               ),
+        ),
+        GoRoute(
+          path: RoutePaths.verificationIdentity,
+          name: RouteNames.verificationIdentity,
+          builder: (BuildContext context, GoRouterState state) =>
+              const IdentityDocumentUploadScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.verificationStatus,
+          name: RouteNames.verificationStatus,
+          builder: (BuildContext context, GoRouterState state) =>
+              const VerificationStatusScreen(),
         ),
       ],
     );

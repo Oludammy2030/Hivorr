@@ -14,4 +14,6 @@ abstract final class RouteNames {
   static const String settings = 'settings';
   static const String publicProfile = 'public-profile';
   static const String publicStore = 'public-store';
+  static const String verificationIdentity = 'verification-identity';
+  static const String verificationStatus = 'verification-status';
 }

@@ -14,6 +14,10 @@ abstract final class RoutePaths {
   static const String profile = '/profile';
   static const String settings = '/settings';
 
+  /// Identity-verification standalone screens (EP-02-10).
+  static const String verificationIdentity = '/verification/identity';
+  static const String verificationStatus = '/verification/status';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 
