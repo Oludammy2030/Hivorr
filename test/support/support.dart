@@ -27,3 +27,4 @@ export 'harnesses/widget_harness.dart';
 export 'matchers/api_matchers.dart';
 export 'matchers/entity_matchers.dart';
 export 'matchers/state_matchers.dart';
+export 'mocks/mock_dio_adapter.dart';

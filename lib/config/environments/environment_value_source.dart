@@ -173,6 +173,27 @@ class CompileTimeEnvironmentValueSource extends EnvironmentValueSource {
       AppConstants.envNotificationIconResource => const String.fromEnvironment(
         AppConstants.envNotificationIconResource,
       ),
+      AppConstants.envPaystackPublicKey => const String.fromEnvironment(
+        AppConstants.envPaystackPublicKey,
+      ),
+      AppConstants.envPaystackSecretKey => const String.fromEnvironment(
+        AppConstants.envPaystackSecretKey,
+      ),
+      AppConstants.envFlutterwavePublicKey => const String.fromEnvironment(
+        AppConstants.envFlutterwavePublicKey,
+      ),
+      AppConstants.envFlutterwaveSecretKey => const String.fromEnvironment(
+        AppConstants.envFlutterwaveSecretKey,
+      ),
+      AppConstants.envNibssBaseUrl => const String.fromEnvironment(
+        AppConstants.envNibssBaseUrl,
+      ),
+      AppConstants.envNibssApiKey => const String.fromEnvironment(
+        AppConstants.envNibssApiKey,
+      ),
+      AppConstants.envPaymentDefaultProvider => const String.fromEnvironment(
+        AppConstants.envPaymentDefaultProvider,
+      ),
       _ => '',
     };
     return value.isEmpty ? null : value;
