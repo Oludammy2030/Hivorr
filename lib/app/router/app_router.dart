@@ -5,7 +5,10 @@ import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
 import 'package:hivorr/systems/verification/screens/identity_document_upload_screen.dart';
+import 'package:hivorr/systems/verification/screens/trade_proof_upload_screen.dart';
+import 'package:hivorr/systems/verification/screens/trade_verification_status_screen.dart';
 import 'package:hivorr/systems/verification/screens/verification_status_screen.dart';
 
 /// Builds the application [GoRouter] with the full route tree.
@@ -99,6 +102,24 @@ class AppRouter {
           name: RouteNames.verificationStatus,
           builder: (BuildContext context, GoRouterState state) =>
               const VerificationStatusScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.tradeProofUpload,
+          name: RouteNames.tradeProofUpload,
+          builder: (BuildContext context, GoRouterState state) =>
+              const TradeProofUploadScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.tradeVerificationStatus,
+          name: RouteNames.tradeVerificationStatus,
+          builder: (BuildContext context, GoRouterState state) =>
+              const TradeVerificationStatusScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.adminReviewQueue,
+          name: RouteNames.adminReviewQueue,
+          builder: (BuildContext context, GoRouterState state) =>
+              const AdminReviewQueueScreen(),
         ),
       ],
     );

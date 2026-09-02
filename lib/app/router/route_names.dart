@@ -16,4 +16,7 @@ abstract final class RouteNames {
   static const String publicStore = 'public-store';
   static const String verificationIdentity = 'verification-identity';
   static const String verificationStatus = 'verification-status';
+  static const String tradeProofUpload = 'trade-proof-upload';
+  static const String tradeVerificationStatus = 'trade-verification-status';
+  static const String adminReviewQueue = 'admin-review-queue';
 }

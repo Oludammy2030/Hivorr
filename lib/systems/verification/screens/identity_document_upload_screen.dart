@@ -26,7 +26,7 @@ typedef PickDocumentCallback = Future<PickedDocument?> Function();
 /// identity verification (EP-02-10 §5.6, §10).
 ///
 /// Consumes [VerificationProvider] via [provider]. All colors/type/spacing come
-/// from [AppTheme] tokens — never `Colors.*`/hex/`fontFamily` literals.
+/// from [AppTheme] tokens — never Material color or font-family literals.
 class IdentityDocumentUploadScreen extends StatefulWidget {
   const IdentityDocumentUploadScreen({
     super.key,

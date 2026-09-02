@@ -18,6 +18,13 @@ abstract final class RoutePaths {
   static const String verificationIdentity = '/verification/identity';
   static const String verificationStatus = '/verification/status';
 
+  /// Trade-verification screens (EP-02-11).
+  static const String tradeProofUpload = '/verification/trade-proof';
+  static const String tradeVerificationStatus = '/verification/trade/status';
+
+  /// Admin review queue (EP-02-11, simplified internal screen).
+  static const String adminReviewQueue = '/admin/review-queue';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 

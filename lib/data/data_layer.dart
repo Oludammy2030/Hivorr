@@ -4,13 +4,17 @@ import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
+import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
+import 'package:hivorr/data/repositories/trade_verification_repository.dart';
+import 'package:hivorr/data/repositories/trade_verification_repository_impl.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository_impl.dart';
 
@@ -20,9 +24,11 @@ export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
 export 'package:hivorr/data/datasources/remote/entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/taxonomy_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/taxonomy_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/trade_verification_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/verification_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/verification_remote_data_source.dart';
 export 'package:hivorr/data/entities/entity.dart';
@@ -31,6 +37,7 @@ export 'package:hivorr/data/entities/entity_role.dart';
 export 'package:hivorr/data/entities/industry.dart';
 export 'package:hivorr/data/entities/kyc_level.dart';
 export 'package:hivorr/data/entities/profession.dart';
+export 'package:hivorr/data/entities/trade_verification_status.dart';
 export 'package:hivorr/data/entities/verification_status.dart';
 export 'package:hivorr/data/entities/verification_submission.dart';
 export 'package:hivorr/data/mappers/entity_mapper.dart';
@@ -45,16 +52,20 @@ export 'package:hivorr/data/models/entity_role_dto.dart';
 export 'package:hivorr/data/models/industry_dto.dart';
 export 'package:hivorr/data/models/kyc_level_dto.dart';
 export 'package:hivorr/data/models/profession_dto.dart';
+export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
 export 'package:hivorr/data/providers/taxonomy_provider.dart';
+export 'package:hivorr/data/providers/trade_verification_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
 export 'package:hivorr/data/repositories/entity_repository.dart';
 export 'package:hivorr/data/repositories/entity_repository_impl.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
+export 'package:hivorr/data/repositories/trade_verification_repository.dart';
+export 'package:hivorr/data/repositories/trade_verification_repository_impl.dart';
 export 'package:hivorr/data/repositories/verification_repository.dart';
 export 'package:hivorr/data/repositories/verification_repository_impl.dart';
 
@@ -127,5 +138,37 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
   return (
     repository: repository,
     provider: VerificationProvider(repo: repository),
+  );
+}
+
+/// Wires the trade-verification data slice for EP-02-11.
+///
+/// Builds the [SupabaseStorageService] (object store) and
+/// [TradeVerificationRepository] over the [ApiLayer] and returns a ready
+/// [TradeVerificationProvider]. Exposed for the bootstrap to register in the
+/// widget tree's MultiProvider (mirrors `registerVerificationLayer`).
+///
+/// The storage service uses the injected API-layer [Dio] for progress-aware
+/// uploads to the private `credential-documents` bucket (server-authoritative).
+({TradeVerificationRepository repository, TradeVerificationProvider provider})
+    registerTradeVerificationLayer(ApiLayer apiLayer) {
+  final remote = SupabaseTradeVerificationRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final storage = SupabaseStorageService(
+    storageClient: apiLayer.supabaseClient.storage,
+    dio: apiLayer.dio,
+    tokenProvider: apiLayer.tokenProvider,
+  );
+  final repository = TradeVerificationRepositoryImpl(
+    remote: remote,
+    storage: storage,
+    supabase: apiLayer.supabaseClient,
+  );
+  return (
+    repository: repository,
+    provider: TradeVerificationProvider(repo: repository),
   );
 }

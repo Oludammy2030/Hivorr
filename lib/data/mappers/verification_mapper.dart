@@ -1,7 +1,9 @@
 import 'package:hivorr/data/entities/kyc_level.dart';
+import 'package:hivorr/data/entities/trade_verification_status.dart';
 import 'package:hivorr/data/entities/verification_status.dart';
 import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/models/kyc_level_dto.dart';
+import 'package:hivorr/data/models/trade_verification_dto.dart';
 import 'package:hivorr/data/models/verification_status_dto.dart';
 import 'package:hivorr/data/models/verification_submission_dto.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
@@ -12,9 +14,7 @@ import 'package:hivorr/systems/verification/models/document_type.dart';
 /// The single transformation boundary between the RPC layer and the domain —
 /// no I/O and no business logic, only null-safe field copying and enum
 /// mapping (EP-01-08 §5.3).
-class VerificationMapper {
-  const VerificationMapper._();
-
+abstract final class VerificationMapper {
   /// Server cap on `decision_notes` length
   /// (`supabase/migrations/20260829090003_verification_admin_review_schema.sql:141`).
   static const int maxDecisionNotesLength = 5000;
@@ -57,6 +57,21 @@ class VerificationMapper {
   /// Maps a trade-verification DTO into a domain [TradeVerification].
   static TradeVerification tradeToEntity(TradeVerificationDto dto) =>
       TradeVerification(professionId: dto.professionId, status: dto.status);
+
+  /// Maps the trade slice of the status aggregate into a domain
+  /// [TradeVerificationStatus].
+  ///
+  /// `rejected` is left as-is in [TradeVerification.statusKind]'s client-side
+  /// derivation; here we copy the per-profession entries + identity flag.
+  static TradeVerificationStatus tradeStatusToEntity(
+    TradeVerificationStatusDto dto,
+  ) =>
+      TradeVerificationStatus(
+        tradeVerifications: dto.tradeVerifications
+            .map(tradeToEntity)
+            .toList(growable: false),
+        identityVerified: dto.identityVerified,
+      );
 
   /// Maps the full status aggregate DTO into a domain [VerificationStatus].
   static VerificationStatus statusToEntity(VerificationStatusDto dto) =>

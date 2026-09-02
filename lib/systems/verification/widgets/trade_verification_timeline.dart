@@ -1,87 +1,82 @@
 import 'package:flutter/material.dart';
-import 'package:hivorr/data/entities/verification_submission.dart';
+
+import 'package:hivorr/data/entities/trade_verification_status.dart';
+import 'package:hivorr/data/entities/verification_status.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
-import 'package:intl/intl.dart';
 
-/// A vertical step indicating the current verification stage (EP-02-10 §5.6).
-enum VerificationTimelineStep { submitted, pending, inReview, decided }
+/// The step within the per-profession trade-verification progression.
+enum TradeTimelineStep { unverified, submitted, pending, decided }
 
-/// Reusable vertical timeline for the identity-verification lifecycle
-/// (EP-02-10 §10).
+/// Reusable vertical timeline for a profession's trade-verification lifecycle
+/// (EP-02-11 §5.6, §10): `Unverified → Submitted → Pending → Approved/Rejected`.
 ///
-/// Renders Submitted → Pending → In Review → Decided with dot colors sourced
-/// exclusively from [ColorScheme] (active = primary, pending = outline,
-/// decided = successContainer for approved / error for rejected). Dates use
-/// `onSurfaceVariant` captions; connectors use `outline`. No hardcoded colors.
-class VerificationTimeline extends StatelessWidget {
-  const VerificationTimeline({
+/// Dot colors are sourced exclusively from [ColorScheme]/[AppThemeExtension]
+/// (active = primary, pending = outline, approved = successContainer, rejected
+/// = error); connectors use `outline`. No hardcoded colors.
+class TradeVerificationTimeline extends StatelessWidget {
+  const TradeVerificationTimeline({
     super.key,
-    required this.status,
+    required this.entry,
     this.submittedAt,
     this.reviewedAt,
     this.decisionNotes,
   });
 
-  /// The current verification status driving the active step.
-  final VerificationStatusKind status;
+  /// The per-profession trade verification entry.
+  final TradeVerification entry;
 
-  /// When the submission was queued (step 1 caption).
+  /// When the proof was queued (submitted caption).
   final DateTime? submittedAt;
 
-  /// When the submission was decided (final step caption).
+  /// When the proof was decided (final caption).
   final DateTime? reviewedAt;
 
-  /// Admin decision notes for `rejected` / `requires_resubmission`.
+  /// Admin decision notes for a rejected proof.
   final String? decisionNotes;
 
-  /// Maps a status to its step index in the 4-step progression.
-  static int stepIndexFor(VerificationStatusKind status) =>
-      switch (status) {
-        VerificationStatusKind.pending => 1,
-        VerificationStatusKind.inReview => 2,
-        VerificationStatusKind.approved ||
-        VerificationStatusKind.rejected ||
-        VerificationStatusKind.requiresResubmission => 3,
+  /// Maps a status kind to its active step index in the 4-step progression.
+  static int stepIndexFor(TradeVerificationStatusKind kind) => switch (kind) {
+        TradeVerificationStatusKind.unverified => 0,
+        TradeVerificationStatusKind.pending => 2,
+        TradeVerificationStatusKind.approved ||
+        TradeVerificationStatusKind.rejected => 3,
       };
 
   @override
   Widget build(BuildContext context) {
-    final int activeIndex = stepIndexFor(status);
+    final int activeIndex = stepIndexFor(entry.statusKind);
     return Column(
       children: <Widget>[
         _StepTile(
-          step: VerificationTimelineStep.submitted,
+          step: TradeTimelineStep.unverified,
+          kind: entry.statusKind,
           activeIndex: activeIndex,
-          status: status,
-          title: 'Submitted',
-          caption: submittedAt == null
-              ? null
-              : DateFormat('MMM d, yyyy · h:mm a').format(submittedAt!),
+          title: 'Unverified',
         ),
         const _Connector(),
         _StepTile(
-          step: VerificationTimelineStep.pending,
+          step: TradeTimelineStep.submitted,
+          kind: entry.statusKind,
           activeIndex: activeIndex,
-          status: status,
+          title: 'Submitted',
+          caption: submittedAt == null ? null : _formatDate(submittedAt!),
+        ),
+        const _Connector(),
+        _StepTile(
+          step: TradeTimelineStep.pending,
+          kind: entry.statusKind,
+          activeIndex: activeIndex,
           title: 'Pending review',
         ),
         const _Connector(),
         _StepTile(
-          step: VerificationTimelineStep.inReview,
+          step: TradeTimelineStep.decided,
+          kind: entry.statusKind,
           activeIndex: activeIndex,
-          status: status,
-          title: 'In review',
-        ),
-        const _Connector(),
-        _StepTile(
-          step: VerificationTimelineStep.decided,
-          activeIndex: activeIndex,
-          status: status,
-          title: _decidedTitle(status),
-          caption: reviewedAt == null
-              ? null
-              : DateFormat('MMM d, yyyy · h:mm a').format(reviewedAt!),
+          title: _decidedTitle(entry.statusKind),
+          caption:
+              reviewedAt == null ? null : _formatDate(reviewedAt!),
         ),
         if (needsNotes && decisionNotes != null && decisionNotes!.isNotEmpty)
           Padding(
@@ -100,18 +95,20 @@ class VerificationTimeline extends StatelessWidget {
     );
   }
 
-  bool get needsNotes =>
-      status == VerificationStatusKind.rejected ||
-      status == VerificationStatusKind.requiresResubmission;
+  bool get needsNotes => entry.statusKind == TradeVerificationStatusKind.rejected;
 
-  static String _decidedTitle(VerificationStatusKind status) =>
-      switch (status) {
-        VerificationStatusKind.approved => 'Approved',
-        VerificationStatusKind.rejected => 'Rejected',
-        VerificationStatusKind.requiresResubmission =>
-          'Requires resubmission',
+  static String _decidedTitle(TradeVerificationStatusKind kind) =>
+      switch (kind) {
+        TradeVerificationStatusKind.approved => 'Approved',
+        TradeVerificationStatusKind.rejected => 'Rejected',
         _ => 'Decision',
       };
+
+  static String _formatDate(DateTime value) =>
+      '${value.year}-${_two(value.month)}-${_two(value.day)} · '
+      '${_two(value.hour)}:${_two(value.minute)}';
+
+  static String _two(int v) => v.toString().padLeft(2, '0');
 }
 
 class _Connector extends StatelessWidget {
@@ -131,23 +128,23 @@ class _Connector extends StatelessWidget {
 class _StepTile extends StatelessWidget {
   const _StepTile({
     required this.step,
+    required this.kind,
     required this.activeIndex,
-    required this.status,
     required this.title,
     this.caption,
   });
 
-  final VerificationTimelineStep step;
+  final TradeTimelineStep step;
+  final TradeVerificationStatusKind kind;
   final int activeIndex;
-  final VerificationStatusKind status;
   final String title;
   final String? caption;
 
   int get index => switch (step) {
-        VerificationTimelineStep.submitted => 0,
-        VerificationTimelineStep.pending => 1,
-        VerificationTimelineStep.inReview => 2,
-        VerificationTimelineStep.decided => 3,
+        TradeTimelineStep.unverified => 0,
+        TradeTimelineStep.submitted => 1,
+        TradeTimelineStep.pending => 2,
+        TradeTimelineStep.decided => 3,
       };
 
   @override
@@ -205,12 +202,14 @@ class _StepTile extends StatelessWidget {
   }
 
   Color _dotColor(ColorScheme colors, AppThemeExtension ext) {
-    if (status == VerificationStatusKind.rejected ||
-        status == VerificationStatusKind.requiresResubmission) {
+    if (kind == TradeVerificationStatusKind.rejected) {
       return colors.error;
     }
-    if (status == VerificationStatusKind.approved && index == 3) {
+    if (kind == TradeVerificationStatusKind.approved && index == 3) {
       return ext.successContainer;
+    }
+    if (index == 0) {
+      return colors.outline;
     }
     return colors.primary;
   }

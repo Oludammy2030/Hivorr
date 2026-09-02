@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 ///
 /// Backed by [KycLevel] and rendered entirely from [AppTheme] tokens — tier
 /// label via `SurfaceTint`/`onSurfaceVariant`, limits as outline chips. No
-/// hardcoded colors or fontFamily.
+/// hardcoded colors or font families.
 class KycLevelCard extends StatelessWidget {
   const KycLevelCard({
     super.key,
