@@ -25,6 +25,10 @@ abstract final class RoutePaths {
   /// Admin review queue (EP-02-11, simplified internal screen).
   static const String adminReviewQueue = '/admin/review-queue';
 
+  /// KYC status + upgrade screens (EP-02-12).
+  static const String kycStatus = '/verification/kyc';
+  static const String kycUpgrade = '/verification/kyc/upgrade';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 

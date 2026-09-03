@@ -7,6 +7,8 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
 import 'package:hivorr/systems/verification/screens/identity_document_upload_screen.dart';
+import 'package:hivorr/systems/verification/screens/kyc_status_screen.dart';
+import 'package:hivorr/systems/verification/screens/kyc_upgrade_screen.dart';
 import 'package:hivorr/systems/verification/screens/trade_proof_upload_screen.dart';
 import 'package:hivorr/systems/verification/screens/trade_verification_status_screen.dart';
 import 'package:hivorr/systems/verification/screens/verification_status_screen.dart';
@@ -120,6 +122,18 @@ class AppRouter {
           name: RouteNames.adminReviewQueue,
           builder: (BuildContext context, GoRouterState state) =>
               const AdminReviewQueueScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.kycStatus,
+          name: RouteNames.kycStatus,
+          builder: (BuildContext context, GoRouterState state) =>
+              const KycStatusScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.kycUpgrade,
+          name: RouteNames.kycUpgrade,
+          builder: (BuildContext context, GoRouterState state) =>
+              const KycUpgradeScreen(),
         ),
       ],
     );
