@@ -19,4 +19,8 @@ abstract final class RouteNames {
   static const String tradeProofUpload = 'trade-proof-upload';
   static const String tradeVerificationStatus = 'trade-verification-status';
   static const String adminReviewQueue = 'admin-review-queue';
+
+  /// KYC status + upgrade routes (EP-02-12).
+  static const String kycStatus = 'kyc-status';
+  static const String kycUpgrade = 'kyc-upgrade';
 }

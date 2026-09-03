@@ -7,6 +7,7 @@ import 'package:hivorr/data/models/trade_verification_dto.dart';
 import 'package:hivorr/data/models/verification_status_dto.dart';
 import 'package:hivorr/data/models/verification_submission_dto.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
+import 'package:hivorr/systems/verification/models/kyc_tier.dart';
 
 /// Transformations between the transport DTOs and the pure-Dart domain
 /// entities (EP-02-10 §5.2, §7).
@@ -91,4 +92,13 @@ abstract final class VerificationMapper {
     if (notes.length <= maxDecisionNotesLength) return notes;
     return notes.substring(0, maxDecisionNotesLength);
   }
+
+  /// Resolves a server tier code to a [KycTier] (EP-02-12).
+  ///
+  /// Falls back to [KycTier.tier0] for unknown/absent codes.
+  static KycTier kycTierFromCode(String code) => KycTier.fromCode(code);
+
+  /// The display label for a server tier code (EP-02-12).
+  static String kycTierLabel(String code) =>
+      KycTier.fromCode(code).displayLabel;
 }

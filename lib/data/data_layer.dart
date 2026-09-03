@@ -3,14 +3,18 @@ import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
+import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
+import 'package:hivorr/data/repositories/kyc_repository.dart';
+import 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
 import 'package:hivorr/data/repositories/trade_verification_repository.dart';
@@ -22,7 +26,9 @@ export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
 export 'package:hivorr/data/datasources/remote/entity_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
@@ -56,12 +62,15 @@ export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
+export 'package:hivorr/data/providers/kyc_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
 export 'package:hivorr/data/providers/taxonomy_provider.dart';
 export 'package:hivorr/data/providers/trade_verification_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
 export 'package:hivorr/data/repositories/entity_repository.dart';
 export 'package:hivorr/data/repositories/entity_repository_impl.dart';
+export 'package:hivorr/data/repositories/kyc_repository.dart';
+export 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
 export 'package:hivorr/data/repositories/trade_verification_repository.dart';
@@ -170,5 +179,25 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
   return (
     repository: repository,
     provider: TradeVerificationProvider(repo: repository),
+  );
+}
+
+/// Wires the KYC data slice for EP-02-12.
+///
+/// Builds the [KycRepository] over the [ApiLayer] and returns a ready
+/// [KycProvider]. Exposed for the bootstrap to register in the widget tree's
+/// MultiProvider (mirrors `registerVerificationLayer`).
+({KycRepository repository, KycProvider provider}) registerKycLayer(
+  ApiLayer apiLayer,
+) {
+  final remote = SupabaseKycRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = KycRepositoryImpl(remote: remote);
+  return (
+    repository: repository,
+    provider: KycProvider(repo: repository),
   );
 }
