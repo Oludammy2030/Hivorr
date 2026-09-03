@@ -237,7 +237,9 @@ void main() {
       final provider = build();
       KycLoadState? observed;
       provider.addListener(() {
-        if (provider.loadState == KycLoadState.loading) observed = provider.loadState;
+        if (provider.loadState == KycLoadState.loading) {
+          observed = provider.loadState;
+        }
       });
 
       await provider.load();
