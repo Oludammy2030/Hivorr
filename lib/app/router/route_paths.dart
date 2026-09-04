@@ -29,6 +29,10 @@ abstract final class RoutePaths {
   static const String kycStatus = '/verification/kyc';
   static const String kycUpgrade = '/verification/kyc/upgrade';
 
+  /// Financial profile screens (EP-02-13).
+  static const String finance = '/finance';
+  static const String financeCreate = '/finance/create';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 
