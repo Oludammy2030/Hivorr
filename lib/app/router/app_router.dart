@@ -5,6 +5,8 @@ import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
+import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
 import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
 import 'package:hivorr/systems/verification/screens/identity_document_upload_screen.dart';
 import 'package:hivorr/systems/verification/screens/kyc_status_screen.dart';
@@ -134,6 +136,18 @@ class AppRouter {
           name: RouteNames.kycUpgrade,
           builder: (BuildContext context, GoRouterState state) =>
               const KycUpgradeScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.finance,
+          name: RouteNames.finance,
+          builder: (BuildContext context, GoRouterState state) =>
+              const FinancialProfileScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.financeCreate,
+          name: RouteNames.financeCreate,
+          builder: (BuildContext context, GoRouterState state) =>
+              const FinancialProfileCreationFlow(),
         ),
       ],
     );

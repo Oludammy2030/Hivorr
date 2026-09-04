@@ -20,6 +20,10 @@ abstract final class RouteNames {
   static const String tradeVerificationStatus = 'trade-verification-status';
   static const String adminReviewQueue = 'admin-review-queue';
 
+  /// Financial profile routes (EP-02-13).
+  static const String finance = 'finance';
+  static const String financeCreate = 'finance-create';
+
   /// KYC status + upgrade routes (EP-02-12).
   static const String kycStatus = 'kyc-status';
   static const String kycUpgrade = 'kyc-upgrade';
