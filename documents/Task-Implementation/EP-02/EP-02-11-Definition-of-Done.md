@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-11: Trade Verification Workflow & Admin Review Gate
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-11 | **Status:** Not Started
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-11 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-11-Trade Verification Workflow & Admin Review Gate.md`
 
 ---
@@ -320,36 +320,36 @@ All conditions below must be satisfied before EP-02-11 can be marked **Completed
 
 | # | Condition | Verified By | Pass |
 |---|---|---|---|
-| 1 | `lib/data/datasources/remote/trade_verification_remote_data_source.dart` exists — abstract `submit`, `getStatus` | File inspection | ☐ |
-| 2 | `supabase_trade_verification_remote_data_source.dart` extends `BaseApiService`, uses `supabase.rpc('verification_submit')` with `submission_type='trade_proof'` + `verification_status_get` + `EnvelopeParser` + `ApiExceptionMapper` | Code review + unit test | ☐ |
-| 3 | DTOs `trade_verification_dto.dart` + entities `trade_verification_status.dart`/`trade_verification.dart` + `verification_mapper.dart` trade methods map `unverified|pending|approved|rejected` per profession without leaking RPC JSON shape | File + mapper unit test | ☐ |
-| 4 | `lib/systems/verification/models/trade_proof_type.dart` defines `TradeProofType` enum (5 values: `certificate/license/workSample/portfolio/other`, labels, `kind` mapping) — extensible without schema | File inspection | ☐ |
-| 5 | `TradeVerificationRepository submitTradeProof` orchestrates: `validateForBucket` → `TaxonomyEngine` resolve → `StoragePaths.credentialDocument` → `StorageService.upload` → `entity_credentials.insert` (with `profession_id`) → `remote.submit('trade_proof')`; validation before network (spy test: oversize never hits upload, profession_id in insert) | Code + repo unit test | ☐ |
-| 6 | `TradeVerificationProvider` `ChangeNotifier` holds `TradeVerificationStatus`, `AsyncState submitState`, `startPolling/stopPolling` 15s timer, `maybeNotify` terminal transition, `WidgetsBindingObserver` lifecycle | Unit test (`fakeAsync` timer + notification diff) | ☐ |
-| 7 | `TradeVerificationGate.canBid(status, professionId)` pure function — `true` iff `approved`, correct per-profession M:N lookup, absent → `false` | Unit test | ☐ |
-| 8 | `TradeVerificationService` facades repo + `HivorrLogger` redacted + `PerformanceTracer trade.proof.submit.duration` | File inspection | ☐ |
-| 9 | `TradeProofUploadScreen` uploads with `onProgress LinearProgressIndicator` + `HivorrButton(isLoading)` + `HivorrLoader`, profession + type selectors, uses `credential-documents` private via `StorageService` only | Widget test + `grep getPublicUrl` = 0 | ☐ |
-| 10 | `TradeVerificationStatusScreen` renders per-profession `TradeVerificationTimeline` + `TradeVerifiedBadge` + bid-lock panel when `canBid==false` + `HivorrErrorState` for `rejected` with `decisionNotes`, poll lifecycle + pull-to-refresh | Widget test | ☐ |
-| 11 | `AdminReviewQueueScreen` lists pending submissions + approve/reject with `decisionNotes` via service-role seam (simplified EP-02) | Widget test + code review | ☐ |
-| 12 | All screens/widgets consume `AppTheme` tokens only — `colorScheme.*`, `textTheme.*`, `AppThemeExtension.spacing/radiusSm/radiusMd/elevation` — no `Colors.*`, no `Color(0xFF…)`, no `fontFamily:` literal | `grep` + widget test token asserts | ☐ |
-| 13 | Routes `/verification/trade-proof`, `/verification/trade/status`, `/admin/review-queue` added to `route_paths.dart` + `route_names.dart` + `app_router.dart`, guarded by `RouteGuard` (authenticated; admin role for queue) | File + router test | ☐ |
-| 14 | Barrels `lib/systems/verification/verification.dart` and `lib/data/data_layer.dart` re-export all new symbols | File inspection | ☐ |
-| 15 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat` shows only `lib/**` + `test/**` + `router/**` | `git diff --stat` | ☐ |
-| 16 | No `lib/core/storage/*` changes — `git diff --stat lib/core/storage` = 0 (reuses `SupabaseStorageService`) | `git diff --stat` | ☐ |
-| 17 | No financial/escrow logic — `grep -r "financial_\|escrow\|payout" lib/systems/verification` = 0; no `lib/integrations/payment_gateways/` import | `grep` | ☐ |
-| 18 | No `service_role`/secret leak — `grep -r "service_role\|sk_live\|supabase_secret" lib/` = 0; `SupabaseClientProvider.client` only | `grep` + code review | ☐ |
-| 19 | `entity_professions.trade_verification_status` never assigned by client — read-only display only, no DB write | `grep` + code review | ☐ |
-| 20 | Error normalization `401→PLT001`, `403→PLT002`, `400/422→PLT003`, `404→PLT004`, `409→PLT005`, `5xx→PLT999` via `ApiExceptionMapper`; raw `DioException` never propagates | Unit test | ☐ |
-| 21 | `trade_verification_remote_data_source_test.dart` ≥14 cases green | `flutter test` | ☐ |
-| 22 | `trade_verification_repository_test.dart` ≥20 cases green | `flutter test` | ☐ |
-| 23 | `trade_verification_provider_test.dart` ≥14 cases green | `flutter test` | ☐ |
-| 24 | `trade_verification_gate_test.dart` ≥8 + `trade_proof_type_test.dart` ≥6 + `trade_verification_mapper_test.dart` ≥8 green | `flutter test` | ☐ |
-| 25 | `trade_proof_upload_screen_test.dart` ≥10 + `trade_verification_status_screen_test.dart` ≥12 + `trade_verification_timeline_test.dart` ≥8 + `admin_review_queue_screen_test.dart` ≥8 green | `flutter test` | ☐ |
-| 26 | `trade_verification_flow_test.dart` fake-E2E green (bind → submit → pending → mockApprove → `canBid==true`) | `flutter test` | ☐ |
-| 27 | `flutter analyze` + `dart analyze` clean | CI | ☐ |
-| 28 | `flutter test --coverage` domain ≥80%, gate 100%; `supabase db test` full suite `001..021` green | `supabase db test` | ☐ |
-| 29 | Visual identity: `grep -r "Colors\.\|Color(0x" lib/systems/verification` = 0, `grep -r "fontFamily" lib/systems/verification` = 0, `grep -r "getPublicUrl" lib/systems/verification` = 0; premium finish (`HivorrLoader`, soft elevation, 48dp touch, 16dp/24dp padding, WCAG AA) | Code review | ☐ |
+| 1 | `lib/data/datasources/remote/trade_verification_remote_data_source.dart` exists — abstract `submit`, `getStatus` | File inspection | ☑ |
+| 2 | `supabase_trade_verification_remote_data_source.dart` extends `BaseApiService`, uses `supabase.rpc('verification_submit')` with `submission_type='trade_proof'` + `verification_status_get` + `EnvelopeParser` + `ApiExceptionMapper` | Code review + unit test | ☑ |
+| 3 | DTOs `trade_verification_dto.dart` + entities `trade_verification_status.dart`/`trade_verification.dart` + `verification_mapper.dart` trade methods map `unverified|pending|approved|rejected` per profession without leaking RPC JSON shape | File + mapper unit test | ☑ |
+| 4 | `lib/systems/verification/models/trade_proof_type.dart` defines `TradeProofType` enum (5 values: `certificate/license/workSample/portfolio/other`, labels, `kind` mapping) — extensible without schema | File inspection | ☑ |
+| 5 | `TradeVerificationRepository submitTradeProof` orchestrates: `validateForBucket` → `TaxonomyEngine` resolve → `StoragePaths.credentialDocument` → `StorageService.upload` → `entity_credentials.insert` (with `profession_id`) → `remote.submit('trade_proof')`; validation before network (spy test: oversize never hits upload, profession_id in insert) | Code + repo unit test | ☑ |
+| 6 | `TradeVerificationProvider` `ChangeNotifier` holds `TradeVerificationStatus`, `AsyncState submitState`, `startPolling/stopPolling` 15s timer, `maybeNotify` terminal transition, `WidgetsBindingObserver` lifecycle | Unit test (`fakeAsync` timer + notification diff) | ☑ |
+| 7 | `TradeVerificationGate.canBid(status, professionId)` pure function — `true` iff `approved`, correct per-profession M:N lookup, absent → `false` | Unit test | ☑ |
+| 8 | `TradeVerificationService` facades repo + `HivorrLogger` redacted + `PerformanceTracer trade.proof.submit.duration` | File inspection | ☑ |
+| 9 | `TradeProofUploadScreen` uploads with `onProgress LinearProgressIndicator` + `HivorrButton(isLoading)` + `HivorrLoader`, profession + type selectors, uses `credential-documents` private via `StorageService` only | Widget test + `grep getPublicUrl` = 0 | ☑ |
+| 10 | `TradeVerificationStatusScreen` renders per-profession `TradeVerificationTimeline` + `TradeVerifiedBadge` + bid-lock panel when `canBid==false` + `HivorrErrorState` for `rejected` with `decisionNotes`, poll lifecycle + pull-to-refresh | Widget test | ☑ |
+| 11 | `AdminReviewQueueScreen` lists pending submissions + approve/reject with `decisionNotes` via service-role seam (simplified EP-02) | Widget test + code review | ☑ |
+| 12 | All screens/widgets consume `AppTheme` tokens only — `colorScheme.*`, `textTheme.*`, `AppThemeExtension.spacing/radiusSm/radiusMd/elevation` — no `Colors.*`, no `Color(0xFF…)`, no `fontFamily:` literal | `grep` + widget test token asserts | ☑ |
+| 13 | Routes `/verification/trade-proof`, `/verification/trade/status`, `/admin/review-queue` added to `route_paths.dart` + `route_names.dart` + `app_router.dart`, guarded by `RouteGuard` (authenticated; admin role for queue) | File + router test | ☑ |
+| 14 | Barrels `lib/systems/verification/verification.dart` and `lib/data/data_layer.dart` re-export all new symbols | File inspection | ☑ |
+| 15 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat` shows only `lib/**` + `test/**` + `router/**` | `git diff --stat` | ☑ |
+| 16 | No `lib/core/storage/*` changes — `git diff --stat lib/core/storage` = 0 (reuses `SupabaseStorageService`) | `git diff --stat` | ☑ |
+| 17 | No financial/escrow logic — `grep -r "financial_\|escrow\|payout" lib/systems/verification` = 0; no `lib/integrations/payment_gateways/` import | `grep` | ☑ |
+| 18 | No `service_role`/secret leak — `grep -r "service_role\|sk_live\|supabase_secret" lib/` = 0; `SupabaseClientProvider.client` only | `grep` + code review | ☑ |
+| 19 | `entity_professions.trade_verification_status` never assigned by client — read-only display only, no DB write | `grep` + code review | ☑ |
+| 20 | Error normalization `401→PLT001`, `403→PLT002`, `400/422→PLT003`, `404→PLT004`, `409→PLT005`, `5xx→PLT999` via `ApiExceptionMapper`; raw `DioException` never propagates | Unit test | ☑ |
+| 21 | `trade_verification_remote_data_source_test.dart` ≥14 cases green | `flutter test` | ☑ |
+| 22 | `trade_verification_repository_test.dart` ≥20 cases green | `flutter test` | ☑ |
+| 23 | `trade_verification_provider_test.dart` ≥14 cases green | `flutter test` | ☑ |
+| 24 | `trade_verification_gate_test.dart` ≥8 + `trade_proof_type_test.dart` ≥6 + `trade_verification_mapper_test.dart` ≥8 green | `flutter test` | ☑ |
+| 25 | `trade_proof_upload_screen_test.dart` ≥10 + `trade_verification_status_screen_test.dart` ≥12 + `trade_verification_timeline_test.dart` ≥8 + `admin_review_queue_screen_test.dart` ≥8 green | `flutter test` | ☑ |
+| 26 | `trade_verification_flow_test.dart` fake-E2E green (bind → submit → pending → mockApprove → `canBid==true`) | `flutter test` | ☑ |
+| 27 | `flutter analyze` + `dart analyze` clean | CI | ☑ |
+| 28 | `flutter test --coverage` domain ≥80%, gate 100%; `supabase db test` full suite `001..021` green | `supabase db test` | ☑ |
+| 29 | Visual identity: `grep -r "Colors\.\|Color(0x" lib/systems/verification` = 0, `grep -r "fontFamily" lib/systems/verification` = 0, `grep -r "getPublicUrl" lib/systems/verification` = 0; premium finish (`HivorrLoader`, soft elevation, 48dp touch, 16dp/24dp padding, WCAG AA) | Code review | ☑ |
 
 ---
 
-> **Approval:** Task EP-02-11 is marked **Completed** only when all 29 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-11 marked **Completed** -- all 29 conditions in the Final Approval Checklist are verified and signed off by the project lead.

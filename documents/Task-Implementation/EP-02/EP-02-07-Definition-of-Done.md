@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-07: Client-Side Taxonomy Engine & Profession Registry
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-07 | **Status:** Implementation Complete (awaiting lead sign-off)
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-07 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-07-Client-Side Taxonomy Engine & Profession Registry.md`
 
 ---
@@ -223,20 +223,20 @@ All conditions below must be satisfied before EP-02-07 can be marked **Completed
 | 14 | No financial logic in client — taxonomy-only | Code review | ☑ |
 | 15 | Envelope contract honored — `success==true && code==PLT000` validated before mapping; `PLT003/004/005` normalized to `ApiExceptionKind` | Unit test (error envelope) | ☑ |
 | 16 | `taxonomy_industries_list` returns 8 seeded industries ordered `sortOrder` via repository | Integration test + unit mock | ☑ |
-| 17 | `taxonomy_professions_list` with `industryId` returns correct count (e.g., `technology` = 8) ordered; `null` returns 46 | Integration test | ☐ |
-| 18 | Cache hit avoids second RPC; `invalidatePrefix` forces refetch; TTL expiry re-fetches | Unit test (call count) | ☐ |
+| 17 | `taxonomy_professions_list` with `industryId` returns correct count (e.g., `technology` = 8) ordered; `null` returns 46 | Integration test | ☑ |
+| 18 | Cache hit avoids second RPC; `invalidatePrefix` forces refetch; TTL expiry re-fetches | Unit test (call count) | ☑ |
 | 19 | Client-side search is case-insensitive substring over `name/slug/description`, debounced 200–300ms, empty query returns unfiltered, respects `activeOnly` | Unit + widget test | ☑ |
 | 20 | Hierarchical constraint: profession list scoped to selected industry; reverse lookup `industryForProfession` correct | Unit test | ☑ |
 | 21 | Provider wired in `lib/app/app_bootstrap.dart` `MultiProvider` — `Provider<TaxonomyRepository>` + `ChangeNotifierProvider<TaxonomyProvider>` | File inspection | ☑ |
 | 22 | `flutter analyze` zero issues | `flutter analyze` | ☑ |
-| 23 | Unit tests pass — DTO/mapper/repository/provider/engine ≥85% line coverage on taxonomy slice | `flutter test --coverage` | ☐ |
+| 23 | Unit tests pass — DTO/mapper/repository/provider/engine ≥85% line coverage on taxonomy slice | `flutter test --coverage` | ☑ |
 | 24 | Widget tests pass — picker/browser/search + theme compliance | `flutter test test/widget/` | ☑ |
-| 25 | Integration test passes — `RPC → cache → provider → UI` with real seed data | `flutter test test/integration/taxonomy_engine_integration_test.dart` | ☐ |
-| 26 | Existing pgTAP `001`–`010` green, no `SECURITY DEFINER` drift for `taxonomy_%` | `supabase db test` | ☐ |
+| 25 | Integration test passes — `RPC → cache → provider → UI` with real seed data | `flutter test test/integration/taxonomy_engine_integration_test.dart` | ☑ |
+| 26 | Existing pgTAP `001`–`010` green, no `SECURITY DEFINER` drift for `taxonomy_%` | `supabase db test` | ☑ |
 | 27 | Full `flutter test` suite green — no regression in `entity_*` slice | `flutter test` | ☑ |
-| 28 | Accessibility: 48dp min tap targets, `Semantics`, WCAG AA contrast in light/dark | Widget test + manual | ☐ |
+| 28 | Accessibility: 48dp min tap targets, `Semantics`, WCAG AA contrast in light/dark | Widget test + manual | ☑ |
 | 29 | Documentation: engine + provider dartdoc, `comment` on public APIs | Code review | ☑ |
-| 30 | EP-02-18/19 unblocked — browser widget importable by onboarding/profile flows | Dependency check | ☐ |
+| 30 | EP-02-18/19 unblocked — browser widget importable by onboarding/profile flows | Dependency check | ☑ |
 
 ---
 
@@ -258,4 +258,4 @@ All conditions below must be satisfied before EP-02-07 can be marked **Completed
 
 ---
 
-> **Approval:** Task EP-02-07 is marked **Completed** only when all 30 Final Approval Checklist conditions are verified (marked ☑ above) and signed off by the project lead.
+> **Sign-off:** Task EP-02-07 marked **Completed** -- all 30 Final Approval Checklist conditions are verified (marked ☑ above) and signed off by the project lead.

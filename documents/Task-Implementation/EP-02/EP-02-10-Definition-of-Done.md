@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-10: Identity Verification System
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-10 | **Status:** Not Started
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-10 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-10-Identity Verification System.md`
 
 ---
@@ -303,34 +303,34 @@ All conditions below must be satisfied before EP-02-10 can be marked **Completed
 
 | # | Condition | Verified By | Pass |
 |---|---|---|---|
-| 1 | `lib/data/datasources/remote/verification_remote_data_source.dart` exists — abstract `submit`, `getStatus`, `getKycLevel`, `getLimits` | File inspection | ☐ |
-| 2 | `supabase_verification_remote_data_source.dart` extends `BaseApiService`, uses `supabase.rpc('verification_submit/status_get/kyc_level_get/limits_get')` + `EnvelopeParser` + `ApiExceptionMapper` | Code review + unit test | ☐ |
-| 3 | DTOs `verification_submission_dto.dart`, `verification_status_dto.dart`, `kyc_level_dto.dart`, `verification_limits_dto.dart` + entities + `verification_mapper.dart` map 5 status enum + KYC limits numeric | File + mapper unit test | ☐ |
-| 4 | `lib/systems/verification/models/document_type.dart` defines `DocumentType` enum (5 values, labels, `kind=identity_document`, `submission_type=identity_document`) — extensible without schema change | File inspection | ☐ |
-| 5 | `VerificationRepository submitIdentityDocument` orchestrates: `validateForBucket` → `StoragePaths.credentialDocument` → `StorageService.upload` → `entity_credentials.insert` → `remote.submit`; validation called before network (spy test: oversize never hits upload) | Code + repo unit test | ☐ |
-| 6 | `VerificationProvider` `ChangeNotifier` holds `VerificationStatus`, `KycLevel`, `AsyncState submitState`, `startPolling/stopPolling` 15s timer, `maybeNotify` terminal transition via `NotificationProvider` | Unit test (`fakeAsync` timer + notification diff) | ☐ |
-| 7 | `IdentityVerificationService` facades repo + `HivorrLogger` redacted + `PerformanceTracer verification.submit.duration` | File inspection | ☐ |
-| 8 | `IdentityDocumentUploadScreen` uploads with `onProgress LinearProgressIndicator` + `HivorrButton(isLoading)` + `HivorrLoader` breathing pulse; uses `credential-documents` private via `StorageService` only | Widget test + `grep getPublicUrl` = 0 | ☐ |
-| 9 | `VerificationStatusScreen` renders `VerificationTimeline` + `IdentityVerifiedBadge` + `KycLevelCard` + `HivorrErrorState` for rejection with `decisionNotes`; poll lifecycle tied to visibility + app lifecycle; pull-to-refresh | Widget test | ☐ |
-| 10 | All screens/widgets consume `AppTheme` tokens only — `colorScheme.*`, `textTheme.*`, `AppThemeExtension.spacing/radiusSm/radiusMd/elevation` — no `Colors.*`, no `Color(0xFF…)`, no `fontFamily:` literal | `grep` + widget test token asserts | ☐ |
-| 11 | Routes `/verification/identity` and `/verification/status` added to `route_paths.dart` + `route_names.dart` + `app_router.dart`, guarded by `RouteGuard` (authenticated), no SEO public route | File + router test | ☐ |
-| 12 | Barrels `lib/systems/verification/verification.dart` and `lib/data/data_layer.dart` re-export all new symbols | File inspection | ☐ |
-| 13 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat` shows only `lib/**` + `test/**` + `router/**` | `git diff --stat` | ☐ |
-| 14 | No `lib/core/storage/*` changes — `git diff --stat lib/core/storage` = 0 (reuses `SupabaseStorageService`) | `git diff --stat` | ☐ |
-| 15 | No financial/escrow logic — `grep -r "financial_\|escrow\|payout" lib/systems/verification` = 0; no `lib/integrations/payment_gateways/` import | `grep` | ☐ |
-| 16 | No `service_role`/secret leak — `grep -r "service_role\|sk_live\|supabase_secret" lib/` = 0; `SupabaseClientProvider.client` only | `grep` + code review | ☐ |
-| 17 | Error normalization `401→PLT001`, `403→PLT002`, `400/422→PLT003`, `404→PLT004`, `409→PLT005`, `5xx→PLT999` via `ApiExceptionMapper`; raw `DioException` never propagates | Unit test | ☐ |
-| 18 | `verification_remote_data_source_test.dart` ≥16 cases green | `flutter test` | ☐ |
-| 19 | `verification_repository_test.dart` ≥20 cases green | `flutter test` | ☐ |
-| 20 | `verification_provider_test.dart` ≥14 cases green | `flutter test` | ☐ |
-| 21 | `verification_mapper_test.dart` ≥8 + `document_type_test.dart` ≥6 green | `flutter test` | ☐ |
-| 22 | `identity_document_upload_screen_test.dart` ≥10 + `verification_status_screen_test.dart` ≥12 + `verification_timeline_test.dart` ≥8 green | `flutter test` | ☐ |
-| 23 | `verification_flow_test.dart` fake-E2E green (submit → pending → mockApprove → badge) | `flutter test` | ☐ |
-| 24 | `flutter analyze` + `dart analyze` clean | CI | ☐ |
-| 25 | `flutter test --coverage` domain ≥80%, widgets theme-asserted; `supabase db test` full suite `001..021` green | `supabase db test` | ☐ |
-| 26 | Visual identity: `grep -r "Colors\.\|Color(0x" lib/systems/verification` = 0, `grep -r "fontFamily" lib/systems/verification` = 0, `grep -r "getPublicUrl" lib/systems/verification` = 0; premium finish (`HivorrLoader`, soft elevation, 48dp touch, 16dp/24dp padding, WCAG AA) | Code review | ☐ |
-| 27 | `EP-02-11`, `EP-02-12`, `EP-02-18` unblocked — downstream can import `IdentityVerificationService`/`VerificationProvider` without modification | Dependency check | ☐ |
+| 1 | `lib/data/datasources/remote/verification_remote_data_source.dart` exists — abstract `submit`, `getStatus`, `getKycLevel`, `getLimits` | File inspection | ☑ |
+| 2 | `supabase_verification_remote_data_source.dart` extends `BaseApiService`, uses `supabase.rpc('verification_submit/status_get/kyc_level_get/limits_get')` + `EnvelopeParser` + `ApiExceptionMapper` | Code review + unit test | ☑ |
+| 3 | DTOs `verification_submission_dto.dart`, `verification_status_dto.dart`, `kyc_level_dto.dart`, `verification_limits_dto.dart` + entities + `verification_mapper.dart` map 5 status enum + KYC limits numeric | File + mapper unit test | ☑ |
+| 4 | `lib/systems/verification/models/document_type.dart` defines `DocumentType` enum (5 values, labels, `kind=identity_document`, `submission_type=identity_document`) — extensible without schema change | File inspection | ☑ |
+| 5 | `VerificationRepository submitIdentityDocument` orchestrates: `validateForBucket` → `StoragePaths.credentialDocument` → `StorageService.upload` → `entity_credentials.insert` → `remote.submit`; validation called before network (spy test: oversize never hits upload) | Code + repo unit test | ☑ |
+| 6 | `VerificationProvider` `ChangeNotifier` holds `VerificationStatus`, `KycLevel`, `AsyncState submitState`, `startPolling/stopPolling` 15s timer, `maybeNotify` terminal transition via `NotificationProvider` | Unit test (`fakeAsync` timer + notification diff) | ☑ |
+| 7 | `IdentityVerificationService` facades repo + `HivorrLogger` redacted + `PerformanceTracer verification.submit.duration` | File inspection | ☑ |
+| 8 | `IdentityDocumentUploadScreen` uploads with `onProgress LinearProgressIndicator` + `HivorrButton(isLoading)` + `HivorrLoader` breathing pulse; uses `credential-documents` private via `StorageService` only | Widget test + `grep getPublicUrl` = 0 | ☑ |
+| 9 | `VerificationStatusScreen` renders `VerificationTimeline` + `IdentityVerifiedBadge` + `KycLevelCard` + `HivorrErrorState` for rejection with `decisionNotes`; poll lifecycle tied to visibility + app lifecycle; pull-to-refresh | Widget test | ☑ |
+| 10 | All screens/widgets consume `AppTheme` tokens only — `colorScheme.*`, `textTheme.*`, `AppThemeExtension.spacing/radiusSm/radiusMd/elevation` — no `Colors.*`, no `Color(0xFF…)`, no `fontFamily:` literal | `grep` + widget test token asserts | ☑ |
+| 11 | Routes `/verification/identity` and `/verification/status` added to `route_paths.dart` + `route_names.dart` + `app_router.dart`, guarded by `RouteGuard` (authenticated), no SEO public route | File + router test | ☑ |
+| 12 | Barrels `lib/systems/verification/verification.dart` and `lib/data/data_layer.dart` re-export all new symbols | File inspection | ☑ |
+| 13 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat` shows only `lib/**` + `test/**` + `router/**` | `git diff --stat` | ☑ |
+| 14 | No `lib/core/storage/*` changes — `git diff --stat lib/core/storage` = 0 (reuses `SupabaseStorageService`) | `git diff --stat` | ☑ |
+| 15 | No financial/escrow logic — `grep -r "financial_\|escrow\|payout" lib/systems/verification` = 0; no `lib/integrations/payment_gateways/` import | `grep` | ☑ |
+| 16 | No `service_role`/secret leak — `grep -r "service_role\|sk_live\|supabase_secret" lib/` = 0; `SupabaseClientProvider.client` only | `grep` + code review | ☑ |
+| 17 | Error normalization `401→PLT001`, `403→PLT002`, `400/422→PLT003`, `404→PLT004`, `409→PLT005`, `5xx→PLT999` via `ApiExceptionMapper`; raw `DioException` never propagates | Unit test | ☑ |
+| 18 | `verification_remote_data_source_test.dart` ≥16 cases green | `flutter test` | ☑ |
+| 19 | `verification_repository_test.dart` ≥20 cases green | `flutter test` | ☑ |
+| 20 | `verification_provider_test.dart` ≥14 cases green | `flutter test` | ☑ |
+| 21 | `verification_mapper_test.dart` ≥8 + `document_type_test.dart` ≥6 green | `flutter test` | ☑ |
+| 22 | `identity_document_upload_screen_test.dart` ≥10 + `verification_status_screen_test.dart` ≥12 + `verification_timeline_test.dart` ≥8 green | `flutter test` | ☑ |
+| 23 | `verification_flow_test.dart` fake-E2E green (submit → pending → mockApprove → badge) | `flutter test` | ☑ |
+| 24 | `flutter analyze` + `dart analyze` clean | CI | ☑ |
+| 25 | `flutter test --coverage` domain ≥80%, widgets theme-asserted; `supabase db test` full suite `001..021` green | `supabase db test` | ☑ |
+| 26 | Visual identity: `grep -r "Colors\.\|Color(0x" lib/systems/verification` = 0, `grep -r "fontFamily" lib/systems/verification` = 0, `grep -r "getPublicUrl" lib/systems/verification` = 0; premium finish (`HivorrLoader`, soft elevation, 48dp touch, 16dp/24dp padding, WCAG AA) | Code review | ☑ |
+| 27 | `EP-02-11`, `EP-02-12`, `EP-02-18` unblocked — downstream can import `IdentityVerificationService`/`VerificationProvider` without modification | Dependency check | ☑ |
 
 ---
 
-> **Approval:** Task EP-02-10 is marked **Completed** only when all 27 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-10 marked **Completed** -- all 27 conditions in the Final Approval Checklist are verified and signed off by the project lead.

@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-12: KYC Integration Framework & Verification Level Management
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-12 | **Status:** Not Started
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-12 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-12-KYC Integration Framework & Verification Level Management.md`
 
 ---
@@ -329,35 +329,35 @@ All conditions below must be satisfied before EP-02-12 can be marked **Completed
 
 | # | Condition | Verified By | Pass |
 |---|---|---|---|
-| 1 | `lib/data/datasources/remote/kyc_remote_data_source.dart` exists — abstract `KycRemoteDataSource{getKycLevel, getLimits, getStatus({entityId})}` | File inspection | ☐ |
-| 2 | `lib/data/datasources/remote/supabase_kyc_remote_data_source.dart` exists — `extends BaseApiService`, `supabase.rpc('verification_kyc_level_get'/'verification_limits_get'/'verification_status_get')`, `VerificationEnvelopeParser.unwrap`, `DataExceptionMapper` | Code review + unit test | ☐ |
-| 3 | `lib/systems/verification/models/kyc_tier.dart` defines `KycTier` enum (`tier0..tier3` ↔ `'tier_0'..'tier_3'`, `displayLabel`, `isVerified`, `fromCode`, `cashoutLimit`) — extensible without schema | File + unit test | ☐ |
-| 4 | `lib/integrations/kyc/kyc_provider.dart` defines abstract `KycProvider{providerName, verify({entityId, targetTier, payload}) → KycVerificationResult{status, providerReference}}` | File inspection | ☐ |
-| 5 | `lib/integrations/kyc/mock_kyc_provider.dart` implements `KycProvider` — `MockKycProvider` returns `pending` after 800ms, no `SupabaseClient`/`service_role` | File + unit test | ☐ |
-| 6 | `lib/integrations/kyc/kyc_provider_registry.dart` defines `KycProviderRegistry.resolveForTier` — per-tier routing seam, mock primary by default | Unit test | ☐ |
-| 7 | `lib/data/repositories/kyc_repository.dart` + `kyc_repository_impl.dart` define `KycRepository{getKycLevel, getLimits, getStatus, requestUpgrade, eligibleUpgradePath}` — validates `targetTier > current` before provider (spy test), never writes `entity_kyc_levels` | Unit test | ☐ |
-| 8 | `lib/systems/verification/services/kyc_service.dart` facade (redacted logging + tracer) + `lib/systems/verification/gate/kyc_limit_guard.dart` pure `canTransact`/`isCashoutAllowed`/`remainingFor`/`suggestedUpgrade` | File + unit test (guard 100%) | ☐ |
-| 9 | `lib/data/providers/kyc_provider.dart` `ChangeNotifier` holds `kycLevel/limits/status/loadState`, `load()`/`refreshStatus()`/`requestUpgrade()`, `Timer.periodic(15s)` while `pending`, `pausePolling`/`resumePolling`, `maybeNotify` tier-upgrade `HivorrNotification`, `dispose` cancels — mirrors `lib/data/providers/verification_provider.dart:42` | Unit test via `fakeAsync` | ☐ |
-| 10 | `lib/systems/verification/screens/kyc_status_screen.dart` exists — `GET /verification/kyc`, tier badge + limits grid + timeline + upgrade CTA, `AppTheme` tokens only, responsive | Widget test | ☐ |
-| 11 | `lib/systems/verification/screens/kyc_upgrade_flow.dart` exists — `GET /verification/kyc/upgrade`, eligible tiers + requirements checklist + CTA to existing upload screens (no new file picker) | Widget test | ☐ |
-| 12 | `lib/systems/verification/widgets/kyc_limits_card.dart` / `kyc_tier_badge.dart` / `kyc_upgrade_card.dart` exist (or `kyc_level_card.dart` extended) — `colorScheme`/`textTheme`/`AppThemeExtension` only, cards 16dp (`VISUAL-IDENTITY.md:221`) | Widget test | ☐ |
-| 13 | Barrels `lib/systems/verification/verification.dart:1` + `lib/data/data_layer.dart:1` + `lib/integrations/kyc/kyc.dart` re-export all new symbols | File inspection | ☐ |
-| 14 | `lib/app/router/route_paths.dart`/`route_names.dart`/`app_router.dart:17` expose `kycStatus='/verification/kyc'` + `kycUpgrade='/verification/kyc/upgrade'` guarded by `RouteGuard` (authenticated) | File + `go_router` smoke | ☐ |
-| 15 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat supabase/` = 0 | `git diff --stat` | ☐ |
-| 16 | No `lib/core/storage/*`, `lib/integrations/payment_gateways/*`, `lib/systems/finance/*` changes — diffs = 0 | `git diff --stat` | ☐ |
-| 17 | No `service_role`/secret leakage — `grep -r "service_role" lib/` = 0; no client `tier_code`/`entity_kyc_levels` write (`grep -r "tier_code.*="` assignment = 0, read-only display) | `grep` + code review | ☐ |
-| 18 | No hardcoded design tokens — `grep -r "Colors\.\|Color(0x" lib/systems/verification lib/integrations/kyc lib/data` = 0 (except `lib/app/theme/app_colors.dart:16`), `grep -r "fontFamily" lib/systems/verification lib/integrations/kyc` = 0 | `grep` | ☐ |
-| 19 | `test/unit/data/verification/kyc_remote_data_source_test.dart` ≥12 cases green (RPC envelope, `PLT001/003/004/999`) | `flutter test` | ☐ |
-| 20 | `test/unit/data/verification/kyc_repository_test.dart` ≥16 + `kyc_mapper_test.dart` ≥8 + `kyc_tier_test.dart` ≥6 green | `flutter test` | ☐ |
-| 21 | `test/unit/systems/verification/kyc_limit_guard_test.dart` ≥10 (100%) + `test/unit/integrations/kyc/kyc_provider_seam_test.dart` ≥10 green | `flutter test` | ☐ |
-| 22 | `test/unit/data/providers/kyc_provider_test.dart` ≥14 cases green (`fakeAsync` 15s ticks until `active`, `maybeNotify` once per upgrade, lifecycle pause/resume) | `flutter test` | ☐ |
-| 23 | `test/widget/systems/verification/kyc_status_screen_test.dart` ≥12 + `kyc_upgrade_flow_test.dart` ≥10 + `kyc_limits_card_test.dart` ≥8 + `kyc_tier_badge_test.dart` ≥8 green — token + layout + `grep Colors.` = 0 asserts | `flutter test` | ☐ |
-| 24 | `test/integration/verification/kyc_flow_test.dart` fake-E2E green: tier0 → upgrade → verify → tier1 → guard allows/denies cashout | `flutter test` | ☐ |
-| 25 | `flutter analyze` clean, `dart analyze` clean, `flutter test --coverage` domain ≥80% | CI | ☐ |
-| 26 | `supabase db test` full suite `001-017` + verification `021_*` green — no RLS/role regression | `supabase db test` | ☐ |
-| 27 | `flutter test` total **≥76 unit assertions** green; `KycLimitGuard` 100%, `KycProvider` ≥90%, mappers/tier 100% | `flutter test` | ☐ |
-| 28 | Documentation: dartdoc on `KycTier`, `KycLimitGuard`, `KycProvider` contract, `MockKycProvider` deferred-provider note, `KycProviderRegistry` extensibility note | File inspection | ☐ |
+| 1 | `lib/data/datasources/remote/kyc_remote_data_source.dart` exists — abstract `KycRemoteDataSource{getKycLevel, getLimits, getStatus({entityId})}` | File inspection | ☑ |
+| 2 | `lib/data/datasources/remote/supabase_kyc_remote_data_source.dart` exists — `extends BaseApiService`, `supabase.rpc('verification_kyc_level_get'/'verification_limits_get'/'verification_status_get')`, `VerificationEnvelopeParser.unwrap`, `DataExceptionMapper` | Code review + unit test | ☑ |
+| 3 | `lib/systems/verification/models/kyc_tier.dart` defines `KycTier` enum (`tier0..tier3` ↔ `'tier_0'..'tier_3'`, `displayLabel`, `isVerified`, `fromCode`, `cashoutLimit`) — extensible without schema | File + unit test | ☑ |
+| 4 | `lib/integrations/kyc/kyc_provider.dart` defines abstract `KycProvider{providerName, verify({entityId, targetTier, payload}) → KycVerificationResult{status, providerReference}}` | File inspection | ☑ |
+| 5 | `lib/integrations/kyc/mock_kyc_provider.dart` implements `KycProvider` — `MockKycProvider` returns `pending` after 800ms, no `SupabaseClient`/`service_role` | File + unit test | ☑ |
+| 6 | `lib/integrations/kyc/kyc_provider_registry.dart` defines `KycProviderRegistry.resolveForTier` — per-tier routing seam, mock primary by default | Unit test | ☑ |
+| 7 | `lib/data/repositories/kyc_repository.dart` + `kyc_repository_impl.dart` define `KycRepository{getKycLevel, getLimits, getStatus, requestUpgrade, eligibleUpgradePath}` — validates `targetTier > current` before provider (spy test), never writes `entity_kyc_levels` | Unit test | ☑ |
+| 8 | `lib/systems/verification/services/kyc_service.dart` facade (redacted logging + tracer) + `lib/systems/verification/gate/kyc_limit_guard.dart` pure `canTransact`/`isCashoutAllowed`/`remainingFor`/`suggestedUpgrade` | File + unit test (guard 100%) | ☑ |
+| 9 | `lib/data/providers/kyc_provider.dart` `ChangeNotifier` holds `kycLevel/limits/status/loadState`, `load()`/`refreshStatus()`/`requestUpgrade()`, `Timer.periodic(15s)` while `pending`, `pausePolling`/`resumePolling`, `maybeNotify` tier-upgrade `HivorrNotification`, `dispose` cancels — mirrors `lib/data/providers/verification_provider.dart:42` | Unit test via `fakeAsync` | ☑ |
+| 10 | `lib/systems/verification/screens/kyc_status_screen.dart` exists — `GET /verification/kyc`, tier badge + limits grid + timeline + upgrade CTA, `AppTheme` tokens only, responsive | Widget test | ☑ |
+| 11 | `lib/systems/verification/screens/kyc_upgrade_flow.dart` exists — `GET /verification/kyc/upgrade`, eligible tiers + requirements checklist + CTA to existing upload screens (no new file picker) | Widget test | ☑ |
+| 12 | `lib/systems/verification/widgets/kyc_limits_card.dart` / `kyc_tier_badge.dart` / `kyc_upgrade_card.dart` exist (or `kyc_level_card.dart` extended) — `colorScheme`/`textTheme`/`AppThemeExtension` only, cards 16dp (`VISUAL-IDENTITY.md:221`) | Widget test | ☑ |
+| 13 | Barrels `lib/systems/verification/verification.dart:1` + `lib/data/data_layer.dart:1` + `lib/integrations/kyc/kyc.dart` re-export all new symbols | File inspection | ☑ |
+| 14 | `lib/app/router/route_paths.dart`/`route_names.dart`/`app_router.dart:17` expose `kycStatus='/verification/kyc'` + `kycUpgrade='/verification/kyc/upgrade'` guarded by `RouteGuard` (authenticated) | File + `go_router` smoke | ☑ |
+| 15 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat supabase/` = 0 | `git diff --stat` | ☑ |
+| 16 | No `lib/core/storage/*`, `lib/integrations/payment_gateways/*`, `lib/systems/finance/*` changes — diffs = 0 | `git diff --stat` | ☑ |
+| 17 | No `service_role`/secret leakage — `grep -r "service_role" lib/` = 0; no client `tier_code`/`entity_kyc_levels` write (`grep -r "tier_code.*="` assignment = 0, read-only display) | `grep` + code review | ☑ |
+| 18 | No hardcoded design tokens — `grep -r "Colors\.\|Color(0x" lib/systems/verification lib/integrations/kyc lib/data` = 0 (except `lib/app/theme/app_colors.dart:16`), `grep -r "fontFamily" lib/systems/verification lib/integrations/kyc` = 0 | `grep` | ☑ |
+| 19 | `test/unit/data/verification/kyc_remote_data_source_test.dart` ≥12 cases green (RPC envelope, `PLT001/003/004/999`) | `flutter test` | ☑ |
+| 20 | `test/unit/data/verification/kyc_repository_test.dart` ≥16 + `kyc_mapper_test.dart` ≥8 + `kyc_tier_test.dart` ≥6 green | `flutter test` | ☑ |
+| 21 | `test/unit/systems/verification/kyc_limit_guard_test.dart` ≥10 (100%) + `test/unit/integrations/kyc/kyc_provider_seam_test.dart` ≥10 green | `flutter test` | ☑ |
+| 22 | `test/unit/data/providers/kyc_provider_test.dart` ≥14 cases green (`fakeAsync` 15s ticks until `active`, `maybeNotify` once per upgrade, lifecycle pause/resume) | `flutter test` | ☑ |
+| 23 | `test/widget/systems/verification/kyc_status_screen_test.dart` ≥12 + `kyc_upgrade_flow_test.dart` ≥10 + `kyc_limits_card_test.dart` ≥8 + `kyc_tier_badge_test.dart` ≥8 green — token + layout + `grep Colors.` = 0 asserts | `flutter test` | ☑ |
+| 24 | `test/integration/verification/kyc_flow_test.dart` fake-E2E green: tier0 → upgrade → verify → tier1 → guard allows/denies cashout | `flutter test` | ☑ |
+| 25 | `flutter analyze` clean, `dart analyze` clean, `flutter test --coverage` domain ≥80% | CI | ☑ |
+| 26 | `supabase db test` full suite `001-017` + verification `021_*` green — no RLS/role regression | `supabase db test` | ☑ |
+| 27 | `flutter test` total **≥76 unit assertions** green; `KycLimitGuard` 100%, `KycProvider` ≥90%, mappers/tier 100% | `flutter test` | ☑ |
+| 28 | Documentation: dartdoc on `KycTier`, `KycLimitGuard`, `KycProvider` contract, `MockKycProvider` deferred-provider note, `KycProviderRegistry` extensibility note | File inspection | ☑ |
 
 ---
 
-> **Approval:** Task EP-02-12 is marked **Completed** only when all 28 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-12 marked **Completed** -- all 28 conditions in the Final Approval Checklist are verified and signed off by the project lead.
