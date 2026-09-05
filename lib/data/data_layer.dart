@@ -3,18 +3,22 @@ import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
+import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
+import 'package:hivorr/data/repositories/escrow_repository.dart';
+import 'package:hivorr/data/repositories/escrow_repository_impl.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository_impl.dart';
 import 'package:hivorr/data/repositories/kyc_repository.dart';
@@ -26,16 +30,20 @@ import 'package:hivorr/data/repositories/trade_verification_repository_impl.dart
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository_impl.dart';
 import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dart';
+import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
 
 export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
 export 'package:hivorr/data/datasources/remote/entity_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/escrow_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/escrow_write_unavailable_exception.dart';
 export 'package:hivorr/data/datasources/remote/financial_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
@@ -51,6 +59,10 @@ export 'package:hivorr/data/entities/currency_account.dart';
 export 'package:hivorr/data/entities/entity.dart';
 export 'package:hivorr/data/entities/entity_profile.dart';
 export 'package:hivorr/data/entities/entity_role.dart';
+export 'package:hivorr/data/entities/escrow.dart';
+export 'package:hivorr/data/entities/escrow_detail.dart';
+export 'package:hivorr/data/entities/escrow_milestone.dart';
+export 'package:hivorr/data/entities/escrow_transaction.dart';
 export 'package:hivorr/data/entities/financial_profile.dart';
 export 'package:hivorr/data/entities/financial_status.dart';
 export 'package:hivorr/data/entities/industry.dart';
@@ -62,6 +74,7 @@ export 'package:hivorr/data/entities/verification_submission.dart';
 export 'package:hivorr/data/mappers/entity_mapper.dart';
 export 'package:hivorr/data/mappers/entity_profile_mapper.dart';
 export 'package:hivorr/data/mappers/entity_role_mapper.dart';
+export 'package:hivorr/data/mappers/escrow_mapper.dart';
 export 'package:hivorr/data/mappers/financial_mapper.dart';
 export 'package:hivorr/data/mappers/industry_mapper.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
@@ -70,6 +83,11 @@ export 'package:hivorr/data/models/balance_dto.dart';
 export 'package:hivorr/data/models/entity_dto.dart';
 export 'package:hivorr/data/models/entity_profile_dto.dart';
 export 'package:hivorr/data/models/entity_role_dto.dart';
+export 'package:hivorr/data/models/escrow_detail_dto.dart';
+export 'package:hivorr/data/models/escrow_dto.dart';
+export 'package:hivorr/data/models/escrow_milestone_dto.dart';
+export 'package:hivorr/data/models/escrow_milestone_input.dart';
+export 'package:hivorr/data/models/escrow_transaction_dto.dart';
 export 'package:hivorr/data/models/financial_profile_dto.dart';
 export 'package:hivorr/data/models/financial_status_dto.dart';
 export 'package:hivorr/data/models/industry_dto.dart';
@@ -79,6 +97,7 @@ export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
+export 'package:hivorr/data/providers/escrow_provider.dart';
 export 'package:hivorr/data/providers/financial_provider.dart';
 export 'package:hivorr/data/providers/kyc_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
@@ -87,6 +106,8 @@ export 'package:hivorr/data/providers/trade_verification_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
 export 'package:hivorr/data/repositories/entity_repository.dart';
 export 'package:hivorr/data/repositories/entity_repository_impl.dart';
+export 'package:hivorr/data/repositories/escrow_repository.dart';
+export 'package:hivorr/data/repositories/escrow_repository_impl.dart';
 export 'package:hivorr/data/repositories/financial_repository.dart';
 export 'package:hivorr/data/repositories/financial_repository_impl.dart';
 export 'package:hivorr/data/repositories/kyc_repository.dart';
@@ -244,5 +265,30 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
   return (
     repository: repository,
     provider: FinancialProvider(service: service),
+  );
+}
+
+/// Wires the escrow data slice for EP-02-14.
+///
+/// Builds the [EscrowRepository] and [EscrowService] over the [ApiLayer] and
+/// returns a ready [EscrowProvider] bound to the write-proxy seam
+/// ([writeViaProxy] — from `AppConfig.escrowWriteViaProxyEnabled`, default
+/// `false`). Exposed for the bootstrap to register in the widget tree's
+/// MultiProvider (mirrors `registerFinancialLayer`).
+({EscrowRepository repository, EscrowProvider provider}) registerEscrowLayer(
+  ApiLayer apiLayer, {
+  bool writeViaProxy = false,
+}) {
+  final remote = SupabaseEscrowRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+    writeViaProxy: writeViaProxy,
+  );
+  final repository = EscrowRepositoryImpl(remote: remote);
+  final service = EscrowService(repository: repository);
+  return (
+    repository: repository,
+    provider: EscrowProvider(service: service),
   );
 }

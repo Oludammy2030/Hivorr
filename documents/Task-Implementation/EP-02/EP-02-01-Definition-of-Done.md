@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-01: Two-Tier Taxonomy Seed Data & Registry Population
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-01 | **Status:** Pending Approval
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-01 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-01-Two-Tier Taxonomy Seed Data & Registry Population.md`
 
 ---
@@ -275,4 +275,4 @@ All conditions below must be satisfied before EP-02-01 can be marked **Completed
 
 ---
 
-> **Approval:** Task EP-02-01 is marked **Completed** only when all 21 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-01 marked **Completed** -- all 21 conditions in the Final Approval Checklist are verified and signed off by the project lead.

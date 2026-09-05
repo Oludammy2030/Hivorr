@@ -6,8 +6,10 @@ import 'package:hivorr/app/router/app_router.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
+import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +30,8 @@ class HivorrApp extends StatefulWidget {
     required this.taxonomyProvider,
     this.verificationRepository,
     this.verificationProvider,
+    this.escrowRepository,
+    this.escrowProvider,
   });
 
   final AuthProvider authProvider;
@@ -41,6 +45,12 @@ class HivorrApp extends StatefulWidget {
 
   /// Identity-verification provider surfaced to the widget tree (EP-02-10).
   final VerificationProvider? verificationProvider;
+
+  /// Escrow repository (EP-02-14). Optional for testability.
+  final EscrowRepository? escrowRepository;
+
+  /// Escrow provider surfaced to the widget tree (EP-02-14).
+  final EscrowProvider? escrowProvider;
 
   @override
   State<HivorrApp> createState() => _HivorrAppState();
@@ -68,6 +78,8 @@ class _HivorrAppState extends State<HivorrApp> {
         widget.verificationRepository;
     final VerificationProvider? verificationProvider =
         widget.verificationProvider;
+    final EscrowRepository? escrowRepository = widget.escrowRepository;
+    final EscrowProvider? escrowProvider = widget.escrowProvider;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(
@@ -85,6 +97,12 @@ class _HivorrAppState extends State<HivorrApp> {
         if (verificationProvider != null)
           ChangeNotifierProvider<VerificationProvider>.value(
             value: verificationProvider,
+          ),
+        if (escrowRepository != null)
+          Provider<EscrowRepository>.value(value: escrowRepository),
+        if (escrowProvider != null)
+          ChangeNotifierProvider<EscrowProvider>.value(
+            value: escrowProvider,
           ),
       ],
       child: Builder(

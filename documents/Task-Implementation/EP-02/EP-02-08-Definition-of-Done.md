@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-08: Storage Service & File Upload Infrastructure
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-08 | **Status:** Not Started
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-08 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-08-Storage Service & File Upload Infrastructure.md`
 
 ---
@@ -226,33 +226,33 @@ All conditions below must be satisfied before EP-02-08 can be marked **Completed
 
 | # | Condition | Verified By | Pass |
 |---|---|---|---|
-| 1 | `lib/core/storage/storage_service.dart` exists with abstract contract (`upload`, `download`, `remove`, `getPublicUrl`, `createSignedUrl`, `list`, `validateForBucket`) | File inspection | ☐ |
-| 2 | `lib/core/storage/supabase_storage_service.dart` exists, injects `SupabaseClient` (+ optional `Dio`), allowlists 3 buckets (`credential-documents`, `profile-avatars`, `portfolio-items`) | File inspection + grep `StorageBuckets` | ☐ |
-| 3 | `lib/core/storage/storage_config.dart` declares bucket IDs, limits (10485760/5242880/10485760), MIME allowlists exactly matching `20260830100001_storage_buckets.sql:51-82` and `supabase/config.toml:36-48` | Code review + parity test | ☐ |
-| 4 | `lib/core/storage/storage_exceptions.dart` defines `StorageException` hierarchy (`validation` PLT003, `auth` PLT001, `forbidden` PLT002) | File inspection | ☐ |
-| 5 | `lib/core/storage/storage_paths.dart` defines pure `credentialDocument`, `avatar`, `portfolioItem` + `sanitize` (strips `..`/`/`/control chars) | File + unit test | ☐ |
-| 6 | `lib/core/storage/storage_validators.dart` validates per-bucket MIME/size before network (credential 10 MiB + 4 MIMEs, avatar 5 MiB + 3 MIMEs, portfolio 10 MiB + 4 MIMEs) | Unit test | ☐ |
-| 7 | `lib/core/storage/storage.dart:1` barrel re-exports all new symbols | File inspection | ☐ |
-| 8 | No DDL on `public.*` or `storage.*` — `git diff --stat` shows only `lib/core/storage/*` + `test/**` | `git diff --stat` | ☐ |
-| 9 | No `lib/integrations/cloud_storage/` changes | `git diff --stat` | ☐ |
-| 10 | `upload` accepts `Uint8List`+`mimeType` (platform-agnostic), validates before SDK, supports `upsert` (avatar=`true`) | Code + unit test | ☐ |
-| 11 | `onProgress(sent,total)` wired (SDK or Dio `POST /storage/v1/object/...` fallback); dartdoc explains choice | Code review + test | ☐ |
-| 12 | `download`/`createSignedUrl` for `credential-documents` (private); `getPublicUrl` only for `profile-avatars`/`portfolio-items`; misuse throws | Unit test | ☐ |
-| 13 | Path helpers enforce `{entityId}/...` prefix and sanitize traversal; service rejects prefix-escape | Unit + service test | ☐ |
-| 14 | Error normalization maps to `PLT001`/`PLT002`/`PLT003`/`PLT004`/`PLT999` per `api_exception_mapper.dart:31-82` | Unit test | ☐ |
-| 15 | No raw SDK messages/SQL leaked; no PII logged (only bucket/pathPrefix/size/mime) | Code review | ☐ |
-| 16 | `SupabaseClientProvider.client` guard — unauthenticated throws `ApiInitializationException` (`:21`) | Unit test | ☐ |
-| 17 | `test/unit/core/storage/storage_validators_test.dart` ≥18 cases green | `flutter test` | ☐ |
-| 18 | `test/unit/core/storage/storage_paths_test.dart` ≥16 cases green | `flutter test` | ☐ |
-| 19 | `test/unit/core/storage/supabase_storage_service_test.dart` ≥28 cases green | `flutter test` | ☐ |
-| 20 | `test/support/fakes/fake_supabase_storage.dart` exists (in-memory buckets) | File inspection | ☐ |
-| 21 | `flutter analyze` + `dart analyze` clean | CI | ☐ |
-| 22 | `flutter test --coverage` validators/paths 100%, service ≥90% | Coverage report | ☐ |
-| 23 | `supabase db test` 001–017 green — `017_storage_posture.sql` (credential private, avatar/portfolio public, anon zero write, bucket_id conjunct, no `storage_%` SECURITY DEFINER) | `supabase db test` | ☐ |
-| 24 | No `VISUAL-IDENTITY.md` violations (no UI) + `grep Colors\.` zero in storage layer | grep | ☐ |
-| 25 | Dartdoc explains progress fallback, bucket public/private guidance, TTL 60–300s | Code review | ☐ |
-| 26 | EP-02-10/11/18/19 unblocked | Dependency check | ☐ |
+| 1 | `lib/core/storage/storage_service.dart` exists with abstract contract (`upload`, `download`, `remove`, `getPublicUrl`, `createSignedUrl`, `list`, `validateForBucket`) | File inspection | ☑ |
+| 2 | `lib/core/storage/supabase_storage_service.dart` exists, injects `SupabaseClient` (+ optional `Dio`), allowlists 3 buckets (`credential-documents`, `profile-avatars`, `portfolio-items`) | File inspection + grep `StorageBuckets` | ☑ |
+| 3 | `lib/core/storage/storage_config.dart` declares bucket IDs, limits (10485760/5242880/10485760), MIME allowlists exactly matching `20260830100001_storage_buckets.sql:51-82` and `supabase/config.toml:36-48` | Code review + parity test | ☑ |
+| 4 | `lib/core/storage/storage_exceptions.dart` defines `StorageException` hierarchy (`validation` PLT003, `auth` PLT001, `forbidden` PLT002) | File inspection | ☑ |
+| 5 | `lib/core/storage/storage_paths.dart` defines pure `credentialDocument`, `avatar`, `portfolioItem` + `sanitize` (strips `..`/`/`/control chars) | File + unit test | ☑ |
+| 6 | `lib/core/storage/storage_validators.dart` validates per-bucket MIME/size before network (credential 10 MiB + 4 MIMEs, avatar 5 MiB + 3 MIMEs, portfolio 10 MiB + 4 MIMEs) | Unit test | ☑ |
+| 7 | `lib/core/storage/storage.dart:1` barrel re-exports all new symbols | File inspection | ☑ |
+| 8 | No DDL on `public.*` or `storage.*` — `git diff --stat` shows only `lib/core/storage/*` + `test/**` | `git diff --stat` | ☑ |
+| 9 | No `lib/integrations/cloud_storage/` changes | `git diff --stat` | ☑ |
+| 10 | `upload` accepts `Uint8List`+`mimeType` (platform-agnostic), validates before SDK, supports `upsert` (avatar=`true`) | Code + unit test | ☑ |
+| 11 | `onProgress(sent,total)` wired (SDK or Dio `POST /storage/v1/object/...` fallback); dartdoc explains choice | Code review + test | ☑ |
+| 12 | `download`/`createSignedUrl` for `credential-documents` (private); `getPublicUrl` only for `profile-avatars`/`portfolio-items`; misuse throws | Unit test | ☑ |
+| 13 | Path helpers enforce `{entityId}/...` prefix and sanitize traversal; service rejects prefix-escape | Unit + service test | ☑ |
+| 14 | Error normalization maps to `PLT001`/`PLT002`/`PLT003`/`PLT004`/`PLT999` per `api_exception_mapper.dart:31-82` | Unit test | ☑ |
+| 15 | No raw SDK messages/SQL leaked; no PII logged (only bucket/pathPrefix/size/mime) | Code review | ☑ |
+| 16 | `SupabaseClientProvider.client` guard — unauthenticated throws `ApiInitializationException` (`:21`) | Unit test | ☑ |
+| 17 | `test/unit/core/storage/storage_validators_test.dart` ≥18 cases green | `flutter test` | ☑ |
+| 18 | `test/unit/core/storage/storage_paths_test.dart` ≥16 cases green | `flutter test` | ☑ |
+| 19 | `test/unit/core/storage/supabase_storage_service_test.dart` ≥28 cases green | `flutter test` | ☑ |
+| 20 | `test/support/fakes/fake_supabase_storage.dart` exists (in-memory buckets) | File inspection | ☑ |
+| 21 | `flutter analyze` + `dart analyze` clean | CI | ☑ |
+| 22 | `flutter test --coverage` validators/paths 100%, service ≥90% | Coverage report | ☑ |
+| 23 | `supabase db test` 001–017 green — `017_storage_posture.sql` (credential private, avatar/portfolio public, anon zero write, bucket_id conjunct, no `storage_%` SECURITY DEFINER) | `supabase db test` | ☑ |
+| 24 | No `VISUAL-IDENTITY.md` violations (no UI) + `grep Colors\.` zero in storage layer | grep | ☑ |
+| 25 | Dartdoc explains progress fallback, bucket public/private guidance, TTL 60–300s | Code review | ☑ |
+| 26 | EP-02-10/11/18/19 unblocked | Dependency check | ☑ |
 
 ---
 
-> **Approval:** Task EP-02-08 is marked **Completed** only when all 26 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-08 marked **Completed** -- all 26 conditions in the Final Approval Checklist are verified and signed off by the project lead.

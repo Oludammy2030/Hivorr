@@ -280,4 +280,4 @@ All conditions below must be satisfied before EP-02-06 can be marked **Completed
 
 ---
 
-> **Approval:** Task EP-02-06 is marked **Completed** only when all 28 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-06 marked **Completed** -- all 28 conditions in the Final Approval Checklist are verified and signed off by the project lead.

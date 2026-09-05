@@ -82,6 +82,8 @@ class _InitializationScreenState extends State<InitializationScreen> {
           taxonomyProvider: _result!.taxonomyProvider,
           verificationRepository: _result!.verificationRepository,
           verificationProvider: _result!.verificationProvider,
+          escrowRepository: _result!.escrowRepository,
+          escrowProvider: _result!.escrowProvider,
         ),
       _ => const MaterialApp(home: SplashScreen()),
     };

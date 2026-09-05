@@ -17,6 +17,7 @@ class FeatureFlags {
     required this.enableDynamicWorkspaceLoading,
     required this.enablePayloadOptimization,
     required this.enablePushNotifications,
+    this.escrowWriteViaProxyEnabled = false,
   });
 
   /// Whether verbose structured logging is enabled.
@@ -55,6 +56,13 @@ class FeatureFlags {
   /// (EP-01-18). Gated together with [NotificationConfig.enablePushNotifications].
   final bool enablePushNotifications;
 
+  /// Whether escrow write actions route through the Edge Function proxy.
+  ///
+  /// Safe default: `false` in all environments until the EP-02-18 proxy
+  /// (`financial-escrow-proxy`) is deployed. When `false`, escrow write calls
+  /// surface [EscrowWriteUnavailableException] guidance (EP-02-14 §5.8).
+  final bool escrowWriteViaProxyEnabled;
+
   /// Parses feature flags from [source] using strict boolean rules.
   ///
   /// Accepted values are exactly `true` or `false` (case-sensitive).
@@ -86,6 +94,10 @@ class FeatureFlags {
         source,
         AppConstants.featureEnablePushNotifications,
       ),
+      escrowWriteViaProxyEnabled: _parseBool(
+        source,
+        AppConstants.featureEscrowWriteViaProxyEnabled,
+      ),
     );
   }
 
@@ -114,6 +126,7 @@ class FeatureFlags {
         'enableAnalyticsTracking: $enableAnalyticsTracking, '
         'enableDynamicWorkspaceLoading: $enableDynamicWorkspaceLoading, '
         'enablePayloadOptimization: $enablePayloadOptimization, '
-        'enablePushNotifications: $enablePushNotifications)';
+        'enablePushNotifications: $enablePushNotifications, '
+        'escrowWriteViaProxyEnabled: $escrowWriteViaProxyEnabled)';
   }
 }

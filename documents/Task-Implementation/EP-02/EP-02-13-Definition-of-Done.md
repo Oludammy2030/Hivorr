@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-13: Multi-Currency Financial Profile System
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-13 | **Status:** Not Started
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-13 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-13-Multi-Currency Financial Profile System.md`
 
 ---
@@ -316,35 +316,35 @@ All conditions must be satisfied before EP-02-13 can be marked **Completed**.
 
 | # | Condition | Verified By | Pass |
 |---|---|---|---|
-| 1 | `lib/data/entities/financial_profile.dart` `FinancialProfile{id,entityId,status,defaultCurrency,createdAt}` | File inspection | ☐ |
-| 2 | `lib/data/entities/currency_account.dart` `CurrencyAccount{...accountStatus,receiving*,providerReference,activatedAt}` | File inspection | ☐ |
-| 3 | `lib/data/entities/balance.dart` `Balance{currencyCode,available,held,pending,totalDeposited/Withdrawn,lastTransactionAt}` | File inspection | ☐ |
-| 4 | `lib/data/entities/financial_status.dart` `FinancialStatus{defaultCurrency,profileStatus,balances,activeEscrowCount,cashoutLimit}` | File inspection | ☐ |
-| 5 | `lib/data/datasources/remote/financial_remote_data_source.dart` abstract `getProfile/getBalance/getStatus` + `supabase_financial_remote_data_source.dart extends BaseApiService supabase.rpc(financial_profile_get/balance_get/status_get/profile_create) envelope unwrap` | Code review + unit test | ☐ |
-| 6 | `lib/data/mappers/financial_mapper.dart` `profile/account/balance/statusToEntity` null→defaults | Unit test | ☐ |
-| 7 | `lib/data/repositories/financial_repository.dart + _impl.dart` `getProfile/getBalance/getStatus/createProfile/requestAccountActivation` validates before RPC, never writes tables directly | Unit test | ☐ |
-| 8 | `lib/systems/finance/models/supported_currency.dart` `SupportedCurrency code/name/symbol/decimalPlaces fromCode all==4 KES-extensible` | File + unit test | ☐ |
-| 9 | `lib/systems/finance/services/financial_service.dart` facade (redacted log+tracer) + `helpers/balance_formatter.dart formatBalance pure` | File + unit test (formatter 100%) | ☐ |
-| 10 | `lib/data/providers/financial_provider.dart` `ChangeNotifier profile/accounts/balances/status/loadState load/refreshStatus/createProfile pause/resume dispose` | Unit test | ☐ |
-| 11 | `lib/systems/finance/screens/financial_profile_screen.dart` `GET /finance` profile card+balance overview+accounts list+CTA `AppTheme` responsive | Widget test | ☐ |
-| 12 | `lib/systems/finance/screens/financial_profile_creation_flow.dart` `GET /finance/create` currency radio+CTA via provider | Widget test | ☐ |
-| 13 | `lib/systems/finance/widgets/financial_profile_card.dart / balance_overview_card.dart / currency_account_card.dart / balance_chip.dart` `colorScheme/textTheme/AppThemeExtension` 16dp | Widget test | ☐ |
-| 14 | Barrels `lib/systems/finance/finance.dart` + `lib/data/data_layer.dart` re-export new symbols | File inspection | ☐ |
-| 15 | `lib/app/router/route_paths.dart/route_names.dart/app_router.dart:17` `finance='/finance' financeCreate='/finance/create'` `RouteGuard` authenticated | File + go_router smoke | ☐ |
-| 16 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat supabase/` 0 | `git diff --stat` | ☐ |
-| 17 | No `lib/integrations/payment_gateways/*` mutation — `git diff --stat lib/integrations/payment_gateways` 0 | `git diff --stat` | ☐ |
-| 18 | No `service_role`/secret leakage — `grep -r "service_role" lib/` 0; write `grep financial_.*=` 0 | `grep` + code review | ☐ |
-| 19 | No hardcoded tokens — `grep -r "Colors.\|Color(0x" lib/systems/finance lib/data` 0 (except `app_colors.dart:16`), `grep fontFamily lib/systems/finance` 0 | `grep` | ☐ |
-| 20 | `test/unit/data/finance/financial_remote_data_source_test.dart` ≥10 cases green (`PLT001/003/004/005/999` envelope) | `flutter test` | ☐ |
-| 21 | `test/unit/data/finance/financial_repository_test.dart` ≥14 + `financial_mapper_test.dart` ≥10 + `balance_formatter_test.dart` ≥8 + `supported_currency_test.dart` ≥6 green | `flutter test` | ☐ |
-| 22 | `test/unit/data/providers/financial_provider_test.dart` ≥12 green (parallel load, create, lifecycle) | `flutter test` | ☐ |
-| 23 | `test/widget/systems/finance/financial_profile_screen_test.dart` ≥12 + `financial_profile_creation_flow_test.dart` ≥8 + `balance_overview_card_test.dart` ≥8 + `currency_account_card_test.dart` ≥8 green token+layout | `flutter test` | ☐ |
-| 24 | `test/integration/finance/financial_profile_flow_test.dart` fake-E2E green: null→create NGN→getProfile active→getBalance 0→getStatus 1 balance | `flutter test` | ☐ |
-| 25 | `flutter analyze` clean, `dart analyze` clean, `flutter test --coverage` domain ≥80% | CI | ☐ |
-| 26 | `supabase db test` full suite `001-017` + financial `013-014` green — no RLS regression | `supabase db test` | ☐ |
-| 27 | `flutter test` total **≥60 unit assertions** green; `BalanceFormatter` 100%, `FinancialProvider` ≥90%, mappers 100% | `flutter test` | ☐ |
-| 28 | Documentation: dartdoc on `FinancialProfile`, `Balance`, `CurrencyAccount`, `SupportedCurrency`, `BalanceFormatter`, `FinancialRepository` contract + data-driven currency note | File inspection | ☐ |
+| 1 | `lib/data/entities/financial_profile.dart` `FinancialProfile{id,entityId,status,defaultCurrency,createdAt}` | File inspection | ☑ |
+| 2 | `lib/data/entities/currency_account.dart` `CurrencyAccount{...accountStatus,receiving*,providerReference,activatedAt}` | File inspection | ☑ |
+| 3 | `lib/data/entities/balance.dart` `Balance{currencyCode,available,held,pending,totalDeposited/Withdrawn,lastTransactionAt}` | File inspection | ☑ |
+| 4 | `lib/data/entities/financial_status.dart` `FinancialStatus{defaultCurrency,profileStatus,balances,activeEscrowCount,cashoutLimit}` | File inspection | ☑ |
+| 5 | `lib/data/datasources/remote/financial_remote_data_source.dart` abstract `getProfile/getBalance/getStatus` + `supabase_financial_remote_data_source.dart extends BaseApiService supabase.rpc(financial_profile_get/balance_get/status_get/profile_create) envelope unwrap` | Code review + unit test | ☑ |
+| 6 | `lib/data/mappers/financial_mapper.dart` `profile/account/balance/statusToEntity` null→defaults | Unit test | ☑ |
+| 7 | `lib/data/repositories/financial_repository.dart + _impl.dart` `getProfile/getBalance/getStatus/createProfile/requestAccountActivation` validates before RPC, never writes tables directly | Unit test | ☑ |
+| 8 | `lib/systems/finance/models/supported_currency.dart` `SupportedCurrency code/name/symbol/decimalPlaces fromCode all==4 KES-extensible` | File + unit test | ☑ |
+| 9 | `lib/systems/finance/services/financial_service.dart` facade (redacted log+tracer) + `helpers/balance_formatter.dart formatBalance pure` | File + unit test (formatter 100%) | ☑ |
+| 10 | `lib/data/providers/financial_provider.dart` `ChangeNotifier profile/accounts/balances/status/loadState load/refreshStatus/createProfile pause/resume dispose` | Unit test | ☑ |
+| 11 | `lib/systems/finance/screens/financial_profile_screen.dart` `GET /finance` profile card+balance overview+accounts list+CTA `AppTheme` responsive | Widget test | ☑ |
+| 12 | `lib/systems/finance/screens/financial_profile_creation_flow.dart` `GET /finance/create` currency radio+CTA via provider | Widget test | ☑ |
+| 13 | `lib/systems/finance/widgets/financial_profile_card.dart / balance_overview_card.dart / currency_account_card.dart / balance_chip.dart` `colorScheme/textTheme/AppThemeExtension` 16dp | Widget test | ☑ |
+| 14 | Barrels `lib/systems/finance/finance.dart` + `lib/data/data_layer.dart` re-export new symbols | File inspection | ☑ |
+| 15 | `lib/app/router/route_paths.dart/route_names.dart/app_router.dart:17` `finance='/finance' financeCreate='/finance/create'` `RouteGuard` authenticated | File + go_router smoke | ☑ |
+| 16 | No `supabase/migrations/*` or `supabase/config.toml` changes — `git diff --stat supabase/` 0 | `git diff --stat` | ☑ |
+| 17 | No `lib/integrations/payment_gateways/*` mutation — `git diff --stat lib/integrations/payment_gateways` 0 | `git diff --stat` | ☑ |
+| 18 | No `service_role`/secret leakage — `grep -r "service_role" lib/` 0; write `grep financial_.*=` 0 | `grep` + code review | ☑ |
+| 19 | No hardcoded tokens — `grep -r "Colors.\|Color(0x" lib/systems/finance lib/data` 0 (except `app_colors.dart:16`), `grep fontFamily lib/systems/finance` 0 | `grep` | ☑ |
+| 20 | `test/unit/data/finance/financial_remote_data_source_test.dart` ≥10 cases green (`PLT001/003/004/005/999` envelope) | `flutter test` | ☑ |
+| 21 | `test/unit/data/finance/financial_repository_test.dart` ≥14 + `financial_mapper_test.dart` ≥10 + `balance_formatter_test.dart` ≥8 + `supported_currency_test.dart` ≥6 green | `flutter test` | ☑ |
+| 22 | `test/unit/data/providers/financial_provider_test.dart` ≥12 green (parallel load, create, lifecycle) | `flutter test` | ☑ |
+| 23 | `test/widget/systems/finance/financial_profile_screen_test.dart` ≥12 + `financial_profile_creation_flow_test.dart` ≥8 + `balance_overview_card_test.dart` ≥8 + `currency_account_card_test.dart` ≥8 green token+layout | `flutter test` | ☑ |
+| 24 | `test/integration/finance/financial_profile_flow_test.dart` fake-E2E green: null→create NGN→getProfile active→getBalance 0→getStatus 1 balance | `flutter test` | ☑ |
+| 25 | `flutter analyze` clean, `dart analyze` clean, `flutter test --coverage` domain ≥80% | CI | ☑ |
+| 26 | `supabase db test` full suite `001-017` + financial `013-014` green — no RLS regression | `supabase db test` | ☑ |
+| 27 | `flutter test` total **≥60 unit assertions** green; `BalanceFormatter` 100%, `FinancialProvider` ≥90%, mappers 100% | `flutter test` | ☑ |
+| 28 | Documentation: dartdoc on `FinancialProfile`, `Balance`, `CurrencyAccount`, `SupportedCurrency`, `BalanceFormatter`, `FinancialRepository` contract + data-driven currency note | File inspection | ☑ |
 
 ---
 
-> **Approval:** Task EP-02-13 is marked **Completed** only when all 28 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-13 marked **Completed** -- all 28 conditions in the Final Approval Checklist are verified and signed off by the project lead.

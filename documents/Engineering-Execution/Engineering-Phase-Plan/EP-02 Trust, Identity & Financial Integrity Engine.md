@@ -263,7 +263,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Provides the server-side management layer for the taxonomy registry. Write operations must be admin-only (service role). Read operations must be efficient and cacheable. Future admin UI and client-side taxonomy engine both consume these RPCs. |
 | **Dependencies** | EP-02-01 |
 | **Expected Outcome** | RPCs for taxonomy CRUD. List RPCs accessible to authenticated users. Write RPCs restricted to service role. pgTAP tests for authorization, validation, and referential integrity. Slug uniqueness enforced server-side. |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | Very High | **Coding Reasoning** | Very High |
 
 ### EP-02-03: Verification & Admin Review Schema Extension
@@ -274,7 +274,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Extends the EP-01 verification schema (entity_credentials, entity_professions.trade_verification_status) into a full verification workflow engine. The admin review gate is the trust checkpoint that controls marketplace access. KYC levels drive financial limits in later EP-02 items. |
 | **Dependencies** | EP-02-02 |
 | **Expected Outcome** | New tables with full RLS (default-deny). RPCs: `verification_submit`, `verification_review_approve`, `verification_review_reject`, `verification_status_get`, `verification_kyc_level_get`, `verification_limits_get`. Admin review operations restricted to service role. Entity can only submit for self. pgTAP test suite. |
-| **Priority** | Critical | **Status** | Not Started |
+| **Priority** | Critical | **Status** | Completed |
 | **Planning Reasoning** | **Extremely High** | **Coding Reasoning** | **Extremely High** |
 
 ### EP-02-04: Financial Integrity Database Schema & Server-Side Enforcement
@@ -285,7 +285,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | **Most architecturally significant item in EP-02.** This schema is the financial bedrock for all marketplace transactions (EP-03+). Every escrow hold, every payout, every balance check, every name-match runs through these tables and their RPCs. Incorrect design here creates catastrophic financial risk. Must support multi-currency, provider-agnostic, double-entry accounting with full audit trail. |
 | **Dependencies** | EP-02-03 |
 | **Expected Outcome** | 11+ financial tables with full RLS (default-deny). RPCs for all financial operations: balance queries, transaction recording, escrow lifecycle (create/fund/hold/release/refund), payout creation, deposit recording, conversion. All balance mutations atomic and server-side. Double-entry integrity enforced. pgTAP financial test suite covering edge cases (partial release, refund, disputed hold, limit breach). Zero financial logic accessible to client. |
-| **Priority** | Critical | **Status** | Not Started |
+| **Priority** | Critical | **Status** | Completed |
 | **Planning Reasoning** | **Extremely High** | **Coding Reasoning** | **Extremely High** |
 
 ### EP-02-05: Dispute Resolution Schema & Server-Side Rules
@@ -296,7 +296,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Provides the structured dispute resolution framework that protects both parties in transactions. Must integrate with escrow (disputed escrow cannot be released until dispute is resolved). Evidence-based resolution rather than ad-hoc complaint handling. |
 | **Dependencies** | EP-02-04 |
 | **Expected Outcome** | Dispute tables with full RLS. RPCs: `dispute_file`, `dispute_submit_evidence`, `dispute_resolve`, `dispute_get`, `dispute_list`. Dispute filing places an automatic hold on linked escrow. Resolution can trigger escrow release or refund. Admin/service-role for resolution operations. pgTAP test suite. |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | **Extremely High** | **Coding Reasoning** | **Extremely High** |
 
 ### EP-02-06: Supabase Storage Infrastructure & Bucket Configuration
@@ -307,7 +307,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Verification workflows require document upload (identity documents, trade proofs, certifications). Profile completion requires avatar upload. Storage must be as secure as the database — RLS-protected, no public access to sensitive documents. |
 | **Dependencies** | EP-01-05 (Supabase project provisioned) |
 | **Expected Outcome** | Storage buckets created with RLS policies. Credential documents: private, owner-only access. Profile avatars: public read, owner write. Portfolio items: public read, owner write. File size and type constraints enforced. Storage policy tests verify no unauthorized access. |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | Very High | **Coding Reasoning** | Very High |
 
 ### EP-02-07: Client-Side Taxonomy Engine & Profession Registry
@@ -318,7 +318,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Entities must browse and select industries/professions during onboarding. The taxonomy engine is also used by the professional profile display and future marketplace discovery. Must be efficient (cached) and support the two-tier hierarchy. |
 | **Dependencies** | EP-02-02 |
 | **Expected Outcome** | Taxonomy service with industry list, profession list (by industry), search, caching. Data layer: `Industry` entity, `Profession` entity, DTOs, mappers, repository, provider. Profession registry widget for browsing/selecting. Integration test verifying data flow from RPC → cache → UI. |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | High | **Coding Reasoning** | High |
 
 ### EP-02-08: Storage Service & File Upload Infrastructure
@@ -329,7 +329,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Verification workflows, profile completion, and portfolio display all require file upload/download. The storage service abstracts Supabase Storage behind a clean interface, enabling future storage provider changes. |
 | **Dependencies** | EP-02-06 |
 | **Expected Outcome** | `StorageService` with upload (progress callback), download, delete, getPublicUrl. File type validation (images, PDFs). Size limit enforcement. Path helpers for credential/avatar/portfolio paths. Integration test with Supabase Storage. |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | High | **Coding Reasoning** | High |
 
 ### EP-02-09: Payment Gateway Abstraction Layer
@@ -340,7 +340,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | AGENT.md Rule 4 and the Financial Infrastructure Strategy require provider-agnostic financial integration. No direct provider calls in business logic. Two adapters validate the abstraction is genuinely provider-agnostic. The NIBSS interface enables name-matching in EP-02-16. |
 | **Dependencies** | EP-01-07 (API layer) |
 | **Expected Outcome** | Abstract `PaymentGateway` interface with methods: `initializePayment`, `verifyPayment`, `createTransfer`, `verifyTransfer`, `getNameEnquiry`. Concrete `PaystackGateway` and `FlutterwaveGateway` adapters. `NameEnquiryService` interface with `NibssNameEnquiryAdapter`. Gateway factory/registry for provider selection. Unit tests with mock HTTP responses. No provider-specific types leak into business logic. |
-| **Priority** | Critical | **Status** | Not Started |
+| **Priority** | Critical | **Status** | Completed |
 | **Planning Reasoning** | **Extremely High** | **Coding Reasoning** | **Extremely High** |
 
 ### EP-02-10: Identity Verification System
@@ -351,7 +351,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Identity verification is the first trust checkpoint. Entities must verify their identity before accessing financial features and before trade verification can proceed. This system connects the client-side upload UX to the server-side verification schema (EP-02-03). |
 | **Dependencies** | EP-02-06 (storage), EP-02-07 (taxonomy), EP-02-03 (verification schema) |
 | **Expected Outcome** | Verification service: submit identity document, check status, get KYC level. Data layer: `VerificationSubmission` entity, DTO, repository, provider. UI: document upload screen, verification status screen, status tracking widget. Notification integration for status changes. Integration test: submit → pending → (mock) approve → status update. |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | Very High | **Coding Reasoning** | Very High |
 
 ### EP-02-11: Trade Verification Workflow & Admin Review Gate
@@ -362,7 +362,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Trade verification is the marketplace participation gate. This is the core trust mechanism: unverified professionals have dashboard access but cannot participate in transactions. The admin review gate ensures human validation before marketplace activation. |
 | **Dependencies** | EP-02-10 (identity verification), EP-02-06 (taxonomy) |
 | **Expected Outcome** | Trade verification service: submit trade proof, check trade verification status, get bid-lock state. UI: trade proof upload screen, verification status with timeline. Admin review interface (simplified): pending submissions list, approve/reject with notes. Bid-lock enforcement verified server-side and reflected client-side. Integration test: bind profession → submit trade proof → admin approve → bid-lock released. |
-| **Priority** | Critical | **Status** | Not Started |
+| **Priority** | Critical | **Status** | Completed |
 | **Planning Reasoning** | Very High | **Coding Reasoning** | Very High |
 
 ### EP-02-12: KYC Integration Framework & Verification Level Management
@@ -373,7 +373,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | KYC levels drive proportional financial risk containment. Higher verification depth unlocks higher limits. The abstract KYC provider interface allows future integration with identity verification services without redesigning the limit enforcement system. |
 | **Dependencies** | EP-02-10 (identity verification), EP-02-03 (verification schema with KYC levels) |
 | **Expected Outcome** | KYC service: get current level, get applicable limits, request level upgrade. KYC level definitions with server-enforced limits. Abstract `KycProvider` interface with mock adapter. UI: KYC status display, level upgrade flow, limit visibility. Integration test: level upgrade → limit increase verified server-side. |
-| **Priority** | High | **Status** | Not Started |
+| **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | Very High | **Coding Reasoning** | Very High |
 
 ### EP-02-13: Multi-Currency Financial Profile System
@@ -384,7 +384,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | The unified multi-currency financial profile is a core business capability. Each entity has one financial profile holding multiple currency accounts and balances. This is the foundation that escrow, payouts, conversions, and deposits all operate against. |
 | **Dependencies** | EP-02-04 (financial schema), EP-02-09 (payment gateway abstraction) |
 | **Expected Outcome** | Financial profile service: create profile, list currency accounts, get balances, request receiving account. Data layer: `FinancialProfile`, `CurrencyAccount`, `Balance` entities, DTOs, repositories, providers. UI: financial profile screen, currency accounts list, balance display per currency. Integration test: profile creation → account request → balance query. |
-| **Priority** | Critical | **Status** | Not Started |
+| **Priority** | Critical | **Status** | Completed |
 | **Planning Reasoning** | Very High | **Coding Reasoning** | Very High |
 
 ### EP-02-14: Escrow & Milestone Payment Management
@@ -395,7 +395,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Engineering Purpose** | Escrow is the financial protection mechanism for all marketplace transactions. EP-03 (professional services) and EP-04 (commerce) both depend on proven escrow infrastructure. The milestone-based release model must be validated here before transaction phases begin. |
 | **Dependencies** | EP-02-04 (financial schema), EP-02-09 (payment gateway) |
 | **Expected Outcome** | Escrow service: create escrow with milestones, fund escrow, report milestone completion, request release, request refund. Data layer: `Escrow`, `EscrowMilestone` entities, DTOs, repositories, providers. UI: escrow creation flow, milestone tracker widget, escrow status display. Integration test: create → fund → milestone complete → release with balance verification. |
-| **Priority** | Critical | **Status** | Not Started |
+| **Priority** | Critical | **Status** | Completed |
 | **Planning Reasoning** | **Extremely High** | **Coding Reasoning** | **Extremely High** |
 
 ### EP-02-15: Currency Conversion Infrastructure
@@ -471,19 +471,19 @@ A fully operational trust and identity engine where entities can register throug
 | Task ID | Task Name | Priority | Plan Reasoning | Code Reasoning | Dependencies | Status |
 |---|---|---|---|---|---|---|
 | EP-02-01 | Taxonomy Seed Data & Registry Population | Critical | High | Medium | None | Completed |
-| EP-02-02 | Taxonomy Management RPCs & Registry | High | Very High | Very High | 01 | Not Started |
-| EP-02-03 | Verification & Admin Review Schema | Critical | **Extremely High** | **Extremely High** | 02 | Not Started |
-| EP-02-04 | Financial Integrity Schema & Enforcement | Critical | **Extremely High** | **Extremely High** | 03 | Not Started |
-| EP-02-05 | Dispute Resolution Schema & Rules | High | **Extremely High** | **Extremely High** | 04 | Not Started |
-| EP-02-06 | Supabase Storage Infrastructure | High | Very High | Very High | EP-01 | Not Started |
-| EP-02-07 | Taxonomy Engine & Profession Registry | High | High | High | 02 | Not Started |
-| EP-02-08 | Storage Service & File Upload | High | High | High | 06 | Not Started |
-| EP-02-09 | Payment Gateway Abstraction Layer | Critical | **Extremely High** | **Extremely High** | EP-01 | Not Started |
-| EP-02-10 | Identity Verification System | High | Very High | Very High | 06, 07, 03 | Not Started |
-| EP-02-11 | Trade Verification & Admin Review Gate | Critical | Very High | Very High | 10, 06 | Not Started |
-| EP-02-12 | KYC Framework & Verification Levels | High | Very High | Very High | 10, 03 | Not Started |
-| EP-02-13 | Multi-Currency Financial Profile | Critical | Very High | Very High | 04, 09 | Not Started |
-| EP-02-14 | Escrow & Milestone Payment Management | Critical | **Extremely High** | **Extremely High** | 04, 09 | Not Started |
+| EP-02-02 | Taxonomy Management RPCs & Registry | High | Very High | Very High | 01 | Completed |
+| EP-02-03 | Verification & Admin Review Schema | Critical | **Extremely High** | **Extremely High** | 02 | Completed |
+| EP-02-04 | Financial Integrity Schema & Enforcement | Critical | **Extremely High** | **Extremely High** | 03 | Completed |
+| EP-02-05 | Dispute Resolution Schema & Rules | High | **Extremely High** | **Extremely High** | 04 | Completed |
+| EP-02-06 | Supabase Storage Infrastructure | High | Very High | Very High | EP-01 | Completed |
+| EP-02-07 | Taxonomy Engine & Profession Registry | High | High | High | 02 | Completed |
+| EP-02-08 | Storage Service & File Upload | High | High | High | 06 | Completed |
+| EP-02-09 | Payment Gateway Abstraction Layer | Critical | **Extremely High** | **Extremely High** | EP-01 | Completed |
+| EP-02-10 | Identity Verification System | High | Very High | Very High | 06, 07, 03 | Completed |
+| EP-02-11 | Trade Verification & Admin Review Gate | Critical | Very High | Very High | 10, 06 | Completed |
+| EP-02-12 | KYC Framework & Verification Levels | High | Very High | Very High | 10, 03 | Completed |
+| EP-02-13 | Multi-Currency Financial Profile | Critical | Very High | Very High | 04, 09 | Completed |
+| EP-02-14 | Escrow & Milestone Payment Management | Critical | **Extremely High** | **Extremely High** | 04, 09 | Completed |
 | EP-02-15 | Currency Conversion Infrastructure | High | Very High | Very High | 13, 04 | Not Started |
 | EP-02-16 | Payout Accounts & Deposit Verification | Critical | **Extremely High** | **Extremely High** | 04, 13, 12, 09 | Not Started |
 | EP-02-17 | Dispute Resolution Framework | High | Very High | Very High | 05, 14 | Not Started |

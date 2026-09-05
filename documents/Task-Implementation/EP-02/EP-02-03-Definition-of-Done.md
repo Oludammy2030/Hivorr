@@ -1,6 +1,6 @@
 # Definition of Done — EP-02-03: Verification & Admin Review Schema Extension
 
-> **Document Type:** Task Definition of Done | **Task ID:** EP-02-03 | **Status:** Ready for Verification
+> **Document Type:** Task Definition of Done | **Task ID:** EP-02-03 | **Status:** Completed
 > **Reference Plan:** `documents/Task-Implementation/EP-02/EP-02-03-Verification & Admin Review Schema Extension.md`
 
 ---

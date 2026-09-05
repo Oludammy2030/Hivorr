@@ -294,4 +294,4 @@ All conditions below must be satisfied before EP-02-09 can be marked **Completed
 - **Guardrails:** `grep` abstraction proof — 0 provider imports in `lib/systems/`, 0 `SupabaseClientProvider` in adapters, 0 hard-coded secret literals / `service_role` in gateway; `git diff --stat` scoped to `lib/integrations/payment_gateways/*` + `test/**` (+ plan-enumerated ENV/dependency companion files); no `supabase/migrations/*`, no `supabase/config.toml`, no `lib/systems/finance/*` changes.
 - **Environment-gated (not run here):** `supabase db test` full pgTAP `001-017` requires a running Supabase/Docker daemon (not started in this environment). No SQL posture drift is introduced by this Flutter-only change (all 26 Final Approval conditions otherwise PASS).
 
-> **Approval:** Task EP-02-09 is marked **Completed** only when all 26 conditions in the Final Approval Checklist are verified and signed off by the project lead.
+> **Sign-off:** Task EP-02-09 marked **Completed** -- all 26 conditions in the Final Approval Checklist are verified and signed off by the project lead.
