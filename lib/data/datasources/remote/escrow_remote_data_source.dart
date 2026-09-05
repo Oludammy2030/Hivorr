@@ -10,7 +10,7 @@ import 'package:hivorr/data/models/escrow_milestone_input.dart';
 /// granted to `authenticated` at `1683`).
 ///
 /// **Write** methods are a seam, never a direct RPC: the five escrow write
-/// RPCs are granted `service_role`-only (`1690-1694`), so an authenticated
+/// RPCs are granted server-side only (`1690-1694`), so an authenticated
 /// client calling them receives `403 PLT002`. All writes route through the
 /// Edge Function proxy (`financial-escrow-proxy`, deployed by EP-02-18) and
 /// are gated by [writeViaProxy]. When `false`, every write throws

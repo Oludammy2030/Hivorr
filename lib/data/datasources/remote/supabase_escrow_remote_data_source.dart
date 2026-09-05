@@ -20,7 +20,7 @@ import 'package:hivorr/data/models/escrow_milestone_input.dart';
 ///   concrete `supabase.functions.invoke('financial-escrow-proxy', ...)` HTTP
 ///   path is owned by EP-02-18; until it ships this branch throws
 ///   [UnimplementedError] — **never** a direct `supabase.rpc` call to a
-///   `service_role`-only write RPC (`1690-1694`).
+///   server-granted write RPC (`1690-1694`).
 class SupabaseEscrowRemoteDataSource extends BaseApiService
     implements EscrowRemoteDataSource {
   SupabaseEscrowRemoteDataSource({
