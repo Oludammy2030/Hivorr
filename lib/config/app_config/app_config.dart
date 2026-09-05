@@ -79,6 +79,18 @@ class AppConfig {
   bool get escrowWriteViaProxyEnabled =>
       _config.featureFlags.escrowWriteViaProxyEnabled;
 
+  /// Whether wallet currency conversion is enabled (EP-02-15).
+  ///
+  /// Gates pair discovery, the `/finance/convert` route, and the conversion
+  /// screen. Defaults to `false` in all environments.
+  bool get conversionPairsEnabled => _config.featureFlags.conversionPairsEnabled;
+
+  /// Whether the `financial_conversions` REST history read seam is enabled
+  /// (EP-02-15 §5.2). Defaults to `false` — when off, `getHistory()` returns
+  /// `[]` with the future `financial_conversions_list` RPC swap point.
+  bool get conversionHistoryReadEnabled =>
+      _config.featureFlags.conversionHistoryReadEnabled;
+
   // ─── Constants ──────────────────────────────────────────────────────
 
   /// Centralized immutable application constants.

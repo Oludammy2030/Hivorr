@@ -4,6 +4,8 @@ import 'package:hivorr/app/lifecycle/app_lifecycle_observer.dart';
 import 'package:hivorr/app/startup/initialization_screen.dart';
 import 'package:hivorr/config/app_config/app_config.dart';
 import 'package:hivorr/config/environments/environment_config.dart';
+import 'package:hivorr/config/wallet/wallet_conversion_pairs_config.dart';
+import 'package:hivorr/config/wallet/wallet_conversion_rates_seed.dart';
 import 'package:hivorr/core/api/api_initializer.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/core/database/database.dart';
@@ -26,6 +28,8 @@ class BootstrapResult {
     required this.verificationProvider,
     this.escrowRepository,
     this.escrowProvider,
+    this.conversionRepository,
+    this.conversionProvider,
   });
 
   final AppConfig appConfig;
@@ -50,6 +54,12 @@ class BootstrapResult {
 
   /// Escrow provider surfaced to the widget tree (EP-02-14).
   final EscrowProvider? escrowProvider;
+
+  /// Currency-conversion repository (EP-02-15). Optional for testability.
+  final ConversionRepository? conversionRepository;
+
+  /// Currency-conversion provider surfaced to the widget tree (EP-02-15).
+  final ConversionProvider? conversionProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -101,6 +111,18 @@ class AppBootstrap {
       apiLayer,
       writeViaProxy: appConfig.escrowWriteViaProxyEnabled,
     );
+    final ({FinancialRepository repository, FinancialProvider provider})
+    financial = registerFinancialLayer(apiLayer);
+    final ({ConversionRepository repository, ConversionProvider provider})
+    conversion = registerConversionLayer(
+      apiLayer,
+      financialRepository: financial.repository,
+      pairsConfig: WalletConversionPairsConfig(
+        enabled: appConfig.conversionPairsEnabled,
+        baseCrossRates: WalletConversionRatesSeed.baseCrossRates,
+      ),
+      historyReadEnabled: appConfig.conversionHistoryReadEnabled,
+    );
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -112,6 +134,8 @@ class AppBootstrap {
       verificationProvider: verification.provider,
       escrowRepository: escrow.repository,
       escrowProvider: escrow.provider,
+      conversionRepository: conversion.repository,
+      conversionProvider: conversion.provider,
     );
   }
 

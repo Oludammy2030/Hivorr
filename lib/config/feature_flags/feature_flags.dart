@@ -18,6 +18,8 @@ class FeatureFlags {
     required this.enablePayloadOptimization,
     required this.enablePushNotifications,
     this.escrowWriteViaProxyEnabled = false,
+    this.conversionPairsEnabled = false,
+    this.conversionHistoryReadEnabled = false,
   });
 
   /// Whether verbose structured logging is enabled.
@@ -63,6 +65,21 @@ class FeatureFlags {
   /// surface [EscrowWriteUnavailableException] guidance (EP-02-14 §5.8).
   final bool escrowWriteViaProxyEnabled;
 
+  /// Whether wallet currency conversion is enabled (EP-02-15).
+  ///
+  /// Safe default: `false`. Gates pair discovery, the `/finance/convert`
+  /// route, and the conversion screen. Rates always originate from the
+  /// `ConversionRateSource` seam, never user input.
+  final bool conversionPairsEnabled;
+
+  /// Whether the `financial_conversions` REST history read seam is enabled
+  /// (EP-02-15 §5.2).
+  ///
+  /// Safe default: `false`. When off, `getHistory()` returns `[]` with the
+  /// future `financial_conversions_list` RPC swap point documented. Never
+  /// bypasses RLS.
+  final bool conversionHistoryReadEnabled;
+
   /// Parses feature flags from [source] using strict boolean rules.
   ///
   /// Accepted values are exactly `true` or `false` (case-sensitive).
@@ -98,6 +115,14 @@ class FeatureFlags {
         source,
         AppConstants.featureEscrowWriteViaProxyEnabled,
       ),
+      conversionPairsEnabled: _parseBool(
+        source,
+        AppConstants.featureConversionPairsEnabled,
+      ),
+      conversionHistoryReadEnabled: _parseBool(
+        source,
+        AppConstants.featureConversionHistoryReadEnabled,
+      ),
     );
   }
 
@@ -127,6 +152,8 @@ class FeatureFlags {
         'enableDynamicWorkspaceLoading: $enableDynamicWorkspaceLoading, '
         'enablePayloadOptimization: $enablePayloadOptimization, '
         'enablePushNotifications: $enablePushNotifications, '
-        'escrowWriteViaProxyEnabled: $escrowWriteViaProxyEnabled)';
+        'escrowWriteViaProxyEnabled: $escrowWriteViaProxyEnabled, '
+        'conversionPairsEnabled: $conversionPairsEnabled, '
+        'conversionHistoryReadEnabled: $conversionHistoryReadEnabled)';
   }
 }

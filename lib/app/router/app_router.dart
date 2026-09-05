@@ -5,6 +5,7 @@ import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
@@ -164,6 +165,12 @@ class AppRouter {
               EscrowDetailScreen(
                 escrowId: state.pathParameters['id'] ?? '',
               ),
+        ),
+        GoRoute(
+          path: RoutePaths.convert,
+          name: RouteNames.convert,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ConversionScreen(),
         ),
       ],
     );

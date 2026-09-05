@@ -28,6 +28,9 @@ abstract final class RouteNames {
   static const String escrow = 'escrow';
   static const String escrowDetail = 'escrow-detail';
 
+  /// Currency-conversion route (EP-02-15).
+  static const String convert = 'convert';
+
   /// KYC status + upgrade routes (EP-02-12).
   static const String kycStatus = 'kyc-status';
   static const String kycUpgrade = 'kyc-upgrade';

@@ -192,6 +192,18 @@ class AppConstants {
   static const String featureEscrowWriteViaProxyEnabled =
       'HIVORR_FEATURE_ESCROW_WRITE_VIA_PROXY';
 
+  /// Feature flag: enables wallet currency conversion (EP-02-15). Default
+  /// `false` — gates pair discovery, the `/finance/convert` route, and the
+  /// conversion screen.
+  static const String featureConversionPairsEnabled =
+      'HIVORR_FEATURE_CONVERSION_PAIRS_ENABLED';
+
+  /// Feature flag: enables the `financial_conversions` REST history read seam
+  /// (EP-02-15 §5.2). Default `false` — when off, `getHistory()` returns `[]`
+  /// with the future `financial_conversions_list` RPC swap point documented.
+  static const String featureConversionHistoryReadEnabled =
+      'HIVORR_FEATURE_CONVERSION_HISTORY_READ';
+
   /// Default connectivity change debounce (0 = no debounce).
   static const int defaultNetworkDebounceMs = 0;
 
