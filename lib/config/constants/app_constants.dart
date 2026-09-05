@@ -186,6 +186,12 @@ class AppConstants {
   static const String featureEnablePushNotifications =
       'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS';
 
+  /// Feature flag: routes escrow write actions through the Edge Function
+  /// proxy (`financial-escrow-proxy`). Default `false` — EP-02-08 owns the
+  /// proxy deploy (EP-02-14 §5.8).
+  static const String featureEscrowWriteViaProxyEnabled =
+      'HIVORR_FEATURE_ESCROW_WRITE_VIA_PROXY';
+
   /// Default connectivity change debounce (0 = no debounce).
   static const int defaultNetworkDebounceMs = 0;
 

@@ -72,6 +72,13 @@ class AppConfig {
   /// Typed, environment-specific feature flags.
   FeatureFlags get featureFlags => _config.featureFlags;
 
+  /// Whether escrow write actions route through the Edge Function proxy.
+  ///
+  /// Defaults to `false` in all environments until EP-02-18 deploys
+  /// `financial-escrow-proxy` (EP-02-14 §5.8).
+  bool get escrowWriteViaProxyEnabled =>
+      _config.featureFlags.escrowWriteViaProxyEnabled;
+
   // ─── Constants ──────────────────────────────────────────────────────
 
   /// Centralized immutable application constants.

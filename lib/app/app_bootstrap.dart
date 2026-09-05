@@ -24,6 +24,8 @@ class BootstrapResult {
     required this.taxonomyProvider,
     required this.verificationRepository,
     required this.verificationProvider,
+    this.escrowRepository,
+    this.escrowProvider,
   });
 
   final AppConfig appConfig;
@@ -42,6 +44,12 @@ class BootstrapResult {
 
   /// Identity-verification provider surfaced to the widget tree (EP-02-10).
   final VerificationProvider verificationProvider;
+
+  /// Escrow repository (EP-02-14). Optional for testability.
+  final EscrowRepository? escrowRepository;
+
+  /// Escrow provider surfaced to the widget tree (EP-02-14).
+  final EscrowProvider? escrowProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -88,6 +96,11 @@ class AppBootstrap {
     taxonomy = registerTaxonomyLayer(apiLayer);
     final ({VerificationRepository repository, VerificationProvider provider})
     verification = registerVerificationLayer(apiLayer);
+    final ({EscrowRepository repository, EscrowProvider provider}) escrow =
+        registerEscrowLayer(
+      apiLayer,
+      writeViaProxy: appConfig.escrowWriteViaProxyEnabled,
+    );
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -97,6 +110,8 @@ class AppBootstrap {
       taxonomyProvider: taxonomy.provider,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,
+      escrowRepository: escrow.repository,
+      escrowProvider: escrow.provider,
     );
   }
 

@@ -5,6 +5,8 @@ import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
+import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
 import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
@@ -148,6 +150,20 @@ class AppRouter {
           name: RouteNames.financeCreate,
           builder: (BuildContext context, GoRouterState state) =>
               const FinancialProfileCreationFlow(),
+        ),
+        GoRoute(
+          path: RoutePaths.escrow,
+          name: RouteNames.escrow,
+          builder: (BuildContext context, GoRouterState state) =>
+              const EscrowListScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.escrowDetail,
+          name: RouteNames.escrowDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              EscrowDetailScreen(
+                escrowId: state.pathParameters['id'] ?? '',
+              ),
         ),
       ],
     );

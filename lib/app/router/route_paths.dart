@@ -33,6 +33,10 @@ abstract final class RoutePaths {
   static const String finance = '/finance';
   static const String financeCreate = '/finance/create';
 
+  /// Escrow screens (EP-02-14).
+  static const String escrow = '/finance/escrow';
+  static const String escrowDetail = '/finance/escrow/:id';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 

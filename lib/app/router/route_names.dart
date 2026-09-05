@@ -24,6 +24,10 @@ abstract final class RouteNames {
   static const String finance = 'finance';
   static const String financeCreate = 'finance-create';
 
+  /// Escrow routes (EP-02-14).
+  static const String escrow = 'escrow';
+  static const String escrowDetail = 'escrow-detail';
+
   /// KYC status + upgrade routes (EP-02-12).
   static const String kycStatus = 'kyc-status';
   static const String kycUpgrade = 'kyc-upgrade';
