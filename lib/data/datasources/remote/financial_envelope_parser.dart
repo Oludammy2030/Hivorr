@@ -6,7 +6,10 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 /// Envelope contract (identical to the verification RPCs):
 ///   `code == 'PLT000'` (and `success == true`) → success; `data` is a single
 ///   JSON object.
-///   `PLT001/P002/003/004/005/999` → typed [ApiException].
+///   `PLT001/PLT002/PLT003/PLT004/PLT005/PLT006/PLT999` → typed [ApiException].
+///   `PLT006` (insufficient source balance, e.g. `financial_convert_currency`
+///   `1511-1513`) maps to [ApiExceptionKind.conflict] — a state conflict the
+///   caller can resolve (fund the balance) rather than a server fault.
 class FinancialEnvelopeParser {
   const FinancialEnvelopeParser._();
 
@@ -64,6 +67,12 @@ class FinancialEnvelopeParser {
           kind: ApiExceptionKind.conflict,
           message: 'A financial profile already exists for this entity.',
           code: 'PLT005',
+        );
+      case 'PLT006':
+        return const ApiException(
+          kind: ApiExceptionKind.conflict,
+          message: 'Insufficient source balance.',
+          code: 'PLT006',
         );
       default:
         return ApiException(

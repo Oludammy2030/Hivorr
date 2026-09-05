@@ -37,6 +37,9 @@ abstract final class RoutePaths {
   static const String escrow = '/finance/escrow';
   static const String escrowDetail = '/finance/escrow/:id';
 
+  /// Currency-conversion screen (EP-02-15).
+  static const String convert = '/finance/convert';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 

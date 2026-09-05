@@ -1,7 +1,10 @@
+import 'package:hivorr/config/wallet/wallet_conversion_pairs_config.dart';
+import 'package:hivorr/config/wallet/wallet_conversion_rates_seed.dart';
 import 'package:hivorr/core/api/api_initializer.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
@@ -9,6 +12,7 @@ import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.d
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
+import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
@@ -16,6 +20,8 @@ import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
+import 'package:hivorr/data/repositories/conversion_repository.dart';
+import 'package:hivorr/data/repositories/conversion_repository_impl.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository_impl.dart';
@@ -30,11 +36,14 @@ import 'package:hivorr/data/repositories/trade_verification_repository_impl.dart
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository_impl.dart';
 import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dart';
+import 'package:hivorr/systems/finance/services/conversion_rate_source.dart';
+import 'package:hivorr/systems/finance/services/conversion_service.dart';
 import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
 
 export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+export 'package:hivorr/data/datasources/remote/conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
 export 'package:hivorr/data/datasources/remote/entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/escrow_remote_data_source.dart';
@@ -42,6 +51,7 @@ export 'package:hivorr/data/datasources/remote/escrow_write_unavailable_exceptio
 export 'package:hivorr/data/datasources/remote/financial_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
@@ -55,7 +65,9 @@ export 'package:hivorr/data/datasources/remote/trade_verification_remote_data_so
 export 'package:hivorr/data/datasources/remote/verification_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/verification_remote_data_source.dart';
 export 'package:hivorr/data/entities/balance.dart';
+export 'package:hivorr/data/entities/conversion_preview.dart';
 export 'package:hivorr/data/entities/currency_account.dart';
+export 'package:hivorr/data/entities/currency_conversion.dart';
 export 'package:hivorr/data/entities/entity.dart';
 export 'package:hivorr/data/entities/entity_profile.dart';
 export 'package:hivorr/data/entities/entity_role.dart';
@@ -71,6 +83,7 @@ export 'package:hivorr/data/entities/profession.dart';
 export 'package:hivorr/data/entities/trade_verification_status.dart';
 export 'package:hivorr/data/entities/verification_status.dart';
 export 'package:hivorr/data/entities/verification_submission.dart';
+export 'package:hivorr/data/mappers/conversion_mapper.dart';
 export 'package:hivorr/data/mappers/entity_mapper.dart';
 export 'package:hivorr/data/mappers/entity_profile_mapper.dart';
 export 'package:hivorr/data/mappers/entity_role_mapper.dart';
@@ -80,6 +93,8 @@ export 'package:hivorr/data/mappers/industry_mapper.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
 export 'package:hivorr/data/mappers/verification_mapper.dart';
 export 'package:hivorr/data/models/balance_dto.dart';
+export 'package:hivorr/data/models/conversion_preview_dto.dart';
+export 'package:hivorr/data/models/currency_conversion_dto.dart';
 export 'package:hivorr/data/models/entity_dto.dart';
 export 'package:hivorr/data/models/entity_profile_dto.dart';
 export 'package:hivorr/data/models/entity_role_dto.dart';
@@ -96,6 +111,7 @@ export 'package:hivorr/data/models/profession_dto.dart';
 export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
+export 'package:hivorr/data/providers/conversion_provider.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
 export 'package:hivorr/data/providers/escrow_provider.dart';
 export 'package:hivorr/data/providers/financial_provider.dart';
@@ -104,6 +120,8 @@ export 'package:hivorr/data/providers/submit_state.dart';
 export 'package:hivorr/data/providers/taxonomy_provider.dart';
 export 'package:hivorr/data/providers/trade_verification_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
+export 'package:hivorr/data/repositories/conversion_repository.dart';
+export 'package:hivorr/data/repositories/conversion_repository_impl.dart';
 export 'package:hivorr/data/repositories/entity_repository.dart';
 export 'package:hivorr/data/repositories/entity_repository_impl.dart';
 export 'package:hivorr/data/repositories/escrow_repository.dart';
@@ -291,4 +309,52 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
     repository: repository,
     provider: EscrowProvider(service: service),
   );
+}
+
+/// Wires the currency-conversion data slice for EP-02-15.
+///
+/// Builds the [ConversionRepository] over the [ApiLayer] with the single
+/// client rate authority ([ConfigConversionRateSource] over
+/// [WalletConversionPairsConfig]) and returns a ready [ConversionProvider]
+/// bound to a [ConversionService] facade. Exposed for the bootstrap to
+/// register in the widget tree's MultiProvider (mirrors
+/// `registerEscrowLayer`).
+///
+/// [financialRepository] is required for the post-execute balance refresh
+/// (`financial_status_get`); a missing pair rate fails closed through
+/// [ConversionRateUnavailableException]. `historyReadEnabled` gates the
+/// `financial_conversions` REST read seam (build-time decision, §5.2).
+({ConversionRepository repository, ConversionProvider provider})
+    registerConversionLayer(
+  ApiLayer apiLayer, {
+  required FinancialRepository financialRepository,
+  WalletConversionPairsConfig? pairsConfig,
+  bool historyReadEnabled = true,
+}) {
+  final remote = SupabaseConversionRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+    historyReadEnabled: historyReadEnabled,
+  );
+  final WalletConversionPairsConfig config =
+      pairsConfig ??
+      const WalletConversionPairsConfig(
+        baseCrossRates: WalletConversionRatesSeed.baseCrossRates,
+      );
+  final ConversionRateSource rateSource = ConfigConversionRateSource(config);
+  final repository = ConversionRepositoryImpl(
+    remote: remote,
+    rateSource: rateSource,
+    financialRepository: financialRepository,
+  );
+  final service = ConversionService(
+    repository: repository,
+    pairsConfig: config,
+  );
+  final provider = ConversionProvider(
+    service: service,
+    financialService: FinancialService(repository: financialRepository),
+  );
+  return (repository: repository, provider: provider);
 }

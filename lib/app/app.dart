@@ -6,9 +6,11 @@ import 'package:hivorr/app/router/app_router.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
+import 'package:hivorr/data/repositories/conversion_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
@@ -32,6 +34,8 @@ class HivorrApp extends StatefulWidget {
     this.verificationProvider,
     this.escrowRepository,
     this.escrowProvider,
+    this.conversionRepository,
+    this.conversionProvider,
   });
 
   final AuthProvider authProvider;
@@ -51,6 +55,12 @@ class HivorrApp extends StatefulWidget {
 
   /// Escrow provider surfaced to the widget tree (EP-02-14).
   final EscrowProvider? escrowProvider;
+
+  /// Currency-conversion repository (EP-02-15). Optional for testability.
+  final ConversionRepository? conversionRepository;
+
+  /// Currency-conversion provider surfaced to the widget tree (EP-02-15).
+  final ConversionProvider? conversionProvider;
 
   @override
   State<HivorrApp> createState() => _HivorrAppState();
@@ -80,6 +90,9 @@ class _HivorrAppState extends State<HivorrApp> {
         widget.verificationProvider;
     final EscrowRepository? escrowRepository = widget.escrowRepository;
     final EscrowProvider? escrowProvider = widget.escrowProvider;
+    final ConversionRepository? conversionRepository =
+        widget.conversionRepository;
+    final ConversionProvider? conversionProvider = widget.conversionProvider;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(
@@ -103,6 +116,12 @@ class _HivorrAppState extends State<HivorrApp> {
         if (escrowProvider != null)
           ChangeNotifierProvider<EscrowProvider>.value(
             value: escrowProvider,
+          ),
+        if (conversionRepository != null)
+          Provider<ConversionRepository>.value(value: conversionRepository),
+        if (conversionProvider != null)
+          ChangeNotifierProvider<ConversionProvider>.value(
+            value: conversionProvider,
           ),
       ],
       child: Builder(

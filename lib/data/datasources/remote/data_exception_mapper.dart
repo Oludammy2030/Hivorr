@@ -14,7 +14,7 @@ ApiException mapDataException(Object error) {
     return error;
   }
   if (error is PostgrestException) {
-    final String code = error.code ?? '';
+    final String code = _platformCode(error);
     final ApiExceptionKind kind;
     switch (code) {
       case 'PLT001':
@@ -26,6 +26,10 @@ ApiException mapDataException(Object error) {
       case 'PLT004':
         kind = ApiExceptionKind.notFound;
       case 'PLT005':
+        kind = ApiExceptionKind.conflict;
+      case 'PLT006':
+        // Insufficient balance (e.g. financial_convert_currency 1511-1513) —
+        // a state conflict the caller can resolve, not a server fault.
         kind = ApiExceptionKind.conflict;
       default:
         if (code.startsWith('235')) {
@@ -48,6 +52,21 @@ ApiException mapDataException(Object error) {
     kind: ApiExceptionKind.unknown,
     message: 'An unexpected data error occurred.',
   );
+}
+
+/// Resolves the platform (`PLT###`) code carried by a [PostgrestException].
+///
+/// `platform_raise_error` raises with SQLSTATE `P0001` but stamps the platform
+/// code in the error `detail` (`20260819090001_enforcement_foundation.sql:77-80`),
+/// so a raised `PLT006` arrives as `code: 'P0001'`, `detail: 'PLT006'`. The
+/// platform code is preferred over the SQLSTATE so typed kinds (auth,
+/// validation, conflict, ...) survive transport.
+String _platformCode(PostgrestException error) {
+  final String? code = error.code;
+  if (code != null && code.startsWith('PLT')) return code;
+  final Object? details = error.details;
+  if (details is String && details.startsWith('PLT')) return details;
+  return code ?? '';
 }
 
 String _safeMessage(ApiExceptionKind kind) {
