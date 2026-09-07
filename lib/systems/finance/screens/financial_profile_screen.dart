@@ -13,14 +13,18 @@ import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/finance/widgets/balance_overview_card.dart';
 import 'package:hivorr/systems/finance/widgets/currency_account_card.dart';
+import 'package:hivorr/systems/finance/widgets/deposit_details_panel.dart';
+import 'package:hivorr/systems/finance/widgets/finance_history_badge.dart';
 import 'package:hivorr/systems/finance/widgets/financial_profile_card.dart';
+import 'package:hivorr/systems/finance/widgets/payout_account_view.dart';
 import 'package:provider/provider.dart';
 
 /// Main financial profile overview screen (EP-02-13 §5.6).
 ///
 /// Shows profile card, balance overview, and currency account list. When no
-/// profile exists, shows an empty state with a creation CTA. Pauses/resumes
-/// provider polling with the app lifecycle via [WidgetsBindingObserver].
+/// profile exists, shows an empty state with a creation CTA. Also hosts the
+/// EP-02-16 payout accounts + deposit sections. Pauses/resumes provider
+/// polling with the app lifecycle via [WidgetsBindingObserver].
 class FinancialProfileScreen extends StatefulWidget {
   const FinancialProfileScreen({super.key});
 
@@ -180,6 +184,25 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
                     ),
                   ),
                 ],
+
+                // Payout accounts (EP-02-16).
+                const SizedBox(height: HivorrSpacing.xl),
+                Text('Payout Accounts', style: context.textTheme.titleMedium),
+                const SizedBox(height: HivorrSpacing.sm),
+                PayoutAccountView(
+                  cashoutLimit: provider.status?.cashoutLimit,
+                  currencyCode: provider.profile!.defaultCurrency,
+                  onWithdrawSuccess: (_) =>
+                      unawaited(provider.refreshStatus()),
+                ),
+
+                // Activity history badge + deposits (EP-02-16).
+                const SizedBox(height: HivorrSpacing.lg),
+                const FinanceHistoryBadge(),
+                const SizedBox(height: HivorrSpacing.lg),
+                Text('Deposits', style: context.textTheme.titleMedium),
+                const SizedBox(height: HivorrSpacing.sm),
+                const DepositDetailsPanel(),
               ],
             ),
           );

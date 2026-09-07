@@ -8,10 +8,16 @@ import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
+import 'package:hivorr/data/providers/financial_deposit_provider.dart';
+import 'package:hivorr/data/providers/financial_payout_provider.dart';
+import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
+import 'package:hivorr/data/repositories/financial_deposit_repository.dart';
+import 'package:hivorr/data/repositories/financial_payout_repository.dart';
+import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:provider/provider.dart';
@@ -36,6 +42,12 @@ class HivorrApp extends StatefulWidget {
     this.escrowProvider,
     this.conversionRepository,
     this.conversionProvider,
+    this.financialRepository,
+    this.financialProvider,
+    this.payoutRepository,
+    this.payoutProvider,
+    this.depositRepository,
+    this.depositProvider,
   });
 
   final AuthProvider authProvider;
@@ -61,6 +73,24 @@ class HivorrApp extends StatefulWidget {
 
   /// Currency-conversion provider surfaced to the widget tree (EP-02-15).
   final ConversionProvider? conversionProvider;
+
+  /// Financial-profile repository (EP-02-13). Optional for testability.
+  final FinancialRepository? financialRepository;
+
+  /// Financial-profile provider surfaced to the widget tree (EP-02-13).
+  final FinancialProvider? financialProvider;
+
+  /// Payout-account repository (EP-02-16). Optional for testability.
+  final FinancialPayoutRepository? payoutRepository;
+
+  /// Payout-account provider surfaced to the widget tree (EP-02-16).
+  final FinancialPayoutProvider? payoutProvider;
+
+  /// Deposit-read repository (EP-02-16). Optional for testability.
+  final FinancialDepositRepository? depositRepository;
+
+  /// Deposit provider surfaced to the widget tree (EP-02-16).
+  final FinancialDepositProvider? depositProvider;
 
   @override
   State<HivorrApp> createState() => _HivorrAppState();
@@ -93,6 +123,14 @@ class _HivorrAppState extends State<HivorrApp> {
     final ConversionRepository? conversionRepository =
         widget.conversionRepository;
     final ConversionProvider? conversionProvider = widget.conversionProvider;
+    final FinancialRepository? financialRepository =
+        widget.financialRepository;
+    final FinancialProvider? financialProvider = widget.financialProvider;
+    final FinancialPayoutRepository? payoutRepository = widget.payoutRepository;
+    final FinancialPayoutProvider? payoutProvider = widget.payoutProvider;
+    final FinancialDepositRepository? depositRepository =
+        widget.depositRepository;
+    final FinancialDepositProvider? depositProvider = widget.depositProvider;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(
@@ -122,6 +160,24 @@ class _HivorrAppState extends State<HivorrApp> {
         if (conversionProvider != null)
           ChangeNotifierProvider<ConversionProvider>.value(
             value: conversionProvider,
+          ),
+        if (financialRepository != null)
+          Provider<FinancialRepository>.value(value: financialRepository),
+        if (financialProvider != null)
+          ChangeNotifierProvider<FinancialProvider>.value(
+            value: financialProvider,
+          ),
+        if (payoutRepository != null)
+          Provider<FinancialPayoutRepository>.value(value: payoutRepository),
+        if (payoutProvider != null)
+          ChangeNotifierProvider<FinancialPayoutProvider>.value(
+            value: payoutProvider,
+          ),
+        if (depositRepository != null)
+          Provider<FinancialDepositRepository>.value(value: depositRepository),
+        if (depositProvider != null)
+          ChangeNotifierProvider<FinancialDepositProvider>.value(
+            value: depositProvider,
           ),
       ],
       child: Builder(

@@ -42,9 +42,11 @@ Future<void> pumpApp(
   }
 }
 
-/// Pumps [child] at a fixed viewport [width] x [height], wrapping via
-/// [pumpApp]. The viewport is restored in a `tearDown` even if the test body
-/// throws (EP-01-19 DoD).
+/// Pumps [child] at a fixed logical viewport [width] x [height], normalizing
+/// [devicePixelRatio] to 1 so the physical size maps 1:1 to logical pixels
+/// (matching `design_system_integration_test` / `escrow_detail_screen_test`).
+/// The viewport is restored in a `tearDown` even if the test body throws
+/// (EP-01-19 DoD).
 Future<void> pumpScreen(
   WidgetTester tester,
   Widget child, {
@@ -53,8 +55,13 @@ Future<void> pumpScreen(
   List<SingleChildWidget>? providers,
   bool dark = false,
 }) async {
-  final Size previous = tester.view.physicalSize;
+  final Size previousPhysical = tester.view.physicalSize;
+  final double previousDpr = tester.view.devicePixelRatio;
   tester.view.physicalSize = Size(width, height);
-  addTearDown(() => tester.view.physicalSize = previous);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.physicalSize = previousPhysical;
+    tester.view.devicePixelRatio = previousDpr;
+  });
   await pumpApp(tester, child, providers: providers, dark: dark);
 }

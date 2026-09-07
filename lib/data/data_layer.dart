@@ -7,14 +7,19 @@ import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
+import 'package:hivorr/data/local/payout_account_local_store.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
+import 'package:hivorr/data/providers/financial_deposit_provider.dart';
+import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
@@ -25,6 +30,10 @@ import 'package:hivorr/data/repositories/conversion_repository_impl.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository_impl.dart';
+import 'package:hivorr/data/repositories/financial_deposit_repository.dart';
+import 'package:hivorr/data/repositories/financial_deposit_repository_impl.dart';
+import 'package:hivorr/data/repositories/financial_payout_repository.dart';
+import 'package:hivorr/data/repositories/financial_payout_repository_impl.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository_impl.dart';
 import 'package:hivorr/data/repositories/kyc_repository.dart';
@@ -39,6 +48,8 @@ import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dar
 import 'package:hivorr/systems/finance/services/conversion_rate_source.dart';
 import 'package:hivorr/systems/finance/services/conversion_service.dart';
 import 'package:hivorr/systems/finance/services/escrow_service.dart';
+import 'package:hivorr/systems/finance/services/financial_deposit_service.dart';
+import 'package:hivorr/systems/finance/services/financial_payout_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
 
 export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
@@ -48,12 +59,16 @@ export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
 export 'package:hivorr/data/datasources/remote/entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/escrow_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/escrow_write_unavailable_exception.dart';
+export 'package:hivorr/data/datasources/remote/financial_deposit_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/financial_envelope_parser.dart';
+export 'package:hivorr/data/datasources/remote/financial_payout_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
@@ -68,6 +83,7 @@ export 'package:hivorr/data/entities/balance.dart';
 export 'package:hivorr/data/entities/conversion_preview.dart';
 export 'package:hivorr/data/entities/currency_account.dart';
 export 'package:hivorr/data/entities/currency_conversion.dart';
+export 'package:hivorr/data/entities/deposit.dart';
 export 'package:hivorr/data/entities/entity.dart';
 export 'package:hivorr/data/entities/entity_profile.dart';
 export 'package:hivorr/data/entities/entity_role.dart';
@@ -79,22 +95,28 @@ export 'package:hivorr/data/entities/financial_profile.dart';
 export 'package:hivorr/data/entities/financial_status.dart';
 export 'package:hivorr/data/entities/industry.dart';
 export 'package:hivorr/data/entities/kyc_level.dart';
+export 'package:hivorr/data/entities/payout_account.dart';
 export 'package:hivorr/data/entities/profession.dart';
 export 'package:hivorr/data/entities/trade_verification_status.dart';
 export 'package:hivorr/data/entities/verification_status.dart';
 export 'package:hivorr/data/entities/verification_submission.dart';
+export 'package:hivorr/data/entities/withdrawal_result.dart';
+export 'package:hivorr/data/local/payout_account_local_store.dart';
 export 'package:hivorr/data/mappers/conversion_mapper.dart';
 export 'package:hivorr/data/mappers/entity_mapper.dart';
 export 'package:hivorr/data/mappers/entity_profile_mapper.dart';
 export 'package:hivorr/data/mappers/entity_role_mapper.dart';
 export 'package:hivorr/data/mappers/escrow_mapper.dart';
+export 'package:hivorr/data/mappers/financial_deposit_mapper.dart';
 export 'package:hivorr/data/mappers/financial_mapper.dart';
+export 'package:hivorr/data/mappers/financial_payout_mapper.dart';
 export 'package:hivorr/data/mappers/industry_mapper.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
 export 'package:hivorr/data/mappers/verification_mapper.dart';
 export 'package:hivorr/data/models/balance_dto.dart';
 export 'package:hivorr/data/models/conversion_preview_dto.dart';
 export 'package:hivorr/data/models/currency_conversion_dto.dart';
+export 'package:hivorr/data/models/deposit_dto.dart';
 export 'package:hivorr/data/models/entity_dto.dart';
 export 'package:hivorr/data/models/entity_profile_dto.dart';
 export 'package:hivorr/data/models/entity_role_dto.dart';
@@ -107,13 +129,17 @@ export 'package:hivorr/data/models/financial_profile_dto.dart';
 export 'package:hivorr/data/models/financial_status_dto.dart';
 export 'package:hivorr/data/models/industry_dto.dart';
 export 'package:hivorr/data/models/kyc_level_dto.dart';
+export 'package:hivorr/data/models/payout_bind_dto.dart';
 export 'package:hivorr/data/models/profession_dto.dart';
 export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
+export 'package:hivorr/data/models/withdrawal_dto.dart';
 export 'package:hivorr/data/providers/conversion_provider.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
 export 'package:hivorr/data/providers/escrow_provider.dart';
+export 'package:hivorr/data/providers/financial_deposit_provider.dart';
+export 'package:hivorr/data/providers/financial_payout_provider.dart';
 export 'package:hivorr/data/providers/financial_provider.dart';
 export 'package:hivorr/data/providers/kyc_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
@@ -126,6 +152,10 @@ export 'package:hivorr/data/repositories/entity_repository.dart';
 export 'package:hivorr/data/repositories/entity_repository_impl.dart';
 export 'package:hivorr/data/repositories/escrow_repository.dart';
 export 'package:hivorr/data/repositories/escrow_repository_impl.dart';
+export 'package:hivorr/data/repositories/financial_deposit_repository.dart';
+export 'package:hivorr/data/repositories/financial_deposit_repository_impl.dart';
+export 'package:hivorr/data/repositories/financial_payout_repository.dart';
+export 'package:hivorr/data/repositories/financial_payout_repository_impl.dart';
 export 'package:hivorr/data/repositories/financial_repository.dart';
 export 'package:hivorr/data/repositories/financial_repository_impl.dart';
 export 'package:hivorr/data/repositories/kyc_repository.dart';
@@ -166,7 +196,7 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
 /// repository as a `Provider<TaxonomyRepository>` alongside the
 /// `ChangeNotifierProvider<TaxonomyProvider>`.
 ({TaxonomyRepository repository, TaxonomyProvider provider})
-    registerTaxonomyLayer(ApiLayer apiLayer) {
+registerTaxonomyLayer(ApiLayer apiLayer) {
   final remote = SupabaseTaxonomyRemoteDataSource(
     dio: apiLayer.dio,
     supabase: apiLayer.supabaseClient,
@@ -174,7 +204,10 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
   );
   final local = CacheManagerTaxonomyLocalDataSource();
   final repository = TaxonomyRepositoryImpl(remote: remote, local: local);
-  return (repository: repository, provider: TaxonomyProvider(repository: repository));
+  return (
+    repository: repository,
+    provider: TaxonomyProvider(repository: repository),
+  );
 }
 
 /// Wires the identity-verification data slice for EP-02-10.
@@ -187,7 +220,7 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
 /// The storage service uses the injected API-layer [Dio] for progress-aware
 /// uploads to the private `credential-documents` bucket (server-authoritative).
 ({VerificationRepository repository, VerificationProvider provider})
-    registerVerificationLayer(ApiLayer apiLayer) {
+registerVerificationLayer(ApiLayer apiLayer) {
   final remote = SupabaseVerificationRemoteDataSource(
     dio: apiLayer.dio,
     supabase: apiLayer.supabaseClient,
@@ -219,7 +252,7 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
 /// The storage service uses the injected API-layer [Dio] for progress-aware
 /// uploads to the private `credential-documents` bucket (server-authoritative).
 ({TradeVerificationRepository repository, TradeVerificationProvider provider})
-    registerTradeVerificationLayer(ApiLayer apiLayer) {
+registerTradeVerificationLayer(ApiLayer apiLayer) {
   final remote = SupabaseTradeVerificationRemoteDataSource(
     dio: apiLayer.dio,
     supabase: apiLayer.supabaseClient,
@@ -255,10 +288,7 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
     exceptionMapper: apiLayer.exceptionMapper,
   );
   final repository = KycRepositoryImpl(remote: remote);
-  return (
-    repository: repository,
-    provider: KycProvider(repo: repository),
-  );
+  return (repository: repository, provider: KycProvider(repo: repository));
 }
 
 /// Wires the financial-profile data slice for EP-02-13.
@@ -268,7 +298,7 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
 /// bootstrap to register in the widget tree's MultiProvider (mirrors
 /// `registerKycLayer`).
 ({FinancialRepository repository, FinancialProvider provider})
-    registerFinancialLayer(
+registerFinancialLayer(
   ApiLayer apiLayer, {
   PaymentGatewayFactory? paymentGatewayFactory,
 }) {
@@ -277,12 +307,59 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
     supabase: apiLayer.supabaseClient,
     exceptionMapper: apiLayer.exceptionMapper,
   );
-  final repository =
-      FinancialRepositoryImpl(remote: remote, paymentGatewayFactory: paymentGatewayFactory);
+  final repository = FinancialRepositoryImpl(
+    remote: remote,
+    paymentGatewayFactory: paymentGatewayFactory,
+  );
   final service = FinancialService(repository: repository);
   return (
     repository: repository,
     provider: FinancialProvider(service: service),
+  );
+}
+
+/// Wires the payout-account data slice for EP-02-16.
+///
+/// Builds the [FinancialPayoutRepository] over the [ApiLayer] (bind + withdraw
+/// via the authenticated RPCs) backed by an injectable
+/// [PayoutAccountLocalStore] display mirror, and returns a ready
+/// [FinancialPayoutProvider] bound to a [FinancialPayoutService] facade.
+({FinancialPayoutRepository repository, FinancialPayoutProvider provider})
+registerPayoutLayer(ApiLayer apiLayer, {PayoutAccountLocalStore? store}) {
+  final remote = SupabaseFinancialPayoutRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = FinancialPayoutRepositoryImpl(
+    remote: remote,
+    store: store ?? InMemoryPayoutAccountLocalStore(),
+  );
+  final service = FinancialPayoutService(repository: repository);
+  return (
+    repository: repository,
+    provider: FinancialPayoutProvider(service: service),
+  );
+}
+
+/// Wires the deposit-read data slice for EP-02-16.
+///
+/// Builds the [FinancialDepositRepository] over the [ApiLayer] (RLS-scoped
+/// REST select on `financial_deposits`) and returns a ready
+/// [FinancialDepositProvider] bound to a [FinancialDepositService] facade.
+/// Read-only — deposit recording/name verification stays service-role.
+({FinancialDepositRepository repository, FinancialDepositProvider provider})
+registerDepositLayer(ApiLayer apiLayer) {
+  final remote = SupabaseFinancialDepositRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = FinancialDepositRepositoryImpl(remote: remote);
+  final service = FinancialDepositService(repository: repository);
+  return (
+    repository: repository,
+    provider: FinancialDepositProvider(service: service),
   );
 }
 
@@ -305,10 +382,7 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
   );
   final repository = EscrowRepositoryImpl(remote: remote);
   final service = EscrowService(repository: repository);
-  return (
-    repository: repository,
-    provider: EscrowProvider(service: service),
-  );
+  return (repository: repository, provider: EscrowProvider(service: service));
 }
 
 /// Wires the currency-conversion data slice for EP-02-15.
@@ -325,7 +399,7 @@ EntityProvider registerDataLayer(ApiLayer apiLayer) {
 /// [ConversionRateUnavailableException]. `historyReadEnabled` gates the
 /// `financial_conversions` REST read seam (build-time decision, §5.2).
 ({ConversionRepository repository, ConversionProvider provider})
-    registerConversionLayer(
+registerConversionLayer(
   ApiLayer apiLayer, {
   required FinancialRepository financialRepository,
   WalletConversionPairsConfig? pairsConfig,

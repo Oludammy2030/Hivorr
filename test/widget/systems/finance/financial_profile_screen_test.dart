@@ -9,15 +9,21 @@ import 'package:hivorr/data/entities/balance.dart';
 import 'package:hivorr/data/entities/currency_account.dart';
 import 'package:hivorr/data/entities/financial_profile.dart';
 import 'package:hivorr/data/entities/financial_status.dart';
+import 'package:hivorr/data/providers/financial_deposit_provider.dart';
+import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
+import 'package:hivorr/systems/finance/services/financial_deposit_service.dart';
+import 'package:hivorr/systems/finance/services/financial_payout_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
 import 'package:hivorr/systems/finance/widgets/balance_overview_card.dart';
 import 'package:hivorr/systems/finance/widgets/financial_profile_card.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
+import '../../../support/fakes/finance/fake_financial_deposit_repository.dart';
+import '../../../support/fakes/finance/fake_financial_payout_repository.dart';
 import '../../../support/fakes/finance/fake_financial_repository.dart';
 import '../../../support/harnesses/widget_harness.dart';
 
@@ -58,15 +64,37 @@ void main() {
   Future<FinancialProvider> pumpScreenWith(
     WidgetTester tester, {
     FinancialRepository? repo,
+    FakeFinancialPayoutRepository? payoutRepo,
+    FakeFinancialDepositRepository? depositRepo,
   }) async {
     final r = repo ?? FakeFinancialRepository();
     final FinancialProvider provider =
         FinancialProvider(service: FinancialService(repository: r));
+    final FinancialPayoutProvider payoutProvider = FinancialPayoutProvider(
+      service: FinancialPayoutService(
+        repository: payoutRepo ?? FakeFinancialPayoutRepository(),
+      ),
+    );
+    final FinancialDepositProvider depositProvider = FinancialDepositProvider(
+      service: FinancialDepositService(
+        repository: depositRepo ?? FakeFinancialDepositRepository(),
+      ),
+    );
+    // Consumed synchronously by the screen's didChangeDependencies.
+    addTearDown(provider.dispose);
+    addTearDown(payoutProvider.dispose);
+    addTearDown(depositProvider.dispose);
     await pumpApp(
       tester,
       const FinancialProfileScreen(),
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<FinancialProvider>.value(value: provider),
+        ChangeNotifierProvider<FinancialPayoutProvider>.value(
+          value: payoutProvider,
+        ),
+        ChangeNotifierProvider<FinancialDepositProvider>.value(
+          value: depositProvider,
+        ),
       ],
     );
     return provider;
