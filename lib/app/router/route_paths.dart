@@ -37,6 +37,13 @@ abstract final class RoutePaths {
   static const String escrow = '/finance/escrow';
   static const String escrowDetail = '/finance/escrow/:id';
 
+  /// Dispute screens (EP-02-17).
+  static const String disputes = '/support/disputes';
+  static const String disputesNew = '/support/disputes/file/:escrowId';
+  static const String disputeDetail = '/support/disputes/:id';
+  static const String disputesEvidenceNew =
+      '/support/disputes/:caseId/evidence/new';
+
   /// Currency-conversion screen (EP-02-15).
   static const String convert = '/finance/convert';
 

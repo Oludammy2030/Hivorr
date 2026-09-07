@@ -36,6 +36,8 @@ class BootstrapResult {
     this.payoutProvider,
     this.depositRepository,
     this.depositProvider,
+    this.disputeRepository,
+    this.disputeProvider,
   });
 
   final AppConfig appConfig;
@@ -84,6 +86,12 @@ class BootstrapResult {
 
   /// Deposit provider surfaced to the widget tree (EP-02-16).
   final FinancialDepositProvider? depositProvider;
+
+  /// Dispute-resolution repository (EP-02-17). Optional for testability.
+  final DisputeRepository? disputeRepository;
+
+  /// Dispute-resolution provider surfaced to the widget tree (EP-02-17).
+  final DisputeProvider? disputeProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -158,6 +166,8 @@ class AppBootstrap {
       ),
       historyReadEnabled: appConfig.conversionHistoryReadEnabled,
     );
+    final ({DisputeRepository repository, DisputeProvider provider}) dispute =
+        registerDisputeLayer(apiLayer);
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -177,6 +187,8 @@ class AppBootstrap {
       payoutProvider: payout.provider,
       depositRepository: deposit.repository,
       depositProvider: deposit.provider,
+      disputeRepository: dispute.repository,
+      disputeProvider: dispute.provider,
     );
   }
 

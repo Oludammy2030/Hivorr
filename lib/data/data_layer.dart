@@ -5,6 +5,7 @@ import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
@@ -16,6 +17,7 @@ import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remot
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
 import 'package:hivorr/data/local/payout_account_local_store.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
+import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
@@ -27,6 +29,8 @@ import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
 import 'package:hivorr/data/repositories/conversion_repository_impl.dart';
+import 'package:hivorr/data/repositories/dispute_repository.dart';
+import 'package:hivorr/data/repositories/dispute_repository_impl.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository_impl.dart';
@@ -51,11 +55,14 @@ import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/finance/services/financial_deposit_service.dart';
 import 'package:hivorr/systems/finance/services/financial_payout_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
+import 'package:hivorr/systems/support/services/dispute_service.dart';
 
 export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 export 'package:hivorr/data/datasources/remote/conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
+export 'package:hivorr/data/datasources/remote/dispute_envelope_parser.dart';
+export 'package:hivorr/data/datasources/remote/dispute_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/escrow_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/escrow_write_unavailable_exception.dart';
@@ -65,6 +72,7 @@ export 'package:hivorr/data/datasources/remote/financial_payout_remote_data_sour
 export 'package:hivorr/data/datasources/remote/financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
@@ -84,6 +92,9 @@ export 'package:hivorr/data/entities/conversion_preview.dart';
 export 'package:hivorr/data/entities/currency_account.dart';
 export 'package:hivorr/data/entities/currency_conversion.dart';
 export 'package:hivorr/data/entities/deposit.dart';
+export 'package:hivorr/data/entities/dispute_case.dart';
+export 'package:hivorr/data/entities/dispute_evidence.dart';
+export 'package:hivorr/data/entities/dispute_resolution.dart';
 export 'package:hivorr/data/entities/entity.dart';
 export 'package:hivorr/data/entities/entity_profile.dart';
 export 'package:hivorr/data/entities/entity_role.dart';
@@ -103,6 +114,7 @@ export 'package:hivorr/data/entities/verification_submission.dart';
 export 'package:hivorr/data/entities/withdrawal_result.dart';
 export 'package:hivorr/data/local/payout_account_local_store.dart';
 export 'package:hivorr/data/mappers/conversion_mapper.dart';
+export 'package:hivorr/data/mappers/dispute_mapper.dart';
 export 'package:hivorr/data/mappers/entity_mapper.dart';
 export 'package:hivorr/data/mappers/entity_profile_mapper.dart';
 export 'package:hivorr/data/mappers/entity_role_mapper.dart';
@@ -117,6 +129,12 @@ export 'package:hivorr/data/models/balance_dto.dart';
 export 'package:hivorr/data/models/conversion_preview_dto.dart';
 export 'package:hivorr/data/models/currency_conversion_dto.dart';
 export 'package:hivorr/data/models/deposit_dto.dart';
+export 'package:hivorr/data/models/dispute_case_detail.dart';
+export 'package:hivorr/data/models/dispute_case_detail_envelope_dto.dart';
+export 'package:hivorr/data/models/dispute_case_dto.dart';
+export 'package:hivorr/data/models/dispute_evidence_dto.dart';
+export 'package:hivorr/data/models/dispute_list_envelope_dto.dart';
+export 'package:hivorr/data/models/dispute_resolution_dto.dart';
 export 'package:hivorr/data/models/entity_dto.dart';
 export 'package:hivorr/data/models/entity_profile_dto.dart';
 export 'package:hivorr/data/models/entity_role_dto.dart';
@@ -136,6 +154,7 @@ export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
 export 'package:hivorr/data/models/withdrawal_dto.dart';
 export 'package:hivorr/data/providers/conversion_provider.dart';
+export 'package:hivorr/data/providers/dispute_provider.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
 export 'package:hivorr/data/providers/escrow_provider.dart';
 export 'package:hivorr/data/providers/financial_deposit_provider.dart';
@@ -148,6 +167,8 @@ export 'package:hivorr/data/providers/trade_verification_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
 export 'package:hivorr/data/repositories/conversion_repository.dart';
 export 'package:hivorr/data/repositories/conversion_repository_impl.dart';
+export 'package:hivorr/data/repositories/dispute_repository.dart';
+export 'package:hivorr/data/repositories/dispute_repository_impl.dart';
 export 'package:hivorr/data/repositories/entity_repository.dart';
 export 'package:hivorr/data/repositories/entity_repository_impl.dart';
 export 'package:hivorr/data/repositories/escrow_repository.dart';
@@ -166,6 +187,7 @@ export 'package:hivorr/data/repositories/trade_verification_repository.dart';
 export 'package:hivorr/data/repositories/trade_verification_repository_impl.dart';
 export 'package:hivorr/data/repositories/verification_repository.dart';
 export 'package:hivorr/data/repositories/verification_repository_impl.dart';
+export 'package:hivorr/systems/support/services/dispute_service.dart';
 
 /// Wires the Unified Data Access Layer for the active environment.
 ///
@@ -431,4 +453,23 @@ registerConversionLayer(
     financialService: FinancialService(repository: financialRepository),
   );
   return (repository: repository, provider: provider);
+}
+
+/// Wires the dispute-resolution data slice for EP-02-17.
+///
+/// Builds the [DisputeRepository] and [DisputeService] over the [ApiLayer] and
+/// returns a ready [DisputeProvider]. Mirrors `registerEscrowLayer`: all five
+/// authenticated RPCs are live, reads are RLS-scoped, and filing/withdrawing
+/// freeze/release the escrow server-side — the client never writes tables and
+/// never references the service-role-only `dispute_resolve`.
+({DisputeRepository repository, DisputeProvider provider})
+registerDisputeLayer(ApiLayer apiLayer) {
+  final remote = SupabaseDisputeRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = DisputeRepositoryImpl(remote: remote);
+  final service = DisputeService(repository: repository);
+  return (repository: repository, provider: DisputeProvider(service: service));
 }

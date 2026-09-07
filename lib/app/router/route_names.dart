@@ -31,6 +31,12 @@ abstract final class RouteNames {
   /// Currency-conversion route (EP-02-15).
   static const String convert = 'convert';
 
+  /// Dispute routes (EP-02-17).
+  static const String disputes = 'disputes';
+  static const String disputesNew = 'disputes-new';
+  static const String disputeDetail = 'dispute-detail';
+  static const String disputesEvidenceNew = 'disputes-evidence-new';
+
   /// KYC status + upgrade routes (EP-02-12).
   static const String kycStatus = 'kyc-status';
   static const String kycUpgrade = 'kyc-upgrade';

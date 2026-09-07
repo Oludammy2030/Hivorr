@@ -10,6 +10,10 @@ import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
+import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
+import 'package:hivorr/systems/support/screens/dispute_evidence_form_screen.dart';
+import 'package:hivorr/systems/support/screens/dispute_filing_screen.dart';
+import 'package:hivorr/systems/support/screens/dispute_list_screen.dart';
 import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
 import 'package:hivorr/systems/verification/screens/identity_document_upload_screen.dart';
 import 'package:hivorr/systems/verification/screens/kyc_status_screen.dart';
@@ -171,6 +175,36 @@ class AppRouter {
           name: RouteNames.convert,
           builder: (BuildContext context, GoRouterState state) =>
               const ConversionScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.disputes,
+          name: RouteNames.disputes,
+          builder: (BuildContext context, GoRouterState state) =>
+              const DisputeListScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.disputesNew,
+          name: RouteNames.disputesNew,
+          builder: (BuildContext context, GoRouterState state) =>
+              DisputeFilingScreen(
+            escrowId: state.pathParameters['escrowId'] ?? '',
+          ),
+        ),
+        GoRoute(
+          path: RoutePaths.disputeDetail,
+          name: RouteNames.disputeDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              DisputeDetailScreen(
+            caseId: state.pathParameters['id'] ?? '',
+          ),
+        ),
+        GoRoute(
+          path: RoutePaths.disputesEvidenceNew,
+          name: RouteNames.disputesEvidenceNew,
+          builder: (BuildContext context, GoRouterState state) =>
+              DisputeEvidenceFormScreen(
+            caseId: state.pathParameters['caseId'] ?? '',
+          ),
         ),
       ],
     );

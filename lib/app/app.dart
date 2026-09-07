@@ -7,6 +7,7 @@ import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
+import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
@@ -14,6 +15,7 @@ import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
+import 'package:hivorr/data/repositories/dispute_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/financial_deposit_repository.dart';
 import 'package:hivorr/data/repositories/financial_payout_repository.dart';
@@ -48,6 +50,8 @@ class HivorrApp extends StatefulWidget {
     this.payoutProvider,
     this.depositRepository,
     this.depositProvider,
+    this.disputeRepository,
+    this.disputeProvider,
   });
 
   final AuthProvider authProvider;
@@ -92,6 +96,12 @@ class HivorrApp extends StatefulWidget {
   /// Deposit provider surfaced to the widget tree (EP-02-16).
   final FinancialDepositProvider? depositProvider;
 
+  /// Dispute-resolution repository (EP-02-17). Optional for testability.
+  final DisputeRepository? disputeRepository;
+
+  /// Dispute-resolution provider surfaced to the widget tree (EP-02-17).
+  final DisputeProvider? disputeProvider;
+
   @override
   State<HivorrApp> createState() => _HivorrAppState();
 }
@@ -131,6 +141,8 @@ class _HivorrAppState extends State<HivorrApp> {
     final FinancialDepositRepository? depositRepository =
         widget.depositRepository;
     final FinancialDepositProvider? depositProvider = widget.depositProvider;
+    final DisputeRepository? disputeRepository = widget.disputeRepository;
+    final DisputeProvider? disputeProvider = widget.disputeProvider;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(
@@ -178,6 +190,12 @@ class _HivorrAppState extends State<HivorrApp> {
         if (depositProvider != null)
           ChangeNotifierProvider<FinancialDepositProvider>.value(
             value: depositProvider,
+          ),
+        if (disputeRepository != null)
+          Provider<DisputeRepository>.value(value: disputeRepository),
+        if (disputeProvider != null)
+          ChangeNotifierProvider<DisputeProvider>.value(
+            value: disputeProvider,
           ),
       ],
       child: Builder(
