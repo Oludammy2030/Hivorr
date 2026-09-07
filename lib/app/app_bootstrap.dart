@@ -30,6 +30,12 @@ class BootstrapResult {
     this.escrowProvider,
     this.conversionRepository,
     this.conversionProvider,
+    this.financialRepository,
+    this.financialProvider,
+    this.payoutRepository,
+    this.payoutProvider,
+    this.depositRepository,
+    this.depositProvider,
   });
 
   final AppConfig appConfig;
@@ -60,6 +66,24 @@ class BootstrapResult {
 
   /// Currency-conversion provider surfaced to the widget tree (EP-02-15).
   final ConversionProvider? conversionProvider;
+
+  /// Financial-profile repository (EP-02-13). Optional for testability.
+  final FinancialRepository? financialRepository;
+
+  /// Financial-profile provider surfaced to the widget tree (EP-02-13).
+  final FinancialProvider? financialProvider;
+
+  /// Payout-account repository (EP-02-16). Optional for testability.
+  final FinancialPayoutRepository? payoutRepository;
+
+  /// Payout-account provider surfaced to the widget tree (EP-02-16).
+  final FinancialPayoutProvider? payoutProvider;
+
+  /// Deposit-read repository (EP-02-16). Optional for testability.
+  final FinancialDepositRepository? depositRepository;
+
+  /// Deposit provider surfaced to the widget tree (EP-02-16).
+  final FinancialDepositProvider? depositProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -82,21 +106,22 @@ class AppBootstrap {
     Future<ApiLayer> Function(EnvironmentConfig) initializeApi =
         ApiInitializer.initializeApi,
     AuthLayer Function(GoTrueClient, SupabaseClient, AuthConfig)
-        initializeAuthLayer = _defaultInitializeAuth,
+        initializeAuthLayer =
+        _defaultInitializeAuth,
     Future<StorageEngine> Function(EnvironmentConfig) initializeStorage =
         _defaultInitializeStorage,
   }) async {
     final AppConfig appConfig = loadConfig();
-    final ApiLayer apiLayer =
-        await initializeApi(appConfig.environmentConfig);
+    final ApiLayer apiLayer = await initializeApi(appConfig.environmentConfig);
     final AuthLayer authLayer = initializeAuthLayer(
       apiLayer.supabaseClient.auth,
       apiLayer.supabaseClient,
       AuthConfig.fromEnvironment(appConfig.environmentConfig),
     );
     await authLayer.provider.initialize();
-    final StorageEngine storage =
-        await initializeStorage(appConfig.environmentConfig);
+    final StorageEngine storage = await initializeStorage(
+      appConfig.environmentConfig,
+    );
     final LocaleProvider localeProvider = LocaleProvider(
       config: defaultLocalizationConfig,
       storage: storage,
@@ -108,11 +133,21 @@ class AppBootstrap {
     verification = registerVerificationLayer(apiLayer);
     final ({EscrowRepository repository, EscrowProvider provider}) escrow =
         registerEscrowLayer(
-      apiLayer,
-      writeViaProxy: appConfig.escrowWriteViaProxyEnabled,
-    );
+          apiLayer,
+          writeViaProxy: appConfig.escrowWriteViaProxyEnabled,
+        );
     final ({FinancialRepository repository, FinancialProvider provider})
     financial = registerFinancialLayer(apiLayer);
+    final ({
+      FinancialPayoutRepository repository,
+      FinancialPayoutProvider provider,
+    })
+    payout = registerPayoutLayer(apiLayer);
+    final ({
+      FinancialDepositRepository repository,
+      FinancialDepositProvider provider,
+    })
+    deposit = registerDepositLayer(apiLayer);
     final ({ConversionRepository repository, ConversionProvider provider})
     conversion = registerConversionLayer(
       apiLayer,
@@ -136,6 +171,12 @@ class AppBootstrap {
       escrowProvider: escrow.provider,
       conversionRepository: conversion.repository,
       conversionProvider: conversion.provider,
+      financialRepository: financial.repository,
+      financialProvider: financial.provider,
+      payoutRepository: payout.repository,
+      payoutProvider: payout.provider,
+      depositRepository: deposit.repository,
+      depositProvider: deposit.provider,
     );
   }
 
@@ -151,12 +192,11 @@ class AppBootstrap {
     GoTrueClient authClient,
     SupabaseClient supabaseClient,
     AuthConfig config,
-  ) =>
-      initializeAuth(
-        authClient: authClient,
-        supabaseClient: supabaseClient,
-        config: config,
-      );
+  ) => initializeAuth(
+    authClient: authClient,
+    supabaseClient: supabaseClient,
+    config: config,
+  );
 
   /// Application entrypoint invoked from [main].
   ///
