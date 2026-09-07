@@ -78,18 +78,20 @@ void main() {
       tokenStore = SecureTokenStore(storage);
     });
 
-    test('persists and reads auth tokens, session id and device secret',
-        () async {
-      await tokenStore.writeAccessToken('at');
-      await tokenStore.writeRefreshToken('rt');
-      await tokenStore.writeSessionId('sid');
-      await tokenStore.writeDeviceSecret('ds');
+    test(
+      'persists and reads auth tokens, session id and device secret',
+      () async {
+        await tokenStore.writeAccessToken('at');
+        await tokenStore.writeRefreshToken('rt');
+        await tokenStore.writeSessionId('sid');
+        await tokenStore.writeDeviceSecret('ds');
 
-      expect(await tokenStore.readAccessToken(), 'at');
-      expect(await tokenStore.readRefreshToken(), 'rt');
-      expect(await tokenStore.readSessionId(), 'sid');
-      expect(await tokenStore.readDeviceSecret(), 'ds');
-    });
+        expect(await tokenStore.readAccessToken(), 'at');
+        expect(await tokenStore.readRefreshToken(), 'rt');
+        expect(await tokenStore.readSessionId(), 'sid');
+        expect(await tokenStore.readDeviceSecret(), 'ds');
+      },
+    );
 
     test('clearTokens removes auth material but keeps device secret', () async {
       await tokenStore.writeAccessToken('at');
@@ -155,14 +157,25 @@ void main() {
     });
 
     test('encrypts token material; stored blob is not plaintext', () async {
-      await tokenStore.writeAccessToken('at');
-      await tokenStore.writeRefreshToken('rt');
-      await tokenStore.writeSessionId('sid');
+      // Distinctive token values longer than any plausible base64-noise
+      // substring, so the assertion below cannot flake on a random nonce.
+      await tokenStore.writeAccessToken('access-token-material-9f2c');
+      await tokenStore.writeRefreshToken('refresh-token-material-7d4a');
+      await tokenStore.writeSessionId('session-id-material-6b1e');
 
       // Backing store must contain ciphertext, never the raw token.
-      expect(storage.entries['auth.access_token'], isNot(contains('at')));
-      expect(storage.entries['auth.refresh_token'], isNot(contains('rt')));
-      expect(storage.entries['auth.session_id'], isNot(contains('sid')));
+      expect(
+        storage.entries['auth.access_token'],
+        isNot(contains('access-token-material-9f2c')),
+      );
+      expect(
+        storage.entries['auth.refresh_token'],
+        isNot(contains('refresh-token-material-7d4a')),
+      );
+      expect(
+        storage.entries['auth.session_id'],
+        isNot(contains('session-id-material-6b1e')),
+      );
     });
 
     test('round-trips encrypted token material', () async {
@@ -175,15 +188,17 @@ void main() {
       expect(await tokenStore.readSessionId(), 'sid');
     });
 
-    test('uses a unique nonce per encryption (non-deterministic blob)',
-        () async {
-      await tokenStore.writeAccessToken('same');
-      final String first = storage.entries['auth.access_token']!;
-      await tokenStore.writeAccessToken('same');
-      final String second = storage.entries['auth.access_token']!;
+    test(
+      'uses a unique nonce per encryption (non-deterministic blob)',
+      () async {
+        await tokenStore.writeAccessToken('same');
+        final String first = storage.entries['auth.access_token']!;
+        await tokenStore.writeAccessToken('same');
+        final String second = storage.entries['auth.access_token']!;
 
-      expect(first, isNot(equals(second)));
-    });
+        expect(first, isNot(equals(second)));
+      },
+    );
 
     test('clearTokens only removes encrypted token material', () async {
       await tokenStore.writeAccessToken('at');
@@ -199,12 +214,14 @@ void main() {
       expect(await tokenStore.readDeviceSecret(), 'ds');
     });
 
-    test('without a cipher the store persists plaintext (backward compatible)',
-        () async {
-      final SecureTokenStore plaintextStore = SecureTokenStore(storage);
-      await plaintextStore.writeAccessToken('at');
-      expect(storage.entries['auth.access_token'], 'at');
-      expect(await plaintextStore.readAccessToken(), 'at');
-    });
+    test(
+      'without a cipher the store persists plaintext (backward compatible)',
+      () async {
+        final SecureTokenStore plaintextStore = SecureTokenStore(storage);
+        await plaintextStore.writeAccessToken('at');
+        expect(storage.entries['auth.access_token'], 'at');
+        expect(await plaintextStore.readAccessToken(), 'at');
+      },
+    );
   });
 }
