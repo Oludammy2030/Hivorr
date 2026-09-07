@@ -90,6 +90,8 @@ class _InitializationScreenState extends State<InitializationScreen> {
           payoutProvider: _result!.payoutProvider,
           depositRepository: _result!.depositRepository,
           depositProvider: _result!.depositProvider,
+          disputeRepository: _result!.disputeRepository,
+          disputeProvider: _result!.disputeProvider,
         ),
       _ => const MaterialApp(home: SplashScreen()),
     };

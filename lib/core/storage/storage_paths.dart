@@ -103,6 +103,36 @@ abstract final class StoragePaths {
     return '$safeId/avatar.$extension';
   }
 
+  /// Builds a `credential-documents` path for a dispute evidence attachment
+  /// (EP-02-17 §7.5): `{entityId}/{caseId}/{uuid}_{sanitizedFileName}`.
+  ///
+  /// The first segment is the uploader's entity id so the storage RLS gate
+  /// `(storage.foldername(name))[1] = auth.uid()::text` (`20260830100001:118`)
+  /// passes for both the insert and any later signed-URL preview — matching the
+  /// `storage_paths.dart` convention documented at line 11. The leading UUID
+  /// segment prevents collision while the sanitized original name remains
+  /// human-readable. The caller supplies [entityId] from the authenticated
+  /// session (never a dispute party id — that is not the uploader).
+  static String disputeEvidence({
+    required String entityId,
+    required String caseId,
+    required String fileName,
+  }) {
+    _validateEntityId(entityId);
+    if (caseId.isEmpty) {
+      throw const StorageValidationException(
+        'Case id cannot be empty.',
+        field: 'caseId',
+      );
+    }
+    final safeId = sanitize(entityId);
+    final safeCase = sanitize(caseId);
+    final safeName = sanitize(fileName);
+    final random = _uuid.v4();
+    final name = safeName.isEmpty ? random : '${random}_$safeName';
+    return '$safeId/$safeCase/$name';
+  }
+
   /// Builds a `portfolio-items` path: `{entityId}/{itemId}/{sanitizedFileName}`.
   static String portfolioItem({
     required String entityId,
