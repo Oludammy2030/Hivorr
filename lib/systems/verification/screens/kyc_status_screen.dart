@@ -7,6 +7,7 @@ import 'package:hivorr/data/entities/kyc_level.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
@@ -69,7 +70,7 @@ class _KycStatusScreenState extends State<KycStatusScreen>
       appBar: AppBar(
         title: Text('KYC Verification', style: context.textTheme.titleLarge),
       ),
-      body: SafeArea(child: _body(context, provider)),
+      body: SafeArea(child: HivorrContentPane(child: _body(context, provider))),
     );
   }
 
@@ -102,15 +103,13 @@ class _KycStatusScreenState extends State<KycStatusScreen>
           if (eligible.isNotEmpty) ...<Widget>[
             KycUpgradeCard(
               eligibleTiers: eligible,
-              onStartVerification: () =>
-                  context.push(RoutePaths.kycUpgrade),
+              onStartVerification: () => context.push(RoutePaths.kycUpgrade),
             ),
           ] else if (provider.currentTier == KycTier.tier3) ...<Widget>[
             HivorrEmptyState(
               icon: const Icon(Icons.verified),
               title: 'Fully verified',
-              subtitle:
-                  'You have the maximum limits available on Hivorr.',
+              subtitle: 'You have the maximum limits available on Hivorr.',
             ),
           ],
         ],

@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/lifecycle/app_lifecycle_observer.dart';
 import 'package:hivorr/app/router/app_router.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
+import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/core/platform/platform_file_picker.dart';
+import 'package:hivorr/data/local/onboarding_progress_store.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
+import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
@@ -22,6 +28,7 @@ import 'package:hivorr/data/repositories/financial_payout_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
+import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -52,6 +59,11 @@ class HivorrApp extends StatefulWidget {
     this.depositProvider,
     this.disputeRepository,
     this.disputeProvider,
+    this.onboardingService,
+    this.onboardingProvider,
+    this.onboardingStore,
+    this.platformFilePicker,
+    this.environment = AppEnvironment.production,
   });
 
   final AuthProvider authProvider;
@@ -102,6 +114,25 @@ class HivorrApp extends StatefulWidget {
   /// Dispute-resolution provider surfaced to the widget tree (EP-02-17).
   final DisputeProvider? disputeProvider;
 
+  /// Onboarding service (EP-02-18). Optional for testability.
+  final OnboardingService? onboardingService;
+
+  /// Onboarding provider surfaced to the widget tree (EP-02-18).
+  final OnboardingProvider? onboardingProvider;
+
+  /// Onboarding progress store (EP-02-18). Optional for testability.
+  final OnboardingProgressStore? onboardingStore;
+
+  /// Real platform file picker surfaced to feature screens. Optional for
+  /// testability; falls back to a fresh instance when omitted.
+  final PlatformFilePicker? platformFilePicker;
+
+  /// The active build environment (EP-01-03), used for dev-only seams.
+  ///
+  /// Defaults to [AppEnvironment.production] so test harnesses stay
+  /// fail-closed; the bootstrap entrypoint passes the loaded environment.
+  final AppEnvironment environment;
+
   @override
   State<HivorrApp> createState() => _HivorrAppState();
 }
@@ -112,14 +143,38 @@ class _HivorrAppState extends State<HivorrApp> {
   @override
   void initState() {
     super.initState();
-    _router = AppRouter.create(authProvider: widget.authProvider);
+    _router = AppRouter.create(
+      authProvider: widget.authProvider,
+      onboardingProvider: widget.onboardingProvider,
+      environment: widget.environment,
+    );
+    widget.authProvider.addListener(_hydrateOnboarding);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateOnboarding());
   }
 
   @override
   void dispose() {
     _router.dispose();
+    widget.authProvider.removeListener(_hydrateOnboarding);
     widget.lifecycleObserver.dispose();
     super.dispose();
+  }
+
+  /// Hydrates (or re-keys) the wizard progress for the active entity after
+  /// auth-bootstrap and on every account switch (EP-02-18 §5.5, FV-44).
+  void _hydrateOnboarding() {
+    final OnboardingProvider? onboarding = widget.onboardingProvider;
+    if (onboarding == null || !widget.authProvider.isSignedIn) {
+      return;
+    }
+    final String? entityId = widget.authProvider.currentEntityId;
+    if (entityId == null || entityId.isEmpty) {
+      return;
+    }
+    if (onboarding.entityId == entityId) {
+      return;
+    }
+    unawaited(onboarding.loadProgress(entityId));
   }
 
   @override
@@ -143,6 +198,9 @@ class _HivorrAppState extends State<HivorrApp> {
     final FinancialDepositProvider? depositProvider = widget.depositProvider;
     final DisputeRepository? disputeRepository = widget.disputeRepository;
     final DisputeProvider? disputeProvider = widget.disputeProvider;
+    final OnboardingService? onboardingService = widget.onboardingService;
+    final OnboardingProvider? onboardingProvider = widget.onboardingProvider;
+    final OnboardingProgressStore? onboardingStore = widget.onboardingStore;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(
@@ -196,6 +254,17 @@ class _HivorrAppState extends State<HivorrApp> {
         if (disputeProvider != null)
           ChangeNotifierProvider<DisputeProvider>.value(
             value: disputeProvider,
+          ),
+        if (onboardingStore != null)
+          Provider<OnboardingProgressStore>.value(value: onboardingStore),
+        Provider<PlatformFilePicker>.value(
+          value: widget.platformFilePicker ?? PlatformFilePicker(),
+        ),
+        if (onboardingService != null)
+          Provider<OnboardingService>.value(value: onboardingService),
+        if (onboardingProvider != null)
+          ChangeNotifierProvider<OnboardingProvider>.value(
+            value: onboardingProvider,
           ),
       ],
       child: Builder(

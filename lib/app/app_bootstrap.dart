@@ -11,6 +11,8 @@ import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/data/data_layer.dart';
+import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
+import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Result of a successful bootstrap initialization sequence.
@@ -38,6 +40,9 @@ class BootstrapResult {
     this.depositProvider,
     this.disputeRepository,
     this.disputeProvider,
+    this.onboardingService,
+    this.onboardingProvider,
+    this.onboardingStore,
   });
 
   final AppConfig appConfig;
@@ -92,6 +97,15 @@ class BootstrapResult {
 
   /// Dispute-resolution provider surfaced to the widget tree (EP-02-17).
   final DisputeProvider? disputeProvider;
+
+  /// Onboarding service (EP-02-18). Optional for testability.
+  final OnboardingService? onboardingService;
+
+  /// Onboarding provider surfaced to the widget tree (EP-02-18).
+  final OnboardingProvider? onboardingProvider;
+
+  /// Onboarding progress store (EP-02-18). Optional for testability.
+  final OnboardingProgressStore? onboardingStore;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -168,6 +182,9 @@ class AppBootstrap {
     );
     final ({DisputeRepository repository, DisputeProvider provider}) dispute =
         registerDisputeLayer(apiLayer);
+    final ({OnboardingService service, OnboardingProvider provider,
+        OnboardingProgressStore store})
+    onboarding = _registerOnboarding(apiLayer, taxonomy, verification);
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -189,6 +206,45 @@ class AppBootstrap {
       depositProvider: deposit.provider,
       disputeRepository: dispute.repository,
       disputeProvider: dispute.provider,
+      onboardingService: onboarding.service,
+      onboardingProvider: onboarding.provider,
+      onboardingStore: onboarding.store,
+    );
+  }
+
+  /// Composes the EP-02-18 onboarding layer from the registered data slices.
+  ///
+  /// Builds the two verification service facades over the already-wired
+  /// repositories and the [EntityProvider] over the EP-01 data seam, then calls
+  /// `registerOnboardingLayer` (plan §5.8, FV-43). Only called from
+  /// `initialize`; extracted so the record types stay local to bootstrap.
+  static ({
+    OnboardingService service,
+    OnboardingProvider provider,
+    OnboardingProgressStore store,
+  })
+  _registerOnboarding(
+    ApiLayer apiLayer,
+    ({TaxonomyRepository repository, TaxonomyProvider provider}) taxonomy,
+    ({VerificationRepository repository, VerificationProvider provider})
+    verification,
+  ) {
+    final EntityProvider entity = registerDataLayer(apiLayer);
+    final IdentityVerificationService identityService =
+        IdentityVerificationService(repo: verification.repository);
+    final ({
+      TradeVerificationRepository repository,
+      TradeVerificationProvider provider,
+    })
+    trade = registerTradeVerificationLayer(apiLayer);
+    final TradeVerificationService tradeService =
+        TradeVerificationService(repo: trade.repository);
+    return registerOnboardingLayer(
+      apiLayer: apiLayer,
+      entityProvider: entity,
+      taxonomyProvider: taxonomy.provider,
+      identityVerification: identityService,
+      tradeVerification: tradeService,
     );
   }
 

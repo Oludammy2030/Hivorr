@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/core/storage/storage_config.dart';
 import 'package:hivorr/core/storage/storage_validators.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
@@ -28,10 +30,7 @@ typedef PickDocumentCallback = Future<PickedDocument?> Function();
 /// Consumes [VerificationProvider] via [provider]. All colors/type/spacing come
 /// from [AppTheme] tokens — never Material color or font-family literals.
 class IdentityDocumentUploadScreen extends StatefulWidget {
-  const IdentityDocumentUploadScreen({
-    super.key,
-    this.pickFile,
-  });
+  const IdentityDocumentUploadScreen({super.key, this.pickFile});
 
   /// Injected file picker. When `null`, a stub is used and submission stays
   /// disabled until the app shell wires a real picker.
@@ -61,59 +60,65 @@ class _IdentityDocumentUploadScreenState
         title: Text('Verify identity', style: context.textTheme.titleLarge),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(HivorrSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Choose a document type, then upload a clear photo or PDF.',
-                style: context.textTheme.bodyMedium
-                    ?.copyWith(color: colors.onSurfaceVariant),
-              ),
-              const SizedBox(height: HivorrSpacing.lg),
-              DocumentTypePicker(
-                selected: _selectedType,
-                onChanged: (DocumentType type) {
-                  setState(() {
-                    _selectedType = type;
-                    _fieldError = null;
-                  });
-                },
-              ),
-              if (_selectedType != null) ...<Widget>[
-                const SizedBox(height: HivorrSpacing.xs),
+        child: HivorrContentPane(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(HivorrSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
                 Text(
-                  _selectedType!.helper,
-                  style: context.textTheme.bodySmall
-                      ?.copyWith(color: colors.onSurfaceVariant),
+                  'Choose a document type, then upload a clear photo or PDF.',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
                 ),
+                const SizedBox(height: HivorrSpacing.lg),
+                DocumentTypePicker(
+                  selected: _selectedType,
+                  onChanged: (DocumentType type) {
+                    setState(() {
+                      _selectedType = type;
+                      _fieldError = null;
+                    });
+                  },
+                ),
+                if (_selectedType != null) ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.xs),
+                  Text(
+                    _selectedType!.helper,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: HivorrSpacing.lg),
+                _FileCard(
+                  picked: _picked,
+                  showProgress: _showProgress,
+                  progress: _total == 0 ? 0 : _sent / _total,
+                  onPick: _pick,
+                  error: _fieldError,
+                ),
+                const SizedBox(height: HivorrSpacing.lg),
+                HivorrButton(
+                  label: 'Upload & submit',
+                  isExpanded: true,
+                  isLoading: provider.isSubmitting,
+                  onPressed: (_selectedType != null && _picked != null)
+                      ? _submit
+                      : null,
+                ),
+                const SizedBox(height: HivorrSpacing.sm),
+                Text(
+                  'Accepted: JPG, PNG, WebP, PDF up to 10 MB.',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: HivorrSpacing.lg),
+                _SubmitFeedback(provider: provider, onViewStatus: _viewStatus),
               ],
-              const SizedBox(height: HivorrSpacing.lg),
-              _FileCard(
-                picked: _picked,
-                showProgress: _showProgress,
-                progress: _total == 0 ? 0 : _sent / _total,
-                onPick: _pick,
-                error: _fieldError,
-              ),
-              const SizedBox(height: HivorrSpacing.lg),
-              HivorrButton(
-                label: 'Upload & submit',
-                isExpanded: true,
-                isLoading: provider.isSubmitting,
-                onPressed:
-                    (_selectedType != null && _picked != null) ? _submit : null,
-              ),
-              const SizedBox(height: HivorrSpacing.sm),
-              Text(
-                'Accepted: JPG, PNG, WebP, PDF up to 10 MB.',
-                style: context.textTheme.bodySmall
-                    ?.copyWith(color: colors.onSurfaceVariant),
-              ),
-              const SizedBox(height: HivorrSpacing.lg),
-              _SubmitFeedback(provider: provider, onViewStatus: _viewStatus),
-            ],
+            ),
           ),
         ),
       ),
@@ -121,11 +126,25 @@ class _IdentityDocumentUploadScreenState
   }
 
   Future<void> _pick() async {
-    final callback = widget.pickFile;
+    final callback = _resolvePick();
     if (callback == null) return;
     final PickedDocument? doc = await callback();
     if (doc == null) return;
     _validateAndCache(doc);
+  }
+
+  /// Resolves the document picker callback: the injected test seam first, else
+  /// the app-wide [PlatformFilePicker] (silent stub when no provider is
+  /// registered — test harnesses that omit the picker stay disabled).
+  PickDocumentCallback? _resolvePick() {
+    if (widget.pickFile != null) {
+      return widget.pickFile;
+    }
+    try {
+      return context.read<PlatformFilePicker>().pickDocument;
+    } on Object {
+      return null;
+    }
   }
 
   void _validateAndCache(PickedDocument doc) {
@@ -236,9 +255,11 @@ class _FileCard extends StatelessWidget {
                 ),
                 const SizedBox(width: HivorrSpacing.sm),
                 Expanded(
-                  child: Text(picked!.fileName,
-                      style: context.textTheme.bodyMedium,
-                      overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    picked!.fileName,
+                    style: context.textTheme.bodyMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 IconButton(
                   onPressed: onPick,
@@ -259,8 +280,7 @@ class _FileCard extends StatelessWidget {
             const SizedBox(height: HivorrSpacing.sm),
             Text(
               error!,
-              style: context.textTheme.bodySmall
-                  ?.copyWith(color: colors.error),
+              style: context.textTheme.bodySmall?.copyWith(color: colors.error),
             ),
           ],
         ],
@@ -270,10 +290,7 @@ class _FileCard extends StatelessWidget {
 }
 
 class _SubmitFeedback extends StatelessWidget {
-  const _SubmitFeedback({
-    required this.provider,
-    required this.onViewStatus,
-  });
+  const _SubmitFeedback({required this.provider, required this.onViewStatus});
 
   final VerificationProvider provider;
   final VoidCallback onViewStatus;

@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
+import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_evidence_form_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_filing_screen.dart';
@@ -34,12 +37,25 @@ import 'package:hivorr/systems/verification/screens/verification_status_screen.d
 class AppRouter {
   const AppRouter._();
 
-  static GoRouter create({required AuthProvider authProvider}) {
-    final RouteGuard routeGuard = RouteGuard(authProvider: authProvider);
+  /// Builds the router. The optional [onboardingProvider] powers the
+  /// EP-02-18 resume gate ([RouteGuard]) and is merged into `refreshListenable`
+  /// so the entry redirect fires once wizard hydration completes.
+  static GoRouter create({
+    required AuthProvider authProvider,
+    OnboardingProvider? onboardingProvider,
+    AppEnvironment environment = AppEnvironment.production,
+  }) {
+    final RouteGuard routeGuard = RouteGuard(
+      authProvider: authProvider,
+      onboardingProvider: onboardingProvider,
+      environment: environment,
+    );
 
     return GoRouter(
       initialLocation: RoutePaths.home,
-      refreshListenable: authProvider,
+      refreshListenable: onboardingProvider == null
+          ? authProvider
+          : Listenable.merge(<Listenable>[authProvider, onboardingProvider]),
       redirect: (BuildContext context, GoRouterState state) =>
           routeGuard.redirectResolver(state.matchedLocation),
       routes: <RouteBase>[
@@ -205,6 +221,53 @@ class AppRouter {
               DisputeEvidenceFormScreen(
             caseId: state.pathParameters['caseId'] ?? '',
           ),
+        ),
+        GoRoute(
+          path: RoutePaths.onboarding,
+          name: RouteNames.onboarding,
+          builder: (BuildContext context, GoRouterState state) =>
+              const OnboardingShellScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.onboardingCapability,
+          name: RouteNames.onboardingCapability,
+          builder: (BuildContext context, GoRouterState state) =>
+              const OnboardingShellScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.onboardingProfile,
+          name: RouteNames.onboardingProfile,
+          builder: (BuildContext context, GoRouterState state) =>
+              const OnboardingShellScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.onboardingIndustry,
+          name: RouteNames.onboardingIndustry,
+          builder: (BuildContext context, GoRouterState state) =>
+              const OnboardingShellScreen(),
+        ),
+        GoRoute(
+          path: '/onboarding/profession',
+          redirect: (BuildContext context, GoRouterState state) =>
+              RoutePaths.onboardingIndustry,
+        ),
+        GoRoute(
+          path: RoutePaths.onboardingIdentity,
+          name: RouteNames.onboardingIdentity,
+          builder: (BuildContext context, GoRouterState state) =>
+              const OnboardingShellScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.onboardingTradeProof,
+          name: RouteNames.onboardingTradeProof,
+          builder: (BuildContext context, GoRouterState state) =>
+              const OnboardingShellScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.onboardingComplete,
+          name: RouteNames.onboardingComplete,
+          builder: (BuildContext context, GoRouterState state) =>
+              const OnboardingShellScreen(),
         ),
       ],
     );

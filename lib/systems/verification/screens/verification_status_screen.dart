@@ -8,6 +8,7 @@ import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
@@ -75,7 +76,9 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen>
       appBar: AppBar(
         title: Text('Verification', style: context.textTheme.titleLarge),
       ),
-      body: SafeArea(child: _body(context, provider, status)),
+      body: SafeArea(
+        child: HivorrContentPane(child: _body(context, provider, status)),
+      ),
     );
   }
 
@@ -101,10 +104,12 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen>
 
     final VerificationStatusKind timelineStatus = switch (provider.stage) {
       VerificationStage.approved => VerificationStatusKind.approved,
-      VerificationStage.actionRequired => VerificationStatusKind.requiresResubmission,
-      _ => status.totalSubmissions > 0
-          ? VerificationStatusKind.inReview
-          : VerificationStatusKind.pending,
+      VerificationStage.actionRequired =>
+        VerificationStatusKind.requiresResubmission,
+      _ =>
+        status.totalSubmissions > 0
+            ? VerificationStatusKind.inReview
+            : VerificationStatusKind.pending,
     };
 
     final bool actionRequired =
@@ -119,7 +124,8 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen>
           if (actionRequired) ...<Widget>[
             HivorrErrorState(
               message: "Your document couldn't be verified.",
-              detail: 'Please review the feedback and resubmit a clear '
+              detail:
+                  'Please review the feedback and resubmit a clear '
                   'document to continue, or contact support.',
               actionLabel: 'Resubmit',
               onAction: () => context.push(RoutePaths.verificationIdentity),
@@ -217,8 +223,9 @@ class _CounterRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: context.textTheme.bodyMedium
-                ?.copyWith(color: colors.onSurfaceVariant),
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ),
         Text('$value', style: context.textTheme.titleMedium),

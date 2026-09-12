@@ -6,6 +6,8 @@ import 'package:hivorr/core/localization/localization.dart';
 import '../../test_helpers.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('AppBootstrap.initialize', () {
     test('wires config, api, auth, and locale layers on success', () async {
       final result = await AppBootstrap.initialize(

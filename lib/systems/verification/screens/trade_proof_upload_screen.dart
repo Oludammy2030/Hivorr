@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/core/storage/storage_config.dart';
 import 'package:hivorr/core/storage/storage_validators.dart';
 import 'package:hivorr/data/entities/verification_status.dart';
@@ -11,6 +12,7 @@ import 'package:hivorr/data/providers/submit_state.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
@@ -73,8 +75,8 @@ class _TradeProofUploadScreenState extends State<TradeProofUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final TradeVerificationProvider provider =
-        context.watch<TradeVerificationProvider>();
+    final TradeVerificationProvider provider = context
+        .watch<TradeVerificationProvider>();
     final ColorScheme colors = context.colorScheme;
     final professions = provider.status?.tradeVerifications ?? const [];
 
@@ -83,81 +85,89 @@ class _TradeProofUploadScreenState extends State<TradeProofUploadScreen> {
         title: Text('Verify your trade', style: context.textTheme.titleLarge),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(HivorrSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              if (professions.isEmpty)
-                _NoProfessions(onAdd: _viewStatus)
-              else ...<Widget>[
-                _ProfessionSelector(
-                  professions: professions,
-                  selectedProfessionId: _selectedProfessionId,
-                  labelFor: widget.professionLabel ??
-                      (String id) => id
-                          .replaceRange(5, id.length - 4, '…'),
-                  onChanged: (String id) {
-                    setState(() {
-                      _selectedProfessionId = id;
-                      _fieldError = null;
-                    });
-                  },
-                ),
-                const SizedBox(height: HivorrSpacing.lg),
-                Text('What kind of proof are you uploading?',
-                    style: context.textTheme.bodyMedium
-                        ?.copyWith(color: colors.onSurfaceVariant)),
-                const SizedBox(height: HivorrSpacing.sm),
-                TradeProofTypePicker(
-                  selected: _selectedType,
-                  onChanged: (TradeProofType type) {
-                    setState(() {
-                      _selectedType = type;
-                      _fieldError = null;
-                    });
-                  },
-                ),
-                if (_selectedType != null) ...<Widget>[
-                  const SizedBox(height: HivorrSpacing.xs),
+        child: HivorrContentPane(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(HivorrSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (professions.isEmpty)
+                  _NoProfessions(onAdd: _viewStatus)
+                else ...<Widget>[
+                  _ProfessionSelector(
+                    professions: professions,
+                    selectedProfessionId: _selectedProfessionId,
+                    labelFor:
+                        widget.professionLabel ??
+                        (String id) => id.replaceRange(5, id.length - 4, '…'),
+                    onChanged: (String id) {
+                      setState(() {
+                        _selectedProfessionId = id;
+                        _fieldError = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: HivorrSpacing.lg),
                   Text(
-                    _selectedType!.helper,
-                    style: context.textTheme.bodySmall
-                        ?.copyWith(color: colors.onSurfaceVariant),
+                    'What kind of proof are you uploading?',
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: HivorrSpacing.sm),
+                  TradeProofTypePicker(
+                    selected: _selectedType,
+                    onChanged: (TradeProofType type) {
+                      setState(() {
+                        _selectedType = type;
+                        _fieldError = null;
+                      });
+                    },
+                  ),
+                  if (_selectedType != null) ...<Widget>[
+                    const SizedBox(height: HivorrSpacing.xs),
+                    Text(
+                      _selectedType!.helper,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: HivorrSpacing.lg),
+                  _FileCard(
+                    picked: _picked,
+                    showProgress: _showProgress,
+                    progress: _total == 0 ? 0 : _sent / _total,
+                    onPick: _pick,
+                    error: _fieldError,
+                  ),
+                  const SizedBox(height: HivorrSpacing.lg),
+                  HivorrButton(
+                    label: 'Upload & submit',
+                    isExpanded: true,
+                    isLoading: provider.isSubmitting,
+                    onPressed:
+                        (_selectedProfessionId != null &&
+                            _selectedType != null &&
+                            _picked != null)
+                        ? _submit
+                        : null,
+                  ),
+                  const SizedBox(height: HivorrSpacing.sm),
+                  Text(
+                    'Accepted: JPG, PNG, WebP, PDF up to 10 MB.',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: HivorrSpacing.lg),
+                  _SubmitFeedback(
+                    provider: provider,
+                    onViewStatus: _viewStatus,
                   ),
                 ],
-                const SizedBox(height: HivorrSpacing.lg),
-                _FileCard(
-                  picked: _picked,
-                  showProgress: _showProgress,
-                  progress: _total == 0 ? 0 : _sent / _total,
-                  onPick: _pick,
-                  error: _fieldError,
-                ),
-                const SizedBox(height: HivorrSpacing.lg),
-                HivorrButton(
-                  label: 'Upload & submit',
-                  isExpanded: true,
-                  isLoading: provider.isSubmitting,
-                  onPressed: (_selectedProfessionId != null &&
-                          _selectedType != null &&
-                          _picked != null)
-                      ? _submit
-                      : null,
-                ),
-                const SizedBox(height: HivorrSpacing.sm),
-                Text(
-                  'Accepted: JPG, PNG, WebP, PDF up to 10 MB.',
-                  style: context.textTheme.bodySmall
-                      ?.copyWith(color: colors.onSurfaceVariant),
-                ),
-                const SizedBox(height: HivorrSpacing.lg),
-                _SubmitFeedback(
-                  provider: provider,
-                  onViewStatus: _viewStatus,
-                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -165,11 +175,25 @@ class _TradeProofUploadScreenState extends State<TradeProofUploadScreen> {
   }
 
   Future<void> _pick() async {
-    final callback = widget.pickFile;
+    final callback = _resolvePick();
     if (callback == null) return;
     final PickedDocument? doc = await callback();
     if (doc == null) return;
     _validateAndCache(doc);
+  }
+
+  /// Resolves the document picker callback: the injected test seam first, else
+  /// the app-wide [PlatformFilePicker] (silent stub when no provider is
+  /// registered — test harnesses that omit the picker stay disabled).
+  TradePickDocumentCallback? _resolvePick() {
+    if (widget.pickFile != null) {
+      return widget.pickFile;
+    }
+    try {
+      return context.read<PlatformFilePicker>().pickDocument;
+    } on Object {
+      return null;
+    }
   }
 
   void _validateAndCache(PickedDocument doc) {
@@ -199,8 +223,8 @@ class _TradeProofUploadScreenState extends State<TradeProofUploadScreen> {
   }
 
   Future<void> _submit() async {
-    final TradeVerificationProvider provider =
-        context.read<TradeVerificationProvider>();
+    final TradeVerificationProvider provider = context
+        .read<TradeVerificationProvider>();
     final PickedDocument doc = _picked!;
     final TradeProofType type = _selectedType!;
     final String professionId = _selectedProfessionId!;
@@ -244,10 +268,7 @@ class _NoProfessions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HivorrEmptyState(
-      icon: Icon(
-        Icons.work_outline,
-        color: context.colorScheme.primary,
-      ),
+      icon: Icon(Icons.work_outline, color: context.colorScheme.primary),
       title: 'No bound professions yet',
       subtitle:
           'Add a profession to your profile before submitting trade proof.',
@@ -281,8 +302,9 @@ class _ProfessionSelector extends StatelessWidget {
       children: <Widget>[
         Text(
           'Choose a profession',
-          style: context.textTheme.bodyMedium
-              ?.copyWith(color: colors.onSurfaceVariant),
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: HivorrSpacing.sm),
         Wrap(
@@ -322,10 +344,12 @@ class _ProfessionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppThemeExtension ext = context.appExtension;
-    final Color background =
-        selected ? colors.primaryContainer : colors.surfaceContainerHighest;
-    final Color foreground =
-        selected ? colors.onPrimaryContainer : colors.onSurfaceVariant;
+    final Color background = selected
+        ? colors.primaryContainer
+        : colors.surfaceContainerHighest;
+    final Color foreground = selected
+        ? colors.onPrimaryContainer
+        : colors.onSurfaceVariant;
     final Color border = selected ? colors.primary : colors.outline;
 
     return InkWell(
@@ -446,10 +470,7 @@ class _FileCard extends StatelessWidget {
 }
 
 class _SubmitFeedback extends StatelessWidget {
-  const _SubmitFeedback({
-    required this.provider,
-    required this.onViewStatus,
-  });
+  const _SubmitFeedback({required this.provider, required this.onViewStatus});
 
   final TradeVerificationProvider provider;
   final VoidCallback onViewStatus;

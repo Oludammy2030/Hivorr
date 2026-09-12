@@ -52,6 +52,15 @@ void main() {
       final Color? bg = btn.style?.backgroundColor?.resolve(<WidgetState>{});
       expect(bg, AppTheme.lightTheme.colorScheme.primary);
     });
+
+    testWidgets('enabled primary label renders in onPrimary for contrast', (WidgetTester tester) async {
+      await pumpTheme(tester, HivorrButton(label: 'X', onPressed: () {}));
+      final Text text = tester.widget<Text>(find.text('X'));
+      expect(
+        text.style?.color,
+        AppTheme.lightTheme.colorScheme.onPrimary,
+      );
+    });
   });
 
   group('HivorrTextField', () {

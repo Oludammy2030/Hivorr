@@ -8,6 +8,7 @@ import 'package:hivorr/app/lifecycle/app_lifecycle_observer.dart';
 import 'package:hivorr/app/startup/error_screen.dart';
 import 'package:hivorr/app/startup/initialization_state.dart';
 import 'package:hivorr/app/startup/splash_screen.dart';
+import 'package:hivorr/config/demo/demo_identity.dart';
 
 /// Drives the bootstrap lifecycle and renders the appropriate screen.
 ///
@@ -44,6 +45,15 @@ class _InitializationScreenState extends State<InitializationScreen> {
       if (!mounted) {
         return;
       }
+
+      // Development-only UAT preview seam: when the onboarding wizard is
+      // opened without a real session (route_guard.dart UAT bypass), sign
+      // in with the seeded demo identity so functional RPC steps work.
+      await DemoIdentity.signInIfUnauthenticated(
+        authLayer: result.authLayer,
+        environment: result.appConfig.environment,
+      );
+
       _result = result;
       setState(() => _state = const InitializationReady());
     } catch (error) {
@@ -92,8 +102,18 @@ class _InitializationScreenState extends State<InitializationScreen> {
           depositProvider: _result!.depositProvider,
           disputeRepository: _result!.disputeRepository,
           disputeProvider: _result!.disputeProvider,
+          onboardingService: _result!.onboardingService,
+          onboardingProvider: _result!.onboardingProvider,
+          onboardingStore: _result!.onboardingStore,
+          environment: _result!.appConfig.environment,
         ),
-      _ => const MaterialApp(home: SplashScreen()),
+      _ => MaterialApp(
+          home: const SplashScreen(),
+          onGenerateRoute: (RouteSettings settings) => MaterialPageRoute<void>(
+            settings: settings,
+            builder: (BuildContext context) => const SplashScreen(),
+          ),
+        ),
     };
   }
 }

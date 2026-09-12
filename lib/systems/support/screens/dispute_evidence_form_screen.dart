@@ -7,6 +7,7 @@ import 'package:hivorr/core/storage/storage_validators.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/systems/support/models/dispute_status.dart';
@@ -21,9 +22,8 @@ typedef PickEvidenceCallback = Future<PickedEvidence?> Function();
 
 /// Uploads [evidence] to the private `credential-documents` bucket and returns
 /// the resulting storage path (may be `null` when no uploader is wired).
-typedef UploadEvidenceCallback = Future<String?> Function(
-  PickedEvidence evidence,
-);
+typedef UploadEvidenceCallback =
+    Future<String?> Function(PickedEvidence evidence);
 
 /// Evidence filing screen (EP-02-17 §5.7).
 ///
@@ -56,8 +56,7 @@ class DisputeEvidenceFormScreen extends StatefulWidget {
       _DisputeEvidenceFormScreenState();
 }
 
-class _DisputeEvidenceFormScreenState
-    extends State<DisputeEvidenceFormScreen> {
+class _DisputeEvidenceFormScreenState extends State<DisputeEvidenceFormScreen> {
   EvidenceType? _type;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -75,8 +74,7 @@ class _DisputeEvidenceFormScreenState
     super.dispose();
   }
 
-  bool get _requiresFile =>
-      _type != null && !_isDescription(_type!.code);
+  bool get _requiresFile => _type != null && !_isDescription(_type!.code);
 
   bool get _titleValid => DisputeService.validateTitle(_titleController.text);
 
@@ -84,9 +82,7 @@ class _DisputeEvidenceFormScreenState
       DisputeService.validateDescription(_descriptionController.text);
 
   bool get _attachmentReady =>
-      _picked != null &&
-      widget.uploadFile != null &&
-      widget.pickFile != null;
+      _picked != null && widget.uploadFile != null && widget.pickFile != null;
 
   bool get _canSubmit =>
       !_submitting &&
@@ -236,89 +232,87 @@ class _DisputeEvidenceFormScreenState
         title: Text('Add evidence', style: context.textTheme.titleLarge),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(HivorrSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              _TypeField(
-                selected: _type,
-                onChanged: _onTypeChanged,
-              ),
-              const SizedBox(height: HivorrSpacing.md),
-              TextField(
-                controller: _titleController,
-                maxLength: 255,
-                onChanged: (_) => setState(() => _submitError = null),
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'e.g. Signed delivery note, chat log…',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: HivorrSpacing.md),
-              TextField(
-                controller: _descriptionController,
-                maxLines: 5,
-                minLines: 3,
-                maxLength: 2000,
-                onChanged: (_) => setState(() => _submitError = null),
-                decoration: const InputDecoration(
-                  labelText: 'Description (optional)',
-                  hintText: 'Add context the reviewer should know…',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              if (_requiresFile) ...[
+        child: HivorrContentPane(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(HivorrSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _TypeField(selected: _type, onChanged: _onTypeChanged),
                 const SizedBox(height: HivorrSpacing.md),
-                _AttachmentCard(
-                  picked: _picked,
-                  pickingEnabled: widget.pickFile != null,
-                  uploading: _uploading,
-                  fieldError: _fieldError,
-                  onPick: _pick,
-                ),
-              ],
-              const SizedBox(height: HivorrSpacing.lg),
-              HivorrButton(
-                label: 'Submit evidence',
-                isExpanded: true,
-                isLoading: _submitting || _uploading,
-                onPressed:
-                    _canSubmit ? () => unawaited(_submit()) : null,
-              ),
-              if (_submitError != null) ...[
-                const SizedBox(height: HivorrSpacing.md),
-                Text(
-                  _submitError!,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.error,
+                TextField(
+                  controller: _titleController,
+                  maxLength: 255,
+                  onChanged: (_) => setState(() => _submitError = null),
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    hintText: 'e.g. Signed delivery note, chat log…',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-              ],
-              const SizedBox(height: HivorrSpacing.md),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Icon(
-                    Icons.lock_outline,
-                    size: 14,
-                    color: colors.onSurfaceVariant,
+                const SizedBox(height: HivorrSpacing.md),
+                TextField(
+                  controller: _descriptionController,
+                  maxLines: 5,
+                  minLines: 3,
+                  maxLength: 2000,
+                  onChanged: (_) => setState(() => _submitError = null),
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optional)',
+                    hintText: 'Add context the reviewer should know…',
+                    border: OutlineInputBorder(),
                   ),
-                  const SizedBox(width: HivorrSpacing.xs),
-                  Expanded(
-                    child: Text(
-                      'Evidence is recorded permanently and cannot be edited '
-                      'or removed after submission.',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                ),
+                if (_requiresFile) ...[
+                  const SizedBox(height: HivorrSpacing.md),
+                  _AttachmentCard(
+                    picked: _picked,
+                    pickingEnabled: widget.pickFile != null,
+                    uploading: _uploading,
+                    fieldError: _fieldError,
+                    onPick: _pick,
+                  ),
+                ],
+                const SizedBox(height: HivorrSpacing.lg),
+                HivorrButton(
+                  label: 'Submit evidence',
+                  isExpanded: true,
+                  isLoading: _submitting || _uploading,
+                  onPressed: _canSubmit ? () => unawaited(_submit()) : null,
+                ),
+                if (_submitError != null) ...[
+                  const SizedBox(height: HivorrSpacing.md),
+                  Text(
+                    _submitError!,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.error,
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: HivorrSpacing.lg),
-            ],
+                const SizedBox(height: HivorrSpacing.md),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Icon(
+                      Icons.lock_outline,
+                      size: 14,
+                      color: colors.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: HivorrSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        'Evidence is recorded permanently and cannot be edited '
+                        'or removed after submission.',
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: HivorrSpacing.lg),
+              ],
+            ),
           ),
         ),
       ),
@@ -342,10 +336,7 @@ class _TypeField extends StatelessWidget {
       ),
       items: <DropdownMenuItem<EvidenceType>>[
         for (final EvidenceType type in evidenceTypes)
-          DropdownMenuItem<EvidenceType>(
-            value: type,
-            child: Text(type.label),
-          ),
+          DropdownMenuItem<EvidenceType>(value: type, child: Text(type.label)),
       ],
       onChanged: (EvidenceType? type) => onChanged(type),
     );
@@ -422,9 +413,7 @@ class _AttachmentCard extends StatelessWidget {
             const SizedBox(height: HivorrSpacing.sm),
             Text(
               fieldError!,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: colors.error,
-              ),
+              style: context.textTheme.bodySmall?.copyWith(color: colors.error),
             ),
           ],
         ],

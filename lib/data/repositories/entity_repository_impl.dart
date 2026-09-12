@@ -80,4 +80,21 @@ class EntityRepositoryImpl implements EntityRepository {
     await local.saveRoles(fetched);
     return fetched.map(EntityRoleMapper.toEntity).toList();
   }
+
+  @override
+  Future<void> bindProfession({required String professionId}) =>
+      remote.bindProfession(professionId: professionId);
+
+  @override
+  Future<EntityProfile> updateAvatarPath({
+    required String entityId,
+    required String avatarPath,
+  }) async {
+    final EntityProfileDto updated = await remote.updateAvatarPath(
+      entityId: entityId,
+      avatarPath: avatarPath,
+    );
+    await local.saveProfile(updated);
+    return EntityProfileMapper.toEntity(updated);
+  }
 }
