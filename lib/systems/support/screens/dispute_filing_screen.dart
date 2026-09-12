@@ -10,6 +10,7 @@ import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/systems/support/helpers/dispute_id_ref.dart';
 import 'package:hivorr/systems/support/models/dispute_status.dart';
@@ -68,13 +69,11 @@ class _DisputeFilingScreenState extends State<DisputeFilingScreen> {
     }
   }
 
-  bool get _reasonValid => DisputeService.validateReason(_reasonController.text);
+  bool get _reasonValid =>
+      DisputeService.validateReason(_reasonController.text);
 
   bool get _canSubmit =>
-      !_submitting &&
-      !_succeeded &&
-      _type != null &&
-      _reasonValid;
+      !_submitting && !_succeeded && _type != null && _reasonValid;
 
   Future<void> _submit() async {
     final DisputeProvider provider = context.read<DisputeProvider>();
@@ -117,124 +116,125 @@ class _DisputeFilingScreenState extends State<DisputeFilingScreen> {
     final Escrow? escrow = context.watch<EscrowProvider>().selected;
     final bool escrowDisputed =
         escrow?.id == widget.escrowId && escrow?.status == 'disputed';
-    final bool canSubmit =
-        _canSubmit && !escrowDisputed;
+    final bool canSubmit = _canSubmit && !escrowDisputed;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('File dispute', style: context.textTheme.titleLarge),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(HivorrSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(
-                'Filing freezes escrow ${idRefSuffix(widget.escrowId)} until '
-                'the dispute is resolved.',
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-              if (escrowDisputed) ...[
-                const SizedBox(height: HivorrSpacing.md),
-                Container(
-                  padding: const EdgeInsets.all(HivorrSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colors.errorContainer,
-                    borderRadius: BorderRadius.circular(
-                      context.appExtension.radiusSm,
-                    ),
+        child: HivorrContentPane(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(HivorrSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  'Filing freezes escrow ${idRefSuffix(widget.escrowId)} until '
+                  'the dispute is resolved.',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Icon(
-                        Icons.gavel_outlined,
-                        size: 18,
-                        color: colors.onErrorContainer,
+                ),
+                if (escrowDisputed) ...[
+                  const SizedBox(height: HivorrSpacing.md),
+                  Container(
+                    padding: const EdgeInsets.all(HivorrSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.errorContainer,
+                      borderRadius: BorderRadius.circular(
+                        context.appExtension.radiusSm,
                       ),
-                      const SizedBox(width: HivorrSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          'An active dispute already exists for this escrow.',
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            color: colors.onErrorContainer,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Icon(
+                          Icons.gavel_outlined,
+                          size: 18,
+                          color: colors.onErrorContainer,
+                        ),
+                        const SizedBox(width: HivorrSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'An active dispute already exists for this escrow.',
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: colors.onErrorContainer,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                ],
+                const SizedBox(height: HivorrSpacing.lg),
+                _TypeField(
+                  selected: _type,
+                  error: _fieldError,
+                  onChanged: (DisputeType? type) {
+                    setState(() {
+                      _type = type;
+                      _fieldError = null;
+                      _submitError = null;
+                    });
+                  },
                 ),
-              ],
-              const SizedBox(height: HivorrSpacing.lg),
-              _TypeField(
-                selected: _type,
-                error: _fieldError,
-                onChanged: (DisputeType? type) {
-                  setState(() {
-                    _type = type;
-                    _fieldError = null;
-                    _submitError = null;
-                  });
-                },
-              ),
-              const SizedBox(height: HivorrSpacing.md),
-              TextField(
-                controller: _reasonController,
-                maxLines: 6,
-                minLines: 4,
-                maxLength: 2000,
-                onChanged: (_) => setState(() => _submitError = null),
-                decoration: InputDecoration(
-                  labelText: 'Reason',
-                  hintText:
-                      'Explain what happened and why the funds should be held…',
-                  helperText:
-                      'At least 10 characters so the reviewer has context.',
-                  errorText: _fieldError,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: HivorrSpacing.sm),
-              _OutcomeField(
-                selected: _outcome,
-                onChanged: (DesiredOutcome? outcome) {
-                  setState(() {
-                    _outcome = outcome;
-                    _submitError = null;
-                  });
-                },
-              ),
-              const SizedBox(height: HivorrSpacing.md),
-              _PriorityField(
-                selected: _priority,
-                onChanged: (DisputePriority? priority) {
-                  setState(() {
-                    _priority = priority;
-                    _submitError = null;
-                  });
-                },
-              ),
-              const SizedBox(height: HivorrSpacing.lg),
-              HivorrButton(
-                label: 'File dispute',
-                isExpanded: true,
-                isLoading: _submitting,
-                onPressed: canSubmit ? () => unawaited(_submit()) : null,
-              ),
-              if (_submitError != null) ...[
                 const SizedBox(height: HivorrSpacing.md),
-                Text(
-                  _submitError!,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.error,
+                TextField(
+                  controller: _reasonController,
+                  maxLines: 6,
+                  minLines: 4,
+                  maxLength: 2000,
+                  onChanged: (_) => setState(() => _submitError = null),
+                  decoration: InputDecoration(
+                    labelText: 'Reason',
+                    hintText:
+                        'Explain what happened and why the funds should be held…',
+                    helperText:
+                        'At least 10 characters so the reviewer has context.',
+                    errorText: _fieldError,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: HivorrSpacing.sm),
+                _OutcomeField(
+                  selected: _outcome,
+                  onChanged: (DesiredOutcome? outcome) {
+                    setState(() {
+                      _outcome = outcome;
+                      _submitError = null;
+                    });
+                  },
+                ),
+                const SizedBox(height: HivorrSpacing.md),
+                _PriorityField(
+                  selected: _priority,
+                  onChanged: (DisputePriority? priority) {
+                    setState(() {
+                      _priority = priority;
+                      _submitError = null;
+                    });
+                  },
+                ),
+                const SizedBox(height: HivorrSpacing.lg),
+                HivorrButton(
+                  label: 'File dispute',
+                  isExpanded: true,
+                  isLoading: _submitting,
+                  onPressed: canSubmit ? () => unawaited(_submit()) : null,
+                ),
+                if (_submitError != null) ...[
+                  const SizedBox(height: HivorrSpacing.md),
+                  Text(
+                    _submitError!,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.error,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: HivorrSpacing.lg),
               ],
-              const SizedBox(height: HivorrSpacing.lg),
-            ],
+            ),
           ),
         ),
       ),
@@ -263,10 +263,7 @@ class _TypeField extends StatelessWidget {
       ),
       items: <DropdownMenuItem<DisputeType>>[
         for (final DisputeType type in disputeTypes)
-          DropdownMenuItem<DisputeType>(
-            value: type,
-            child: Text(type.label),
-          ),
+          DropdownMenuItem<DisputeType>(value: type, child: Text(type.label)),
       ],
       onChanged: (DisputeType? type) => onChanged(type),
     );
@@ -283,7 +280,9 @@ class _OutcomeField extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<DesiredOutcome?>(
       initialValue: selected,
-      decoration: const InputDecoration(labelText: 'Desired outcome (optional)'),
+      decoration: const InputDecoration(
+        labelText: 'Desired outcome (optional)',
+      ),
       items: <DropdownMenuItem<DesiredOutcome?>>[
         const DropdownMenuItem<DesiredOutcome?>(
           value: null,

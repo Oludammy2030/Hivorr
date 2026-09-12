@@ -222,6 +222,7 @@ class SupabaseAuthService implements AuthService {
         ? null
         : DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000),
     provider: session.user.appMetadata['provider'] as String?,
+    email: session.user.email,
   );
 
   ApiException _mapError(Object error) {

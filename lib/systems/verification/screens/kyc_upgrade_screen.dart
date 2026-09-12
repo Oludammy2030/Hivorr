@@ -7,6 +7,7 @@ import 'package:hivorr/data/entities/kyc_level.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
@@ -45,9 +46,12 @@ class _KycUpgradeScreenState extends State<KycUpgradeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Upgrade verification', style: context.textTheme.titleLarge),
+        title: Text(
+          'Upgrade verification',
+          style: context.textTheme.titleLarge,
+        ),
       ),
-      body: SafeArea(child: _body(context, provider)),
+      body: SafeArea(child: HivorrContentPane(child: _body(context, provider))),
     );
   }
 
@@ -70,10 +74,7 @@ class _KycUpgradeScreenState extends State<KycUpgradeScreen> {
     return ListView(
       padding: const EdgeInsets.all(HivorrSpacing.lg),
       children: <Widget>[
-        Text(
-          'Eligible upgrades',
-          style: context.textTheme.titleMedium,
-        ),
+        Text('Eligible upgrades', style: context.textTheme.titleMedium),
         const SizedBox(height: HivorrSpacing.sm),
         if (eligible.isEmpty)
           const _NoUpgradeNote()

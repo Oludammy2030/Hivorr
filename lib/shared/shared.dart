@@ -9,6 +9,7 @@ export 'extensions/string_extensions.dart';
 export 'helpers/hivorr_formatters.dart';
 export 'helpers/hivorr_spacing.dart';
 export 'layouts/breakpoints.dart';
+export 'layouts/hivorr_content_pane.dart';
 export 'layouts/hivorr_responsive_scaffold.dart';
 export 'layouts/hivorr_screen_scaffold.dart';
 export 'mixins/form_validation_mixin.dart';

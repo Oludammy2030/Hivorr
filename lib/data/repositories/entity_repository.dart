@@ -27,4 +27,18 @@ abstract class EntityRepository {
 
   /// Returns the entity's role bindings.
   Future<List<EntityRole>> getRoles(String entityId);
+
+  /// Binds the entity to a profession via `entity_profession_bind`.
+  ///
+  /// The server validates existence/active state (`PLT004`), rejects duplicate
+  /// bindings (`PLT005`), and lands `trade_verification_status = unverified`.
+  Future<void> bindProfession({required String professionId});
+
+  /// Persists a Storage-uploaded avatar path via the self-scoped REST update.
+  ///
+  /// Returns the refreshed profile (cache refreshed).
+  Future<EntityProfile> updateAvatarPath({
+    required String entityId,
+    required String avatarPath,
+  });
 }

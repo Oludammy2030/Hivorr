@@ -86,6 +86,7 @@ dependencies:
   # Android/iOS/Web local notification rendering + pending-request queries.
   # Version confirmed compatible with Dart SDK ^3.12.2 at implementation time.
   flutter_local_notifications: ^18.0.0
+  file_picker: ^12.3.0
 
 dev_dependencies:
   flutter_test:

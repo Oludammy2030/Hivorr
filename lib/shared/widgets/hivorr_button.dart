@@ -89,6 +89,23 @@ class HivorrButton extends StatelessWidget {
         loaderColor = colors.primary;
     }
 
+    final Color labelColor;
+    switch (variant) {
+      case HivorrButtonVariant.primary:
+        labelColor = colors.onPrimary;
+      case HivorrButtonVariant.secondary:
+        labelColor = colors.onSecondary;
+      case HivorrButtonVariant.outline:
+      case HivorrButtonVariant.text:
+        labelColor = colors.primary;
+    }
+
+    final TextStyle labelStyle =
+        (context.textTheme.labelLarge ?? const TextStyle()).copyWith(
+      color: enabled ? labelColor : null,
+    );
+    final Widget labelChild = Text(label, style: labelStyle);
+
     final Widget child = isLoading
         ? HivorrLoader(size: 20, color: loaderColor)
         : (icon != null
@@ -97,10 +114,10 @@ class HivorrButton extends StatelessWidget {
                 children: <Widget>[
                   icon!,
                   const SizedBox(width: HivorrSpacing.xs),
-                  Text(label, style: context.textTheme.labelLarge),
+                  labelChild,
                 ],
               )
-            : Text(label, style: context.textTheme.labelLarge));
+            : labelChild);
 
     final ButtonStyle style;
     switch (variant) {
@@ -109,8 +126,7 @@ class HivorrButton extends StatelessWidget {
           backgroundColor: colors.primary,
           foregroundColor: colors.onPrimary,
           disabledBackgroundColor: colors.surfaceContainerHighest,
-          disabledForegroundColor:
-              colors.onSurfaceVariant.withValues(alpha: 0.5),
+          disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.5),
           padding: EdgeInsets.symmetric(
             vertical: vertical,
             horizontal: horizontal,
@@ -127,8 +143,7 @@ class HivorrButton extends StatelessWidget {
           backgroundColor: colors.secondary,
           foregroundColor: colors.onSecondary,
           disabledBackgroundColor: colors.surfaceContainerHighest,
-          disabledForegroundColor:
-              colors.onSurfaceVariant.withValues(alpha: 0.5),
+          disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.5),
           padding: EdgeInsets.symmetric(
             vertical: vertical,
             horizontal: horizontal,
@@ -143,8 +158,7 @@ class HivorrButton extends StatelessWidget {
       case HivorrButtonVariant.outline:
         style = OutlinedButton.styleFrom(
           foregroundColor: colors.primary,
-          disabledForegroundColor:
-              colors.onSurfaceVariant.withValues(alpha: 0.5),
+          disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.5),
           disabledBackgroundColor: colors.surfaceContainerHighest,
           side: BorderSide(color: colors.primary),
           padding: EdgeInsets.symmetric(
@@ -160,8 +174,8 @@ class HivorrButton extends StatelessWidget {
       case HivorrButtonVariant.text:
         style = TextButton.styleFrom(
           foregroundColor: colors.primary,
-          disabledForegroundColor:
-              colors.onSurfaceVariant.withValues(alpha: 0.5),
+          disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.5),
+          disabledBackgroundColor: colors.surfaceContainerHighest,
           padding: EdgeInsets.symmetric(
             vertical: vertical,
             horizontal: horizontal,

@@ -220,6 +220,8 @@ Token source: `AppThemeExtension.spacing`.
 - 8pt grid base. Use the token spacings; never ad-hoc `EdgeInsets`.
 - Border radius via tokens: cards/standard surfaces **16dp**; modal bottom sheets **24dp top corners**.
 - Screen padding: 16dp mobile / 24dp on web content panes; section gaps follow the spacing scale.
+- **Content width & centering** — use the space the content requires, not the full available width. Standard forms and focused content (fields, avatars, and their associated actions) should be contained in a comfortable, visually centered pane on larger screens (desktop) rather than stretching edge-to-edge; govern the inner pane's width with the token scale (target ≈ 720dp max) and keep symmetric gutters around it. The content container owns the width — it must not force its fields or primary actions to full-bleed just because the parent is wide. Genuinely full-width surfaces (dashboards, data views, and similar content whose purpose justifies them) remain allowed.
+- **Responsive width behavior** — the width guidance above is direction, not a fixed-width mandate. On desktop, prefer the centered, constrained pane with token padding; on tablet and mobile, allow layouts to use available width with token screen padding so forms stay comfortably usable (never a cramped column) down to small screens. Interfaces should adapt, not stretch or squeeze.
 
 ### 9.4 Depth & elevation
 

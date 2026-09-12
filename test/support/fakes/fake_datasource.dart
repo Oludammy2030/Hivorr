@@ -27,8 +27,26 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
   /// Number of times [activateRole] was invoked.
   int activateRoleCallCount = 0;
 
+  /// The role most recently activated via [activateRole].
+  String? lastActivatedRole;
+
   /// Number of times [getRoles] was invoked.
   int getRolesCallCount = 0;
+
+  /// Number of times [bindProfession] was invoked.
+  int bindProfessionCallCount = 0;
+
+  /// Number of times [updateAvatarPath] was invoked.
+  int updateAvatarPathCallCount = 0;
+
+  /// The profession id most recently bound via [bindProfession].
+  String? lastBoundProfessionId;
+
+  /// The avatar path most recently persisted via [updateAvatarPath].
+  String? lastAvatarPath;
+
+  /// When `true`, [bindProfession] throws `PLT005` (`conflict`).
+  bool throwConflictOnBind = false;
 
   @override
   Future<EntityProfileDto?> getProfile(String entityId) async {
@@ -66,6 +84,7 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
         code: 'PLT003',
       );
     }
+    lastActivatedRole = role;
     roles = <EntityRoleDto>[
       EntityRoleDto(entityId: entityId, role: role, isActive: true),
     ];
@@ -75,6 +94,43 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
   Future<List<EntityRoleDto>> getRoles(String entityId) async {
     getRolesCallCount++;
     return roles;
+  }
+
+  @override
+  Future<void> bindProfession({required String professionId}) async {
+    bindProfessionCallCount++;
+    if (throwConflictOnBind) {
+      throw const ApiException(
+        kind: ApiExceptionKind.conflict,
+        message: 'Profession already bound.',
+        code: 'PLT005',
+      );
+    }
+    lastBoundProfessionId = professionId;
+  }
+
+  @override
+  Future<EntityProfileDto> updateAvatarPath({
+    required String entityId,
+    required String avatarPath,
+  }) async {
+    updateAvatarPathCallCount++;
+    final EntityProfileDto current = profile ??
+        EntityProfileDto(
+          entityId: entityId,
+          legalName: '',
+          displayName: '',
+        );
+    profile = EntityProfileDto(
+      entityId: current.entityId,
+      legalName: current.legalName,
+      displayName: current.displayName,
+      bio: current.bio,
+      avatarPath: avatarPath,
+      countryCode: current.countryCode,
+    );
+    lastAvatarPath = avatarPath;
+    return profile!;
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
@@ -113,61 +114,61 @@ class _ConversionScreenState extends State<ConversionScreen>
       appBar: AppBar(
         title: Text('Convert', style: context.textTheme.titleLarge),
       ),
-      body: Consumer<ConversionProvider>(
-        builder: (BuildContext context, ConversionProvider provider, _) {
-          if (!provider.isConversionEnabled) {
-            return HivorrEmptyState(
-              icon: const Icon(Icons.currency_exchange),
-              title: 'Currency conversion unavailable',
-              subtitle:
-                  'Conversions are not enabled for your account yet. Check back soon.',
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: provider.loadHistory,
-            child: ListView(
-              padding: const EdgeInsets.all(HivorrSpacing.lg),
-              children: <Widget>[
-                ConversionPairSelector(
-                  fromCurrency: provider.fromCurrency,
-                  toCurrency: provider.toCurrency,
-                  onFromSelected: _onFromSelected,
-                  onToSelected: _onToSelected,
-                ),
-                const SizedBox(height: HivorrSpacing.lg),
-                ConversionAmountField(
-                  controller: _amountController,
-                  currencyCode: provider.fromCurrency,
-                  onChanged: _onAmountChanged,
-                ),
-                const SizedBox(height: HivorrSpacing.md),
-                ConversionRateCard(
-                  rate: provider.rate,
-                  fromCurrency: provider.fromCurrency,
-                  toCurrency: provider.toCurrency,
-                  isLoading: provider.isRateLoading,
-                  isUnavailable: provider.isRateUnavailable,
-                  onRetry: provider.loadRate,
-                ),
-                const SizedBox(height: HivorrSpacing.md),
-                if (provider.lastError != null)
-                  _FailedOperationCard(
-                    message: 'Conversion not completed',
-                    detail: provider.lastError!.message,
-                    onRetry: () => provider.refreshPreview(),
+      body: HivorrContentPane(
+        child: Consumer<ConversionProvider>(
+          builder: (BuildContext context, ConversionProvider provider, _) {
+            if (!provider.isConversionEnabled) {
+              return HivorrEmptyState(
+                icon: const Icon(Icons.currency_exchange),
+                title: 'Currency conversion unavailable',
+                subtitle:
+                    'Conversions are not enabled for your account yet. Check back soon.',
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: provider.loadHistory,
+              child: ListView(
+                padding: const EdgeInsets.all(HivorrSpacing.lg),
+                children: <Widget>[
+                  ConversionPairSelector(
+                    fromCurrency: provider.fromCurrency,
+                    toCurrency: provider.toCurrency,
+                    onFromSelected: _onFromSelected,
+                    onToSelected: _onToSelected,
                   ),
-                if (provider.preview != null) ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.lg),
+                  ConversionAmountField(
+                    controller: _amountController,
+                    currencyCode: provider.fromCurrency,
+                    onChanged: _onAmountChanged,
+                  ),
                   const SizedBox(height: HivorrSpacing.md),
-                  ConversionPreviewCard(
-                    preview: provider.preview!,
-                    isExecuting: provider.isConverting,
-                    onExecute:
-                        provider.isPreviewing || provider.isConverting
-                            ? null
-                            : () => provider.execute(),
+                  ConversionRateCard(
+                    rate: provider.rate,
+                    fromCurrency: provider.fromCurrency,
+                    toCurrency: provider.toCurrency,
+                    isLoading: provider.isRateLoading,
+                    isUnavailable: provider.isRateUnavailable,
+                    onRetry: provider.loadRate,
                   ),
-                ] else if (provider.canConvert && !provider.isPreviewing)
-                  ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.md),
+                  if (provider.lastError != null)
+                    _FailedOperationCard(
+                      message: 'Conversion not completed',
+                      detail: provider.lastError!.message,
+                      onRetry: () => provider.refreshPreview(),
+                    ),
+                  if (provider.preview != null) ...<Widget>[
+                    const SizedBox(height: HivorrSpacing.md),
+                    ConversionPreviewCard(
+                      preview: provider.preview!,
+                      isExecuting: provider.isConverting,
+                      onExecute: provider.isPreviewing || provider.isConverting
+                          ? null
+                          : () => provider.execute(),
+                    ),
+                  ] else if (provider.canConvert &&
+                      !provider.isPreviewing) ...<Widget>[
                     HivorrButton(
                       label: 'See estimate',
                       variant: HivorrButtonVariant.secondary,
@@ -175,25 +176,26 @@ class _ConversionScreenState extends State<ConversionScreen>
                       onPressed: () => provider.refreshPreview(),
                     ),
                   ],
-                if (provider.lastConversion != null) ...<Widget>[
-                  const SizedBox(height: HivorrSpacing.md),
-                  ConversionResultCard(
-                    conversion: provider.lastConversion!,
-                    onViewHistory: _scrollToHistory,
+                  if (provider.lastConversion != null) ...<Widget>[
+                    const SizedBox(height: HivorrSpacing.md),
+                    ConversionResultCard(
+                      conversion: provider.lastConversion!,
+                      onViewHistory: _scrollToHistory,
+                    ),
+                  ],
+                  const SizedBox(height: HivorrSpacing.lg),
+                  Text(
+                    'History',
+                    key: _historyKey,
+                    style: context.textTheme.titleMedium,
                   ),
+                  const SizedBox(height: HivorrSpacing.sm),
+                  ConversionHistoryList(history: provider.history),
                 ],
-                const SizedBox(height: HivorrSpacing.lg),
-                Text(
-                  'History',
-                  key: _historyKey,
-                  style: context.textTheme.titleMedium,
-                ),
-                const SizedBox(height: HivorrSpacing.sm),
-                ConversionHistoryList(history: provider.history),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

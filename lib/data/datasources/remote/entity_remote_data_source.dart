@@ -23,4 +23,21 @@ abstract class EntityRemoteDataSource {
 
   /// Fetches the self-scoped role bindings for [entityId].
   Future<List<EntityRoleDto>> getRoles(String entityId);
+
+  /// Binds a profession via the EP-01/02 `entity_profession_bind` RPC.
+  ///
+  /// Lands `trade_verification_status = unverified` server-side. Duplicate
+  /// binding throws `PLT005` (`ApiExceptionKind.conflict`).
+  Future<void> bindProfession({required String professionId});
+
+  /// Persists a Storage-uploaded avatar path via the self-scoped REST update
+  /// (`entity_profiles_authenticated_update`; `legal_name` remains RPC-guarded).
+  ///
+  /// Returns the refreshed profile. Validated at build time against the
+  /// migration grant (20260821090003/20260821090006), which include
+  /// `avatar_path` for `authenticated`.
+  Future<EntityProfileDto> updateAvatarPath({
+    required String entityId,
+    required String avatarPath,
+  });
 }

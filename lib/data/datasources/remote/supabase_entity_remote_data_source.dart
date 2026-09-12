@@ -85,4 +85,37 @@ class SupabaseEntityRemoteDataSource extends BaseApiService
         .eq('entity_id', entityId);
     return rows.map(EntityRoleDto.fromJson).toList();
   });
+
+  @override
+  Future<void> bindProfession({required String professionId}) =>
+      _guard(() async {
+        final Map<String, dynamic> params = <String, dynamic>{
+          'p_profession_id': professionId,
+        };
+        await supabase.rpc<void>('entity_profession_bind', params: params);
+      });
+
+  @override
+  Future<EntityProfileDto> updateAvatarPath({
+    required String entityId,
+    required String avatarPath,
+  }) => _guard(() async {
+    await supabase
+        .from('entity_profiles')
+        .update(<String, dynamic>{'avatar_path': avatarPath})
+        .eq('entity_id', entityId);
+    final Map<String, dynamic>? row = await supabase
+        .from('entity_profiles')
+        .select()
+        .eq('entity_id', entityId)
+        .maybeSingle();
+    if (row == null) {
+      throw const ApiException(
+        kind: ApiExceptionKind.notFound,
+        message: 'Profile not found.',
+        code: 'PLT004',
+      );
+    }
+    return EntityProfileDto.fromJson(row);
+  });
 }

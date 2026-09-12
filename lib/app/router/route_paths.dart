@@ -1,3 +1,5 @@
+import 'package:hivorr/data/entities/onboarding_progress.dart';
+
 /// Compile-time route path constants (GoRouter path patterns).
 ///
 /// Path parameters use GoRouter syntax (`:param`). Use the typed builders
@@ -28,6 +30,25 @@ abstract final class RoutePaths {
   /// KYC status + upgrade screens (EP-02-12).
   static const String kycStatus = '/verification/kyc';
   static const String kycUpgrade = '/verification/kyc/upgrade';
+
+  /// Onboarding wizard routes (EP-02-18) — private authenticated flow, no SEO.
+  static const String onboarding = '/onboarding';
+  static const String onboardingCapability = '/onboarding/capability';
+  static const String onboardingProfile = '/onboarding/profile';
+  static const String onboardingIndustry = '/onboarding/industry';
+  static const String onboardingIdentity = '/onboarding/identity';
+  static const String onboardingTradeProof = '/onboarding/trade-proof';
+  static const String onboardingComplete = '/onboarding/complete';
+
+  /// Maps a wizard step code to its bookmarkable location
+  /// (EP-02-18 §5.7). `completed` maps to the completion screen.
+  static String onboardingRouteFor(OnboardingStepCode step) => switch (step) {
+        OnboardingStepCode.capability => onboardingCapability,
+        OnboardingStepCode.profile => onboardingProfile,
+        OnboardingStepCode.industry => onboardingIndustry,
+        OnboardingStepCode.identityDocument => onboardingIdentity,
+        OnboardingStepCode.tradeProof => onboardingTradeProof,
+      };
 
   /// Financial profile screens (EP-02-13).
   static const String finance = '/finance';
