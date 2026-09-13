@@ -60,6 +60,14 @@ class AuthProvider extends ChangeNotifier {
   /// Ends the active session.
   Future<void> signOut() => _run(() => service.signOut());
 
+  /// Sends a password-reset (recovery) email for [email].
+  Future<void> requestPasswordReset(String email) =>
+      _run(() => service.requestPasswordReset(email));
+
+  /// Updates the active user's password (recovery-session empowered).
+  Future<void> updatePassword(String newPassword) =>
+      _run(() => service.updatePassword(newPassword));
+
   void _syncFromService() {
     _status = service.status;
     _currentEntityId = service.currentEntityId;

@@ -115,6 +115,26 @@ class SupabaseAuthService implements AuthService {
   }
 
   @override
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      await _authClient.resetPasswordForEmail(email);
+    } on Object catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _authClient.updateUser(
+        UserAttributes(password: newPassword),
+      );
+    } on Object catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
   Future<void> ensureEntityExists() async {
     final User? user = _authClient.currentUser;
     if (user == null || user.id.isEmpty) {

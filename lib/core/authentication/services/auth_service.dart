@@ -51,6 +51,13 @@ abstract class AuthService {
   /// signed-in identity. Self-scoped by RLS to `auth.uid()` (EP-01-09 §5.3, §8).
   Future<void> ensureEntityExists();
 
+  /// Sends a password-reset (recovery) email to [email]; the reset deep link
+  /// carries the recovery session used by [updatePassword].
+  Future<void> requestPasswordReset(String email);
+
+  /// Updates the active user's password (recovery-session empowered).
+  Future<void> updatePassword(String newPassword);
+
   /// Releases the auth-state subscription and status stream.
   ///
   /// Called by the bootstrap on teardown; not required for the normal app

@@ -39,6 +39,12 @@ class FakeAuthService implements AuthService {
   Future<void> ensureEntityExists() async {}
 
   @override
+  Future<void> requestPasswordReset(String email) async {}
+
+  @override
+  Future<void> updatePassword(String newPassword) async {}
+
+  @override
   Future<void> dispose() async {}
 }
 

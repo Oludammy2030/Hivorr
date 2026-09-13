@@ -26,6 +26,15 @@ class AuthGuard {
     '/auth',
     '/forgot-password',
     '/reset-password',
+    '/welcome',
+    '/intro',
+    '/about',
+    '/how-it-works',
+    '/features',
+    '/pricing',
+    '/security',
+    '/contact',
+    '/help',
   ];
 
   /// Whether [location] is a public route.

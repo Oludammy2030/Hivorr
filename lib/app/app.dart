@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/lifecycle/app_lifecycle_observer.dart';
 import 'package:hivorr/app/router/app_router.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
@@ -10,6 +11,7 @@ import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/core/platform/platform_file_picker.dart';
+import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
@@ -62,6 +64,8 @@ class HivorrApp extends StatefulWidget {
     this.onboardingService,
     this.onboardingProvider,
     this.onboardingStore,
+    this.entryStateProvider,
+    this.entryStore,
     this.platformFilePicker,
     this.environment = AppEnvironment.production,
   });
@@ -123,6 +127,14 @@ class HivorrApp extends StatefulWidget {
   /// Onboarding progress store (EP-02-18). Optional for testability.
   final OnboardingProgressStore? onboardingStore;
 
+  /// Entry-state provider (intro flag + pending redirect). Optional for
+  /// testability; the bootstrap entrypoint builds and hydrates the real one.
+  final EntryStateProvider? entryStateProvider;
+
+  /// Entry-state store backing [entryStateProvider] when both are omitted
+  /// (entry architecture §5). Optional for testability.
+  final EntryStateStore? entryStore;
+
   /// Real platform file picker surfaced to feature screens. Optional for
   /// testability; falls back to a fresh instance when omitted.
   final PlatformFilePicker? platformFilePicker;
@@ -140,12 +152,27 @@ class HivorrApp extends StatefulWidget {
 class _HivorrAppState extends State<HivorrApp> {
   late final GoRouter _router;
 
+  /// Entry-state provider surfaced to the tree; created here when the caller
+  /// (bootstrap/tests) does not supply one, so public doors always resolve.
+  late final EntryStateProvider _entryState;
+
+  bool _ownsEntryState = false;
+
   @override
   void initState() {
     super.initState();
+    _entryState = widget.entryStateProvider ??
+        EntryStateProvider(
+          store: widget.entryStore ?? InMemoryEntryStateStore(),
+        );
+    _ownsEntryState = widget.entryStateProvider == null;
+    if (_ownsEntryState) {
+      unawaited(_entryState.hydrate());
+    }
     _router = AppRouter.create(
       authProvider: widget.authProvider,
       onboardingProvider: widget.onboardingProvider,
+      entryStateProvider: _entryState,
       environment: widget.environment,
     );
     widget.authProvider.addListener(_hydrateOnboarding);
@@ -157,6 +184,9 @@ class _HivorrAppState extends State<HivorrApp> {
     _router.dispose();
     widget.authProvider.removeListener(_hydrateOnboarding);
     widget.lifecycleObserver.dispose();
+    if (_ownsEntryState) {
+      _entryState.dispose();
+    }
     super.dispose();
   }
 
@@ -266,6 +296,7 @@ class _HivorrAppState extends State<HivorrApp> {
           ChangeNotifierProvider<OnboardingProvider>.value(
             value: onboardingProvider,
           ),
+        ChangeNotifierProvider<EntryStateProvider>.value(value: _entryState),
       ],
       child: Builder(
         builder: (BuildContext context) {

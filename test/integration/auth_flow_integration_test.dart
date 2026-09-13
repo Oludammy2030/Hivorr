@@ -288,7 +288,10 @@ void main() {
       await pumpEventQueue();
 
       expect(provider.isSignedIn, isFalse);
-      expect(routeGuard.redirectResolver('/profile'), '/login');
+      expect(
+        routeGuard.redirectResolver('/profile'),
+        '/login?next=/profile',
+      );
 
       await service.signIn(
         AuthCredentials(email: 'user@example.com', password: 'password'),
@@ -302,8 +305,14 @@ void main() {
       await service.signOut();
       await pumpEventQueue();
       expect(provider.isSignedIn, isFalse);
-      expect(routeGuard.redirectResolver('/profile'), '/login');
-      expect(routeGuard.redirectResolver('/dashboard'), '/login');
+      expect(
+        routeGuard.redirectResolver('/profile'),
+        '/login?next=/profile',
+      );
+      expect(
+        routeGuard.redirectResolver('/dashboard'),
+        '/login?next=/dashboard',
+      );
 
       await service.dispose();
       await goTrue.close();

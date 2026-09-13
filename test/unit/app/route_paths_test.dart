@@ -10,6 +10,8 @@ void main() {
     expect(RoutePaths.signup, '/signup');
     expect(RoutePaths.forgotPassword, '/forgot-password');
     expect(RoutePaths.resetPassword, '/reset-password');
+    expect(RoutePaths.welcome, '/welcome');
+    expect(RoutePaths.intro, '/intro');
     expect(RoutePaths.profile, '/profile');
     expect(RoutePaths.settings, '/settings');
     expect(RoutePaths.publicProfileRoute, '/p/:slug/:id');
@@ -44,6 +46,8 @@ void main() {
     expect(RouteNames.signup, 'signup');
     expect(RouteNames.forgotPassword, 'forgot-password');
     expect(RouteNames.resetPassword, 'reset-password');
+    expect(RouteNames.welcome, 'welcome');
+    expect(RouteNames.intro, 'intro');
     expect(RouteNames.profile, 'profile');
     expect(RouteNames.settings, 'settings');
     expect(RouteNames.publicProfile, 'public-profile');

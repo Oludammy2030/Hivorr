@@ -159,6 +159,10 @@ void main() {
         expect(paths, contains(RoutePaths.login));
         expect(paths, contains(RoutePaths.signup));
         expect(paths, contains(RoutePaths.forgotPassword));
+        expect(paths, contains(RoutePaths.resetPassword));
+        // Public pre-onboarding entry doors.
+        expect(paths, contains(RoutePaths.welcome));
+        expect(paths, contains(RoutePaths.intro));
         // Protected routes.
         expect(paths, contains(RoutePaths.profile));
         expect(paths, contains(RoutePaths.settings));
@@ -173,14 +177,21 @@ void main() {
         router.dispose();
       });
 
-      test('auth redirect bounces unauthenticated users to /login', () {
+      test('auth redirect bounces unauthenticated users to the entry door', () {
         final FakeAuthProvider authProvider =
             FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
         final RouteGuard guard = RouteGuard(authProvider: authProvider);
 
+        // Dart VM test environment → returning-native root → login door.
         expect(guard.redirectResolver(RoutePaths.home), RoutePaths.login);
-        expect(guard.redirectResolver(RoutePaths.profile), RoutePaths.login);
+        // Protected destinations keep their context as `?next=`.
+        expect(
+          guard.redirectResolver(RoutePaths.profile),
+          '${RoutePaths.login}?next=${RoutePaths.profile}',
+        );
         expect(guard.redirectResolver(RoutePaths.login), isNull);
+        expect(guard.redirectResolver(RoutePaths.welcome), isNull);
+        expect(guard.redirectResolver(RoutePaths.intro), isNull);
         expect(
           guard.redirectResolver(
             RoutePaths.publicProfile(slug: 'john', id: '1'),

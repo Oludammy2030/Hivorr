@@ -1,6 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:hivorr/app/auth/screens/auth_confirmation_gate_screen.dart';
+import 'package:hivorr/app/auth/screens/forgot_password_screen.dart';
+import 'package:hivorr/app/auth/screens/login_screen.dart';
+import 'package:hivorr/app/auth/screens/register_screen.dart';
+import 'package:hivorr/app/auth/screens/reset_password_screen.dart';
+import 'package:hivorr/app/entry/entry_platform.dart';
+import 'package:hivorr/app/entry/entry_state_provider.dart';
+import 'package:hivorr/app/entry/screens/intro_screen.dart';
+import 'package:hivorr/app/entry/screens/welcome_screen.dart';
+import 'package:hivorr/app/public/screens/about_screen.dart';
+import 'package:hivorr/app/public/screens/contact_screen.dart';
+import 'package:hivorr/app/public/screens/features_screen.dart';
+import 'package:hivorr/app/public/screens/help_screen.dart';
+import 'package:hivorr/app/public/screens/how_it_works_screen.dart';
+import 'package:hivorr/app/public/screens/pricing_screen.dart';
+import 'package:hivorr/app/public/screens/security_screen.dart';
 import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
@@ -39,23 +55,30 @@ class AppRouter {
 
   /// Builds the router. The optional [onboardingProvider] powers the
   /// EP-02-18 resume gate ([RouteGuard]) and is merged into `refreshListenable`
-  /// so the entry redirect fires once wizard hydration completes.
+  /// so the entry redirect fires once wizard hydration completes. The optional
+  /// [entryStateProvider] powers the platform entry doors (`/welcome`, `/intro`).
   static GoRouter create({
     required AuthProvider authProvider,
     OnboardingProvider? onboardingProvider,
+    EntryStateProvider? entryStateProvider,
     AppEnvironment environment = AppEnvironment.production,
   }) {
     final RouteGuard routeGuard = RouteGuard(
       authProvider: authProvider,
       onboardingProvider: onboardingProvider,
+      entryStateProvider: entryStateProvider,
       environment: environment,
     );
 
     return GoRouter(
-      initialLocation: RoutePaths.home,
-      refreshListenable: onboardingProvider == null
-          ? authProvider
-          : Listenable.merge(<Listenable>[authProvider, onboardingProvider]),
+      initialLocation: EntryPlatform.isWeb
+          ? RoutePaths.welcome
+          : RoutePaths.home,
+      refreshListenable: Listenable.merge(<Listenable>[
+        authProvider,
+        ?onboardingProvider,
+        ?entryStateProvider,
+      ]),
       redirect: (BuildContext context, GoRouterState state) =>
           routeGuard.redirectResolver(state.matchedLocation),
       routes: <RouteBase>[
@@ -66,28 +89,91 @@ class AppRouter {
               const PlaceholderScreen(title: 'Home'),
         ),
         GoRoute(
+          path: RoutePaths.welcome,
+          name: RouteNames.welcome,
+          builder: (BuildContext context, GoRouterState state) =>
+              const WelcomeScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.about,
+          name: RouteNames.about,
+          builder: (BuildContext context, GoRouterState state) =>
+              const AboutScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.howItWorks,
+          name: RouteNames.howItWorks,
+          builder: (BuildContext context, GoRouterState state) =>
+              const HowItWorksScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.features,
+          name: RouteNames.features,
+          builder: (BuildContext context, GoRouterState state) =>
+              const FeaturesScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.pricing,
+          name: RouteNames.pricing,
+          builder: (BuildContext context, GoRouterState state) =>
+              const PricingScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.security,
+          name: RouteNames.security,
+          builder: (BuildContext context, GoRouterState state) =>
+              const SecurityScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.contact,
+          name: RouteNames.contact,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ContactScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.help,
+          name: RouteNames.help,
+          builder: (BuildContext context, GoRouterState state) =>
+              const HelpScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.intro,
+          name: RouteNames.intro,
+          builder: (BuildContext context, GoRouterState state) =>
+              const IntroScreen(),
+        ),
+        GoRoute(
           path: RoutePaths.login,
           name: RouteNames.login,
           builder: (BuildContext context, GoRouterState state) =>
-              const PlaceholderScreen(title: 'Login'),
+              const LoginScreen(),
         ),
         GoRoute(
           path: RoutePaths.signup,
           name: RouteNames.signup,
           builder: (BuildContext context, GoRouterState state) =>
-              const PlaceholderScreen(title: 'Sign Up'),
+              const RegisterScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.authConfirmation,
+          name: RouteNames.authConfirmation,
+          builder: (BuildContext context, GoRouterState state) =>
+              AuthConfirmationGateScreen(
+            email: state.uri.queryParameters['email'],
+            next: state.uri.queryParameters['next'],
+          ),
         ),
         GoRoute(
           path: RoutePaths.forgotPassword,
           name: RouteNames.forgotPassword,
           builder: (BuildContext context, GoRouterState state) =>
-              const PlaceholderScreen(title: 'Forgot Password'),
+              const ForgotPasswordScreen(),
         ),
         GoRoute(
           path: RoutePaths.resetPassword,
           name: RouteNames.resetPassword,
           builder: (BuildContext context, GoRouterState state) =>
-              const PlaceholderScreen(title: 'Reset Password'),
+              const ResetPasswordScreen(),
         ),
         GoRoute(
           path: RoutePaths.profile,
