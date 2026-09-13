@@ -10,6 +10,25 @@ abstract final class RouteNames {
   static const String signup = 'signup';
   static const String forgotPassword = 'forgot-password';
   static const String resetPassword = 'reset-password';
+
+  /// Public Web landing experience (pre-registration, SEO-targetable).
+  static const String welcome = 'welcome';
+
+  /// Public Website information pages (public navigation, SEO-targetable).
+  static const String about = 'about';
+  static const String howItWorks = 'how-it-works';
+  static const String features = 'features';
+  static const String pricing = 'pricing';
+  static const String security = 'security';
+  static const String contact = 'contact';
+  static const String help = 'help';
+
+  /// Email-confirmation gate shown after a sign-up that requires confirmation.
+  static const String authConfirmation = 'auth-confirmation';
+
+  /// Native first-launch welcome for newly installed Android/iOS apps.
+  static const String intro = 'intro';
+
   static const String profile = 'profile';
   static const String settings = 'settings';
   static const String publicProfile = 'public-profile';

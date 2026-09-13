@@ -23,6 +23,15 @@ class AppBoxes {
   /// Catch-all box for miscellaneous non-secret local state.
   static const String misc = 'misc';
 
+  /// Device-local entry state (first-launch flag + pending redirect).
+  static const String entry = 'entry';
+
   /// All pre-registered box names.
-  static const List<String> all = <String>[cache, syncQueue, entityCache, misc];
+  static const List<String> all = <String>[
+    cache,
+    syncQueue,
+    entityCache,
+    misc,
+    entry,
+  ];
 }

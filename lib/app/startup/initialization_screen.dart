@@ -105,6 +105,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
           onboardingService: _result!.onboardingService,
           onboardingProvider: _result!.onboardingProvider,
           onboardingStore: _result!.onboardingStore,
+          entryStateProvider: _result!.entryStateProvider,
           environment: _result!.appConfig.environment,
         ),
       _ => MaterialApp(

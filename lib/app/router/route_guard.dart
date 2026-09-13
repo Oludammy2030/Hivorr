@@ -1,3 +1,5 @@
+import 'package:hivorr/app/entry/entry_platform.dart';
+import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/guards/auth_guard.dart';
@@ -9,8 +11,14 @@ import 'package:hivorr/data/providers/onboarding_provider.dart';
 ///
 /// This is the single point where EP-01-09 authorization decisions are applied
 /// to navigation. No business logic lives here (AGENT.md Rule 4) — it wraps
-/// [AuthGuard] and adds the EP-01-15 rule that authenticated users are bounced
-/// off public-only auth screens (e.g. `/login`).
+/// [AuthGuard] and adds the entry rules for the pre-onboarding doors:
+///
+/// * the unauthenticated root (`/`) resolves to the platform entry point
+///   ([EntryPlatform]): the Web landing `/welcome`, the mobile first-launch
+///   `/intro`, or `/login` for native returnees;
+/// * protected destinations requested while signed out are redirected to the
+///   right door with their original target preserved as `?next=` (entry
+///   architecture §4), so the invite/SEO flow resumes after sign-up.
 ///
 /// EP-02-18 §5.5: when an [onboardingProvider] is supplied, an authenticated
 /// entity with a hydrated, incomplete wizard is redirected from the placeholder
@@ -20,6 +28,7 @@ class RouteGuard {
   RouteGuard({
     required this.authProvider,
     this.onboardingProvider,
+    this.entryStateProvider,
     this.environment = AppEnvironment.production,
     Uri? baseUri,
   }) : guard = AuthGuard(
@@ -32,6 +41,10 @@ class RouteGuard {
 
   final AuthProvider authProvider;
   final OnboardingProvider? onboardingProvider;
+
+  /// Device-local entry state (first-launch flag, pending redirect). Optional
+  /// for testability; drives the `/` entry decision for native builds.
+  final EntryStateProvider? entryStateProvider;
 
   /// Development-only: the onboarding route the browser asked for at page
   /// load, captured before GoRouter syncs the address bar (EP-02-18 UAT).
@@ -50,7 +63,7 @@ class RouteGuard {
   ///
   /// Returns `null` to allow the navigation, or a path string to redirect to.
   /// Delegates public-route classification to [AuthGuard.publicRoutePrefixes]
-  /// and the unauthenticated→`/login` decision to [AuthGuard.redirectResolver].
+  /// and the platform-entry decision to [_entryPathForUnauthenticated].
   String? redirectResolver(String location) {
     final bool authenticated = authProvider.isSignedIn;
 
@@ -90,8 +103,40 @@ class RouteGuard {
       return developmentDeepLink;
     }
 
-    // Fail-closed: any other (protected) route redirects to login.
-    return guard.redirectResolver(location);
+    // The unauthenticated root resolves to the platform's entry door.
+    if (location == RoutePaths.home) {
+      return _entryPathForUnauthenticated();
+    }
+
+    // Fail-closed: any other (protected) route redirects to the platform's
+    // entry door, preserving the original destination as `?next=` so the
+    // visitor resumes the invite/SEO flow after sign-up.
+    return _contextPreservingEntryRedirect(location);
+  }
+
+  /// The platform entry target for an unauthenticated root request:
+  ///
+  /// * Web builds → the public landing (`/welcome`, SEO door);
+  /// * Native builds → the one-time intro on first launch, else `/login` for
+  ///   returning visitors (entry architecture §4).
+  String _entryPathForUnauthenticated() {
+    if (EntryPlatform.isWeb) {
+      return RoutePaths.welcome;
+    }
+    final EntryStateProvider? entryState = entryStateProvider;
+    if (entryState != null && !entryState.introSeen) {
+      return RoutePaths.intro;
+    }
+    return RoutePaths.login;
+  }
+
+  /// Fail-closed redirect that preserves [location] as `?next=`.
+  String _contextPreservingEntryRedirect(String location) {
+    final String entryTarget = _entryPathForUnauthenticated();
+    if (location.isEmpty) {
+      return entryTarget;
+    }
+    return '$entryTarget?next=$location';
   }
 
   /// Entry gate for incomplete entities (EP-02-18 §5.5, FV-44):

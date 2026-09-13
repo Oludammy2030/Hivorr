@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/lifecycle/app_lifecycle_observer.dart';
 import 'package:hivorr/app/startup/initialization_screen.dart';
 import 'package:hivorr/config/app_config/app_config.dart';
@@ -11,6 +12,7 @@ import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/data/data_layer.dart';
+import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -43,6 +45,8 @@ class BootstrapResult {
     this.onboardingService,
     this.onboardingProvider,
     this.onboardingStore,
+    required this.entryStore,
+    required this.entryStateProvider,
   });
 
   final AppConfig appConfig;
@@ -106,6 +110,13 @@ class BootstrapResult {
 
   /// Onboarding progress store (EP-02-18). Optional for testability.
   final OnboardingProgressStore? onboardingStore;
+
+  /// Entry-state store (first-launch flag + pending redirect) over the local
+  /// storage engine (entry architecture §5).
+  final EntryStateStore entryStore;
+
+  /// Entry-state provider surfaced to the widget tree and the router guard.
+  final EntryStateProvider entryStateProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -185,6 +196,13 @@ class AppBootstrap {
     final ({OnboardingService service, OnboardingProvider provider,
         OnboardingProgressStore store})
     onboarding = _registerOnboarding(apiLayer, taxonomy, verification);
+    final EntryStateStore entryStore = HiveEntryStateStore(
+      store: LocalStore(storage),
+    );
+    final EntryStateProvider entryStateProvider = EntryStateProvider(
+      store: entryStore,
+    );
+    await entryStateProvider.hydrate();
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -209,6 +227,8 @@ class AppBootstrap {
       onboardingService: onboarding.service,
       onboardingProvider: onboarding.provider,
       onboardingStore: onboarding.store,
+      entryStore: entryStore,
+      entryStateProvider: entryStateProvider,
     );
   }
 

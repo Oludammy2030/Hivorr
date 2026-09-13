@@ -46,6 +46,11 @@ dependencies:
   # Deep links, route configuration, and SEO-friendly URLs for lib/app/router/.
   go_router: 17.5.0
 
+  # Web URL strategy (path-based URLs for SEO-friendly public routes).
+  # No-op on non-web platforms (VISUAL-IDENTITY/entry architecture).
+  flutter_web_plugins:
+    sdk: flutter
+
   # Application and data state propagation for lib/app/ and lib/data/providers/.
   provider: 6.1.5
 

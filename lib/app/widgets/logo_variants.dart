@@ -29,6 +29,10 @@ class LogoIcon extends StatelessWidget {
 }
 
 /// Horizontal lockup: emblem to the left of the "Hivorr" wordmark.
+///
+/// Uses the cerulean-tile wordmark variant (`logo_wordmark.svg`) for light
+/// surfaces. See `documents/Context/VISUAL-IDENTITY.md` §5 for variant
+/// guidance.
 class LogoHorizontal extends StatelessWidget {
   const LogoHorizontal({
     super.key,
@@ -36,14 +40,14 @@ class LogoHorizontal extends StatelessWidget {
     this.fit = BoxFit.contain,
   });
 
-  /// Rendered height; width derives from the 256:80 (3.2:1) aspect ratio.
+  /// Rendered height; width derives from the 320:80 (4:1) aspect ratio.
   final double height;
 
   final BoxFit fit;
 
   @override
   Widget build(BuildContext context) => SvgPicture.asset(
-    'assets/images/logo_horizontal.svg',
+    'assets/images/logo_wordmark.svg',
     height: height,
     fit: fit,
   );
