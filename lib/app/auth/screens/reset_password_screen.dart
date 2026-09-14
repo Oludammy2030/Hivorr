@@ -5,8 +5,12 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/validators/password_policy.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
+import 'package:hivorr/shared/widgets/password_match_indicator.dart';
+import 'package:hivorr/shared/widgets/password_requirements_checklist.dart';
+import 'package:hivorr/shared/widgets/password_strength_indicator.dart';
 import 'package:provider/provider.dart';
 
 /// Set-a-new-password flow reachable from the recovery email link.
@@ -39,8 +43,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final AuthProvider auth = context.watch<AuthProvider>();
-    final bool valid = _password.text.length >= 6 && _passwordsMatch;
-    final String? confirmError = _attempted && !_passwordsMatch
+    final PasswordPolicyResult policy = _passwordPolicy;
+    final bool valid = policy.isValid && _passwordsMatch;
+    final String? confirmError = _confirm.text.isNotEmpty && !_passwordsMatch
         ? 'Passwords do not match.'
         : null;
     final String? error = _attempted ? auth.lastError?.message : null;
@@ -80,8 +85,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               controller: _password,
               label: 'New password',
               obscureText: _obscure,
-              errorText: _attempted && _password.text.length < 6
-                  ? 'Use at least 6 characters.'
+              errorText: _attempted && !policy.isValid
+                  ? PasswordPolicy.supabase.invalidMessage
                   : null,
               enabled: !_submitting,
               onChanged: (_) => setState(() {}),
@@ -94,6 +99,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: HivorrSpacing.sm),
+            PasswordRequirementsChecklist(
+              result: policy,
+              requirements: PasswordPolicy.supabase.required,
+            ),
+            if (_password.text.isNotEmpty) ...<Widget>[
+              const SizedBox(height: HivorrSpacing.sm),
+              PasswordStrengthIndicator(strength: policy.strength),
+            ],
             const SizedBox(height: HivorrSpacing.md),
             HivorrTextField(
               controller: _confirm,
@@ -103,6 +117,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               enabled: !_submitting,
               onChanged: (_) => setState(() {}),
             ),
+            if (_confirm.text.isNotEmpty && _passwordsMatch) ...<Widget>[
+              const SizedBox(height: HivorrSpacing.sm),
+              const PasswordMatchIndicator(matches: true),
+            ],
             if (error != null) ...<Widget>[
               const SizedBox(height: HivorrSpacing.md),
               AuthErrorText(message: error),
@@ -131,6 +149,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   bool get _passwordsMatch =>
       _confirm.text.isNotEmpty && _confirm.text == _password.text;
+
+  PasswordPolicyResult get _passwordPolicy =>
+      PasswordPolicy.supabase.evaluate(_password.text);
 
   Future<void> _submit() async {
     setState(() {

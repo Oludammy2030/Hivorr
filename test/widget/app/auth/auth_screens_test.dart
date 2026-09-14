@@ -11,6 +11,7 @@ import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/authentication/services/auth_service.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
+import 'package:hivorr/shared/validators/password_policy.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -314,7 +315,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Enter a valid email address.'), findsOneWidget);
-      expect(find.text('Use at least 6 characters.'), findsOneWidget);
+      expect(find.text(PasswordPolicy.supabase.invalidMessage), findsOneWidget);
       expect(router.routerDelegate.state.matchedLocation, RoutePaths.signup);
     });
 
@@ -330,8 +331,8 @@ void main() {
       );
 
       await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'abc123');
-      await enterField(tester, 'Confirm password', 'abc999');
+      await enterField(tester, 'Password', 'Abc123!9');
+      await enterField(tester, 'Confirm password', 'Abc123!8');
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -354,8 +355,8 @@ void main() {
       );
 
       await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'abc123');
-      await enterField(tester, 'Confirm password', 'abc123');
+      await enterField(tester, 'Password', 'Abc123!9');
+      await enterField(tester, 'Confirm password', 'Abc123!9');
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -378,8 +379,8 @@ void main() {
       );
 
       await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'abc123');
-      await enterField(tester, 'Confirm password', 'abc123');
+      await enterField(tester, 'Password', 'Abc123!9');
+      await enterField(tester, 'Confirm password', 'Abc123!9');
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -422,8 +423,8 @@ void main() {
       );
 
       await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'abc123');
-      await enterField(tester, 'Confirm password', 'abc123');
+      await enterField(tester, 'Password', 'Abc123!9');
+      await enterField(tester, 'Confirm password', 'Abc123!9');
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -444,6 +445,62 @@ void main() {
         router.routerDelegate.state.uri.queryParameters['next'],
         '/p/acme/1',
       );
+    });
+
+    testWidgets('password checklist and strength update as user types',
+        (tester) async {
+      final service = _ScriptedAuthService();
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      await pumpAuth(
+        tester,
+        router: doorRouter(initialLocation: RoutePaths.signup),
+        authProvider: provider,
+      );
+
+      // Empty — no strength indicator, all requirements unsatisfied
+      expect(find.text('Password strength:'), findsNothing);
+
+      await enterField(tester, 'Password', 'hello');
+      await tester.pumpAndSettle();
+      expect(find.text('Password strength: Weak'), findsOneWidget);
+      expect(find.text('Lowercase letter'), findsOneWidget);
+      expect(find.text('Uppercase letter'), findsOneWidget);
+
+      await enterField(tester, 'Password', 'Hello');
+      await tester.pumpAndSettle();
+      expect(find.text('Password strength: Medium'), findsOneWidget);
+
+      await enterField(tester, 'Password', 'Hello123');
+      await tester.pumpAndSettle();
+      expect(find.text('Password strength: Medium'), findsOneWidget);
+
+      await enterField(tester, 'Password', 'Hello123!');
+      await tester.pumpAndSettle();
+      expect(find.text('Password strength: Strong'), findsOneWidget);
+    });
+
+    testWidgets('confirm field shows match indicator in real time',
+        (tester) async {
+      final service = _ScriptedAuthService();
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      await pumpAuth(
+        tester,
+        router: doorRouter(initialLocation: RoutePaths.signup),
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Password', 'Abc123!9');
+      await enterField(tester, 'Confirm password', 'Abc123!8');
+      await tester.pumpAndSettle();
+      expect(find.text('Passwords do not match.'), findsOneWidget);
+
+      await enterField(tester, 'Confirm password', 'Abc123!9');
+      await tester.pumpAndSettle();
+      expect(find.text('Passwords match'), findsOneWidget);
     });
   });
 
@@ -696,8 +753,8 @@ void main() {
 
       expect(button().onPressed, isNull);
 
-      await enterField(tester, 'New password', 'abc123');
-      await enterField(tester, 'Confirm new password', 'abc999');
+      await enterField(tester, 'New password', 'Newpass1!');
+      await enterField(tester, 'Confirm new password', 'Newpass2!');
       await tester.pump();
       expect(button().onPressed, isNull);
     });
@@ -714,12 +771,12 @@ void main() {
         authProvider: provider,
       );
 
-      await enterField(tester, 'New password', 'newpass1');
-      await enterField(tester, 'Confirm new password', 'newpass1');
+      await enterField(tester, 'New password', 'Newpass1!');
+      await enterField(tester, 'Confirm new password', 'Newpass1!');
       await tester.tap(find.text('Update password'));
       await tester.pumpAndSettle();
 
-      expect(service.updatedPasswords, <String>['newpass1']);
+      expect(service.updatedPasswords, <String>['Newpass1!']);
       expect(
         find.text('Your password has been updated. You can now sign in.'),
         findsOneWidget,
@@ -740,14 +797,48 @@ void main() {
         authProvider: provider,
       );
 
-      await enterField(tester, 'New password', 'newpass1');
-      await enterField(tester, 'Confirm new password', 'newpass1');
+      await enterField(tester, 'New password', 'Newpass1!');
+      await enterField(tester, 'Confirm new password', 'Newpass1!');
       await tester.tap(find.text('Update password'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Go to sign in'));
       await tester.pumpAndSettle();
 
       expect(router.routerDelegate.state.matchedLocation, RoutePaths.login);
+    });
+
+    testWidgets('button stays disabled when password fails the policy',
+        (tester) async {
+      final service = _ScriptedAuthService();
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      await pumpAuth(
+        tester,
+        router: doorRouter(initialLocation: RoutePaths.resetPassword),
+        authProvider: provider,
+      );
+
+      HivorrButton button() =>
+          tester.widget<HivorrButton>(find.byType(HivorrButton));
+
+      // Password too short / missing classes — even when fields match
+      await enterField(tester, 'New password', 'short');
+      await enterField(tester, 'Confirm new password', 'short');
+      await tester.pump();
+      expect(button().onPressed, isNull);
+
+      // Still invalid — no uppercase / symbol
+      await enterField(tester, 'New password', 'newpass1');
+      await enterField(tester, 'Confirm new password', 'newpass1');
+      await tester.pump();
+      expect(button().onPressed, isNull);
+
+      // Policy-compliant → button enabled
+      await enterField(tester, 'New password', 'Newpass1!');
+      await enterField(tester, 'Confirm new password', 'Newpass1!');
+      await tester.pump();
+      expect(button().onPressed, isNotNull);
     });
   });
 

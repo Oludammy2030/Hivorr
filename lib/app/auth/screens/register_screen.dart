@@ -7,8 +7,12 @@ import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/validators/password_policy.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
+import 'package:hivorr/shared/widgets/password_match_indicator.dart';
+import 'package:hivorr/shared/widgets/password_requirements_checklist.dart';
+import 'package:hivorr/shared/widgets/password_strength_indicator.dart';
 import 'package:provider/provider.dart';
 
 /// Registration (register → account creation → onboarding handoff).
@@ -52,8 +56,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final String? emailError = _attempted && !_isEmailValid ? _emailError : null;
     final String? passwordError =
         _attempted && !_isPasswordValid ? _passwordError : null;
-    final String? confirmError =
-        _attempted && !_passwordsMatch ? _confirmError : null;
+    final String? confirmError = _confirm.text.isNotEmpty && !_passwordsMatch
+        ? _confirmError
+        : null;
     final String? error = alreadyRegistered
         ? 'This email is already registered. Please log in to continue.'
         : _attempted
@@ -94,6 +99,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
+          const SizedBox(height: HivorrSpacing.sm),
+          PasswordRequirementsChecklist(
+            result: _passwordPolicy,
+            requirements: PasswordPolicy.supabase.required,
+          ),
+          if (_password.text.isNotEmpty) ...<Widget>[
+            const SizedBox(height: HivorrSpacing.sm),
+            PasswordStrengthIndicator(strength: _passwordPolicy.strength),
+          ],
           const SizedBox(height: HivorrSpacing.md),
           HivorrTextField(
             controller: _confirm,
@@ -103,6 +117,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             enabled: !_submitting,
             onChanged: (_) => setState(() {}),
           ),
+          if (_confirm.text.isNotEmpty && _passwordsMatch) ...<Widget>[
+            const SizedBox(height: HivorrSpacing.sm),
+            const PasswordMatchIndicator(matches: true),
+          ],
           if (error != null) ...<Widget>[
             const SizedBox(height: HivorrSpacing.md),
             AuthErrorText(message: error),
@@ -143,14 +161,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool get _isEmailValid =>
       _email.text.trim().isNotEmpty && _email.text.contains('@');
 
-  bool get _isPasswordValid => _password.text.length >= 6;
+  PasswordPolicyResult get _passwordPolicy =>
+      PasswordPolicy.supabase.evaluate(_password.text);
+
+  bool get _isPasswordValid => _passwordPolicy.isValid;
 
   bool get _passwordsMatch => _confirm.text.isNotEmpty && _confirm.text == _password.text;
 
   String? get _emailError => _isEmailValid ? null : 'Enter a valid email address.';
 
-  String? get _passwordError =>
-      _isPasswordValid ? null : 'Use at least 6 characters.';
+  String? get _passwordError => _isPasswordValid ? null : PasswordPolicy.supabase.invalidMessage;
 
   String? get _confirmError => _passwordsMatch ? null : 'Passwords do not match.';
 
@@ -162,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 'Check your email address.';
     }
     if (!_isPasswordValid) {
-      return 'Password must be at least 6 characters.';
+      return PasswordPolicy.supabase.invalidMessage;
     }
     if (!_passwordsMatch) {
       return 'Passwords do not match.';
