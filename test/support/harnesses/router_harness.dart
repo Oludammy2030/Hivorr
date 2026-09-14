@@ -100,6 +100,7 @@ GoRouter doorRouter({String initialLocation = RoutePaths.welcome}) {
             AuthConfirmationGateScreen(
           email: state.uri.queryParameters['email'],
           next: state.uri.queryParameters['next'],
+          mode: state.uri.queryParameters['mode'],
         ),
       ),
       GoRoute(

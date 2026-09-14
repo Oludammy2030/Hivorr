@@ -9,6 +9,7 @@ class AuthSession {
     this.expiresAt,
     this.provider,
     this.email,
+    this.isEmailConfirmed = false,
   });
 
   /// The entity id, equal to `auth.users.id` (EP-01-06 D1).
@@ -23,4 +24,10 @@ class AuthSession {
   /// The verified sign-in email from `auth.users` (read-only display; NOT
   /// duplicating PII into business tables — see AGENT.md minimal-PII rule).
   final String? email;
+
+  /// Whether the sign-in email is verified (`auth.users.email_confirmed_at`).
+  ///
+  /// Server-authoritative verification state. The email-verification gate must
+  /// precede the main onboarding; see the account-lifecycle requirement.
+  final bool isEmailConfirmed;
 }

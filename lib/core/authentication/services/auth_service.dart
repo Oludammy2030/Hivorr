@@ -38,6 +38,28 @@ abstract class AuthService {
   /// Registers a new identity and returns the resulting status.
   Future<AuthResult> signUp(AuthCredentials credentials);
 
+  /// Sends a one-time verification code to [email] (email-OTP sign-in).
+  ///
+  /// Used by the verification gate for an identity that already exists
+  /// [AuthStatus.awaitingEmailConfirmation]. [createIfMissing] keeps the
+  /// registration single-purpose: account creation happens in [signUp], never
+  /// through a code send.
+  Future<void> sendEmailVerificationOtp(
+    String email, {
+    bool createIfMissing = false,
+  });
+
+  /// Verifies the code delivered to [email] and activates the session.
+  ///
+  /// When [newPassword] is provided it is assigned to the just-verified identity
+  /// after verification — registration keeps password and OTP as separate
+  /// credentials.
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String code,
+    String? newPassword,
+  });
+
   /// Authenticates an existing identity and returns the resulting status.
   Future<AuthResult> signIn(AuthCredentials credentials);
 

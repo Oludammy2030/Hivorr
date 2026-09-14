@@ -37,6 +37,10 @@ class AuthProvider extends ChangeNotifier {
   /// The latest error, if the last operation failed (EP-01-09 §2, §9).
   ApiException? get lastError => _error;
 
+  /// The stable platform code of the latest error (e.g.
+  /// `user_already_exists`, `email_not_confirmed`), when available.
+  String? get lastErrorCode => _error?.code;
+
   /// Token-free view of the active session, or `null` when unauthenticated.
   AuthSession? get currentSession => service.currentSession;
 
@@ -52,6 +56,23 @@ class AuthProvider extends ChangeNotifier {
   /// Registers a new identity.
   Future<void> signUp(AuthCredentials credentials) =>
       _run(() => service.signUp(credentials));
+
+  /// Sends a one-time verification code to [email] (DEV email-OTP).
+  Future<void> sendEmailVerificationOtp(String email) =>
+      _run(() => service.sendEmailVerificationOtp(email));
+
+  /// Verifies the code delivered to [email] and activates the session.
+  ///
+  /// The registration password is assigned at account creation ([signUp]), so
+  /// no additional credential is carried through the verification gate.
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String code,
+  }) =>
+      _run(() => service.verifyEmailOtp(
+            email: email,
+            code: code,
+          ));
 
   /// Authenticates an existing identity.
   Future<void> signIn(AuthCredentials credentials) =>

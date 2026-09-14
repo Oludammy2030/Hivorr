@@ -15,9 +15,12 @@ import 'package:provider/provider.dart';
 ///
 /// Captures credentials only: account provisioning is the existing
 /// RLS-scoped [AuthService.ensureEntityExists] and Basic Information stays in
-/// onboarding (correction plan §6, §8). On success the entity is routed
-/// onward; when the environment requires email confirmation, the register
-/// flow hands off to the [AuthConfirmationGateScreen].
+/// onboarding (correction plan §6, §8). Registration creates the account with
+/// its password via [AuthProvider.signUp]; the email-OTP code is then the
+/// remaining verification factor for the [AuthConfirmationGateScreen]. One
+/// email maps to one account — when [AuthProvider.signUp] reports
+/// `user_already_exists`, the visitor is told the email is registered and
+/// offered the login door instead of a duplicate account.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -44,14 +47,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final AuthProvider auth = context.watch<AuthProvider>();
+    final bool alreadyRegistered =
+        auth.lastErrorCode == 'user_already_exists' && _attempted;
     final String? emailError = _attempted && !_isEmailValid ? _emailError : null;
     final String? passwordError =
         _attempted && !_isPasswordValid ? _passwordError : null;
     final String? confirmError =
         _attempted && !_passwordsMatch ? _confirmError : null;
-    final String? serverError = _attempted ? auth.lastError?.message : null;
-    final String? error =
-        (serverError ?? _validationError);
+    final String? error = alreadyRegistered
+        ? 'This email is already registered. Please log in to continue.'
+        : _attempted
+            ? (auth.lastError?.message ?? _validationError)
+            : null;
 
     return AuthScaffold(
       title: 'Create your free account',
@@ -99,6 +106,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (error != null) ...<Widget>[
             const SizedBox(height: HivorrSpacing.md),
             AuthErrorText(message: error),
+          ],
+          if (alreadyRegistered) ...<Widget>[
+            const SizedBox(height: HivorrSpacing.sm),
+            TextButton(
+              onPressed: _submitting
+                  ? null
+                  : () => context.go(_target(RoutePaths.login)),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              child: const Text('Log In'),
+            ),
           ],
           const SizedBox(height: HivorrSpacing.lg),
           HivorrButton(
@@ -164,7 +183,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     final AuthProvider auth = context.read<AuthProvider>();
     await auth.signUp(
-      AuthCredentials(email: _email.text.trim(), password: _password.text),
+      AuthCredentials(
+        email: _email.text.trim(),
+        password: _password.text,
+      ),
     );
     if (!mounted) {
       return;
@@ -175,6 +197,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     if (auth.status == AuthStatus.awaitingEmailConfirmation) {
+      // The signup confirmation email already carries a verification code
+      // (gotrue sends it as a code email when email confirmations are on);
+      // explicitly re-sending here would trip the send rate limit and deliver
+      // a redundant mail. The gate verifies with the code already sent.
       context.go(_confirmationTarget());
     }
   }

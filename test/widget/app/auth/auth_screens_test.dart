@@ -41,6 +41,9 @@ class _ScriptedAuthService extends FakeAuthService {
 
   final List<String> resetEmails = <String>[];
   final List<String> updatedPasswords = <String>[];
+  final List<String> otpEmails = <String>[];
+  final List<bool> otpCreateFlags = <bool>[];
+  final List<String> verifiedCodes = <String>[];
 
   /// Drives the provider's reported status and notifies listeners.
   void setStatus(AuthStatus next) {
@@ -73,6 +76,33 @@ class _ScriptedAuthService extends FakeAuthService {
     if (error != null) {
       throw error;
     }
+  }
+
+  @override
+  Future<void> sendEmailVerificationOtp(
+    String email, {
+    bool createIfMissing = false,
+  }) async {
+    otpEmails.add(email);
+    otpCreateFlags.add(createIfMissing);
+    final ApiException? error = failure;
+    if (error != null) {
+      throw error;
+    }
+  }
+
+  @override
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String code,
+    String? newPassword,
+  }) async {
+    verifiedCodes.add(code);
+    final ApiException? error = failure;
+    if (error != null) {
+      throw error;
+    }
+    setStatus(AuthStatus.authenticated);
   }
 
   @override
@@ -208,6 +238,40 @@ void main() {
       expect(find.text('Invalid email or password'), findsOneWidget);
       expect(router.routerDelegate.state.matchedLocation, RoutePaths.login);
     });
+
+    testWidgets('failed sign-in with email_not_confirmed routes to the '
+        'verification gate in resume mode', (tester) async {
+      final service = _ScriptedAuthService()
+        ..failure = const ApiException(
+          kind: ApiExceptionKind.auth,
+          message: 'Your email has not been verified yet.',
+          code: 'email_not_confirmed',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Email address', 'me@example.com');
+      await enterField(tester, 'Password', 'any-password');
+      await tester.tap(find.text('Sign in'));
+      await tester.pumpAndSettle();
+
+      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+      expect(
+        router.routerDelegate.state.uri.queryParameters['email'],
+        'me@example.com',
+      );
+      expect(
+        router.routerDelegate.state.uri.queryParameters['mode'],
+        RoutePaths.authVerificationResumeMode,
+      );
+    });
   });
 
   group('RegisterScreen', () {
@@ -319,6 +383,11 @@ void main() {
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
+      // No redundant OTP re-send: the signup confirmation email already
+      // carries the verification code, and an explicit /otp would trip the
+      // send rate limit straight after signUp.
+      expect(service.otpEmails, <String>[]);
+      expect(service.otpCreateFlags, <bool>[]);
       expect(
         router.routerDelegate.state.matchedLocation,
         RoutePaths.authConfirmation,
@@ -332,10 +401,55 @@ void main() {
         '/p/acme/1',
       );
     });
+
+    testWidgets('a user_already_exists error surfaces the message and Log In',
+        (tester) async {
+      final service = _ScriptedAuthService()
+        ..failure = const ApiException(
+          kind: ApiExceptionKind.conflict,
+          message: 'This email is already registered.',
+          code: 'user_already_exists',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router =
+          doorRouter(initialLocation: '${RoutePaths.signup}?next=/p/acme/1');
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Email address', 'me@example.com');
+      await enterField(tester, 'Password', 'abc123');
+      await enterField(tester, 'Confirm password', 'abc123');
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'This email is already registered. Please log in to continue.',
+        ),
+        findsOneWidget,
+      );
+      expect(service.otpEmails, isEmpty);
+      expect(router.routerDelegate.state.matchedLocation, RoutePaths.signup);
+
+      await tester.tap(find.text('Log In'));
+      await tester.pumpAndSettle();
+
+      expect(router.routerDelegate.state.matchedLocation, RoutePaths.login);
+      expect(
+        router.routerDelegate.state.uri.queryParameters['next'],
+        '/p/acme/1',
+      );
+    });
   });
 
   group('AuthConfirmationGateScreen', () {
-    testWidgets('shows the address and waits for confirmation', (tester) async {
+    testWidgets('shows the address and an OTP entry for verification',
+        (tester) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -351,7 +465,33 @@ void main() {
 
       expect(find.text('Confirm your email'), findsOneWidget);
       expect(find.textContaining('me@example.com'), findsOneWidget);
-      expect(find.text('Waiting for confirmation…'), findsOneWidget);
+      expect(find.text('Verification code'), findsOneWidget);
+      expect(find.text('Verify code'), findsOneWidget);
+      expect(find.text('Resend code'), findsOneWidget);
+    });
+
+    testWidgets('verifying the code activates the session and continues',
+        (tester) async {
+      final service = _ScriptedAuthService();
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router = doorRouter(
+        initialLocation:
+            '${RoutePaths.authConfirmation}?email=me@example.com&next=/p/acme/1',
+      );
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Verification code', '123456');
+      await tester.tap(find.text('Verify code'));
+      await tester.pumpAndSettle();
+
+      expect(service.verifiedCodes, <String>['123456']);
+      expect(router.routerDelegate.state.matchedLocation, '/p/acme/1');
     });
 
     testWidgets('auto-continues to the preserved destination once the session '
@@ -399,6 +539,87 @@ void main() {
         router.routerDelegate.state.uri.queryParameters['next'],
         '/p/acme/1',
       );
+    });
+
+    testWidgets('resume mode issues a fresh code on entry', (tester) async {
+      final service = _ScriptedAuthService();
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      await pumpAuth(
+        tester,
+        router: doorRouter(
+          initialLocation:
+              '${RoutePaths.authConfirmation}?email=me@example.com'
+              '&mode=${RoutePaths.authVerificationResumeMode}&next=/p/acme/1',
+        ),
+        authProvider: provider,
+      );
+      await tester.pumpAndSettle();
+
+      expect(service.otpEmails, <String>['me@example.com']);
+      expect(service.otpCreateFlags, <bool>[false]);
+    });
+
+    testWidgets('resend arms a cooldown and disables until it elapses',
+        (tester) async {
+      final service = _ScriptedAuthService();
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      await pumpAuth(
+        tester,
+        router: doorRouter(
+          initialLocation:
+              '${RoutePaths.authConfirmation}?email=me@example.com',
+        ),
+        authProvider: provider,
+      );
+
+      await tester.tap(find.text('Resend code'));
+      await tester.pumpAndSettle();
+
+      expect(service.otpEmails.length, 1);
+      expect(find.text('Resend code in 01:00'), findsOneWidget);
+      // The cooldown label disables the resend action.
+      final TextButton button =
+          tester.widget<TextButton>(find.widgetWithText(TextButton, 'Resend code in 01:00'));
+      expect(button.onPressed, isNull);
+
+      await tester.pump(const Duration(seconds: 61));
+      expect(find.text('Resend code'), findsOneWidget);
+    });
+
+    testWidgets('an invalid code surfaces the specific message',
+        (tester) async {
+      final service = _ScriptedAuthService()
+        ..failure = const ApiException(
+          kind: ApiExceptionKind.auth,
+          message: 'Invalid code. Please check and try again.',
+          code: 'invalid_otp',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router = doorRouter(
+        initialLocation:
+            '${RoutePaths.authConfirmation}?email=me@example.com',
+      );
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Verification code', '000000');
+      await tester.tap(find.text('Verify code'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Invalid code. Please check and try again.'),
+        findsOneWidget,
+      );
+      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
     });
   });
 

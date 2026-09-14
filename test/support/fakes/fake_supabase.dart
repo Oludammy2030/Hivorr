@@ -5,19 +5,20 @@ import 'package:hivorr/core/authentication/services/supabase_auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Builds a [User] with the minimal fields the auth framework reads.
-User fakeUser(String id) => User(
+User fakeUser(String id, {bool emailConfirmed = false}) => User(
       id: id,
       appMetadata: <String, dynamic>{},
       userMetadata: null,
       aud: 'authenticated',
+      emailConfirmedAt: emailConfirmed ? DateTime.now().toIso8601String() : null,
       createdAt: DateTime.now().toIso8601String(),
     );
 
 /// Builds a [Session] with a non-JWT access token (expiry stays null).
-Session fakeSession(String id) => Session(
+Session fakeSession(String id, {bool emailConfirmed = false}) => Session(
       accessToken: 'fake-access-token',
       tokenType: 'bearer',
-      user: fakeUser(id),
+      user: fakeUser(id, emailConfirmed: emailConfirmed),
     );
 
 /// Controllable [GoTrueClient] for unit tests.
@@ -42,7 +43,13 @@ class FakeGoTrueClient extends GoTrueClient {
   Session? _session;
   User? _seededUser;
   bool returnSessionOnSignUp = true;
+  bool returnSessionOnVerify = true;
   AuthException? nextError;
+
+  /// Controls the `email_confirmed_at` flag on the session produced by
+  /// [signUp], [signInWithPassword] and [verifyOTP], so the service maps the
+  /// confirmed/unconfirmed session correctly in widget and unit tests.
+  bool emailConfirmedInSession = false;
 
   /// Plants a current session (e.g. a persisted cold-start session).
   void seedSession(Session session) => _session = session;
@@ -82,7 +89,7 @@ class FakeGoTrueClient extends GoTrueClient {
       throw e;
     }
     if (returnSessionOnSignUp) {
-      _session = fakeSession('u1');
+      _session = fakeSession('u1', emailConfirmed: emailConfirmedInSession);
       return AuthResponse(session: _session, user: _session!.user);
     }
     return AuthResponse(session: null, user: null);
@@ -100,13 +107,88 @@ class FakeGoTrueClient extends GoTrueClient {
       nextError = null;
       throw e;
     }
-    _session = fakeSession('u1');
+    _session = fakeSession('u1', emailConfirmed: emailConfirmedInSession);
     return AuthResponse(session: _session, user: _session!.user);
   }
 
   @override
   Future<void> signOut({SignOutScope scope = SignOutScope.global}) async {
     _session = null;
+  }
+
+  /// Email passed to the most recent [signInWithOtp] call, if any.
+  String? otpEmail;
+
+  /// `shouldCreateUser` argument of the most recent [signInWithOtp] call.
+  bool? otpShouldCreateUser;
+
+  /// Number of [signInWithOtp] calls observed.
+  int otpCallCount = 0;
+
+  @override
+  Future<void> signInWithOtp({
+    String? email,
+    String? phone,
+    String? emailRedirectTo,
+    bool? shouldCreateUser,
+    Map<String, dynamic>? data,
+    String? captchaToken,
+    OtpChannel channel = OtpChannel.sms,
+  }) async {
+    if (nextError != null) {
+      final AuthException e = nextError!;
+      nextError = null;
+      throw e;
+    }
+    otpCallCount++;
+    otpEmail = email;
+    otpShouldCreateUser = shouldCreateUser;
+  }
+
+  /// Token passed to the most recent [verifyOTP] call, if any.
+  String? verifiedToken;
+
+  /// Type of the most recent [verifyOTP] call.
+  OtpType? verifiedType;
+
+  /// Number of [verifyOTP] calls observed.
+  int verifyCallCount = 0;
+
+  @override
+  Future<AuthResponse> verifyOTP({
+    String? email,
+    String? phone,
+    String? token,
+    required OtpType type,
+    String? redirectTo,
+    String? captchaToken,
+    String? tokenHash,
+  }) async {
+    if (nextError != null) {
+      final AuthException e = nextError!;
+      nextError = null;
+      throw e;
+    }
+    verifyCallCount++;
+    verifiedToken = token;
+    verifiedType = type;
+    if (returnSessionOnVerify) {
+      _session = fakeSession('u1', emailConfirmed: emailConfirmedInSession);
+      return AuthResponse(session: _session, user: _session!.user);
+    }
+    return AuthResponse(session: null, user: null);
+  }
+
+  /// Password submitted to the most recent [updateUser] call, if any.
+  String? updatedPassword;
+
+  @override
+  Future<UserResponse> updateUser(
+    UserAttributes attributes, {
+    String? emailRedirectTo,
+  }) async {
+    updatedPassword = attributes.password;
+    return UserResponse.fromJson((_seededUser ?? fakeUser('u1')).toJson());
   }
 
   @override

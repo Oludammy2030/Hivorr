@@ -29,6 +29,10 @@ abstract final class RoutePaths {
   /// Email-confirmation gate shown after a sign-up that requires confirmation.
   static const String authConfirmation = '/auth/confirm';
 
+  /// Query-param value that signals the gate should issue a fresh code on entry
+  /// (login-resume and guard-redirect flows).
+  static const String authVerificationResumeMode = 'resume';
+
   /// Native first-launch welcome for newly installed Android/iOS apps.
   static const String intro = '/intro';
 

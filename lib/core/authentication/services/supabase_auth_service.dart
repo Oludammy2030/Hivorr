@@ -102,6 +102,54 @@ class SupabaseAuthService implements AuthService {
   }
 
   @override
+  /// Sends a one-time verification code to [email] (email-OTP sign-in).
+  ///
+  /// Used by the verification gate after an account was created via [signUp]:
+  /// it targets an existing identity, so [createIfMissing] stays `false` — the
+  /// code must never mint an account behind the gate's back.
+  @override
+  Future<void> sendEmailVerificationOtp(
+    String email, {
+    bool createIfMissing = false,
+  }) async {
+    try {
+      await _authClient.signInWithOtp(
+        email: email,
+        shouldCreateUser: createIfMissing,
+      );
+      final AuthStatus status = _config.emailConfirmationRequired
+          ? AuthStatus.awaitingEmailConfirmation
+          : AuthStatus.unauthenticated;
+      _applyStatus(status, null);
+    } on Object catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String code,
+    String? newPassword,
+  }) async {
+    try {
+      final AuthResponse response = await _authClient.verifyOTP(
+        email: email,
+        token: code,
+        type: OtpType.email,
+      );
+      _applySession(response);
+      if (newPassword != null && newPassword.isNotEmpty) {
+        await _authClient.updateUser(
+          UserAttributes(password: newPassword),
+        );
+      }
+    } on Object catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
   Future<void> signOut() async {
     try {
       await _authClient.signOut();
@@ -158,20 +206,30 @@ class SupabaseAuthService implements AuthService {
   }
 
   AuthResult _handleAuthResponse(AuthResponse response) {
+    _applySession(response);
+    final Session? session = response.session;
+    if (session == null || session.user.id.isEmpty) {
+      return AuthResult(status: _status);
+    }
+    return AuthResult(
+      status: AuthStatus.authenticated,
+      session: _toAuthSession(session),
+    );
+  }
+
+  /// Applies an authenticated session — or the awaiting-confirmation state when
+  /// the response carries none — and schedules entity provisioning.
+  void _applySession(AuthResponse response) {
     final Session? session = response.session;
     if (session == null || session.user.id.isEmpty) {
       final AuthStatus status = _config.emailConfirmationRequired
           ? AuthStatus.awaitingEmailConfirmation
           : AuthStatus.unauthenticated;
       _applyStatus(status, null);
-      return AuthResult(status: status);
+      return;
     }
     _applyAuthenticated(session.user.id);
     unawaited(_provisionIfNeeded(session.user.id, rethrowOnError: false));
-    return AuthResult(
-      status: AuthStatus.authenticated,
-      session: _toAuthSession(session),
-    );
   }
 
   void _handleAuthState(AuthState state) {
@@ -243,6 +301,7 @@ class SupabaseAuthService implements AuthService {
         : DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000),
     provider: session.user.appMetadata['provider'] as String?,
     email: session.user.email,
+    isEmailConfirmed: session.user.emailConfirmedAt != null,
   );
 
   ApiException _mapError(Object error) {
@@ -266,17 +325,22 @@ class SupabaseAuthService implements AuthService {
       );
     }
     if (error is AuthException) {
-      final String? status = error.statusCode;
+      final String? code =
+          (error.code != null && error.code!.isNotEmpty) ? error.code : null;
+      final int? status = int.tryParse(error.statusCode ?? '');
+      if (code != null) {
+        return _mapAuthCode(code, status);
+      }
       final ApiExceptionKind kind = switch (status) {
-        '401' => ApiExceptionKind.auth,
-        '403' => ApiExceptionKind.forbidden,
-        '400' || '422' => ApiExceptionKind.validation,
+        401 => ApiExceptionKind.auth,
+        403 => ApiExceptionKind.forbidden,
+        400 || 422 => ApiExceptionKind.validation,
         _ => ApiExceptionKind.unknown,
       };
       return ApiException(
         kind: kind,
         message: _safeMessage(kind),
-        code: status,
+        code: code ?? status?.toString(),
       );
     }
     return const ApiException(
@@ -284,6 +348,70 @@ class SupabaseAuthService implements AuthService {
       message: 'An unexpected authentication error occurred.',
     );
   }
+
+  /// Maps a gotrue error code to a typed [ApiException].
+  ///
+  /// Distinct codes drive the account-lifecycle UX: an existing identity
+  /// (`user_already_exists`), an unverified email on sign-in
+  /// (`email_not_confirmed`), an expired/disabled code (`otp_expired`,
+  /// `otp_disabled`), and provider rate limits all resolve to safe copy with a
+  /// stable [ApiException.code] the screens can branch on.
+  ApiException _mapAuthCode(String code, int? status) {
+    final ApiExceptionKind kind = switch (code) {
+      'user_already_exists' => ApiExceptionKind.conflict,
+      'email_not_confirmed' || 'email_not_verified' || 'invalid_otp' =>
+        ApiExceptionKind.auth,
+      'otp_expired' || 'otp_disabled' => ApiExceptionKind.validation,
+      'over_request_rate_limit' ||
+      'over_email_send_rate_limit' ||
+      'over_sms_send_rate_limit' =>
+        ApiExceptionKind.validation,
+      'invalid_credentials' ||
+      'wrong_password' ||
+      'invalid_otp' ||
+      'email_address_changed' =>
+        ApiExceptionKind.auth,
+      'user_not_found' ||
+      'user_has_active_session' ||
+      'signup_disabled' =>
+        ApiExceptionKind.validation,
+      _ => _safeKindForStatus(status),
+    };
+    final String message = switch (kind) {
+      ApiExceptionKind.conflict => 'This email is already registered.',
+      ApiExceptionKind.auth => _emailAuthMessage(code),
+      ApiExceptionKind.validation when code == 'otp_expired' =>
+        'That code has expired. Request a new one.',
+      ApiExceptionKind.validation when code == 'otp_disabled' =>
+        'Code verification is currently unavailable.',
+      ApiExceptionKind.validation when _isRateLimit(code) =>
+        'Too many requests. Please wait a moment and try again.',
+      _ => _safeMessage(kind),
+    };
+    return ApiException(kind: kind, message: message, code: code, statusCode: status);
+  }
+
+  bool _isRateLimit(String code) =>
+      code == 'over_request_rate_limit' ||
+      code == 'over_email_send_rate_limit' ||
+      code == 'over_sms_send_rate_limit';
+
+  /// Extended-validation login failures keep a neutral, single message so the
+  /// login form never leaks which part of the credentials was wrong.
+  String _emailAuthMessage(String code) => switch (code) {
+        'email_not_confirmed' || 'email_not_verified' =>
+          'Your email has not been verified yet.',
+        'invalid_otp' => 'Invalid code. Please check and try again.',
+        _ => 'Invalid email or password.',
+      };
+
+  ApiExceptionKind _safeKindForStatus(int? status) => switch (status) {
+        401 => ApiExceptionKind.auth,
+        403 => ApiExceptionKind.forbidden,
+        400 || 422 => ApiExceptionKind.validation,
+        429 => ApiExceptionKind.validation,
+        _ => ApiExceptionKind.unknown,
+      };
 
   String _safeMessage(ApiExceptionKind kind) {
     switch (kind) {
