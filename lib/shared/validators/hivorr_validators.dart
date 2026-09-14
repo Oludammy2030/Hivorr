@@ -1,4 +1,5 @@
 import 'package:hivorr/shared/extensions/string_extensions.dart';
+import 'package:hivorr/shared/validators/password_policy.dart';
 
 /// Reusable form-validation rules.
 ///
@@ -56,24 +57,13 @@ class HivorrValidators {
     return null;
   }
 
-  /// Password strength check: ≥ 8 chars with uppercase, lowercase, and digit.
+  /// Password strength check — mirrors the [PasswordPolicy.supabase] policy
+  /// (≥ 8 chars with an uppercase letter, a lowercase letter, a number, and a
+  /// symbol). Delegates to the shared policy so the checklist, the strength
+  /// indicator, and this form rule always agree.
   static String? passwordStrength(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password must be at least 8 characters with uppercase, '
-          'lowercase, and number';
-    }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters with uppercase, '
-          'lowercase, and number';
-    }
-    final bool hasUpper = value.contains(RegExp(r'[A-Z]'));
-    final bool hasLower = value.contains(RegExp(r'[a-z]'));
-    final bool hasDigit = value.contains(RegExp(r'[0-9]'));
-    if (!hasUpper || !hasLower || !hasDigit) {
-      return 'Password must be at least 8 characters with uppercase, '
-          'lowercase, and number';
-    }
-    return null;
+    final PasswordPolicyResult result = PasswordPolicy.supabase.evaluate(value);
+    return result.isValid ? null : PasswordPolicy.supabase.invalidMessage;
   }
 
   /// Numeric value check.

@@ -30,6 +30,10 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
+# Password policy mirrors the hosted project's Auth settings (strongest preset):
+# minimum 8 characters and required lowercase, uppercase, digit, and symbol.
+minimum_password_length = 8
+password_requirements = "lower_upper_letters_digits_symbols"
 
 [auth.email]
 enable_confirmations = true
