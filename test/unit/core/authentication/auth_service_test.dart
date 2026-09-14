@@ -67,6 +67,190 @@ void main() {
       await service.dispose();
     });
 
+    test('sendEmailVerificationOtp requests the code and awaits confirmation',
+        () async {
+      final AuthService service = buildService(authClient: authClient);
+
+      await service.sendEmailVerificationOtp('a@b.com');
+
+      expect(authClient.otpCallCount, 1);
+      expect(authClient.otpEmail, 'a@b.com');
+      expect(authClient.otpShouldCreateUser, isFalse);
+      expect(service.status, AuthStatus.awaitingEmailConfirmation);
+      expect(service.isSignedIn, isFalse);
+      await service.dispose();
+    });
+
+    test('sendEmailVerificationOtp only creates when explicitly requested',
+        () async {
+      final AuthService service = buildService(authClient: authClient);
+
+      await service.sendEmailVerificationOtp('a@b.com', createIfMissing: true);
+
+      expect(authClient.otpShouldCreateUser, isTrue);
+      await service.dispose();
+    });
+
+    test('verifyEmailOtp activates the session on a valid code', () async {
+      final AuthService service = buildService(authClient: authClient);
+
+      await service.verifyEmailOtp(email: 'a@b.com', code: '123456');
+
+      expect(authClient.verifyCallCount, 1);
+      expect(authClient.verifiedType, OtpType.email);
+      expect(authClient.verifiedToken, '123456');
+      expect(service.status, AuthStatus.authenticated);
+      expect(service.currentEntityId, 'u1');
+      await service.dispose();
+    });
+
+    test('verifyEmailOtp optionally assigns a password after the code',
+        () async {
+      final AuthService service = buildService(authClient: authClient);
+
+      await service.verifyEmailOtp(
+        email: 'a@b.com',
+        code: '123456',
+        newPassword: 'separate-password',
+      );
+
+      expect(authClient.updatedPassword, 'separate-password');
+      expect(service.status, AuthStatus.authenticated);
+      await service.dispose();
+    });
+
+    test('verifyEmailOtp without a password keeps the account credentials',
+        () async {
+      final AuthService service = buildService(authClient: authClient);
+
+      await service.verifyEmailOtp(email: 'a@b.com', code: '123456');
+
+      expect(authClient.updatedPassword, isNull);
+      expect(service.status, AuthStatus.authenticated);
+      await service.dispose();
+    });
+
+    test('verifyEmailOtp without a session stays awaiting confirmation',
+        () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.returnSessionOnVerify = false;
+
+      await service.verifyEmailOtp(email: 'a@b.com', code: '000000');
+
+      expect(service.status, AuthStatus.awaitingEmailConfirmation);
+      expect(service.isSignedIn, isFalse);
+      await service.dispose();
+    });
+
+    test('an invalid code surfaces a typed ApiException', () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.nextError = const AuthException(
+        'Token has expired or is invalid',
+        statusCode: '400',
+      );
+
+      expect(
+        () => service.verifyEmailOtp(email: 'a@b.com', code: 'wrong'),
+        throwsA(isA<ApiException>()),
+      );
+      expect(service.status, AuthStatus.initial);
+      await service.dispose();
+    });
+
+    test('user_already_exists surfaces a typed ApiException', () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.nextError = const AuthException(
+        'User already registered',
+        statusCode: '422',
+        code: 'user_already_exists',
+      );
+
+      late final ApiException error;
+      try {
+        await service.signUp(
+          AuthCredentials(email: 'a@b.com', password: 'password'),
+        );
+        fail('Expected ApiException');
+      } on Object catch (e) {
+        error = e as ApiException;
+      }
+
+      expect(error.code, 'user_already_exists');
+      expect(error.kind, ApiExceptionKind.conflict);
+      await service.dispose();
+    });
+
+    test('email_not_confirmed surfaces a typed ApiException', () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.nextError = const AuthException(
+        'Email not confirmed',
+        statusCode: '400',
+        code: 'email_not_confirmed',
+      );
+
+      late final ApiException error;
+      try {
+        await service.signIn(
+          AuthCredentials(email: 'a@b.com', password: 'password'),
+        );
+        fail('Expected ApiException');
+      } on Object catch (e) {
+        error = e as ApiException;
+      }
+
+      expect(error.code, 'email_not_confirmed');
+      expect(error.message, 'Your email has not been verified yet.');
+      await service.dispose();
+    });
+
+    test('invalid_otp surfaces a typed ApiException', () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.nextError = const AuthException(
+        'Invalid login credentials',
+        statusCode: '400',
+        code: 'invalid_otp',
+      );
+
+      late final ApiException error;
+      try {
+        await service.verifyEmailOtp(
+          email: 'a@b.com',
+          code: 'wrong',
+        );
+        fail('Expected ApiException');
+      } on Object catch (e) {
+        error = e as ApiException;
+      }
+
+      expect(error.code, 'invalid_otp');
+      expect(error.message, 'Invalid code. Please check and try again.');
+      await service.dispose();
+    });
+
+    test('isEmailConfirmed is true when emailConfirmedAt is set', () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.emailConfirmedInSession = true;
+
+      await service.signIn(
+        AuthCredentials(email: 'a@b.com', password: 'password'),
+      );
+
+      expect(service.currentSession?.isEmailConfirmed, isTrue);
+      await service.dispose();
+    });
+
+    test('isEmailConfirmed is false when emailConfirmedAt is absent', () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.emailConfirmedInSession = false;
+
+      await service.signIn(
+        AuthCredentials(email: 'a@b.com', password: 'password'),
+      );
+
+      expect(service.currentSession?.isEmailConfirmed, isFalse);
+      await service.dispose();
+    });
+
     test('signIn returns authenticated and exposes the entity id', () async {
       final AuthService service = buildService(authClient: authClient);
 

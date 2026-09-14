@@ -6,6 +6,7 @@ import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
+import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 
@@ -185,6 +186,64 @@ void main() {
       final guard = RouteGuard(authProvider: provider);
       expect(guard.redirectResolver('/login'), '/');
       expect(guard.redirectResolver('/signup'), '/');
+    });
+
+    test(
+        'authenticated but unverified session is confined to the verification '
+        'gate (fail-closed)', () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.authenticated)
+        ..sessionOverride = const AuthSession(
+          entityId: 'u1',
+          email: 'me@example.com',
+          isEmailConfirmed: false,
+        );
+      final guard = RouteGuard(authProvider: provider);
+
+      // The gate itself stays reachable in resume mode.
+      expect(
+        guard.redirectResolver('/auth/confirm?email=me%40example.com&mode=resume'),
+        isNull,
+      );
+      // Every other destination — home, onboarding, profile, public doors —
+      // redirects to the verification gate in resume mode.
+      for (final String path in <String>[
+        '/',
+        '/profile',
+        '/onboarding',
+        '/onboarding/profile',
+        '/login',
+        '/signup',
+        '/welcome',
+      ]) {
+        expect(
+          guard.redirectResolver(path),
+          '/auth/confirm?email=me%40example.com&mode=resume',
+          reason: '$path should confine an unverified session to the gate',
+        );
+      }
+    });
+
+    test('an unverified session without an email is left untouched', () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.authenticated)
+        ..sessionOverride = const AuthSession(
+          entityId: 'u1',
+          isEmailConfirmed: false,
+        );
+      final guard = RouteGuard(authProvider: provider);
+      expect(guard.redirectResolver('/'), isNull);
+    });
+
+    test('verified sessions are unaffected by the verification gate', () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.authenticated)
+        ..sessionOverride = const AuthSession(
+          entityId: 'u1',
+          email: 'me@example.com',
+          isEmailConfirmed: true,
+        );
+      final guard = RouteGuard(authProvider: provider);
+      expect(guard.redirectResolver('/'), isNull);
+      expect(guard.redirectResolver('/profile'), isNull);
+      expect(guard.redirectResolver('/login'), '/');
     });
 
     test('initial (pre-init) status is fail-closed to /login', () {

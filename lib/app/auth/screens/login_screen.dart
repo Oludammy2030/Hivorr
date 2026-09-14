@@ -14,7 +14,11 @@ import 'package:provider/provider.dart';
 ///
 /// Thin UI over [AuthProvider.signIn]: validates locally, calls the service
 /// once, and routes to the preserved `?next=` destination (or home — the
-/// RouteGuard then applies the onboarding resume gate) on success. Errors are
+/// RouteGuard then applies the onboarding resume gate) on success. When the
+/// identity exists but its email is not verified yet (gotrue
+/// `email_not_confirmed`, e.g. an abandoned registration), the visitor is sent
+/// to the verification gate in resume mode, which issues a fresh code and then
+/// continues to onboarding — never creating a duplicate account. Errors are
 /// surfaced as the safe [ApiException.message]. No business logic here.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -114,8 +118,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     final AuthProvider auth = context.read<AuthProvider>();
+    final String email = _email.text.trim();
     await auth.signIn(
-      AuthCredentials(email: _email.text.trim(), password: _password.text),
+      AuthCredentials(email: email, password: _password.text),
     );
     if (!mounted) {
       return;
@@ -123,6 +128,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _submitting = false);
     if (auth.isSignedIn) {
       context.go(_target(_afterSignIn()));
+      return;
+    }
+    if (auth.lastErrorCode == 'email_not_confirmed') {
+      context.go(_verificationTarget(email));
     }
   }
 
@@ -132,6 +141,21 @@ class _LoginScreenState extends State<LoginScreen> {
       return next;
     }
     return RoutePaths.home;
+  }
+
+  /// Routes an unverified identity to the verification gate in resume mode.
+  ///
+  /// The gate will issue a fresh code on entry; verifying it confirms the email
+  /// and continues to onboarding. No session exists yet, so nothing is lost by
+  /// leaving login.
+  String _verificationTarget(String email) {
+    final String encodedEmail = Uri.encodeQueryComponent(email);
+    final String? next = EntryQuery.nextFrom(GoRouterState.of(context));
+    final String nextParam = (next == null || next.isEmpty)
+        ? ''
+        : '&next=${Uri.encodeQueryComponent(next)}';
+    return '${RoutePaths.authConfirmation}?email=$encodedEmail'
+        '&mode=${RoutePaths.authVerificationResumeMode}$nextParam';
   }
 
   /// Carries the preserved `?next=` across auth routes.

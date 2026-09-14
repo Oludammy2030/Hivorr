@@ -21,8 +21,11 @@ class AuthConfig {
 
   /// Builds [AuthConfig] from the active [EnvironmentConfig].
   ///
-  /// Production is treated as confirmation-required; development and staging
-  /// may run with autoconfirm enabled (env-driven).
+  /// Email confirmation is required in every environment so the OTP
+  /// verification gate is exercised in development as well as production: the
+  /// register flow always sends a 6-digit verification code before the account
+  /// is activated (email-OTP provider). Delivery still depends on the Supabase
+  /// project enabling the `email_otp` provider for numeric codes.
   factory AuthConfig.fromEnvironment(EnvironmentConfig config) =>
-      AuthConfig(emailConfirmationRequired: config.isProduction);
+      const AuthConfig(emailConfirmationRequired: true);
 }

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:hivorr/core/platform/file_picker_web_options.dart';
 import 'package:hivorr/systems/onboarding/models/picked_avatar.dart';
 import 'package:hivorr/systems/verification/models/picked_document.dart';
 
@@ -36,8 +37,7 @@ class PlatformFilePicker {
   ///
   /// Returns `null` when the user cancels the platform dialog.
   Future<PickedDocument?> pickDocument() async {
-    final PlatformFile? file = await FilePicker.pickFile(
-      type: FileType.custom,
+    final PlatformFile? file = await _pickFile(
       allowedExtensions: documentExtensions,
     );
     final Uint8List? bytes = await _readBytes(file);
@@ -55,8 +55,7 @@ class PlatformFilePicker {
   ///
   /// Returns `null` when the user cancels the platform dialog.
   Future<PickedAvatar?> pickAvatar() async {
-    final PlatformFile? file = await FilePicker.pickFile(
-      type: FileType.custom,
+    final PlatformFile? file = await _pickFile(
       allowedExtensions: avatarExtensions,
     );
     final Uint8List? bytes = await _readBytes(file);
@@ -69,6 +68,22 @@ class PlatformFilePicker {
       mimeType: _mimeFor(file.extension),
     );
   }
+
+  /// Runs a single-file pick with the shared web options.
+  ///
+  /// `cancelUploadOnWindowBlur` is disabled on web: the default behavior
+  /// registers a `focus` listener on `window` and can silently drop a pick
+  /// that finished successfully but regained focus before the `change` event
+  /// processed — the exact "chose a file, nothing happened" failure. On
+  /// non-web platforms the option is ignored.
+  static Future<PlatformFile?> _pickFile({
+    required List<String> allowedExtensions,
+  }) =>
+      FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
+        webOptions: platformFilePickerWebOptions,
+      );
 
   /// Reads the file bytes, tolerating platform read failures (returns `null`
   /// so the caller treats it as a cancelled/metrics-neutral pick).

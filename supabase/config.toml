@@ -29,6 +29,18 @@ port = 54323
 
 [auth]
 enabled = true
+site_url = "http://127.0.0.1:3000"
+
+[auth.email]
+enable_confirmations = true
+
+[auth.email.template.confirmation]
+subject = "Confirm your email address"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Your sign-in code"
+content_path = "./supabase/templates/magic_link.html"
 
 [storage]
 enabled = true

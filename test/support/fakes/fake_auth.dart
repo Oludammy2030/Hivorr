@@ -30,6 +30,19 @@ class FakeAuthService implements AuthService {
       AuthResult(status: AuthStatus.unauthenticated);
 
   @override
+  Future<void> sendEmailVerificationOtp(
+    String email, {
+    bool createIfMissing = false,
+  }) async {}
+
+  @override
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String code,
+    String? newPassword,
+  }) async {}
+
+  @override
   Future<void> signOut() async {}
 
   @override
@@ -56,11 +69,18 @@ class FakeAuthProvider extends AuthProvider {
 
   AuthStatus _status;
 
+  /// Scripted session for route-guard tests; when set, it overrides the
+  /// provider's [currentSession] (e.g. to exercise the unverified-email gate).
+  AuthSession? sessionOverride;
+
   @override
   AuthStatus get status => _status;
 
   @override
   bool get isSignedIn => _status == AuthStatus.authenticated;
+
+  @override
+  AuthSession? get currentSession => sessionOverride;
 
   /// Drives the provider's reported status (and notifies listeners).
   void setStatus(AuthStatus status) {

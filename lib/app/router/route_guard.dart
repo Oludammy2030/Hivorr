@@ -3,6 +3,7 @@ import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/guards/auth_guard.dart';
+import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -69,6 +70,24 @@ class RouteGuard {
 
     // Authenticated users should not land on public-only auth screens.
     if (authenticated) {
+      // Email verification is a gate ahead of the main onboarding: an
+      // authenticated session with an unverified email may only occupy the
+      // verification screen. Fail-closed — it cannot reach home or onboarding.
+      final AuthSession? session = authProvider.currentSession;
+      final String? sessionEmail = session?.email;
+      final bool unverified =
+          session != null &&
+              !session.isEmailConfirmed &&
+              sessionEmail != null &&
+              sessionEmail.isNotEmpty;
+      if (unverified) {
+        // The verification gate is the only permitted destination; allow it
+        // outright (its resume mode sends the code), redirect others to it.
+        if (location.startsWith(RoutePaths.authConfirmation)) {
+          return null;
+        }
+        return _verificationGateResumeTarget(sessionEmail);
+      }
       if (guard.isPublicRoute(location)) {
         return RoutePaths.home;
       }
@@ -138,6 +157,14 @@ class RouteGuard {
     }
     return '$entryTarget?next=$location';
   }
+
+  /// The verification gate in resume mode for an unverified email — the gate
+  /// issues a fresh code on entry, so a returning user completes verification
+  /// and only then reaches the main onboarding.
+  static String _verificationGateResumeTarget(String email) =>
+      '${RoutePaths.authConfirmation}?email='
+      '${Uri.encodeQueryComponent(email)}'
+      '&mode=${RoutePaths.authVerificationResumeMode}';
 
   /// Entry gate for incomplete entities (EP-02-18 §5.5, FV-44):
   ///
