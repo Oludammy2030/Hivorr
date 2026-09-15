@@ -30,6 +30,7 @@ import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
+import 'package:hivorr/systems/portfolio/screens/professional_profile_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_evidence_form_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_filing_screen.dart';
@@ -193,10 +194,10 @@ class AppRouter {
           path: RoutePaths.publicProfileRoute,
           name: RouteNames.publicProfile,
           builder: (BuildContext context, GoRouterState state) =>
-              PlaceholderScreen(
-                title: 'Public Profile — ${state.pathParameters['slug'] ?? ''}'
-                    '/${state.pathParameters['id'] ?? ''}',
-              ),
+              ProfessionalProfileScreen(
+            profileId: state.pathParameters['id'] ?? '',
+            routeSlug: state.pathParameters['slug'],
+          ),
         ),
         GoRoute(
           path: RoutePaths.publicStoreRoute,

@@ -20,6 +20,7 @@ import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/providers/portfolio_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
@@ -28,9 +29,11 @@ import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/financial_deposit_repository.dart';
 import 'package:hivorr/data/repositories/financial_payout_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
+import 'package:hivorr/data/repositories/portfolio_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
+import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -66,6 +69,9 @@ class HivorrApp extends StatefulWidget {
     this.onboardingStore,
     this.entryStateProvider,
     this.entryStore,
+    this.portfolioRepository,
+    this.portfolioProvider,
+    this.portfolioService,
     this.platformFilePicker,
     this.environment = AppEnvironment.production,
   });
@@ -134,6 +140,16 @@ class HivorrApp extends StatefulWidget {
   /// Entry-state store backing [entryStateProvider] when both are omitted
   /// (entry architecture §5). Optional for testability.
   final EntryStateStore? entryStore;
+
+  /// Public professional profile repository (EP-02-19). Optional for
+  /// testability.
+  final PortfolioRepository? portfolioRepository;
+
+  /// Public-profile provider surfaced to the widget tree (EP-02-19).
+  final PortfolioProvider? portfolioProvider;
+
+  /// Professional-profile facade consumed by the public screen (EP-02-19).
+  final ProfessionalProfileService? portfolioService;
 
   /// Real platform file picker surfaced to feature screens. Optional for
   /// testability; falls back to a fresh instance when omitted.
@@ -231,6 +247,10 @@ class _HivorrAppState extends State<HivorrApp> {
     final OnboardingService? onboardingService = widget.onboardingService;
     final OnboardingProvider? onboardingProvider = widget.onboardingProvider;
     final OnboardingProgressStore? onboardingStore = widget.onboardingStore;
+    final PortfolioRepository? portfolioRepository = widget.portfolioRepository;
+    final PortfolioProvider? portfolioProvider = widget.portfolioProvider;
+    final ProfessionalProfileService? portfolioService =
+        widget.portfolioService;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(
@@ -296,6 +316,14 @@ class _HivorrAppState extends State<HivorrApp> {
           ChangeNotifierProvider<OnboardingProvider>.value(
             value: onboardingProvider,
           ),
+        if (portfolioRepository != null)
+          Provider<PortfolioRepository>.value(value: portfolioRepository),
+        if (portfolioProvider != null)
+          ChangeNotifierProvider<PortfolioProvider>.value(
+            value: portfolioProvider,
+          ),
+        if (portfolioService != null)
+          Provider<ProfessionalProfileService>.value(value: portfolioService),
         ChangeNotifierProvider<EntryStateProvider>.value(value: _entryState),
       ],
       child: Builder(

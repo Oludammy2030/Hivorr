@@ -13,6 +13,8 @@ import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
+import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
+import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -47,6 +49,9 @@ class BootstrapResult {
     this.onboardingStore,
     required this.entryStore,
     required this.entryStateProvider,
+    this.portfolioRepository,
+    this.portfolioProvider,
+    this.portfolioService,
   });
 
   final AppConfig appConfig;
@@ -117,6 +122,15 @@ class BootstrapResult {
 
   /// Entry-state provider surfaced to the widget tree and the router guard.
   final EntryStateProvider entryStateProvider;
+
+  /// Public professional profile repository (EP-02-19). Optional for testability.
+  final PortfolioRepository? portfolioRepository;
+
+  /// Public-profile provider surfaced to the widget tree (EP-02-19).
+  final PortfolioProvider? portfolioProvider;
+
+  /// Professional-profile facade consumed by the public screen (EP-02-19).
+  final ProfessionalProfileService? portfolioService;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -203,6 +217,13 @@ class AppBootstrap {
       store: entryStore,
     );
     await entryStateProvider.hydrate();
+    final ({
+      PortfolioRemoteDataSource dataSource,
+      PortfolioRepository repository,
+      PortfolioProvider provider,
+      ProfessionalProfileService service,
+    })
+    portfolio = registerPortfolioLayer(apiLayer: apiLayer);
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -229,6 +250,9 @@ class AppBootstrap {
       onboardingStore: onboarding.store,
       entryStore: entryStore,
       entryStateProvider: entryStateProvider,
+      portfolioRepository: portfolio.repository,
+      portfolioProvider: portfolio.provider,
+      portfolioService: portfolio.service,
     );
   }
 
