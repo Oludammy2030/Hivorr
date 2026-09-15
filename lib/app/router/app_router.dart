@@ -10,6 +10,7 @@ import 'package:hivorr/app/entry/entry_platform.dart';
 import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/entry/screens/intro_screen.dart';
 import 'package:hivorr/app/entry/screens/welcome_screen.dart';
+import 'package:hivorr/app/home/home_screen.dart';
 import 'package:hivorr/app/public/screens/about_screen.dart';
 import 'package:hivorr/app/public/screens/contact_screen.dart';
 import 'package:hivorr/app/public/screens/features_screen.dart';
@@ -86,7 +87,7 @@ class AppRouter {
           path: RoutePaths.home,
           name: RouteNames.home,
           builder: (BuildContext context, GoRouterState state) =>
-              const PlaceholderScreen(title: 'Home'),
+              const HomeScreen(),
         ),
         GoRoute(
           path: RoutePaths.welcome,
@@ -311,25 +312,12 @@ class AppRouter {
         ),
         GoRoute(
           path: RoutePaths.onboarding,
+          redirect: (BuildContext context, GoRouterState state) =>
+              RoutePaths.onboardingProfile,
+        ),
+        GoRoute(
+          path: '/onboarding/:step',
           name: RouteNames.onboarding,
-          builder: (BuildContext context, GoRouterState state) =>
-              const OnboardingShellScreen(),
-        ),
-        GoRoute(
-          path: RoutePaths.onboardingCapability,
-          name: RouteNames.onboardingCapability,
-          builder: (BuildContext context, GoRouterState state) =>
-              const OnboardingShellScreen(),
-        ),
-        GoRoute(
-          path: RoutePaths.onboardingProfile,
-          name: RouteNames.onboardingProfile,
-          builder: (BuildContext context, GoRouterState state) =>
-              const OnboardingShellScreen(),
-        ),
-        GoRoute(
-          path: RoutePaths.onboardingIndustry,
-          name: RouteNames.onboardingIndustry,
           builder: (BuildContext context, GoRouterState state) =>
               const OnboardingShellScreen(),
         ),
@@ -337,24 +325,6 @@ class AppRouter {
           path: '/onboarding/profession',
           redirect: (BuildContext context, GoRouterState state) =>
               RoutePaths.onboardingIndustry,
-        ),
-        GoRoute(
-          path: RoutePaths.onboardingIdentity,
-          name: RouteNames.onboardingIdentity,
-          builder: (BuildContext context, GoRouterState state) =>
-              const OnboardingShellScreen(),
-        ),
-        GoRoute(
-          path: RoutePaths.onboardingTradeProof,
-          name: RouteNames.onboardingTradeProof,
-          builder: (BuildContext context, GoRouterState state) =>
-              const OnboardingShellScreen(),
-        ),
-        GoRoute(
-          path: RoutePaths.onboardingComplete,
-          name: RouteNames.onboardingComplete,
-          builder: (BuildContext context, GoRouterState state) =>
-              const OnboardingShellScreen(),
         ),
       ],
     );

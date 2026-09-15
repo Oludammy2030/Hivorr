@@ -128,6 +128,44 @@ void main() {
     });
   });
 
+  group('exit and continue gates (B1)', () {
+    test('exitWizard marks exited and keeps the position (FV-37)', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      await stack.provider.advance();
+      await stack.provider.exitWizard();
+      expect(stack.provider.exited, isTrue);
+      expect(stack.provider.currentStep, OnboardingStepCode.capability);
+      expect((await stack.store.read('u1'))!.exited, isTrue);
+    });
+
+    test('continueRegistration clears the exit flag for the resume gate',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      await stack.provider.advance();
+      await stack.provider.exitWizard();
+      await stack.provider.continueRegistration();
+      expect(stack.provider.exited, isFalse);
+      expect(stack.provider.currentStep, OnboardingStepCode.capability,
+          reason: 'continue resumes at the saved step');
+      expect((await stack.store.read('u1'))!.exited, isFalse);
+    });
+
+    test('lifecycle saveAndExit never sets the exit flag', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      await stack.provider.advance();
+      await stack.provider.saveAndExit();
+      expect(stack.provider.exited, isFalse,
+          reason: 'an interrupted session resumes automatically');
+      expect((await stack.store.read('u1'))!.exited, isFalse);
+    });
+  });
+
   group('submit operations (FV-25, FV-61)', () {
     test('completeProfile success flows through and sets files/state',
         () async {

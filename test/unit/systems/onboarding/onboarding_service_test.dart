@@ -579,6 +579,46 @@ expect(persist.context['step'], 'capability');
           reason: 'prof-sw remains unverified for this aggregate');
     });
   });
+
+  group('exit and continue gates (B1)', () {
+    test('exitWizard persists the position and marks exited', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.service.resume('u1');
+      await stack.service.advance();
+      await stack.service.exitWizard();
+      expect(stack.service.progress!.exited, isTrue);
+      expect(stack.service.progress!.step, OnboardingStepCode.capability);
+      expect((await stack.store.read('u1'))!.exited, isTrue);
+    });
+
+    test('exitAndSave (lifecycle) never marks exited', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.service.resume('u1');
+      await stack.service.advance();
+      await stack.service.exitAndSave();
+      expect(stack.service.progress!.exited, isFalse);
+      expect((await stack.store.read('u1'))!.exited, isFalse);
+    });
+
+    test('continueRegistration clears the exit flag and keeps the step',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.service.resume('u1');
+      await stack.service.advance();
+      await stack.service.exitWizard();
+      await stack.service.continueRegistration();
+      expect(stack.service.progress!.exited, isFalse);
+      expect(stack.service.progress!.step, OnboardingStepCode.capability);
+      expect((await stack.store.read('u1'))!.exited, isFalse);
+    });
+
+    test('exit/continue are no-ops before hydration', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.service.exitWizard();
+      await stack.service.continueRegistration();
+      expect(stack.service.progress, isNull);
+    });
+  });
 }
 
 class _ThrowingProgressStore implements OnboardingProgressStore {

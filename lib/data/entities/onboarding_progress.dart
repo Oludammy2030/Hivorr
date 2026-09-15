@@ -32,6 +32,7 @@ class OnboardingProgress {
     this.capability = EntityCapability.both,
     this.hasIdentitySubmission = false,
     this.hasTradeProofSubmission = false,
+    this.exited = false,
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -54,6 +55,15 @@ class OnboardingProgress {
 
   /// Whether a trade proof was submitted (UX mirror only).
   final bool hasTradeProofSubmission;
+
+  /// Whether the user deliberately saved-and-exited the wizard (Save & exit,
+  /// Back on the first step, or the dialog's confirm action).
+  ///
+  /// While [exited] is `true`, the entry guard leaves the placeholder home
+  /// reachable instead of force-resuming the wizard, and the home screen offers
+  /// a "Continue registration" action that clears the flag ([withExited]).
+  /// Lifecycle-background saves never set this — only an explicit exit does.
+  final bool exited;
 
   /// Last write time (UTC epoch used as a stable default).
   final DateTime updatedAt;
@@ -114,6 +124,7 @@ class OnboardingProgress {
     capability: capability,
     hasIdentitySubmission: hasIdentitySubmission,
     hasTradeProofSubmission: hasTradeProofSubmission,
+    exited: exited,
     updatedAt: DateTime.now(),
   );
 
@@ -130,6 +141,7 @@ class OnboardingProgress {
       capability: capability,
       hasIdentitySubmission: hasIdentitySubmission,
       hasTradeProofSubmission: hasTradeProofSubmission,
+      exited: exited,
       updatedAt: DateTime.now(),
     );
   }
@@ -143,6 +155,7 @@ class OnboardingProgress {
     capability: capability,
     hasIdentitySubmission: hasIdentitySubmission,
     hasTradeProofSubmission: hasTradeProofSubmission,
+    exited: exited,
     updatedAt: DateTime.now(),
   );
 
@@ -157,6 +170,7 @@ class OnboardingProgress {
         capability: value,
         hasIdentitySubmission: hasIdentitySubmission,
         hasTradeProofSubmission: hasTradeProofSubmission,
+        exited: exited,
         updatedAt: DateTime.now(),
       );
 
@@ -168,6 +182,7 @@ class OnboardingProgress {
     capability: capability,
     hasIdentitySubmission: value,
     hasTradeProofSubmission: hasTradeProofSubmission,
+    exited: exited,
     updatedAt: DateTime.now(),
   );
 
@@ -179,6 +194,21 @@ class OnboardingProgress {
     capability: capability,
     hasIdentitySubmission: hasIdentitySubmission,
     hasTradeProofSubmission: value,
+    exited: exited,
+    updatedAt: DateTime.now(),
+  );
+
+  /// A copy with the explicit-exit flag set ([exited]). [OnboardingProgress.updatedAt]
+  /// refreshes; position, capability and verification mirrors are untouched.
+  /// [continueRegistration] flips the flag back to `false`.
+  OnboardingProgress withExited(bool value) => OnboardingProgress(
+    entityId: entityId,
+    step: step,
+    completedSteps: completedSteps,
+    capability: capability,
+    hasIdentitySubmission: hasIdentitySubmission,
+    hasTradeProofSubmission: hasTradeProofSubmission,
+    exited: value,
     updatedAt: DateTime.now(),
   );
 
@@ -190,6 +220,7 @@ class OnboardingProgress {
     capability: capability,
     hasIdentitySubmission: hasIdentitySubmission,
     hasTradeProofSubmission: hasTradeProofSubmission,
+    exited: exited,
     updatedAt: updatedAt,
   );
 }

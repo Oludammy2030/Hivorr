@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -31,22 +30,17 @@ import 'package:provider/provider.dart';
 /// industry & profession selection → identity → trade proof. Progress is
 /// stored by [OnboardingProgress] and the shell renders the tracker, the active
 /// step body (kept alive in an [IndexedStack]), and the standard CTA bar
-/// (`Back` / `Continue`/`Submit`). Step transitions update the GoRouter
-/// location (`/onboarding/{step}`) while the provider remains the source of
-/// truth. Back returns to the previous stage; the explicit AppBar `Exit`
-/// affordance (and Back on the first stage) opens [OnboardingExitConfirmDialog]
+/// (`Back` / `Continue`/`Submit`). The shell is registered once under the
+/// single `/onboarding/:step` route, so step transitions update the URL in
+/// place without recreating the shell's State (controllers and step bodies
+/// survive). The provider remains the source of truth: [go_router] URL and
+/// current step stay aligned via [_reconcileUrl]. Back returns to the previous
+/// stage — while a text field has focus, the first Back only dismisses the
+/// keyboard ([_dismissKeyboardIfOpen]); the explicit AppBar `Exit` affordance
+/// (and Back on the first stage) opens [OnboardingExitConfirmDialog]
 /// (Save & exit).
 class OnboardingShellScreen extends StatefulWidget {
   const OnboardingShellScreen({super.key});
-
-  /// Maps a step code to its route name (step URL bookmarks the resume point).
-  static String routeNameFor(OnboardingStepCode step) => switch (step) {
-        OnboardingStepCode.capability => RouteNames.onboardingCapability,
-        OnboardingStepCode.profile => RouteNames.onboardingProfile,
-        OnboardingStepCode.industry => RouteNames.onboardingIndustry,
-        OnboardingStepCode.identityDocument => RouteNames.onboardingIdentity,
-        OnboardingStepCode.tradeProof => RouteNames.onboardingTradeProof,
-      };
 
   @override
   State<OnboardingShellScreen> createState() => _OnboardingShellScreenState();
@@ -55,6 +49,7 @@ class OnboardingShellScreen extends StatefulWidget {
 class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
   final OnboardingStepController _controller = OnboardingStepController();
   bool _exitDialogOpen = false;
+  bool _reconcileScheduled = false;
 
   @override
   void dispose() {
@@ -74,6 +69,8 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     final bool showProfessionFallback =
         step == OnboardingStepCode.tradeProof &&
         context.read<TaxonomyProvider>().selectedProfession == null;
+
+    _reconcileUrl(context, provider);
 
     return PopScope(
       canPop: false,
@@ -173,10 +170,18 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
   /// Steps back to the previous stage (persisting the position), except on
   /// the first step where Back means "leave the wizard" (exit-and-save). On
   /// success the URL is restored to the previous step's route.
+  ///
+  /// Keyboard-first: while a text field holds focus, the first Back only
+  /// dismisses the keyboard — the next Back then navigates. This matches the
+  /// native Android convention (IME swallows the first system Back) for both
+  /// the in-app buttons and the system gesture.
   Future<void> _goBack(
     BuildContext context,
     OnboardingProvider provider,
   ) async {
+    if (_dismissKeyboardIfOpen()) {
+      return;
+    }
     final OnboardingStepCode? step = provider.currentStep;
     if (step == null) {
       return;
@@ -193,7 +198,56 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     if (now == step) {
       return;
     }
-    context.goNamed(OnboardingShellScreen.routeNameFor(now ?? step));
+    context.go(RoutePaths.onboardingRouteFor(now ?? step));
+  }
+
+  /// Dismisses the keyboard when an editable text field holds focus.
+  ///
+  /// Returns `true` when it dismissed a keyboard (the caller returns without
+  /// navigating); the next Back may then step back.
+  static bool _dismissKeyboardIfOpen() {
+    final FocusNode? node = FocusManager.instance.primaryFocus;
+    final BuildContext? nodeContext = node?.context;
+    if (node == null ||
+        nodeContext == null ||
+        nodeContext.findAncestorWidgetOfExactType<EditableText>() == null) {
+      return false;
+    }
+    node.unfocus();
+    return true;
+  }
+
+  /// Keeps the URL aligned with the provider step (EP-02-18 §5.7), the wizard's
+  /// source of truth. After a cold deep link — or any URL stuck on an outdated
+  /// step — the canonical step route replaces it; once aligned, this is a no-op.
+  /// Unknown/stray segments never map to a valid step: they fall through to
+  /// `go_router`'s unmatched-route handling (404) or are realigned here.
+  void _reconcileUrl(
+    BuildContext context,
+    OnboardingProvider provider,
+  ) {
+    if (provider.progress == null || _reconcileScheduled) {
+      return;
+    }
+    final String canonical = provider.isComplete
+        ? RoutePaths.onboardingComplete
+        : RoutePaths.onboardingRouteFor(
+            provider.currentStep ?? OnboardingStepCode.profile,
+          );
+    final String current = GoRouterState.of(context).uri.path;
+    if (current == canonical) {
+      return;
+    }
+    _reconcileScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _reconcileScheduled = false;
+      if (!mounted) {
+        return;
+      }
+      if (GoRouterState.of(context).uri.path != canonical) {
+        context.go(canonical);
+      }
+    });
   }
 
   int _bodyIndex(
@@ -222,7 +276,7 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     await OnboardingExitConfirmDialog.show(
       context,
       onExit: () {
-        unawaited(provider.saveAndExit());
+        unawaited(provider.exitWizard());
         context.go(RoutePaths.home);
       },
     );

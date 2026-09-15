@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:hivorr/app/router/route_names.dart';
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -343,7 +343,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       }
       // Every entity advances to capability selection after Basic Information;
       // a hire choice later finishes the wizard, professional continues.
-      context.goNamed(RouteNames.onboardingCapability);
+      context.go(RoutePaths.onboardingCapability);
     }
   }
 }

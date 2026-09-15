@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:hivorr/app/router/route_names.dart';
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -100,10 +100,10 @@ class _CapabilitySelectionScreenState extends State<CapabilitySelectionScreen> {
     if (provider.submitState == SubmitState.success) {
       // Hire-only entities finish after the capability step; professional/
       // `both` entities continue into industry selection.
-      context.goNamed(
+      context.go(
         provider.isComplete
-            ? RouteNames.onboardingComplete
-            : RouteNames.onboardingIndustry,
+            ? RoutePaths.onboardingComplete
+            : RoutePaths.onboardingIndustry,
       );
     } else {
       _advanced = false;
