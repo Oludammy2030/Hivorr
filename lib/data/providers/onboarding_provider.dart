@@ -53,6 +53,11 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// The owning entity id for progress keying.
   String? get entityId => _entityId;
 
+  /// Whether the wizard was deliberately exited (Save & exit). Drives the home
+  /// "Continue registration" affordance and suppresses the guard's resume
+  /// redirect while `true`.
+  bool get exited => _progress?.exited ?? false;
+
   /// Current submit lifecycle state (drives CTA spinners).
   SubmitState get submitState => _submitState;
 
@@ -102,6 +107,19 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Persists the current position without moving (exit protocol, FV-15).
   Future<void> saveAndExit() async {
     await _runAsSubmit(() => _service.exitAndSave());
+  }
+
+  /// Explicit wizard exit: persists the position and marks the wizard
+  /// [exited], so home offers "Continue registration" instead of the guard
+  /// force-resuming the wizard.
+  Future<void> exitWizard() async {
+    await _runAsSubmit(() => _service.exitWizard());
+  }
+
+  /// Clears the exit flag ("Continue registration" from home) so the resume
+  /// gate re-engages and the wizard resumes at its saved step.
+  Future<void> continueRegistration() async {
+    await _runAsSubmit(() => _service.continueRegistration());
   }
 
   /// Completes the profile step (avatar upload → RPC → avatar_path persist).

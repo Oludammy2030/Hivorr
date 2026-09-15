@@ -56,12 +56,14 @@ void main() {
         entityId: 'u1',
         step: OnboardingStepCode.identityDocument,
         hasIdentitySubmission: true,
+        exited: true,
       );
       await store.save(progress);
       final OnboardingProgress? restored = await store.read('u1');
       expect(restored, isNotNull);
       expect(restored!.step, OnboardingStepCode.identityDocument);
       expect(restored.hasIdentitySubmission, isTrue);
+      expect(restored.exited, isTrue);
       expect(restored.completedSteps, progress.completedSteps);
     });
 

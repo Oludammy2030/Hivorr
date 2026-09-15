@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:hivorr/app/router/route_names.dart';
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/industry.dart';
 import 'package:hivorr/data/entities/profession.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -92,7 +92,7 @@ class _IndustryProfessionSelectionScreenState
       if (!mounted) {
         return;
       }
-      context.goNamed(RouteNames.onboardingIdentity);
+      context.go(RoutePaths.onboardingIdentity);
       return;
     }
     if (provider.lastError?.code == 'PLT005') {

@@ -207,6 +207,43 @@ void main() {
       expect(rebound.entityId, 'u2');
       expect(rebound.step, OnboardingStepCode.industry);
     });
+
+    test('withExited toggles the exit flag and preserves the position', () {
+      final OnboardingProgress progress = OnboardingProgress(
+        entityId: 'u1',
+        step: OnboardingStepCode.industry,
+        completedSteps: <OnboardingStepCode>[
+          OnboardingStepCode.profile,
+          OnboardingStepCode.capability,
+        ],
+      );
+      expect(progress.exited, isFalse);
+      final OnboardingProgress exited = progress.withExited(true);
+      expect(exited.exited, isTrue);
+      expect(exited.step, OnboardingStepCode.industry);
+      expect(exited.completedSteps, progress.completedSteps);
+      final OnboardingProgress resumed = exited.withExited(false);
+      expect(resumed.exited, isFalse);
+      expect(resumed.step, OnboardingStepCode.industry);
+    });
+
+    test('the exit flag survives advanceTo, stepBack, finish and forEntity',
+        () {
+      final OnboardingProgress exited = OnboardingProgress(
+        entityId: 'u1',
+        step: OnboardingStepCode.industry,
+      ).withExited(true);
+      expect(exited.advanceTo(OnboardingStepCode.identityDocument).exited,
+          isTrue);
+      expect(exited.finish().exited, isTrue);
+      expect(exited.forEntity('u2').exited, isTrue);
+      expect(exited.stepBack().exited, isTrue);
+      expect(
+        exited.withIdentitySubmission(true).withTradeProofSubmission(true)
+            .exited,
+        isTrue,
+      );
+    });
   });
 
   group('Serialization parity (DV-16, TT-05)', () {
@@ -225,6 +262,7 @@ void main() {
         capability: EntityCapability.offer,
         hasIdentitySubmission: true,
         hasTradeProofSubmission: true,
+        exited: true,
       );
       await stack.store.save(progress);
       final OnboardingProgress? restored =
@@ -236,6 +274,7 @@ void main() {
       expect(restored.capability, EntityCapability.offer);
       expect(restored.hasIdentitySubmission, isTrue);
       expect(restored.hasTradeProofSubmission, isTrue);
+      expect(restored.exited, isTrue);
     });
 
     test('legacy rows without capability default to both (safe superset)',
@@ -258,6 +297,8 @@ void main() {
       final OnboardingProgress? restored = await hive.read('u1');
       expect(restored, isNotNull);
       expect(restored!.capability, EntityCapability.both);
+      expect(restored.exited, isFalse,
+          reason: 'legacy rows default to not-exited');
     });
   });
 }

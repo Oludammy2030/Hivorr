@@ -168,7 +168,10 @@ class RouteGuard {
 
   /// Entry gate for incomplete entities (EP-02-18 §5.5, FV-44):
   ///
-  /// * placeholder home + hydrated incomplete wizard → the resume step;
+  /// * placeholder home + hydrated incomplete wizard → the resume step — unless
+  ///   the wizard was deliberately exited ([OnboardingProvider.exited]), in
+  ///   which case home stays reachable so its "Continue registration" action
+  ///   can drive the return (clearing the flag re-engages this redirect);
   /// * any onboarding route + completed wizard → home.
   ///
   /// `null` when the provider is absent or not hydrated yet (no redirect beats
@@ -183,7 +186,9 @@ class RouteGuard {
     if (step == null) {
       return null;
     }
-    if (location == RoutePaths.home && !onboarding.isComplete) {
+    if (location == RoutePaths.home &&
+        !onboarding.isComplete &&
+        !onboarding.exited) {
       return RoutePaths.onboardingRouteFor(step);
     }
     if (location.startsWith(RoutePaths.onboarding) && onboarding.isComplete) {

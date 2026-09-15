@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
@@ -15,16 +16,26 @@ void main() {
     WidgetTester tester, {
     OnboardingTestStack? stack,
     int advances = 0,
+    String? path,
   }) async {
     final OnboardingTestStack s = stack ?? buildOnboardingStack();
     await s.hydrate('u1');
     for (int i = 0; i < advances; i++) {
       await s.provider.advance();
     }
+    // The single `/onboarding/:step` route means the URL stays aligned with the
+    // provider step; pump at the canonical location unless a test explicitly
+    // injects a stale path to exercise the reconcile.
+    final String canonical = path ??
+        (s.provider.isComplete
+            ? RoutePaths.onboardingComplete
+            : RoutePaths.onboardingRouteFor(
+                s.provider.currentStep ?? OnboardingStepCode.profile,
+              ));
     await pumpOnboardingScreen(
       tester,
       const OnboardingShellScreen(),
-      path: '/onboarding/profile',
+      path: canonical,
       providers: s.buildProviders(),
     );
     await tester.pump();
@@ -71,7 +82,7 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('Save & exit persists progress and routes home',
+    testWidgets('Save & exit persists progress, marks exited, and routes home',
         (WidgetTester tester) async {
       final OnboardingTestStack stack = await pumpShell(tester, advances: 2);
       expect(stack.provider.progress!.step, OnboardingStepCode.industry);
@@ -82,6 +93,8 @@ void main() {
       expect(find.text('HOME'), findsOneWidget);
       expect(stack.provider.progress!.step, OnboardingStepCode.industry,
           reason: 'exit saves the current position without moving');
+      expect(stack.provider.exited, isTrue,
+          reason: 'an explicit exit must not be force-resumed by the guard');
       stack.provider.dispose();
     });
 
@@ -149,6 +162,50 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Registration'), findsOneWidget);
       s.provider.dispose();
+    });
+
+    testWidgets(
+        'system Back with the keyboard open only dismisses the keyboard',
+        (WidgetTester tester) async {
+      final OnboardingTestStack stack = await pumpShell(tester);
+      await tester.enterText(find.byType(TextField).first, 'Ada');
+      expect(
+        FocusManager.instance.primaryFocus?.context
+            ?.findAncestorWidgetOfExactType<EditableText>(),
+        isNotNull,
+        reason: 'a text field holds focus so the IME is open',
+      );
+      final bool first = await tester.binding.handlePopRoute();
+      expect(first, isTrue);
+      await tester.pumpAndSettle();
+      expect(find.text('Registration'), findsOneWidget,
+          reason: 'first back dismisses the keyboard, it must not navigate');
+      expect(find.text('Save my progress and exit?'), findsNothing);
+      expect(
+        FocusManager.instance.primaryFocus?.context
+            ?.findAncestorWidgetOfExactType<EditableText>(),
+        isNull,
+        reason: 'keyboard focus was released',
+      );
+
+      final bool second = await tester.binding.handlePopRoute();
+      expect(second, isTrue);
+      await tester.pumpAndSettle();
+      expect(find.text('Save my progress and exit?'), findsOneWidget,
+          reason: 'the next back proceeds to the exit flow');
+      stack.provider.dispose();
+    });
+
+    testWidgets('a stale /onboarding URL is re-aligned to the provider step',
+        (WidgetTester tester) async {
+      // Simulates a cold/deep link that bookmarks an outdated step while the
+      // saved wizard sits further along.
+      final OnboardingTestStack stack =
+          await pumpShell(tester, advances: 2, path: '/onboarding/profile');
+      await tester.pumpAndSettle();
+      expect(find.text('ONBOARDING-INDUSTRY'), findsOneWidget,
+          reason: 'the shell realigns the URL to the resumed step');
+      stack.provider.dispose();
     });
   });
 }

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/core/storage/storage_config.dart';
@@ -203,7 +202,7 @@ class _IdentityVerificationStepScreenState
       setState(() => _submitted = true);
       await provider.advance();
       if (context.mounted) {
-        context.goNamed(RouteNames.onboardingTradeProof);
+        context.go(RoutePaths.onboardingTradeProof);
       }
     }
   }
@@ -214,7 +213,7 @@ class _IdentityVerificationStepScreenState
     if (!mounted) {
       return;
     }
-    context.goNamed(RouteNames.onboardingTradeProof);
+    context.go(RoutePaths.onboardingTradeProof);
   }
 
   void _viewStatus() {

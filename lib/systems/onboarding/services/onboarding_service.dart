@@ -172,13 +172,42 @@ class OnboardingService {
     await _persist(updated, 'onboarding.step.back');
   }
 
-  /// Persists the current position without changing it (exit protocol).
+  /// Persists the current position without changing it (lifecycle save).
+  ///
+  /// Used on app background/termination (FV-15). Deliberately does **not** set
+  /// the [OnboardingProgress.exited] flag — an interrupted session resumes
+  /// automatically, while only an explicit exit does.
   Future<void> exitAndSave() async {
     final OnboardingProgress? p = _progress;
     if (p == null) {
       return;
     }
     await _persist(p, 'onboarding.exit');
+  }
+
+  /// Explicit wizard exit (Save & exit, FV-37): persists the position and marks
+  /// [OnboardingProgress.exited] so the guard stops force-resuming the wizard
+  /// and the home screen offers "Continue registration".
+  Future<void> exitWizard() async {
+    final OnboardingProgress? p = _progress;
+    if (p == null) {
+      return;
+    }
+    final OnboardingProgress exited = p.withExited(true);
+    _progress = exited;
+    await _persist(exited, 'onboarding.exit.wizard');
+  }
+
+  /// Clears the exit flag so the resume gate re-engages ("Continue registration"
+  /// from home). Position is untouched — the wizard resumes at [currentStep].
+  Future<void> continueRegistration() async {
+    final OnboardingProgress? p = _progress;
+    if (p == null) {
+      return;
+    }
+    final OnboardingProgress resumed = p.withExited(false);
+    _progress = resumed;
+    await _persist(resumed, 'onboarding.resume');
   }
 
   /// Completes the profile step: avatar upload → profile RPC → avatar_path

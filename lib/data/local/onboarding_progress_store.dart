@@ -127,6 +127,7 @@ Map<String, dynamic> _progressToJson(OnboardingProgress progress) {
     'capability': progress.capability.name,
     'hasIdentitySubmission': progress.hasIdentitySubmission,
     'hasTradeProofSubmission': progress.hasTradeProofSubmission,
+    'exited': progress.exited,
     'updatedAt': progress.updatedAt.millisecondsSinceEpoch,
   };
 }
@@ -156,6 +157,7 @@ OnboardingProgress _progressFromJson(Map<String, dynamic> json) {
     hasIdentitySubmission: json['hasIdentitySubmission'] as bool? ?? false,
     hasTradeProofSubmission:
         json['hasTradeProofSubmission'] as bool? ?? false,
+    exited: json['exited'] as bool? ?? false,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(epoch),
   );
 }

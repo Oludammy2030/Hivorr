@@ -10,6 +10,7 @@ import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 
+import '../../support/onboarding/onboarding_test_support.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -339,6 +340,92 @@ void main() {
         guard.redirectResolver('/onboarding'),
         '/login?next=/onboarding',
       );
+    });
+  });
+
+  group('RouteGuard (exit-and-resume gate)', () {
+    setUpAll(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+    });
+
+    test('an exited incomplete wizard keeps home reachable (no force-resume)',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      await stack.provider.advance();
+      await stack.provider.exitWizard();
+      expect(stack.provider.exited, isTrue);
+      final RouteGuard guard = RouteGuard(
+        authProvider:
+            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      expect(guard.redirectResolver(RoutePaths.home), isNull);
+      expect(
+        guard.redirectResolver(RoutePaths.onboardingCapability),
+        isNull,
+        reason: 'onboarding routes stay reachable while the wizard resumes',
+      );
+      stack.provider.dispose();
+    });
+
+    test('home is force-resumed once the exit flag is cleared', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      await stack.provider.advance();
+      await stack.provider.continueRegistration();
+      expect(stack.provider.exited, isFalse);
+      final RouteGuard guard = RouteGuard(
+        authProvider:
+            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      expect(
+        guard.redirectResolver(RoutePaths.home),
+        RoutePaths.onboardingCapability,
+        reason: 'resume re-engages after Continue registration',
+      );
+      stack.provider.dispose();
+    });
+
+    test('lifecycle saveAndExit never suppresses the resume redirect',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      await stack.provider.advance();
+      await stack.provider.saveAndExit();
+      expect(stack.provider.exited, isFalse);
+      final RouteGuard guard = RouteGuard(
+        authProvider:
+            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      expect(
+        guard.redirectResolver(RoutePaths.home),
+        RoutePaths.onboardingCapability,
+      );
+      stack.provider.dispose();
+    });
+
+    test('a completed exited wizard reads as complete; home stays all-clear',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      for (int i = 0; i < 5; i++) {
+        await stack.provider.advance();
+      }
+      expect(stack.provider.isComplete, isTrue);
+      final RouteGuard guard = RouteGuard(
+        authProvider:
+            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      expect(guard.redirectResolver(RoutePaths.home), isNull);
+      expect(
+        guard.redirectResolver(RoutePaths.onboarding),
+        RoutePaths.home,
+      );
+      stack.provider.dispose();
     });
   });
 }
