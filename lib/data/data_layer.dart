@@ -6,6 +6,7 @@ import 'package:hivorr/core/storage/storage_service.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
@@ -14,11 +15,13 @@ import 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote
 import 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
 import 'package:hivorr/data/local/payout_account_local_store.dart';
+import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
@@ -27,10 +30,13 @@ import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
+import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
+import 'package:hivorr/data/repositories/admin_review_repository.dart';
+import 'package:hivorr/data/repositories/admin_review_repository_impl.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
 import 'package:hivorr/data/repositories/conversion_repository_impl.dart';
 import 'package:hivorr/data/repositories/dispute_repository.dart';
@@ -46,6 +52,8 @@ import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository_impl.dart';
 import 'package:hivorr/data/repositories/kyc_repository.dart';
 import 'package:hivorr/data/repositories/kyc_repository_impl.dart';
+import 'package:hivorr/data/repositories/manage_user_repository.dart';
+import 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
 import 'package:hivorr/data/repositories/trade_verification_repository.dart';
@@ -78,8 +86,10 @@ export 'package:hivorr/data/datasources/remote/financial_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/financial_payout_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/manage_user_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
@@ -88,6 +98,7 @@ export 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote
 export 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_portfolio_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
@@ -164,6 +175,7 @@ export 'package:hivorr/data/models/financial_profile_dto.dart';
 export 'package:hivorr/data/models/financial_status_dto.dart';
 export 'package:hivorr/data/models/industry_dto.dart';
 export 'package:hivorr/data/models/kyc_level_dto.dart';
+export 'package:hivorr/data/models/manage_user_dto.dart';
 export 'package:hivorr/data/models/payout_bind_dto.dart';
 export 'package:hivorr/data/models/portfolio_item_dto.dart';
 export 'package:hivorr/data/models/profession_dto.dart';
@@ -174,6 +186,7 @@ export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
 export 'package:hivorr/data/models/withdrawal_dto.dart';
+export 'package:hivorr/data/providers/admin_review_provider.dart';
 export 'package:hivorr/data/providers/conversion_provider.dart';
 export 'package:hivorr/data/providers/dispute_provider.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
@@ -182,12 +195,15 @@ export 'package:hivorr/data/providers/financial_deposit_provider.dart';
 export 'package:hivorr/data/providers/financial_payout_provider.dart';
 export 'package:hivorr/data/providers/financial_provider.dart';
 export 'package:hivorr/data/providers/kyc_provider.dart';
+export 'package:hivorr/data/providers/manage_user_provider.dart';
 export 'package:hivorr/data/providers/onboarding_provider.dart';
 export 'package:hivorr/data/providers/portfolio_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
 export 'package:hivorr/data/providers/taxonomy_provider.dart';
 export 'package:hivorr/data/providers/trade_verification_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
+export 'package:hivorr/data/repositories/admin_review_repository.dart';
+export 'package:hivorr/data/repositories/admin_review_repository_impl.dart';
 export 'package:hivorr/data/repositories/conversion_repository.dart';
 export 'package:hivorr/data/repositories/conversion_repository_impl.dart';
 export 'package:hivorr/data/repositories/dispute_repository.dart';
@@ -204,6 +220,8 @@ export 'package:hivorr/data/repositories/financial_repository.dart';
 export 'package:hivorr/data/repositories/financial_repository_impl.dart';
 export 'package:hivorr/data/repositories/kyc_repository.dart';
 export 'package:hivorr/data/repositories/kyc_repository_impl.dart';
+export 'package:hivorr/data/repositories/manage_user_repository.dart';
+export 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
 export 'package:hivorr/data/repositories/portfolio_repository.dart';
 export 'package:hivorr/data/repositories/portfolio_repository_impl.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository.dart';
@@ -319,6 +337,51 @@ registerTradeVerificationLayer(ApiLayer apiLayer) {
   return (
     repository: repository,
     provider: TradeVerificationProvider(repo: repository),
+  );
+}
+
+/// Wires the admin-review data slice for EP-02-11.
+///
+/// Builds the [AdminReviewRepository] over the [ApiLayer] and returns a ready
+/// [AdminReviewProvider]. Exposed for the bootstrap to register in the widget
+/// tree's MultiProvider (mirrors `registerTradeVerificationLayer`).
+///
+/// Admin authorization is enforced server-side by `is_platform_admin()`; the
+/// provider caches the admin flag for the current session only.
+({AdminReviewRepository repository, AdminReviewProvider provider})
+registerAdminReviewLayer(ApiLayer apiLayer) {
+  final remote = SupabaseAdminReviewRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = AdminReviewRepositoryImpl(remote: remote);
+  return (
+    repository: repository,
+    provider: AdminReviewProvider(repo: repository),
+  );
+}
+
+/// Wires the Manage User (admin console) data slice for EP-02-11.
+///
+/// Builds the [ManageUserRepository] over the [ApiLayer] and returns a ready
+/// [ManageUserProvider]. Exposed for the bootstrap to register in the widget
+/// tree's MultiProvider (mirrors `registerAdminReviewLayer`).
+///
+/// Admin authorization is enforced server-side by `is_platform_admin()`; the
+/// router guard and screens gate the `/admin/users` routes with the shared
+/// [AdminGate] over the admin-review provider.
+({ManageUserRepository repository, ManageUserProvider provider})
+registerManageUserLayer(ApiLayer apiLayer) {
+  final remote = SupabaseManageUserRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = ManageUserRepositoryImpl(remote: remote);
+  return (
+    repository: repository,
+    provider: ManageUserProvider(repo: repository),
   );
 }
 

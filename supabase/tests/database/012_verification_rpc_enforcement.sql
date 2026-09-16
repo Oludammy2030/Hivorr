@@ -216,9 +216,12 @@ select is(
   'PLT000', 'status envelope code is PLT000');
 
 -- ─── 6. Posture ─────────────────────────────────────────────────────────────────
+-- EP-02-11 (migration 20260916090001) added verification_review_queue_get,
+-- verification_review_start, verification_review_audit_get and the D5 guard
+-- trigger function verification_submissions_guard_review_state.
 select is(
   (select count(*)::int from pg_proc where proname like 'verification_%'),
-  6, 'exactly 6 verification_* functions exist');
+  10, 'exactly 10 verification_* functions exist');
 select is(
   (select count(*)::int from pg_proc where proname like 'verification_%' and prosecdef),
   0, 'no verification_* function is SECURITY DEFINER');

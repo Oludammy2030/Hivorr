@@ -77,7 +77,7 @@ select is(
   (select display_name from public.entity_profiles where entity_id = '11111111-1111-1111-1111-111111111111'),
   'Display A', 'user B update did not alter A profile');
 
--- ─── D. Verification-column write denial (column-level grants) ──────────────
+-- ─── D. Verification-column write denial (D5 guard triggers) ─────────────────
 set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -86,10 +86,12 @@ insert into public.entity_professions (profession_id) values ('bbbbbbbb-0000-000
 
 select throws_ok(
   'update public.entity_professions set trade_verification_status = ''approved'' where entity_id = ''11111111-1111-1111-1111-111111111111''',
-  '42501', null, 'client cannot write trade_verification_status (column-level grant)');
+  'P0001', 'PLT002: Trade verification state may only be changed through the verification review RPCs.',
+  'client cannot write trade_verification_status (D5 guard)');
 select throws_ok(
   'update public.entity_professions set verified_by = ''22222222-2222-2222-2222-222222222222'' where entity_id = ''11111111-1111-1111-1111-111111111111''',
-  '42501', null, 'client cannot write verified_by (column-level grant)');
+  'P0001', 'PLT002: Trade verification state may only be changed through the verification review RPCs.',
+  'client cannot write verified_by (D5 guard)');
 
 -- ─── E. Credential immutability (no UPDATE grant to owner) ──────────────────
 insert into public.entity_credentials (kind, title)

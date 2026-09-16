@@ -23,7 +23,10 @@ import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
+import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
@@ -35,6 +38,7 @@ import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_evidence_form_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_filing_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_list_screen.dart';
+import 'package:hivorr/systems/verification/screens/admin_review_detail_screen.dart';
 import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
 import 'package:hivorr/systems/verification/screens/identity_document_upload_screen.dart';
 import 'package:hivorr/systems/verification/screens/kyc_status_screen.dart';
@@ -62,12 +66,14 @@ class AppRouter {
   static GoRouter create({
     required AuthProvider authProvider,
     OnboardingProvider? onboardingProvider,
+    AdminReviewProvider? adminReviewProvider,
     EntryStateProvider? entryStateProvider,
     AppEnvironment environment = AppEnvironment.production,
   }) {
     final RouteGuard routeGuard = RouteGuard(
       authProvider: authProvider,
       onboardingProvider: onboardingProvider,
+      adminReviewProvider: adminReviewProvider,
       entryStateProvider: entryStateProvider,
       environment: environment,
     );
@@ -79,6 +85,7 @@ class AppRouter {
       refreshListenable: Listenable.merge(<Listenable>[
         authProvider,
         ?onboardingProvider,
+        ?adminReviewProvider,
         ?entryStateProvider,
       ]),
       redirect: (BuildContext context, GoRouterState state) =>
@@ -236,6 +243,28 @@ class AppRouter {
           name: RouteNames.adminReviewQueue,
           builder: (BuildContext context, GoRouterState state) =>
               const AdminReviewQueueScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.adminReviewDetail,
+          name: RouteNames.adminReviewDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              AdminReviewDetailScreen(
+            submissionId: state.pathParameters['submissionId'] ?? '',
+          ),
+        ),
+        GoRoute(
+          path: RoutePaths.adminManageUsers,
+          name: RouteNames.adminManageUsers,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ManageUserScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.adminManageUserDetail,
+          name: RouteNames.adminManageUserDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              ManageUserDetailScreen(
+            userId: state.pathParameters['userId'] ?? '',
+          ),
         ),
         GoRoute(
           path: RoutePaths.kycStatus,

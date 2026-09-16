@@ -13,22 +13,26 @@ import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
+import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
+import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
+import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
 import 'package:hivorr/data/repositories/dispute_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/financial_deposit_repository.dart';
 import 'package:hivorr/data/repositories/financial_payout_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
+import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/portfolio_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
@@ -72,6 +76,10 @@ class HivorrApp extends StatefulWidget {
     this.portfolioRepository,
     this.portfolioProvider,
     this.portfolioService,
+    this.adminReviewRepository,
+    this.adminReviewProvider,
+    this.manageUserRepository,
+    this.manageUserProvider,
     this.platformFilePicker,
     this.environment = AppEnvironment.production,
   });
@@ -151,6 +159,18 @@ class HivorrApp extends StatefulWidget {
   /// Professional-profile facade consumed by the public screen (EP-02-19).
   final ProfessionalProfileService? portfolioService;
 
+  /// Admin review repository (EP-02-11). Optional for testability.
+  final AdminReviewRepository? adminReviewRepository;
+
+  /// Admin review provider surfaced to the widget tree (EP-02-11).
+  final AdminReviewProvider? adminReviewProvider;
+
+  /// Manage User repository (EP-02-11). Optional for testability.
+  final ManageUserRepository? manageUserRepository;
+
+  /// Manage User provider surfaced to the widget tree (EP-02-11).
+  final ManageUserProvider? manageUserProvider;
+
   /// Real platform file picker surfaced to feature screens. Optional for
   /// testability; falls back to a fresh instance when omitted.
   final PlatformFilePicker? platformFilePicker;
@@ -188,6 +208,7 @@ class _HivorrAppState extends State<HivorrApp> {
     _router = AppRouter.create(
       authProvider: widget.authProvider,
       onboardingProvider: widget.onboardingProvider,
+      adminReviewProvider: widget.adminReviewProvider,
       entryStateProvider: _entryState,
       environment: widget.environment,
     );
@@ -324,6 +345,20 @@ class _HivorrAppState extends State<HivorrApp> {
           ),
         if (portfolioService != null)
           Provider<ProfessionalProfileService>.value(value: portfolioService),
+        if (widget.adminReviewRepository != null)
+          Provider<AdminReviewRepository>.value(
+              value: widget.adminReviewRepository!),
+        if (widget.adminReviewProvider != null)
+          ChangeNotifierProvider<AdminReviewProvider>.value(
+            value: widget.adminReviewProvider!,
+          ),
+        if (widget.manageUserRepository != null)
+          Provider<ManageUserRepository>.value(
+              value: widget.manageUserRepository!),
+        if (widget.manageUserProvider != null)
+          ChangeNotifierProvider<ManageUserProvider>.value(
+            value: widget.manageUserProvider!,
+          ),
         ChangeNotifierProvider<EntryStateProvider>.value(value: _entryState),
       ],
       child: Builder(

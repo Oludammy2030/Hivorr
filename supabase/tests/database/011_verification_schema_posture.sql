@@ -44,29 +44,33 @@ select is(
   'anon has zero table grants on the five new tables'
 );
 
--- ─── verification_submissions privileged columns excluded from client WRITE ────
+-- ─── verification_submissions privileged columns guarded for clients ──────────
+-- Migration 20260916090001 granted UPDATE to authenticated so the admin review
+-- RPCs (SECURITY INVOKER) can transition state; the D5 guard trigger is the
+-- enforcement that blocks direct client writes to these privileged columns.
 select is(
   (select count(*)::int
-     from information_schema.role_column_grants
-    where table_schema = 'public'
-      and table_name = 'verification_submissions'
-      and grantee = 'authenticated'
-      and privilege_type in ('INSERT', 'UPDATE')
-      and column_name in ('status','reviewed_at','reviewed_by')),
-  0,
-  'verification_submissions.status/reviewed_at/reviewed_by not writable by authenticated'
+     from pg_trigger t
+     join pg_class c on c.oid = t.tgrelid
+     join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'verification_submissions'
+      and t.tgname = 'verification_submissions_guard_review_state_update'),
+  1,
+  'verification_submissions D5 guard present on status/reviewed_at/reviewed_by'
 );
 
--- ─── entity_kyc_levels not writable by authenticated ──────────────────────────
+-- ─── entity_kyc_levels guarded for clients ────────────────────────────────────
 select is(
   (select count(*)::int
-     from information_schema.role_column_grants
-    where table_schema = 'public'
-      and table_name = 'entity_kyc_levels'
-      and grantee = 'authenticated'
-      and privilege_type in ('INSERT', 'UPDATE')),
-  0,
-  'entity_kyc_levels not INSERT/UPDATE writable by authenticated'
+     from pg_trigger t
+     join pg_class c on c.oid = t.tgrelid
+     join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'entity_kyc_levels'
+      and t.tgname like 'entity_kyc_levels_guard_state_%'),
+  2,
+  'entity_kyc_levels D5 guards present (INSERT + UPDATE)'
 );
 
 -- ─── verification_reviews immutable: no UPDATE/DELETE to any client role ────────
