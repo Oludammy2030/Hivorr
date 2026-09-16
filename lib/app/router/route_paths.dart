@@ -50,6 +50,15 @@ abstract final class RoutePaths {
   /// Admin review queue (EP-02-11, simplified internal screen).
   static const String adminReviewQueue = '/admin/review-queue';
 
+  /// Admin review detail (EP-02-11, document viewer + audit trail).
+  static const String adminReviewDetail = '/admin/review-queue/:submissionId';
+
+  /// Manage User directory (EP-02-11 admin console).
+  static const String adminManageUsers = '/admin/users';
+
+  /// Manage User detail (EP-02-11 admin console, single-user posture).
+  static const String adminManageUserDetail = '/admin/users/:userId';
+
   /// KYC status + upgrade screens (EP-02-12).
   static const String kycStatus = '/verification/kyc';
   static const String kycUpgrade = '/verification/kyc/upgrade';

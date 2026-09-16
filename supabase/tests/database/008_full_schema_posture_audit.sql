@@ -61,19 +61,20 @@ select is(
   'anon has zero table grants on the seven private entity tables'
 );
 
--- ─── Verification columns excluded from client WRITE grants ─────────────────
--- Table-level SELECT grants surface in role_column_grants for every column, so
--- we scope to INSERT/UPDATE privileges only (the privileged-state protection).
+-- ─── Verification-column write protection on entity_professions ─────────────
+-- Authenticated holds UPDATE grants on the guarded columns so the admin review
+-- RPCs (SECURITY INVOKER) can write them; direct client writes are blocked by
+-- the D5 guard trigger, not by ACL absence. Assert the guard is present.
 select is(
   (select count(*)::int
-     from information_schema.role_column_grants
-    where table_schema = 'public'
-      and table_name = 'entity_professions'
-      and grantee = 'authenticated'
-      and privilege_type in ('INSERT', 'UPDATE')
-      and column_name in ('trade_verification_status','verified_at','verified_by')),
-  0,
-  'verification columns not writable by authenticated on entity_professions'
+     from pg_trigger t
+     join pg_class c on c.oid = t.tgrelid
+     join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'entity_professions'
+      and t.tgname = 'entity_professions_guard_verification_state_update'),
+  1,
+  'D5 guard trigger present on entity_professions verification columns'
 );
 
 -- entity_credentials review columns excluded from client WRITE grants

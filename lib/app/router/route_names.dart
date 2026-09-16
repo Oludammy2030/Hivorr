@@ -38,6 +38,11 @@ abstract final class RouteNames {
   static const String tradeProofUpload = 'trade-proof-upload';
   static const String tradeVerificationStatus = 'trade-verification-status';
   static const String adminReviewQueue = 'admin-review-queue';
+  static const String adminReviewDetail = 'admin-review-detail';
+
+  /// Manage User routes (EP-02-11 admin console).
+  static const String adminManageUsers = 'admin-manage-users';
+  static const String adminManageUserDetail = 'admin-manage-user-detail';
 
   /// Financial profile routes (EP-02-13).
   static const String finance = 'finance';

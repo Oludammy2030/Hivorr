@@ -52,6 +52,10 @@ class BootstrapResult {
     this.portfolioRepository,
     this.portfolioProvider,
     this.portfolioService,
+    this.adminReviewRepository,
+    this.adminReviewProvider,
+    this.manageUserRepository,
+    this.manageUserProvider,
   });
 
   final AppConfig appConfig;
@@ -131,6 +135,19 @@ class BootstrapResult {
 
   /// Professional-profile facade consumed by the public screen (EP-02-19).
   final ProfessionalProfileService? portfolioService;
+
+  /// Admin review repository (EP-02-11). Optional for testability.
+  final AdminReviewRepository? adminReviewRepository;
+
+  /// Admin review provider surfaced to the widget tree and router guard
+  /// (EP-02-11).
+  final AdminReviewProvider? adminReviewProvider;
+
+  /// Manage User repository (EP-02-11). Optional for testability.
+  final ManageUserRepository? manageUserRepository;
+
+  /// Manage User provider surfaced to the widget tree (EP-02-11).
+  final ManageUserProvider? manageUserProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -224,6 +241,10 @@ class AppBootstrap {
       ProfessionalProfileService service,
     })
     portfolio = registerPortfolioLayer(apiLayer: apiLayer);
+    final ({AdminReviewRepository repository, AdminReviewProvider provider})
+    adminReview = registerAdminReviewLayer(apiLayer);
+    final ({ManageUserRepository repository, ManageUserProvider provider})
+    manageUser = registerManageUserLayer(apiLayer);
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -253,6 +274,10 @@ class AppBootstrap {
       portfolioRepository: portfolio.repository,
       portfolioProvider: portfolio.provider,
       portfolioService: portfolio.service,
+      adminReviewRepository: adminReview.repository,
+      adminReviewProvider: adminReview.provider,
+      manageUserRepository: manageUser.repository,
+      manageUserProvider: manageUser.provider,
     );
   }
 

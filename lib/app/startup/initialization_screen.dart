@@ -108,6 +108,8 @@ class _InitializationScreenState extends State<InitializationScreen> {
           portfolioRepository: _result!.portfolioRepository,
           portfolioProvider: _result!.portfolioProvider,
           portfolioService: _result!.portfolioService,
+          adminReviewRepository: _result!.adminReviewRepository,
+          adminReviewProvider: _result!.adminReviewProvider,
           entryStateProvider: _result!.entryStateProvider,
           environment: _result!.appConfig.environment,
         ),

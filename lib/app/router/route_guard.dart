@@ -2,10 +2,12 @@ import 'package:hivorr/app/entry/entry_platform.dart';
 import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
+import 'package:hivorr/config/permissions/admin_gate.dart';
 import 'package:hivorr/core/authentication/guards/auth_guard.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
+import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 
 /// Adapts the EP-01-09 [AuthGuard] to the GoRouter redirect flow.
@@ -29,6 +31,7 @@ class RouteGuard {
   RouteGuard({
     required this.authProvider,
     this.onboardingProvider,
+    this.adminReviewProvider,
     this.entryStateProvider,
     this.environment = AppEnvironment.production,
     Uri? baseUri,
@@ -42,6 +45,11 @@ class RouteGuard {
 
   final AuthProvider authProvider;
   final OnboardingProvider? onboardingProvider;
+
+  /// The admin review provider used to gate the `/admin/*` routes
+  /// (EP-02-11). Optional for testability; when absent, admin routes
+  /// fail-closed (redirect to home).
+  final AdminReviewProvider? adminReviewProvider;
 
   /// Device-local entry state (first-launch flag, pending redirect). Optional
   /// for testability; drives the `/` entry decision for native builds.
@@ -91,6 +99,13 @@ class RouteGuard {
       if (guard.isPublicRoute(location)) {
         return RoutePaths.home;
       }
+
+      // Admin gate: block /admin/* routes for non-admin users (EP-02-11).
+      if (location.startsWith('/admin/') &&
+          !AdminGate.isAdmin(adminReviewProvider)) {
+        return RoutePaths.home;
+      }
+
       final String? onboardingRedirect =
           _onboardingResumeRedirect(location);
       if (onboardingRedirect != null) {

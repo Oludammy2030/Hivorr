@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
-import 'package:hivorr/data/entities/trade_verification_status.dart';
-import 'package:hivorr/data/entities/verification_status.dart';
-import 'package:hivorr/data/providers/trade_verification_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hivorr/app/router/route_names.dart';
+import 'package:hivorr/config/permissions/admin_gate.dart';
+import 'package:hivorr/data/providers/admin_review_provider.dart';
+import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -13,228 +14,197 @@ import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:provider/provider.dart';
 
-/// Resolves a human-readable decision outcome label.
-typedef TradeReviewResultBuilder = String Function(String shortId);
-
-/// A decision submitted through the (service-role) review seam.
-typedef TradeReviewDecider = Future<void> Function({
-  required String professionId,
-  required bool approved,
-  required String notes,
-});
-
-/// Simplified admin review queue (EP-02-11 §5.6, §10; decision log #3).
+/// Admin review queue screen (EP-02-11 §5.6, §10).
 ///
-/// EP-02 scope is the **simplified** internal screen: a pending-submissions
-/// list grouped by profession with one-step approve/reject + optional notes.
-/// Advanced pagination / filters / bulk / image preview are deferred. The
-/// approve/reject actions invoke the injected [onDecide] seam, which is the
-/// client-side handle for the service-role `verification_review_approve/reject`
-/// path — the admin UI never holds or leaks the `service_role` key.
+/// Displays pending verification submissions fetched from the server via the
+/// admin review RPCs. Tapping a queue entry navigates to the detail screen.
+/// Approve/reject actions are handled by the detail screen; this screen
+/// provides the overview list with optional type filtering.
 class AdminReviewQueueScreen extends StatefulWidget {
-  const AdminReviewQueueScreen({
-    super.key,
-    this.onDecide,
-    this.professionLabel,
-  });
-
-  /// The service-role review seam. When `null`, decisions are disabled.
-  final TradeReviewDecider? onDecide;
-
-  /// Optional profession label resolver.
-  final TradeReviewResultBuilder? professionLabel;
+  const AdminReviewQueueScreen({super.key});
 
   @override
   State<AdminReviewQueueScreen> createState() => _AdminReviewQueueScreenState();
 }
 
 class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
-  final Map<String, TextEditingController> _notes = <String, TextEditingController>{};
-  final Set<String> _busy = <String>{};
-  String? _feedback;
+  String? _selectedType;
 
   @override
   void initState() {
     super.initState();
-    // The queue screen is a read-mostly surface: fetch the aggregate on first
-    // build so entering the route directly shows real data (the provider never
-    // fetches on its own). Deferred out of the build phase because
-    // refreshStatus() notifies synchronously, which is illegal mid-build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<TradeVerificationProvider>();
       if (!mounted) return;
-      unawaited(provider.refreshStatus());
+      final provider = context.read<AdminReviewProvider>();
+      // Ensure admin flag is hydrated, then load queue.
+      unawaited(provider.checkAdmin().then((_) {
+        if (!mounted) return;
+        if (AdminGate.isAdmin(provider)) {
+          unawaited(provider.loadQueue());
+        }
+      }));
     });
   }
 
   @override
-  void dispose() {
-    for (final controller in _notes.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  TextEditingController _controllerFor(String id) =>
-      _notes.putIfAbsent(id, TextEditingController.new);
-
-  @override
   Widget build(BuildContext context) {
-    final provider = context.watch<TradeVerificationProvider>();
-    final status = provider.status;
+    final provider = context.watch<AdminReviewProvider>();
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Review queue', style: context.textTheme.titleLarge),
+        actions: <Widget>[
+          PopupMenuButton<String?>(
+            icon: const Icon(Icons.filter_list),
+            onSelected: (String? type) {
+              setState(() => _selectedType = type);
+              unawaited(provider.loadQueue(submissionType: type));
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String?>>[
+              const PopupMenuItem<String?>(
+                value: null,
+                child: Text('All types'),
+              ),
+              const PopupMenuItem<String?>(
+                value: 'trade_proof',
+                child: Text('Trade proof'),
+              ),
+              const PopupMenuItem<String?>(
+                value: 'identity_document',
+                child: Text('Identity document'),
+              ),
+              const PopupMenuItem<String?>(
+                value: 'certification',
+                child: Text('Certification'),
+              ),
+            ],
+          ),
+        ],
       ),
-      body: SafeArea(child: _body(status, provider)),
+      body: SafeArea(child: _body(provider)),
     );
   }
 
-  Widget _body(TradeVerificationStatus? status, TradeVerificationProvider provider) {
-    if (status == null) {
+  Widget _body(AdminReviewProvider provider) {
+    if (!AdminGate.isAdmin(provider)) {
+      return HivorrEmptyState(
+        icon: Icon(
+          Icons.admin_panel_settings_outlined,
+          color: context.colorScheme.primary,
+        ),
+        title: 'Admin access required',
+        subtitle: 'You do not have platform admin privileges.',
+      );
+    }
+    if (provider.isLoadingQueue && provider.queue.isEmpty) {
       return const HivorrLoadingState();
     }
-    final pending = status.tradeVerifications
-        .where((TradeVerification t) => !t.statusKind.isTerminal)
-        .toList(growable: false);
-    if (pending.isEmpty) {
+    if (provider.lastError != null && provider.queue.isEmpty) {
+      return HivorrEmptyState(
+        icon: Icon(
+          Icons.error_outline,
+          color: context.colorScheme.error,
+        ),
+        title: 'Failed to load queue',
+        subtitle: provider.lastError!.message,
+      );
+    }
+    if (provider.queue.isEmpty) {
       return HivorrEmptyState(
         icon: Icon(
           Icons.task_alt,
           color: context.colorScheme.primary,
         ),
         title: 'Queue is clear',
-        subtitle: 'No trade proofs are awaiting review.',
+        subtitle: 'No submissions are awaiting review.',
       );
     }
-    return ListView(
-      padding: const EdgeInsets.all(HivorrSpacing.lg),
-      children: <Widget>[
-        if (_feedback != null && _feedback!.isNotEmpty) ...<Widget>[
-          Text(
-            _feedback!,
-            style: context.textTheme.bodyMedium
-                ?.copyWith(color: context.colorScheme.primary),
-          ),
-          const SizedBox(height: HivorrSpacing.md),
-        ],
-        for (final TradeVerification entry in pending)
-          _ReviewCard(
-            key: ValueKey<String>(entry.professionId),
+    return RefreshIndicator(
+      onRefresh: () => provider.loadQueue(submissionType: _selectedType),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(HivorrSpacing.lg),
+        itemCount: provider.queue.length + (provider.hasMore ? 1 : 0),
+        itemBuilder: (BuildContext context, int index) {
+          if (index == provider.queue.length) {
+            // Load more trigger.
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: HivorrSpacing.md),
+              child: Center(
+                child: provider.isLoadingQueue
+                    ? const CircularProgressIndicator()
+                    : HivorrButton(
+                        label: 'Load more',
+                        onPressed: () =>
+                            provider.loadMore(submissionType: _selectedType),
+                      ),
+              ),
+            );
+          }
+          final entry = provider.queue[index];
+          return _QueueCard(
+            key: ValueKey<String>(entry.submissionId),
             entry: entry,
-            label: _labelFor(entry.professionId),
-            notesController: _controllerFor(entry.professionId),
-            busy: _busy.contains(entry.professionId),
-            decider: widget.onDecide,
-            onResult: (String message) => setState(() => _feedback = message),
-            onBusyChange: (bool busy) {
-              setState(() {
-                if (busy) {
-                  _busy.add(entry.professionId);
-                } else {
-                  _busy.remove(entry.professionId);
-                }
-              });
-            },
-          ),
-      ],
+            onTap: () => context.pushNamed(
+              RouteNames.adminReviewDetail,
+              pathParameters: <String, String>{
+                'submissionId': entry.submissionId,
+              },
+            ),
+          );
+        },
+      ),
     );
   }
-
-  String _labelFor(String id) => widget.professionLabel?.call(id) ??
-      (id.length > 13 ? 'Profession ${id.substring(0, 8)}' : 'Profession $id');
 }
 
-class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({
+class _QueueCard extends StatelessWidget {
+  const _QueueCard({
     super.key,
     required this.entry,
-    required this.label,
-    required this.notesController,
-    required this.busy,
-    required this.decider,
-    required this.onResult,
-    required this.onBusyChange,
+    required this.onTap,
   });
 
-  final TradeVerification entry;
-  final String label;
-  final TextEditingController notesController;
-  final bool busy;
-  final TradeReviewDecider? decider;
-  final void Function(String message) onResult;
-  final void Function(bool busy) onBusyChange;
+  final AdminReviewQueueEntry entry;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: HivorrSpacing.md),
       child: HivorrCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(label, style: context.textTheme.titleMedium),
-            const SizedBox(height: HivorrSpacing.xs),
-            Text(
-              'Status: ${entry.status}',
-              style: context.textTheme.bodySmall
-                  ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: HivorrSpacing.sm),
-            TextField(
-              controller: notesController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Decision notes (optional)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: HivorrSpacing.sm),
-            Row(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(HivorrSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Expanded(
-                  child: HivorrButton(
-                    label: 'Approve',
-                    isLoading: busy,
-                    onPressed: decider == null
-                        ? null
-                        : () => _decide(context, approved: true),
+                Text(
+                  entry.entityName.isNotEmpty
+                      ? entry.entityName
+                      : 'Unknown entity',
+                  style: context.textTheme.titleMedium,
+                ),
+                const SizedBox(height: HivorrSpacing.xs),
+                Text(
+                  '${entry.submissionType} — ${entry.credentialName}',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(width: HivorrSpacing.sm),
-                Expanded(
-                  child: HivorrButton(
-                    label: 'Reject',
-                    variant: HivorrButtonVariant.outline,
-                    onPressed: decider == null
-                        ? null
-                        : () => _decide(context, approved: false),
+                const SizedBox(height: HivorrSpacing.xs),
+                Text(
+                  'Status: ${entry.status}',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
-  }
-
-  Future<void> _decide(BuildContext context, {required bool approved}) async {
-    final decider = this.decider;
-    if (decider == null) return;
-    onBusyChange(true);
-    try {
-      await decider(
-        professionId: entry.professionId,
-        approved: approved,
-        notes: notesController.text.trim(),
-      );
-      onResult(approved ? 'Approved $label' : 'Rejected $label');
-    } catch (e) {
-      onResult('Decision failed: ${e.toString()}');
-    } finally {
-      onBusyChange(false);
-    }
   }
 }
