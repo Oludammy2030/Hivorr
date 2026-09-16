@@ -18,7 +18,7 @@
 
 begin;
 set search_path to extensions, public;
-select plan(34);
+select plan(35);
 
 -- ─── 0. Fixtures ──────────────────────────────────────────────────────────────
 set role postgres;
@@ -68,9 +68,13 @@ insert into public.kyc_tiers (tier_code, name, daily_limit)
 values ('tier_1', 'Identity Verified', 50000)
 on conflict (tier_code) do update set daily_limit = 50000;
 
+-- KYC rows are an RPC-only table under the D5 guard (platform.rpc_invocation);
+-- the fixture seeds the profile's KYC state the same way review RPCs do.
+select set_config('platform.rpc_invocation', 'on', true);
 insert into public.entity_kyc_levels (entity_id, tier_code, status)
 values (current_setting('test.a')::uuid, 'tier_1', 'active')
 on conflict (entity_id) do nothing;
+select set_config('platform.rpc_invocation', '', true);
 
 insert into public.portfolio_items (entity_id, item_type, title, description, media_path, sort_order)
 values
@@ -81,9 +85,9 @@ on conflict do nothing;
 select has_table('public', 'portfolio_items', 'portfolio_items table exists');
 
 -- ─── 2. audit columns present ─────────────────────────────────────────────────
-select col_not_null('public.portfolio_items', 'created_at', 'created_at is not null');
-select col_not_null('public.portfolio_items', 'updated_at', 'updated_at is not null');
-select has_trigger('public.portfolio_items', 'portfolio_items_set_updated_at', 'platform_set_updated_at trigger exists');
+select col_not_null('public', 'portfolio_items', 'created_at', 'created_at is not null');
+select col_not_null('public', 'portfolio_items', 'updated_at', 'updated_at is not null');
+select has_trigger('public', 'portfolio_items', 'portfolio_items_set_updated_at', 'platform_set_updated_at trigger exists');
 
 -- ─── 3. RLS enabled ──────────────────────────────────────────────────────────
 select is(
@@ -183,16 +187,16 @@ select has_function('public', 'portfolio_public_profile_get', array['uuid'],
 select is(
   (select prosecdef from pg_proc
     where proname = 'portfolio_public_profile_get'
-      and proargtypes::regtype[] = array['uuid'::regtype]),
+      and (proargtypes::regtype[])[0] = 'uuid'::regtype),
   true,
   'portfolio_public_profile_get is SECURITY DEFINER'
 );
 
 select is(
-  (select proargtypes::regtype[] from pg_proc
+  (select prorettype::regtype from pg_proc
     where proname = 'portfolio_public_profile_get'
-      and proargtypes::regtype[] = array['uuid'::regtype]),
-  array['uuid']::regtype[],
+      and (proargtypes::regtype[])[0] = 'uuid'::regtype),
+  'jsonb'::regtype,
   'portfolio_public_profile_get returns jsonb'
 );
 
@@ -200,7 +204,7 @@ select is(
 select is(
   (select provolatile from pg_proc
     where proname = 'portfolio_public_profile_get'
-      and proargtypes::regtype[] = array['uuid'::regtype]),
+      and (proargtypes::regtype[])[0] = 'uuid'::regtype),
   's',
   'portfolio_public_profile_get is STABLE'
 );

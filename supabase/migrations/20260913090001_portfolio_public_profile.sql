@@ -128,7 +128,7 @@ stable
 as $$
 declare
   v_entity public.entities;
-  v_profile public.entity_profiles;
+  v_profile record;
   v_approved_count int;
   v_kyc jsonb;
   v_professions jsonb;
