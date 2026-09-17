@@ -1,8 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/home/home_screen.dart';
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
+import 'package:hivorr/data/providers/admin_review_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 
+import '../../../support/fakes/fake_admin_review.dart';
 import '../../../support/onboarding/onboarding_test_support.dart';
 
 void main() {
@@ -79,6 +85,73 @@ void main() {
       expect(find.text('Welcome to Hivorr'), findsOneWidget);
       expect(find.text('Continue registration'), findsNothing);
       stack.provider.dispose();
+    });
+  });
+
+  group('HomeScreen admin console entry point (EP-02-11)', () {
+    GoRoute adminMarker(String path, String label) => GoRoute(
+          path: path,
+          builder: (BuildContext context, GoRouterState state) =>
+              Scaffold(body: Center(child: Text(label))),
+        );
+
+    Future<void> pumpHomeAsAdmin(
+      WidgetTester tester, {
+      required bool isAdmin,
+    }) async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      addTearDown(stack.provider.dispose);
+      final AdminReviewProvider provider = AdminReviewProvider(
+        repo: FakeAdminReviewRepository(isAdmin: isAdmin),
+      );
+      await pumpOnboardingScreen(
+        tester,
+        const HomeScreen(),
+        path: '/',
+        routes: <RouteBase>[
+          adminMarker(RoutePaths.adminReviewQueue, 'ADMIN-REVIEW-QUEUE'),
+          adminMarker(RoutePaths.adminManageUsers, 'ADMIN-MANAGE-USERS'),
+        ],
+        providers: <SingleChildWidget>[
+          ...stack.buildProviders(),
+          ChangeNotifierProvider<AdminReviewProvider>.value(value: provider),
+        ],
+      );
+      // Let the post-frame checkAdmin hydrate and rebuild.
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('hides the console for non-admins',
+        (WidgetTester tester) async {
+      await pumpHomeAsAdmin(tester, isAdmin: false);
+      expect(find.text('Review queue'), findsNothing);
+      expect(find.text('Manage users'), findsNothing);
+      expect(find.text('Welcome to Hivorr'), findsOneWidget);
+    });
+
+    testWidgets('shows the console for platform admins',
+        (WidgetTester tester) async {
+      await pumpHomeAsAdmin(tester, isAdmin: true);
+      expect(find.text('Review queue'), findsOneWidget);
+      expect(find.text('Manage users'), findsOneWidget);
+      expect(find.text('Welcome to Hivorr'), findsOneWidget);
+    });
+
+    testWidgets('Review queue button opens the approval console',
+        (WidgetTester tester) async {
+      await pumpHomeAsAdmin(tester, isAdmin: true);
+      await tester.tap(find.text('Review queue'));
+      await tester.pumpAndSettle();
+      expect(find.text('ADMIN-REVIEW-QUEUE'), findsOneWidget);
+    });
+
+    testWidgets('Manage users button opens the directory',
+        (WidgetTester tester) async {
+      await pumpHomeAsAdmin(tester, isAdmin: true);
+      await tester.tap(find.text('Manage users'));
+      await tester.pumpAndSettle();
+      expect(find.text('ADMIN-MANAGE-USERS'), findsOneWidget);
     });
   });
 }

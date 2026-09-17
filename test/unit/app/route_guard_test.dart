@@ -184,6 +184,43 @@ void main() {
       expect(guard.redirectResolver('/store/abc'), isNull);
     });
 
+    test(
+        'authenticated users may open admin routes (router is not an admin '
+        'gate)', () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.authenticated);
+      final guard = RouteGuard(authProvider: provider);
+      // EP-02-11: authorization is enforced inside the admin screens via
+      // [AdminGate] (fail-closed "Admin access required" state). Gating here
+      // would lock platform admins out — the admin flag is only hydrated once
+      // those screens mount. So every authenticated user may navigate to the
+      // routes and the screens decide.
+      for (final String path in <String>[
+        RoutePaths.adminReviewQueue,
+        '${RoutePaths.adminReviewQueue}/sub-1',
+        RoutePaths.adminManageUsers,
+        '${RoutePaths.adminManageUsers}/u-9',
+      ]) {
+        expect(guard.redirectResolver(path), isNull,
+            reason: '$path should not be router-gated');
+      }
+    });
+
+    test(
+        'unauthenticated admin routes resolve to the login door with ?next=',
+        () {
+      final provider =
+          FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
+      final guard = RouteGuard(authProvider: provider);
+      expect(
+        guard.redirectResolver(RoutePaths.adminManageUsers),
+        '/login?next=/admin/users',
+      );
+      expect(
+        guard.redirectResolver('${RoutePaths.adminReviewQueue}/sub-1'),
+        '/login?next=/admin/review-queue/sub-1',
+      );
+    });
+
     test('authenticated user is bounced from public-only auth routes to /', () {
       final provider = FakeAuthProvider(initialStatus: AuthStatus.authenticated);
       final guard = RouteGuard(authProvider: provider);

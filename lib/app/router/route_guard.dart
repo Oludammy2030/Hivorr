@@ -2,7 +2,6 @@ import 'package:hivorr/app/entry/entry_platform.dart';
 import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
-import 'package:hivorr/config/permissions/admin_gate.dart';
 import 'package:hivorr/core/authentication/guards/auth_guard.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
@@ -46,9 +45,13 @@ class RouteGuard {
   final AuthProvider authProvider;
   final OnboardingProvider? onboardingProvider;
 
-  /// The admin review provider used to gate the `/admin/*` routes
-  /// (EP-02-11). Optional for testability; when absent, admin routes
-  /// fail-closed (redirect to home).
+  /// The admin review provider surfaced to the widget tree (EP-02-11).
+  ///
+  /// Admin routes are not redirected here — the admin screens run
+  /// [AdminReviewProvider.checkAdmin] themselves and fail closed internally.
+  /// The provider is kept on the guard so its changes participate in the
+  /// merged `refreshListenable` (route re-evaluation) and so callers can wire
+  /// the seams without a separate listenable.
   final AdminReviewProvider? adminReviewProvider;
 
   /// Device-local entry state (first-launch flag, pending redirect). Optional
@@ -100,11 +103,12 @@ class RouteGuard {
         return RoutePaths.home;
       }
 
-      // Admin gate: block /admin/* routes for non-admin users (EP-02-11).
-      if (location.startsWith('/admin/') &&
-          !AdminGate.isAdmin(adminReviewProvider)) {
-        return RoutePaths.home;
-      }
+      // Admin routes (/admin/*) are not gated at the router level: the admin
+      // screens enforce authorization internally via the AdminGate fail-closed
+      // "Admin access required" state. Gating here on the hydrated admin flag
+      // would deadlock — the flag is only populated once those screens mount —
+      // locking platform admins out of the review console entirely. Only the
+      // authentication walls above apply.
 
       final String? onboardingRedirect =
           _onboardingResumeRedirect(location);

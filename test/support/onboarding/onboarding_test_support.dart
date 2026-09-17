@@ -254,15 +254,21 @@ const List<(String, String)> _markers = <(String, String)>[
 ];
 
 /// Pumps [child] at [path] inside a GoRouter-backed [MaterialApp] with the
-/// onboarding providers injected.
+/// onboarding providers injected.  Extra [routes] are appended so screens
+/// that navigate elsewhere settle without a real router.
 Future<void> pumpOnboardingScreen(
   WidgetTester tester,
   Widget child, {
   required String path,
   List<SingleChildWidget>? providers,
+  List<RouteBase> routes = const <RouteBase>[],
   bool dark = false,
 }) async {
-  final GoRouter router = onboardingTestRouter(path: path, child: child);
+  final GoRouter router = onboardingTestRouter(
+    path: path,
+    child: child,
+    routes: routes,
+  );
   final Widget app = MaterialApp.router(
     routerConfig: router,
     theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
