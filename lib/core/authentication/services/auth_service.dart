@@ -32,6 +32,22 @@ abstract class AuthService {
   /// Whether a valid session is currently active.
   bool get isSignedIn;
 
+  /// Whether the active session is a password-recovery session
+  /// ([AuthStatus.recovery]).
+  ///
+  /// Single-purpose: it only empowers [updatePassword] and is consumed by the
+  /// route guard to confine the user to the reset door. The default mirrors
+  /// [status] so fakes that set status directly stay correct.
+  bool get isRecoverySession => status == AuthStatus.recovery;
+
+  /// A failed password-recovery deep-link exchange surfaced at bootstrap —
+  /// i.e. an expired, invalid, or already-used recovery `code` — or `null`
+  /// when no recovery callback landed (or the exchange succeeded).
+  ///
+  /// Read by the reset screen to render the "request a new link" guidance
+  /// instead of a broken password form.
+  ApiException? get recoveryCallbackError;
+
   /// Stream of [AuthStatus] changes (subscribe once; broadcast).
   Stream<AuthStatus> get onStatusChanged;
 
@@ -75,9 +91,16 @@ abstract class AuthService {
 
   /// Sends a password-reset (recovery) email to [email]; the reset deep link
   /// carries the recovery session used by [updatePassword].
+  ///
+  /// The embedded link targets [AuthConfig.recoveryRedirectUrl] (the
+  /// `/reset-password` landing page), which GoTrue allow-lists per project.
   Future<void> requestPasswordReset(String email);
 
-  /// Updates the active user's password (recovery-session empowered).
+  /// Updates the active user's password.
+  ///
+  /// Empowering session is the recovery session issued by the reset deep link
+  /// (see [isRecoverySession]). Fail-closed without one: an authenticated
+  /// user's password is never changed outside a recovery flow.
   Future<void> updatePassword(String newPassword);
 
   /// Releases the auth-state subscription and status stream.

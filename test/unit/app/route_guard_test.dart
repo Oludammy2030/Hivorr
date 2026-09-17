@@ -428,4 +428,46 @@ void main() {
       stack.provider.dispose();
     });
   });
+
+  group('RouteGuard (password recovery)', () {
+    test('a recovery session is not a sign-in', () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.recovery);
+      expect(provider.isSignedIn, isFalse);
+      expect(provider.isRecoverySession, isTrue);
+    });
+
+    test('a recovery session may occupy the public reset door', () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.recovery);
+      final guard = RouteGuard(authProvider: provider);
+      expect(guard.redirectResolver(RoutePaths.resetPassword), isNull);
+      expect(
+        guard.redirectResolver('${RoutePaths.resetPassword}?code=abc'),
+        isNull,
+      );
+      expect(guard.redirectResolver(RoutePaths.forgotPassword), isNull);
+    });
+
+    test('a recovery session with an unverified email is not gated', () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.recovery)
+        ..sessionOverride = const AuthSession(
+          entityId: 'u1',
+          email: 'me@example.com',
+          isEmailConfirmed: false,
+        );
+      final guard = RouteGuard(authProvider: provider);
+      expect(guard.redirectResolver(RoutePaths.resetPassword), isNull);
+      expect(guard.redirectResolver('/profile'), isNotNull);
+    });
+
+    test('a recovery session is confined to the reset door (fail-closed)',
+        () {
+      final provider = FakeAuthProvider(initialStatus: AuthStatus.recovery);
+      final guard = RouteGuard(authProvider: provider);
+      // Protected destinations never resolve to the reset flow; the guard
+      // resolves them to the unauthenticated entry door.
+      expect(guard.redirectResolver('/profile'), isNotNull);
+      expect(guard.redirectResolver(RoutePaths.home), isNotNull);
+      expect(guard.redirectResolver('/onboarding'), isNotNull);
+    });
+  });
 }

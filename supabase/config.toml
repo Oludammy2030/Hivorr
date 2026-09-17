@@ -30,6 +30,13 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
+# Password-recovery PKCE deep links terminate on the web client landing page
+# (served by run_local.ps1 at localhost:8080), not the CLI site_url. GoTrue
+# only honours redirects whose origin is allow-listed here.
+additional_redirect_urls = [
+  "http://localhost:8080/reset-password",
+  "http://127.0.0.1:8080/reset-password",
+]
 # Password policy mirrors the hosted project's Auth settings (strongest preset):
 # minimum 8 characters and required lowercase, uppercase, digit, and symbol.
 minimum_password_length = 8
@@ -45,6 +52,14 @@ content_path = "./supabase/templates/confirmation.html"
 [auth.email.template.magic_link]
 subject = "Your sign-in code"
 content_path = "./supabase/templates/magic_link.html"
+
+# Password-recovery email. Unlike the confirmation/magic-link templates, the
+# recovery link is a deep link (PKCE): the client exchanges the `code` on the
+# web landing page at /reset-password — recovery has no OTP entry screen.
+# Keep `additional_redirect_urls` below in sync with the landing page origin.
+[auth.email.template.recovery]
+subject = "Reset your password"
+content_path = "./supabase/templates/recovery.html"
 
 [storage]
 enabled = true

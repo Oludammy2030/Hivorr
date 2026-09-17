@@ -14,4 +14,11 @@ enum AuthStatus {
 
   /// A sign-up succeeded but email confirmation is required before sign-in.
   awaitingEmailConfirmation,
+
+  /// A password-recovery (reset) session is active.
+  ///
+  /// Issued by the recovery deep-link exchange; the user is confined to the
+  /// reset door until [AuthService.updatePassword] completes (the session is
+  /// single-purpose and is not a normal sign-in).
+  recovery,
 }

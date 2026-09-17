@@ -34,8 +34,18 @@ class _ScriptedAuthService extends FakeAuthService {
 
   ApiException? failure;
 
+  /// Thrown specifically by [updatePassword] (recovery/update failures).
+  ApiException? updateFailure;
+
+  /// Scripted [AuthService.recoveryCallbackError] (failure at recovery-link
+  /// exchange, surfaced at bootstrap).
+  ApiException? recoveryCallbackErrorValue;
+
   @override
   AuthStatus get status => _status;
+
+  @override
+  ApiException? get recoveryCallbackError => recoveryCallbackErrorValue;
 
   @override
   Stream<AuthStatus> get onStatusChanged => _controller.stream;
@@ -109,9 +119,13 @@ class _ScriptedAuthService extends FakeAuthService {
   @override
   Future<void> updatePassword(String newPassword) async {
     updatedPasswords.add(newPassword);
-    final ApiException? error = failure;
+    final ApiException? error = updateFailure;
     if (error != null) {
       throw error;
+    }
+    final ApiException? generic = failure;
+    if (generic != null) {
+      throw generic;
     }
   }
 
@@ -839,6 +853,102 @@ void main() {
       await enterField(tester, 'Confirm new password', 'Newpass1!');
       await tester.pump();
       expect(button().onPressed, isNotNull);
+    });
+
+    testWidgets('an invalid/expired link shows recovery guidance, not success',
+        (tester) async {
+      final service = _ScriptedAuthService()
+        ..updateFailure = const ApiException(
+          kind: ApiExceptionKind.validation,
+          message: 'This reset link is invalid or has expired. '
+              'Request a new one.',
+          code: 'invalid_grant',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      await pumpAuth(
+        tester,
+        router: doorRouter(initialLocation: RoutePaths.resetPassword),
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'New password', 'Newpass1!');
+      await enterField(tester, 'Confirm new password', 'Newpass1!');
+      await tester.tap(find.text('Update password'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('invalid or has expired'),
+        findsOneWidget,
+      );
+      expect(find.text('Request a new link'), findsOneWidget);
+      expect(
+        find.text('Your password has been updated. You can now sign in.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('Request a new link navigates to the forgot-password door',
+        (tester) async {
+      final service = _ScriptedAuthService()
+        ..updateFailure = const ApiException(
+          kind: ApiExceptionKind.validation,
+          message: 'This reset link is invalid or has expired. '
+              'Request a new one.',
+          code: 'invalid_grant',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router =
+          doorRouter(initialLocation: RoutePaths.resetPassword);
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'New password', 'Newpass1!');
+      await enterField(tester, 'Confirm new password', 'Newpass1!');
+      await tester.tap(find.text('Update password'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Request a new link'));
+      await tester.pumpAndSettle();
+
+      expect(
+        router.routerDelegate.state.matchedLocation,
+        RoutePaths.forgotPassword,
+      );
+      expect(find.text('Reset your password'), findsOneWidget);
+    });
+
+    testWidgets('a failed recovery callback shows the expired-link state',
+        (tester) async {
+      final service = _ScriptedAuthService()
+        ..recoveryCallbackErrorValue = const ApiException(
+          kind: ApiExceptionKind.validation,
+          message: 'This reset link is invalid or has expired. '
+              'Request a new one.',
+          code: 'invalid_grant',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      await pumpAuth(
+        tester,
+        router: doorRouter(initialLocation: RoutePaths.resetPassword),
+        authProvider: provider,
+      );
+
+      expect(
+        find.textContaining('invalid or has expired'),
+        findsOneWidget,
+      );
+      expect(find.text('Request a new link'), findsOneWidget);
+      // No password form behind a broken link.
+      expect(find.text('New password'), findsNothing);
+      expect(find.text('Update password'), findsNothing);
     });
   });
 

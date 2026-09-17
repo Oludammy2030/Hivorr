@@ -47,6 +47,17 @@ class AuthProvider extends ChangeNotifier {
   /// Whether a valid session is currently active.
   bool get isSignedIn => _status == AuthStatus.authenticated;
 
+  /// Whether the active session is a password-recovery session
+  /// ([AuthStatus.recovery]); consumed by the route guard and the reset door.
+  ///
+  /// Reads the virtual [status] so subclasses that override [status] (test
+  /// fakes) mirror recovery correctly without re-declaring this getter.
+  bool get isRecoverySession => status == AuthStatus.recovery;
+
+  /// A failed password-recovery deep-link exchange (expired/invalid/used code)
+  /// surfaced at bootstrap, or `null` when nothing landed or it succeeded.
+  ApiException? get recoveryCallbackError => service.recoveryCallbackError;
+
   /// Restores any persisted session and begins observing auth changes.
   Future<void> initialize() async {
     await service.initialize();
@@ -65,14 +76,8 @@ class AuthProvider extends ChangeNotifier {
   ///
   /// The registration password is assigned at account creation ([signUp]), so
   /// no additional credential is carried through the verification gate.
-  Future<void> verifyEmailOtp({
-    required String email,
-    required String code,
-  }) =>
-      _run(() => service.verifyEmailOtp(
-            email: email,
-            code: code,
-          ));
+  Future<void> verifyEmailOtp({required String email, required String code}) =>
+      _run(() => service.verifyEmailOtp(email: email, code: code));
 
   /// Authenticates an existing identity.
   Future<void> signIn(AuthCredentials credentials) =>

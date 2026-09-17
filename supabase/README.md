@@ -81,6 +81,24 @@ supabase test db      # Run the pgTAP RLS/RPC suite
 `supabase db reset` rebuilds the schema from zero — this is the reproducibility
 check for the migration set.
 
+## 5b. Password-Recovery Redirects (Auth)
+
+Password resets use GoTrue's PKCE recovery deep link (no OTP entry screen for
+recovery): the email template links to the Web client landing page
+`/reset-password?code=...`, and the client exchanges the code there. GoTrue
+only honours a `redirect_to` whose origin is allow-listed.
+
+| Environment | Landing page (`AuthConfig.recoveryRedirectUrl`) | Allow-list source |
+|---|---|---|
+| Development | current page origin + `/reset-password` (dev server, e.g. `http://localhost:8080/reset-password`) | `supabase/config.toml` → `[auth] additional_redirect_urls` (committed) |
+| Staging | `https://staging.hivorr.com/reset-password` | Hosted Dashboard: Site URL / Additional Redirect URLs (lead-approved secret env, ENV-007) |
+| Production | `https://hivorr.com/reset-password` | Hosted Dashboard: Site URL / Additional Redirect URLs (lead-approved secret env, ENV-007) |
+
+Hosted projects additionally need the recovery email template (`[auth.email.template.recovery]`
+in `config.toml`; `supabase/templates/recovery.html`) applied via the Dashboard —
+this is an Auth-settings config, not a migration, and requires the lead-approval
+gate before touching non-local environments.
+
 ## 6. Migration Promotion (Dev → Staging → Prod)
 
 Migrations are append-only. Never edit an applied migration; ship corrections
