@@ -259,8 +259,42 @@ void main() {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.auth,
-          message: 'Your email has not been verified yet.',
+          message: 'Your email address has not been verified yet.',
           code: 'email_not_confirmed',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Email address', 'me@example.com');
+      await enterField(tester, 'Password', 'any-password');
+      await tester.tap(find.text('Sign in'));
+      await tester.pumpAndSettle();
+
+      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+      expect(
+        router.routerDelegate.state.uri.queryParameters['email'],
+        'me@example.com',
+      );
+      expect(
+        router.routerDelegate.state.uri.queryParameters['mode'],
+        RoutePaths.authVerificationResumeMode,
+      );
+    });
+
+    testWidgets('failed sign-in with email_not_verified routes to the '
+        'verification gate in resume mode (parity)', (tester) async {
+      final service = _ScriptedAuthService()
+        ..failure = const ApiException(
+          kind: ApiExceptionKind.auth,
+          message: 'Your email address has not been verified yet.',
+          code: 'email_not_verified',
         );
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -422,7 +456,8 @@ void main() {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.conflict,
-          message: 'This email is already registered.',
+          message: 'An account already exists with this email address. '
+              'Please log in to continue.',
           code: 'user_already_exists',
         );
       final provider = AuthProvider(service: service);
@@ -444,7 +479,8 @@ void main() {
 
       expect(
         find.text(
-          'This email is already registered. Please log in to continue.',
+          'An account already exists with this email address. '
+          'Please log in to continue.',
         ),
         findsOneWidget,
       );
@@ -459,6 +495,64 @@ void main() {
         router.routerDelegate.state.uri.queryParameters['next'],
         '/p/acme/1',
       );
+    });
+
+    testWidgets('a user_already_exists error offers Verify email to resume '
+        'verification without a duplicate account', (tester) async {
+      final service = _ScriptedAuthService()
+        ..failure = const ApiException(
+          kind: ApiExceptionKind.conflict,
+          message: 'An account already exists with this email address. '
+              'Please log in to continue.',
+          code: 'user_already_exists',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router =
+          doorRouter(initialLocation: '${RoutePaths.signup}?next=/p/acme/1');
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Email address', 'me@example.com');
+      await enterField(tester, 'Password', 'Abc123!9');
+      await enterField(tester, 'Confirm password', 'Abc123!9');
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+
+      // No OTP is sent while submitting the duplicate; no account is created.
+      expect(service.otpEmails, isEmpty);
+      expect(find.text('Log In'), findsOneWidget);
+      expect(find.text('Verify email'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Verify email'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Verify email'));
+      await tester.pumpAndSettle();
+
+      expect(
+        router.routerDelegate.state.matchedLocation,
+        RoutePaths.authConfirmation,
+      );
+      expect(
+        router.routerDelegate.state.uri.queryParameters['email'],
+        'me@example.com',
+      );
+      expect(
+        router.routerDelegate.state.uri.queryParameters['mode'],
+        RoutePaths.authVerificationResumeMode,
+      );
+      expect(
+        router.routerDelegate.state.uri.queryParameters['next'],
+        '/p/acme/1',
+      );
+      // Resume mode issues a fresh code for the existing identity only —
+      // never `shouldCreateUser: true`.
+      expect(service.otpEmails, <String>['me@example.com']);
+      expect(service.otpCreateFlags, <bool>[false]);
     });
 
     testWidgets('password checklist and strength update as user types',
@@ -536,6 +630,10 @@ void main() {
 
       expect(find.text('Confirm your email'), findsOneWidget);
       expect(find.textContaining('me@example.com'), findsOneWidget);
+      expect(
+        find.textContaining('Enter the 6-digit code sent to'),
+        findsOneWidget,
+      );
       expect(find.text('Verification code'), findsOneWidget);
       expect(find.text('Verify code'), findsOneWidget);
       expect(find.text('Resend code'), findsOneWidget);

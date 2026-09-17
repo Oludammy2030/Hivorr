@@ -466,7 +466,8 @@ class SupabaseAuthService implements AuthService {
       _ => _safeKindForStatus(status),
     };
     final String message = switch (kind) {
-      ApiExceptionKind.conflict => 'This email is already registered.',
+      ApiExceptionKind.conflict => 'An account already exists with this '
+          'email address. Please log in to continue.',
       ApiExceptionKind.auth => _emailAuthMessage(code),
       ApiExceptionKind.validation when code == 'otp_expired' =>
         'That code has expired. Request a new one.',
@@ -495,7 +496,7 @@ class SupabaseAuthService implements AuthService {
   /// login form never leaks which part of the credentials was wrong.
   String _emailAuthMessage(String code) => switch (code) {
     'email_not_confirmed' ||
-    'email_not_verified' => 'Your email has not been verified yet.',
+    'email_not_verified' => 'Your email address has not been verified yet.',
     'invalid_otp' => 'Invalid code. Please check and try again.',
     _ => 'Invalid email or password.',
   };

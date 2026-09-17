@@ -94,8 +94,8 @@ class _AuthConfirmationGateScreenState
     return AuthScaffold(
       title: 'Confirm your email',
       subtitle: email.isEmpty
-          ? 'We emailed a 6-digit code to you.'
-          : 'We emailed a 6-digit code to\n$email.',
+          ? 'Enter the 6-digit code sent to your email address.'
+          : 'Enter the 6-digit code sent to\n$email.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[

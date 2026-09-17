@@ -130,7 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
       context.go(_target(_afterSignIn()));
       return;
     }
-    if (auth.lastErrorCode == 'email_not_confirmed') {
+    if (auth.lastErrorCode == 'email_not_confirmed' ||
+        auth.lastErrorCode == 'email_not_verified') {
       context.go(_verificationTarget(email));
     }
   }
