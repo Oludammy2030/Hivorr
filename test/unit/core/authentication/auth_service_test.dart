@@ -204,7 +204,56 @@ void main() {
       }
 
       expect(error.code, 'email_not_confirmed');
-      expect(error.message, 'Your email has not been verified yet.');
+      expect(error.message, 'Your email address has not been verified yet.');
+      await service.dispose();
+    });
+
+    test('email_not_verified maps like email_not_confirmed', () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.nextError = const AuthException(
+        'Email not verified',
+        statusCode: '400',
+        code: 'email_not_verified',
+      );
+
+      late final ApiException error;
+      try {
+        await service.signIn(
+          AuthCredentials(email: 'a@b.com', password: 'password'),
+        );
+        fail('Expected ApiException');
+      } on Object catch (e) {
+        error = e as ApiException;
+      }
+
+      expect(error.code, 'email_not_verified');
+      expect(error.message, 'Your email address has not been verified yet.');
+      expect(error.kind, ApiExceptionKind.auth);
+      await service.dispose();
+    });
+
+    test('a bare 400 without a code stays generic (no enumeration)',
+        () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.nextError = const AuthException(
+        'Invalid login credentials',
+        statusCode: '400',
+      );
+
+      late final ApiException error;
+      try {
+        await service.signIn(
+          AuthCredentials(email: 'a@b.com', password: 'wrong'),
+        );
+        fail('Expected ApiException');
+      } on Object catch (e) {
+        error = e as ApiException;
+      }
+
+      // Only the HTTP status flows through (transport-only code); no semantic
+      // gotrue code leaks the verification state to the login form.
+      expect(error.code, '400');
+      expect(error.message, 'Validation failed.');
       await service.dispose();
     });
 

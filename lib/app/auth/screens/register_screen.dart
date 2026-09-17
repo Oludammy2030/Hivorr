@@ -24,7 +24,9 @@ import 'package:provider/provider.dart';
 /// remaining verification factor for the [AuthConfirmationGateScreen]. One
 /// email maps to one account — when [AuthProvider.signUp] reports
 /// `user_already_exists`, the visitor is told the email is registered and
-/// offered the login door instead of a duplicate account.
+/// offered both the login door and the resume-mode verification gate
+/// (`Verify email`, which never creates a duplicate account) instead of a
+/// duplicate registration.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -60,7 +62,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ? _confirmError
         : null;
     final String? error = alreadyRegistered
-        ? 'This email is already registered. Please log in to continue.'
+        ? 'An account already exists with this email address. '
+            'Please log in to continue.'
         : _attempted
             ? (auth.lastError?.message ?? _validationError)
             : null;
@@ -135,6 +138,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 foregroundColor: Theme.of(context).colorScheme.primary,
               ),
               child: const Text('Log In'),
+            ),
+            const SizedBox(height: HivorrSpacing.sm),
+            TextButton(
+              onPressed: _submitting
+                  ? null
+                  : () => context.go(_verificationTarget(_email.text.trim())),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              child: const Text('Verify email'),
             ),
           ],
           const SizedBox(height: HivorrSpacing.lg),
@@ -242,6 +255,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ? ''
         : '&next=${Uri.encodeQueryComponent(next)}';
     return '${RoutePaths.authConfirmation}?email=$email$nextParam';
+  }
+
+  /// Routes an existing identity whose email is not verified yet to the
+  /// verification gate in resume mode — the gate issues a fresh code for the
+  /// existing account only (`sendEmailVerificationOtp` never creates users),
+  /// so the returnee completes verification without a duplicate registration.
+  String _verificationTarget(String email) {
+    final String encodedEmail = Uri.encodeQueryComponent(email);
+    final String? next = EntryQuery.nextFrom(GoRouterState.of(context));
+    final String nextParam = (next == null || next.isEmpty)
+        ? ''
+        : '&next=${Uri.encodeQueryComponent(next)}';
+    return '${RoutePaths.authConfirmation}?email=$encodedEmail'
+        '&mode=${RoutePaths.authVerificationResumeMode}$nextParam';
   }
 
   /// Carries the preserved `?next=` across auth routes.
