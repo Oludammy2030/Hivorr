@@ -1,6 +1,8 @@
 import 'package:hivorr/config/wallet/wallet_conversion_pairs_config.dart';
 import 'package:hivorr/config/wallet/wallet_conversion_rates_seed.dart';
 import 'package:hivorr/core/api/api_initializer.dart';
+import 'package:hivorr/core/database/local_store.dart';
+import 'package:hivorr/core/database/storage_engine.dart';
 import 'package:hivorr/core/logging/hivorr_logger.dart';
 import 'package:hivorr/core/storage/storage_service.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
@@ -16,6 +18,7 @@ import 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_
 import 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
@@ -54,6 +57,8 @@ import 'package:hivorr/data/repositories/kyc_repository.dart';
 import 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
+import 'package:hivorr/data/repositories/onboarding_repository.dart';
+import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
 import 'package:hivorr/data/repositories/trade_verification_repository.dart';
@@ -87,6 +92,7 @@ export 'package:hivorr/data/datasources/remote/financial_payout_remote_data_sour
 export 'package:hivorr/data/datasources/remote/financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/manage_user_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
@@ -99,6 +105,7 @@ export 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_
 export 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_portfolio_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
@@ -128,6 +135,7 @@ export 'package:hivorr/data/entities/financial_status.dart';
 export 'package:hivorr/data/entities/industry.dart';
 export 'package:hivorr/data/entities/kyc_level.dart';
 export 'package:hivorr/data/entities/onboarding_progress.dart';
+export 'package:hivorr/data/entities/onboarding_status.dart';
 export 'package:hivorr/data/entities/payout_account.dart';
 export 'package:hivorr/data/entities/portfolio_item.dart';
 export 'package:hivorr/data/entities/profession.dart';
@@ -150,6 +158,7 @@ export 'package:hivorr/data/mappers/financial_deposit_mapper.dart';
 export 'package:hivorr/data/mappers/financial_mapper.dart';
 export 'package:hivorr/data/mappers/financial_payout_mapper.dart';
 export 'package:hivorr/data/mappers/industry_mapper.dart';
+export 'package:hivorr/data/mappers/onboarding_status_mapper.dart';
 export 'package:hivorr/data/mappers/portfolio_mappers.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
 export 'package:hivorr/data/mappers/verification_mapper.dart';
@@ -176,6 +185,7 @@ export 'package:hivorr/data/models/financial_status_dto.dart';
 export 'package:hivorr/data/models/industry_dto.dart';
 export 'package:hivorr/data/models/kyc_level_dto.dart';
 export 'package:hivorr/data/models/manage_user_dto.dart';
+export 'package:hivorr/data/models/onboarding_status_dto.dart';
 export 'package:hivorr/data/models/payout_bind_dto.dart';
 export 'package:hivorr/data/models/portfolio_item_dto.dart';
 export 'package:hivorr/data/models/profession_dto.dart';
@@ -222,6 +232,8 @@ export 'package:hivorr/data/repositories/kyc_repository.dart';
 export 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 export 'package:hivorr/data/repositories/manage_user_repository.dart';
 export 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
+export 'package:hivorr/data/repositories/onboarding_repository.dart';
+export 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 export 'package:hivorr/data/repositories/portfolio_repository.dart';
 export 'package:hivorr/data/repositories/portfolio_repository_impl.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository.dart';
@@ -565,14 +577,19 @@ registerDisputeLayer(ApiLayer apiLayer) {
 
 /// Wires the onboarding data slice for EP-02-18.
 ///
-/// Builds the [OnboardingService] facade over the injected layers and the
-/// [OnboardingProgressStore] (in-memory unless a Hive-backed impl is supplied),
-/// then returns a ready [OnboardingProvider] plus the store for widget-tree
-/// registration. Mirrors `registerVerificationLayer`: the storage service is
-/// `SupabaseStorageService` over the API-layer Dio (progress-aware uploads to
-/// `profile-avatars` / `credential-documents`) with an injectable override for
-/// tests. Consumes the existing [IdentityVerificationService] /
-/// [TradeVerificationService] facades — no new transport (plan §5.2, §5.8).
+/// Builds the [OnboardingService] facade over the injected layers, the
+/// authoritative [OnboardingRepository] (`entity_onboarding_status_*` RPCs)
+/// and the [OnboardingProgressStore], then returns a ready [OnboardingProvider]
+/// plus the store for widget-tree registration. Mirrors
+/// `registerVerificationLayer`: the storage service is `SupabaseStorageService`
+/// over the API-layer Dio (progress-aware uploads to `profile-avatars` /
+/// `credential-documents`) with an injectable override for tests. Consumes the
+/// existing [IdentityVerificationService] / [TradeVerificationService] facades
+/// — no new transport (plan §5.2, §5.8).
+///
+/// The store is cache-only (server-authoritative completion): when
+/// [storageEngine] is supplied the [HiveOnboardingProgressStore] backs it so
+/// the resume position survives relaunch, degrading to in-memory otherwise.
 ({OnboardingService service, OnboardingProvider provider, OnboardingProgressStore store})
 registerOnboardingLayer({
   required ApiLayer apiLayer,
@@ -581,6 +598,7 @@ registerOnboardingLayer({
   required IdentityVerificationService identityVerification,
   required TradeVerificationService tradeVerification,
   StorageService? storage,
+  StorageEngine? storageEngine,
   OnboardingProgressStore? store,
   HivorrLogger? logger,
 }) {
@@ -592,7 +610,17 @@ registerOnboardingLayer({
         tokenProvider: apiLayer.tokenProvider,
       );
   final OnboardingProgressStore resolvedStore =
-      store ?? InMemoryOnboardingProgressStore();
+      store ??
+      (storageEngine != null
+          ? HiveOnboardingProgressStore(store: LocalStore(storageEngine))
+          : InMemoryOnboardingProgressStore());
+  final onboardingRemote = SupabaseOnboardingRemoteDataSource(
+        dio: apiLayer.dio,
+        supabase: apiLayer.supabaseClient,
+        exceptionMapper: apiLayer.exceptionMapper,
+      );
+  final OnboardingRepository onboardingRepository =
+      OnboardingRepositoryImpl(remote: onboardingRemote);
   final OnboardingService service = OnboardingService(
     store: resolvedStore,
     entityRepository: entityProvider.repository,
@@ -600,6 +628,7 @@ registerOnboardingLayer({
     identityVerification: identityVerification,
     tradeVerification: tradeVerification,
     storage: resolvedStorage,
+    onboardingRepository: onboardingRepository,
     logger: logger,
   );
   return (

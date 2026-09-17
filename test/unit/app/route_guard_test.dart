@@ -6,9 +6,11 @@ import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
+import 'package:hivorr/data/models/onboarding_status_dto.dart';
 
 import '../../support/onboarding/onboarding_test_support.dart';
 import '../../test_helpers.dart';
@@ -425,6 +427,97 @@ void main() {
         guard.redirectResolver(RoutePaths.onboarding),
         RoutePaths.home,
       );
+      stack.provider.dispose();
+    });
+  });
+
+  group('RouteGuard (server-authoritative completion)', () {
+    setUpAll(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+    });
+
+    test('server-completed relaunch with an empty store short-circuits to home',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      stack.onboardingRemote.status = OnboardingStatusDto(
+        capability: 'both',
+        completed: true,
+        onboardingCompletedAt: DateTime.utc(2026, 9, 17),
+        profileExists: true,
+        professionalRoleActive: true,
+        professionExists: true,
+      );
+      await stack.hydrate('u1');
+      final RouteGuard guard = RouteGuard(
+        authProvider:
+            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      expect(guard.redirectResolver(RoutePaths.home), isNull,
+          reason: 'home stays reachable for a completed wizard');
+      expect(
+        guard.redirectResolver(RoutePaths.onboardingCapability),
+        RoutePaths.home,
+        reason: 'a completed wizard bounces away from onboarding routes',
+      );
+      stack.provider.dispose();
+    });
+
+    test('authoritative incomplete overrides a stale cached complete',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      await stack.provider.advance();
+      await stack.provider.advance();
+      await stack.provider.advance();
+      await stack.provider.advance();
+      await stack.provider.advance();
+      expect(stack.provider.isComplete, isTrue,
+          reason: 'the local cache was completed in the previous session');
+      // The server (source of truth) reports the wizard is NOT complete —
+      // e.g. the completion stamp was rolled back or never persisted.
+      stack.onboardingRemote.status = const OnboardingStatusDto(
+        completed: false,
+      );
+      await stack.hydrate('u1');
+      expect(stack.provider.isCompleteAuthoritative, isFalse);
+      final RouteGuard guard = RouteGuard(
+        authProvider:
+            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      expect(
+        guard.redirectResolver(RoutePaths.home),
+        RoutePaths.onboardingTradeProof,
+        reason: 'the authoritative incomplete wins over the stale cache, '
+            'routing home into the wizard at the cached trade-proof step',
+      );
+      stack.provider.dispose();
+    });
+
+    test('offline relaunch with cached completion degrades gracefully',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      for (int i = 0; i < 5; i++) {
+        await stack.provider.advance();
+      }
+      expect(stack.provider.isComplete, isTrue);
+      stack.onboardingRemote.nextGetError = const ApiException(
+        kind: ApiExceptionKind.network,
+        message: 'No connection',
+        code: 'PLT-01-33',
+      );
+      await stack.hydrate('u1');
+      expect(stack.provider.serverHydrated, isFalse);
+      expect(stack.provider.isCompleteAuthoritative, isNull);
+      final RouteGuard guard = RouteGuard(
+        authProvider:
+            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      expect(guard.redirectResolver(RoutePaths.home), isNull,
+          reason: 'offline fallback to the cached completion keeps home usable');
       stack.provider.dispose();
     });
   });

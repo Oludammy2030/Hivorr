@@ -26,6 +26,10 @@ class AppBoxes {
   /// Device-local entry state (first-launch flag + pending redirect).
   static const String entry = 'entry';
 
+  /// Device-local onboarding resume position cache (EP-02-18). Cache-only —
+  /// completion state is server-authoritative (entities.onboarding_completed_at).
+  static const String onboarding = 'onboarding';
+
   /// All pre-registered box names.
   static const List<String> all = <String>[
     cache,
@@ -33,5 +37,6 @@ class AppBoxes {
     entityCache,
     misc,
     entry,
+    onboarding,
   ];
 }

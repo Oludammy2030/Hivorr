@@ -25,8 +25,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final OnboardingProvider onboarding = context.watch<OnboardingProvider>();
+    final bool complete =
+        onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
     final bool showResume = onboarding.progress != null &&
-        !onboarding.isComplete &&
+        !complete &&
         onboarding.exited;
 
     return Scaffold(

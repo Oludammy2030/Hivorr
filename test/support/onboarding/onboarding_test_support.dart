@@ -16,6 +16,8 @@ import 'package:hivorr/data/providers/entity_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
+import 'package:hivorr/data/repositories/onboarding_repository.dart';
+import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 import 'package:hivorr/systems/onboarding/models/picked_avatar.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/verification/models/picked_document.dart';
@@ -25,6 +27,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import '../fakes/fake_datasource.dart';
+import '../fakes/fake_onboarding_remote.dart';
 import '../fakes/fake_storage.dart';
 import '../fakes/fake_taxonomy.dart';
 import '../fakes/fake_trade_verification.dart';
@@ -46,6 +49,8 @@ class OnboardingTestStack {
     required this.tradeVerification,
     required this.storage,
     required this.store,
+    required this.onboardingRemote,
+    required this.onboardingRepository,
     required this.service,
     required this.provider,
   });
@@ -60,6 +65,8 @@ class OnboardingTestStack {
   final TradeVerificationService tradeVerification;
   final FakeStorageService storage;
   final InMemoryOnboardingProgressStore store;
+  final FakeOnboardingRemoteDataSource onboardingRemote;
+  final OnboardingRepository onboardingRepository;
   final OnboardingService service;
   final OnboardingProvider provider;
 
@@ -82,6 +89,7 @@ OnboardingTestStack buildOnboardingStack({
   FakeTradeVerificationRepository? tradeRepo,
   FakeTaxonomyRepository? taxonomyRepo,
   FakeStorageService? storage,
+  FakeOnboardingRemoteDataSource? onboardingRemote,
   HivorrLogger? logger,
   String entityId = 'u1',
 }) {
@@ -103,6 +111,10 @@ OnboardingTestStack buildOnboardingStack({
       storage ?? FakeStorageService();
   final InMemoryOnboardingProgressStore progressStore =
       store ?? InMemoryOnboardingProgressStore();
+  final FakeOnboardingRemoteDataSource onboarding =
+      onboardingRemote ?? FakeOnboardingRemoteDataSource();
+  final OnboardingRepository onboardingRepository =
+      OnboardingRepositoryImpl(remote: onboarding);
   final OnboardingService service = OnboardingService(
     store: progressStore,
     entityRepository: entityRepository,
@@ -110,6 +122,7 @@ OnboardingTestStack buildOnboardingStack({
     identityVerification: IdentityVerificationService(repo: identity),
     tradeVerification: TradeVerificationService(repo: trade),
     storage: storageService,
+    onboardingRepository: onboardingRepository,
     logger: logger,
   );
   final OnboardingProvider provider =
@@ -125,6 +138,8 @@ OnboardingTestStack buildOnboardingStack({
     tradeVerification: TradeVerificationService(repo: trade),
     storage: storageService,
     store: progressStore,
+    onboardingRemote: onboarding,
+    onboardingRepository: onboardingRepository,
     service: service,
     provider: provider,
   );

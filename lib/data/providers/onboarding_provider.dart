@@ -47,8 +47,24 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// The current (furthest) step code.
   OnboardingStepCode? get currentStep => _progress?.step;
 
-  /// Whether all five wizard steps are complete.
+  /// Whether all five wizard steps are complete (derived from the local
+  /// resume position).
   bool get isComplete => _progress?.isComplete ?? false;
+
+  /// The server-authoritative completion flag
+  /// (`entities.onboarding_completed_at is not null`), or `null` until the
+  /// status is resolved for the active session (or the fetch failed and the
+  /// service degraded to the local cache).
+  ///
+  /// The route guard prefers this over [isComplete]: the backend — not the
+  /// volatile local store — decides whether onboarding is truly finished
+  /// (Rule 2/3), fixing the refresh/relaunch regression.
+  bool? get isCompleteAuthoritative => _service.serverCompleted;
+
+  /// Whether the server-authoritative status has been resolved for the active
+  /// session. `false` until the first [loadProgress] round-trip completes (or
+  /// when no repository is wired and the service fell back to local-only).
+  bool get serverHydrated => _service.serverHydrated;
 
   /// The owning entity id for progress keying.
   String? get entityId => _entityId;
