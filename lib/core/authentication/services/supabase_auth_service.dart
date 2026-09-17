@@ -6,6 +6,7 @@ import 'package:hivorr/core/authentication/auth_config.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/services/auth_service.dart';
+import 'package:hivorr/core/authentication/services/clear_auth_url_parameters.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -21,13 +22,26 @@ class SupabaseAuthService implements AuthService {
     required GoTrueClient authClient,
     required SupabaseClient supabaseClient,
     required AuthConfig config,
+    Uri Function()? callbackUriResolver,
   }) : _authClient = authClient,
        _supabaseClient = supabaseClient,
-       _config = config;
+       _config = config,
+       _callbackUriResolver = callbackUriResolver ?? _defaultCallbackUri;
 
+  /// The Supabase instance performing the recovery exchange, so this service
+  /// and the EP-01-07 API layer share one network session (EP-01-09 §5.3).
   final GoTrueClient _authClient;
   final SupabaseClient _supabaseClient;
   final AuthConfig _config;
+
+  /// Resolves the current page URL at recovery-callback handling time.
+  ///
+  /// Injected for tests; defaults to [Uri.base] (the browser URL on Web).
+  final Uri Function() _callbackUriResolver;
+
+  /// The recovery deep link must end on the Web client; non-Web builds never
+  /// observe a `code` callback, so the resolver is only exercised on Web.
+  static Uri _defaultCallbackUri() => Uri.base;
 
   final StreamController<AuthStatus> _statusController =
       StreamController<AuthStatus>.broadcast();
@@ -37,6 +51,10 @@ class SupabaseAuthService implements AuthService {
   String? _provisionedUserId;
   StreamSubscription<AuthState>? _subscription;
   bool _initialized = false;
+
+  /// A failed recovery deep-link exchange (expired/invalid/already-used code)
+  /// surfaced at bootstrap, or `null` when nothing landed or it succeeded.
+  ApiException? _lastRecoveryError;
 
   @override
   AuthStatus get status => _status;
@@ -54,6 +72,12 @@ class SupabaseAuthService implements AuthService {
   bool get isSignedIn => _status == AuthStatus.authenticated;
 
   @override
+  bool get isRecoverySession => _status == AuthStatus.recovery;
+
+  @override
+  ApiException? get recoveryCallbackError => _lastRecoveryError;
+
+  @override
   Stream<AuthStatus> get onStatusChanged => _statusController.stream;
 
   @override
@@ -63,16 +87,58 @@ class SupabaseAuthService implements AuthService {
     }
     _initialized = true;
 
-    final Session? session = _authClient.currentSession;
-    if (session != null && session.user.id.isNotEmpty) {
-      _applyAuthenticated(session.user.id);
-      // Best-effort: ensure the entity exists without blocking startup.
-      unawaited(_provisionIfNeeded(session.user.id, rethrowOnError: false));
-    } else {
-      _applyStatus(AuthStatus.unauthenticated, null);
+    // Consume a password-recovery callback from the boot URL before restoring
+    // the persisted session: the exchange is single-use and must win over any
+    // stale persisted session (which is also why restore is skipped once a
+    // callback was handled).
+    final bool recoveryCallbackHandled = await _consumeRecoveryCallbackIfPresent();
+    if (!recoveryCallbackHandled) {
+      final Session? session = _authClient.currentSession;
+      if (session != null && session.user.id.isNotEmpty) {
+        _applyAuthenticated(session.user.id);
+        // Best-effort: ensure the entity exists without blocking startup.
+        unawaited(_provisionIfNeeded(session.user.id, rethrowOnError: false));
+      } else {
+        _applyStatus(AuthStatus.unauthenticated, null);
+      }
     }
 
     _subscription = _authClient.onAuthStateChange.listen(_handleAuthState);
+  }
+
+  /// Exchanges a recovery `code` present in the current URL (PKCE deep link).
+  ///
+  /// Returns `true` when a recovery code was found (and therefore handled —
+  /// success applies [AuthStatus.recovery], failure stays unauthenticated and
+  /// stashes [recoveryCallbackError]).
+  ///
+  /// On success the recovery session is applied so the reset door is reachable
+  /// even for accounts whose email is unverified (the recovery flow keeps
+  /// `email_confirmed_at` untouched). The `code` parameter is always stripped
+  /// from the address bar so a refresh never re-exchanges it.
+  Future<bool> _consumeRecoveryCallbackIfPresent() async {
+    final Uri callback = _callbackUriResolver();
+    final String? code = callback.queryParameters['code'];
+    if (code == null || code.isEmpty) {
+      return false;
+    }
+    try {
+      await _authClient.exchangeCodeForSession(code);
+      clearAuthUrlParameters();
+      _lastRecoveryError = null;
+      final Session? session = _authClient.currentSession;
+      if (session != null && session.user.id.isNotEmpty) {
+        _applyStatus(AuthStatus.recovery, session.user.id);
+      } else {
+        _applyStatus(AuthStatus.unauthenticated, null);
+      }
+      return true;
+    } on Object catch (e) {
+      clearAuthUrlParameters();
+      _lastRecoveryError = _mapError(e);
+      _applyStatus(AuthStatus.unauthenticated, null);
+      return true;
+    }
   }
 
   @override
@@ -140,9 +206,7 @@ class SupabaseAuthService implements AuthService {
       );
       _applySession(response);
       if (newPassword != null && newPassword.isNotEmpty) {
-        await _authClient.updateUser(
-          UserAttributes(password: newPassword),
-        );
+        await _authClient.updateUser(UserAttributes(password: newPassword));
       }
     } on Object catch (e) {
       throw _mapError(e);
@@ -165,7 +229,10 @@ class SupabaseAuthService implements AuthService {
   @override
   Future<void> requestPasswordReset(String email) async {
     try {
-      await _authClient.resetPasswordForEmail(email);
+      await _authClient.resetPasswordForEmail(
+        email,
+        redirectTo: _config.recoveryRedirectUrl,
+      );
     } on Object catch (e) {
       throw _mapError(e);
     }
@@ -173,10 +240,20 @@ class SupabaseAuthService implements AuthService {
 
   @override
   Future<void> updatePassword(String newPassword) async {
-    try {
-      await _authClient.updateUser(
-        UserAttributes(password: newPassword),
+    // Fail-closed: only a recovery session may change the password. A user
+    // landing on /reset-password without a live recovery link gets the
+    // "request a new link" guidance, never a silent read-write from a stale
+    // session.
+    if (!isRecoverySession) {
+      throw const ApiException(
+        kind: ApiExceptionKind.validation,
+        message:
+            'This reset link is invalid or has expired. Request a new one.',
+        code: 'invalid_grant',
       );
+    }
+    try {
+      await _authClient.updateUser(UserAttributes(password: newPassword));
     } on Object catch (e) {
       throw _mapError(e);
     }
@@ -250,18 +327,29 @@ class SupabaseAuthService implements AuthService {
       case AuthChangeEvent.initialSession:
       case AuthChangeEvent.tokenRefreshed:
       case AuthChangeEvent.userUpdated:
-      case AuthChangeEvent.passwordRecovery:
         if (hasSession) {
           _applyAuthenticated(session.user.id);
         } else {
           _applyStatus(AuthStatus.unauthenticated, null);
         }
+      case AuthChangeEvent.passwordRecovery:
+        // The recovery deep link issued a session; it only empowers the reset
+        // door until [updatePassword] completes.
+        _applyRecoveryOrUnauthenticated(session);
       default:
         if (hasSession) {
           _applyAuthenticated(session.user.id);
         } else {
           _applyStatus(AuthStatus.unauthenticated, null);
         }
+    }
+  }
+
+  void _applyRecoveryOrUnauthenticated(Session? session) {
+    if (session != null && session.user.id.isNotEmpty) {
+      _applyStatus(AuthStatus.recovery, session.user.id);
+    } else {
+      _applyStatus(AuthStatus.unauthenticated, null);
     }
   }
 
@@ -325,8 +413,9 @@ class SupabaseAuthService implements AuthService {
       );
     }
     if (error is AuthException) {
-      final String? code =
-          (error.code != null && error.code!.isNotEmpty) ? error.code : null;
+      final String? code = (error.code != null && error.code!.isNotEmpty)
+          ? error.code
+          : null;
       final int? status = int.tryParse(error.statusCode ?? '');
       if (code != null) {
         return _mapAuthCode(code, status);
@@ -359,22 +448,21 @@ class SupabaseAuthService implements AuthService {
   ApiException _mapAuthCode(String code, int? status) {
     final ApiExceptionKind kind = switch (code) {
       'user_already_exists' => ApiExceptionKind.conflict,
-      'email_not_confirmed' || 'email_not_verified' || 'invalid_otp' =>
-        ApiExceptionKind.auth,
+      'email_not_confirmed' ||
+      'email_not_verified' ||
+      'invalid_otp' => ApiExceptionKind.auth,
       'otp_expired' || 'otp_disabled' => ApiExceptionKind.validation,
+      'invalid_grant' => ApiExceptionKind.validation,
       'over_request_rate_limit' ||
       'over_email_send_rate_limit' ||
-      'over_sms_send_rate_limit' =>
-        ApiExceptionKind.validation,
+      'over_sms_send_rate_limit' => ApiExceptionKind.validation,
       'invalid_credentials' ||
       'wrong_password' ||
       'invalid_otp' ||
-      'email_address_changed' =>
-        ApiExceptionKind.auth,
+      'email_address_changed' => ApiExceptionKind.auth,
       'user_not_found' ||
       'user_has_active_session' ||
-      'signup_disabled' =>
-        ApiExceptionKind.validation,
+      'signup_disabled' => ApiExceptionKind.validation,
       _ => _safeKindForStatus(status),
     };
     final String message = switch (kind) {
@@ -384,11 +472,18 @@ class SupabaseAuthService implements AuthService {
         'That code has expired. Request a new one.',
       ApiExceptionKind.validation when code == 'otp_disabled' =>
         'Code verification is currently unavailable.',
+      ApiExceptionKind.validation when code == 'invalid_grant' =>
+        'This reset link is invalid or has expired. Request a new one.',
       ApiExceptionKind.validation when _isRateLimit(code) =>
         'Too many requests. Please wait a moment and try again.',
       _ => _safeMessage(kind),
     };
-    return ApiException(kind: kind, message: message, code: code, statusCode: status);
+    return ApiException(
+      kind: kind,
+      message: message,
+      code: code,
+      statusCode: status,
+    );
   }
 
   bool _isRateLimit(String code) =>
@@ -399,19 +494,19 @@ class SupabaseAuthService implements AuthService {
   /// Extended-validation login failures keep a neutral, single message so the
   /// login form never leaks which part of the credentials was wrong.
   String _emailAuthMessage(String code) => switch (code) {
-        'email_not_confirmed' || 'email_not_verified' =>
-          'Your email has not been verified yet.',
-        'invalid_otp' => 'Invalid code. Please check and try again.',
-        _ => 'Invalid email or password.',
-      };
+    'email_not_confirmed' ||
+    'email_not_verified' => 'Your email has not been verified yet.',
+    'invalid_otp' => 'Invalid code. Please check and try again.',
+    _ => 'Invalid email or password.',
+  };
 
   ApiExceptionKind _safeKindForStatus(int? status) => switch (status) {
-        401 => ApiExceptionKind.auth,
-        403 => ApiExceptionKind.forbidden,
-        400 || 422 => ApiExceptionKind.validation,
-        429 => ApiExceptionKind.validation,
-        _ => ApiExceptionKind.unknown,
-      };
+    401 => ApiExceptionKind.auth,
+    403 => ApiExceptionKind.forbidden,
+    400 || 422 => ApiExceptionKind.validation,
+    429 => ApiExceptionKind.validation,
+    _ => ApiExceptionKind.unknown,
+  };
 
   String _safeMessage(ApiExceptionKind kind) {
     switch (kind) {

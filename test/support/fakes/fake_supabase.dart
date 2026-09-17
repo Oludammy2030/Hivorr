@@ -44,12 +44,29 @@ class FakeGoTrueClient extends GoTrueClient {
   User? _seededUser;
   bool returnSessionOnSignUp = true;
   bool returnSessionOnVerify = true;
+  bool returnSessionOnExchange = true;
   AuthException? nextError;
+  AuthException? exchangeError;
 
   /// Controls the `email_confirmed_at` flag on the session produced by
   /// [signUp], [signInWithPassword] and [verifyOTP], so the service maps the
   /// confirmed/unconfirmed session correctly in widget and unit tests.
   bool emailConfirmedInSession = false;
+
+  /// Email of the most recent [resetPasswordForEmail] call, if any.
+  String? resetEmail;
+
+  /// `redirectTo` argument of the most recent [resetPasswordForEmail] call.
+  String? resetRedirectTo;
+
+  /// Number of [resetPasswordForEmail] calls observed.
+  int resetCallCount = 0;
+
+  /// Code passed to the most recent [exchangeCodeForSession] call, if any.
+  String? exchangedCode;
+
+  /// Number of [exchangeCodeForSession] calls observed.
+  int exchangeCallCount = 0;
 
   /// Plants a current session (e.g. a persisted cold-start session).
   void seedSession(Session session) => _session = session;
@@ -179,6 +196,45 @@ class FakeGoTrueClient extends GoTrueClient {
     return AuthResponse(session: null, user: null);
   }
 
+  @override
+  Future<void> resetPasswordForEmail(
+    String email, {
+    String? redirectTo,
+    String? captchaToken,
+  }) async {
+    if (nextError != null) {
+      final AuthException e = nextError!;
+      nextError = null;
+      throw e;
+    }
+    resetCallCount++;
+    resetEmail = email;
+    resetRedirectTo = redirectTo;
+  }
+
+  @override
+  Future<AuthSessionUrlResponse> exchangeCodeForSession(String authCode) async {
+    exchangeCallCount++;
+    exchangedCode = authCode;
+    if (exchangeError != null) {
+      final AuthException e = exchangeError!;
+      exchangeError = null;
+      throw e;
+    }
+    final Session session = fakeSession(
+      'u1',
+      emailConfirmed: emailConfirmedInSession,
+    );
+    if (returnSessionOnExchange) {
+      _session = session;
+      emit(AuthChangeEvent.passwordRecovery, _session);
+    }
+    return AuthSessionUrlResponse(
+      session: session,
+      redirectType: AuthChangeEvent.passwordRecovery.name,
+    );
+  }
+
   /// Password submitted to the most recent [updateUser] call, if any.
   String? updatedPassword;
 
@@ -229,6 +285,7 @@ class FakeSupabaseAuthService extends SupabaseAuthService {
     required super.authClient,
     required super.supabaseClient,
     required super.config,
+    super.callbackUriResolver,
   });
 
   int provisionCallCount = 0;

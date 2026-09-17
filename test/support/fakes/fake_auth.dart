@@ -1,4 +1,5 @@
 import 'package:hivorr/core/api/auth/access_token_provider.dart';
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
 
 export 'fake_supabase.dart';
@@ -7,6 +8,12 @@ export 'fake_supabase.dart';
 class FakeAuthService implements AuthService {
   @override
   AuthStatus get status => AuthStatus.unauthenticated;
+
+  @override
+  bool get isRecoverySession => false;
+
+  @override
+  ApiException? get recoveryCallbackError => null;
 
   @override
   String? get currentEntityId => null;

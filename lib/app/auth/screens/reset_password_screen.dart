@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/auth/screens/auth_scaffold.dart';
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -15,9 +16,15 @@ import 'package:provider/provider.dart';
 
 /// Set-a-new-password flow reachable from the recovery email link.
 ///
-/// Thin UI over [AuthProvider.updatePassword]; the recovery email link
-/// carries the session that empowers the password update. Screens both the
-/// change-in-progress error and a success confirmation.
+/// Thin UI over [AuthProvider.updatePassword]; the recovery email link carries
+/// the single-purpose session that empowers the update. Distinctly handles:
+///
+/// * a successful update (recovery session is then signed out so the new
+///   password is proven from a fresh sign-in);
+/// * an expired/invalid/already-used link, surfacing the "request a new link"
+///   guidance instead of a broken password form;
+/// * a recovery callback whose PKCE exchange already failed at bootstrap
+///   ([AuthProvider.recoveryCallbackError]).
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
 
@@ -32,6 +39,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _submitting = false;
   bool _attempted = false;
   bool _done = false;
+  bool _invalidLink = false;
 
   @override
   void dispose() {
@@ -48,7 +56,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final String? confirmError = _confirm.text.isNotEmpty && !_passwordsMatch
         ? 'Passwords do not match.'
         : null;
-    final String? error = _attempted ? auth.lastError?.message : null;
+    final bool linkUnavailable = auth.recoveryCallbackError != null;
+    final String? error = _attempted && !_invalidLink && !linkUnavailable
+        ? auth.lastError?.message
+        : null;
 
     return AuthScaffold(
       title: 'Set a new password',
@@ -56,31 +67,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          if (_done) ...<Widget>[
-            Container(
-              padding: const EdgeInsets.all(HivorrSpacing.md),
-              decoration: BoxDecoration(
-                color: context.appExtension.successContainer,
-                borderRadius: BorderRadius.circular(
-                  context.appExtension.radiusSm,
-                ),
-              ),
-              child: Text(
-                'Your password has been updated. You can now sign in.',
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: context.appExtension.onSuccessContainer,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: HivorrSpacing.md),
-            HivorrButton(
-              label: 'Go to sign in',
-              isExpanded: true,
-              size: HivorrButtonSize.large,
-              onPressed: () => context.go(RoutePaths.login),
-            ),
-          ] else ...<Widget>[
+          if (_done)
+            ..._successSection()
+          else if (_invalidLink || linkUnavailable)
+            ..._invalidLinkSection()
+          else ...<Widget>[
             HivorrTextField(
               controller: _password,
               label: 'New password',
@@ -135,7 +126,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
             const SizedBox(height: HivorrSpacing.md),
             TextButton(
-              onPressed: _submitting ? null : () => context.go(RoutePaths.login),
+              onPressed: _submitting
+                  ? null
+                  : () => context.go(RoutePaths.login),
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.primary,
               ),
@@ -145,6 +138,69 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ],
       ),
     );
+  }
+
+  List<Widget> _successSection() {
+    final BuildContext context = this.context;
+    return <Widget>[
+      Container(
+        padding: const EdgeInsets.all(HivorrSpacing.md),
+        decoration: BoxDecoration(
+          color: context.appExtension.successContainer,
+          borderRadius: BorderRadius.circular(context.appExtension.radiusSm),
+        ),
+        child: Text(
+          'Your password has been updated. You can now sign in.',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.appExtension.onSuccessContainer,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      const SizedBox(height: HivorrSpacing.md),
+      HivorrButton(
+        label: 'Go to sign in',
+        isExpanded: true,
+        size: HivorrButtonSize.large,
+        onPressed: () => context.go(RoutePaths.login),
+      ),
+    ];
+  }
+
+  List<Widget> _invalidLinkSection() {
+    final BuildContext context = this.context;
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return <Widget>[
+      Container(
+        padding: const EdgeInsets.all(HivorrSpacing.md),
+        decoration: BoxDecoration(
+          color: scheme.errorContainer,
+          borderRadius: BorderRadius.circular(context.appExtension.radiusSm),
+        ),
+        child: Text(
+          'This reset link is invalid or has expired. Request a new one.',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: scheme.onErrorContainer,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      const SizedBox(height: HivorrSpacing.md),
+      HivorrButton(
+        label: 'Request a new link',
+        isExpanded: true,
+        size: HivorrButtonSize.large,
+        onPressed: () => context.go(RoutePaths.forgotPassword),
+      ),
+      const SizedBox(height: HivorrSpacing.md),
+      TextButton(
+        onPressed: () => context.go(RoutePaths.login),
+        style: TextButton.styleFrom(
+          foregroundColor: Theme.of(context).colorScheme.primary,
+        ),
+        child: const Text('Back to sign in'),
+      ),
+    ];
   }
 
   bool get _passwordsMatch =>
@@ -160,6 +216,24 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
     final AuthProvider auth = context.read<AuthProvider>();
     await auth.updatePassword(_password.text);
+    final ApiException? lastError = auth.lastError;
+    if (!mounted) {
+      return;
+    }
+    if (lastError != null) {
+      setState(() {
+        _submitting = false;
+        _invalidLink = _isInvalidLinkError(lastError);
+      });
+      return;
+    }
+    // The recovery session is single-purpose: sign out before returning to the
+    // login door so the just-updated password is proven from a fresh sign-in.
+    try {
+      await auth.signOut();
+    } on ApiException {
+      // A failed sign-out must not hide the successful password update.
+    }
     if (!mounted) {
       return;
     }
@@ -168,4 +242,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _done = true;
     });
   }
+
+  /// Codes surfaced when a recovery code is expired, already used, or invalid.
+  static bool _isInvalidLinkError(ApiException error) =>
+      error.code == 'invalid_grant' ||
+      error.code == 'otp_expired' ||
+      error.code == 'otp_disabled';
 }

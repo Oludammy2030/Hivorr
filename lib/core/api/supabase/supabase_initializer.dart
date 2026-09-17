@@ -27,6 +27,14 @@ class SupabaseInitializer {
     await Supabase.initialize(
       url: config.supabaseConfig.url,
       publishableKey: config.supabaseConfig.anonKey,
+      authOptions: const FlutterAuthClientOptions(
+        // Password-recovery deep links (`/reset-password?code=...`) are
+        // exchanged explicitly by SupabaseAuthService.initialize(), not by
+        // supabase_flutter's generic URI observer: the exchange result must
+        // drive AuthStatus.recovery and the address-bar cleanup. Disabling it
+        // also prevents double-exchanges and keeps non-recovery params intact.
+        detectSessionInUri: false,
+      ),
     );
     _isInitialized = true;
     return Supabase.instance.client;

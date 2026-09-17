@@ -15,18 +15,23 @@ AuthService buildService({
   required FakeGoTrueClient authClient,
   SupabaseClient? supabaseClient,
   bool recordProvisioning = false,
+  AuthConfig? config,
+  Uri? callbackUri,
 }) {
+  final Uri Function()? resolver = callbackUri == null ? null : () => callbackUri;
   if (recordProvisioning) {
     return FakeSupabaseAuthService(
       authClient: authClient,
       supabaseClient: supabaseClient ?? FakeSupabaseClient(),
-      config: const AuthConfig(),
+      config: config ?? const AuthConfig(),
+      callbackUriResolver: resolver,
     );
   }
   return SupabaseAuthService(
     authClient: authClient,
     supabaseClient: supabaseClient ?? FakeSupabaseClient(),
-    config: const AuthConfig(),
+    config: config ?? const AuthConfig(),
+    callbackUriResolver: resolver,
   );
 }
 
@@ -358,6 +363,129 @@ void main() {
 
       expect(service.provisionCallCount, 1);
       await service.dispose();
+    });
+
+    group('password recovery', () {
+      test('requestPasswordReset forwards the configured redirect URL',
+          () async {
+        final AuthService service = buildService(
+          authClient: authClient,
+          config: const AuthConfig(
+            recoveryRedirectBase: 'https://staging.hivorr.com',
+          ),
+        );
+
+        await service.requestPasswordReset('a@b.com');
+
+        expect(authClient.resetCallCount, 1);
+        expect(authClient.resetEmail, 'a@b.com');
+        expect(
+          authClient.resetRedirectTo,
+          'https://staging.hivorr.com/reset-password',
+        );
+        await service.dispose();
+      });
+
+      test('a recovery callback exchange drives AuthStatus.recovery', () async {
+        final AuthService service = buildService(
+          authClient: authClient,
+          callbackUri: Uri.parse(
+            'http://localhost:8080/reset-password?code=reset-code',
+          ),
+        );
+
+        await service.initialize();
+
+        expect(authClient.exchangeCallCount, 1);
+        expect(authClient.exchangedCode, 'reset-code');
+        expect(service.status, AuthStatus.recovery);
+        expect(service.isRecoverySession, isTrue);
+        expect(service.isSignedIn, isFalse);
+        expect(service.currentSession?.entityId, 'u1');
+        expect(service.recoveryCallbackError, isNull);
+        await service.dispose();
+      });
+
+      test('an unverified email keeps the recovery session (orthogonal gate)',
+          () async {
+        final AuthService service = buildService(
+          authClient: authClient,
+          callbackUri: Uri.parse('http://localhost:8080/reset-password?code=c'),
+        );
+        authClient.emailConfirmedInSession = false;
+
+        await service.initialize();
+
+        expect(service.status, AuthStatus.recovery);
+        expect(service.currentSession?.isEmailConfirmed, isFalse);
+        await service.dispose();
+      });
+
+      test('a failed exchange surfaces recoveryCallbackError and stays '
+          'unauthenticated', () async {
+        final AuthService service = buildService(
+          authClient: authClient,
+          callbackUri: Uri.parse('http://localhost:8080/reset-password?code=c'),
+        );
+        authClient.exchangeError = const AuthException(
+          'Code verifier could not be found in local storage.',
+        );
+
+        await service.initialize();
+
+        expect(authClient.exchangeCallCount, 1);
+        expect(service.status, AuthStatus.unauthenticated);
+        expect(service.isRecoverySession, isFalse);
+        expect(service.isSignedIn, isFalse);
+        expect(service.recoveryCallbackError, isNotNull);
+        await service.dispose();
+      });
+
+      test('a passwordRecovery event drives AuthStatus.recovery', () async {
+        final AuthService service = buildService(authClient: authClient);
+        await service.initialize();
+        expect(service.status, AuthStatus.unauthenticated);
+
+        authClient.emit(AuthChangeEvent.passwordRecovery, fakeSession('u1'));
+        await pumpEventQueue();
+
+        expect(service.status, AuthStatus.recovery);
+        expect(service.isRecoverySession, isTrue);
+        expect(service.isSignedIn, isFalse);
+        await service.dispose();
+      });
+
+      test('updatePassword succeeds with a recovery session present', () async {
+        final AuthService service = buildService(
+          authClient: authClient,
+          callbackUri: Uri.parse('http://localhost:8080/reset-password?code=c'),
+        );
+        await service.initialize();
+        expect(service.status, AuthStatus.recovery);
+
+        await service.updatePassword('Newpass1!');
+
+        expect(authClient.updatedPassword, 'Newpass1!');
+        await service.dispose();
+      });
+
+      test('updatePassword is fail-closed without a recovery session', () async {
+        final AuthService service = buildService(authClient: authClient);
+        await service.initialize();
+        expect(service.status, AuthStatus.unauthenticated);
+
+        late final ApiException error;
+        try {
+          await service.updatePassword('Newpass1!');
+          fail('Expected ApiException');
+        } on Object catch (e) {
+          error = e as ApiException;
+        }
+
+        expect(error.code, 'invalid_grant');
+        expect(error.kind, ApiExceptionKind.validation);
+        await service.dispose();
+      });
     });
   });
 }

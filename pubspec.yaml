@@ -51,6 +51,10 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
 
+  # Web platform interop for the password-recovery callback cleanup
+  # (clearAuthUrlParameters). Web-only; unit tests resolve the no-op stub.
+  web: ^1.1.0
+
   # Application and data state propagation for lib/app/ and lib/data/providers/.
   provider: 6.1.5
 
