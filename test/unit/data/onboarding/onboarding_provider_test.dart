@@ -12,7 +12,9 @@ import 'package:hivorr/core/logging/log_sink.dart';
 import 'package:hivorr/core/logging/pii_redactor.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
+import 'package:hivorr/data/models/onboarding_status_dto.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
 import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
 
@@ -390,6 +392,136 @@ void main() {
       await pumpEventQueue();
       expect((await stack.store.read('u1'))!.step,
           OnboardingStepCode.capability);
+    });
+  });
+
+  group('server-authoritative completion (refresh/relaunch fix)', () {
+    test('resume hydrates a completed server state into an empty store',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      stack.onboardingRemote.status = OnboardingStatusDto(
+        capability: 'both',
+        completed: true,
+        onboardingCompletedAt: DateTime.utc(2026, 9, 17),
+        profileExists: true,
+        professionalRoleActive: true,
+        professionExists: true,
+      );
+      await stack.hydrate('u1');
+      expect(stack.service.serverHydrated, isTrue);
+      expect(stack.provider.isCompleteAuthoritative, isTrue);
+      expect(stack.provider.isComplete, isTrue,
+          reason: 'server truth synthesizes the local position');
+      final OnboardingProgress? cached = await stack.store.read('u1');
+      expect(cached, isNotNull);
+      expect(cached!.isComplete, isTrue,
+          reason: 'server truth is write-through cached for offline resumes');
+    });
+
+    test('a fresh server never overwrites a partial local resume position',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      await stack.provider.advance(); // → capability
+      await stack.provider.advance(); // → industry
+      await stack.hydrate('u1'); // re-resume: server still says not completed
+      expect(stack.service.serverHydrated, isTrue);
+      expect(stack.provider.isCompleteAuthoritative, isFalse);
+      expect(stack.provider.currentStep, OnboardingStepCode.industry,
+          reason: 'an incomplete server result falls back to the store');
+    });
+
+    test('offline resume degrades to the cache without claiming authority',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      await stack.provider.advance(); // → capability
+      stack.onboardingRemote.nextGetError = const ApiException(
+        kind: ApiExceptionKind.network,
+        message: 'No connection',
+        code: 'PLT-01-33',
+      );
+      await stack.hydrate('u1');
+      expect(stack.service.serverHydrated, isFalse);
+      expect(stack.provider.isCompleteAuthoritative, isNull,
+          reason: 'unknown server state must not assert completion');
+      expect(stack.provider.currentStep, OnboardingStepCode.capability,
+          reason: 'the cached resume point is preserved');
+    });
+
+    test('selectCapability hire completes on the server in the same RPC',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      await stack.provider.completeProfile(
+        legalName: 'Jane Doe',
+        displayName: 'Jane',
+      );
+      await stack.provider.advance(); // profile → capability
+      await stack.provider.selectCapability(EntityCapability.hire);
+      expect(stack.onboardingRemote.updateStatusCallCount, 1);
+      expect(stack.onboardingRemote.lastCapability, 'hire');
+      expect(stack.onboardingRemote.lastCompleted, isTrue);
+      expect(stack.provider.isCompleteAuthoritative, isTrue);
+      expect(stack.provider.isComplete, isTrue);
+    });
+
+    test('selectCapability offer persists the capability without completing',
+        () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      await stack.provider.completeProfile(
+        legalName: 'Jane Doe',
+        displayName: 'Jane',
+      );
+      await stack.provider.advance(); // profile → capability
+      await stack.provider.selectCapability(EntityCapability.offer);
+      expect(stack.onboardingRemote.updateStatusCallCount, 1);
+      expect(stack.onboardingRemote.lastCapability, 'offer');
+      expect(stack.onboardingRemote.lastCompleted, isFalse,
+          reason: 'an offer entity still has the professional steps left');
+      expect(stack.provider.isCompleteAuthoritative, isFalse);
+      expect(stack.provider.currentStep, OnboardingStepCode.industry);
+    });
+
+    test('advance off the final step stamps completion server-side', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      for (int i = 0; i < 5; i++) {
+        await stack.provider.advance();
+      }
+      expect(stack.onboardingRemote.updateStatusCallCount, 1);
+      expect(stack.onboardingRemote.lastCompleted, isTrue);
+      expect(stack.provider.isCompleteAuthoritative, isTrue);
+      expect(stack.provider.isComplete, isTrue);
+    });
+
+    test('a PLT003 on the final advance blocks local completion', () async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      activeProvider = stack.provider;
+      await stack.hydrate('u1');
+      for (int i = 0; i < 4; i++) {
+        await stack.provider.advance();
+      }
+      expect(stack.provider.currentStep, OnboardingStepCode.tradeProof);
+      stack.onboardingRemote.nextUpdateError = const ApiException(
+        kind: ApiExceptionKind.validation,
+        message: 'Required onboarding steps are incomplete.',
+        code: 'PLT003',
+      );
+      await stack.provider.advance();
+      expect(stack.provider.submitState, SubmitState.error);
+      expect(stack.provider.lastError?.code, 'PLT003');
+      expect(stack.provider.isComplete, isFalse,
+          reason: 'a rejected server completion never finishes locally');
+      expect(stack.provider.currentStep, OnboardingStepCode.tradeProof,
+          reason: 'the wizard stays resumable at the final step');
     });
   });
 }

@@ -226,7 +226,7 @@ class AppBootstrap {
         registerDisputeLayer(apiLayer);
     final ({OnboardingService service, OnboardingProvider provider,
         OnboardingProgressStore store})
-    onboarding = _registerOnboarding(apiLayer, taxonomy, verification);
+    onboarding = _registerOnboarding(apiLayer, storage, taxonomy, verification);
     final EntryStateStore entryStore = HiveEntryStateStore(
       store: LocalStore(storage),
     );
@@ -287,6 +287,7 @@ class AppBootstrap {
   /// repositories and the [EntityProvider] over the EP-01 data seam, then calls
   /// `registerOnboardingLayer` (plan §5.8, FV-43). Only called from
   /// `initialize`; extracted so the record types stay local to bootstrap.
+  /// [storage] backs the cache-only [HiveOnboardingProgressStore].
   static ({
     OnboardingService service,
     OnboardingProvider provider,
@@ -294,6 +295,7 @@ class AppBootstrap {
   })
   _registerOnboarding(
     ApiLayer apiLayer,
+    StorageEngine storage,
     ({TaxonomyRepository repository, TaxonomyProvider provider}) taxonomy,
     ({VerificationRepository repository, VerificationProvider provider})
     verification,
@@ -314,6 +316,7 @@ class AppBootstrap {
       taxonomyProvider: taxonomy.provider,
       identityVerification: identityService,
       tradeVerification: tradeService,
+      storageEngine: storage,
     );
   }
 

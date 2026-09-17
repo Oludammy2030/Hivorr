@@ -12,11 +12,13 @@ import 'package:hivorr/core/storage/storage_paths.dart';
 import 'package:hivorr/core/storage/storage_service.dart';
 import 'package:hivorr/data/entities/entity_profile.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
+import 'package:hivorr/data/entities/onboarding_status.dart';
 import 'package:hivorr/data/entities/trade_verification_status.dart';
 import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/repositories/entity_repository.dart';
+import 'package:hivorr/data/repositories/onboarding_repository.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
 import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
@@ -30,8 +32,16 @@ import 'package:sentry_flutter/sentry_flutter.dart' show SpanStatus, ISentrySpan
 /// composes the existing data-layer facades (`EntityRepository`,
 /// `TaxonomyProvider`, `IdentityVerificationService`,
 /// `TradeVerificationService`, `StorageService`) plus the
-/// [OnboardingProgressStore]; it does not re-implement any transport, and the
-/// only RPC wrapper added for onboarding is `entity_profession_bind`.
+/// [OnboardingProgressStore] and the [OnboardingRepository]; it does not
+/// re-implement any transport, and the only RPC wrappers added for onboarding
+/// are `entity_profession_bind` and the authoritative
+/// `entity_onboarding_status_*` pair.
+///
+/// The [OnboardingRepository] is the **authority** for completion: the local
+/// store remains a cache-only resume position, and the route guard prefers
+/// [serverCompleted] over the derived [OnboardingProgress.isComplete]. When no
+/// repository is wired (unit/widget seams), the facade degrades to the
+/// legacy local-only behavior so the wizard still works without a backend.
 ///
 /// All operations propagate normalized [ApiException]s (and
 /// [StorageValidationException] as `PLT003`) — raw Supabase/Dio exceptions
@@ -45,6 +55,7 @@ class OnboardingService {
     required IdentityVerificationService identityVerification,
     required TradeVerificationService tradeVerification,
     required StorageService storage,
+    OnboardingRepository? onboardingRepository,
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
@@ -54,6 +65,7 @@ class OnboardingService {
         _identityVerification = identityVerification,
         _tradeVerification = tradeVerification,
         _storage = storage,
+        _onboardingRepository = onboardingRepository,
         _logger = logger,
         _tracer = tracer,
         _redactor = redactor ?? PiiRedactor();
@@ -64,17 +76,34 @@ class OnboardingService {
   final IdentityVerificationService _identityVerification;
   final TradeVerificationService _tradeVerification;
   final StorageService _storage;
+  final OnboardingRepository? _onboardingRepository;
   final HivorrLogger? _logger;
   final PerformanceTracer? _tracer;
   final PiiRedactor _redactor;
 
   OnboardingProgress? _progress;
 
+  /// Whether the server-authoritative status was resolved for the active
+  /// session. `false` until the first [resume] round-trip (or when the
+  /// repository is absent / the fetch failed and we fell back to cache).
+  bool _serverHydrated = false;
+
+  /// The server-authoritative completion flag (`entities.onboarding_completed_at
+  /// is not null`), or `null` while unknown.
+  bool? _serverCompleted;
+
   /// The in-memory wizard position, or `null` before [loadProgress]/[resume].
   OnboardingProgress? get progress => _progress;
 
   /// The furthest step reached for the active session, if hydration happened.
   OnboardingStepCode? get currentStep => _progress?.step;
+
+  /// Whether the server-authoritative completion flag has been resolved.
+  bool get serverHydrated => _serverHydrated;
+
+  /// The server-authoritative completion flag, or `null` while unknown. The
+  /// route guard prefers this over [OnboardingProgress.isComplete] (Rule 2/3).
+  bool? get serverCompleted => _serverCompleted;
 
   /// Whether a non-complete progress row exists for [entityId].
   ///
@@ -87,23 +116,30 @@ class OnboardingService {
 
   /// Hydrates the wizard position for [entityId] (plan §5.5).
   ///
-  /// Reads the store and returns the furthest step reached — the resume
-  /// point. When nothing is saved, a fresh progress at `profile` is started
-  /// (not persisted until the first [advance]). Tracing
-  /// `onboarding.resume.duration` wraps the store hydration.
+  /// The **server is authoritative**: when an [OnboardingRepository] is wired,
+  /// the status is fetched first (Rule 2). A completed server response
+  /// synthesizes a complete progress and write-through caches it — this is the
+  /// fix for refresh/relaunch regressions, where the volatile local store was
+  /// the only completion record. Offline/transient fetch failures degrade to
+  /// the local store (cache-only) without marking the state authoritative.
+  /// When nothing is saved, a fresh progress at `profile` is started (not
+  /// persisted until the first [advance]). Tracing
+  /// `onboarding.resume.duration` wraps the hydration.
   Future<OnboardingStepCode> resume(String entityId) async {
     final ISentrySpan? span = _tracer?.startTransaction(
       'onboarding.resume',
       'onboarding',
     );
     try {
-      final OnboardingProgress? saved = await _store.read(entityId);
-      _progress = saved ?? OnboardingProgress(entityId: entityId);
+      OnboardingProgress? progress = await _serverHydrate(entityId);
+      progress ??= await _store.read(entityId);
+      _progress = progress ?? OnboardingProgress(entityId: entityId);
       final OnboardingStepCode step = _progress!.step;
       _logger?.info('Onboarding progress hydrated', <String, Object?>{
         'entityId': _redactor.redact(entityId),
         'step': step.name,
         'isComplete': _progress!.isComplete,
+        'isCompleteAuthoritative': _serverCompleted,
       });
       await _tracer?.finishSpan(span, status: SpanStatus.ok());
       return step;
@@ -119,20 +155,87 @@ class OnboardingService {
     }
   }
 
+  /// Resolves the server-authoritative completion for [entityId].
+  ///
+  /// When the repository is absent this is a no-op returning `null` (legacy
+  /// local-only seam). A completed server state returns a synthesized
+  /// [OnboardingProgress] (capability + full step set from the server),
+  /// write-through-cached so subsequent local-only hydration agrees.
+  /// Transient [ApiException]s (offline, transport) fall back to the store
+  /// with `_serverCompleted` left unknown.
+  Future<OnboardingProgress?> _serverHydrate(String entityId) async {
+    final OnboardingRepository? repo = _onboardingRepository;
+    if (repo == null) {
+      _serverHydrated = false;
+      _serverCompleted = null;
+      return null;
+    }
+    try {
+      final OnboardingStatus status = await repo.getStatus();
+      _serverHydrated = true;
+      _serverCompleted = status.completed;
+      if (!status.completed) {
+        return null;
+      }
+      final EntityCapability capability =
+          status.capability ?? EntityCapability.both;
+      final OnboardingProgress complete = OnboardingProgress(
+        entityId: entityId,
+        capability: capability,
+        step: capability.requiresProfessionalWizard
+            ? OnboardingStepCode.tradeProof
+            : OnboardingStepCode.capability,
+        completedSteps: <OnboardingStepCode>[
+          OnboardingStepCode.profile,
+          OnboardingStepCode.capability,
+          if (capability.requiresProfessionalWizard) ...<OnboardingStepCode>[
+            OnboardingStepCode.industry,
+            OnboardingStepCode.identityDocument,
+            OnboardingStepCode.tradeProof,
+          ],
+        ],
+      );
+      await _store.save(complete);
+      _logger?.info(
+        'Onboarding completion hydrated from server authority',
+        <String, Object?>{
+          'entityId': _redactor.redact(entityId),
+          'capability': capability.name,
+        },
+      );
+      return complete;
+    } on ApiException {
+      // Network/transient — degrade to the local cache without trusting it
+      // for completion. serverCompleted stays null so the guard fails
+      // closed (never force-redirects nor skips onboarding on unknown state
+      // that cannot be resolved).
+      _serverHydrated = false;
+      _serverCompleted = null;
+      return null;
+    }
+  }
+
   /// Advances one step along the capability path and persists (plan §5.4).
   ///
   /// `profile → capability → industry (incl. profession) → identityDocument →
   /// tradeProof` for professional/`both` entities; a hire-only entity finishes
   /// right after the capability step (industry/profession/verification are
-  /// never on its path). Reaching the end calls [OnboardingProgress.finish] so
-  /// `isComplete` becomes `true` (the shell then routes to the complete
-  /// screen). Never skips a required step.
+  /// never on its path). Reaching the end first stamps completion
+  /// **server-side** via `entity_onboarding_status_update` (the
+  /// [OnboardingRepository] is the completion authority); only once the server
+  /// accepts does the local position finish (`isComplete` becomes `true`, the
+  /// shell then routes to the complete screen). A server rejection (`PLT003`,
+  /// e.g. a missing required step) propagates before any local advance, so the
+  /// wizard stays resumable on the final step. Never skips a required step.
   Future<void> advance() async {
     final OnboardingProgress? p = _progress;
     if (p == null || p.isComplete) {
       return;
     }
     final OnboardingStepCode? next = p.nextStep;
+    if (next == null) {
+      await _completeOnServer(p.capability);
+    }
     final OnboardingProgress updated =
         next == null ? p.finish() : p.advanceTo(next);
     _progress = updated;
@@ -141,17 +244,18 @@ class OnboardingService {
 
   /// Records the entity's capability choice and advances past the decision.
   ///
-  /// A professional/`both` choice advances into industry selection; a hire-only
-  /// choice finishes the wizard (`isComplete` becomes true — the shell then
-  /// shows the completion screen). Persists the decision so a resume at the
-  /// capability step keeps it; the role bindings themselves are activated
-  /// later on the professional path (consumer is provisioned at sign-in;
-  /// professional activates on bind).
+  /// The capability is persisted **server-side first**
+  /// (`entity_onboarding_status_update`) as soon as the decision is reached;
+  /// a hire choice finishes the wizard in the same RPC (profile-only path,
+  /// validated server-side), while professional/`both` choices continue into
+  /// industry selection. Only after the server accepts is the local position
+  /// advanced/persisted, so the local cache never lies about the authority.
   Future<void> selectCapability(EntityCapability capability) async {
     final OnboardingProgress? p = _progress;
     if (p == null) {
       return;
     }
+    await _completeOrPersistCapability(capability);
     final OnboardingProgress chosen = p.withCapability(capability);
     final OnboardingStepCode? next = chosen.nextStep;
     final OnboardingProgress updated = next == null
@@ -159,6 +263,45 @@ class OnboardingService {
         : chosen.advanceTo(next);
     _progress = updated;
     await _persist(updated, 'onboarding.step.capability.duration');
+  }
+
+  /// Persists [capability] (and, for a hire-only choice, completion) on the
+  /// server via [OnboardingRepository.update].
+  Future<void> _completeOrPersistCapability(EntityCapability capability) async {
+    final OnboardingRepository? repo = _onboardingRepository;
+    if (repo == null) {
+      _serverHydrated = false;
+      _serverCompleted = null;
+      return;
+    }
+    final OnboardingStatus status = await repo.update(
+      capability: capability,
+      completed: !capability.requiresProfessionalWizard,
+    );
+    _serverHydrated = true;
+    _serverCompleted = status.completed;
+  }
+
+  /// Stamps server-side completion via [OnboardingRepository.update].
+  ///
+  /// No-op when no repository is wired (legacy local-only seam). The server
+  /// re-verifies every required step (`profile`, `capability`, and for
+  /// offer/both: professional role, profession bind, identity document, trade
+  /// proof) and raises `PLT003` when incomplete — that propagates unchanged.
+  Future<void> _completeOnServer(EntityCapability capability) async {
+    final OnboardingRepository? repo = _onboardingRepository;
+    if (repo == null) {
+      _serverHydrated = false;
+      _serverCompleted = null;
+      return;
+    }
+    final OnboardingStatus status = await repo.update(completed: true);
+    _serverHydrated = true;
+    _serverCompleted = status.completed;
+    _logger?.info('Onboarding completion stamped server-side', <String, Object?>{
+      'capability': capability.name,
+      'completed': status.completed,
+    });
   }
 
   /// Steps back one position and persists.

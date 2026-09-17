@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -11,16 +12,18 @@ import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
 import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
 
+import '../support/fakes/fake_onboarding_remote.dart';
 import '../support/fakes/fake_trade_verification.dart';
 import '../support/onboarding/onboarding_test_support.dart';
 
-/// Fake-E2E integration for EP-02-18 (DoD TT-17..TT-20).
+/// Fake-E2E integration for EP-02-18 (DoD TT-17..TT-23).
 ///
 /// Wires the real [OnboardingProvider]/[OnboardingService] seam against the
 /// fake collaborators (taxonomy, identity/trade verification, entity
 /// repository, storage, in-memory progress store) — no widgets and no live
-/// backend. Exercises the full wizard, exit-and-resume, the bid gate, and the
-/// `PLT005` no-fire-hammer contract.
+/// backend. Exercises the full wizard, exit-and-resume, the bid gate, the
+/// `PLT005` no-fire-hammer contract, and the server-authoritative completion
+/// across a relaunch (refresh/relaunch regression fix).
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -231,6 +234,77 @@ test('TT-20: duplicate binding surfaces PLT005 and never fire-hammers',
         OnboardingStepCode.capability,
       ]);
       stack.provider.dispose();
+    });
+
+    test(
+        'TT-22: completion survives a relaunch through the server authority',
+        () async {
+      // "Server memory": one fake remote carries the completion across the
+      // relaunch, while the relaunch uses a brand-new empty local store.
+      final FakeOnboardingRemoteDataSource server =
+          FakeOnboardingRemoteDataSource();
+      final OnboardingTestStack first =
+          buildOnboardingStack(onboardingRemote: server);
+      await first.hydrate('u1');
+      await runProfileStep(first);
+      await runTaxonomySteps(first);
+      await runVerificationSteps(first);
+      expect(first.onboardingRemote.updateStatusCallCount, 1,
+          reason: 'completion is stamped exactly once, server-side');
+      expect(first.onboardingRemote.lastCompleted, isTrue);
+      expect(first.provider.isComplete, isTrue);
+
+      // Relaunch: fresh store + completed server (the pre-fix regression where
+      // the volatile local cache was the only completion record).
+      final OnboardingTestStack second =
+          buildOnboardingStack(onboardingRemote: server);
+      await second.hydrate('u1');
+      expect(second.service.serverHydrated, isTrue);
+      expect(second.provider.isCompleteAuthoritative, isTrue);
+      expect(second.provider.isComplete, isTrue,
+          reason: 'a completed server hydrates completion into an empty store');
+      final OnboardingProgress reseeded =
+          (await second.store.read('u1'))!;
+      expect(reseeded.isComplete, isTrue,
+          reason: 'the relaunch write-throughs the server truth');
+
+      first.provider.dispose();
+      second.provider.dispose();
+    });
+
+    test(
+        'TT-23: offline relaunch degrades to cached completion without claiming '
+        'authority', () async {
+      // Shared store so the completed position survives the relaunch's cache.
+      final InMemoryOnboardingProgressStore store =
+          InMemoryOnboardingProgressStore();
+      final OnboardingTestStack first =
+          buildOnboardingStack(store: store);
+      await first.hydrate('u1');
+      await runProfileStep(first);
+      await runTaxonomySteps(first);
+      await runVerificationSteps(first);
+      expect(first.provider.isComplete, isTrue);
+
+      // Relaunch with an unreachable server: the cache keeps home usable, but
+      // the authority stays unknown (fail-closed on the unknown flag).
+      final FakeOnboardingRemoteDataSource offlineServer =
+          FakeOnboardingRemoteDataSource()
+            ..nextGetError = const ApiException(
+              kind: ApiExceptionKind.network,
+              message: 'No connection',
+              code: 'PLT-01-33',
+            );
+      final OnboardingTestStack second =
+          buildOnboardingStack(store: store, onboardingRemote: offlineServer);
+      await second.hydrate('u1');
+      expect(second.service.serverHydrated, isFalse);
+      expect(second.provider.isCompleteAuthoritative, isNull);
+      expect(second.provider.isComplete, isTrue,
+          reason: 'the cached completion keeps the wizard usable offline');
+
+      first.provider.dispose();
+      second.provider.dispose();
     });
   });
 }

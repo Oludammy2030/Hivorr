@@ -201,12 +201,19 @@ class RouteGuard {
     if (step == null) {
       return null;
     }
+    // Server-authoritative completion wins (Rule 2/3): the backend decides
+    // whether onboarding is finished, so a refresh (volatile local store
+    // cleared) never re-enters a completed wizard. Falls back to the local
+    // derivation only when the server state is unknown (no repository seam /
+    // offline hydration failure).
+    final bool complete =
+        onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
     if (location == RoutePaths.home &&
-        !onboarding.isComplete &&
+        !complete &&
         !onboarding.exited) {
       return RoutePaths.onboardingRouteFor(step);
     }
-    if (location.startsWith(RoutePaths.onboarding) && onboarding.isComplete) {
+    if (location.startsWith(RoutePaths.onboarding) && complete) {
       return RoutePaths.home;
     }
     return null;
