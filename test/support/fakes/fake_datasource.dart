@@ -57,16 +57,34 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
   @override
   Future<EntityProfileDto> updateProfile({
     required String entityId,
-    required String legalName,
-    required String displayName,
+    String? legalName,
+    String? displayName,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? phoneNumber,
     String? bio,
   }) async {
     updateProfileCallCount++;
+    // Derive legalName when split provided but legalName omitted (new registration path).
+    String resolvedLegal = legalName ??
+        (firstName != null && lastName != null
+            ? (middleName != null && middleName.trim().isNotEmpty
+                ? '${firstName.trim()} ${middleName.trim()} ${lastName.trim()}'
+                : '${firstName.trim()} ${lastName.trim()}')
+            : legalName ?? '');
+    String resolvedDisplay = displayName ?? profile?.displayName ?? '';
     profile = EntityProfileDto(
       entityId: entityId,
-      legalName: legalName,
-      displayName: displayName,
-      bio: bio,
+      legalName: resolvedLegal,
+      displayName: resolvedDisplay,
+      firstName: firstName ?? profile?.firstName,
+      middleName: middleName ?? profile?.middleName,
+      lastName: lastName ?? profile?.lastName,
+      phoneNumber: phoneNumber ?? profile?.phoneNumber,
+      bio: bio ?? profile?.bio,
+      avatarPath: profile?.avatarPath,
+      countryCode: profile?.countryCode,
     );
     return profile!;
   }

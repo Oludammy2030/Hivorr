@@ -1,6 +1,7 @@
 import 'package:hivorr/core/api/auth/access_token_provider.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
+import 'package:hivorr/core/authentication/models/registration_identity.dart';
 
 export 'fake_supabase.dart';
 
@@ -28,9 +29,23 @@ class FakeAuthService implements AuthService {
   Stream<AuthStatus> get onStatusChanged =>
       const Stream<AuthStatus>.empty();
 
+  // Captured for registration-restructuring assertions.
+  AuthCredentials? lastSignUpCredentials;
+  dynamic lastSignUpIdentity;
+  int signUpWithIdentityCallCount = 0;
+
   @override
-  Future<AuthResult> signUp(AuthCredentials credentials) async =>
-      AuthResult(status: AuthStatus.unauthenticated);
+  Future<AuthResult> signUp(AuthCredentials credentials) async {
+    lastSignUpCredentials = credentials;
+    return AuthResult(status: AuthStatus.unauthenticated);
+  }
+
+  @override
+  Future<AuthResult> signUpWithIdentity(RegistrationIdentity identity) async {
+    signUpWithIdentityCallCount++;
+    lastSignUpIdentity = identity;
+    return AuthResult(status: AuthStatus.awaitingEmailConfirmation);
+  }
 
   @override
   Future<AuthResult> signIn(AuthCredentials credentials) async =>

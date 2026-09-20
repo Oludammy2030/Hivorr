@@ -7,6 +7,10 @@ class EntityProfileDto {
     required this.entityId,
     required this.legalName,
     required this.displayName,
+    this.firstName,
+    this.middleName,
+    this.lastName,
+    this.phoneNumber,
     this.bio,
     this.avatarPath,
     this.countryCode,
@@ -21,6 +25,10 @@ class EntityProfileDto {
         entityId: json['entity_id'] as String,
         legalName: json['legal_name'] as String,
         displayName: json['display_name'] as String,
+        firstName: json['first_name'] as String?,
+        middleName: json['middle_name'] as String?,
+        lastName: json['last_name'] as String?,
+        phoneNumber: json['phone_number'] as String?,
         bio: json['bio'] as String?,
         avatarPath: json['avatar_path'] as String?,
         countryCode: json['country_code'] as String?,
@@ -36,6 +44,10 @@ class EntityProfileDto {
   final String entityId;
   final String legalName;
   final String displayName;
+  final String? firstName;
+  final String? middleName;
+  final String? lastName;
+  final String? phoneNumber;
   final String? bio;
   final String? avatarPath;
   final String? countryCode;
@@ -48,6 +60,10 @@ class EntityProfileDto {
     'entity_id': entityId,
     'legal_name': legalName,
     'display_name': displayName,
+    if (firstName != null) 'first_name': firstName,
+    if (middleName != null) 'middle_name': middleName,
+    if (lastName != null) 'last_name': lastName,
+    if (phoneNumber != null) 'phone_number': phoneNumber,
     if (bio != null) 'bio': bio,
     if (avatarPath != null) 'avatar_path': avatarPath,
     if (countryCode != null) 'country_code': countryCode,

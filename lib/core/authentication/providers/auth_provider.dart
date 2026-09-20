@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
+import 'package:hivorr/core/authentication/models/registration_identity.dart';
 import 'package:hivorr/core/authentication/services/auth_service.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 
@@ -67,6 +68,10 @@ class AuthProvider extends ChangeNotifier {
   /// Registers a new identity.
   Future<void> signUp(AuthCredentials credentials) =>
       _run(() => service.signUp(credentials));
+
+  /// Registers with staged identity (first/middle/last, displayName, phone).
+  Future<void> signUpWithIdentity(RegistrationIdentity identity) =>
+      _run(() => service.signUpWithIdentity(identity));
 
   /// Sends a one-time verification code to [email] (DEV email-OTP).
   Future<void> sendEmailVerificationOtp(String email) =>

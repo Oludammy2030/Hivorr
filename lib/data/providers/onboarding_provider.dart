@@ -139,9 +139,15 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Completes the profile step (avatar upload → RPC → avatar_path persist).
+  ///
+  /// Split-identity variant preferred (registration restructuring).
   Future<void> completeProfile({
-    required String legalName,
-    required String displayName,
+    String? legalName,
+    String? displayName,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? phoneNumber,
     String? bio,
     Uint8List? avatarBytes,
     String? avatarFileName,
@@ -153,6 +159,10 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
           entityId: entityId,
           legalName: legalName,
           displayName: displayName,
+          firstName: firstName,
+          middleName: middleName,
+          lastName: lastName,
+          phoneNumber: phoneNumber,
           bio: bio,
           avatarBytes: avatarBytes,
           avatarFileName: avatarFileName,

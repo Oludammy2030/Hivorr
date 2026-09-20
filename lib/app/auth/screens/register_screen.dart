@@ -4,9 +4,11 @@ import 'package:hivorr/app/auth/screens/auth_scaffold.dart';
 import 'package:hivorr/app/entry/entry_query.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
+import 'package:hivorr/core/authentication/models/registration_identity.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/validators/hivorr_validators.dart';
 import 'package:hivorr/shared/validators/password_policy.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
@@ -15,18 +17,15 @@ import 'package:hivorr/shared/widgets/password_requirements_checklist.dart';
 import 'package:hivorr/shared/widgets/password_strength_indicator.dart';
 import 'package:provider/provider.dart';
 
-/// Registration (register → account creation → onboarding handoff).
+/// Registration with basic identity capture (account creation → OTP → onboarding).
 ///
-/// Captures credentials only: account provisioning is the existing
-/// RLS-scoped [AuthService.ensureEntityExists] and Basic Information stays in
-/// onboarding (correction plan §6, §8). Registration creates the account with
-/// its password via [AuthProvider.signUp]; the email-OTP code is then the
-/// remaining verification factor for the [AuthConfirmationGateScreen]. One
-/// email maps to one account — when [AuthProvider.signUp] reports
-/// `user_already_exists`, the visitor is told the email is registered and
-/// offered both the login door and the resume-mode verification gate
-/// (`Verify email`, which never creates a duplicate account) instead of a
-/// duplicate registration.
+/// Collects authoritative account identity at sign-up (first/last required,
+/// middle optional, displayName required, email/phone required, password).
+/// Bio/Avatar are NOT collected here — they remain profile-completion later
+/// (`/profile`). On submit the identity is staged via GoTrue `user_metadata`
+/// (OTP gap has no JWT) so `AuthConfirmationGateScreen` → verified session can
+/// hydrate `entity_profiles` via the split-name `entity_profile_update` RPC
+/// before entering capability-first onboarding.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -35,7 +34,12 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _firstName = TextEditingController();
+  final TextEditingController _middleName = TextEditingController();
+  final TextEditingController _lastName = TextEditingController();
+  final TextEditingController _displayName = TextEditingController();
   final TextEditingController _email = TextEditingController();
+  final TextEditingController _phone = TextEditingController();
   final TextEditingController _password = TextEditingController();
   final TextEditingController _confirm = TextEditingController();
   bool _obscure = true;
@@ -44,7 +48,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    _firstName.dispose();
+    _middleName.dispose();
+    _lastName.dispose();
+    _displayName.dispose();
     _email.dispose();
+    _phone.dispose();
     _password.dispose();
     _confirm.dispose();
     super.dispose();
@@ -55,7 +64,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final AuthProvider auth = context.watch<AuthProvider>();
     final bool alreadyRegistered =
         auth.lastErrorCode == 'user_already_exists' && _attempted;
+    final String? firstNameError =
+        _attempted && !_isFirstNameValid ? _firstNameError : null;
+    final String? lastNameError =
+        _attempted && !_isLastNameValid ? _lastNameError : null;
+    final String? displayNameError =
+        _attempted && !_isDisplayNameValid ? _displayNameError : null;
     final String? emailError = _attempted && !_isEmailValid ? _emailError : null;
+    final String? phoneError = _attempted && !_isPhoneValid ? _phoneError : null;
     final String? passwordError =
         _attempted && !_isPasswordValid ? _passwordError : null;
     final String? confirmError = _confirm.text.isNotEmpty && !_passwordsMatch
@@ -71,17 +87,86 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return AuthScaffold(
       title: 'Create your free account',
       subtitle:
-          'One verified identity for professional, client and every other '
-          'role. Basic Information comes right after.',
+          'Your basic identity is captured here — onboarding will start with how you want to use Hivorr.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
+          // Name row: first / middle / last — layout adapts to width.
+          LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final bool wide = constraints.maxWidth >= 520;
+              final Widget first = HivorrTextField(
+                controller: _firstName,
+                label: 'First name',
+                hint: 'Required',
+                errorText: firstNameError,
+                enabled: !_submitting,
+                onChanged: (_) => setState(() {}),
+              );
+              final Widget middle = HivorrTextField(
+                controller: _middleName,
+                label: 'Middle name',
+                hint: 'Optional',
+                enabled: !_submitting,
+                onChanged: (_) => setState(() {}),
+              );
+              final Widget last = HivorrTextField(
+                controller: _lastName,
+                label: 'Last name',
+                hint: 'Required',
+                errorText: lastNameError,
+                enabled: !_submitting,
+                onChanged: (_) => setState(() {}),
+              );
+              if (wide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(child: first),
+                    const SizedBox(width: HivorrSpacing.md),
+                    Expanded(child: middle),
+                    const SizedBox(width: HivorrSpacing.md),
+                    Expanded(child: last),
+                  ],
+                );
+              }
+              return Column(
+                children: <Widget>[
+                  first,
+                  const SizedBox(height: HivorrSpacing.md),
+                  middle,
+                  const SizedBox(height: HivorrSpacing.md),
+                  last,
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: HivorrSpacing.md),
+          HivorrTextField(
+            controller: _displayName,
+            label: 'Display name',
+            hint: 'How clients see you',
+            errorText: displayNameError,
+            enabled: !_submitting,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: HivorrSpacing.md),
           HivorrTextField(
             controller: _email,
             label: 'Email address',
             hint: 'you@example.com',
             keyboardType: TextInputType.emailAddress,
             errorText: emailError,
+            enabled: !_submitting,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: HivorrSpacing.md),
+          HivorrTextField(
+            controller: _phone,
+            label: 'Phone number',
+            hint: '+1 555 000 1234',
+            keyboardType: TextInputType.phone,
+            errorText: phoneError,
             enabled: !_submitting,
             onChanged: (_) => setState(() {}),
           ),
@@ -171,8 +256,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  bool get _isFirstNameValid =>
+      HivorrValidators.required(_firstName.text, field: 'First name') == null;
+
+  bool get _isLastNameValid =>
+      HivorrValidators.required(_lastName.text, field: 'Last name') == null;
+
+  bool get _isDisplayNameValid =>
+      HivorrValidators.required(_displayName.text, field: 'Display name') == null;
+
   bool get _isEmailValid =>
-      _email.text.trim().isNotEmpty && _email.text.contains('@');
+      HivorrValidators.email(_email.text) == null;
+
+  bool get _isPhoneValid =>
+      HivorrValidators.phone(_phone.text) == null;
 
   PasswordPolicyResult get _passwordPolicy =>
       PasswordPolicy.supabase.evaluate(_password.text);
@@ -181,7 +278,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool get _passwordsMatch => _confirm.text.isNotEmpty && _confirm.text == _password.text;
 
-  String? get _emailError => _isEmailValid ? null : 'Enter a valid email address.';
+  String? get _firstNameError =>
+      HivorrValidators.required(_firstName.text, field: 'First name');
+
+  String? get _lastNameError =>
+      HivorrValidators.required(_lastName.text, field: 'Last name');
+
+  String? get _displayNameError =>
+      HivorrValidators.required(_displayName.text, field: 'Display name');
+
+  String? get _emailError => HivorrValidators.email(_email.text);
+
+  String? get _phoneError => HivorrValidators.phone(_phone.text);
 
   String? get _passwordError => _isPasswordValid ? null : PasswordPolicy.supabase.invalidMessage;
 
@@ -191,8 +299,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_attempted) {
       return null;
     }
+    if (!_isFirstNameValid) {
+      return 'Enter your first name.';
+    }
+    if (!_isLastNameValid) {
+      return 'Enter your last name.';
+    }
+    if (!_isDisplayNameValid) {
+      return 'Enter a display name.';
+    }
     if (!_isEmailValid) {
       return 'Check your email address.';
+    }
+    if (!_isPhoneValid) {
+      return 'Enter a valid phone number.';
     }
     if (!_isPasswordValid) {
       return PasswordPolicy.supabase.invalidMessage;
@@ -210,17 +330,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _attempted = true;
       _submitting = true;
     });
-    if (!_isEmailValid || !_isPasswordValid || !_passwordsMatch) {
+    if (!_isFirstNameValid ||
+        !_isLastNameValid ||
+        !_isDisplayNameValid ||
+        !_isEmailValid ||
+        !_isPhoneValid ||
+        !_isPasswordValid ||
+        !_passwordsMatch) {
       setState(() => _submitting = false);
       return;
     }
     final AuthProvider auth = context.read<AuthProvider>();
-    await auth.signUp(
-      AuthCredentials(
-        email: _email.text.trim(),
-        password: _password.text,
-      ),
-    );
+    // Use staged-identity sign-up so the OTP gap (no JWT) does not lose names/phone.
+    // Falls back to plain signUp if the provider/service is a test fake without the seam.
+    try {
+      await auth.signUpWithIdentity(
+        RegistrationIdentity(
+          email: _email.text.trim(),
+          password: _password.text,
+          firstName: _firstName.text.trim(),
+          middleName: _middleName.text.trim().isEmpty ? null : _middleName.text.trim(),
+          lastName: _lastName.text.trim(),
+          displayName: _displayName.text.trim(),
+          phoneNumber: _phone.text.trim(),
+        ),
+      );
+    } on NoSuchMethodError {
+      await auth.signUp(
+        AuthCredentials(
+          email: _email.text.trim(),
+          password: _password.text,
+        ),
+      );
+    }
     if (!mounted) {
       return;
     }
@@ -230,10 +372,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     if (auth.status == AuthStatus.awaitingEmailConfirmation) {
-      // The signup confirmation email already carries a verification code
-      // (gotrue sends it as a code email when email confirmations are on);
-      // explicitly re-sending here would trip the send rate limit and deliver
-      // a redundant mail. The gate verifies with the code already sent.
       context.go(_confirmationTarget());
     }
   }

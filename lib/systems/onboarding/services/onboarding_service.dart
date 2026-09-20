@@ -125,6 +125,13 @@ class OnboardingService {
   /// When nothing is saved, a fresh progress at `profile` is started (not
   /// persisted until the first [advance]). Tracing
   /// `onboarding.resume.duration` wraps the hydration.
+  ///
+  /// Registration-restructuring extension: if the server reports
+  /// `profile_exists=true` (registration captured identity before onboarding)
+  /// and the local resume position is still at `profile` with no completed
+  /// steps, the wizard is coerced to `capability` (profile considered done)
+  /// so onboarding never re-asks for names/email/phone. Legacy users without
+  /// a profile stay at `profile`.
   Future<OnboardingStepCode> resume(String entityId) async {
     final ISentrySpan? span = _tracer?.startTransaction(
       'onboarding.resume',
@@ -133,6 +140,67 @@ class OnboardingService {
     try {
       OnboardingProgress? progress = await _serverHydrate(entityId);
       progress ??= await _store.read(entityId);
+      // Capability-first coercion for registration-captured identity.
+      if (progress == null) {
+        // Check server profile existence for fresh accounts (no local row).
+        final OnboardingRepository? repo = _onboardingRepository;
+        if (repo != null) {
+          try {
+            final OnboardingStatus probe = await repo.getStatus();
+            // Update authoritative flags if _serverHydrate didn't already.
+            if (!_serverHydrated) {
+              _serverHydrated = true;
+              _serverCompleted = probe.completed;
+            }
+            if (probe.profileExists && !probe.completed) {
+              progress = OnboardingProgress(
+                entityId: entityId,
+                step: OnboardingStepCode.capability,
+                completedSteps: const <OnboardingStepCode>[
+                  OnboardingStepCode.profile,
+                ],
+                capability: probe.capability ?? EntityCapability.both,
+              );
+              await _store.save(progress);
+              _logger?.info(
+                'Onboarding coerced to capability (profile pre-filled at registration)',
+                <String, Object?>{'entityId': _redactor.redact(entityId)},
+              );
+            }
+          } on ApiException {
+            // Probe failed — keep null so fallback creates profile step (fail-closed).
+          }
+        }
+      } else if (progress.step == OnboardingStepCode.profile &&
+          progress.completedSteps.isEmpty) {
+        // Existing local row at profile but server already has profile — promote.
+        final OnboardingRepository? repo = _onboardingRepository;
+        if (repo != null) {
+          try {
+            final OnboardingStatus probe = await repo.getStatus();
+            if (probe.profileExists && !probe.completed) {
+              progress = OnboardingProgress(
+                entityId: entityId,
+                step: OnboardingStepCode.capability,
+                completedSteps: const <OnboardingStepCode>[
+                  OnboardingStepCode.profile,
+                ],
+                capability: probe.capability ?? progress.capability,
+                hasIdentitySubmission: progress.hasIdentitySubmission,
+                hasTradeProofSubmission: progress.hasTradeProofSubmission,
+                exited: progress.exited,
+              );
+              await _store.save(progress);
+              _logger?.info(
+                'Onboarding promoted from profile to capability (registration identity present)',
+                <String, Object?>{'entityId': _redactor.redact(entityId)},
+              );
+            }
+          } on ApiException {
+            // Keep original progress.
+          }
+        }
+      }
       _progress = progress ?? OnboardingProgress(entityId: entityId);
       final OnboardingStepCode step = _progress!.step;
       _logger?.info('Onboarding progress hydrated', <String, Object?>{
@@ -356,6 +424,9 @@ class OnboardingService {
   /// Completes the profile step: avatar upload → profile RPC → avatar_path
   /// update (DoD TT-04 call order; plan §5.4, §5.6).
   ///
+  /// Split-identity variant (registration restructuring): when [firstName]/[lastName]
+  /// etc are provided they are preferred; legacy [legalName] kept for backward
+  /// compatibility. Bio/avatar remain optional (profile-completed later).
   /// When [avatarBytes] is provided the avatar is uploaded first to the
   /// canonical `profile-avatars/{entityId}/avatar.{ext}` path (`upsert: true`),
   /// validated against the profile-avatar rules (5 MiB, `jpeg/png/webp`) before
@@ -364,8 +435,12 @@ class OnboardingService {
   /// update. [StorageValidationException] propagates as an inline field error.
   Future<EntityProfile> completeProfile({
     required String entityId,
-    required String legalName,
-    required String displayName,
+    String? legalName,
+    String? displayName,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? phoneNumber,
     String? bio,
     Uint8List? avatarBytes,
     String? avatarFileName,
@@ -402,10 +477,20 @@ class OnboardingService {
         );
       }
 
+      final String? resolvedLegalName = legalName ??
+          (firstName != null && lastName != null
+              ? (middleName != null && middleName.trim().isNotEmpty
+                  ? '${firstName.trim()} ${middleName.trim()} ${lastName.trim()}'
+                  : '${firstName.trim()} ${lastName.trim()}')
+              : null);
       final EntityProfile profile = await _entityRepository.updateProfile(
         entityId: entityId,
-        legalName: legalName,
+        legalName: resolvedLegalName,
         displayName: displayName,
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
         bio: bio,
       );
 

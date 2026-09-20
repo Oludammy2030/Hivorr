@@ -90,6 +90,8 @@ class FakeGoTrueClient extends GoTrueClient {
   @override
   Stream<AuthState> get onAuthStateChange => _controller.stream;
 
+  Map<String, dynamic>? lastSignUpData;
+
   @override
   Future<AuthResponse> signUp({
     String? email,
@@ -105,8 +107,26 @@ class FakeGoTrueClient extends GoTrueClient {
       nextError = null;
       throw e;
     }
+    lastSignUpData = data;
     if (returnSessionOnSignUp) {
-      _session = fakeSession('u1', emailConfirmed: emailConfirmedInSession);
+      final User base = fakeUser('u1', emailConfirmed: emailConfirmedInSession);
+      final User withMeta = data == null || data.isEmpty
+          ? base
+          : User(
+              id: base.id,
+              appMetadata: base.appMetadata,
+              userMetadata: data,
+              aud: base.aud,
+              emailConfirmedAt: base.emailConfirmedAt,
+              createdAt: base.createdAt,
+              email: email,
+            );
+      _session = Session(
+        accessToken: 'fake-access-token',
+        tokenType: 'bearer',
+        user: withMeta,
+      );
+      _seededUser = withMeta;
       return AuthResponse(session: _session, user: _session!.user);
     }
     return AuthResponse(session: null, user: null);
