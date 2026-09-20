@@ -764,7 +764,8 @@ void main() {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.auth,
-          message: 'Invalid code. Please check and try again.',
+          message:
+              'The code you entered is incorrect. Please check the code and try again.',
           code: 'invalid_otp',
         );
       final provider = AuthProvider(service: service);
@@ -785,10 +786,54 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Invalid code. Please check and try again.'),
+        find.text(
+          'The code you entered is incorrect. Please check the code and try again.',
+        ),
         findsOneWidget,
       );
       expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+    });
+
+    testWidgets('an otp_expired error (wrong/expired/used) surfaces the '
+        'combined incorrect-or-expired message and stays on the gate',
+        (tester) async {
+      // Regression for “wrong OTP showed expired”: Supabase conflates wrong,
+      // expired and already-used into `otp_expired`. The gate must show the
+      // combined copy and must not auto-resend or navigate away.
+      final service = _ScriptedAuthService()
+        ..failure = const ApiException(
+          kind: ApiExceptionKind.validation,
+          message:
+              'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
+          code: 'otp_expired',
+        );
+      final provider = AuthProvider(service: service);
+      addTearDown(provider.dispose);
+
+      final GoRouter router = doorRouter(
+        initialLocation:
+            '${RoutePaths.authConfirmation}?email=me@example.com',
+      );
+      await pumpAuth(
+        tester,
+        router: router,
+        authProvider: provider,
+      );
+
+      await enterField(tester, 'Verification code', '000000');
+      await tester.tap(find.text('Verify code'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
+        ),
+        findsOneWidget,
+      );
+      // Must remain on the OTP screen (no auto-advance, no auto resend).
+      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+      expect(service.otpEmails, isEmpty);
+      expect(find.text('Resend code'), findsOneWidget);
     });
   });
 
