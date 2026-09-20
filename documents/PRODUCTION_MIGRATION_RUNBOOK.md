@@ -63,3 +63,5 @@ Until those secrets exist, the migration job logs `::warning::… skipped` and l
 
 Migrations are additive; no destructive `DROP`. Rollback is not needed. If a migration fails, `supabase db push` aborts before `deploy`; frontend remains at previous artifact (serialized `production` concurrency, `cancel-in-progress:false`).
 
+
+<!-- trigger staging via PR for 45690b6 -->
