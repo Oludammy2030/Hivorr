@@ -111,7 +111,6 @@ jobs:
   migrate:
     name: Production DB Migration
     needs: verify
-    environment: production
     uses: ./.github/workflows/reusable-supabase-migration.yml
     with:
       environment-name: 'production'

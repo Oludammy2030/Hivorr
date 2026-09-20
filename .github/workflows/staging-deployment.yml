@@ -48,7 +48,6 @@ jobs:
   migrate:
     name: Staging DB Migration
     needs: guard
-    environment: staging
     uses: ./.github/workflows/reusable-supabase-migration.yml
     with:
       environment-name: 'staging'
