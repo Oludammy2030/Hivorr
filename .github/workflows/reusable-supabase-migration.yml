@@ -17,13 +17,12 @@
 #       If not set, derived from SUPABASE_URL host `https://<ref>.supabase.co`.
 #     SUPABASE_URL                   — Supabase project HTTPS URL (for derivation fallback)
 #   Secrets:
-#     SUPABASE_ACCESS_TOKEN          — Supabase personal access token (supabase login token)
-#     SUPABASE_DB_PASSWORD           — Remote Postgres password (Dashboard → Database → Connection string)
+#     SUPABASE_ACCESS_TOKEN          — Supabase personal access token (supabase login token) — **required**
+#     SUPABASE_DB_PASSWORD           — Remote Postgres password (Dashboard → Database → Connection string) — **optional**; if not set, `supabase link` is tried without `--password` (pooler via access token)
 #
-# If SUPABASE_ACCESS_TOKEN or SUPABASE_DB_PASSWORD is not configured, the job
-# fails closed with an actionable error (do not silently deploy a skewed
-# frontend). For local `act` / PR validation where no remote exists, callers
-# should not invoke this workflow.
+# If SUPABASE_ACCESS_TOKEN is not configured, the job logs a warning and skips
+# (drift protection inactive) — add it to enable. `SUPABASE_DB_PASSWORD` is
+# optional; the link step will attempt both with and without `--password`.
 
 name: Reusable Supabase Migration
 
@@ -82,11 +81,11 @@ jobs:
           if [ -z "${{ secrets.supabase-access-token }}" ]; then
             echo "::warning::SUPABASE_ACCESS_TOKEN not configured in the ${{ inputs.environment-name }} environment — DB migration will be skipped until it is added (drift protection inactive). Add via GitHub → Settings → Environments → ${{ inputs.environment-name }} → Secrets."
             echo "skip=true" >> $GITHUB_OUTPUT
-          elif [ -z "${{ secrets.supabase-db-password }}" ]; then
-            echo "::warning::SUPABASE_DB_PASSWORD not configured in the ${{ inputs.environment-name }} environment — DB migration skipped."
-            echo "skip=true" >> $GITHUB_OUTPUT
           else
             echo "skip=false" >> $GITHUB_OUTPUT
+            if [ -z "${{ secrets.supabase-db-password }}" ]; then
+              echo "::notice::SUPABASE_DB_PASSWORD not set — will try supabase link without --password (access-token pooler)."
+            fi
           fi
           COUNT=$(ls -1 supabase/migrations/*.sql 2>/dev/null | wc -l)
           echo "Local migration files: $COUNT"
@@ -133,7 +132,11 @@ jobs:
         run: |
           set -e
           echo "Linking to project ${{ steps.project-ref.outputs.ref }}..."
-          supabase link --project-ref "${{ steps.project-ref.outputs.ref }}" --password "$SUPABASE_DB_PASSWORD"
+          if [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            supabase link --project-ref "${{ steps.project-ref.outputs.ref }}" --password "$SUPABASE_DB_PASSWORD"
+          else
+            supabase link --project-ref "${{ steps.project-ref.outputs.ref }}"
+          fi
 
       - name: Dry-run migration diff
         if: steps.validate.outputs.skip != 'true'
