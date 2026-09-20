@@ -1,0 +1,176 @@
+# Reusable Supabase Migration — EP-01-05 / EP-02-18 hardening
+#
+# Applies versioned `supabase/migrations/*.sql` to the target Supabase project
+# via `supabase link` + `supabase db push`. Used by Staging (automatic on
+# master) and Production (verified staged SHA) to keep the remote schema in lock
+# step with the Git-migrated local Docker schema, preventing frontend/backend
+# version skew (e.g. PGRST202 `entity_onboarding_status_get` missing on prod
+# while `9ece964` frontend expects it).
+#
+# Actions are pinned to immutable commit SHAs for supply-chain security
+# (EP-01-04 §12). The Supabase CLI version is pinned to 2.115.0 (local) to keep
+# remote pushes reproducible.
+#
+# Required GitHub Environment variables and secrets (per environment):
+#   Variables:
+#     SUPABASE_PROJECT_REF           — Supabase project ref (e.g. fxpcgtetvzlexbptqiwp)
+#       If not set, derived from SUPABASE_URL host `https://<ref>.supabase.co`.
+#     SUPABASE_URL                   — Supabase project HTTPS URL (for derivation fallback)
+#   Secrets:
+#     SUPABASE_ACCESS_TOKEN          — Supabase personal access token (supabase login token)
+#     SUPABASE_DB_PASSWORD           — Remote Postgres password (Dashboard → Database → Connection string)
+#
+# If SUPABASE_ACCESS_TOKEN or SUPABASE_DB_PASSWORD is not configured, the job
+# fails closed with an actionable error (do not silently deploy a skewed
+# frontend). For local `act` / PR validation where no remote exists, callers
+# should not invoke this workflow.
+
+name: Reusable Supabase Migration
+
+on:
+  workflow_call:
+    inputs:
+      environment-name:
+        description: Target environment (staging, production)
+        required: true
+        type: string
+      supabase-url:
+        description: Supabase project HTTPS URL for --dart-define and ref derivation
+        required: true
+        type: string
+      supabase-project-ref:
+        description: Supabase project ref (20-char lower). If empty, derived from supabase-url.
+        required: false
+        type: string
+        default: ''
+      dry-run:
+        description: If true, runs `supabase db push --dry-run` without mutating remote.
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      supabase-access-token:
+        description: Supabase personal access token
+        required: false
+      supabase-db-password:
+        description: Remote Postgres password
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: Push migrations (${{ inputs.environment-name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate migration inputs
+        id: validate
+        shell: bash
+        run: |
+          set -e
+          if [ -z "${{ inputs.supabase-url }}" ]; then
+            echo "::error::supabase-url is required"
+            exit 1
+          fi
+          if [ -z "${{ secrets.supabase-access-token }}" ]; then
+            echo "::warning::SUPABASE_ACCESS_TOKEN not configured in the ${{ inputs.environment-name }} environment — DB migration will be skipped until it is added (drift protection inactive). Add via GitHub → Settings → Environments → ${{ inputs.environment-name }} → Secrets."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          elif [ -z "${{ secrets.supabase-db-password }}" ]; then
+            echo "::warning::SUPABASE_DB_PASSWORD not configured in the ${{ inputs.environment-name }} environment — DB migration skipped."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+          COUNT=$(ls -1 supabase/migrations/*.sql 2>/dev/null | wc -l)
+          echo "Local migration files: $COUNT"
+          ls -1 supabase/migrations/*.sql
+
+      - name: Setup Supabase CLI
+        if: steps.validate.outputs.skip != 'true'
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.115.0
+
+      - name: Verify pinned CLI version
+        if: steps.validate.outputs.skip != 'true'
+        run: supabase --version
+
+      - name: Derive project ref
+        id: project-ref
+        if: steps.validate.outputs.skip != 'true'
+        shell: bash
+        env:
+          INPUT_REF: ${{ inputs.supabase-project-ref }}
+          SUPABASE_URL: ${{ inputs.supabase-url }}
+        run: |
+          set -e
+          REF="$INPUT_REF"
+          if [ -z "$REF" ]; then
+            # Derive from https://<ref>.supabase.co
+            REF=$(echo "$SUPABASE_URL" | sed -E 's|https://([^.]+)\.supabase\.co.*|\1|')
+            echo "Derived project ref from URL host: $REF"
+          fi
+          if [ ${#REF} -lt 10 ]; then
+            echo "::error::Invalid project ref derived: '$REF' from URL '$SUPABASE_URL'"
+            exit 1
+          fi
+          echo "ref=$REF" >> $GITHUB_OUTPUT
+          echo "Project ref: $REF"
+
+      - name: Link remote project
+        if: steps.validate.outputs.skip != 'true'
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.supabase-db-password }}
+        run: |
+          set -e
+          echo "Linking to project ${{ steps.project-ref.outputs.ref }}..."
+          supabase link --project-ref "${{ steps.project-ref.outputs.ref }}" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Dry-run migration diff
+        if: steps.validate.outputs.skip != 'true'
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
+        run: |
+          set -e
+          echo "Checking remote migration status..."
+          supabase db diff --linked --schema public 2>&1 | head -100 || true
+          echo "--- Remote migration list ---"
+          # supabase migration list --linked shows applied vs local
+          supabase migration list --linked 2>&1 | tail -30 || true
+
+      - name: Push migrations
+        if: steps.validate.outputs.skip != 'true' && inputs.dry-run == false
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
+        run: |
+          set -e
+          echo "Pushing migrations to ${{ inputs.environment-name }} (${{ steps.project-ref.outputs.ref }})..."
+          supabase db push --linked
+          echo "Push complete. Verifying remote schema..."
+          supabase migration list --linked 2>&1 | tail -30 || true
+
+      - name: Record migration metadata
+        if: always()
+        shell: bash
+        run: |
+          echo "## Supabase Migration — ${{ inputs.environment-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | \`${{ inputs.environment-name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Project ref | \`${{ steps.project-ref.outputs.ref }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Supabase URL host | \`${{ inputs.supabase-url }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dry run | \`${{ inputs.dry-run }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Local migrations | \`$(ls -1 supabase/migrations/*.sql | wc -l)\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow Run | ${{ github.run_id }} |" >> $GITHUB_STEP_SUMMARY

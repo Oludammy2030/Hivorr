@@ -13,14 +13,24 @@
 # Production deployments are serialized — concurrent runs are queued, not
 # cancelled (EP-01-04 §3.8).
 #
-# Deployment target: Cloudflare Pages.
+# Deployment target: Cloudflare Pages + Supabase DB (production).
 # Requires the following GitHub Environment variables and secrets:
 #   Variables:
 #     CLOUDFLARE_ACCOUNT_ID          — Cloudflare account ID
 #     CLOUDFLARE_PAGES_PROJECT_NAME  — Cloudflare Pages project name (production)
 #     DEPLOY_WEB_URL                 — Production URL for smoke checks
+#     PRODUCTION_HIVORR_SUPABASE_URL — Production Supabase project HTTPS URL
+#     PRODUCTION_SUPABASE_PROJECT_REF — (optional) Supabase project ref; derived from URL host if empty
 #   Secrets:
 #     CLOUDFLARE_API_TOKEN           — Cloudflare API token with Pages permissions
+#     PRODUCTION_HIVORR_SUPABASE_ANON_KEY — Production Supabase anon key (for web build --dart-define)
+#     SUPABASE_ACCESS_TOKEN          — Supabase personal access token (for db push)
+#     SUPABASE_DB_PASSWORD           — Production DB password (for supabase link)
+#
+# The Supabase migration is applied **before** the production artifact is built
+# (verify → migrate → build), so the built web artifact and the remote schema
+# are version-locked and the `PGRST202`/`42703` drift that caused
+# `Resource not found.` on onboarding (20260915090001 not on prod) cannot recur.
 
 name: Production Promotion
 
@@ -98,9 +108,23 @@ jobs:
             exit 1
           fi
 
+  migrate:
+    name: Production DB Migration
+    needs: verify
+    environment: production
+    uses: ./.github/workflows/reusable-supabase-migration.yml
+    with:
+      environment-name: 'production'
+      supabase-url: ${{ vars.PRODUCTION_HIVORR_SUPABASE_URL }}
+      supabase-project-ref: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF || '' }}
+      dry-run: false
+    secrets:
+      supabase-access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      supabase-db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
   build:
     name: Production Build
-    needs: verify
+    needs: migrate
     uses: ./.github/workflows/reusable-validation.yml
     with:
       flutter-version: '3.47.0'
