@@ -277,7 +277,77 @@ void main() {
       }
 
       expect(error.code, 'invalid_otp');
-      expect(error.message, 'Invalid code. Please check and try again.');
+      expect(
+        error.message,
+        'The code you entered is incorrect. Please check the code and try again.',
+      );
+      await service.dispose();
+    });
+
+    test('otp_expired surfaces the combined incorrect-or-expired message '
+        '(server conflates invalid/expired/used)', () async {
+      final AuthService service = buildService(authClient: authClient);
+      // Supabase Auth returns `otp_expired` for wrong, expired and
+      // already-used OTPs with message "Token has expired or is invalid"
+      // (verify.go: verifyUserAndToken / verifyTokenHash). The service must
+      // not claim pure expiry for a typo.
+      authClient.nextError = const AuthException(
+        'Token has expired or is invalid',
+        statusCode: '403',
+        code: 'otp_expired',
+      );
+
+      late final ApiException error;
+      try {
+        await service.verifyEmailOtp(
+          email: 'a@b.com',
+          code: 'wrong',
+        );
+        fail('Expected ApiException');
+      } on Object catch (e) {
+        error = e as ApiException;
+      }
+
+      expect(error.code, 'otp_expired');
+      expect(error.kind, ApiExceptionKind.validation);
+      // Regression guard: must NOT be the old pure-expiry copy.
+      expect(error.message, isNot('That code has expired. Request a new one.'));
+      expect(
+        error.message,
+        'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
+      );
+      // Incorrect OTP must not change auth state or create a session.
+      expect(service.status, AuthStatus.initial);
+      expect(service.isSignedIn, isFalse);
+      expect(service.currentSession, isNull);
+      await service.dispose();
+    });
+
+    test('otp_expired for a truly expired link also yields the combined message',
+        () async {
+      final AuthService service = buildService(authClient: authClient);
+      authClient.nextError = const AuthException(
+        'Email link is invalid or has expired',
+        statusCode: '403',
+        code: 'otp_expired',
+      );
+
+      late final ApiException error;
+      try {
+        await service.verifyEmailOtp(
+          email: 'a@b.com',
+          code: '000000',
+        );
+        fail('Expected ApiException');
+      } on Object catch (e) {
+        error = e as ApiException;
+      }
+
+      expect(error.code, 'otp_expired');
+      expect(
+        error.message,
+        'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
+      );
       await service.dispose();
     });
 

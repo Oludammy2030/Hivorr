@@ -445,6 +445,19 @@ class SupabaseAuthService implements AuthService {
   /// (`email_not_confirmed`), an expired/disabled code (`otp_expired`,
   /// `otp_disabled`), and provider rate limits all resolve to safe copy with a
   /// stable [ApiException.code] the screens can branch on.
+  ///
+  /// Supabase Auth conflates invalid, expired and already-used email OTPs into
+  /// a single `otp_expired` code with message "Token has expired or is invalid"
+  /// (see `supabase/auth` `internal/api/verify.go:verifyUserAndToken` and
+  /// `verifyTokenHash` — both return `ErrorCodeOTPExpired` for `!isValid` and
+  /// `isExpired`). `invalid_otp` is not emitted by modern GoTrue for
+  /// `POST /auth/v1/verify` with `type=email` (checked against
+  /// `gotrue-2.27.2` `ErrorCode` enum and server `errorcode.go`). To avoid
+  /// misclassifying a typo as expiry (report: wrong OTP showed “expired”),
+  /// `otp_expired` is now mapped to a combined, non-committal message that
+  /// covers both cases without auto-invalidating the valid OTP. The stable
+  /// `code` (`otp_expired`) is preserved so screens can still branch if needed,
+  /// but the human message no longer claims expiry when it may be a mismatch.
   ApiException _mapAuthCode(String code, int? status) {
     final ApiExceptionKind kind = switch (code) {
       'user_already_exists' => ApiExceptionKind.conflict,
@@ -458,7 +471,6 @@ class SupabaseAuthService implements AuthService {
       'over_sms_send_rate_limit' => ApiExceptionKind.validation,
       'invalid_credentials' ||
       'wrong_password' ||
-      'invalid_otp' ||
       'email_address_changed' => ApiExceptionKind.auth,
       'user_not_found' ||
       'user_has_active_session' ||
@@ -470,7 +482,7 @@ class SupabaseAuthService implements AuthService {
           'email address. Please log in to continue.',
       ApiExceptionKind.auth => _emailAuthMessage(code),
       ApiExceptionKind.validation when code == 'otp_expired' =>
-        'That code has expired. Request a new one.',
+        'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
       ApiExceptionKind.validation when code == 'otp_disabled' =>
         'Code verification is currently unavailable.',
       ApiExceptionKind.validation when code == 'invalid_grant' =>
@@ -494,10 +506,16 @@ class SupabaseAuthService implements AuthService {
 
   /// Extended-validation login failures keep a neutral, single message so the
   /// login form never leaks which part of the credentials was wrong.
+  ///
+  /// `invalid_otp` is retained for forward-compatibility (legacy clients) even
+  /// though the current OTP verification endpoint emits `otp_expired` for
+  /// mismatches. Its message is aligned with the `otp_expired` combined copy
+  /// in [_mapAuthCode] to satisfy the “incorrect OTP” UX without claiming
+  /// expiry.
   String _emailAuthMessage(String code) => switch (code) {
     'email_not_confirmed' ||
     'email_not_verified' => 'Your email address has not been verified yet.',
-    'invalid_otp' => 'Invalid code. Please check and try again.',
+    'invalid_otp' => 'The code you entered is incorrect. Please check the code and try again.',
     _ => 'Invalid email or password.',
   };
 
