@@ -46,14 +46,22 @@ class EntityRepositoryImpl implements EntityRepository {
   @override
   Future<EntityProfile> updateProfile({
     required String entityId,
-    required String legalName,
-    required String displayName,
+    String? legalName,
+    String? displayName,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? phoneNumber,
     String? bio,
   }) async {
     final EntityProfileDto updated = await remote.updateProfile(
       entityId: entityId,
       legalName: legalName,
       displayName: displayName,
+      firstName: firstName,
+      middleName: middleName,
+      lastName: lastName,
+      phoneNumber: phoneNumber,
       bio: bio,
     );
     await local.saveProfile(updated);

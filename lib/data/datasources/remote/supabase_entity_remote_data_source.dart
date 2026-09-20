@@ -45,14 +45,22 @@ class SupabaseEntityRemoteDataSource extends BaseApiService
   @override
   Future<EntityProfileDto> updateProfile({
     required String entityId,
-    required String legalName,
-    required String displayName,
+    String? legalName,
+    String? displayName,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? phoneNumber,
     String? bio,
   }) => _guard(() async {
     final Map<String, dynamic> params = <String, dynamic>{
-      'p_legal_name': legalName,
-      'p_display_name': displayName,
-      'p_bio': bio,
+      if (firstName != null) 'p_first_name': firstName,
+      if (middleName != null) 'p_middle_name': middleName,
+      if (lastName != null) 'p_last_name': lastName,
+      if (displayName != null) 'p_display_name': displayName,
+      if (phoneNumber != null) 'p_phone_number': phoneNumber,
+      if (bio != null) 'p_bio': bio,
+      if (legalName != null) 'p_legal_name': legalName,
     };
     await supabase.rpc<void>('entity_profile_update', params: params);
     final Map<String, dynamic>? row = await supabase

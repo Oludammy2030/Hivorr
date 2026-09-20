@@ -5,6 +5,7 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/auth_config.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
+import 'package:hivorr/core/authentication/models/registration_identity.dart';
 import 'package:hivorr/core/authentication/services/auth_service.dart';
 import 'package:hivorr/core/authentication/services/clear_auth_url_parameters.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
@@ -155,6 +156,20 @@ class SupabaseAuthService implements AuthService {
   }
 
   @override
+  Future<AuthResult> signUpWithIdentity(RegistrationIdentity identity) async {
+    try {
+      final AuthResponse response = await _authClient.signUp(
+        email: identity.email,
+        password: identity.password,
+        data: identity.toUserMetadata(),
+      );
+      return _handleAuthResponse(response);
+    } on Object catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
   Future<AuthResult> signIn(AuthCredentials credentials) async {
     try {
       final AuthResponse response = await _authClient.signInWithPassword(
@@ -208,8 +223,56 @@ class SupabaseAuthService implements AuthService {
       if (newPassword != null && newPassword.isNotEmpty) {
         await _authClient.updateUser(UserAttributes(password: newPassword));
       }
+      // Best-effort: hydrate entity_profiles from registration metadata staged
+      // at sign-up (first/middle/last, displayName, phone). No JWT existed
+      // at sign-up, so the OTP verification is the first authenticated moment
+      // where the RLS-gated upsert can run. Awaited best-effort before the
+      // caller navigates so `entity_onboarding_status_get.profile_exists`
+      // is true when the onboarding guard hydrates (capability-first).
+      await _hydrateProfileFromMetadata();
     } on Object catch (e) {
       throw _mapError(e);
+    }
+  }
+
+  /// Best-effort profile hydration from GoTrue `user_metadata` staged at
+  /// registration (`RegistrationIdentity.toUserMetadata()`).
+  Future<void> _hydrateProfileFromMetadata() async {
+    try {
+      final User? user = _authClient.currentUser;
+      final Map<String, dynamic>? meta = user?.userMetadata;
+      if (user == null || meta == null || meta.isEmpty) {
+        return;
+      }
+      final String? first = (meta['first_name'] as String?)?.trim();
+      final String? last = (meta['last_name'] as String?)?.trim();
+      final String? display = (meta['display_name'] as String?)?.trim();
+      final String? phone = (meta['phone_number'] as String?)?.trim();
+      if (first == null ||
+          first.isEmpty ||
+          last == null ||
+          last.isEmpty ||
+          display == null ||
+          display.isEmpty ||
+          phone == null ||
+          phone.isEmpty) {
+        return;
+      }
+      // Ensure entity root exists first (idempotent).
+      await _provisionIfNeeded(user.id, rethrowOnError: false);
+      final String? middle = (meta['middle_name'] as String?)?.trim();
+      final Map<String, dynamic> params = <String, dynamic>{
+        'p_first_name': first,
+        'p_last_name': last,
+        'p_display_name': display,
+        'p_phone_number': phone,
+      };
+      if (middle != null && middle.isNotEmpty) {
+        params['p_middle_name'] = middle;
+      }
+      await _supabaseClient.rpc<void>('entity_profile_update', params: params);
+    } on Object {
+      // Silent — onboarding will surface validation if hydration missed.
     }
   }
 
@@ -321,6 +384,9 @@ class SupabaseAuthService implements AuthService {
         if (hasSession) {
           _applyAuthenticated(session.user.id);
           unawaited(_provisionIfNeeded(session.user.id, rethrowOnError: false));
+          // Registration-restructuring: best-effort hydrate split profile from
+          // staged user_metadata (first OTP verification may have raced).
+          unawaited(_hydrateProfileFromMetadata());
         } else {
           _applyStatus(AuthStatus.unauthenticated, null);
         }

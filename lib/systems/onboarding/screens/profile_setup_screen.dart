@@ -31,16 +31,16 @@ abstract final class ProfileFieldLimits {
   static const int bio = 5000;
 }
 
-/// Step 1 — Basic Information (EP-02-18 FV-29).
+/// Step 1 — Basic Information (legacy path for pre-restructuring accounts).
 ///
-/// The account's basics: first name (required), middle name (optional), last
-/// name (required), display name (required), verified email (read-only from
-/// the auth session — never re-collected or written to business tables),
-/// optional phone (client-side format check only; not persisted), an optional
-/// bio, and an [OnboardingAvatarPicker]. Continue is disabled until the names
-/// are valid — fail-fast before the RPC, no `PLT003` round-trip. Submitting
-/// runs `completeProfile` (avatar upload → RPC → avatar_path persist) then
-/// advances to capability selection.
+/// For new registrations this step is skipped — identity (first/middle/last,
+/// displayName, phone, email) is captured at registration and hydrated via
+/// `entity_profiles` before onboarding starts (capability is then first).
+/// This screen remains for existing accounts whose profile is still missing;
+/// it collects split names + required phone and persists via
+/// `entity_profile_update` (legal_name derived server-side). Bio/avatar remain
+/// optional and can be completed later from Profile — they do not block
+/// onboarding completion.
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({
     super.key,
@@ -89,6 +89,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
+  /// Legal name still derived for legacy callers but server now derives from
+  /// split fields (registration restructuring).
   String get _combinedLegalName {
     final String first = _firstName.text.trim();
     final String middle = _middleName.text.trim();
@@ -108,18 +110,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         combined.length <= ProfileFieldLimits.legalName;
   }
 
-  /// Phone is optional; when filled it must be a plausible number (7–15
-  /// digits after stripping formatting). Client-side only — not persisted.
   bool get _phoneValid {
     final String digits = _phone.text.trim().replaceAll(RegExp(r'\D'), '');
-    return _phone.text.trim().isEmpty ||
-        (digits.length >= 7 && digits.length <= 15);
+    return digits.length >= 7 && digits.length <= 15;
   }
 
   void _onPhoneChanged() {
-    final String? error = _phoneValid
-        ? null
-        : 'Enter a valid phone number or leave it blank.';
+    final String? error = _phoneValid ? null : 'Enter a valid phone number.';
     setState(() => _phoneError = error);
   }
 
@@ -195,7 +192,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           const SizedBox(height: HivorrSpacing.md),
           HivorrTextField(
             controller: _phone,
-            label: 'Phone (optional)',
+            label: 'Phone *',
             hint: '+1 555 000 1234',
             keyboardType: TextInputType.phone,
             errorText: _phoneError,
@@ -314,8 +311,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       _total = avatar?.bytes.length ?? 0;
     });
     await provider.completeProfile(
-      legalName: _combinedLegalName,
+      firstName: _firstName.text.trim(),
+      middleName:
+          _middleName.text.trim().isEmpty ? null : _middleName.text.trim(),
+      lastName: _lastName.text.trim(),
       displayName: _displayName.text.trim(),
+      phoneNumber: _phone.text.trim(),
+      legalName: _combinedLegalName,
       bio: _bio.text.trim().isEmpty ? null : _bio.text,
       avatarBytes: avatar?.bytes,
       avatarFileName: avatar?.fileName,

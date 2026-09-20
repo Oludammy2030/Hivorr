@@ -12,10 +12,16 @@ abstract class EntityRepository {
   Future<EntityProfile> getProfile(String entityId);
 
   /// Updates the profile via the server and returns the mapped result.
+  ///
+  /// Split identity fields are preferred; legacy [legalName] kept for compat.
   Future<EntityProfile> updateProfile({
     required String entityId,
-    required String legalName,
-    required String displayName,
+    String? legalName,
+    String? displayName,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? phoneNumber,
     String? bio,
   });
 

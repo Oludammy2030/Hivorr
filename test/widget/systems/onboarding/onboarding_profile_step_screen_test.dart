@@ -65,6 +65,9 @@ void main() {
         await tester.enterText(find.byType(TextField).at(0), 'Jane');
         await tester.enterText(find.byType(TextField).at(2), 'Doe');
         await tester.enterText(find.byType(TextField).at(3), 'Jane');
+        // Phone is now required (registration restructuring) — capability-first
+        // onboarding keeps phone validation; legacy test must satisfy it.
+        await tester.enterText(find.byType(TextField).at(5), '+1 555 000 1234');
         await tester.pump();
         expect(controller.canPrimary, isTrue);
         stack.provider.dispose();
@@ -88,6 +91,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(0), 'Jane');
       await tester.enterText(find.byType(TextField).at(2), 'Doe');
       await tester.enterText(find.byType(TextField).at(3), 'Jane');
+      await tester.enterText(find.byType(TextField).at(5), '+1 555 000 1234');
       await tester.pump();
       expect(controller.canPrimary, isTrue);
       stack.provider.dispose();
@@ -144,6 +148,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(0), 'Jane');
       await tester.enterText(find.byType(TextField).at(2), 'Doe');
       await tester.enterText(find.byType(TextField).at(3), 'Jane');
+      await tester.enterText(find.byType(TextField).at(5), '+1 555 000 1234');
       await tester.pump();
       controller.onPrimary!.call();
       await tester.pumpAndSettle();
@@ -165,6 +170,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(1), 'Marie');
       await tester.enterText(find.byType(TextField).at(2), 'Doe');
       await tester.enterText(find.byType(TextField).at(3), 'Jane');
+      await tester.enterText(find.byType(TextField).at(5), '+1 555 000 1234');
       await tester.pump();
       controller.onPrimary!.call();
       await tester.pumpAndSettle();
@@ -204,6 +210,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(0), 'Jane');
       await tester.enterText(find.byType(TextField).at(2), 'Doe');
       await tester.enterText(find.byType(TextField).at(3), 'Jane');
+      await tester.enterText(find.byType(TextField).at(5), '+1 555 000 1234');
       await tester.pump();
       controller.onPrimary!.call();
       await tester.pumpAndSettle();

@@ -11,10 +11,17 @@ abstract class EntityRemoteDataSource {
   Future<EntityProfileDto?> getProfile(String entityId);
 
   /// Updates the profile via the EP-01-06 `entity_profile_update` RPC.
+  ///
+  /// Split identity (first/middle/last/phone) is preferred; [legalName] is
+  /// retained for backward compatibility (legacy callers).
   Future<EntityProfileDto> updateProfile({
     required String entityId,
-    required String legalName,
-    required String displayName,
+    String? legalName,
+    String? displayName,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? phoneNumber,
     String? bio,
   });
 

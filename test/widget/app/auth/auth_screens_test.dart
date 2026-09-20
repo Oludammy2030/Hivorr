@@ -8,6 +8,7 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
+import 'package:hivorr/core/authentication/models/registration_identity.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/authentication/services/auth_service.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
@@ -70,6 +71,10 @@ class _ScriptedAuthService extends FakeAuthService {
 
   @override
   Future<AuthResult> signUp(AuthCredentials credentials) =>
+      _result(() => AuthResult(status: _status));
+
+  @override
+  Future<AuthResult> signUpWithIdentity(RegistrationIdentity identity) =>
       _result(() => AuthResult(status: _status));
 
   Future<AuthResult> _result(AuthResult Function() build) async {
@@ -158,6 +163,14 @@ Future<void> pumpAuth(
 Future<void> enterField(WidgetTester tester, String label, String value) async {
   await tester.enterText(find.widgetWithText(TextField, label), value);
   await tester.pump();
+}
+
+/// Fills the new required identity fields for registration restructuring.
+Future<void> fillRegistrationIdentity(WidgetTester tester) async {
+  await enterField(tester, 'First name', 'Jane');
+  await enterField(tester, 'Last name', 'Doe');
+  await enterField(tester, 'Display name', 'Jane D');
+  await enterField(tester, 'Phone number', '+1 555 000 1234');
 }
 
 void main() {
@@ -336,7 +349,11 @@ void main() {
       );
 
       expect(find.text('Create your free account'), findsOneWidget);
+      expect(find.text('First name'), findsOneWidget);
+      expect(find.text('Last name'), findsOneWidget);
+      expect(find.text('Display name'), findsOneWidget);
       expect(find.text('Email address'), findsOneWidget);
+      expect(find.text('Phone number'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
       expect(find.text('Confirm password'), findsOneWidget);
       expect(find.text('Create account'), findsOneWidget);
@@ -356,13 +373,16 @@ void main() {
         authProvider: provider,
       );
 
+      await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'not-an-email');
       await enterField(tester, 'Password', '123');
       await enterField(tester, 'Confirm password', '123');
+      await tester.ensureVisible(find.text('Create account'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Enter a valid email address.'), findsOneWidget);
+      expect(find.text('Enter a valid email address'), findsOneWidget);
       expect(find.text(PasswordPolicy.supabase.invalidMessage), findsOneWidget);
       expect(router.routerDelegate.state.matchedLocation, RoutePaths.signup);
     });
@@ -378,9 +398,12 @@ void main() {
         authProvider: provider,
       );
 
+      await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'Abc123!9');
       await enterField(tester, 'Confirm password', 'Abc123!8');
+      await tester.ensureVisible(find.text('Create account'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -402,9 +425,12 @@ void main() {
         authProvider: provider,
       );
 
+      await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'Abc123!9');
       await enterField(tester, 'Confirm password', 'Abc123!9');
+      await tester.ensureVisible(find.text('Create account'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -426,9 +452,12 @@ void main() {
         authProvider: provider,
       );
 
+      await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'Abc123!9');
       await enterField(tester, 'Confirm password', 'Abc123!9');
+      await tester.ensureVisible(find.text('Create account'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -471,9 +500,12 @@ void main() {
         authProvider: provider,
       );
 
+      await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'Abc123!9');
       await enterField(tester, 'Confirm password', 'Abc123!9');
+      await tester.ensureVisible(find.text('Create account'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 
@@ -487,6 +519,8 @@ void main() {
       expect(service.otpEmails, isEmpty);
       expect(router.routerDelegate.state.matchedLocation, RoutePaths.signup);
 
+      await tester.ensureVisible(find.text('Log In'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Log In'));
       await tester.pumpAndSettle();
 
@@ -517,9 +551,12 @@ void main() {
         authProvider: provider,
       );
 
+      await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'Abc123!9');
       await enterField(tester, 'Confirm password', 'Abc123!9');
+      await tester.ensureVisible(find.text('Create account'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create account'));
       await tester.pumpAndSettle();
 

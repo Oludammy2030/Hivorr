@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
+import 'package:hivorr/core/authentication/models/registration_identity.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 
 /// Result of an authentication attempt.
@@ -52,7 +53,16 @@ abstract class AuthService {
   Stream<AuthStatus> get onStatusChanged;
 
   /// Registers a new identity and returns the resulting status.
+  ///
+  /// When [identity] is provided, basic account identity (first/middle/last,
+  /// displayName, phone) is staged via GoTrue `user_metadata` so the OTP gap
+  /// (no JWT) does not lose data; hydrated post-verification into
+  /// `entity_profiles`.
   Future<AuthResult> signUp(AuthCredentials credentials);
+
+  /// Registers with staged identity; default delegates to [signUp].
+  Future<AuthResult> signUpWithIdentity(RegistrationIdentity identity) =>
+      signUp(AuthCredentials(email: identity.email, password: identity.password));
 
   /// Sends a one-time verification code to [email] (email-OTP sign-in).
   ///

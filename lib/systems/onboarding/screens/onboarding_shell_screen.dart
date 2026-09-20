@@ -22,14 +22,19 @@ import 'package:hivorr/systems/onboarding/widgets/onboarding_progress_indicator.
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:provider/provider.dart';
 
-/// Shell for the capability-aware registration wizard (EP-02-18 FV-28).
+/// Shell for the capability-aware registration wizard (EP-02-18 FV-28, registration restructuring).
 ///
-/// Basic Information comes first; the second step captures the entity's
-/// capability (hire / offer / both); consumer-only entities then finish after
-/// the capability step, while professional/`both` entities continue through
-/// industry & profession selection → identity → trade proof. Progress is
-/// stored by [OnboardingProgress] and the shell renders the tracker, the active
-/// step body (kept alive in an [IndexedStack]), and the standard CTA bar
+/// For new registrations identity (first/middle/last, displayName, phone,
+/// email) is captured at account creation and hydrated into `entity_profiles`
+/// before onboarding starts — onboarding therefore begins at capability
+/// (hire / offer / both). Legacy accounts whose profile is still missing still
+/// traverse Basic Information (now split-identity with required phone) as step 0
+/// for backward compatibility; the resume coercion in `OnboardingService`
+/// promotes them to capability once the profile exists. Consumer-only entities
+/// finish after capability, professional/`both` continue through industry &
+/// profession selection → identity → trade proof. Progress is stored by
+/// [OnboardingProgress] and the shell renders the tracker, the active step
+/// body (kept alive in an [IndexedStack]), and the standard CTA bar
 /// (`Back` / `Continue`/`Submit`). The shell is registered once under the
 /// single `/onboarding/:step` route, so step transitions update the URL in
 /// place without recreating the shell's State (controllers and step bodies
@@ -186,7 +191,11 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     if (step == null) {
       return;
     }
-    if (step == OnboardingStepCode.profile) {
+    final bool atFirstInteractiveStep = step == OnboardingStepCode.profile ||
+        (step == OnboardingStepCode.capability &&
+            (provider.progress?.completedSteps.contains(OnboardingStepCode.profile) ??
+                false));
+    if (atFirstInteractiveStep) {
       unawaited(_maybeExit(context, provider));
       return;
     }
