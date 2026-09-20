@@ -34,10 +34,9 @@ class SupabaseFinancialPayoutRemoteDataSource extends BaseApiService
     required String bankName,
     required String accountNumber,
     required String accountName,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'financial_payout_account_bind',
           params: <String, dynamic>{
             'p_currency_code': currencyCode,
@@ -46,27 +45,24 @@ class SupabaseFinancialPayoutRemoteDataSource extends BaseApiService
             'p_account_name': accountName,
           },
         );
-        final Map<String, dynamic> data =
-            FinancialEnvelopeParser.unwrap(response);
-        return PayoutBindDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = FinancialEnvelopeParser.unwrap(response);
+    return PayoutBindDto.fromJson(data);
+  });
 
   @override
   Future<WithdrawalDto> withdraw({
     required String payoutAccountId,
     required double amount,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'financial_withdraw',
           params: <String, dynamic>{
             'p_payout_account_id': payoutAccountId,
             'p_amount': amount,
           },
         );
-        final Map<String, dynamic> data =
-            FinancialEnvelopeParser.unwrap(response);
-        return WithdrawalDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = FinancialEnvelopeParser.unwrap(response);
+    return WithdrawalDto.fromJson(data);
+  });
 }

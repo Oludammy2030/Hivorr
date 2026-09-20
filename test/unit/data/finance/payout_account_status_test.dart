@@ -4,14 +4,16 @@ import 'package:hivorr/systems/finance/models/payout_account_status.dart';
 
 void main() {
   group('PayoutAccountStatus', () {
-    test('has exactly the three lifecycle states matching the schema',
-        () {
+    test('has exactly the three lifecycle states matching the schema', () {
       expect(PayoutAccountStatus.values, hasLength(3));
-      expect(PayoutAccountStatus.values, containsAll(<PayoutAccountStatus>[
-        PayoutAccountStatus.pending,
-        PayoutAccountStatus.active,
-        PayoutAccountStatus.deactivated,
-      ]));
+      expect(
+        PayoutAccountStatus.values,
+        containsAll(<PayoutAccountStatus>[
+          PayoutAccountStatus.pending,
+          PayoutAccountStatus.active,
+          PayoutAccountStatus.deactivated,
+        ]),
+      );
     });
 
     test('fromPersisted maps active and deactivated exactly', () {
@@ -29,8 +31,7 @@ void main() {
       );
     });
 
-    test('fromPersisted defaults unknown values to pending (conservative)',
-        () {
+    test('fromPersisted defaults unknown values to pending (conservative)', () {
       expect(
         PayoutAccountStatus.fromPersisted('verified'),
         PayoutAccountStatus.pending,

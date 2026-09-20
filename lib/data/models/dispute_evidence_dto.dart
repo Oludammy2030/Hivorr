@@ -26,7 +26,8 @@ class DisputeEvidenceDto {
         title: (json['title'] as String?) ?? '',
         description: json['description'] as String?,
         fileUrl: json['file_url'] as String?,
-        fileMetadata: (json['file_metadata'] as Map<String, dynamic>?) ??
+        fileMetadata:
+            (json['file_metadata'] as Map<String, dynamic>?) ??
             const <String, dynamic>{},
         createdAt: _parseDateTime(json['created_at']),
       );

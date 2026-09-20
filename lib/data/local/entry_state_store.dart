@@ -44,8 +44,8 @@ abstract class EntryStateStore {
 /// In-memory [EntryStateStore] for tests and unsupported platforms.
 class InMemoryEntryStateStore implements EntryStateStore {
   InMemoryEntryStateStore({bool? introSeen, String? pendingRedirect})
-      : _introSeen = introSeen,
-        _pendingRedirect = pendingRedirect;
+    : _introSeen = introSeen,
+      _pendingRedirect = pendingRedirect;
 
   bool? _introSeen;
   String? _pendingRedirect;
@@ -149,6 +149,5 @@ class HiveEntryStateStore implements EntryStateStore {
   }
 }
 
-Map<String, dynamic> _boolToJson(bool value) =>
-    <String, dynamic>{'v': value};
+Map<String, dynamic> _boolToJson(bool value) => <String, dynamic>{'v': value};
 bool _boolFromJson(Map<String, dynamic> json) => json['v'] as bool? ?? false;

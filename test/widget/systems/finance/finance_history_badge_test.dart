@@ -51,8 +51,9 @@ void main() {
   }
 
   group('FinanceHistoryBadge', () {
-    testWidgets('shows zero counts for an empty financial history',
-        (WidgetTester tester) async {
+    testWidgets('shows zero counts for an empty financial history', (
+      WidgetTester tester,
+    ) async {
       await pumpBadge(tester);
 
       expect(find.text('Activity'), findsOneWidget);
@@ -60,8 +61,9 @@ void main() {
       expect(find.text('0 deposits'), findsOneWidget);
     });
 
-    testWidgets('shows the bound payout-account count',
-        (WidgetTester tester) async {
+    testWidgets('shows the bound payout-account count', (
+      WidgetTester tester,
+    ) async {
       await pumpBadge(
         tester,
         payoutRepo: FakeFinancialPayoutRepository(
@@ -76,8 +78,9 @@ void main() {
       expect(find.text('0 deposits'), findsOneWidget);
     });
 
-    testWidgets('shows the recorded-deposit count',
-        (WidgetTester tester) async {
+    testWidgets('shows the recorded-deposit count', (
+      WidgetTester tester,
+    ) async {
       await pumpBadge(
         tester,
         depositRepo: FakeFinancialDepositRepository(

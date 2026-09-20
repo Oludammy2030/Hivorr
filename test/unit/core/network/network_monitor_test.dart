@@ -5,22 +5,22 @@ import 'package:hivorr/core/network/network_type.dart';
 
 void main() {
   NetworkStatus wifiStatus() => NetworkStatus(
-        isConnected: true,
-        networkType: NetworkType.wifi,
-        timestamp: DateTime.now(),
-      );
+    isConnected: true,
+    networkType: NetworkType.wifi,
+    timestamp: DateTime.now(),
+  );
 
   NetworkStatus mobileStatus() => NetworkStatus(
-        isConnected: true,
-        networkType: NetworkType.mobile,
-        timestamp: DateTime.now(),
-      );
+    isConnected: true,
+    networkType: NetworkType.mobile,
+    timestamp: DateTime.now(),
+  );
 
   NetworkStatus offlineStatus() => NetworkStatus(
-        isConnected: false,
-        networkType: NetworkType.none,
-        timestamp: DateTime.now(),
-      );
+    isConnected: false,
+    networkType: NetworkType.none,
+    timestamp: DateTime.now(),
+  );
 
   group('FakeNetworkMonitor', () {
     test('initial status is disconnected by default', () {
@@ -116,7 +116,9 @@ void main() {
       addTearDown(monitor.dispose);
 
       final types = <NetworkType>[];
-      final sub = monitor.onStatusChanged.listen((s) => types.add(s.networkType));
+      final sub = monitor.onStatusChanged.listen(
+        (s) => types.add(s.networkType),
+      );
       addTearDown(sub.cancel);
 
       await Future<void>.delayed(Duration.zero);
@@ -127,10 +129,11 @@ void main() {
       monitor.setStatus(offlineStatus());
       await Future<void>.delayed(Duration.zero);
 
-      expect(
-        types,
-        <NetworkType>[NetworkType.wifi, NetworkType.mobile, NetworkType.none],
-      );
+      expect(types, <NetworkType>[
+        NetworkType.wifi,
+        NetworkType.mobile,
+        NetworkType.none,
+      ]);
     });
 
     test('dispose closes stream', () async {

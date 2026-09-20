@@ -18,9 +18,9 @@ class FakeConversionRepository implements ConversionRepository {
     Map<String, double> rates = const <String, double>{},
     CurrencyConversion? conversion,
     List<CurrencyConversion> history = const <CurrencyConversion>[],
-  })  : _rates = Map<String, double>.of(rates),
-        _conversion = conversion,
-        _history = List<CurrencyConversion>.of(history);
+  }) : _rates = Map<String, double>.of(rates),
+       _conversion = conversion,
+       _history = List<CurrencyConversion>.of(history);
 
   final Map<String, double> _rates;
   CurrencyConversion? _conversion;
@@ -135,17 +135,16 @@ CurrencyConversion seedConversionEntity({
   double fee = 0,
   String status = 'completed',
   DateTime? createdAt,
-}) =>
-    CurrencyConversion(
-      id: id,
-      entityId: entityId,
-      fromCurrency: fromCurrency,
-      toCurrency: toCurrency,
-      fromAmount: fromAmount,
-      toAmount: toAmount,
-      exchangeRate: exchangeRate,
-      fee: fee,
-      status: status,
-      completedAt: createdAt,
-      createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => CurrencyConversion(
+  id: id,
+  entityId: entityId,
+  fromCurrency: fromCurrency,
+  toCurrency: toCurrency,
+  fromAmount: fromAmount,
+  toAmount: toAmount,
+  exchangeRate: exchangeRate,
+  fee: fee,
+  status: status,
+  completedAt: createdAt,
+  createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);

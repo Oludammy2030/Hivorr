@@ -73,8 +73,11 @@ void main() {
     test('no duplicate key values', () {
       final Set<String> seen = <String>{};
       for (final String value in _allKeys) {
-        expect(seen.contains(value), isFalse,
-            reason: 'duplicate key value: $value');
+        expect(
+          seen.contains(value),
+          isFalse,
+          reason: 'duplicate key value: $value',
+        );
         seen.add(value);
       }
     });
@@ -83,10 +86,12 @@ void main() {
       final File file = File('assets/translations/en.json');
       expect(file.existsSync(), isTrue);
       final String raw = file.readAsStringSync();
-      final Map<String, dynamic> json =
-          Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final Map<String, dynamic> json = Map<String, dynamic>.from(
+        jsonDecode(raw) as Map,
+      );
       for (final String key in _allKeys) {
-        final bool present = json.containsKey(key) ||
+        final bool present =
+            json.containsKey(key) ||
             json.keys.any((String k) => k.startsWith('$key.'));
         expect(present, isTrue, reason: 'missing translation for $key');
       }

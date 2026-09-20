@@ -43,8 +43,9 @@ void main() {
   }
 
   group('PayoutWithdrawFormView', () {
-    testWidgets('shows an empty state when no verified accounts exist',
-        (WidgetTester tester) async {
+    testWidgets('shows an empty state when no verified accounts exist', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -57,8 +58,9 @@ void main() {
       expect(find.text('Withdraw'), findsNothing);
     });
 
-    testWidgets('offers verified accounts in the destination dropdown',
-        (WidgetTester tester) async {
+    testWidgets('offers verified accounts in the destination dropdown', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -77,8 +79,9 @@ void main() {
       expect(find.text('Withdraw'), findsWidgets);
     });
 
-    testWidgets('validates that the amount is greater than zero',
-        (WidgetTester tester) async {
+    testWidgets('validates that the amount is greater than zero', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -95,8 +98,9 @@ void main() {
       expect(find.text('Enter an amount greater than zero'), findsOneWidget);
     });
 
-    testWidgets('rejects amounts above the cashout limit',
-        (WidgetTester tester) async {
+    testWidgets('rejects amounts above the cashout limit', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -117,8 +121,9 @@ void main() {
       );
     });
 
-    testWidgets('shows the cashout limit display when a limit is provided',
-        (WidgetTester tester) async {
+    testWidgets('shows the cashout limit display when a limit is provided', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -132,8 +137,9 @@ void main() {
       expect(find.text('\u20A6500,000.00'), findsOneWidget);
     });
 
-    testWidgets('a successful withdrawal invokes onWithdrawSuccess',
-        (WidgetTester tester) async {
+    testWidgets('a successful withdrawal invokes onWithdrawSuccess', (
+      WidgetTester tester,
+    ) async {
       WithdrawalResult? received;
       final repo = FakeFinancialPayoutRepository(
         seed: <PayoutAccount>[FakeFinancialPayoutRepository.verified()],
@@ -164,8 +170,9 @@ void main() {
       expect(received!.cashoutRemaining, 450000);
     });
 
-    testWidgets('surfaces a typed failure message inline',
-        (WidgetTester tester) async {
+    testWidgets('surfaces a typed failure message inline', (
+      WidgetTester tester,
+    ) async {
       const ApiException insufficient = ApiException(
         kind: ApiExceptionKind.conflict,
         message: 'Insufficient balance.',

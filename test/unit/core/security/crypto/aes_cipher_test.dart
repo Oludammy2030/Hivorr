@@ -13,16 +13,16 @@ void main() {
     final AesCipher cipher = AesCipher.defaultInstance;
 
     Future<SecretKey> deriveKey() async {
-      final KeyDerivation kdf = KeyDerivation.fromConfiguration(
-        _config(),
-      );
+      final KeyDerivation kdf = KeyDerivation.fromConfiguration(_config());
       return kdf.deriveKey('passphrase');
     }
 
     test('round-trips a UTF-8 string', () async {
       final SecretKey key = await deriveKey();
-      final EncryptedPayload payload =
-          await cipher.encryptString('hunter2-secret', key);
+      final EncryptedPayload payload = await cipher.encryptString(
+        'hunter2-secret',
+        key,
+      );
       final String decrypted = await cipher.decryptString(payload, key);
 
       expect(decrypted, 'hunter2-secret');
@@ -55,8 +55,10 @@ void main() {
 
     test('fails closed on tampered ciphertext', () async {
       final SecretKey key = await deriveKey();
-      final EncryptedPayload payload =
-          await cipher.encryptString('integrity', key);
+      final EncryptedPayload payload = await cipher.encryptString(
+        'integrity',
+        key,
+      );
       final Uint8List tampered = Uint8List.fromList(payload.ciphertext)
         ..[0] ^= 0x01;
 
@@ -79,8 +81,10 @@ void main() {
         _config(),
       ).deriveKey('different-passphrase');
 
-      final EncryptedPayload payload =
-          await cipher.encryptString('secret', key);
+      final EncryptedPayload payload = await cipher.encryptString(
+        'secret',
+        key,
+      );
 
       expect(
         () => cipher.decryptString(payload, other),
@@ -91,11 +95,11 @@ void main() {
 }
 
 SecurityConfiguration _config() => SecurityConfiguration(
-      const SecurityConfig(
-        pinningEnabled: false,
-        pinnedSpkiSha256Hashes: <String>[],
-        kdfSalt: 'salt',
-        kdfIterations: 1000,
-        kdfKeyLength: 32,
-      ),
-    );
+  const SecurityConfig(
+    pinningEnabled: false,
+    pinnedSpkiSha256Hashes: <String>[],
+    kdfSalt: 'salt',
+    kdfIterations: 1000,
+    kdfKeyLength: 32,
+  ),
+);

@@ -22,18 +22,18 @@ void main() {
         manageRepo ?? FakeManageUserRepository();
     final FakeAdminReviewRepository resolvedAdmin =
         adminRepo ?? FakeAdminReviewRepository(isAdmin: true);
-    final ManageUserProvider manageProvider =
-        ManageUserProvider(repo: resolvedManage);
-    final AdminReviewProvider adminProvider =
-        AdminReviewProvider(repo: resolvedAdmin);
+    final ManageUserProvider manageProvider = ManageUserProvider(
+      repo: resolvedManage,
+    );
+    final AdminReviewProvider adminProvider = AdminReviewProvider(
+      repo: resolvedAdmin,
+    );
     await pumpApp(
       tester,
       const ManageUserScreen(),
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<ManageUserProvider>.value(value: manageProvider),
-        ChangeNotifierProvider<AdminReviewProvider>.value(
-          value: adminProvider,
-        ),
+        ChangeNotifierProvider<AdminReviewProvider>.value(value: adminProvider),
       ],
     );
     // Let the post-frame checkAdmin + loadUsers settle.
@@ -53,8 +53,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows the admin gate when the user is not an admin',
-        (WidgetTester tester) async {
+    testWidgets('shows the admin gate when the user is not an admin', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         adminRepo: FakeAdminReviewRepository(isAdmin: false),
@@ -63,15 +64,17 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows the empty state when the directory is empty',
-        (WidgetTester tester) async {
+    testWidgets('shows the empty state when the directory is empty', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
       expect(find.text('No users found'), findsOneWidget);
       await unmount(tester);
     });
 
-    testWidgets('lists users with status + role metadata',
-        (WidgetTester tester) async {
+    testWidgets('lists users with status + role metadata', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         manageRepo: FakeManageUserRepository(
@@ -98,8 +101,9 @@ void main() {
   });
 
   group('initial load', () {
-    testWidgets('fetches the directory for admins on first build',
-        (WidgetTester tester) async {
+    testWidgets('fetches the directory for admins on first build', (
+      WidgetTester tester,
+    ) async {
       final FakeManageUserRepository repo = FakeManageUserRepository(
         users: <ManageUserListItem>[
           manageUserListItem(id: 'u1', displayName: 'Ada Lovelace'),
@@ -112,8 +116,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('does not fetch the directory for non-admins',
-        (WidgetTester tester) async {
+    testWidgets('does not fetch the directory for non-admins', (
+      WidgetTester tester,
+    ) async {
       final FakeManageUserRepository repo = FakeManageUserRepository(
         users: <ManageUserListItem>[manageUserListItem(id: 'u1')],
       );

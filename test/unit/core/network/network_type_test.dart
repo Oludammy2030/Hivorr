@@ -54,7 +54,10 @@ void main() {
 
   group('selectPrimaryNetworkType', () {
     test('returns none for empty list', () {
-      expect(selectPrimaryNetworkType(<ConnectivityResult>[]), NetworkType.none);
+      expect(
+        selectPrimaryNetworkType(<ConnectivityResult>[]),
+        NetworkType.none,
+      );
     });
 
     test('returns none for all-none results', () {
@@ -69,7 +72,10 @@ void main() {
 
     test('selects vpn over wifi', () {
       expect(
-        selectPrimaryNetworkType([ConnectivityResult.vpn, ConnectivityResult.wifi]),
+        selectPrimaryNetworkType([
+          ConnectivityResult.vpn,
+          ConnectivityResult.wifi,
+        ]),
         NetworkType.vpn,
       );
     });

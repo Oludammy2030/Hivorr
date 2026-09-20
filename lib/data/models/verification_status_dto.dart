@@ -30,10 +30,9 @@ class VerificationStatusDto {
     final Object? tradesRaw = json['trade_verifications'];
     final List<TradeVerificationDto> trades = tradesRaw is List
         ? tradesRaw
-            .whereType<Map<String, dynamic>>()
-            .map((Map<String, dynamic> e) =>
-                TradeVerificationDto.fromJson(e))
-            .toList(growable: false)
+              .whereType<Map<String, dynamic>>()
+              .map((Map<String, dynamic> e) => TradeVerificationDto.fromJson(e))
+              .toList(growable: false)
         : const <TradeVerificationDto>[];
 
     return VerificationStatusDto(

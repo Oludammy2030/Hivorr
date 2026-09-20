@@ -30,7 +30,9 @@ void main() {
         createdAt: createdAt,
       );
 
-      final CurrencyConversion entity = ConversionMapper.conversionToEntity(dto);
+      final CurrencyConversion entity = ConversionMapper.conversionToEntity(
+        dto,
+      );
 
       expect(entity.id, 'conversion-1');
       expect(entity.entityId, 'u1');
@@ -119,68 +121,76 @@ void main() {
       expect(dto.completedAt, isNotNull);
     });
 
-    test('defaults fee to 0, status to pending, and null completed_at to null',
-        () {
-      final dto = CurrencyConversionDto.fromJson(<String, dynamic>{
-        'conversion_id': 'row-2',
-        'from_currency': 'USD',
-        'to_currency': 'GBP',
-        'from_amount': 100,
-        'to_amount': 78.74,
-        'exchange_rate': 0.7874,
-      });
+    test(
+      'defaults fee to 0, status to pending, and null completed_at to null',
+      () {
+        final dto = CurrencyConversionDto.fromJson(<String, dynamic>{
+          'conversion_id': 'row-2',
+          'from_currency': 'USD',
+          'to_currency': 'GBP',
+          'from_amount': 100,
+          'to_amount': 78.74,
+          'exchange_rate': 0.7874,
+        });
 
-      expect(dto.fee, 0);
-      expect(dto.status, 'pending');
-      expect(dto.completedAt, isNull);
-    });
+        expect(dto.fee, 0);
+        expect(dto.status, 'pending');
+        expect(dto.completedAt, isNull);
+      },
+    );
 
-    test('accepts the id key fallback and stays null-safe on missing fields',
-        () {
-      final dto = CurrencyConversionDto.fromJson(<String, dynamic>{
-        'id': 'row-3',
-        'from_amount': 1,
-        'to_amount': 0.0007,
-      });
+    test(
+      'accepts the id key fallback and stays null-safe on missing fields',
+      () {
+        final dto = CurrencyConversionDto.fromJson(<String, dynamic>{
+          'id': 'row-3',
+          'from_amount': 1,
+          'to_amount': 0.0007,
+        });
 
-      expect(dto.id, 'row-3');
-      expect(dto.fromCurrency, '');
-      expect(dto.toCurrency, '');
-      expect(dto.entityId, '');
-    });
+        expect(dto.id, 'row-3');
+        expect(dto.fromCurrency, '');
+        expect(dto.toCurrency, '');
+        expect(dto.entityId, '');
+      },
+    );
 
-    test('falls back to the epoch when created_at is missing (never throws)',
-        () {
-      final dto = CurrencyConversionDto.fromJson(<String, dynamic>{
-        'conversion_id': 'row-4',
-      });
+    test(
+      'falls back to the epoch when created_at is missing (never throws)',
+      () {
+        final dto = CurrencyConversionDto.fromJson(<String, dynamic>{
+          'conversion_id': 'row-4',
+        });
 
-      expect(dto.createdAt.millisecondsSinceEpoch, 0);
-      expect(dto.id, 'row-4');
-    });
+        expect(dto.createdAt.millisecondsSinceEpoch, 0);
+        expect(dto.id, 'row-4');
+      },
+    );
   });
 
   group('CurrencyConversionDto.fromRpc (success envelope)', () {
-    test('maps conversion_id + amounts + rate with completed status and fee 0',
-        () {
-      final dto = CurrencyConversionDto.fromRpc(
-        conversionId: 'conversion-rpc-9',
-        fromCurrency: 'NGN',
-        toCurrency: 'USD',
-        fromAmount: 50000,
-        toAmount: 35,
-        rate: 0.0007,
-      );
+    test(
+      'maps conversion_id + amounts + rate with completed status and fee 0',
+      () {
+        final dto = CurrencyConversionDto.fromRpc(
+          conversionId: 'conversion-rpc-9',
+          fromCurrency: 'NGN',
+          toCurrency: 'USD',
+          fromAmount: 50000,
+          toAmount: 35,
+          rate: 0.0007,
+        );
 
-      expect(dto.id, 'conversion-rpc-9');
-      expect(dto.fromCurrency, 'NGN');
-      expect(dto.toCurrency, 'USD');
-      expect(dto.fromAmount, 50000);
-      expect(dto.toAmount, 35);
-      expect(dto.exchangeRate, 0.0007);
-      expect(dto.fee, 0);
-      expect(dto.status, 'completed');
-    });
+        expect(dto.id, 'conversion-rpc-9');
+        expect(dto.fromCurrency, 'NGN');
+        expect(dto.toCurrency, 'USD');
+        expect(dto.fromAmount, 50000);
+        expect(dto.toAmount, 35);
+        expect(dto.exchangeRate, 0.0007);
+        expect(dto.fee, 0);
+        expect(dto.status, 'completed');
+      },
+    );
 
     test('keeps the server timestamp when supplied', () {
       final DateTime stamp = DateTime.utc(2026, 3, 15, 12);

@@ -132,7 +132,8 @@ class MockApiServiceFactory {
       return null;
     }
     for (final ScriptedResponse r in responses) {
-      final bool methodOk = r.method == '*' ||
+      final bool methodOk =
+          r.method == '*' ||
           r.method.toUpperCase() == options.method.toUpperCase();
       final bool pathOk = r.path is RegExp
           ? (r.path as RegExp).hasMatch(options.path)

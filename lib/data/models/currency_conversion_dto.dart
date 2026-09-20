@@ -63,20 +63,19 @@ class CurrencyConversionDto {
     required double rate,
     String entityId = '',
     DateTime? timestamp,
-  }) =>
-      CurrencyConversionDto(
-        id: conversionId,
-        entityId: entityId,
-        fromCurrency: fromCurrency,
-        toCurrency: toCurrency,
-        fromAmount: fromAmount,
-        toAmount: toAmount,
-        exchangeRate: rate,
-        fee: 0,
-        status: 'completed',
-        completedAt: timestamp,
-        createdAt: timestamp ?? DateTime.now(),
-      );
+  }) => CurrencyConversionDto(
+    id: conversionId,
+    entityId: entityId,
+    fromCurrency: fromCurrency,
+    toCurrency: toCurrency,
+    fromAmount: fromAmount,
+    toAmount: toAmount,
+    exchangeRate: rate,
+    fee: 0,
+    status: 'completed',
+    completedAt: timestamp,
+    createdAt: timestamp ?? DateTime.now(),
+  );
 
   final String id;
   final String entityId;

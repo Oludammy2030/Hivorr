@@ -12,9 +12,9 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
     bool isAdmin = true,
     List<AdminReviewQueueEntry>? queue,
     ApiException? nextError,
-  })  : isAdminResult = isAdmin,
-        _queue = queue ?? const <AdminReviewQueueEntry>[],
-        nextError = nextError;
+  }) : isAdminResult = isAdmin,
+       _queue = queue ?? const <AdminReviewQueueEntry>[],
+       nextError = nextError;
 
   bool isAdminResult;
   List<AdminReviewQueueEntry> _queue;
@@ -65,7 +65,10 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
   }
 
   @override
-  Future<void> approveSubmission(String submissionId, {String notes = ''}) async {
+  Future<void> approveSubmission(
+    String submissionId, {
+    String notes = '',
+  }) async {
     approveCallCount++;
     lastApprovedId = submissionId;
     lastNotes = notes;
@@ -86,9 +89,7 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
   }
 
   @override
-  Future<List<AdminReviewAuditEntry>> getAuditTrail(
-    String submissionId,
-  ) async {
+  Future<List<AdminReviewAuditEntry>> getAuditTrail(String submissionId) async {
     auditCallCount++;
     if (nextError != null) throw _consumeError();
     return _auditTrail;
@@ -121,18 +122,17 @@ AdminReviewQueueEntry adminQueueEntry({
   String submissionType = 'trade_proof',
   String status = 'pending',
   DateTime? submittedAt,
-}) =>
-    AdminReviewQueueEntry(
-      submissionId: submissionId,
-      entityId: entityId,
-      entityName: entityName,
-      credentialId: credentialId,
-      credentialType: credentialType,
-      credentialName: credentialName,
-      submissionType: submissionType,
-      status: status,
-      submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => AdminReviewQueueEntry(
+  submissionId: submissionId,
+  entityId: entityId,
+  entityName: entityName,
+  credentialId: credentialId,
+  credentialType: credentialType,
+  credentialName: credentialName,
+  submissionType: submissionType,
+  status: status,
+  submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 /// An audit entry fixture.
 AdminReviewAuditEntry adminAuditEntry({
@@ -142,12 +142,11 @@ AdminReviewAuditEntry adminAuditEntry({
   String? toState,
   String actorId = 'u1',
   DateTime? createdAt,
-}) =>
-    AdminReviewAuditEntry(
-      id: id,
-      eventType: eventType,
-      fromState: fromState,
-      toState: toState,
-      actorId: actorId,
-      createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => AdminReviewAuditEntry(
+  id: id,
+  eventType: eventType,
+  fromState: fromState,
+  toState: toState,
+  actorId: actorId,
+  createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);

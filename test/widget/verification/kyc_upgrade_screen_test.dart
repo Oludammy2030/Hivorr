@@ -13,8 +13,8 @@ import '../../support/harnesses/widget_harness.dart';
 
 void main() {
   KycProvider buildProvider({FakeKycRemoteDataSource? remote}) => KycProvider(
-        repo: KycRepositoryImpl(remote: remote ?? FakeKycRemoteDataSource()),
-      );
+    repo: KycRepositoryImpl(remote: remote ?? FakeKycRemoteDataSource()),
+  );
 
   Future<void> pumpUpgrade(
     WidgetTester tester, {
@@ -45,8 +45,9 @@ void main() {
   });
 
   group('KycUpgradeScreen loading', () {
-    testWidgets('shows a loading state until the level is loaded',
-        (WidgetTester tester) async {
+    testWidgets('shows a loading state until the level is loaded', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource()..blockLevel = true;
       await pumpUpgrade(tester, remote: remote);
       await tester.pump();
@@ -56,8 +57,9 @@ void main() {
   });
 
   group('KycUpgradeScreen error', () {
-    testWidgets('shows an error state after a failed load',
-        (WidgetTester tester) async {
+    testWidgets('shows an error state after a failed load', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -69,8 +71,9 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('recovers to content after tapping retry',
-        (WidgetTester tester) async {
+    testWidgets('recovers to content after tapping retry', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -91,8 +94,9 @@ void main() {
   });
 
   group('KycUpgradeScreen eligible tiers', () {
-    testWidgets('lists the next eligible tier for a tier_1 account',
-        (WidgetTester tester) async {
+    testWidgets('lists the next eligible tier for a tier_1 account', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_1', status: 'active'),
       );
@@ -104,8 +108,9 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('shows the start verification CTA',
-        (WidgetTester tester) async {
+    testWidgets('shows the start verification CTA', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
       );
@@ -116,8 +121,9 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('shows the tier code for the next eligible tier',
-        (WidgetTester tester) async {
+    testWidgets('shows the tier code for the next eligible tier', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_1', status: 'active'),
       );
@@ -128,8 +134,9 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('lists the top tier for a tier_2 account',
-        (WidgetTester tester) async {
+    testWidgets('lists the top tier for a tier_2 account', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_2', status: 'active'),
       );
@@ -140,8 +147,9 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('lists tier_1 as the first tier for a tier_0 account',
-        (WidgetTester tester) async {
+    testWidgets('lists tier_1 as the first tier for a tier_0 account', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
       );
@@ -154,16 +162,19 @@ void main() {
   });
 
   group('KycUpgradeScreen max tier', () {
-    testWidgets('shows the max-tier note and no CTA for tier_3',
-        (WidgetTester tester) async {
+    testWidgets('shows the max-tier note and no CTA for tier_3', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_3', status: 'active'),
       );
       await pumpUpgrade(tester, remote: remote);
       await settle(tester);
 
-      expect(find.text('You are already at the highest available tier.'),
-          findsOneWidget);
+      expect(
+        find.text('You are already at the highest available tier.'),
+        findsOneWidget,
+      );
       expect(find.text('Start verification'), findsNothing);
       await tester.pumpWidget(const SizedBox());
     });

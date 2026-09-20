@@ -20,8 +20,8 @@ class FakeEscrowRepository implements EscrowRepository {
     this.writeAvailable = false,
     EscrowDetail? detail,
     List<Escrow> headers = const <Escrow>[],
-  })  : _detail = detail,
-        _headers = headers;
+  }) : _detail = detail,
+       _headers = headers;
 
   @override
   final bool writeAvailable;
@@ -137,20 +137,19 @@ Escrow seedEscrowEntity({
   double refundedAmount = 0,
   String status = 'funded',
   String? externalReference = 'ORD-2026-000123',
-}) =>
-    Escrow(
-      id: id,
-      financialProfileId: financialProfileId,
-      payerEntityId: payerEntityId,
-      payeeEntityId: payeeEntityId,
-      currencyCode: currencyCode,
-      totalAmount: totalAmount,
-      releasedAmount: releasedAmount,
-      refundedAmount: refundedAmount,
-      status: status,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-      externalReference: externalReference,
-    );
+}) => Escrow(
+  id: id,
+  financialProfileId: financialProfileId,
+  payerEntityId: payerEntityId,
+  payeeEntityId: payeeEntityId,
+  currencyCode: currencyCode,
+  totalAmount: totalAmount,
+  releasedAmount: releasedAmount,
+  refundedAmount: refundedAmount,
+  status: status,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+  externalReference: externalReference,
+);
 
 EscrowMilestone seedMilestoneEntity({
   String id = 'ms-1',
@@ -161,18 +160,17 @@ EscrowMilestone seedMilestoneEntity({
   double amount = 50000,
   String status = 'pending',
   int sortOrder = 1,
-}) =>
-    EscrowMilestone(
-      id: id,
-      escrowId: escrowId,
-      milestoneNumber: milestoneNumber,
-      title: title,
-      description: description,
-      amount: amount,
-      status: status,
-      sortOrder: sortOrder,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => EscrowMilestone(
+  id: id,
+  escrowId: escrowId,
+  milestoneNumber: milestoneNumber,
+  title: title,
+  description: description,
+  amount: amount,
+  status: status,
+  sortOrder: sortOrder,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 EscrowTransaction seedTransactionEntity({
   String id = 'txn-1',
@@ -182,17 +180,16 @@ EscrowTransaction seedTransactionEntity({
   String direction = 'out',
   String entityId = 'entity-payee',
   String reference = 'RELEASE-1',
-}) =>
-    EscrowTransaction(
-      id: id,
-      escrowId: escrowId,
-      type: type,
-      amount: amount,
-      direction: direction,
-      entityId: entityId,
-      reference: reference,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => EscrowTransaction(
+  id: id,
+  escrowId: escrowId,
+  type: type,
+  amount: amount,
+  direction: direction,
+  entityId: entityId,
+  reference: reference,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 EscrowDetail seedEscrowDetailEntity({
   String id = 'escrow-1',
@@ -201,14 +198,13 @@ EscrowDetail seedEscrowDetailEntity({
   String status = 'funded',
   List<EscrowMilestone> milestones = const <EscrowMilestone>[],
   List<EscrowTransaction> transactions = const <EscrowTransaction>[],
-}) =>
-    EscrowDetail(
-      escrow: seedEscrowEntity(
-        id: id,
-        totalAmount: totalAmount,
-        releasedAmount: releasedAmount,
-        status: status,
-      ),
-      milestones: milestones,
-      transactions: transactions,
-    );
+}) => EscrowDetail(
+  escrow: seedEscrowEntity(
+    id: id,
+    totalAmount: totalAmount,
+    releasedAmount: releasedAmount,
+    status: status,
+  ),
+  milestones: milestones,
+  transactions: transactions,
+);

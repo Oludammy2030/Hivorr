@@ -34,66 +34,59 @@ class SupabaseManageUserRemoteDataSource extends BaseApiService
     String? status,
     int offset = 0,
     int limit = 20,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{
-          'p_offset': offset,
-          'p_limit': limit,
-        };
-        if (search != null && search.isNotEmpty) {
-          params['p_search'] = search;
-        }
-        if (status != null && status.isNotEmpty) {
-          params['p_status'] = status;
-        }
-        final Map<String, dynamic> envelope =
-            await supabase.rpc<Map<String, dynamic>>(
-          'manage_user_list',
-          params: params,
-        );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(envelope);
-        return ManageUserListEnvelopeDto.fromJson(data);
-      });
+  }) => _guard(() async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'p_offset': offset,
+      'p_limit': limit,
+    };
+    if (search != null && search.isNotEmpty) {
+      params['p_search'] = search;
+    }
+    if (status != null && status.isNotEmpty) {
+      params['p_status'] = status;
+    }
+    final Map<String, dynamic> envelope = await supabase
+        .rpc<Map<String, dynamic>>('manage_user_list', params: params);
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      envelope,
+    );
+    return ManageUserListEnvelopeDto.fromJson(data);
+  });
 
   @override
   Future<ManageUserDetailDto> getUser(String userId) => _guard(() async {
-        final Map<String, dynamic> envelope =
-            await supabase.rpc<Map<String, dynamic>>(
+    final Map<String, dynamic> envelope = await supabase
+        .rpc<Map<String, dynamic>>(
           'manage_user_get',
           params: <String, dynamic>{'p_user_id': userId},
         );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(envelope);
-        final Object? user = data['user'];
-        if (user is! Map) {
-          throw const FormatException('Malformed manage_user_get payload.');
-        }
-        return ManageUserDetailDto.fromJson(
-          Map<String, dynamic>.from(user),
-        );
-      });
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      envelope,
+    );
+    final Object? user = data['user'];
+    if (user is! Map) {
+      throw const FormatException('Malformed manage_user_get payload.');
+    }
+    return ManageUserDetailDto.fromJson(Map<String, dynamic>.from(user));
+  });
 
   @override
   Future<void> setUserStatus(String userId, String status) => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'manage_user_set_status',
-          params: <String, dynamic>{
-            'p_user_id': userId,
-            'p_status': status,
-          },
+          params: <String, dynamic>{'p_user_id': userId, 'p_status': status},
         );
-        VerificationEnvelopeParser.unwrap(response);
-      });
+    VerificationEnvelopeParser.unwrap(response);
+  });
 
   @override
   Future<void> resetOnboarding(String userId) => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'manage_user_reset_onboarding',
           params: <String, dynamic>{'p_user_id': userId},
         );
-        VerificationEnvelopeParser.unwrap(response);
-      });
+    VerificationEnvelopeParser.unwrap(response);
+  });
 }

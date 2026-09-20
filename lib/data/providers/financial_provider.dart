@@ -58,11 +58,11 @@ class FinancialProvider extends ChangeNotifier {
     NotificationProvider? notificationProvider,
     Duration? pollInterval,
     DateTime Function()? clock,
-  })  : _service = service,
-        _logger = logger,
-        _notificationProvider = notificationProvider,
-        _pollInterval = pollInterval ?? const Duration(seconds: 15),
-        _clock = clock ?? DateTime.now;
+  }) : _service = service,
+       _logger = logger,
+       _notificationProvider = notificationProvider,
+       _pollInterval = pollInterval ?? const Duration(seconds: 15),
+       _clock = clock ?? DateTime.now;
 
   final FinancialService _service;
   final HivorrLogger? _logger;
@@ -169,16 +169,15 @@ class FinancialProvider extends ChangeNotifier {
   /// Creates a financial profile with the given default currency, then
   /// reloads profile + status and emits a one-shot `profile_created`
   /// notification.
-  Future<void> createProfile({
-    String defaultCurrency = 'NGN',
-  }) async {
+  Future<void> createProfile({String defaultCurrency = 'NGN'}) async {
     if (_creating) return;
     _creating = true;
     _error = null;
     notifyListeners();
     try {
-      final FinancialProfile created =
-          await _service.createProfile(defaultCurrency: defaultCurrency);
+      final FinancialProfile created = await _service.createProfile(
+        defaultCurrency: defaultCurrency,
+      );
       _maybeNotifyProfileCreated(created);
       await load();
     } on ApiException catch (e) {
@@ -263,10 +262,7 @@ class FinancialProvider extends ChangeNotifier {
 
   void _ensurePollTimer() {
     if (_pollTimer != null) return;
-    _pollTimer = Timer.periodic(
-      _pollInterval,
-      (_) => unawaited(_onPollTick()),
-    );
+    _pollTimer = Timer.periodic(_pollInterval, (_) => unawaited(_onPollTick()));
   }
 
   Future<void> _onPollTick() async {

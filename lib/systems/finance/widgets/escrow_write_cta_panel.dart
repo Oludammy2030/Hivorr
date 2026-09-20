@@ -98,11 +98,7 @@ class _SupportGuidanceCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            Icons.help_outline,
-            color: colors.onSurfaceVariant,
-            size: 20,
-          ),
+          Icon(Icons.help_outline, color: colors.onSurfaceVariant, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

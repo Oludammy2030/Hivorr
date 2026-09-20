@@ -59,23 +59,37 @@ void main() {
 
   group('TradeVerificationStatusKind mapping', () {
     test('fromServer maps the server column vocabulary', () {
-      expect(TradeVerificationStatusKind.fromServer('approved'),
-          TradeVerificationStatusKind.approved);
-      expect(TradeVerificationStatusKind.fromServer('pending'),
-          TradeVerificationStatusKind.pending);
-      expect(TradeVerificationStatusKind.fromServer('unverified'),
-          TradeVerificationStatusKind.unverified);
-      expect(TradeVerificationStatusKind.fromServer('rejected'),
-          TradeVerificationStatusKind.rejected);
+      expect(
+        TradeVerificationStatusKind.fromServer('approved'),
+        TradeVerificationStatusKind.approved,
+      );
+      expect(
+        TradeVerificationStatusKind.fromServer('pending'),
+        TradeVerificationStatusKind.pending,
+      );
+      expect(
+        TradeVerificationStatusKind.fromServer('unverified'),
+        TradeVerificationStatusKind.unverified,
+      );
+      expect(
+        TradeVerificationStatusKind.fromServer('rejected'),
+        TradeVerificationStatusKind.rejected,
+      );
     });
 
     test('unknown values default to unverified', () {
-      expect(TradeVerificationStatusKind.fromServer(null),
-          TradeVerificationStatusKind.unverified);
-      expect(TradeVerificationStatusKind.fromServer(''),
-          TradeVerificationStatusKind.unverified);
-      expect(TradeVerificationStatusKind.fromServer('weird'),
-          TradeVerificationStatusKind.unverified);
+      expect(
+        TradeVerificationStatusKind.fromServer(null),
+        TradeVerificationStatusKind.unverified,
+      );
+      expect(
+        TradeVerificationStatusKind.fromServer(''),
+        TradeVerificationStatusKind.unverified,
+      );
+      expect(
+        TradeVerificationStatusKind.fromServer('weird'),
+        TradeVerificationStatusKind.unverified,
+      );
     });
 
     test('only approved is terminal + bid-locked', () {

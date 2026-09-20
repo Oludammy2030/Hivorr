@@ -19,12 +19,7 @@ import 'package:dio/dio.dart';
 ///   ..httpClientAdapter = httpMock;
 /// ```
 class MockDioAdapter implements HttpClientAdapter {
-  MockDioAdapter({
-    this.statusCode = 200,
-    this.body,
-    this.error,
-    this.thrown,
-  });
+  MockDioAdapter({this.statusCode = 200, this.body, this.error, this.thrown});
 
   /// HTTP status code returned for every request.
   int statusCode;
@@ -52,16 +47,14 @@ class MockDioAdapter implements HttpClientAdapter {
       requests.isEmpty ? '' : requests.last.uri.toString();
 
   /// The most recent request's absolute path (baseUrl + path).
-  String get capturedPath =>
-      requests.isEmpty ? '' : requests.last.path;
+  String get capturedPath => requests.isEmpty ? '' : requests.last.path;
 
   /// The most recent request's query parameters.
   Map<String, dynamic>? get capturedQueryParameters =>
       requests.isEmpty ? null : requests.last.queryParameters;
 
   /// The most recent request's `Authorization` header value.
-  String? get capturedAuthorizationHeader =>
-      _header(requests, 'Authorization');
+  String? get capturedAuthorizationHeader => _header(requests, 'Authorization');
 
   /// The most recent request's decoded JSON body.
   Map<String, dynamic>? get capturedBody {

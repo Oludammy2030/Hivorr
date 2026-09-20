@@ -9,10 +9,10 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 /// callers always surface the support-team guidance.
 class EscrowWriteUnavailableException extends ApiException {
   const EscrowWriteUnavailableException()
-      : super(
-          kind: ApiExceptionKind.forbidden,
-          message:
-              'Escrow actions are not available yet — releases are handled by '
-              'our support team.',
-        );
+    : super(
+        kind: ApiExceptionKind.forbidden,
+        message:
+            'Escrow actions are not available yet — releases are handled by '
+            'our support team.',
+      );
 }

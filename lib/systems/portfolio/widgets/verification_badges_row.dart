@@ -63,7 +63,8 @@ class VerificationBadgesRow extends StatelessWidget {
               variant: HivorrBadgeVariant.success,
             ),
           HivorrBadge(
-            label: '$credentialCount Approved '
+            label:
+                '$credentialCount Approved '
                 '${credentialCount == 1 ? 'Credential' : 'Credentials'}',
             variant: HivorrBadgeVariant.info,
           ),

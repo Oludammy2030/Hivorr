@@ -41,8 +41,11 @@ void main() {
           const Amount(minorUnits: 9900000001, currency: 'NGN'),
         ),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -70,8 +73,7 @@ void main() {
     test('accepts all supported currencies', () {
       for (final String currency in <String>['NGN', 'GHS', 'USD', 'GBP']) {
         expect(
-          () =>
-              validateAmount(Amount(minorUnits: 100, currency: currency)),
+          () => validateAmount(Amount(minorUnits: 100, currency: currency)),
           returnsNormally,
           reason: 'currency $currency should be supported',
         );
@@ -88,8 +90,11 @@ void main() {
       expect(
         () => requireValidNuban('12345'),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -111,8 +116,11 @@ void main() {
       expect(
         () => requireValidBankCode('58'),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -139,10 +147,7 @@ void main() {
 
   group('invokePaymentCall', () {
     test('returns the value when the call succeeds', () async {
-      final int result = await invokePaymentCall<int>(
-        mapper,
-        () async => 42,
-      );
+      final int result = await invokePaymentCall<int>(mapper, () async => 42);
       expect(result, 42);
     });
 
@@ -154,8 +159,11 @@ void main() {
       await expectLater(
         invokePaymentCall<int>(mapper, () async => throw e),
         throwsA(
-          isA<ApiException>()
-              .having((ex) => ex.kind, 'kind', ApiExceptionKind.network),
+          isA<ApiException>().having(
+            (ex) => ex.kind,
+            'kind',
+            ApiExceptionKind.network,
+          ),
         ),
       );
     });

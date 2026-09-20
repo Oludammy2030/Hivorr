@@ -224,8 +224,11 @@ class AppBootstrap {
     );
     final ({DisputeRepository repository, DisputeProvider provider}) dispute =
         registerDisputeLayer(apiLayer);
-    final ({OnboardingService service, OnboardingProvider provider,
-        OnboardingProgressStore store})
+    final ({
+      OnboardingService service,
+      OnboardingProvider provider,
+      OnboardingProgressStore store,
+    })
     onboarding = _registerOnboarding(apiLayer, storage, taxonomy, verification);
     final EntryStateStore entryStore = HiveEntryStateStore(
       store: LocalStore(storage),
@@ -308,8 +311,9 @@ class AppBootstrap {
       TradeVerificationProvider provider,
     })
     trade = registerTradeVerificationLayer(apiLayer);
-    final TradeVerificationService tradeService =
-        TradeVerificationService(repo: trade.repository);
+    final TradeVerificationService tradeService = TradeVerificationService(
+      repo: trade.repository,
+    );
     return registerOnboardingLayer(
       apiLayer: apiLayer,
       entityProvider: entity,

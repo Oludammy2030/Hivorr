@@ -43,34 +43,33 @@ void main() {
     bool verified = false,
     int pending = 0,
     int total = 1,
-  }) =>
-      <String, dynamic>{
-        'entity_id': 'u1',
-        'kyc': <String, dynamic>{
-          'tier_code': tier,
-          'status': tier == 'tier_0' ? 'pending' : 'active',
-          'limits': <String, dynamic>{
-            'daily': tier == 'tier_0' ? 0 : 500000,
-            'weekly': tier == 'tier_0' ? 0 : 2000000,
-            'monthly': tier == 'tier_0' ? 0 : 8000000,
-            'cashout': tier == 'tier_0' ? 0 : 1000000,
-          },
-        },
-        'identity_verified': verified,
-        'trade_verifications': <dynamic>[],
-        'pending_submissions': pending,
-        'total_submissions': total,
-      };
+  }) => <String, dynamic>{
+    'entity_id': 'u1',
+    'kyc': <String, dynamic>{
+      'tier_code': tier,
+      'status': tier == 'tier_0' ? 'pending' : 'active',
+      'limits': <String, dynamic>{
+        'daily': tier == 'tier_0' ? 0 : 500000,
+        'weekly': tier == 'tier_0' ? 0 : 2000000,
+        'monthly': tier == 'tier_0' ? 0 : 8000000,
+        'cashout': tier == 'tier_0' ? 0 : 1000000,
+      },
+    },
+    'identity_verified': verified,
+    'trade_verifications': <dynamic>[],
+    'pending_submissions': pending,
+    'total_submissions': total,
+  };
 
   Map<String, dynamic> envelope(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   ({VerificationRepositoryImpl repository, FakeStorageService storage})
-      buildFlow({
+  buildFlow({
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
     bool signedIn = true,
     String submitStatus = 'pending',
@@ -96,20 +95,27 @@ void main() {
             'tier_code': 'tier_0',
             'status': 'pending',
             'limits': <String, dynamic>{
-              'daily': 0, 'weekly': 0, 'monthly': 0, 'cashout': 0},
+              'daily': 0,
+              'weekly': 0,
+              'monthly': 0,
+              'cashout': 0,
+            },
           });
     final Map<String, Object? Function(Map<String, dynamic>)> defaults = {
-      'verification_submit': (params) => envelope(submissionData(status: submitStatus)),
+      'verification_submit': (params) =>
+          envelope(submissionData(status: submitStatus)),
       'verification_status_get': (params) => envelope(statusGetter()),
       'verification_kyc_level_get': (params) => envelope(kycData()),
       'verification_limits_get': (params) => envelope(<String, dynamic>{
-            'daily': 0,
-            'weekly': 0,
-            'monthly': 0,
-            'cashout': 0,
-          }),
+        'daily': 0,
+        'weekly': 0,
+        'monthly': 0,
+        'cashout': 0,
+      }),
     };
-    defaults.addAll(rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+    defaults.addAll(
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final client = MockSupabaseClientFactory.create(
       currentUser: signedIn ? fakeUser('u1') : null,
       rpcHandlers: defaults,
@@ -128,10 +134,10 @@ void main() {
     );
     final SupabaseVerificationRemoteDataSource remote =
         SupabaseVerificationRemoteDataSource(
-      dio: Dio(),
-      supabase: client,
-      exceptionMapper: const ApiExceptionMapper(),
-    );
+          dio: Dio(),
+          supabase: client,
+          exceptionMapper: const ApiExceptionMapper(),
+        );
     final VerificationRepositoryImpl repository = VerificationRepositoryImpl(
       remote: remote,
       storage: storage,
@@ -141,41 +147,51 @@ void main() {
   }
 
   group('Verification flow (EP-02-10 §15)', () {
-    test('submits: validate → private-bucket upload → credential → RPC → entity',
-        () async {
-      final flow = buildFlow();
-      final VerificationSubmission submission = await flow.repository
-          .submitIdentityDocument(
-        documentType: DocumentType.nationalId,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-      );
+    test(
+      'submits: validate → private-bucket upload → credential → RPC → entity',
+      () async {
+        final flow = buildFlow();
+        final VerificationSubmission submission = await flow.repository
+            .submitIdentityDocument(
+              documentType: DocumentType.nationalId,
+              bytes: bytes,
+              mimeType: mimeType,
+              fileName: fileName,
+            );
 
-      expect(flow.storage.lastBucket, StorageBuckets.credentialDocuments);
-      expect(flow.storage.lastMimeType, mimeType);
-      expect(submission.id, 'sub-9001');
-      expect(submission.credentialId, 'cred-1');
-      expect(submission.documentType, DocumentType.nationalId);
-      expect(submission.status, VerificationStatusKind.pending);
-    });
+        expect(flow.storage.lastBucket, StorageBuckets.credentialDocuments);
+        expect(flow.storage.lastMimeType, mimeType);
+        expect(submission.id, 'sub-9001');
+        expect(submission.credentialId, 'cred-1');
+        expect(submission.documentType, DocumentType.nationalId);
+        expect(submission.status, VerificationStatusKind.pending);
+      },
+    );
 
-    test('submit requires a signed-in entity (server-authoritative id)',
-        () async {
-      final flow = buildFlow(signedIn: false);
+    test(
+      'submit requires a signed-in entity (server-authoritative id)',
+      () async {
+        final flow = buildFlow(signedIn: false);
 
-      expect(
-        () => flow.repository.submitIdentityDocument(
-          documentType: DocumentType.passport,
-          bytes: bytes,
-          mimeType: mimeType,
-          fileName: fileName,
-        ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
-            .having((ApiException e) => e.code, 'code', 'PLT001')),
-      );
-    });
+        expect(
+          () => flow.repository.submitIdentityDocument(
+            documentType: DocumentType.passport,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+          ),
+          throwsA(
+            isA<ApiException>()
+                .having(
+                  (ApiException e) => e.kind,
+                  'kind',
+                  ApiExceptionKind.auth,
+                )
+                .having((ApiException e) => e.code, 'code', 'PLT001'),
+          ),
+        );
+      },
+    );
 
     test('status surfaces the aggregate with KYC + counts', () async {
       final flow = buildFlow(
@@ -193,21 +209,25 @@ void main() {
       expect(status.totalSubmissions, 1);
     });
 
-    test('a rejected envelope maps to a typed conflict ApiException',
-        () async {
+    test('a rejected envelope maps to a typed conflict ApiException', () async {
       final flow = buildFlow(
         rpcHandlers: {
           'verification_status_get': (params) => <String, dynamic>{
-                'code': 'PLT005',
-                'data': <String, dynamic>{},
-              },
+            'code': 'PLT005',
+            'data': <String, dynamic>{},
+          },
         },
       );
 
       expect(
         () => flow.repository.getStatus(),
-        throwsA(isA<ApiException>().having((ApiException e) => e.kind,
-            'kind', ApiExceptionKind.conflict)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
 
@@ -261,32 +281,34 @@ void main() {
       provider.dispose();
     });
 
-    test('provider surfaces a submission failure as a typed error state',
-        () async {
-      final flow = buildFlow(
-        rpcHandlers: {
-          'verification_submit': (params) => <String, dynamic>{
-                'code': 'PLT003',
-                'data': <String, dynamic>{},
-              },
-        },
-      );
-      final VerificationProvider provider = VerificationProvider(
-        repo: flow.repository,
-      );
+    test(
+      'provider surfaces a submission failure as a typed error state',
+      () async {
+        final flow = buildFlow(
+          rpcHandlers: {
+            'verification_submit': (params) => <String, dynamic>{
+              'code': 'PLT003',
+              'data': <String, dynamic>{},
+            },
+          },
+        );
+        final VerificationProvider provider = VerificationProvider(
+          repo: flow.repository,
+        );
 
-      await provider.submitIdentityDocument(
-        documentType: DocumentType.nationalId,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-      );
+        await provider.submitIdentityDocument(
+          documentType: DocumentType.nationalId,
+          bytes: bytes,
+          mimeType: mimeType,
+          fileName: fileName,
+        );
 
-      expect(provider.submitState, SubmitState.error);
-      expect(provider.submitError, isA<ApiException>());
-      expect(provider.submitError!.code, 'PLT003');
-      provider.dispose();
-    });
+        expect(provider.submitState, SubmitState.error);
+        expect(provider.submitError, isA<ApiException>());
+        expect(provider.submitError!.code, 'PLT003');
+        provider.dispose();
+      },
+    );
 
     test('the full flow remains server-authoritative: client never writes '
         'status/tier', () async {

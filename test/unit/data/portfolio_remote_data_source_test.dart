@@ -13,19 +13,18 @@ import '../../support/fakes/fake_portfolio.dart';
 void main() {
   SupabasePortfolioRemoteDataSource build(
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
-  ) =>
-      SupabasePortfolioRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
-        exceptionMapper: const ApiExceptionMapper(),
-      );
+  ) => SupabasePortfolioRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
+    exceptionMapper: const ApiExceptionMapper(),
+  );
 
   Map<String, dynamic> ok(Map<String, dynamic> data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   group('SupabasePortfolioRemoteDataSource.fetchPublicProfile', () {
     test('calls portfolio_public_profile_get with p_entity_id', () async {
@@ -49,14 +48,18 @@ void main() {
 
     test('returns a valid DTO from a full envelope payload', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'portfolio_public_profile_get': (_) =>
-            ok(seedPublicProfileDto(
-              entityId: 'ent-2',
-              displayName: 'Marie Curie',
-              credentials: <PublicCredentialDto>[
-                seedPublicCredentialDto(kind: 'identity_document', title: 'National ID'),
-              ],
-            ).toJson()),
+        'portfolio_public_profile_get': (_) => ok(
+          seedPublicProfileDto(
+            entityId: 'ent-2',
+            displayName: 'Marie Curie',
+            credentials: <PublicCredentialDto>[
+              seedPublicCredentialDto(
+                kind: 'identity_document',
+                title: 'National ID',
+              ),
+            ],
+          ).toJson(),
+        ),
       });
 
       final PublicProfileDto dto = await source.fetchPublicProfile('ent-2');
@@ -70,17 +73,21 @@ void main() {
     test('maps PLT004 to notFound ApiException', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'portfolio_public_profile_get': (_) => <String, dynamic>{
-              'code': 'PLT004',
-              'message': 'not found',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT004',
+          'message': 'not found',
+          'data': <String, dynamic>{},
+        },
       });
 
       expect(
         () => source.fetchPublicProfile('unknown'),
         throwsA(
           isA<ApiException>()
-              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.notFound)
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.notFound,
+              )
               .having((ApiException e) => e.code, 'code', 'PLT004'),
         ),
       );
@@ -89,30 +96,36 @@ void main() {
     test('maps a non-object data payload to server ApiException', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'portfolio_public_profile_get': (_) => <String, dynamic>{
-              'code': 'PLT000',
-              'data': 'not-a-map',
-            },
+          'code': 'PLT000',
+          'data': 'not-a-map',
+        },
       });
 
       expect(
         () => source.fetchPublicProfile('entity-1'),
         throwsA(
-          isA<ApiException>()
-              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server),
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
         ),
       );
     });
 
-    test('maps a thrown transport error to a typed ApiException (never raw)',
-        () {
-      final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'portfolio_public_profile_get': (_) => throw StateError('network down'),
-      });
+    test(
+      'maps a thrown transport error to a typed ApiException (never raw)',
+      () {
+        final source = build(<String, Object? Function(Map<String, dynamic>)>{
+          'portfolio_public_profile_get': (_) =>
+              throw StateError('network down'),
+        });
 
-      expect(
-        () => source.fetchPublicProfile('entity-1'),
-        throwsA(isA<ApiException>()),
-      );
-    });
+        expect(
+          () => source.fetchPublicProfile('entity-1'),
+          throwsA(isA<ApiException>()),
+        );
+      },
+    );
   });
 }

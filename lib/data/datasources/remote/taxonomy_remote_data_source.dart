@@ -12,9 +12,7 @@ abstract class TaxonomyRemoteDataSource {
   ///
   /// Backed by `taxonomy_industries_list`. Results are already ordered
   /// `sort_order ASC` by the server.
-  Future<List<IndustryDto>> getIndustries({
-    bool includeInactive = false,
-  });
+  Future<List<IndustryDto>> getIndustries({bool includeInactive = false});
 
   /// Returns all professions, optionally scoped to [industryId].
   ///

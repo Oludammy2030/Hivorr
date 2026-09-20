@@ -15,7 +15,8 @@ enum EntityCapability {
   /// "Offer Professional Services" — professional role; full onboarding.
   offer(
     label: 'Offer Professional Services',
-    description: 'Get found by clients, showcase your profession, and win work.',
+    description:
+        'Get found by clients, showcase your profession, and win work.',
     requiresProfessionalWizard: true,
   ),
 
@@ -45,9 +46,10 @@ enum EntityCapability {
   /// Parses a persisted capability string, defaulting to [both] so older saved
   /// wizard positions (written before capabilities existed) resume safely on
   /// the professional path rather than stranding the user mid-wizard.
-  static EntityCapability fromName(String? name) => EntityCapability.values
-      .where((EntityCapability value) => value.name == name)
-      .firstOrNull ??
+  static EntityCapability fromName(String? name) =>
+      EntityCapability.values
+          .where((EntityCapability value) => value.name == name)
+          .firstOrNull ??
       EntityCapability.both;
 }
 

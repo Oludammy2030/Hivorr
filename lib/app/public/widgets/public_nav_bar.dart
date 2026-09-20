@@ -45,9 +45,7 @@ class PublicNavBar extends StatelessWidget {
       color: colors.surface,
       child: Container(
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: colors.outlineVariant),
-          ),
+          border: Border(bottom: BorderSide(color: colors.outlineVariant)),
         ),
         child: SafeArea(
           bottom: false,
@@ -93,10 +91,7 @@ class PublicNavBar extends StatelessWidget {
                     style: TextButton.styleFrom(
                       foregroundColor: colors.primary,
                     ),
-                    child: Text(
-                      'Sign in',
-                      style: context.textTheme.labelLarge,
-                    ),
+                    child: Text('Sign in', style: context.textTheme.labelLarge),
                   ),
                   const SizedBox(width: HivorrSpacing.xs),
                   HivorrButton(
@@ -132,9 +127,11 @@ class PublicNavBar extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: HivorrSpacing.xs),
-                  _NavMenu(onSelected: (PublicNavItem item) {
-                    context.goNamed(item.name);
-                  }),
+                  _NavMenu(
+                    onSelected: (PublicNavItem item) {
+                      context.goNamed(item.name);
+                    },
+                  ),
                 ],
               ],
             ),

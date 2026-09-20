@@ -19,15 +19,14 @@ void main() {
     List<EscrowMilestone> milestones = const <EscrowMilestone>[],
     double totalAmount = 50000,
     String currencyCode = 'NGN',
-  }) =>
-      pumpTheme(
-        tester,
-        MilestoneListCard(
-          milestones: milestones,
-          totalAmount: totalAmount,
-          currencyCode: currencyCode,
-        ),
-      );
+  }) => pumpTheme(
+    tester,
+    MilestoneListCard(
+      milestones: milestones,
+      totalAmount: totalAmount,
+      currencyCode: currencyCode,
+    ),
+  );
 
   Color chipColor(WidgetTester tester) {
     final Container container = tester.widget<Container>(
@@ -40,8 +39,9 @@ void main() {
   }
 
   group('MilestoneListCard', () {
-    testWidgets('renders the header and milestone rows sorted by sortOrder',
-        (WidgetTester tester) async {
+    testWidgets('renders the header and milestone rows sorted by sortOrder', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         milestones: <EscrowMilestone>[
@@ -68,8 +68,9 @@ void main() {
       expect(find.text('2. Build'), findsOneWidget);
     });
 
-    testWidgets('renders milestone amounts via BalanceFormatter',
-        (WidgetTester tester) async {
+    testWidgets('renders milestone amounts via BalanceFormatter', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         milestones: <EscrowMilestone>[
@@ -81,19 +82,15 @@ void main() {
       expect(find.text('\u20A630,000.00'), findsOneWidget);
     });
 
-    testWidgets('pending chip → "Pending" on surfaceContainerHighest',
-        (WidgetTester tester) async {
+    testWidgets('pending chip → "Pending" on surfaceContainerHighest', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
-        milestones: <EscrowMilestone>[
-          seedMilestoneEntity(status: 'pending'),
-        ],
+        milestones: <EscrowMilestone>[seedMilestoneEntity(status: 'pending')],
       );
 
-      expect(
-        MilestoneStatus.forCode('pending')!.label,
-        'Pending',
-      );
+      expect(MilestoneStatus.forCode('pending')!.label, 'Pending');
       expect(find.text('Pending'), findsOneWidget);
       expect(
         chipColor(tester),
@@ -101,13 +98,12 @@ void main() {
       );
     });
 
-    testWidgets('completed chip → primaryContainer',
-        (WidgetTester tester) async {
+    testWidgets('completed chip → primaryContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
-        milestones: <EscrowMilestone>[
-          seedMilestoneEntity(status: 'completed'),
-        ],
+        milestones: <EscrowMilestone>[seedMilestoneEntity(status: 'completed')],
       );
 
       expect(find.text('Completed — awaiting release'), findsOneWidget);
@@ -117,43 +113,40 @@ void main() {
       );
     });
 
-    testWidgets('released chip → successContainer',
-        (WidgetTester tester) async {
+    testWidgets('released chip → successContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
-        milestones: <EscrowMilestone>[
-          seedMilestoneEntity(status: 'released'),
-        ],
+        milestones: <EscrowMilestone>[seedMilestoneEntity(status: 'released')],
       );
 
       expect(find.text('Released'), findsOneWidget);
       expect(chipColor(tester), ext().successContainer);
     });
 
-    testWidgets('progress equals releasedTotal / total',
-        (WidgetTester tester) async {
+    testWidgets('progress equals releasedTotal / total', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         milestones: <EscrowMilestone>[
           seedMilestoneEntity(status: 'released', amount: 25000),
-          seedMilestoneEntity(
-            id: 'ms-2',
-            status: 'pending',
-            amount: 25000,
-          ),
+          seedMilestoneEntity(id: 'ms-2', status: 'pending', amount: 25000),
         ],
         totalAmount: 50000,
       );
 
-      final LinearProgressIndicator bar =
-          tester.widget<LinearProgressIndicator>(
-        find.byType(LinearProgressIndicator),
-      );
+      final LinearProgressIndicator bar = tester
+          .widget<LinearProgressIndicator>(
+            find.byType(LinearProgressIndicator),
+          );
       expect(bar.value, closeTo(0.5, 0.0001));
     });
 
-    testWidgets('progress is 0 when nothing is released',
-        (WidgetTester tester) async {
+    testWidgets('progress is 0 when nothing is released', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         milestones: <EscrowMilestone>[
@@ -162,15 +155,16 @@ void main() {
         totalAmount: 50000,
       );
 
-      final LinearProgressIndicator bar =
-          tester.widget<LinearProgressIndicator>(
-        find.byType(LinearProgressIndicator),
-      );
+      final LinearProgressIndicator bar = tester
+          .widget<LinearProgressIndicator>(
+            find.byType(LinearProgressIndicator),
+          );
       expect(bar.value, 0.0);
     });
 
-    testWidgets('progress clamps to 1.0 when releases exceed total',
-        (WidgetTester tester) async {
+    testWidgets('progress clamps to 1.0 when releases exceed total', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         milestones: <EscrowMilestone>[
@@ -179,24 +173,21 @@ void main() {
         totalAmount: 50000,
       );
 
-      final LinearProgressIndicator bar =
-          tester.widget<LinearProgressIndicator>(
-        find.byType(LinearProgressIndicator),
-      );
+      final LinearProgressIndicator bar = tester
+          .widget<LinearProgressIndicator>(
+            find.byType(LinearProgressIndicator),
+          );
       expect(bar.value, 1.0);
     });
 
-    testWidgets('released total appears in the header row',
-        (WidgetTester tester) async {
+    testWidgets('released total appears in the header row', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         milestones: <EscrowMilestone>[
           seedMilestoneEntity(status: 'released', amount: 20000),
-          seedMilestoneEntity(
-            id: 'ms-2',
-            status: 'pending',
-            amount: 30000,
-          ),
+          seedMilestoneEntity(id: 'ms-2', status: 'pending', amount: 30000),
         ],
         totalAmount: 50000,
       );
@@ -204,13 +195,12 @@ void main() {
       expect(find.text('\u20A620,000.00'), findsNWidgets(2));
     });
 
-    testWidgets('unknown milestone status renders no chip',
-        (WidgetTester tester) async {
+    testWidgets('unknown milestone status renders no chip', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
-        milestones: <EscrowMilestone>[
-          seedMilestoneEntity(status: 'bogus'),
-        ],
+        milestones: <EscrowMilestone>[seedMilestoneEntity(status: 'bogus')],
       );
 
       expect(find.byType(MilestoneStatusBadge), findsNothing);

@@ -24,12 +24,11 @@ void main() {
     FakeKycRemoteDataSource? remote,
     KycProviderRegistry? registry,
     HivorrLogger? logger,
-  }) =>
-      KycRepositoryImpl(
-        remote: remote ?? FakeKycRemoteDataSource(),
-        providerRegistry: registry,
-        logger: logger,
-      );
+  }) => KycRepositoryImpl(
+    remote: remote ?? FakeKycRemoteDataSource(),
+    providerRegistry: registry,
+    logger: logger,
+  );
 
   group('KycRepository.getKycLevel', () {
     test('maps the remote KycLevelDto to a domain KycLevel', () async {
@@ -124,12 +123,21 @@ void main() {
 
       await expectLater(
         repo.requestUpgrade(targetTier: KycTier.tier1),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)
-            .having((ApiException e) => e.code, 'code', 'PLT003')),
+        throwsA(
+          isA<ApiException>()
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.validation,
+              )
+              .having((ApiException e) => e.code, 'code', 'PLT003'),
+        ),
       );
-      expect(mock.lastTargetTier, isNull, reason: 'provider must not be called');
+      expect(
+        mock.lastTargetTier,
+        isNull,
+        reason: 'provider must not be called',
+      );
     });
 
     test('delegates to the provider seam for an upgrade target', () async {
@@ -144,45 +152,66 @@ void main() {
         registry: KycProviderRegistry(primary: mock),
       );
 
-      final KycLevel result =
-          await repo.requestUpgrade(targetTier: KycTier.tier1);
+      final KycLevel result = await repo.requestUpgrade(
+        targetTier: KycTier.tier1,
+      );
 
       expect(mock.lastTargetTier, KycTier.tier1);
       expect(mock.lastEntityId, 'u1');
-      expect(result.tierCode, 'tier_0', reason: 'no server approval re-read here');
+      expect(
+        result.tierCode,
+        'tier_0',
+        reason: 'no server approval re-read here',
+      );
     });
 
-    test('returns current level unchanged when no provider is configured', () async {
-      final remote = FakeKycRemoteDataSource(
-        kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
-      );
-      final repo = build(remote: remote);
+    test(
+      'returns current level unchanged when no provider is configured',
+      () async {
+        final remote = FakeKycRemoteDataSource(
+          kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
+        );
+        final repo = build(remote: remote);
 
-      final KycLevel result =
-          await repo.requestUpgrade(targetTier: KycTier.tier1);
+        final KycLevel result = await repo.requestUpgrade(
+          targetTier: KycTier.tier1,
+        );
 
-      expect(result.tierCode, 'tier_0');
-      expect(remote.kycCallCount, 1);
-    });
+        expect(result.tierCode, 'tier_0');
+        expect(remote.kycCallCount, 1);
+      },
+    );
 
-    test('rejects an equal target tier with PLT003 before the provider', () async {
-      final mock = MockKycProvider();
-      final repo = build(
-        remote: FakeKycRemoteDataSource(
-          kycResult: seedKycDto(tierCode: 'tier_2', status: 'active'),
-        ),
-        registry: KycProviderRegistry(primary: mock),
-      );
+    test(
+      'rejects an equal target tier with PLT003 before the provider',
+      () async {
+        final mock = MockKycProvider();
+        final repo = build(
+          remote: FakeKycRemoteDataSource(
+            kycResult: seedKycDto(tierCode: 'tier_2', status: 'active'),
+          ),
+          registry: KycProviderRegistry(primary: mock),
+        );
 
-      await expectLater(
-        repo.requestUpgrade(targetTier: KycTier.tier2),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)
-            .having((ApiException e) => e.code, 'code', 'PLT003')),
-      );
-      expect(mock.lastTargetTier, isNull, reason: 'equal target must not reach provider');
-    });
+        await expectLater(
+          repo.requestUpgrade(targetTier: KycTier.tier2),
+          throwsA(
+            isA<ApiException>()
+                .having(
+                  (ApiException e) => e.kind,
+                  'kind',
+                  ApiExceptionKind.validation,
+                )
+                .having((ApiException e) => e.code, 'code', 'PLT003'),
+          ),
+        );
+        expect(
+          mock.lastTargetTier,
+          isNull,
+          reason: 'equal target must not reach provider',
+        );
+      },
+    );
 
     test('forwards a payload to the provider seam', () async {
       final mock = MockKycProvider(
@@ -221,10 +250,15 @@ void main() {
         registry: KycProviderRegistry(primary: mock),
       );
 
-      final KycLevel result =
-          await repo.requestUpgrade(targetTier: KycTier.tier1);
+      final KycLevel result = await repo.requestUpgrade(
+        targetTier: KycTier.tier1,
+      );
 
-      expect(result.tierCode, 'tier_1', reason: 'approval re-reads server state');
+      expect(
+        result.tierCode,
+        'tier_1',
+        reason: 'approval re-reads server state',
+      );
       expect(remote.kycCallCount, 2, reason: 'initial fetch + server re-read');
     });
   });
@@ -244,18 +278,21 @@ void main() {
       expect(level.isVerified, isFalse);
     });
 
-    test('getStatus maps an empty trade-verification array for KYC-only', () async {
-      final remote = FakeKycRemoteDataSource(
-        statusResult: seedKycStatusDto(),
-      );
-      final repo = build(remote: remote);
+    test(
+      'getStatus maps an empty trade-verification array for KYC-only',
+      () async {
+        final remote = FakeKycRemoteDataSource(
+          statusResult: seedKycStatusDto(),
+        );
+        final repo = build(remote: remote);
 
-      final VerificationStatus status = await repo.getStatus();
+        final VerificationStatus status = await repo.getStatus();
 
-      expect(status.tradeVerifications, isEmpty);
-      expect(status.kycLevel.tierCode, 'tier_0');
-      expect(status.identityVerified, isFalse);
-    });
+        expect(status.tradeVerifications, isEmpty);
+        expect(status.kycLevel.tierCode, 'tier_0');
+        expect(status.identityVerified, isFalse);
+      },
+    );
   });
 
   group('KycRepository.eligibleUpgradePath', () {
@@ -266,8 +303,11 @@ void main() {
         status: 'pending',
         limits: const KycLimits(daily: 0, weekly: 0, monthly: 0, cashout: 0),
       );
-      expect(repo.eligibleUpgradePath(level),
-          <KycTier>[KycTier.tier1, KycTier.tier2, KycTier.tier3]);
+      expect(repo.eligibleUpgradePath(level), <KycTier>[
+        KycTier.tier1,
+        KycTier.tier2,
+        KycTier.tier3,
+      ]);
     });
 
     test('tier1 exposes tier2 and tier3', () {
@@ -276,10 +316,16 @@ void main() {
         tierCode: 'tier_1',
         status: 'active',
         limits: const KycLimits(
-          daily: 50000, weekly: 200000, monthly: 800000, cashout: 100000),
+          daily: 50000,
+          weekly: 200000,
+          monthly: 800000,
+          cashout: 100000,
+        ),
       );
-      expect(repo.eligibleUpgradePath(level),
-          <KycTier>[KycTier.tier2, KycTier.tier3]);
+      expect(repo.eligibleUpgradePath(level), <KycTier>[
+        KycTier.tier2,
+        KycTier.tier3,
+      ]);
     });
 
     test('tier2 exposes only tier3', () {
@@ -288,7 +334,11 @@ void main() {
         tierCode: 'tier_2',
         status: 'active',
         limits: const KycLimits(
-          daily: 200000, weekly: 800000, monthly: 3000000, cashout: 500000),
+          daily: 200000,
+          weekly: 800000,
+          monthly: 3000000,
+          cashout: 500000,
+        ),
       );
       expect(repo.eligibleUpgradePath(level), <KycTier>[KycTier.tier3]);
     });
@@ -299,7 +349,11 @@ void main() {
         tierCode: 'tier_3',
         status: 'active',
         limits: const KycLimits(
-          daily: 1000000, weekly: 4000000, monthly: 15000000, cashout: 2000000),
+          daily: 1000000,
+          weekly: 4000000,
+          monthly: 15000000,
+          cashout: 2000000,
+        ),
       );
       expect(repo.eligibleUpgradePath(level), isEmpty);
     });

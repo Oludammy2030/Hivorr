@@ -89,8 +89,5 @@ abstract class EscrowRemoteDataSource {
   /// Maps to `financial_escrow_refund(p_escrow_id)` (`969-1025`); [reason] is
   /// carried in the proxy payload only (the frozen RPC does not take one).
   /// Gated by [writeViaProxy].
-  Future<void> refundEscrow({
-    required String escrowId,
-    required String reason,
-  });
+  Future<void> refundEscrow({required String escrowId, required String reason});
 }

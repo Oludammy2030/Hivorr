@@ -45,8 +45,9 @@ class HivorrListTile extends StatelessWidget {
                   if (subtitle != null && subtitle!.isNotEmpty)
                     Text(
                       subtitle!,
-                      style: context.textTheme.bodySmall
-                          ?.copyWith(color: colors.onSurfaceVariant),
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
                 ],
               ),

@@ -37,11 +37,11 @@ class TradeVerificationTimeline extends StatelessWidget {
 
   /// Maps a status kind to its active step index in the 4-step progression.
   static int stepIndexFor(TradeVerificationStatusKind kind) => switch (kind) {
-        TradeVerificationStatusKind.unverified => 0,
-        TradeVerificationStatusKind.pending => 2,
-        TradeVerificationStatusKind.approved ||
-        TradeVerificationStatusKind.rejected => 3,
-      };
+    TradeVerificationStatusKind.unverified => 0,
+    TradeVerificationStatusKind.pending => 2,
+    TradeVerificationStatusKind.approved ||
+    TradeVerificationStatusKind.rejected => 3,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -75,8 +75,7 @@ class TradeVerificationTimeline extends StatelessWidget {
           kind: entry.statusKind,
           activeIndex: activeIndex,
           title: _decidedTitle(entry.statusKind),
-          caption:
-              reviewedAt == null ? null : _formatDate(reviewedAt!),
+          caption: reviewedAt == null ? null : _formatDate(reviewedAt!),
         ),
         if (needsNotes && decisionNotes != null && decisionNotes!.isNotEmpty)
           Padding(
@@ -95,7 +94,8 @@ class TradeVerificationTimeline extends StatelessWidget {
     );
   }
 
-  bool get needsNotes => entry.statusKind == TradeVerificationStatusKind.rejected;
+  bool get needsNotes =>
+      entry.statusKind == TradeVerificationStatusKind.rejected;
 
   static String _decidedTitle(TradeVerificationStatusKind kind) =>
       switch (kind) {
@@ -141,11 +141,11 @@ class _StepTile extends StatelessWidget {
   final String? caption;
 
   int get index => switch (step) {
-        TradeTimelineStep.unverified => 0,
-        TradeTimelineStep.submitted => 1,
-        TradeTimelineStep.pending => 2,
-        TradeTimelineStep.decided => 3,
-      };
+    TradeTimelineStep.unverified => 0,
+    TradeTimelineStep.submitted => 1,
+    TradeTimelineStep.pending => 2,
+    TradeTimelineStep.decided => 3,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -162,10 +162,7 @@ class _StepTile extends StatelessWidget {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: _Dot(
-              color: _dotColor(colors, ext),
-              filled: completed,
-            ),
+            child: _Dot(color: _dotColor(colors, ext), filled: completed),
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Expanded(

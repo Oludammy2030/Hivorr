@@ -35,8 +35,9 @@ void main() {
   }
 
   group('IdentityVerificationStepScreen (FV-22, FV-24)', () {
-    testWidgets('renders intro copy and all five document-type chips',
-        (WidgetTester tester) async {
+    testWidgets('renders intro copy and all five document-type chips', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, _) = await pumpIdentity(tester);
       expect(
         find.text('Verify your identity with a government-issued document.'),
@@ -49,8 +50,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('primary is disabled until both type and file are picked',
-        (WidgetTester tester) async {
+    testWidgets('primary is disabled until both type and file are picked', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpIdentity(tester);
       expect(controller.primaryLabel, 'Upload & submit');
@@ -70,8 +72,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('a document type + picked file enables the primary action',
-        (WidgetTester tester) async {
+    testWidgets('a document type + picked file enables the primary action', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpIdentity(tester, pickFile: () async => seedPickedFile());
       await tester.tap(find.text('Passport'));
@@ -83,10 +86,13 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('oversized file is rejected inline before upload',
-        (WidgetTester tester) async {
-      final (OnboardingTestStack stack, OnboardingStepController controller) =
-          await pumpIdentity(
+    testWidgets('oversized file is rejected inline before upload', (
+      WidgetTester tester,
+    ) async {
+      final (
+        OnboardingTestStack stack,
+        OnboardingStepController controller,
+      ) = await pumpIdentity(
         tester,
         pickFile: () async => PickedDocument(
           bytes: Uint8List(10 * 1024 * 1024 + 1),
@@ -106,8 +112,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('javascript-invalid MIME type is rejected inline',
-        (WidgetTester tester) async {
+    testWidgets('javascript-invalid MIME type is rejected inline', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, _) = await pumpIdentity(
         tester,
         pickFile: () async => PickedDocument(
@@ -129,8 +136,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('submit delegates, shows reviewed copy, advances to trade',
-        (WidgetTester tester) async {
+    testWidgets('submit delegates, shows reviewed copy, advances to trade', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpIdentity(tester, pickFile: () async => seedPickedFile());
       await tester.tap(find.text('Passport'));
@@ -141,24 +149,31 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(stack.identityRepo.submitCallCount, 1);
-      expect(stack.provider.progress!.hasIdentitySubmission, isTrue,
-          reason: 'mirror flag set after a successful submission');
+      expect(
+        stack.provider.progress!.hasIdentitySubmission,
+        isTrue,
+        reason: 'mirror flag set after a successful submission',
+      );
       expect(stack.provider.currentStep, isNotNull);
       expect(find.text('ONBOARDING-TRADE-PROOF'), findsOneWidget);
       controller.dispose();
       stack.provider.dispose();
     });
 
-    testWidgets('pending-verification conflict offers skip + view-status',
-        (WidgetTester tester) async {
+    testWidgets('pending-verification conflict offers skip + view-status', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack s = buildOnboardingStack();
       s.identityRepo.nextError = const ApiException(
         kind: ApiExceptionKind.conflict,
         message: 'You already have a pending verification for this document.',
         code: 'PLT005',
       );
-      final (_, OnboardingStepController controller) =
-          await pumpIdentity(tester, stack: s, pickFile: () async => seedPickedFile());
+      final (_, OnboardingStepController controller) = await pumpIdentity(
+        tester,
+        stack: s,
+        pickFile: () async => seedPickedFile(),
+      );
       await tester.tap(find.text('Passport'));
       await tester.pump();
       await tester.tap(find.text('Choose file'));
@@ -180,16 +195,20 @@ void main() {
       s.provider.dispose();
     });
 
-    testWidgets('skip-for-now advances without a submission or mirror flag',
-        (WidgetTester tester) async {
+    testWidgets('skip-for-now advances without a submission or mirror flag', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack s = buildOnboardingStack();
       s.identityRepo.nextError = const ApiException(
         kind: ApiExceptionKind.conflict,
         message: 'You already have a pending verification for this document.',
         code: 'PLT005',
       );
-      final (_, OnboardingStepController controller) =
-          await pumpIdentity(tester, stack: s, pickFile: () async => seedPickedFile());
+      final (_, OnboardingStepController controller) = await pumpIdentity(
+        tester,
+        stack: s,
+        pickFile: () async => seedPickedFile(),
+      );
       await tester.tap(find.text('Passport'));
       await tester.pump();
       await tester.tap(find.text('Choose file'));
@@ -199,12 +218,21 @@ void main() {
 
       await tester.tap(find.text('Skip for now'));
       await tester.pumpAndSettle();
-      expect(find.text('ONBOARDING-TRADE-PROOF'), findsOneWidget,
-          reason: 'skip continues the wizard to the trade step');
-      expect(s.identityRepo.submitCallCount, 1,
-          reason: 'the failed attempt is not re-fired by skip');
-      expect(s.provider.progress!.hasIdentitySubmission, isFalse,
-          reason: 'no submission succeeded, so no UX mirror flag');
+      expect(
+        find.text('ONBOARDING-TRADE-PROOF'),
+        findsOneWidget,
+        reason: 'skip continues the wizard to the trade step',
+      );
+      expect(
+        s.identityRepo.submitCallCount,
+        1,
+        reason: 'the failed attempt is not re-fired by skip',
+      );
+      expect(
+        s.provider.progress!.hasIdentitySubmission,
+        isFalse,
+        reason: 'no submission succeeded, so no UX mirror flag',
+      );
       controller.dispose();
       s.provider.dispose();
     });

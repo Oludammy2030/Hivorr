@@ -15,8 +15,9 @@ import '../../../support/harnesses/widget_harness.dart';
 
 /// The single vertical body list under the public chrome (the horizontal nav
 /// scroll and any nested lists are excluded).
-Finder bodyScroll() =>
-    find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first;
+Finder bodyScroll() => find
+    .descendant(of: find.byType(ListView), matching: find.byType(Scrollable))
+    .first;
 
 Future<void> pumpWelcome(
   WidgetTester tester,
@@ -26,14 +27,9 @@ Future<void> pumpWelcome(
 }) async {
   await pumpScreen(
     tester,
-    MaterialApp.router(
-      theme: AppTheme.lightTheme,
-      routerConfig: router,
-    ),
+    MaterialApp.router(theme: AppTheme.lightTheme, routerConfig: router),
     providers: <SingleChildWidget>[
-      ChangeNotifierProvider<AuthProvider>.value(
-        value: FakeAuthProvider(),
-      ),
+      ChangeNotifierProvider<AuthProvider>.value(value: FakeAuthProvider()),
     ],
     width: width,
     height: height,
@@ -42,12 +38,10 @@ Future<void> pumpWelcome(
 
 void main() {
   group('WelcomeScreen (web landing)', () {
-    testWidgets('renders the brand lockup, hero and sectioned content',
-        (tester) async {
-      await pumpWelcome(
-        tester,
-        doorRouter(initialLocation: '/welcome'),
-      );
+    testWidgets('renders the brand lockup, hero and sectioned content', (
+      tester,
+    ) async {
+      await pumpWelcome(tester, doorRouter(initialLocation: '/welcome'));
 
       expect(find.byType(PublicPageScaffold), findsOneWidget);
       expect(find.byType(PublicNavBar), findsOneWidget);
@@ -56,22 +50,17 @@ void main() {
         find.text('Run your whole life on one operating system.'),
         findsOneWidget,
       );
-      expect(
-        find.text('I already have an account — sign in'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('Create your free account'),
-        findsWidgets,
-      );
+      expect(find.text('I already have an account — sign in'), findsOneWidget);
+      expect(find.text('Create your free account'), findsWidgets);
       expect(
         find.text('Trust is the foundation, not a feature'),
         findsOneWidget,
       );
     });
 
-    testWidgets('primary CTA navigates to /signup preserving ?next',
-        (tester) async {
+    testWidgets('primary CTA navigates to /signup preserving ?next', (
+      tester,
+    ) async {
       final GoRouter router = doorRouter(
         initialLocation: '/welcome?next=/p/acme/1',
       );
@@ -85,8 +74,9 @@ void main() {
       expect(state.uri.queryParameters['next'], '/p/acme/1');
     });
 
-    testWidgets('sign-in CTA navigates to /login when no ?next is present',
-        (tester) async {
+    testWidgets('sign-in CTA navigates to /login when no ?next is present', (
+      tester,
+    ) async {
       final GoRouter router = doorRouter(initialLocation: '/welcome');
       await pumpWelcome(tester, router);
 
@@ -98,8 +88,9 @@ void main() {
       expect(state.uri.queryParameters.containsKey('next'), isFalse);
     });
 
-    testWidgets('closing band drives back to registration with ?next intact',
-        (tester) async {
+    testWidgets('closing band drives back to registration with ?next intact', (
+      tester,
+    ) async {
       final GoRouter router = doorRouter(
         initialLocation: '/welcome?next=/p/acme/1',
       );
@@ -110,9 +101,7 @@ void main() {
         400,
         scrollable: bodyScroll(),
       );
-      await tester.ensureVisible(
-        find.text('Create your free account').last,
-      );
+      await tester.ensureVisible(find.text('Create your free account').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Create your free account').last);
       await tester.pumpAndSettle();
@@ -122,8 +111,9 @@ void main() {
       expect(state.uri.queryParameters['next'], '/p/acme/1');
     });
 
-    testWidgets('how-it-works teaser links to the full public page',
-        (tester) async {
+    testWidgets('how-it-works teaser links to the full public page', (
+      tester,
+    ) async {
       final GoRouter router = doorRouter(initialLocation: '/welcome');
       await pumpWelcome(tester, router);
 

@@ -17,18 +17,28 @@ import 'package:hivorr/core/storage/storage_config.dart';
 void main() {
   group('DoD-C4: Storage posture verification', () {
     test('credential-documents is private (not public-read)', () {
-      expect(StorageBucketVisibilities.credentialDocuments, isFalse,
-          reason: 'credential-documents must be private per 017_storage_posture.sql');
+      expect(
+        StorageBucketVisibilities.credentialDocuments,
+        isFalse,
+        reason:
+            'credential-documents must be private per 017_storage_posture.sql',
+      );
     });
 
     test('profile-avatars is public-read', () {
-      expect(StorageBucketVisibilities.profileAvatars, isTrue,
-          reason: 'profile-avatars must be public-read per 20260830100001');
+      expect(
+        StorageBucketVisibilities.profileAvatars,
+        isTrue,
+        reason: 'profile-avatars must be public-read per 20260830100001',
+      );
     });
 
     test('portfolio-items is public-read', () {
-      expect(StorageBucketVisibilities.portfolioItems, isTrue,
-          reason: 'portfolio-items must be public-read per 20260830100001');
+      expect(
+        StorageBucketVisibilities.portfolioItems,
+        isTrue,
+        reason: 'portfolio-items must be public-read per 20260830100001',
+      );
     });
 
     test('credential-documents: 10 MiB, jpeg/png/webp/pdf', () {
@@ -48,9 +58,11 @@ void main() {
         'image/png',
         'image/webp',
       });
-      expect(StorageMimeTypes.profileAvatars.contains('application/pdf'),
-          isFalse,
-          reason: 'profile-avatars must not allow PDF');
+      expect(
+        StorageMimeTypes.profileAvatars.contains('application/pdf'),
+        isFalse,
+        reason: 'profile-avatars must not allow PDF',
+      );
     });
 
     test('portfolio-items: 10 MiB, jpeg/png/webp/pdf', () {
@@ -86,14 +98,13 @@ void main() {
     });
 
     test('StorageBucketVisibilities.forBucket returns correct flags', () {
-      expect(StorageBucketVisibilities.forBucket('credential-documents'),
-          isFalse);
       expect(
-          StorageBucketVisibilities.forBucket('profile-avatars'), isTrue);
-      expect(
-          StorageBucketVisibilities.forBucket('portfolio-items'), isTrue);
-      expect(
-          StorageBucketVisibilities.forBucket('unknown-bucket'), isNull);
+        StorageBucketVisibilities.forBucket('credential-documents'),
+        isFalse,
+      );
+      expect(StorageBucketVisibilities.forBucket('profile-avatars'), isTrue);
+      expect(StorageBucketVisibilities.forBucket('portfolio-items'), isTrue);
+      expect(StorageBucketVisibilities.forBucket('unknown-bucket'), isNull);
     });
   });
 }

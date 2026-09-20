@@ -16,8 +16,8 @@ class FakeDisputeRepository implements DisputeRepository {
   FakeDisputeRepository({
     List<DisputeCase> cases = const <DisputeCase>[],
     DisputeCaseDetail? detail,
-  })  : _cases = List<DisputeCase>.of(cases),
-        _detail = detail;
+  }) : _cases = List<DisputeCase>.of(cases),
+       _detail = detail;
 
   List<DisputeCase> _cases;
   DisputeCaseDetail? _detail;
@@ -57,7 +57,8 @@ class FakeDisputeRepository implements DisputeRepository {
   /// The last evidence `fileUrl` passed to [submitEvidence].
   String? lastFileUrl;
 
-  void setCases(List<DisputeCase> cases) => _cases = List<DisputeCase>.of(cases);
+  void setCases(List<DisputeCase> cases) =>
+      _cases = List<DisputeCase>.of(cases);
 
   void setDetail(DisputeCaseDetail? detail) => _detail = detail;
 
@@ -163,23 +164,22 @@ DisputeCase seedDisputeCaseEntity({
   DateTime? closedAt,
   DateTime? withdrawnAt,
   Map<String, dynamic> metadata = const <String, dynamic>{},
-}) =>
-    DisputeCase(
-      id: id,
-      escrowId: escrowId,
-      filerEntityId: filerEntityId,
-      counterpartyEntityId: counterpartyEntityId,
-      disputeType: disputeType,
-      status: status,
-      reason: reason,
-      desiredOutcome: desiredOutcome,
-      priority: priority,
-      filedAt: filedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-      resolvedAt: resolvedAt,
-      closedAt: closedAt,
-      withdrawnAt: withdrawnAt,
-      metadata: metadata,
-    );
+}) => DisputeCase(
+  id: id,
+  escrowId: escrowId,
+  filerEntityId: filerEntityId,
+  counterpartyEntityId: counterpartyEntityId,
+  disputeType: disputeType,
+  status: status,
+  reason: reason,
+  desiredOutcome: desiredOutcome,
+  priority: priority,
+  filedAt: filedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+  resolvedAt: resolvedAt,
+  closedAt: closedAt,
+  withdrawnAt: withdrawnAt,
+  metadata: metadata,
+);
 
 DisputeEvidence seedDisputeEvidenceEntity({
   String id = 'evidence-1',
@@ -191,18 +191,17 @@ DisputeEvidence seedDisputeEvidenceEntity({
   String? fileUrl,
   Map<String, dynamic> fileMetadata = const <String, dynamic>{},
   DateTime? createdAt,
-}) =>
-    DisputeEvidence(
-      id: id,
-      caseId: caseId,
-      submittedBy: submittedBy,
-      evidenceType: evidenceType,
-      title: title,
-      description: description,
-      fileUrl: fileUrl,
-      fileMetadata: fileMetadata,
-      createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => DisputeEvidence(
+  id: id,
+  caseId: caseId,
+  submittedBy: submittedBy,
+  evidenceType: evidenceType,
+  title: title,
+  description: description,
+  fileUrl: fileUrl,
+  fileMetadata: fileMetadata,
+  createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 DisputeResolution seedDisputeResolutionEntity({
   String id = 'resolution-1',
@@ -215,28 +214,26 @@ DisputeResolution seedDisputeResolutionEntity({
   double payeeReleaseAmount = 0.0,
   String? notes,
   DateTime? resolvedAt,
-}) =>
-    DisputeResolution(
-      id: id,
-      caseId: caseId,
-      resolvedBy: resolvedBy,
-      resolutionType: resolutionType,
-      reasoning: reasoning,
-      payerRefundAmount: payerRefundAmount,
-      payeeReleaseAmount: payeeReleaseAmount,
-      notes: notes,
-      resolvedAt: resolvedAt ?? DateTime.fromMillisecondsSinceEpoch(2000),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(2000),
-    );
+}) => DisputeResolution(
+  id: id,
+  caseId: caseId,
+  resolvedBy: resolvedBy,
+  resolutionType: resolutionType,
+  reasoning: reasoning,
+  payerRefundAmount: payerRefundAmount,
+  payeeReleaseAmount: payeeReleaseAmount,
+  notes: notes,
+  resolvedAt: resolvedAt ?? DateTime.fromMillisecondsSinceEpoch(2000),
+  createdAt: DateTime.fromMillisecondsSinceEpoch(2000),
+);
 
 DisputeCaseDetail seedDisputeDetailEntity({
   String id = 'dispute-1',
   String status = 'open',
   List<DisputeEvidence> evidence = const <DisputeEvidence>[],
   DisputeResolution? resolution,
-}) =>
-    DisputeCaseDetail(
-      disputeCase: seedDisputeCaseEntity(id: id, status: status),
-      evidence: evidence,
-      resolution: resolution,
-    );
+}) => DisputeCaseDetail(
+  disputeCase: seedDisputeCaseEntity(id: id, status: status),
+  evidence: evidence,
+  resolution: resolution,
+);

@@ -54,8 +54,7 @@ class KycUpgradeCard extends StatelessWidget {
             spacing: HivorrSpacing.xs,
             runSpacing: HivorrSpacing.xs,
             children: <Widget>[
-              for (final KycTier tier in eligibleTiers)
-                _TierPill(tier: tier),
+              for (final KycTier tier in eligibleTiers) _TierPill(tier: tier),
             ],
           ),
           const SizedBox(height: HivorrSpacing.md),

@@ -22,10 +22,10 @@ import '../../../support/fakes/fake_verification.dart';
 
 void main() {
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-        PiiRedactor(),
-      );
+    'hivorr.test',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+    PiiRedactor(),
+  );
 
   ProfessionalProfileService buildService({
     PublicProfileDto? result,
@@ -33,8 +33,10 @@ void main() {
     StorageService? storage,
     HivorrLogger? logger,
   }) {
-    final FakePortfolioRemoteDataSource remote =
-        FakePortfolioRemoteDataSource(result: result, error: error);
+    final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource(
+      result: result,
+      error: error,
+    );
     final PortfolioProvider provider = PortfolioProvider(
       repository: PortfolioRepositoryImpl(remote: remote),
     );
@@ -63,23 +65,26 @@ void main() {
       expect(service.lastError, isNull);
     });
 
-    test('returns null (not-found) when the repository surfaces PLT004', () async {
-      final service = buildService(
-        error: const ApiException(
-          kind: ApiExceptionKind.notFound,
-          message: 'not found',
-          code: 'PLT004',
-        ),
-      );
+    test(
+      'returns null (not-found) when the repository surfaces PLT004',
+      () async {
+        final service = buildService(
+          error: const ApiException(
+            kind: ApiExceptionKind.notFound,
+            message: 'not found',
+            code: 'PLT004',
+          ),
+        );
 
-      final PublicProfile? profile = await service.load('unknown');
+        final PublicProfile? profile = await service.load('unknown');
 
-      expect(profile, isNull);
-      expect(service.isLoaded, isTrue);
-      expect(service.profile, isNull);
-      expect(service.verifiedIdentity, isFalse);
-      expect(service.tradeVerified, isFalse);
-    });
+        expect(profile, isNull);
+        expect(service.isLoaded, isTrue);
+        expect(service.profile, isNull);
+        expect(service.verifiedIdentity, isFalse);
+        expect(service.tradeVerified, isFalse);
+      },
+    );
 
     test('rethrows a normalized server ApiException', () async {
       final service = buildService(
@@ -94,7 +99,11 @@ void main() {
         service.load('entity-1'),
         throwsA(
           isA<ApiException>()
-              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.server,
+              )
               .having((ApiException e) => e.message, 'message', 'boom'),
         ),
       );
@@ -104,59 +113,66 @@ void main() {
   });
 
   group('ProfessionalProfileService trust signals', () {
-    test('verifiedIdentity via approved identity-document credential', () async {
-      final service = buildService(
-        result: seedPublicProfileDto(
-          kycTierCode: null,
-          kycStatus: null,
-          credentials: <PublicCredentialDto>[
-            seedPublicCredentialDto(
-              kind: 'identity_document',
-              verificationStatus: 'approved',
-            ),
-          ],
-        ),
-      );
-      await service.load('entity-1');
+    test(
+      'verifiedIdentity via approved identity-document credential',
+      () async {
+        final service = buildService(
+          result: seedPublicProfileDto(
+            kycTierCode: null,
+            kycStatus: null,
+            credentials: <PublicCredentialDto>[
+              seedPublicCredentialDto(
+                kind: 'identity_document',
+                verificationStatus: 'approved',
+              ),
+            ],
+          ),
+        );
+        await service.load('entity-1');
 
-      expect(service.verifiedIdentity, isTrue);
-    });
+        expect(service.verifiedIdentity, isTrue);
+      },
+    );
 
-    test('verifiedIdentity false when no identity credential and no KYC tier',
-        () async {
-      final service = buildService(
-        result: seedPublicProfileDto(
-          kycTierCode: null,
-          kycStatus: null,
-          credentials: <PublicCredentialDto>[
-            seedPublicCredentialDto(
-              kind: 'certification',
-              title: 'AWS Certified',
-              verificationStatus: 'approved',
-            ),
-          ],
-        ),
-      );
-      await service.load('entity-1');
+    test(
+      'verifiedIdentity false when no identity credential and no KYC tier',
+      () async {
+        final service = buildService(
+          result: seedPublicProfileDto(
+            kycTierCode: null,
+            kycStatus: null,
+            credentials: <PublicCredentialDto>[
+              seedPublicCredentialDto(
+                kind: 'certification',
+                title: 'AWS Certified',
+                verificationStatus: 'approved',
+              ),
+            ],
+          ),
+        );
+        await service.load('entity-1');
 
-      expect(service.verifiedIdentity, isFalse);
-    });
+        expect(service.verifiedIdentity, isFalse);
+      },
+    );
 
-    test('verifiedIdentity true via active KYC tier_1 without credentials',
-        () async {
-      final service = buildService(
-        result: seedPublicProfileDto(
-          credentials: <PublicCredentialDto>[],
-          kycTierCode: 'tier_1',
-          kycStatus: 'active',
-        ),
-      );
-      await service.load('entity-1');
+    test(
+      'verifiedIdentity true via active KYC tier_1 without credentials',
+      () async {
+        final service = buildService(
+          result: seedPublicProfileDto(
+            credentials: <PublicCredentialDto>[],
+            kycTierCode: 'tier_1',
+            kycStatus: 'active',
+          ),
+        );
+        await service.load('entity-1');
 
-      expect(service.verifiedIdentity, isTrue);
-      expect(service.kycTierCode, 'tier_1');
-      expect(service.kycStatus, 'active');
-    });
+        expect(service.verifiedIdentity, isTrue);
+        expect(service.kycTierCode, 'tier_1');
+        expect(service.kycStatus, 'active');
+      },
+    );
 
     test('verifiedIdentity false when KYC is tier_1 but not active', () async {
       final service = buildService(
@@ -186,9 +202,7 @@ void main() {
 
     test('tradeVerified false when the profile has no professions', () async {
       final service = buildService(
-        result: seedPublicProfileDto(
-          professions: <PublicProfessionDto>[],
-        ),
+        result: seedPublicProfileDto(professions: <PublicProfessionDto>[]),
       );
       await service.load('entity-1');
 
@@ -289,7 +303,10 @@ void main() {
       expect(meta, isNotNull);
       expect(meta!.title, 'Ada Lovelace · Software Engineer');
       expect(meta.description, 'Analytical engine pioneer.');
-      expect(meta.canonicalUrl, 'https://hivorr.com/p/software-engineer/entity-1');
+      expect(
+        meta.canonicalUrl,
+        'https://hivorr.com/p/software-engineer/entity-1',
+      );
     });
 
     test('payload profession slug wins over the cosmetic route slug', () async {
@@ -298,28 +315,35 @@ void main() {
 
       final meta = service.seoMeta(routeSlug: 'different-slug');
 
-      expect(meta!.canonicalUrl,
-          'https://hivorr.com/p/software-engineer/entity-1');
-    });
-
-    test('falls back to the route slug when the payload has no profession slug',
-        () async {
-      final service = buildService(
-        result: seedPublicProfileDto(
-          professions: <PublicProfessionDto>[],
-          professionSlug: null,
-          professionName: null,
-          industrySlug: null,
-          industryName: null,
-        ),
+      expect(
+        meta!.canonicalUrl,
+        'https://hivorr.com/p/software-engineer/entity-1',
       );
-      await service.load('entity-1');
-
-      final meta = service.seoMeta(routeSlug: 'fallback-slug');
-
-      expect(meta!.canonicalUrl, 'https://hivorr.com/p/fallback-slug/entity-1');
-      expect(meta.title, 'Ada Lovelace');
     });
+
+    test(
+      'falls back to the route slug when the payload has no profession slug',
+      () async {
+        final service = buildService(
+          result: seedPublicProfileDto(
+            professions: <PublicProfessionDto>[],
+            professionSlug: null,
+            professionName: null,
+            industrySlug: null,
+            industryName: null,
+          ),
+        );
+        await service.load('entity-1');
+
+        final meta = service.seoMeta(routeSlug: 'fallback-slug');
+
+        expect(
+          meta!.canonicalUrl,
+          'https://hivorr.com/p/fallback-slug/entity-1',
+        );
+        expect(meta.title, 'Ada Lovelace');
+      },
+    );
   });
 
   group('ProfessionalProfileService storage URLs', () {
@@ -393,14 +417,21 @@ void main() {
       expect(completed[0].context['portfolioItems'], 2);
 
       for (final LogEntry entry in sink.entries) {
-        final String dump = entry.message +
+        final String dump =
+            entry.message +
             entry.context.values
                 .map((Object? value) => value.toString())
                 .join(' ');
-        expect(dump, isNot(contains('Ada')),
-            reason: 'displayName must never reach the log output');
-        expect(dump, isNot(contains('Analytical engine pioneer')),
-            reason: 'bio must never reach the log output');
+        expect(
+          dump,
+          isNot(contains('Ada')),
+          reason: 'displayName must never reach the log output',
+        );
+        expect(
+          dump,
+          isNot(contains('Analytical engine pioneer')),
+          reason: 'bio must never reach the log output',
+        );
       }
     });
 
@@ -415,10 +446,7 @@ void main() {
         ),
       );
 
-      await expectLater(
-        service.load('entity-1'),
-        throwsA(isA<ApiException>()),
-      );
+      await expectLater(service.load('entity-1'), throwsA(isA<ApiException>()));
 
       final List<LogEntry> failed = sink.entries
           .where((LogEntry e) => e.message == 'Public profile load failed')

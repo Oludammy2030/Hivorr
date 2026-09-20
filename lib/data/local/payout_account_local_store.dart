@@ -32,8 +32,9 @@ class InMemoryPayoutAccountLocalStore implements PayoutAccountLocalStore {
 
   @override
   Future<void> upsert(PayoutAccount account) async {
-    final int index =
-        _accounts.indexWhere((PayoutAccount a) => a.id == account.id);
+    final int index = _accounts.indexWhere(
+      (PayoutAccount a) => a.id == account.id,
+    );
     if (index >= 0) {
       _accounts[index] = account;
     } else {

@@ -198,7 +198,8 @@ void main() {
         expect(
           item.pass,
           isTrue,
-          reason: '${item.id} verification failed for: ${item.paths.join(', ')}',
+          reason:
+              '${item.id} verification failed for: ${item.paths.join(', ')}',
         );
       });
     }
@@ -206,19 +207,31 @@ void main() {
     test('All 19 EP-01 phase completion areas are present', () {
       final int passed = _checklist.where((c) => c.pass).length;
       final int total = _checklist.length;
-      debugPrint('--- PHASE COMPLETION SUMMARY: $passed/$total areas present ---');
+      debugPrint(
+        '--- PHASE COMPLETION SUMMARY: $passed/$total areas present ---',
+      );
       expect(total, 19, reason: 'Expected exactly 19 EP-01 phase areas.');
-      expect(_checklist.every((c) => c.pass), isTrue,
-          reason: 'One or more EP-01 phase areas are missing.');
+      expect(
+        _checklist.every((c) => c.pass),
+        isTrue,
+        reason: 'One or more EP-01 phase areas are missing.',
+      );
     });
   });
 
   group('EP-01-20 Integration Test Files', () {
     test('Test infrastructure (EP-01-19) present at test/support', () {
-      final exists = Directory('$_projectRoot${Platform.pathSeparator}test/support')
-          .existsSync();
-      debugPrint('[${exists ? 'PASS' : 'FAIL'}] test/support directory present');
-      expect(exists, isTrue, reason: 'test/support test infrastructure missing.');
+      final exists = Directory(
+        '$_projectRoot${Platform.pathSeparator}test/support',
+      ).existsSync();
+      debugPrint(
+        '[${exists ? 'PASS' : 'FAIL'}] test/support directory present',
+      );
+      expect(
+        exists,
+        isTrue,
+        reason: 'test/support test infrastructure missing.',
+      );
     });
 
     test('All 10 EP-01-20 integration test files exist', () {
@@ -234,8 +247,11 @@ void main() {
         'Integration test files present: '
         '${_requiredIntegrationFiles.length - missing.length}/${_requiredIntegrationFiles.length}',
       );
-      expect(missing, isEmpty,
-          reason: 'Missing integration test files: ${missing.join(', ')}');
+      expect(
+        missing,
+        isEmpty,
+        reason: 'Missing integration test files: ${missing.join(', ')}',
+      );
     });
   });
 }

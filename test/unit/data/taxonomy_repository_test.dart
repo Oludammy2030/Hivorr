@@ -11,30 +11,36 @@ import '../../support/fakes/fake_taxonomy.dart';
 
 void main() {
   group('TaxonomyRepositoryImpl', () {
-    test('getIndustries caches remote result locally and maps entities', () async {
-      final remote = FakeTaxonomyRemoteDataSource();
-      final local = InMemoryTaxonomyLocalDataSource();
-      final repo = TaxonomyRepositoryImpl(remote: remote, local: local);
+    test(
+      'getIndustries caches remote result locally and maps entities',
+      () async {
+        final remote = FakeTaxonomyRemoteDataSource();
+        final local = InMemoryTaxonomyLocalDataSource();
+        final repo = TaxonomyRepositoryImpl(remote: remote, local: local);
 
-      final List<Industry> industries = await repo.getIndustries();
+        final List<Industry> industries = await repo.getIndustries();
 
-      expect(industries.length, 3);
-      expect(remote.getIndustriesCallCount, 1);
-      expect(local, isA<InMemoryTaxonomyLocalDataSource>());
-    });
+        expect(industries.length, 3);
+        expect(remote.getIndustriesCallCount, 1);
+        expect(local, isA<InMemoryTaxonomyLocalDataSource>());
+      },
+    );
 
-    test('getIndustries uses local cache when present (no remote call)', () async {
-      final remote = FakeTaxonomyRemoteDataSource();
-      final local = InMemoryTaxonomyLocalDataSource(
-        industries: seedIndustryRows.map(IndustryDto.fromJson).toList(),
-      );
-      final repo = TaxonomyRepositoryImpl(remote: remote, local: local);
+    test(
+      'getIndustries uses local cache when present (no remote call)',
+      () async {
+        final remote = FakeTaxonomyRemoteDataSource();
+        final local = InMemoryTaxonomyLocalDataSource(
+          industries: seedIndustryRows.map(IndustryDto.fromJson).toList(),
+        );
+        final repo = TaxonomyRepositoryImpl(remote: remote, local: local);
 
-      final List<Industry> industries = await repo.getIndustries();
+        final List<Industry> industries = await repo.getIndustries();
 
-      expect(industries.length, 3);
-      expect(remote.getIndustriesCallCount, 0);
-    });
+        expect(industries.length, 3);
+        expect(remote.getIndustriesCallCount, 0);
+      },
+    );
 
     test('getProfessions filters by industryId via remote', () async {
       final remote = FakeTaxonomyRemoteDataSource();
@@ -46,7 +52,10 @@ void main() {
       );
 
       expect(professions.length, 3);
-      expect(professions.every((Profession p) => p.industryId == 'ind-tech'), isTrue);
+      expect(
+        professions.every((Profession p) => p.industryId == 'ind-tech'),
+        isTrue,
+      );
     });
 
     test('getProfessions returns all when industryId is null', () async {
@@ -68,10 +77,7 @@ void main() {
       final local = InMemoryTaxonomyLocalDataSource();
       final repo = TaxonomyRepositoryImpl(remote: remote, local: local);
 
-      expect(
-        () => repo.getIndustries(),
-        throwsA(isA<ApiException>()),
-      );
+      expect(() => repo.getIndustries(), throwsA(isA<ApiException>()));
     });
 
     test('invalidate clears local cache so the next read refetches', () async {
@@ -84,8 +90,11 @@ void main() {
       await repo.invalidate();
 
       final List<Industry> industries = await repo.getIndustries();
-      expect(remote.getIndustriesCallCount, 1,
-          reason: 'empty cache after invalidate -> remote fetch');
+      expect(
+        remote.getIndustriesCallCount,
+        1,
+        reason: 'empty cache after invalidate -> remote fetch',
+      );
       expect(industries, isNotEmpty);
     });
   });

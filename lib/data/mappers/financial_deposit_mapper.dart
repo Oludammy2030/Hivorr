@@ -9,17 +9,15 @@ import 'package:hivorr/systems/finance/models/deposit_name_match_status.dart';
 abstract final class FinancialDepositMapper {
   /// Maps a deposit DTO into a domain [Deposit].
   static Deposit toEntity(DepositDto dto) => Deposit(
-        id: dto.id,
-        currencyCode: dto.currencyCode,
-        amount: dto.amount,
-        nameMatchStatus: DepositNameMatchStatus.fromPersisted(
-          dto.nameMatchStatus,
-        ),
-        payerName: dto.payerName,
-        nameMatchScore: dto.nameMatchScore,
-        externalReference: dto.externalReference,
-        status: dto.status,
-        creditedAt: dto.creditedAt,
-        createdAt: dto.createdAt,
-      );
+    id: dto.id,
+    currencyCode: dto.currencyCode,
+    amount: dto.amount,
+    nameMatchStatus: DepositNameMatchStatus.fromPersisted(dto.nameMatchStatus),
+    payerName: dto.payerName,
+    nameMatchScore: dto.nameMatchScore,
+    externalReference: dto.externalReference,
+    status: dto.status,
+    creditedAt: dto.creditedAt,
+    createdAt: dto.createdAt,
+  );
 }

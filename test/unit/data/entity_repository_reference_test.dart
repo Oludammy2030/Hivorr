@@ -30,8 +30,11 @@ void main() {
       final EntityProfile profile = await repo.getProfile('e1');
 
       expect(profile, isEntityProfile(legalName: 'Cached'));
-      expect(remote.getProfileCallCount, 0,
-          reason: 'local cache must be used without hitting remote');
+      expect(
+        remote.getProfileCallCount,
+        0,
+        reason: 'local cache must be used without hitting remote',
+      );
     });
 
     test('remote fetch: fetches and writes through to local', () async {
@@ -48,13 +51,15 @@ void main() {
       expect(local.cachedProfile!.legalName, 'Remote');
     });
 
-    test('error propagation: missing profile throws typed ApiException',
-        () async {
-      expect(
-        () => repo.getProfile('missing'),
-        throwsA(isApiException(kind: ApiExceptionKind.notFound)),
-      );
-    });
+    test(
+      'error propagation: missing profile throws typed ApiException',
+      () async {
+        expect(
+          () => repo.getProfile('missing'),
+          throwsA(isApiException(kind: ApiExceptionKind.notFound)),
+        );
+      },
+    );
 
     test('write-through: updateProfile writes to remote and local', () async {
       final EntityProfile profile = await repo.updateProfile(
@@ -102,8 +107,9 @@ void main() {
     });
 
     test('EntityProfileBuilder override leaves defaults intact', () {
-      final EntityProfile p =
-          EntityProfileBuilder().withDisplayName('custom').build();
+      final EntityProfile p = EntityProfileBuilder()
+          .withDisplayName('custom')
+          .build();
       expect(p.displayName, 'custom');
       expect(p.legalName, 'Test Legal Name');
     });
@@ -123,18 +129,24 @@ void main() {
     });
 
     test('EntityBuilder custom composition', () {
-      final EntityProfile profile =
-          EntityProfileBuilder().withLegalName('Custom').build();
-      final EntityRole role = EntityRoleBuilder().withRoleName('merchant').build();
-      final Entity e =
-          EntityBuilder().withProfile(profile).addRole(role).build();
+      final EntityProfile profile = EntityProfileBuilder()
+          .withLegalName('Custom')
+          .build();
+      final EntityRole role = EntityRoleBuilder()
+          .withRoleName('merchant')
+          .build();
+      final Entity e = EntityBuilder()
+          .withProfile(profile)
+          .addRole(role)
+          .build();
       expect(e.profile!.legalName, 'Custom');
       expect(e, hasRole('merchant'));
     });
 
     test('EntityProfileDtoBuilder.toMap includes null keys', () {
-      final Map<String, dynamic> map =
-          EntityProfileDtoBuilder().withEntityId('x').toMap();
+      final Map<String, dynamic> map = EntityProfileDtoBuilder()
+          .withEntityId('x')
+          .toMap();
       expect(map['entity_id'], 'x');
       expect(map['bio'], isNull);
       expect(map.containsKey('bio'), isTrue);

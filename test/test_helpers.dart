@@ -25,27 +25,24 @@ const String fakeAnonKey = 'public-anon-key-abcdef123456';
 /// Builds an [AppConfig] backed by an in-memory value source (no compile-time
 /// flags). Suitable for bootstrap unit tests.
 AppConfig fakeAppConfig() => AppConfig.load(
-      source: const MapEnvironmentValueSource(<String, String>{
-        AppConstants.envEnvironment: 'development',
-        AppConstants.envSupabaseUrl: 'https://example.supabase.co',
-        AppConstants.envSupabaseAnonKey: fakeAnonKey,
-        AppConstants.envConfigSchemaVersion: '1',
-      }),
-    );
+  source: const MapEnvironmentValueSource(<String, String>{
+    AppConstants.envEnvironment: 'development',
+    AppConstants.envSupabaseUrl: 'https://example.supabase.co',
+    AppConstants.envSupabaseAnonKey: fakeAnonKey,
+    AppConstants.envConfigSchemaVersion: '1',
+  }),
+);
 
 /// No-arg loader matching [AppBootstrap.initialize]'s [loadConfig] signature.
 AppConfig fakeLoadConfig() => fakeAppConfig();
 
 /// Builds a fully wired but network-free [ApiLayer] for bootstrap tests.
 ApiLayer fakeApiLayer() => ApiLayer(
-      dio: Dio(),
-      supabaseClient: SupabaseClient(
-        'https://example.supabase.co',
-        fakeAnonKey,
-      ),
-      tokenProvider: const SupabaseAccessTokenProvider(),
-      exceptionMapper: const ApiExceptionMapper(),
-    );
+  dio: Dio(),
+  supabaseClient: SupabaseClient('https://example.supabase.co', fakeAnonKey),
+  tokenProvider: const SupabaseAccessTokenProvider(),
+  exceptionMapper: const ApiExceptionMapper(),
+);
 
 /// API initializer stub returning [fakeApiLayer].
 Future<ApiLayer> fakeInitializeApi(EnvironmentConfig _) async => fakeApiLayer();
@@ -55,16 +52,12 @@ AuthLayer fakeInitializeAuthLayer(
   GoTrueClient _,
   SupabaseClient _,
   AuthConfig _,
-) =>
-    AuthLayer(service: FakeAuthService(), provider: FakeAuthProvider());
+) => AuthLayer(service: FakeAuthService(), provider: FakeAuthProvider());
 
 /// [LocaleProvider] backed by [FakeStorageEngine], for app shell tests.
 class FakeLocaleProvider extends LocaleProvider {
   FakeLocaleProvider()
-      : super(
-          config: defaultLocalizationConfig,
-          storage: FakeStorageEngine(),
-        );
+    : super(config: defaultLocalizationConfig, storage: FakeStorageEngine());
 }
 
 /// [LocalizationsDelegate] that returns pre-loaded [HivorrLocalizations] without
@@ -78,19 +71,18 @@ class FakeLocalizationsDelegate
   bool isSupported(Locale locale) => true;
 
   @override
-  Future<HivorrLocalizations> load(Locale locale) async =>
-      HivorrLocalizations(
-        <String, String>{
-          'common.ok': locale.languageCode == 'fr' ? 'DACCORD' : 'OK',
-          'common.cancel': 'Cancel',
-          'validation.required': '{field} is required',
-          'common.itemCount.zero': 'No items',
-          'common.itemCount.one': '1 item',
-          'common.itemCount.other': '{count} items',
-        },
-        <String, String>{},
-        locale,
-      );
+  Future<HivorrLocalizations> load(Locale locale) async => HivorrLocalizations(
+    <String, String>{
+      'common.ok': locale.languageCode == 'fr' ? 'DACCORD' : 'OK',
+      'common.cancel': 'Cancel',
+      'validation.required': '{field} is required',
+      'common.itemCount.zero': 'No items',
+      'common.itemCount.one': '1 item',
+      'common.itemCount.other': '{count} items',
+    },
+    <String, String>{},
+    locale,
+  );
 
   @override
   bool shouldReload(FakeLocalizationsDelegate old) => true;

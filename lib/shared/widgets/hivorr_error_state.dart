@@ -53,16 +53,18 @@ class HivorrErrorState extends StatelessWidget {
             const SizedBox(height: HivorrSpacing.md),
             Text(
               message,
-              style: context.textTheme.titleMedium
-                  ?.copyWith(color: context.colorScheme.error),
+              style: context.textTheme.titleMedium?.copyWith(
+                color: context.colorScheme.error,
+              ),
               textAlign: TextAlign.center,
             ),
             if (detail != null && detail!.isNotEmpty) ...<Widget>[
               const SizedBox(height: HivorrSpacing.sm),
               Text(
                 detail!,
-                style: context.textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

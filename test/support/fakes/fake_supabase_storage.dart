@@ -10,12 +10,10 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 /// (`bucket -> path -> bytes`). Enforces size/MIME limits when [strict] is
 /// true by throwing SDK-style [supabase.StorageException]s.
 class FakeSupabaseStorageClient extends supabase.SupabaseStorageClient {
-  FakeSupabaseStorageClient({
-    this.strict = false,
-  }) : super(
-          'https://example.supabase.co/storage/v1',
-          <String, String>{'apikey': 'public-anon-key'},
-        );
+  FakeSupabaseStorageClient({this.strict = false})
+    : super('https://example.supabase.co/storage/v1', <String, String>{
+        'apikey': 'public-anon-key',
+      });
 
   /// When true, enforcement of size/MIME limits on the fake.
   final bool strict;
@@ -37,13 +35,8 @@ class FakeSupabaseStorageClient extends supabase.SupabaseStorageClient {
   supabase.StorageException? nextError;
 
   @override
-  supabase.StorageFileApi from(String id) => FakeStorageFileApi(
-        this,
-        id,
-        url,
-        headers,
-        strict: strict,
-      );
+  supabase.StorageFileApi from(String id) =>
+      FakeStorageFileApi(this, id, url, headers, strict: strict);
 }
 
 /// In-memory [supabase.StorageFileApi] implementing the narrow surface the
@@ -186,10 +179,9 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     for (final entry in _storeFor(bucketId!).keys) {
       if (!entry.startsWith(prefix)) continue;
       if (result.length >= limit) break;
-      final name = entry.substring(prefix.length).replaceFirst(
-            RegExp(r'^/'),
-            '',
-          );
+      final name = entry
+          .substring(prefix.length)
+          .replaceFirst(RegExp(r'^/'), '');
       result.add(supabase.FileObject.fromJson(<String, dynamic>{'name': name}));
     }
     return result;
@@ -204,8 +196,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     supabase.FileOptions fileOptions = const supabase.FileOptions(),
     int? retryAttempts,
     supabase.StorageRetryController? retryController,
-  }) =>
-      throw UnimplementedError('upload(File) is not used in storage tests');
+  }) => throw UnimplementedError('upload(File) is not used in storage tests');
 
   @override
   Future<String> uploadToSignedUrl(
@@ -215,8 +206,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     supabase.FileOptions? fileOptions,
     int? retryAttempts,
     supabase.StorageRetryController? retryController,
-  ]) =>
-      throw UnimplementedError('uploadToSignedUrl not used in storage tests');
+  ]) => throw UnimplementedError('uploadToSignedUrl not used in storage tests');
 
   @override
   Future<String> uploadBinaryToSignedUrl(
@@ -226,15 +216,13 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     supabase.FileOptions? fileOptions,
     int? retryAttempts,
     supabase.StorageRetryController? retryController,
-  ]) =>
-      throw UnimplementedError('uploadBinaryToSignedUrl not used in tests');
+  ]) => throw UnimplementedError('uploadBinaryToSignedUrl not used in tests');
 
   @override
   Future<supabase.SignedUploadURLResponse> createSignedUploadUrl(
     String path, {
     bool upsert = false,
-  }) =>
-      throw UnimplementedError('createSignedUploadUrl not used in tests');
+  }) => throw UnimplementedError('createSignedUploadUrl not used in tests');
 
   @override
   Future<String> update(
@@ -243,8 +231,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     supabase.FileOptions fileOptions = const supabase.FileOptions(),
     int? retryAttempts,
     supabase.StorageRetryController? retryController,
-  }) =>
-      throw UnimplementedError('update not used in tests');
+  }) => throw UnimplementedError('update not used in tests');
 
   @override
   Future<String> updateBinary(
@@ -253,18 +240,21 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     supabase.FileOptions fileOptions = const supabase.FileOptions(),
     int? retryAttempts,
     supabase.StorageRetryController? retryController,
-  }) =>
-      throw UnimplementedError('updateBinary not used in tests');
+  }) => throw UnimplementedError('updateBinary not used in tests');
 
   @override
-  Future<String> move(String fromPath, String toPath,
-          {String? destinationBucket}) =>
-      throw UnimplementedError('move not used in tests');
+  Future<String> move(
+    String fromPath,
+    String toPath, {
+    String? destinationBucket,
+  }) => throw UnimplementedError('move not used in tests');
 
   @override
-  Future<String> copy(String fromPath, String toPath,
-          {String? destinationBucket}) =>
-      throw UnimplementedError('copy not used in tests');
+  Future<String> copy(
+    String fromPath,
+    String toPath, {
+    String? destinationBucket,
+  }) => throw UnimplementedError('copy not used in tests');
 
   @override
   Future<List<supabase.SignedUrl>> createSignedUrls(
@@ -272,8 +262,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     int expiresIn, {
     supabase.DownloadBehavior? download,
     String? cacheNonce,
-  }) =>
-      throw UnimplementedError('createSignedUrls not used in tests');
+  }) => throw UnimplementedError('createSignedUrls not used in tests');
 
   @override
   Future<List<supabase.SignedUrlResult>> createSignedUrlsResult(
@@ -281,8 +270,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     int expiresIn, {
     supabase.DownloadBehavior? download,
     String? cacheNonce,
-  }) =>
-      throw UnimplementedError('createSignedUrlsResult not used in tests');
+  }) => throw UnimplementedError('createSignedUrlsResult not used in tests');
 
   @override
   Stream<Uint8List> downloadStream(
@@ -290,8 +278,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     supabase.TransformOptions? transform,
     Map<String, String>? queryParams,
     String? cacheNonce,
-  }) =>
-      throw UnimplementedError('downloadStream not used in tests');
+  }) => throw UnimplementedError('downloadStream not used in tests');
 
   @override
   Future<supabase.FileObjectV2> info(String path) =>
@@ -309,8 +296,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
   Future<supabase.PaginatedListResult> listPaginated({
     supabase.PaginatedSearchOptions options =
         const supabase.PaginatedSearchOptions(),
-  }) =>
-      throw UnimplementedError('listPaginated not used in tests');
+  }) => throw UnimplementedError('listPaginated not used in tests');
 }
 
 /// Strict-mode limits aligned with the bucket catalogue.
@@ -321,19 +307,14 @@ final Map<String, int> strictLimits = <String, int>{
 };
 
 /// Strict-mode MIME allowlists aligned with the bucket catalogue.
-final Map<String, Set<String>> strictAllowedMimeTypes =
-    <String, Set<String>>{
+final Map<String, Set<String>> strictAllowedMimeTypes = <String, Set<String>>{
   'credential-documents': <String>{
     'image/jpeg',
     'image/png',
     'image/webp',
     'application/pdf',
   },
-  'profile-avatars': <String>{
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-  },
+  'profile-avatars': <String>{'image/jpeg', 'image/png', 'image/webp'},
   'portfolio-items': <String>{
     'image/jpeg',
     'image/png',

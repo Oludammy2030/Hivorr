@@ -13,7 +13,9 @@ import '../../test_helpers.dart';
 
 void main() {
   testWidgets('HivorrApp mounts and exposes the AuthProvider', (tester) async {
-    final provider = FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
+    final provider = FakeAuthProvider(
+      initialStatus: AuthStatus.unauthenticated,
+    );
     final observer = AppLifecycleObserver();
     final taxonomyRepository = FakeTaxonomyRepository();
     final taxonomyProvider = TaxonomyProvider(repository: taxonomyRepository);

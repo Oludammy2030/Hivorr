@@ -4,8 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hivorr/app/widgets/hivorr_loader.dart';
 
 void main() {
-  testWidgets('HivorrLoader renders as monochrome animated outlines',
-      (WidgetTester tester) async {
+  testWidgets('HivorrLoader renders as monochrome animated outlines', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Center(child: HivorrLoader(size: 48, color: Colors.grey)),

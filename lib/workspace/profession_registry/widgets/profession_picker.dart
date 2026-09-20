@@ -54,8 +54,10 @@ class ProfessionPicker extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(profession.name,
-                          style: context.textTheme.titleMedium),
+                      Text(
+                        profession.name,
+                        style: context.textTheme.titleMedium,
+                      ),
                       if (profession.description != null &&
                           profession.description!.isNotEmpty)
                         Padding(
@@ -71,10 +73,7 @@ class ProfessionPicker extends StatelessWidget {
                   ),
                 ),
                 if (profession.id == selectedId)
-                  Icon(
-                    Icons.check_circle,
-                    color: context.colorScheme.primary,
-                  ),
+                  Icon(Icons.check_circle, color: context.colorScheme.primary),
               ],
             ),
           ),

@@ -22,9 +22,9 @@ class KycRepositoryImpl implements KycRepository {
     required KycRemoteDataSource remote,
     KycProviderRegistry? providerRegistry,
     HivorrLogger? logger,
-  })  : _remote = remote,
-        _providerRegistry = providerRegistry,
-        _logger = logger;
+  }) : _remote = remote,
+       _providerRegistry = providerRegistry,
+       _logger = logger;
 
   final KycRemoteDataSource _remote;
   final KycProviderRegistry? _providerRegistry;
@@ -89,8 +89,10 @@ class KycRepositoryImpl implements KycRepository {
     }
 
     // 3. No live provider — return the level unchanged with guidance.
-    _logger?.info('KYC upgrade without provider — guidance surfaced',
-        <String, Object?>{'targetTier': targetTier.code});
+    _logger?.info(
+      'KYC upgrade without provider — guidance surfaced',
+      <String, Object?>{'targetTier': targetTier.code},
+    );
     return current;
   }
 

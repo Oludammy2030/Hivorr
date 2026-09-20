@@ -63,10 +63,7 @@ void main() {
       provider.setStatus(SyncStatus.syncing);
       provider.setError(const SyncException('Drain failed'));
 
-      expect(
-        transitions,
-        <SyncStatus>[SyncStatus.syncing, SyncStatus.error],
-      );
+      expect(transitions, <SyncStatus>[SyncStatus.syncing, SyncStatus.error]);
       expect(provider.lastError, isNotNull);
       expect(provider.lastError!.message, 'Drain failed');
     });

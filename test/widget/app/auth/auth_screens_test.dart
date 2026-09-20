@@ -26,7 +26,7 @@ import '../../../support/harnesses/widget_harness.dart';
 /// [failure]. Password-reset seams record their arguments for assertions.
 class _ScriptedAuthService extends FakeAuthService {
   _ScriptedAuthService({AuthStatus initialStatus = AuthStatus.unauthenticated})
-      : _status = initialStatus {
+    : _status = initialStatus {
     _controller = StreamController<AuthStatus>.broadcast();
   }
 
@@ -148,10 +148,7 @@ Future<void> pumpAuth(
 }) async {
   await pumpScreen(
     tester,
-    MaterialApp.router(
-      theme: AppTheme.lightTheme,
-      routerConfig: router,
-    ),
+    MaterialApp.router(theme: AppTheme.lightTheme, routerConfig: router),
     providers: <SingleChildWidget>[
       ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
     ],
@@ -194,8 +191,9 @@ void main() {
       expect(find.text('New here? Create your free account'), findsOneWidget);
     });
 
-    testWidgets('Sign in is disabled until email and password are entered',
-        (tester) async {
+    testWidgets('Sign in is disabled until email and password are entered', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -206,7 +204,8 @@ void main() {
         authProvider: provider,
       );
 
-      HivorrButton button() => tester.widget<HivorrButton>(find.byType(HivorrButton));
+      HivorrButton button() =>
+          tester.widget<HivorrButton>(find.byType(HivorrButton));
       expect(button().onPressed, isNull);
 
       await enterField(tester, 'Email address', 'me@example.com');
@@ -218,20 +217,18 @@ void main() {
       expect(button().onPressed, isNotNull);
     });
 
-    testWidgets('successful sign-in routes to the preserved ?next',
-        (tester) async {
+    testWidgets('successful sign-in routes to the preserved ?next', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..setStatus(AuthStatus.authenticated);
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      final GoRouter router =
-          doorRouter(initialLocation: '${RoutePaths.login}?next=/p/acme/1');
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
+      final GoRouter router = doorRouter(
+        initialLocation: '${RoutePaths.login}?next=/p/acme/1',
       );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'secret1');
@@ -241,8 +238,9 @@ void main() {
       expect(router.routerDelegate.state.matchedLocation, '/p/acme/1');
     });
 
-    testWidgets('failed sign-in surfaces the safe error and stays put',
-        (tester) async {
+    testWidgets('failed sign-in surfaces the safe error and stays put', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.auth,
@@ -252,11 +250,7 @@ void main() {
       addTearDown(provider.dispose);
 
       final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'wrong-pass');
@@ -279,18 +273,17 @@ void main() {
       addTearDown(provider.dispose);
 
       final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'any-password');
       await tester.tap(find.text('Sign in'));
       await tester.pumpAndSettle();
 
-      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+      expect(
+        router.routerDelegate.state.matchedLocation,
+        RoutePaths.authConfirmation,
+      );
       expect(
         router.routerDelegate.state.uri.queryParameters['email'],
         'me@example.com',
@@ -313,18 +306,17 @@ void main() {
       addTearDown(provider.dispose);
 
       final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'Email address', 'me@example.com');
       await enterField(tester, 'Password', 'any-password');
       await tester.tap(find.text('Sign in'));
       await tester.pumpAndSettle();
 
-      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+      expect(
+        router.routerDelegate.state.matchedLocation,
+        RoutePaths.authConfirmation,
+      );
       expect(
         router.routerDelegate.state.uri.queryParameters['email'],
         'me@example.com',
@@ -360,18 +352,15 @@ void main() {
       expect(find.text('Already have an account? Sign in'), findsOneWidget);
     });
 
-    testWidgets('invalid input shows inline validation and does not submit',
-        (tester) async {
+    testWidgets('invalid input shows inline validation and does not submit', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
       final GoRouter router = doorRouter(initialLocation: RoutePaths.signup);
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'not-an-email');
@@ -410,20 +399,18 @@ void main() {
       expect(find.text('Passwords do not match.'), findsWidgets);
     });
 
-    testWidgets('successful registration routes to the preserved ?next',
-        (tester) async {
+    testWidgets('successful registration routes to the preserved ?next', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..setStatus(AuthStatus.authenticated);
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      final GoRouter router =
-          doorRouter(initialLocation: '${RoutePaths.signup}?next=/p/acme/1');
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
+      final GoRouter router = doorRouter(
+        initialLocation: '${RoutePaths.signup}?next=/p/acme/1',
       );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
@@ -437,20 +424,18 @@ void main() {
       expect(router.routerDelegate.state.matchedLocation, '/p/acme/1');
     });
 
-    testWidgets('awaiting-confirmation registration hands off to the gate',
-        (tester) async {
+    testWidgets('awaiting-confirmation registration hands off to the gate', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..setStatus(AuthStatus.awaitingEmailConfirmation);
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      final GoRouter router =
-          doorRouter(initialLocation: '${RoutePaths.signup}?next=/p/acme/1');
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
+      final GoRouter router = doorRouter(
+        initialLocation: '${RoutePaths.signup}?next=/p/acme/1',
       );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
@@ -480,25 +465,24 @@ void main() {
       );
     });
 
-    testWidgets('a user_already_exists error surfaces the message and Log In',
-        (tester) async {
+    testWidgets('a user_already_exists error surfaces the message and Log In', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.conflict,
-          message: 'An account already exists with this email address. '
+          message:
+              'An account already exists with this email address. '
               'Please log in to continue.',
           code: 'user_already_exists',
         );
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      final GoRouter router =
-          doorRouter(initialLocation: '${RoutePaths.signup}?next=/p/acme/1');
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
+      final GoRouter router = doorRouter(
+        initialLocation: '${RoutePaths.signup}?next=/p/acme/1',
       );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
@@ -536,20 +520,18 @@ void main() {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.conflict,
-          message: 'An account already exists with this email address. '
+          message:
+              'An account already exists with this email address. '
               'Please log in to continue.',
           code: 'user_already_exists',
         );
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      final GoRouter router =
-          doorRouter(initialLocation: '${RoutePaths.signup}?next=/p/acme/1');
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
+      final GoRouter router = doorRouter(
+        initialLocation: '${RoutePaths.signup}?next=/p/acme/1',
       );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await fillRegistrationIdentity(tester);
       await enterField(tester, 'Email address', 'me@example.com');
@@ -592,8 +574,9 @@ void main() {
       expect(service.otpCreateFlags, <bool>[false]);
     });
 
-    testWidgets('password checklist and strength update as user types',
-        (tester) async {
+    testWidgets('password checklist and strength update as user types', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -626,8 +609,9 @@ void main() {
       expect(find.text('Password strength: Strong'), findsOneWidget);
     });
 
-    testWidgets('confirm field shows match indicator in real time',
-        (tester) async {
+    testWidgets('confirm field shows match indicator in real time', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -650,8 +634,9 @@ void main() {
   });
 
   group('AuthConfirmationGateScreen', () {
-    testWidgets('shows the address and an OTP entry for verification',
-        (tester) async {
+    testWidgets('shows the address and an OTP entry for verification', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -676,8 +661,9 @@ void main() {
       expect(find.text('Resend code'), findsOneWidget);
     });
 
-    testWidgets('verifying the code activates the session and continues',
-        (tester) async {
+    testWidgets('verifying the code activates the session and continues', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -686,11 +672,7 @@ void main() {
         initialLocation:
             '${RoutePaths.authConfirmation}?email=me@example.com&next=/p/acme/1',
       );
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'Verification code', '123456');
       await tester.tap(find.text('Verify code'));
@@ -710,11 +692,7 @@ void main() {
         initialLocation:
             '${RoutePaths.authConfirmation}?email=me@example.com&next=/p/acme/1',
       );
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       service.setStatus(AuthStatus.authenticated);
       await tester.pumpAndSettle();
@@ -731,11 +709,7 @@ void main() {
         initialLocation:
             '${RoutePaths.authConfirmation}?email=me@example.com&next=/p/acme/1',
       );
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await tester.tap(find.text('Back to sign in'));
       await tester.pumpAndSettle();
@@ -767,8 +741,9 @@ void main() {
       expect(service.otpCreateFlags, <bool>[false]);
     });
 
-    testWidgets('resend arms a cooldown and disables until it elapses',
-        (tester) async {
+    testWidgets('resend arms a cooldown and disables until it elapses', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -788,16 +763,18 @@ void main() {
       expect(service.otpEmails.length, 1);
       expect(find.text('Resend code in 01:00'), findsOneWidget);
       // The cooldown label disables the resend action.
-      final TextButton button =
-          tester.widget<TextButton>(find.widgetWithText(TextButton, 'Resend code in 01:00'));
+      final TextButton button = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, 'Resend code in 01:00'),
+      );
       expect(button.onPressed, isNull);
 
       await tester.pump(const Duration(seconds: 61));
       expect(find.text('Resend code'), findsOneWidget);
     });
 
-    testWidgets('an invalid code surfaces the specific message',
-        (tester) async {
+    testWidgets('an invalid code surfaces the specific message', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.auth,
@@ -809,14 +786,9 @@ void main() {
       addTearDown(provider.dispose);
 
       final GoRouter router = doorRouter(
-        initialLocation:
-            '${RoutePaths.authConfirmation}?email=me@example.com',
+        initialLocation: '${RoutePaths.authConfirmation}?email=me@example.com',
       );
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'Verification code', '000000');
       await tester.tap(find.text('Verify code'));
@@ -828,12 +800,16 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+      expect(
+        router.routerDelegate.state.matchedLocation,
+        RoutePaths.authConfirmation,
+      );
     });
 
     testWidgets('an otp_expired error (wrong/expired/used) surfaces the '
-        'combined incorrect-or-expired message and stays on the gate',
-        (tester) async {
+        'combined incorrect-or-expired message and stays on the gate', (
+      tester,
+    ) async {
       // Regression for “wrong OTP showed expired”: Supabase conflates wrong,
       // expired and already-used into `otp_expired`. The gate must show the
       // combined copy and must not auto-resend or navigate away.
@@ -848,14 +824,9 @@ void main() {
       addTearDown(provider.dispose);
 
       final GoRouter router = doorRouter(
-        initialLocation:
-            '${RoutePaths.authConfirmation}?email=me@example.com',
+        initialLocation: '${RoutePaths.authConfirmation}?email=me@example.com',
       );
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'Verification code', '000000');
       await tester.tap(find.text('Verify code'));
@@ -868,15 +839,19 @@ void main() {
         findsOneWidget,
       );
       // Must remain on the OTP screen (no auto-advance, no auto resend).
-      expect(router.routerDelegate.state.matchedLocation, RoutePaths.authConfirmation);
+      expect(
+        router.routerDelegate.state.matchedLocation,
+        RoutePaths.authConfirmation,
+      );
       expect(service.otpEmails, isEmpty);
       expect(find.text('Resend code'), findsOneWidget);
     });
   });
 
   group('ForgotPasswordScreen', () {
-    testWidgets('requests a recovery email and shows the neutral message',
-        (tester) async {
+    testWidgets('requests a recovery email and shows the neutral message', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -900,8 +875,9 @@ void main() {
       );
     });
 
-    testWidgets('never leaks account existence, even on failure',
-        (tester) async {
+    testWidgets('never leaks account existence, even on failure', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..failure = const ApiException(
           kind: ApiExceptionKind.notFound,
@@ -922,39 +898,45 @@ void main() {
 
       expect(find.text('No account found'), findsNothing);
       expect(
-        find.text('If an account exists for that address, recovery '
-            'instructions are on their way.'),
+        find.text(
+          'If an account exists for that address, recovery '
+          'instructions are on their way.',
+        ),
         findsOneWidget,
       );
     });
   });
 
   group('ResetPasswordScreen', () {
-    testWidgets('renders and disables Update password until both fields match',
-        (tester) async {
-      final service = _ScriptedAuthService();
-      final provider = AuthProvider(service: service);
-      addTearDown(provider.dispose);
+    testWidgets(
+      'renders and disables Update password until both fields match',
+      (tester) async {
+        final service = _ScriptedAuthService();
+        final provider = AuthProvider(service: service);
+        addTearDown(provider.dispose);
 
-      await pumpAuth(
-        tester,
-        router: doorRouter(initialLocation: RoutePaths.resetPassword),
-        authProvider: provider,
-      );
+        await pumpAuth(
+          tester,
+          router: doorRouter(initialLocation: RoutePaths.resetPassword),
+          authProvider: provider,
+        );
 
-      expect(find.text('Set a new password'), findsOneWidget);
-      HivorrButton button() => tester.widget<HivorrButton>(find.byType(HivorrButton));
+        expect(find.text('Set a new password'), findsOneWidget);
+        HivorrButton button() =>
+            tester.widget<HivorrButton>(find.byType(HivorrButton));
 
-      expect(button().onPressed, isNull);
+        expect(button().onPressed, isNull);
 
-      await enterField(tester, 'New password', 'Newpass1!');
-      await enterField(tester, 'Confirm new password', 'Newpass2!');
-      await tester.pump();
-      expect(button().onPressed, isNull);
-    });
+        await enterField(tester, 'New password', 'Newpass1!');
+        await enterField(tester, 'Confirm new password', 'Newpass2!');
+        await tester.pump();
+        expect(button().onPressed, isNull);
+      },
+    );
 
-    testWidgets('update records the password and confirms success',
-        (tester) async {
+    testWidgets('update records the password and confirms success', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -983,13 +965,10 @@ void main() {
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      final GoRouter router =
-          doorRouter(initialLocation: RoutePaths.resetPassword);
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
+      final GoRouter router = doorRouter(
+        initialLocation: RoutePaths.resetPassword,
       );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'New password', 'Newpass1!');
       await enterField(tester, 'Confirm new password', 'Newpass1!');
@@ -1001,8 +980,9 @@ void main() {
       expect(router.routerDelegate.state.matchedLocation, RoutePaths.login);
     });
 
-    testWidgets('button stays disabled when password fails the policy',
-        (tester) async {
+    testWidgets('button stays disabled when password fails the policy', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
@@ -1035,59 +1015,58 @@ void main() {
       expect(button().onPressed, isNotNull);
     });
 
-    testWidgets('an invalid/expired link shows recovery guidance, not success',
-        (tester) async {
+    testWidgets(
+      'an invalid/expired link shows recovery guidance, not success',
+      (tester) async {
+        final service = _ScriptedAuthService()
+          ..updateFailure = const ApiException(
+            kind: ApiExceptionKind.validation,
+            message:
+                'This reset link is invalid or has expired. '
+                'Request a new one.',
+            code: 'invalid_grant',
+          );
+        final provider = AuthProvider(service: service);
+        addTearDown(provider.dispose);
+
+        await pumpAuth(
+          tester,
+          router: doorRouter(initialLocation: RoutePaths.resetPassword),
+          authProvider: provider,
+        );
+
+        await enterField(tester, 'New password', 'Newpass1!');
+        await enterField(tester, 'Confirm new password', 'Newpass1!');
+        await tester.tap(find.text('Update password'));
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('invalid or has expired'), findsOneWidget);
+        expect(find.text('Request a new link'), findsOneWidget);
+        expect(
+          find.text('Your password has been updated. You can now sign in.'),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('Request a new link navigates to the forgot-password door', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..updateFailure = const ApiException(
           kind: ApiExceptionKind.validation,
-          message: 'This reset link is invalid or has expired. '
+          message:
+              'This reset link is invalid or has expired. '
               'Request a new one.',
           code: 'invalid_grant',
         );
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      await pumpAuth(
-        tester,
-        router: doorRouter(initialLocation: RoutePaths.resetPassword),
-        authProvider: provider,
+      final GoRouter router = doorRouter(
+        initialLocation: RoutePaths.resetPassword,
       );
-
-      await enterField(tester, 'New password', 'Newpass1!');
-      await enterField(tester, 'Confirm new password', 'Newpass1!');
-      await tester.tap(find.text('Update password'));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.textContaining('invalid or has expired'),
-        findsOneWidget,
-      );
-      expect(find.text('Request a new link'), findsOneWidget);
-      expect(
-        find.text('Your password has been updated. You can now sign in.'),
-        findsNothing,
-      );
-    });
-
-    testWidgets('Request a new link navigates to the forgot-password door',
-        (tester) async {
-      final service = _ScriptedAuthService()
-        ..updateFailure = const ApiException(
-          kind: ApiExceptionKind.validation,
-          message: 'This reset link is invalid or has expired. '
-              'Request a new one.',
-          code: 'invalid_grant',
-        );
-      final provider = AuthProvider(service: service);
-      addTearDown(provider.dispose);
-
-      final GoRouter router =
-          doorRouter(initialLocation: RoutePaths.resetPassword);
-      await pumpAuth(
-        tester,
-        router: router,
-        authProvider: provider,
-      );
+      await pumpAuth(tester, router: router, authProvider: provider);
 
       await enterField(tester, 'New password', 'Newpass1!');
       await enterField(tester, 'Confirm new password', 'Newpass1!');
@@ -1103,12 +1082,14 @@ void main() {
       expect(find.text('Reset your password'), findsOneWidget);
     });
 
-    testWidgets('a failed recovery callback shows the expired-link state',
-        (tester) async {
+    testWidgets('a failed recovery callback shows the expired-link state', (
+      tester,
+    ) async {
       final service = _ScriptedAuthService()
         ..recoveryCallbackErrorValue = const ApiException(
           kind: ApiExceptionKind.validation,
-          message: 'This reset link is invalid or has expired. '
+          message:
+              'This reset link is invalid or has expired. '
               'Request a new one.',
           code: 'invalid_grant',
         );
@@ -1121,10 +1102,7 @@ void main() {
         authProvider: provider,
       );
 
-      expect(
-        find.textContaining('invalid or has expired'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('invalid or has expired'), findsOneWidget);
       expect(find.text('Request a new link'), findsOneWidget);
       // No password form behind a broken link.
       expect(find.text('New password'), findsNothing);
@@ -1132,8 +1110,9 @@ void main() {
     });
   });
 
-  testWidgets('AuthErrorText renders the safe message in the error tone',
-      (tester) async {
+  testWidgets('AuthErrorText renders the safe message in the error tone', (
+    tester,
+  ) async {
     await pumpTheme(
       tester,
       const AuthErrorText(message: 'Something went wrong'),

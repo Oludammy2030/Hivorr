@@ -83,7 +83,8 @@ class AppConfig {
   ///
   /// Gates pair discovery, the `/finance/convert` route, and the conversion
   /// screen. Defaults to `false` in all environments.
-  bool get conversionPairsEnabled => _config.featureFlags.conversionPairsEnabled;
+  bool get conversionPairsEnabled =>
+      _config.featureFlags.conversionPairsEnabled;
 
   /// Whether the `financial_conversions` REST history read seam is enabled
   /// (EP-02-15 §5.2). Defaults to `false` — when off, `getHistory()` returns

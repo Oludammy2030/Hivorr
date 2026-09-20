@@ -23,12 +23,12 @@ class EntityProfileBuilder {
       this.._countryCode = value;
 
   EntityProfile build() => EntityProfile(
-        legalName: _legalName,
-        displayName: _displayName,
-        bio: _bio,
-        avatarPath: _avatarPath,
-        countryCode: _countryCode,
-      );
+    legalName: _legalName,
+    displayName: _displayName,
+    bio: _bio,
+    avatarPath: _avatarPath,
+    countryCode: _countryCode,
+  );
 }
 
 /// Builds valid [EntityRole] instances with sensible defaults.
@@ -44,11 +44,8 @@ class EntityRoleBuilder {
   EntityRoleBuilder withActivatedAt(DateTime? value) =>
       this.._activatedAt = value;
 
-  EntityRole build() => EntityRole(
-        role: _role,
-        isActive: _isActive,
-        activatedAt: _activatedAt,
-      );
+  EntityRole build() =>
+      EntityRole(role: _role, isActive: _isActive, activatedAt: _activatedAt);
 }
 
 /// Builds valid [Entity] aggregates with sensible defaults.
@@ -65,10 +62,12 @@ class EntityBuilder {
   EntityBuilder withId(String value) => this.._id = value;
   EntityBuilder withStatus(EntityStatus value) => this.._status = value;
   EntityBuilder withProfile(EntityProfile? value) => this.._profile = value;
-  EntityBuilder withRoles(List<EntityRole> value) =>
-      this.._roles = List<EntityRole>.of(value).._rolesExplicit = true;
-  EntityBuilder addRole(EntityRole value) =>
-      this.._roles.add(value).._rolesExplicit = true;
+  EntityBuilder withRoles(List<EntityRole> value) => this
+    .._roles = List<EntityRole>.of(value)
+    .._rolesExplicit = true;
+  EntityBuilder addRole(EntityRole value) => this
+    .._roles.add(value)
+    .._rolesExplicit = true;
 
   Entity build() {
     final EntityProfile profile = _profile ?? EntityProfileBuilder().build();

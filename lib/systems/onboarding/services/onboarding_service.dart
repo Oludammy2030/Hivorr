@@ -24,7 +24,8 @@ import 'package:hivorr/systems/verification/models/document_type.dart';
 import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
-import 'package:sentry_flutter/sentry_flutter.dart' show SpanStatus, ISentrySpan;
+import 'package:sentry_flutter/sentry_flutter.dart'
+    show SpanStatus, ISentrySpan;
 
 /// Thin orchestration facade for the EP-02-18 wizard (plan §5.4).
 ///
@@ -59,16 +60,16 @@ class OnboardingService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _store = store,
-        _entityRepository = entityRepository,
-        _taxonomy = taxonomy,
-        _identityVerification = identityVerification,
-        _tradeVerification = tradeVerification,
-        _storage = storage,
-        _onboardingRepository = onboardingRepository,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _store = store,
+       _entityRepository = entityRepository,
+       _taxonomy = taxonomy,
+       _identityVerification = identityVerification,
+       _tradeVerification = tradeVerification,
+       _storage = storage,
+       _onboardingRepository = onboardingRepository,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final OnboardingProgressStore _store;
   final EntityRepository _entityRepository;
@@ -304,8 +305,9 @@ class OnboardingService {
     if (next == null) {
       await _completeOnServer(p.capability);
     }
-    final OnboardingProgress updated =
-        next == null ? p.finish() : p.advanceTo(next);
+    final OnboardingProgress updated = next == null
+        ? p.finish()
+        : p.advanceTo(next);
     _progress = updated;
     await _persist(updated, 'onboarding.step.${p.step.ordinal + 1}.duration');
   }
@@ -366,10 +368,13 @@ class OnboardingService {
     final OnboardingStatus status = await repo.update(completed: true);
     _serverHydrated = true;
     _serverCompleted = status.completed;
-    _logger?.info('Onboarding completion stamped server-side', <String, Object?>{
-      'capability': capability.name,
-      'completed': status.completed,
-    });
+    _logger?.info(
+      'Onboarding completion stamped server-side',
+      <String, Object?>{
+        'capability': capability.name,
+        'completed': status.completed,
+      },
+    );
   }
 
   /// Steps back one position and persists.
@@ -477,11 +482,12 @@ class OnboardingService {
         );
       }
 
-      final String? resolvedLegalName = legalName ??
+      final String? resolvedLegalName =
+          legalName ??
           (firstName != null && lastName != null
               ? (middleName != null && middleName.trim().isNotEmpty
-                  ? '${firstName.trim()} ${middleName.trim()} ${lastName.trim()}'
-                  : '${firstName.trim()} ${lastName.trim()}')
+                    ? '${firstName.trim()} ${middleName.trim()} ${lastName.trim()}'
+                    : '${firstName.trim()} ${lastName.trim()}')
               : null);
       final EntityProfile profile = await _entityRepository.updateProfile(
         entityId: entityId,
@@ -541,7 +547,8 @@ class OnboardingService {
       'professionId': _redactor.redact(professionId),
     });
     try {
-      final bool valid = _taxonomy.selectedIndustry?.id == industryId &&
+      final bool valid =
+          _taxonomy.selectedIndustry?.id == industryId &&
           _taxonomy.selectedProfession?.id == professionId;
       if (!valid) {
         throw const ApiException(
@@ -550,9 +557,7 @@ class OnboardingService {
           code: 'PLT003',
         );
       }
-      await _entityRepository.bindProfession(
-        professionId: professionId,
-      );
+      await _entityRepository.bindProfession(professionId: professionId);
       // Binding a profession is the professional-capability commitment —
       // activate the fluid `professional` role (idempotent upsert RPC).
       await _entityRepository.activateRole(
@@ -595,14 +600,14 @@ class OnboardingService {
       'onboarding',
     );
     try {
-      final VerificationSubmission submission =
-          await _identityVerification.submitIdentityDocument(
-        documentType: documentType,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-        onProgress: onProgress,
-      );
+      final VerificationSubmission submission = await _identityVerification
+          .submitIdentityDocument(
+            documentType: documentType,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+            onProgress: onProgress,
+          );
       final OnboardingProgress? p = _progress;
       if (p != null) {
         final OnboardingProgress marked = p.withIdentitySubmission(true);
@@ -637,15 +642,15 @@ class OnboardingService {
       'onboarding',
     );
     try {
-      final VerificationSubmission submission =
-          await _tradeVerification.submitTradeProof(
-        type: type,
-        professionId: professionId,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-        onProgress: onProgress,
-      );
+      final VerificationSubmission submission = await _tradeVerification
+          .submitTradeProof(
+            type: type,
+            professionId: professionId,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+            onProgress: onProgress,
+          );
       final OnboardingProgress? p = _progress;
       if (p != null) {
         final OnboardingProgress marked = p.withTradeProofSubmission(true);
@@ -672,10 +677,8 @@ class OnboardingService {
   /// verification status is `approved` for [professionId] (defaults to the
   /// taxonomy-selected profession when omitted).
   Future<bool> refreshTradeGate({String? professionId}) async {
-    final TradeVerificationStatus status =
-        await _tradeVerification.getStatus();
-    final String id =
-        professionId ?? _taxonomy.selectedProfession?.id ?? '';
+    final TradeVerificationStatus status = await _tradeVerification.getStatus();
+    final String id = professionId ?? _taxonomy.selectedProfession?.id ?? '';
     final bool open = id.isEmpty ? false : status.kindFor(id).canBid;
     _logger?.info('Trade gate refreshed', <String, Object?>{
       'entityId': _redactor.redact(_progress?.entityId ?? ''),
@@ -688,7 +691,10 @@ class OnboardingService {
   void disposeProgress() => _progress = null;
 
   Future<void> _persist(OnboardingProgress progress, String traceName) async {
-    final ISentrySpan? span = _tracer?.startTransaction(traceName, 'onboarding');
+    final ISentrySpan? span = _tracer?.startTransaction(
+      traceName,
+      'onboarding',
+    );
     try {
       await _store.save(progress);
       _logger?.info('Onboarding progress persisted', <String, Object?>{
@@ -714,8 +720,8 @@ class OnboardingService {
     final String? fromName = fileName == null
         ? null
         : fileName.contains('.')
-            ? fileName.split('.').last
-            : null;
+        ? fileName.split('.').last
+        : null;
     final String ext = switch (mimeType) {
       'image/png' => 'png',
       'image/webp' => 'webp',

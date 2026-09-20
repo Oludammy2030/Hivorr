@@ -35,14 +35,17 @@ void main() {
 
   group('CapabilitySelectionScreen (capability correction)', () {
     testWidgets('inactive renders nothing', (WidgetTester tester) async {
-      final (OnboardingTestStack stack, _) =
-          await pumpCapability(tester, active: false);
+      final (OnboardingTestStack stack, _) = await pumpCapability(
+        tester,
+        active: false,
+      );
       expect(find.text('What will you do on Hivorr?'), findsNothing);
       stack.provider.dispose();
     });
 
-    testWidgets('renders the three capability cards + helper copy',
-        (WidgetTester tester) async {
+    testWidgets('renders the three capability cards + helper copy', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, _) = await pumpCapability(tester);
       expect(find.text('What will you do on Hivorr?'), findsOneWidget);
       for (final String label in <String>[
@@ -50,48 +53,61 @@ void main() {
         'Offer Professional Services',
         'Do both',
       ]) {
-        expect(find.text(label), findsOneWidget,
-            reason: '$label renders as a selectable card');
+        expect(
+          find.text(label),
+          findsOneWidget,
+          reason: '$label renders as a selectable card',
+        );
       }
       stack.provider.dispose();
     });
 
     testWidgets('hides the shell primary CTA', (WidgetTester tester) async {
-      final (_, OnboardingStepController controller) =
-          await pumpCapability(tester);
+      final (_, OnboardingStepController controller) = await pumpCapability(
+        tester,
+      );
       expect(controller.primaryLabel, isEmpty);
       controller.dispose();
     });
 
-    testWidgets('tapping Hire selects, persists, and routes to the complete step',
-        (WidgetTester tester) async {
-      final (OnboardingTestStack stack, _) = await pumpCapability(tester);
-      await tester.tap(find.text('Hire Professionals'));
-      await tester.pumpAndSettle();
-      expect(stack.provider.progress!.capability, EntityCapability.hire,
-          reason: 'the hire choice is the persisted decision');
-      final OnboardingProgress saved = (await stack.store.read('u1'))!;
-      expect(saved.capability, EntityCapability.hire);
-      expect(saved.step, OnboardingStepCode.capability,
-          reason: 'a hire-only entity finishes after the capability step');
-      expect(stack.provider.isComplete, isTrue);
-      expect(find.text('ONBOARDING-COMPLETE'), findsOneWidget);
-      stack.provider.dispose();
-    });
+    testWidgets(
+      'tapping Hire selects, persists, and routes to the complete step',
+      (WidgetTester tester) async {
+        final (OnboardingTestStack stack, _) = await pumpCapability(tester);
+        await tester.tap(find.text('Hire Professionals'));
+        await tester.pumpAndSettle();
+        expect(
+          stack.provider.progress!.capability,
+          EntityCapability.hire,
+          reason: 'the hire choice is the persisted decision',
+        );
+        final OnboardingProgress saved = (await stack.store.read('u1'))!;
+        expect(saved.capability, EntityCapability.hire);
+        expect(
+          saved.step,
+          OnboardingStepCode.capability,
+          reason: 'a hire-only entity finishes after the capability step',
+        );
+        expect(stack.provider.isComplete, isTrue);
+        expect(find.text('ONBOARDING-COMPLETE'), findsOneWidget);
+        stack.provider.dispose();
+      },
+    );
 
-    testWidgets('tapping Offer and Both persist their decision',
-        (WidgetTester tester) async {
-      final (OnboardingTestStack offerStack, _) =
-          await pumpCapability(tester);
+    testWidgets('tapping Offer and Both persist their decision', (
+      WidgetTester tester,
+    ) async {
+      final (OnboardingTestStack offerStack, _) = await pumpCapability(tester);
       await tester.tap(find.text('Offer Professional Services'));
       await tester.pumpAndSettle();
       expect(offerStack.provider.progress!.capability, EntityCapability.offer);
-      expect(offerStack.provider.progress!.step,
-          OnboardingStepCode.industry,
-          reason: 'offer continues into industry selection');
+      expect(
+        offerStack.provider.progress!.step,
+        OnboardingStepCode.industry,
+        reason: 'offer continues into industry selection',
+      );
       expect(find.text('ONBOARDING-INDUSTRY'), findsOneWidget);
-      final (OnboardingTestStack bothStack, _) =
-          await pumpCapability(tester);
+      final (OnboardingTestStack bothStack, _) = await pumpCapability(tester);
       await tester.tap(find.text('Do both'));
       await tester.pumpAndSettle();
       expect(bothStack.provider.progress!.capability, EntityCapability.both);
@@ -100,16 +116,20 @@ void main() {
       bothStack.provider.dispose();
     });
 
-    testWidgets('a failed persist surfaces the error inline and stays',
-        (WidgetTester tester) async {
+    testWidgets('a failed persist surfaces the error inline and stays', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack stack = buildOnboardingStack(
         store: _ThrowingSaveStore(),
       );
       final (_, _) = await pumpCapability(tester, stack: stack);
       await tester.tap(find.text('Hire Professionals'));
       await tester.pumpAndSettle();
-      expect(find.text('ONBOARDING-COMPLETE'), findsNothing,
-          reason: 'navigation only fires on a persisted decision');
+      expect(
+        find.text('ONBOARDING-COMPLETE'),
+        findsNothing,
+        reason: 'navigation only fires on a persisted decision',
+      );
       expect(
         find.text('Something went wrong. Please try again.'),
         findsOneWidget,

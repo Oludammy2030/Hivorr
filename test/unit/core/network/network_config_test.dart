@@ -11,20 +11,26 @@ void main() {
 
       final config = NetworkConfig.fromSource(source);
 
-      expect(config.debounceIntervalMs,
-          AppConstants.defaultNetworkDebounceMs);
+      expect(config.debounceIntervalMs, AppConstants.defaultNetworkDebounceMs);
       expect(config.enablePayloadOptimization, isFalse);
-      expect(config.mobileImageQuality,
-          AppConstants.defaultNetworkMobileImageQuality);
-      expect(config.wifiImageQuality,
-          AppConstants.defaultNetworkWifiImageQuality);
-      expect(config.mobilePageSize,
-          AppConstants.defaultNetworkMobilePageSize);
+      expect(
+        config.mobileImageQuality,
+        AppConstants.defaultNetworkMobileImageQuality,
+      );
+      expect(
+        config.wifiImageQuality,
+        AppConstants.defaultNetworkWifiImageQuality,
+      );
+      expect(config.mobilePageSize, AppConstants.defaultNetworkMobilePageSize);
       expect(config.wifiPageSize, AppConstants.defaultNetworkWifiPageSize);
-      expect(config.maxUploadSizeMbMobile,
-          AppConstants.defaultNetworkMaxUploadMbMobile);
-      expect(config.maxUploadSizeMbWifi,
-          AppConstants.defaultNetworkMaxUploadMbWifi);
+      expect(
+        config.maxUploadSizeMbMobile,
+        AppConstants.defaultNetworkMaxUploadMbMobile,
+      );
+      expect(
+        config.maxUploadSizeMbWifi,
+        AppConstants.defaultNetworkMaxUploadMbWifi,
+      );
     });
   });
 

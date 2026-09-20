@@ -135,8 +135,9 @@ Map<String, dynamic> _progressToJson(OnboardingProgress progress) {
 OnboardingProgress _progressFromJson(Map<String, dynamic> json) {
   final Iterable<dynamic> raw =
       json['completedSteps'] as List<dynamic>? ?? const <dynamic>[];
-  final List<String> completed =
-      raw.map((dynamic e) => e as String).toList(growable: false);
+  final List<String> completed = raw
+      .map((dynamic e) => e as String)
+      .toList(growable: false);
   final int epoch = (json['updatedAt'] as num?)?.toInt() ?? 0;
   return OnboardingProgress(
     entityId: json['entityId'] as String? ?? '',
@@ -151,12 +152,9 @@ OnboardingProgress _progressFromJson(Map<String, dynamic> json) {
           orElse: () => OnboardingStepCode.profile,
         ),
     ],
-    capability: EntityCapability.fromName(
-      json['capability'] as String?,
-    ),
+    capability: EntityCapability.fromName(json['capability'] as String?),
     hasIdentitySubmission: json['hasIdentitySubmission'] as bool? ?? false,
-    hasTradeProofSubmission:
-        json['hasTradeProofSubmission'] as bool? ?? false,
+    hasTradeProofSubmission: json['hasTradeProofSubmission'] as bool? ?? false,
     exited: json['exited'] as bool? ?? false,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(epoch),
   );

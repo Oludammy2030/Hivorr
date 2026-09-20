@@ -30,10 +30,10 @@ class EscrowMilestoneInput {
 
   /// The JSON payload fragment sent through the write seam / proxy.
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'milestone_number': milestoneNumber,
-        'title': title,
-        'description': description,
-        'amount': amount,
-        'sort_order': sortOrder ?? milestoneNumber,
-      };
+    'milestone_number': milestoneNumber,
+    'title': title,
+    'description': description,
+    'amount': amount,
+    'sort_order': sortOrder ?? milestoneNumber,
+  };
 }

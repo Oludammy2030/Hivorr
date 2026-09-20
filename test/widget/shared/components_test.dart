@@ -6,7 +6,9 @@ import 'test_helpers.dart';
 
 void main() {
   group('HivorrFormField', () {
-    testWidgets('shows validation error on invalid input', (WidgetTester tester) async {
+    testWidgets('shows validation error on invalid input', (
+      WidgetTester tester,
+    ) async {
       final GlobalKey<FormState> formKey = GlobalKey<FormState>();
       await tester.pumpWidget(
         MaterialApp(
@@ -28,7 +30,9 @@ void main() {
       expect(find.text('Required'), findsOneWidget);
     });
 
-    testWidgets('surfaces typed text to onChanged', (WidgetTester tester) async {
+    testWidgets('surfaces typed text to onChanged', (
+      WidgetTester tester,
+    ) async {
       String? value;
       await tester.pumpWidget(
         MaterialApp(
@@ -48,11 +52,7 @@ void main() {
       bool tapped = false;
       await pumpTheme(
         tester,
-        HivorrListTile(
-          title: 'T',
-          subtitle: 'S',
-          onTap: () => tapped = true,
-        ),
+        HivorrListTile(title: 'T', subtitle: 'S', onTap: () => tapped = true),
       );
       expect(find.text('T'), findsOneWidget);
       expect(find.text('S'), findsOneWidget);
@@ -62,7 +62,9 @@ void main() {
   });
 
   group('HivorrSectionHeader', () {
-    testWidgets('renders title and optional action', (WidgetTester tester) async {
+    testWidgets('renders title and optional action', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         HivorrSectionHeader(
@@ -81,7 +83,9 @@ void main() {
   });
 
   group('HivorrDialog', () {
-    testWidgets('shows title, content and actions', (WidgetTester tester) async {
+    testWidgets('shows title, content and actions', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
@@ -145,7 +149,9 @@ class _Holder with FormValidationMixin {}
 
 void _formValidationTests() {
   group('FormValidationMixin', () {
-    testWidgets('validate returns false for invalid form', (WidgetTester tester) async {
+    testWidgets('validate returns false for invalid form', (
+      WidgetTester tester,
+    ) async {
       final _Holder holder = _Holder();
       await tester.pumpWidget(
         MaterialApp(
@@ -161,7 +167,9 @@ void _formValidationTests() {
       holder.reset();
     });
 
-    testWidgets('validate returns true for valid form', (WidgetTester tester) async {
+    testWidgets('validate returns true for valid form', (
+      WidgetTester tester,
+    ) async {
       final _Holder holder = _Holder();
       await tester.pumpWidget(
         MaterialApp(

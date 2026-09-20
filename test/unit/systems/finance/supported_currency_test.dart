@@ -9,7 +9,10 @@ void main() {
     });
 
     test('registers codes NGN, GHS, USD, GBP', () {
-      expect(SupportedCurrency.codes, containsAll(<String>['NGN', 'GHS', 'USD', 'GBP']));
+      expect(
+        SupportedCurrency.codes,
+        containsAll(<String>['NGN', 'GHS', 'USD', 'GBP']),
+      );
     });
 
     test('maps display labels', () {

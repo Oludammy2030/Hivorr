@@ -12,19 +12,18 @@ import '../../../support/factories/mock_supabase_client_factory.dart';
 void main() {
   SupabaseKycRemoteDataSource build([
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
-  ]) =>
-      SupabaseKycRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
-        exceptionMapper: const ApiExceptionMapper(),
-      );
+  ]) => SupabaseKycRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
+    exceptionMapper: const ApiExceptionMapper(),
+  );
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   group('SupabaseKycRemoteDataSource.getKycLevel', () {
     test('calls verification_kyc_level_get and maps the level', () async {
@@ -117,30 +116,39 @@ void main() {
     test('maps a PLT001 envelope to auth ApiException', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_status_get': (_) => <String, dynamic>{
-              'code': 'PLT001',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT001',
+          'data': <String, dynamic>{},
+        },
       });
       expect(
         () => source.getStatus(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.auth,
+          ),
+        ),
       );
     });
 
     test('throws server when envelope data is not an object', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_status_get': (_) => <String, dynamic>{
-              'success': true,
-              'code': 'PLT000',
-              'data': <dynamic>[1, 2],
-            },
+          'success': true,
+          'code': 'PLT000',
+          'data': <dynamic>[1, 2],
+        },
       });
       expect(
         () => source.getStatus(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
   });
@@ -149,106 +157,135 @@ void main() {
     test('maps PLT003 to validation on getKycLevel', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_kyc_level_get': (_) => <String, dynamic>{
-              'code': 'PLT003',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT003',
+          'data': <String, dynamic>{},
+        },
       });
       expect(
         () => source.getKycLevel(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)
-            .having((ApiException e) => e.code, 'code', 'PLT003')),
+        throwsA(
+          isA<ApiException>()
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.validation,
+              )
+              .having((ApiException e) => e.code, 'code', 'PLT003'),
+        ),
       );
     });
 
     test('maps PLT004 to notFound on getLimits', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_limits_get': (_) => <String, dynamic>{
-              'code': 'PLT004',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT004',
+          'data': <String, dynamic>{},
+        },
       });
       expect(
         () => source.getLimits(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.notFound)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.notFound,
+          ),
+        ),
       );
     });
 
     test('maps PLT002 to forbidden on getStatus', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_status_get': (_) => <String, dynamic>{
-              'code': 'PLT002',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT002',
+          'data': <String, dynamic>{},
+        },
       });
       expect(
         () => source.getStatus(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.forbidden)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.forbidden,
+          ),
+        ),
       );
     });
 
     test('maps an unknown code to server on getLimits', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_limits_get': (_) => <String, dynamic>{
-              'code': 'PLT999',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT999',
+          'data': <String, dynamic>{},
+        },
       });
       expect(
         () => source.getLimits(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
 
     test('maps missing code to server on getKycLevel', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_kyc_level_get': (_) => <String, dynamic>{
-              'data': <String, dynamic>{},
-            },
+          'data': <String, dynamic>{},
+        },
       });
       expect(
         () => source.getKycLevel(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
 
     test('maps PLT005 to conflict on getStatus', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_status_get': (_) => <String, dynamic>{
-              'code': 'PLT005',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT005',
+          'data': <String, dynamic>{},
+        },
       });
       expect(
         () => source.getStatus(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.conflict)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
 
     test('throws server when getLimits data is not an object', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_limits_get': (_) => <String, dynamic>{
-              'success': true,
-              'code': 'PLT000',
-              'data': 'oops',
-            },
+          'success': true,
+          'code': 'PLT000',
+          'data': 'oops',
+        },
       });
       expect(
         () => source.getLimits(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
   });

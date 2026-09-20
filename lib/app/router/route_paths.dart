@@ -75,12 +75,12 @@ abstract final class RoutePaths {
   /// Maps a wizard step code to its bookmarkable location
   /// (EP-02-18 §5.7). `completed` maps to the completion screen.
   static String onboardingRouteFor(OnboardingStepCode step) => switch (step) {
-        OnboardingStepCode.capability => onboardingCapability,
-        OnboardingStepCode.profile => onboardingProfile,
-        OnboardingStepCode.industry => onboardingIndustry,
-        OnboardingStepCode.identityDocument => onboardingIdentity,
-        OnboardingStepCode.tradeProof => onboardingTradeProof,
-      };
+    OnboardingStepCode.capability => onboardingCapability,
+    OnboardingStepCode.profile => onboardingProfile,
+    OnboardingStepCode.industry => onboardingIndustry,
+    OnboardingStepCode.identityDocument => onboardingIdentity,
+    OnboardingStepCode.tradeProof => onboardingTradeProof,
+  };
 
   /// Financial profile screens (EP-02-13).
   static const String finance = '/finance';
@@ -108,10 +108,7 @@ abstract final class RoutePaths {
 
   /// Builds a URL-encoded public profile path, e.g.
   /// `publicProfile(slug: 'electrician', id: 'abc-123')` → `/p/electrician/abc-123`.
-  static String publicProfile({
-    required String slug,
-    required String id,
-  }) =>
+  static String publicProfile({required String slug, required String id}) =>
       '/p/${Uri.encodeComponent(slug)}/${Uri.encodeComponent(id)}';
 
   /// Builds a URL-encoded public store path, e.g.

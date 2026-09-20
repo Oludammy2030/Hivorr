@@ -11,10 +11,7 @@ import 'package:intl/intl.dart';
 /// label via `SurfaceTint`/`onSurfaceVariant`, limits as outline chips. No
 /// hardcoded colors or font families.
 class KycLevelCard extends StatelessWidget {
-  const KycLevelCard({
-    super.key,
-    required this.level,
-  });
+  const KycLevelCard({super.key, required this.level});
 
   /// The assigned KYC level to render.
   final KycLevel level;
@@ -34,8 +31,11 @@ class KycLevelCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.workspace_premium_outlined,
-                  size: 20, color: colors.primary),
+              Icon(
+                Icons.workspace_premium_outlined,
+                size: 20,
+                color: colors.primary,
+              ),
               const SizedBox(width: HivorrSpacing.xs),
               Expanded(
                 child: Text(
@@ -52,7 +52,10 @@ class KycLevelCard extends StatelessWidget {
             spacing: HivorrSpacing.xs,
             runSpacing: HivorrSpacing.xs,
             children: <Widget>[
-              _Limit(label: 'Daily', value: _currency.format(level.limits.daily)),
+              _Limit(
+                label: 'Daily',
+                value: _currency.format(level.limits.daily),
+              ),
               _Limit(
                 label: 'Weekly',
                 value: _currency.format(level.limits.weekly),
@@ -73,11 +76,11 @@ class KycLevelCard extends StatelessWidget {
   }
 
   static String _tierTitle(String tierCode) => switch (tierCode) {
-        'tier_1' => 'Identity Verified',
-        'tier_2' => 'Trade Verified',
-        'tier_3' => 'Fully Verified',
-        _ => 'Verified — $tierCode',
-      };
+    'tier_1' => 'Identity Verified',
+    'tier_2' => 'Trade Verified',
+    'tier_3' => 'Fully Verified',
+    _ => 'Verified — $tierCode',
+  };
 }
 
 class _Limit extends StatelessWidget {

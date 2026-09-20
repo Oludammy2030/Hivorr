@@ -33,10 +33,7 @@ void main() {
         find.byType(ElevatedButton),
       );
       expect(button.onPressed, isNull);
-      await tester.tap(
-        find.byType(HivorrButton),
-        warnIfMissed: false,
-      );
+      await tester.tap(find.byType(HivorrButton), warnIfMissed: false);
       expect(tapped, isFalse);
     });
   });
@@ -143,9 +140,7 @@ void main() {
       expect(ticks, greaterThanOrEqualTo(3));
     });
 
-    testWidgets('pumpUntil times out with descriptive message', (
-      tester,
-    ) async {
+    testWidgets('pumpUntil times out with descriptive message', (tester) async {
       await pumpTheme(tester, const SizedBox.shrink());
       expect(
         () => pumpUntil(tester, () => false, timeout: Duration.zero),

@@ -20,7 +20,7 @@ import 'package:hivorr/data/repositories/dispute_repository.dart';
 /// `dispute_resolve` (AGENT.md Rule 4, EP-02-17 §9.2).
 class DisputeRepositoryImpl implements DisputeRepository {
   DisputeRepositoryImpl({required DisputeRemoteDataSource remote})
-      : _remote = remote;
+    : _remote = remote;
 
   final DisputeRemoteDataSource _remote;
 
@@ -146,7 +146,11 @@ class DisputeRepositoryImpl implements DisputeRepository {
     }
   }
 
-  static void _requireInVocabulary(String value, Set<String> vocabulary, String field) {
+  static void _requireInVocabulary(
+    String value,
+    Set<String> vocabulary,
+    String field,
+  ) {
     if (!vocabulary.contains(value)) {
       throw ApiException(
         kind: ApiExceptionKind.validation,

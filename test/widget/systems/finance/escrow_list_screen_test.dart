@@ -28,12 +28,10 @@ class _HangingEscrowRepository implements EscrowRepository {
   Future<List<Escrow>> getByProject({
     required String projectId,
     required List<String> escrowIds,
-  }) =>
-      Completer<List<Escrow>>().future;
+  }) => Completer<List<Escrow>>().future;
 
   @override
-  Future<EscrowDetail> getById(String id) =>
-      Completer<EscrowDetail>().future;
+  Future<EscrowDetail> getById(String id) => Completer<EscrowDetail>().future;
 
   @override
   Future<EscrowDetail> createEscrow({
@@ -42,22 +40,19 @@ class _HangingEscrowRepository implements EscrowRepository {
     required String currencyCode,
     required double totalAmount,
     required List<EscrowMilestoneInput> milestones,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<EscrowDetail> completeMilestone({
     required String escrowId,
     required String milestoneId,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<EscrowDetail> releaseMilestone({
     required String escrowId,
     required String milestoneId,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<EscrowDetail> releaseFinal({required String escrowId}) =>
@@ -67,20 +62,14 @@ class _HangingEscrowRepository implements EscrowRepository {
   Future<EscrowDetail> refundEscrow({
     required String escrowId,
     required String reason,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }
 
 void main() {
   EscrowProvider providerWith(EscrowRepository repository) =>
-      EscrowProvider(
-        service: EscrowService(repository: repository),
-      );
+      EscrowProvider(service: EscrowService(repository: repository));
 
-  Future<void> pumpList(
-    WidgetTester tester,
-    EscrowProvider provider,
-  ) async {
+  Future<void> pumpList(WidgetTester tester, EscrowProvider provider) async {
     await pumpApp(
       tester,
       const EscrowListScreen(projectId: 'untitled'),
@@ -91,8 +80,9 @@ void main() {
   }
 
   group('EscrowListScreen', () {
-    testWidgets('renders the Escrows app bar title',
-        (WidgetTester tester) async {
+    testWidgets('renders the Escrows app bar title', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository();
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -103,8 +93,9 @@ void main() {
       expect(find.widgetWithText(AppBar, 'Escrows'), findsOneWidget);
     });
 
-    testWidgets('shows HivorrLoadingState while the list is pending',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrLoadingState while the list is pending', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(_HangingEscrowRepository());
       addTearDown(provider.dispose);
 
@@ -114,8 +105,9 @@ void main() {
       expect(find.byType(HivorrLoadingState), findsOneWidget);
     });
 
-    testWidgets('renders one card per escrow with badge and amount',
-        (WidgetTester tester) async {
+    testWidgets('renders one card per escrow with badge and amount', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         headers: <Escrow>[
           seedEscrowEntity(id: 'e1'),
@@ -139,8 +131,9 @@ void main() {
       expect(find.text('Released to provider'), findsOneWidget);
     });
 
-    testWidgets('shows HivorrEmptyState when no escrows exist',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrEmptyState when no escrows exist', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeEscrowRepository(headers: const []));
       addTearDown(provider.dispose);
 
@@ -151,8 +144,9 @@ void main() {
       expect(find.text('No active escrows'), findsOneWidget);
     });
 
-    testWidgets('shows HivorrErrorState on read failure',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrErrorState on read failure', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository();
       repository.nextError = const ApiException(
         kind: ApiExceptionKind.forbidden,
@@ -171,7 +165,9 @@ void main() {
       expect(find.text('Not allowed'), findsOneWidget);
     });
 
-    testWidgets('pull-to-refresh reloads the list', (WidgetTester tester) async {
+    testWidgets('pull-to-refresh reloads the list', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         headers: <Escrow>[seedEscrowEntity()],
       );
@@ -188,8 +184,9 @@ void main() {
       expect(repository.getByProjectCallCount, greaterThan(initial));
     });
 
-    testWidgets('reloads when the app resumes from background',
-        (WidgetTester tester) async {
+    testWidgets('reloads when the app resumes from background', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         headers: <Escrow>[seedEscrowEntity()],
       );
@@ -200,14 +197,15 @@ void main() {
       await tester.pumpAndSettle();
       final int initial = repository.getByProjectCallCount;
 
-      tester.binding
-          .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
 
       expect(repository.getByProjectCallCount, greaterThan(initial));
     });
 
-    testWidgets('empty list does not render cards', (WidgetTester tester) async {
+    testWidgets('empty list does not render cards', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeEscrowRepository(headers: const []));
       addTearDown(provider.dispose);
 

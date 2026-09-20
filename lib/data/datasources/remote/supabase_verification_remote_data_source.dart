@@ -39,52 +39,47 @@ class SupabaseVerificationRemoteDataSource extends BaseApiService
     if (submissionType != null && submissionType.isNotEmpty) {
       params['p_submission_type'] = submissionType;
     }
-    final Map<String, dynamic> response =
-        await supabase.rpc<Map<String, dynamic>>(
-      'verification_submit',
-      params: params,
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('verification_submit', params: params);
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
     );
-    final Map<String, dynamic> data =
-        VerificationEnvelopeParser.unwrap(response);
     return VerificationSubmissionDto.fromJson(data);
   });
 
   @override
-  Future<VerificationStatusDto> getStatus({String? entityId}) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{};
-        if (entityId != null && entityId.isNotEmpty) {
-          params['p_entity_id'] = entityId;
-        }
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_status_get',
-          params: params,
-        );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return VerificationStatusDto.fromJson(data);
-      });
+  Future<VerificationStatusDto> getStatus({String? entityId}) => _guard(
+    () async {
+      final Map<String, dynamic> params = <String, dynamic>{};
+      if (entityId != null && entityId.isNotEmpty) {
+        params['p_entity_id'] = entityId;
+      }
+      final Map<String, dynamic> response = await supabase
+          .rpc<Map<String, dynamic>>('verification_status_get', params: params);
+      final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+        response,
+      );
+      return VerificationStatusDto.fromJson(data);
+    },
+  );
 
   @override
   Future<KycLevelDto> getKycLevel() => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_kyc_level_get',
-        );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return KycLevelDto.fromJson(data);
-      });
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('verification_kyc_level_get');
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
+    );
+    return KycLevelDto.fromJson(data);
+  });
 
   @override
   Future<KycLevelDto> getLimits() => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_limits_get',
-        );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return KycLevelDto.fromJson(data);
-      });
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('verification_limits_get');
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
+    );
+    return KycLevelDto.fromJson(data);
+  });
 }

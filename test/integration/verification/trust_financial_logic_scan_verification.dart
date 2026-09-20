@@ -58,11 +58,7 @@ String _computeProjectRoot(String scriptPath) {
   return Directory.current.path;
 }
 
-void _collectDartFiles(
-  Directory dir,
-  String scriptPath,
-  List<String> files,
-) {
+void _collectDartFiles(Directory dir, String scriptPath, List<String> files) {
   for (final entity in dir.listSync()) {
     if (entity is Directory) {
       final base = _basename(entity.path);
@@ -86,8 +82,9 @@ int _lineOf(String content, int index) {
 
 String _snippetAt(String content, int index, int length) {
   final start = index < 0 ? 0 : index;
-  final end =
-      (start + length) > content.length ? content.length : start + length;
+  final end = (start + length) > content.length
+      ? content.length
+      : start + length;
   return content.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
@@ -115,7 +112,8 @@ String _stripComments(String content) {
 // import paths) — those are predicates and wiring, not money authority.
 final List<RegExp> _financialMutationPatterns = <RegExp>[
   RegExp(
-      r'\b(balance|amount|total|fee|escrow_split|released_amount|conversion_rate|to_amount|from_amount)\s*[\+\-\*\/]'),
+    r'\b(balance|amount|total|fee|escrow_split|released_amount|conversion_rate|to_amount|from_amount)\s*[\+\-\*\/]',
+  ),
 ];
 
 List<_LogicFinding> _scanFinancialLogic() {
@@ -125,8 +123,7 @@ List<_LogicFinding> _scanFinancialLogic() {
   final files = <String>[];
 
   // Walk lib/systems/ (excluding integrations/payment_gateways adapters).
-  final systemsDir =
-      Directory(_join(<String>[projectRoot, 'lib', 'systems']));
+  final systemsDir = Directory(_join(<String>[projectRoot, 'lib', 'systems']));
   if (systemsDir.existsSync()) {
     _collectDartFiles(systemsDir, scriptPath, files);
   }
@@ -161,12 +158,14 @@ List<_LogicFinding> _scanFinancialLogic() {
 
     for (final pattern in _financialMutationPatterns) {
       for (final m in pattern.allMatches(content)) {
-        findings.add(_LogicFinding(
-          filePath,
-          _lineOf(content, m.start),
-          pattern.pattern,
-          _snippetAt(content, m.start, 60),
-        ));
+        findings.add(
+          _LogicFinding(
+            filePath,
+            _lineOf(content, m.start),
+            pattern.pattern,
+            _snippetAt(content, m.start, 60),
+          ),
+        );
       }
     }
   }
@@ -178,20 +177,19 @@ void main() {
   final findings = _scanFinancialLogic();
 
   group('DoD-C1: Trust financial logic scan', () {
-    test('zero client-side financial arithmetic in lib/systems/ + lib/data/',
-        () {
-      final buffer = StringBuffer();
-      buffer.writeln(
-          'Financial logic scan found ${findings.length} finding(s):');
-      for (final f in findings) {
-        buffer.writeln('  - $f');
-      }
-      expect(
-        findings,
-        isEmpty,
-        reason: buffer.toString(),
-      );
-    });
+    test(
+      'zero client-side financial arithmetic in lib/systems/ + lib/data/',
+      () {
+        final buffer = StringBuffer();
+        buffer.writeln(
+          'Financial logic scan found ${findings.length} finding(s):',
+        );
+        for (final f in findings) {
+          buffer.writeln('  - $f');
+        }
+        expect(findings, isEmpty, reason: buffer.toString());
+      },
+    );
 
     test('scanned a non-trivial set of files', () {
       // Guards against the scanner silently scanning nothing.

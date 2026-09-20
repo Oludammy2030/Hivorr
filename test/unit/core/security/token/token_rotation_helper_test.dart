@@ -43,8 +43,7 @@ void main() {
     });
 
     test('rotateIfNeeded refreshes when within expiry buffer', () async {
-      final DateTime soon =
-          DateTime.now().add(const Duration(minutes: 1));
+      final DateTime soon = DateTime.now().add(const Duration(minutes: 1));
       final String? result = await helper.rotateIfNeeded(soon);
 
       expect(result, 'refreshed-token');
@@ -72,15 +71,14 @@ void main() {
         tokenStore: tokenStore,
       );
 
-      final List<String?> results = await Future.wait<String?>(
-        <Future<String?>>[
-          helper.rotateIfNeeded(null),
-          helper.rotateIfNeeded(null),
-          helper.rotateIfNeeded(null),
-          helper.rotateIfNeeded(null),
-          helper.rotateIfNeeded(null),
-        ],
-      );
+      final List<String?> results =
+          await Future.wait<String?>(<Future<String?>>[
+            helper.rotateIfNeeded(null),
+            helper.rotateIfNeeded(null),
+            helper.rotateIfNeeded(null),
+            helper.rotateIfNeeded(null),
+            helper.rotateIfNeeded(null),
+          ]);
 
       expect(results, everyElement('refreshed-token'));
       expect(provider.refreshCalls, 1);
@@ -105,23 +103,25 @@ void main() {
       expect(await tokenStore.readAccessToken(), isNull);
     });
 
-    test('rotateIfNeeded throws ApiException when refresh returns no token',
-        () async {
-      provider = FakeAccessTokenProvider(
-        currentToken: 'current-token',
-        nextToken: null,
-      );
-      helper = TokenRotationHelper(
-        accessTokenProvider: provider,
-        tokenStore: tokenStore,
-      );
+    test(
+      'rotateIfNeeded throws ApiException when refresh returns no token',
+      () async {
+        provider = FakeAccessTokenProvider(
+          currentToken: 'current-token',
+          nextToken: null,
+        );
+        helper = TokenRotationHelper(
+          accessTokenProvider: provider,
+          tokenStore: tokenStore,
+        );
 
-      await expectLater(
-        helper.rotateIfNeeded(null),
-        throwsA(isA<ApiException>()),
-      );
-      expect(await tokenStore.readAccessToken(), isNull);
-    });
+        await expectLater(
+          helper.rotateIfNeeded(null),
+          throwsA(isA<ApiException>()),
+        );
+        expect(await tokenStore.readAccessToken(), isNull);
+      },
+    );
 
     test('does not write when the refreshed token is unchanged', () async {
       provider = FakeAccessTokenProvider(

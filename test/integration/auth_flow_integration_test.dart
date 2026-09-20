@@ -100,222 +100,224 @@ class _ApiHarness {
 void main() {
   group('Auth flow integration', () {
     test(
-        'sign-up flow: session created, provider authenticated, token injected',
-        () async {
-      final SupabaseClient supabase =
-          MockSupabaseClientFactory.create(currentUser: fakeUser('u1'));
-      final FakeGoTrueClient goTrue =
-          (supabase as ScriptedSupabaseClient).goTrue;
-      final AuthService service = SupabaseAuthService(
-        authClient: goTrue,
-        supabaseClient: supabase,
-        config: const AuthConfig(),
-      );
-      final AuthProvider provider = AuthProvider(service: service);
-      final _GoTrueAccessTokenProvider tokenProvider =
-          _GoTrueAccessTokenProvider(goTrue);
-      final _ApiHarness api = _ApiHarness(tokenProvider: tokenProvider);
+      'sign-up flow: session created, provider authenticated, token injected',
+      () async {
+        final SupabaseClient supabase = MockSupabaseClientFactory.create(
+          currentUser: fakeUser('u1'),
+        );
+        final FakeGoTrueClient goTrue =
+            (supabase as ScriptedSupabaseClient).goTrue;
+        final AuthService service = SupabaseAuthService(
+          authClient: goTrue,
+          supabaseClient: supabase,
+          config: const AuthConfig(),
+        );
+        final AuthProvider provider = AuthProvider(service: service);
+        final _GoTrueAccessTokenProvider tokenProvider =
+            _GoTrueAccessTokenProvider(goTrue);
+        final _ApiHarness api = _ApiHarness(tokenProvider: tokenProvider);
 
-      await provider.initialize();
-      await pumpEventQueue();
+        await provider.initialize();
+        await pumpEventQueue();
 
-      final AuthResult result = await service.signUp(
-        AuthCredentials(email: 'user@example.com', password: 'password'),
-      );
-      await pumpEventQueue();
+        final AuthResult result = await service.signUp(
+          AuthCredentials(email: 'user@example.com', password: 'password'),
+        );
+        await pumpEventQueue();
 
-      expect(result.status, AuthStatus.authenticated);
-      expect(service.currentSession, isNotNull);
-      expect(provider.status, AuthStatus.authenticated);
-      expect(tokenProvider.currentToken, isNotNull);
-      expect(tokenProvider.currentToken?.isNotEmpty, isTrue);
+        expect(result.status, AuthStatus.authenticated);
+        expect(service.currentSession, isNotNull);
+        expect(provider.status, AuthStatus.authenticated);
+        expect(tokenProvider.currentToken, isNotNull);
+        expect(tokenProvider.currentToken?.isNotEmpty, isTrue);
 
-      await api.call('/me');
-      expect(api.lastAuthHeader, 'Bearer ${tokenProvider.currentToken}');
+        await api.call('/me');
+        expect(api.lastAuthHeader, 'Bearer ${tokenProvider.currentToken}');
 
-      await service.dispose();
-      await goTrue.close();
-    });
-
-    test(
-        'sign-in flow: session restored, provider transitions, token valid',
-        () async {
-      final SupabaseClient supabase = MockSupabaseClientFactory.create();
-      final FakeGoTrueClient goTrue =
-          (supabase as ScriptedSupabaseClient).goTrue;
-      final AuthService service = SupabaseAuthService(
-        authClient: goTrue,
-        supabaseClient: supabase,
-        config: const AuthConfig(),
-      );
-      final AuthProvider provider = AuthProvider(service: service);
-      final _GoTrueAccessTokenProvider tokenProvider =
-          _GoTrueAccessTokenProvider(goTrue);
-
-      await provider.initialize();
-      await pumpEventQueue();
-
-      final AuthResult result = await service.signIn(
-        AuthCredentials(email: 'user@example.com', password: 'password'),
-      );
-      await pumpEventQueue();
-
-      expect(result.status, AuthStatus.authenticated);
-      expect(service.currentSession, isNotNull);
-      expect(provider.status, AuthStatus.authenticated);
-      expect(tokenProvider.currentToken, 'fake-access-token');
-
-      await service.dispose();
-      await goTrue.close();
-    });
+        await service.dispose();
+        await goTrue.close();
+      },
+    );
 
     test(
-        'token refresh: 401 triggers refresh and retry with new token',
-        () async {
-      final _RefreshingFakeGoTrueClient goTrue =
-          _RefreshingFakeGoTrueClient('refreshed-token');
-      goTrue.seedSession(fakeSession('u1'));
-      final _GoTrueAccessTokenProvider tokenProvider =
-          _GoTrueAccessTokenProvider(goTrue);
-      final _ApiHarness api = _ApiHarness(
-        tokenProvider: tokenProvider,
-        retry: true,
-        failWith: 401,
-      );
+      'sign-in flow: session restored, provider transitions, token valid',
+      () async {
+        final SupabaseClient supabase = MockSupabaseClientFactory.create();
+        final FakeGoTrueClient goTrue =
+            (supabase as ScriptedSupabaseClient).goTrue;
+        final AuthService service = SupabaseAuthService(
+          authClient: goTrue,
+          supabaseClient: supabase,
+          config: const AuthConfig(),
+        );
+        final AuthProvider provider = AuthProvider(service: service);
+        final _GoTrueAccessTokenProvider tokenProvider =
+            _GoTrueAccessTokenProvider(goTrue);
 
-      expect(tokenProvider.currentToken, 'fake-access-token');
+        await provider.initialize();
+        await pumpEventQueue();
 
-      await api.call('/secure');
-      await pumpEventQueue();
+        final AuthResult result = await service.signIn(
+          AuthCredentials(email: 'user@example.com', password: 'password'),
+        );
+        await pumpEventQueue();
 
-      expect(tokenProvider.refreshCount, 1);
-      expect(api.requestCount, 2);
-      expect(api.lastAuthHeader, 'Bearer refreshed-token');
+        expect(result.status, AuthStatus.authenticated);
+        expect(service.currentSession, isNotNull);
+        expect(provider.status, AuthStatus.authenticated);
+        expect(tokenProvider.currentToken, 'fake-access-token');
 
-      await goTrue.close();
-    });
-
-    test(
-        'session persistence: recreate service with same auth client restores session',
-        () async {
-      final SupabaseClient supabase = MockSupabaseClientFactory.create();
-      final FakeGoTrueClient goTrue =
-          (supabase as ScriptedSupabaseClient).goTrue;
-      final AuthService service1 = SupabaseAuthService(
-        authClient: goTrue,
-        supabaseClient: supabase,
-        config: const AuthConfig(),
-      );
-      final AuthProvider provider1 = AuthProvider(service: service1);
-      await provider1.initialize();
-      await pumpEventQueue();
-      await service1.signIn(
-        AuthCredentials(email: 'user@example.com', password: 'password'),
-      );
-      await pumpEventQueue();
-      expect(provider1.status, AuthStatus.authenticated);
-      await service1.dispose();
-
-      final AuthService service2 = SupabaseAuthService(
-        authClient: goTrue,
-        supabaseClient: supabase,
-        config: const AuthConfig(),
-      );
-      final AuthProvider provider2 = AuthProvider(service: service2);
-      await provider2.initialize();
-      await pumpEventQueue();
-
-      expect(goTrue.currentSession, isNotNull);
-      expect(provider2.status, AuthStatus.authenticated);
-
-      await service2.dispose();
-      await goTrue.close();
-    });
+        await service.dispose();
+        await goTrue.close();
+      },
+    );
 
     test(
-        'logout: provider unauthenticated and interceptor stops injecting token',
-        () async {
-      final SupabaseClient supabase = MockSupabaseClientFactory.create();
-      final FakeGoTrueClient goTrue =
-          (supabase as ScriptedSupabaseClient).goTrue;
-      final AuthService service = SupabaseAuthService(
-        authClient: goTrue,
-        supabaseClient: supabase,
-        config: const AuthConfig(),
-      );
-      final AuthProvider provider = AuthProvider(service: service);
-      final _GoTrueAccessTokenProvider tokenProvider =
-          _GoTrueAccessTokenProvider(goTrue);
-      final _ApiHarness api = _ApiHarness(tokenProvider: tokenProvider);
+      'token refresh: 401 triggers refresh and retry with new token',
+      () async {
+        final _RefreshingFakeGoTrueClient goTrue = _RefreshingFakeGoTrueClient(
+          'refreshed-token',
+        );
+        goTrue.seedSession(fakeSession('u1'));
+        final _GoTrueAccessTokenProvider tokenProvider =
+            _GoTrueAccessTokenProvider(goTrue);
+        final _ApiHarness api = _ApiHarness(
+          tokenProvider: tokenProvider,
+          retry: true,
+          failWith: 401,
+        );
 
-      await provider.initialize();
-      await pumpEventQueue();
-      await service.signIn(
-        AuthCredentials(email: 'user@example.com', password: 'password'),
-      );
-      await pumpEventQueue();
+        expect(tokenProvider.currentToken, 'fake-access-token');
 
-      await api.call('/me');
-      expect(api.lastAuthHeader, 'Bearer fake-access-token');
+        await api.call('/secure');
+        await pumpEventQueue();
 
-      await service.signOut();
-      await pumpEventQueue();
-      expect(provider.status, AuthStatus.unauthenticated);
-      expect(tokenProvider.currentToken, isNull);
+        expect(tokenProvider.refreshCount, 1);
+        expect(api.requestCount, 2);
+        expect(api.lastAuthHeader, 'Bearer refreshed-token');
 
-      await api.call('/me');
-      expect(api.lastAuthHeader, isNull);
-
-      await service.dispose();
-      await goTrue.close();
-    });
+        await goTrue.close();
+      },
+    );
 
     test(
-        'auth state propagation: guard permits when signed-in, redirects when signed-out',
-        () async {
-      final SupabaseClient supabase = MockSupabaseClientFactory.create();
-      final FakeGoTrueClient goTrue =
-          (supabase as ScriptedSupabaseClient).goTrue;
-      final AuthService service = SupabaseAuthService(
-        authClient: goTrue,
-        supabaseClient: supabase,
-        config: const AuthConfig(),
-      );
-      final AuthProvider provider = AuthProvider(service: service);
-      final RouteGuard routeGuard = RouteGuard(authProvider: provider);
+      'session persistence: recreate service with same auth client restores session',
+      () async {
+        final SupabaseClient supabase = MockSupabaseClientFactory.create();
+        final FakeGoTrueClient goTrue =
+            (supabase as ScriptedSupabaseClient).goTrue;
+        final AuthService service1 = SupabaseAuthService(
+          authClient: goTrue,
+          supabaseClient: supabase,
+          config: const AuthConfig(),
+        );
+        final AuthProvider provider1 = AuthProvider(service: service1);
+        await provider1.initialize();
+        await pumpEventQueue();
+        await service1.signIn(
+          AuthCredentials(email: 'user@example.com', password: 'password'),
+        );
+        await pumpEventQueue();
+        expect(provider1.status, AuthStatus.authenticated);
+        await service1.dispose();
 
-      await provider.initialize();
-      await pumpEventQueue();
+        final AuthService service2 = SupabaseAuthService(
+          authClient: goTrue,
+          supabaseClient: supabase,
+          config: const AuthConfig(),
+        );
+        final AuthProvider provider2 = AuthProvider(service: service2);
+        await provider2.initialize();
+        await pumpEventQueue();
 
-      expect(provider.isSignedIn, isFalse);
-      expect(
-        routeGuard.redirectResolver('/profile'),
-        '/login?next=/profile',
-      );
+        expect(goTrue.currentSession, isNotNull);
+        expect(provider2.status, AuthStatus.authenticated);
 
-      await service.signIn(
-        AuthCredentials(email: 'user@example.com', password: 'password'),
-      );
-      await pumpEventQueue();
-      expect(provider.isSignedIn, isTrue);
-      expect(routeGuard.redirectResolver('/profile'), isNull);
-      expect(routeGuard.redirectResolver('/'), isNull);
-      expect(routeGuard.redirectResolver('/login'), RoutePaths.home);
+        await service2.dispose();
+        await goTrue.close();
+      },
+    );
 
-      await service.signOut();
-      await pumpEventQueue();
-      expect(provider.isSignedIn, isFalse);
-      expect(
-        routeGuard.redirectResolver('/profile'),
-        '/login?next=/profile',
-      );
-      expect(
-        routeGuard.redirectResolver('/dashboard'),
-        '/login?next=/dashboard',
-      );
+    test(
+      'logout: provider unauthenticated and interceptor stops injecting token',
+      () async {
+        final SupabaseClient supabase = MockSupabaseClientFactory.create();
+        final FakeGoTrueClient goTrue =
+            (supabase as ScriptedSupabaseClient).goTrue;
+        final AuthService service = SupabaseAuthService(
+          authClient: goTrue,
+          supabaseClient: supabase,
+          config: const AuthConfig(),
+        );
+        final AuthProvider provider = AuthProvider(service: service);
+        final _GoTrueAccessTokenProvider tokenProvider =
+            _GoTrueAccessTokenProvider(goTrue);
+        final _ApiHarness api = _ApiHarness(tokenProvider: tokenProvider);
 
-      await service.dispose();
-      await goTrue.close();
-    });
+        await provider.initialize();
+        await pumpEventQueue();
+        await service.signIn(
+          AuthCredentials(email: 'user@example.com', password: 'password'),
+        );
+        await pumpEventQueue();
+
+        await api.call('/me');
+        expect(api.lastAuthHeader, 'Bearer fake-access-token');
+
+        await service.signOut();
+        await pumpEventQueue();
+        expect(provider.status, AuthStatus.unauthenticated);
+        expect(tokenProvider.currentToken, isNull);
+
+        await api.call('/me');
+        expect(api.lastAuthHeader, isNull);
+
+        await service.dispose();
+        await goTrue.close();
+      },
+    );
+
+    test(
+      'auth state propagation: guard permits when signed-in, redirects when signed-out',
+      () async {
+        final SupabaseClient supabase = MockSupabaseClientFactory.create();
+        final FakeGoTrueClient goTrue =
+            (supabase as ScriptedSupabaseClient).goTrue;
+        final AuthService service = SupabaseAuthService(
+          authClient: goTrue,
+          supabaseClient: supabase,
+          config: const AuthConfig(),
+        );
+        final AuthProvider provider = AuthProvider(service: service);
+        final RouteGuard routeGuard = RouteGuard(authProvider: provider);
+
+        await provider.initialize();
+        await pumpEventQueue();
+
+        expect(provider.isSignedIn, isFalse);
+        expect(routeGuard.redirectResolver('/profile'), '/login?next=/profile');
+
+        await service.signIn(
+          AuthCredentials(email: 'user@example.com', password: 'password'),
+        );
+        await pumpEventQueue();
+        expect(provider.isSignedIn, isTrue);
+        expect(routeGuard.redirectResolver('/profile'), isNull);
+        expect(routeGuard.redirectResolver('/'), isNull);
+        expect(routeGuard.redirectResolver('/login'), RoutePaths.home);
+
+        await service.signOut();
+        await pumpEventQueue();
+        expect(provider.isSignedIn, isFalse);
+        expect(routeGuard.redirectResolver('/profile'), '/login?next=/profile');
+        expect(
+          routeGuard.redirectResolver('/dashboard'),
+          '/login?next=/dashboard',
+        );
+
+        await service.dispose();
+        await goTrue.close();
+      },
+    );
   });
 }

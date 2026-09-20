@@ -4,12 +4,7 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 
 /// Semantic color variants for [HivorrBadge].
-enum HivorrBadgeVariant {
-  success,
-  error,
-  warning,
-  info,
-}
+enum HivorrBadgeVariant { success, error, warning, info }
 
 /// Small status / count indicator tinted with a semantic color from
 /// [AppThemeExtension].

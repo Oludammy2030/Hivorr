@@ -39,7 +39,9 @@ class ManageUserListItemDto {
       kycTier: json['kyc_tier'] as String?,
       isAdmin: (json['is_admin'] as bool?) ?? false,
       onboardingCompleted: (json['onboarding_completed'] as bool?) ?? false,
-      createdAt: _parseDate(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt:
+          _parseDate(json['created_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
@@ -70,9 +72,9 @@ class ManageUserListEnvelopeDto {
     return ManageUserListEnvelopeDto(
       users: usersValue is List
           ? usersValue
-              .whereType<Map<String, dynamic>>()
-              .map(ManageUserListItemDto.fromJson)
-              .toList(growable: false)
+                .whereType<Map<String, dynamic>>()
+                .map(ManageUserListItemDto.fromJson)
+                .toList(growable: false)
           : const <ManageUserListItemDto>[],
       totalCount: (json['total_count'] as num?)?.toInt() ?? 0,
     );
@@ -113,9 +115,7 @@ class ManageUserDetailDto {
       throw const FormatException('Malformed manage_user_get payload.');
     }
     return ManageUserDetailDto(
-      entity: ManageUserEntityDto.fromJson(
-        Map<String, dynamic>.from(entity),
-      ),
+      entity: ManageUserEntityDto.fromJson(Map<String, dynamic>.from(entity)),
       profile: profile is Map
           ? ManageUserProfileDto.fromJson(Map<String, dynamic>.from(profile))
           : null,
@@ -162,7 +162,9 @@ class ManageUserEntityDto {
       status: (json['status'] as String?) ?? 'active',
       capability: json['capability'] as String?,
       onboardingCompletedAt: _parseDate(json['onboarding_completed_at']),
-      createdAt: _parseDate(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt:
+          _parseDate(json['created_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
@@ -225,11 +227,7 @@ class ManageUserRoleDto {
 /// Current KYC block of [ManageUserDetailDto]. `null` when the entity has no
 /// KYC level row.
 class ManageUserKycDto {
-  const ManageUserKycDto({
-    this.tierCode,
-    this.status,
-    this.assignedAt,
-  });
+  const ManageUserKycDto({this.tierCode, this.status, this.assignedAt});
 
   factory ManageUserKycDto.fromJson(Map<String, dynamic> json) {
     return ManageUserKycDto(

@@ -129,11 +129,7 @@ class ManageUserRoleAssignment {
 
 /// Current KYC summary of [ManageUserDetail]. `null` when no KYC level exists.
 class ManageUserKycSummary {
-  const ManageUserKycSummary({
-    this.tierCode,
-    this.status,
-    this.assignedAt,
-  });
+  const ManageUserKycSummary({this.tierCode, this.status, this.assignedAt});
 
   final String? tierCode;
   final String? status;

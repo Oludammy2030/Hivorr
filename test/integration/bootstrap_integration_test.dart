@@ -26,8 +26,7 @@ import '../test_helpers.dart';
 void main() {
   group('Bootstrap integration — §5.16', () {
     group('1. Initialization order', () {
-      test('AppBootstrap.initialize wires systems in dependency order',
-          () async {
+      test('AppBootstrap.initialize wires systems in dependency order', () async {
         final List<String> order = <String>[];
 
         final BootstrapResult result = await AppBootstrap.initialize(
@@ -39,18 +38,19 @@ void main() {
             order.add('api');
             return fakeInitializeApi(config);
           },
-          initializeAuthLayer: (
-            GoTrueClient authClient,
-            SupabaseClient supabaseClient,
-            AuthConfig config,
-          ) {
-            order.add('auth');
-            return fakeInitializeAuthLayer(
-              authClient,
-              supabaseClient,
-              config,
-            );
-          },
+          initializeAuthLayer:
+              (
+                GoTrueClient authClient,
+                SupabaseClient supabaseClient,
+                AuthConfig config,
+              ) {
+                order.add('auth');
+                return fakeInitializeAuthLayer(
+                  authClient,
+                  supabaseClient,
+                  config,
+                );
+              },
           initializeStorage: (EnvironmentConfig config) async {
             order.add('storage');
             return FakeStorageEngine();
@@ -58,10 +58,7 @@ void main() {
         );
 
         // config -> API -> auth -> storage must run before locale finalization.
-        expect(
-          order,
-          <String>['config', 'api', 'auth', 'storage'],
-        );
+        expect(order, <String>['config', 'api', 'auth', 'storage']);
 
         // Observable post-conditions: every later system depends on its
         // predecessor, so each must be present and non-null.
@@ -73,14 +70,18 @@ void main() {
     });
 
     group('2. Provider registration', () {
-      testWidgets('HivorrApp registers AuthProvider and LocaleProvider',
-          (tester) async {
-        final FakeAuthProvider authProvider =
-            FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
+      testWidgets('HivorrApp registers AuthProvider and LocaleProvider', (
+        tester,
+      ) async {
+        final FakeAuthProvider authProvider = FakeAuthProvider(
+          initialStatus: AuthStatus.unauthenticated,
+        );
         final FakeLocaleProvider localeProvider = FakeLocaleProvider();
         final AppLifecycleObserver observer = AppLifecycleObserver();
         final taxonomyRepository = FakeTaxonomyRepository();
-        final taxonomyProvider = TaxonomyProvider(repository: taxonomyRepository);
+        final taxonomyProvider = TaxonomyProvider(
+          repository: taxonomyRepository,
+        );
 
         await tester.pumpWidget(
           HivorrApp(
@@ -108,45 +109,51 @@ void main() {
         observer.dispose();
       });
 
-      testWidgets('MultiProvider exposes ChangeNotifierProviders for core types',
-          (tester) async {
-        final FakeAuthProvider authProvider =
-            FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
-        final FakeLocaleProvider localeProvider = FakeLocaleProvider();
-        final AppLifecycleObserver observer = AppLifecycleObserver();
-        final taxonomyRepository = FakeTaxonomyRepository();
-        final taxonomyProvider = TaxonomyProvider(repository: taxonomyRepository);
+      testWidgets(
+        'MultiProvider exposes ChangeNotifierProviders for core types',
+        (tester) async {
+          final FakeAuthProvider authProvider = FakeAuthProvider(
+            initialStatus: AuthStatus.unauthenticated,
+          );
+          final FakeLocaleProvider localeProvider = FakeLocaleProvider();
+          final AppLifecycleObserver observer = AppLifecycleObserver();
+          final taxonomyRepository = FakeTaxonomyRepository();
+          final taxonomyProvider = TaxonomyProvider(
+            repository: taxonomyRepository,
+          );
 
-        await tester.pumpWidget(
-          HivorrApp(
-            authProvider: authProvider,
-            localeProvider: localeProvider,
-            lifecycleObserver: observer,
-            taxonomyRepository: taxonomyRepository,
-            taxonomyProvider: taxonomyProvider,
-          ),
-        );
-        await tester.pumpAndSettle();
+          await tester.pumpWidget(
+            HivorrApp(
+              authProvider: authProvider,
+              localeProvider: localeProvider,
+              lifecycleObserver: observer,
+              taxonomyRepository: taxonomyRepository,
+              taxonomyProvider: taxonomyProvider,
+            ),
+          );
+          await tester.pumpAndSettle();
 
-        // The MultiProvider inside HivorrApp exposes the core providers and
-        // resolves them to the exact instances supplied to the app shell.
-        final BuildContext ctx = tester.element(find.byType(MaterialApp));
-        expect(
-          Provider.of<AuthProvider>(ctx, listen: false),
-          same(authProvider),
-        );
-        expect(
-          Provider.of<LocaleProvider>(ctx, listen: false),
-          same(localeProvider),
-        );
-        observer.dispose();
-      });
+          // The MultiProvider inside HivorrApp exposes the core providers and
+          // resolves them to the exact instances supplied to the app shell.
+          final BuildContext ctx = tester.element(find.byType(MaterialApp));
+          expect(
+            Provider.of<AuthProvider>(ctx, listen: false),
+            same(authProvider),
+          );
+          expect(
+            Provider.of<LocaleProvider>(ctx, listen: false),
+            same(localeProvider),
+          );
+          observer.dispose();
+        },
+      );
     });
 
     group('3. Router configuration', () {
       test('GoRouter exposes public, protected, and SEO-friendly routes', () {
-        final FakeAuthProvider authProvider =
-            FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
+        final FakeAuthProvider authProvider = FakeAuthProvider(
+          initialStatus: AuthStatus.unauthenticated,
+        );
         final GoRouter router = AppRouter.create(authProvider: authProvider);
 
         final List<RouteBase> routeBases = router.configuration.routes;
@@ -170,16 +177,19 @@ void main() {
         // Public, SEO-friendly content routes.
         expect(paths, contains(RoutePaths.publicProfileRoute));
         expect(paths, contains(RoutePaths.publicStoreRoute));
-        expect(RoutePaths.publicProfile(slug: 'electrician', id: 'abc-123'),
-            '/p/electrician/abc-123');
+        expect(
+          RoutePaths.publicProfile(slug: 'electrician', id: 'abc-123'),
+          '/p/electrician/abc-123',
+        );
         expect(RoutePaths.publicStore(storeId: 'xyz-456'), '/store/xyz-456');
 
         router.dispose();
       });
 
       test('auth redirect bounces unauthenticated users to the entry door', () {
-        final FakeAuthProvider authProvider =
-            FakeAuthProvider(initialStatus: AuthStatus.unauthenticated);
+        final FakeAuthProvider authProvider = FakeAuthProvider(
+          initialStatus: AuthStatus.unauthenticated,
+        );
         final RouteGuard guard = RouteGuard(authProvider: authProvider);
 
         // Dart VM test environment → returning-native root → login door.
@@ -201,8 +211,9 @@ void main() {
       });
 
       test('auth redirect keeps authenticated users on protected routes', () {
-        final FakeAuthProvider authProvider =
-            FakeAuthProvider(initialStatus: AuthStatus.authenticated);
+        final FakeAuthProvider authProvider = FakeAuthProvider(
+          initialStatus: AuthStatus.authenticated,
+        );
         final RouteGuard guard = RouteGuard(authProvider: authProvider);
 
         expect(guard.redirectResolver(RoutePaths.home), isNull);
@@ -212,51 +223,54 @@ void main() {
     });
 
     group('4. Splash sequence', () {
-      testWidgets('SplashScreen renders the brand logo and loader during init',
-          (tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
+      testWidgets(
+        'SplashScreen renders the brand logo and loader during init',
+        (tester) async {
+          await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
 
-        expect(find.byType(SplashScreen), findsOneWidget);
-        expect(find.byType(LogoHorizontal), findsOneWidget);
-        expect(find.byType(HivorrLoader), findsOneWidget);
-      });
+          expect(find.byType(SplashScreen), findsOneWidget);
+          expect(find.byType(LogoHorizontal), findsOneWidget);
+          expect(find.byType(HivorrLoader), findsOneWidget);
+        },
+      );
 
       testWidgets(
-          'successful bootstrap hands off to the app shell (authenticated)',
-          (WidgetTester tester) async {
-        final BootstrapResult result = await AppBootstrap.initialize(
-          loadConfig: fakeLoadConfig,
-          initializeApi: fakeInitializeApi,
-          initializeAuthLayer: fakeInitializeAuthLayer,
-          initializeStorage: (_) async => FakeStorageEngine(),
-        );
+        'successful bootstrap hands off to the app shell (authenticated)',
+        (WidgetTester tester) async {
+          final BootstrapResult result = await AppBootstrap.initialize(
+            loadConfig: fakeLoadConfig,
+            initializeApi: fakeInitializeApi,
+            initializeAuthLayer: fakeInitializeAuthLayer,
+            initializeStorage: (_) async => FakeStorageEngine(),
+          );
 
-        final FakeAuthProvider authProvider =
-            result.authLayer.provider as FakeAuthProvider;
-        authProvider.setStatus(AuthStatus.authenticated);
+          final FakeAuthProvider authProvider =
+              result.authLayer.provider as FakeAuthProvider;
+          authProvider.setStatus(AuthStatus.authenticated);
 
-        final AppLifecycleObserver observer = AppLifecycleObserver();
-        await tester.pumpWidget(
-          HivorrApp(
-            authProvider: authProvider,
-            localeProvider: result.localeProvider,
-            lifecycleObserver: observer,
-            taxonomyRepository: result.taxonomyRepository,
-            taxonomyProvider: result.taxonomyProvider,
-          ),
-        );
-        await tester.pumpAndSettle();
+          final AppLifecycleObserver observer = AppLifecycleObserver();
+          await tester.pumpWidget(
+            HivorrApp(
+              authProvider: authProvider,
+              localeProvider: result.localeProvider,
+              lifecycleObserver: observer,
+              taxonomyRepository: result.taxonomyRepository,
+              taxonomyProvider: result.taxonomyProvider,
+            ),
+          );
+          await tester.pumpAndSettle();
 
-        expect(find.byType(HivorrApp), findsOneWidget);
+          expect(find.byType(HivorrApp), findsOneWidget);
 
-        final RouteGuard guard = RouteGuard(authProvider: authProvider);
-        expect(guard.redirectResolver(RoutePaths.home), isNull);
+          final RouteGuard guard = RouteGuard(authProvider: authProvider);
+          expect(guard.redirectResolver(RoutePaths.home), isNull);
 
-        // Cancel the Supabase auto-refresh timer started by the scripted
-        // ApiLayer so the test binding does not report a pending timer.
-        result.apiLayer.supabaseClient.auth.stopAutoRefresh();
-        observer.dispose();
-      });
+          // Cancel the Supabase auto-refresh timer started by the scripted
+          // ApiLayer so the test binding does not report a pending timer.
+          result.apiLayer.supabaseClient.auth.stopAutoRefresh();
+          observer.dispose();
+        },
+      );
 
       test('unauthenticated bootstrap redirects to login (not home)', () async {
         final BootstrapResult result = await AppBootstrap.initialize(

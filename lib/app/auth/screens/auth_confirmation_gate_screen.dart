@@ -110,10 +110,10 @@ class _AuthConfirmationGateScreenState
             child: Text(
               auth.isSignedIn
                   ? 'Your account is ready — continuing to your account and '
-                      'onboarding.'
+                        'onboarding.'
                   : 'Enter the code to verify your email. Once verified, '
-                      'we’ll continue automatically to your account and '
-                      'onboarding.',
+                        'we’ll continue automatically to your account and '
+                        'onboarding.',
               style: context.textTheme.bodyMedium?.copyWith(
                 color: context.colorScheme.onPrimaryContainer,
               ),
@@ -140,9 +140,8 @@ class _AuthConfirmationGateScreenState
             isExpanded: true,
             size: HivorrButtonSize.large,
             isLoading: _submitting,
-            onPressed: (_submitting ||
-                    _code.text.trim().isEmpty ||
-                    auth.isSignedIn)
+            onPressed:
+                (_submitting || _code.text.trim().isEmpty || auth.isSignedIn)
                 ? null
                 : _verify,
           ),

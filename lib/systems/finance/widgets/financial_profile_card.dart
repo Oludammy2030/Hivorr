@@ -9,10 +9,7 @@ import 'package:hivorr/systems/finance/models/supported_currency.dart';
 ///
 /// Uses only [AppTheme] tokens (AGENT.md Rule 5) — no hardcoded colors or fonts.
 class FinancialProfileCard extends StatelessWidget {
-  const FinancialProfileCard({
-    super.key,
-    required this.profile,
-  });
+  const FinancialProfileCard({super.key, required this.profile});
 
   final FinancialProfile profile;
 
@@ -35,8 +32,9 @@ class FinancialProfileCard extends StatelessWidget {
         statusLabel = 'Closed';
     }
 
-    final SupportedCurrency? currency =
-        SupportedCurrency.fromCode(profile.defaultCurrency);
+    final SupportedCurrency? currency = SupportedCurrency.fromCode(
+      profile.defaultCurrency,
+    );
     final String currencyDisplay = currency != null
         ? '${currency.symbol} ${currency.name}'
         : profile.defaultCurrency;
@@ -59,10 +57,7 @@ class FinancialProfileCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'Financial Profile',
-                  style: context.textTheme.titleMedium,
-                ),
+                Text('Financial Profile', style: context.textTheme.titleMedium),
                 const SizedBox(height: HivorrSpacing.xs),
                 Text(
                   'Default: $currencyDisplay',

@@ -30,8 +30,10 @@ void main() {
 
     test('defaults to a pending result', () async {
       final mock = MockKycProvider();
-      final result =
-          await mock.verify(entityId: 'u1', targetTier: KycTier.tier2);
+      final result = await mock.verify(
+        entityId: 'u1',
+        targetTier: KycTier.tier2,
+      );
       expect(result.status, 'pending');
       expect(result.isPending, isTrue);
       expect(result.isApproved, isFalse);
@@ -40,8 +42,10 @@ void main() {
     test('setResult overrides subsequent calls', () async {
       final mock = MockKycProvider();
       mock.setResult(const KycVerificationResult(status: 'rejected'));
-      final result =
-          await mock.verify(entityId: 'u1', targetTier: KycTier.tier1);
+      final result = await mock.verify(
+        entityId: 'u1',
+        targetTier: KycTier.tier1,
+      );
       expect(result.status, 'rejected');
       expect(result.isApproved, isFalse);
       expect(result.isPending, isFalse);
@@ -54,8 +58,10 @@ void main() {
           providerReference: 'ref_123',
         ),
       );
-      final result =
-          await mock.verify(entityId: 'u1', targetTier: KycTier.tier1);
+      final result = await mock.verify(
+        entityId: 'u1',
+        targetTier: KycTier.tier1,
+      );
       expect(result.status, 'approved');
       expect(result.isApproved, isTrue);
       expect(result.providerReference, 'ref_123');

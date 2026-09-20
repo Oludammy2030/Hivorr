@@ -60,17 +60,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  HivorrButton submitWidget(WidgetTester tester) =>
-      tester.widget<HivorrButton>(
-        find.ancestor(
-          of: find.text('Submit evidence'),
-          matching: find.byType(HivorrButton),
-        ),
-      );
+  HivorrButton submitWidget(WidgetTester tester) => tester.widget<HivorrButton>(
+    find.ancestor(
+      of: find.text('Submit evidence'),
+      matching: find.byType(HivorrButton),
+    ),
+  );
 
   group('DisputeEvidenceFormScreen', () {
-    testWidgets('renders the Add evidence app bar and evidence-type dropdown',
-        (WidgetTester tester) async {
+    testWidgets('renders the Add evidence app bar and evidence-type dropdown', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -89,8 +89,9 @@ void main() {
       }
     });
 
-    testWidgets('surfaces the permanent-record immutability notice',
-        (WidgetTester tester) async {
+    testWidgets('surfaces the permanent-record immutability notice', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -102,8 +103,9 @@ void main() {
       );
     });
 
-    testWidgets('submit stays disabled until a type and title are entered',
-        (WidgetTester tester) async {
+    testWidgets('submit stays disabled until a type and title are entered', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -119,8 +121,9 @@ void main() {
       expect(submitWidget(tester).onPressed, isNotNull);
     });
 
-    testWidgets('description-type evidence needs no attachment and submits',
-        (WidgetTester tester) async {
+    testWidgets('description-type evidence needs no attachment and submits', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository();
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -139,8 +142,9 @@ void main() {
       expect(repository.lastFileUrl, isNull);
     });
 
-    testWidgets('an attachment type stays disabled until a file is picked',
-        (WidgetTester tester) async {
+    testWidgets('an attachment type stays disabled until a file is picked', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -157,8 +161,9 @@ void main() {
       expect(find.text('Choose file'), findsOneWidget);
     });
 
-    testWidgets('an invalid file type shows the friendly pick error',
-        (WidgetTester tester) async {
+    testWidgets('an invalid file type shows the friendly pick error', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -185,8 +190,9 @@ void main() {
       expect(submitWidget(tester).onPressed, isNull);
     });
 
-    testWidgets('a valid pick + upload submits with the storage path',
-        (WidgetTester tester) async {
+    testWidgets('a valid pick + upload submits with the storage path', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository();
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -217,18 +223,16 @@ void main() {
       expect(uploaded, 'delivery.pdf'); // storage-before-RPC: upload happened
       expect(repository.submitEvidenceCallCount, 1);
       expect(repository.lastFileUrl, 'entity/dispute-1/delivery.pdf');
-      expect(
-        repository.lastFileMetadata,
-        <String, dynamic>{
-          'mimeType': 'application/pdf',
-          'sizeBytes': 4,
-          'originalName': 'delivery.pdf',
-        },
-      );
+      expect(repository.lastFileMetadata, <String, dynamic>{
+        'mimeType': 'application/pdf',
+        'sizeBytes': 4,
+        'originalName': 'delivery.pdf',
+      });
     });
 
-    testWidgets('a failed upload never calls submitEvidence',
-        (WidgetTester tester) async {
+    testWidgets('a failed upload never calls submitEvidence', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository();
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -255,8 +259,9 @@ void main() {
       expect(repository.submitEvidenceCallCount, 0);
     });
 
-    testWidgets('a successful submit pops the screen',
-        (WidgetTester tester) async {
+    testWidgets('a successful submit pops the screen', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository();
       final provider = providerWith(repository);
       addTearDown(provider.dispose);

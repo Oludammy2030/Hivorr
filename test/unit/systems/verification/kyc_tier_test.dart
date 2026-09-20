@@ -50,7 +50,10 @@ void main() {
 
     test('cashoutLimit reads from the given KycLimits', () {
       const KycLimits limits = KycLimits(
-        daily: 1, weekly: 2, monthly: 3, cashout: 100000,
+        daily: 1,
+        weekly: 2,
+        monthly: 3,
+        cashout: 100000,
       );
       expect(KycTier.tier1.cashoutLimit(limits), 100000);
     });

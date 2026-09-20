@@ -73,7 +73,8 @@ class _AboutHeader extends StatelessWidget {
               child: PublicInfoRow(
                 icon: Icons.verified_user_outlined,
                 title: 'Trust first',
-                body: 'Verification, escrow and fair resolution come before '
+                body:
+                    'Verification, escrow and fair resolution come before '
                     'anything else.',
               ),
             ),
@@ -82,7 +83,8 @@ class _AboutHeader extends StatelessWidget {
               child: PublicInfoRow(
                 icon: Icons.workspaces_outline,
                 title: 'One identity',
-                body: 'Professional, client, merchant — no second app, no '
+                body:
+                    'Professional, client, merchant — no second app, no '
                     'second identity.',
               ),
             ),
@@ -90,7 +92,8 @@ class _AboutHeader extends StatelessWidget {
               child: PublicInfoRow(
                 icon: Icons.auto_awesome_outlined,
                 title: 'AI-assisted',
-                body: 'An operational partner that drafts, automates and '
+                body:
+                    'An operational partner that drafts, automates and '
                     'simplifies.',
               ),
             ),

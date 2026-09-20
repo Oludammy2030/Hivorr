@@ -107,19 +107,14 @@ class _DisputeListScreenState extends State<DisputeListScreen>
             child: ListView(
               padding: const EdgeInsets.all(HivorrSpacing.lg),
               children: <Widget>[
-                _FilterChips(
-                  selected: _statusFilter,
-                  onSelected: _applyFilter,
-                ),
+                _FilterChips(selected: _statusFilter, onSelected: _applyFilter),
                 const SizedBox(height: HivorrSpacing.md),
                 for (final DisputeCase case_ in provider.disputes) ...[
                   _DisputeCard(
                     case_: case_,
-                    onTap: () =>
-                        context.push(RoutePaths.disputeDetail.replaceAll(
-                          ':id',
-                          case_.id,
-                        )),
+                    onTap: () => context.push(
+                      RoutePaths.disputeDetail.replaceAll(':id', case_.id),
+                    ),
                   ),
                   const SizedBox(height: HivorrSpacing.md),
                 ],

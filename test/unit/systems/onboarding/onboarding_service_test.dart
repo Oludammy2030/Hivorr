@@ -34,20 +34,19 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.onboarding',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-        PiiRedactor(),
-      );
+    'hivorr.onboarding',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+    PiiRedactor(),
+  );
 
   group('OnboardingService facade (FV-06..FV-09)', () {
-    test('resume returns the furthest step incl. completed progress',
-        () async {
+    test('resume returns the furthest step incl. completed progress', () async {
       final OnboardingTestStack stack = buildOnboardingStack(
         store: InMemoryOnboardingProgressStore(
           seed: <OnboardingProgress>[
-            OnboardingProgress(entityId: 'u1')
-                .advanceTo(OnboardingStepCode.tradeProof)
-                .finish(),
+            OnboardingProgress(
+              entityId: 'u1',
+            ).advanceTo(OnboardingStepCode.tradeProof).finish(),
           ],
         ),
       );
@@ -63,69 +62,81 @@ void main() {
       expect(stack.service.currentStep, OnboardingStepCode.profile);
     });
 
-    test('advance never skips a required step (FV-09 ordering contract)',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.service.resume('u1');
-      final List<OnboardingStepCode> walked =
-          <OnboardingStepCode>[];
-      for (int i = 0; i < OnboardingStepCode.values.length; i++) {
-        if (stack.service.progress!.isComplete) {
-          break;
+    test(
+      'advance never skips a required step (FV-09 ordering contract)',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.service.resume('u1');
+        final List<OnboardingStepCode> walked = <OnboardingStepCode>[];
+        for (int i = 0; i < OnboardingStepCode.values.length; i++) {
+          if (stack.service.progress!.isComplete) {
+            break;
+          }
+          final OnboardingStepCode before = stack.service.currentStep!;
+          await stack.service.advance();
+          walked.add(before);
         }
-        final OnboardingStepCode before = stack.service.currentStep!;
-        await stack.service.advance();
-        walked.add(before);
-      }
-      expect(
-        walked,
-        <OnboardingStepCode>[
+        expect(walked, <OnboardingStepCode>[
           OnboardingStepCode.profile,
           OnboardingStepCode.capability,
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
           OnboardingStepCode.tradeProof,
-        ],
-      );
-      expect(stack.service.progress!.isComplete, isTrue);
-      expect(stack.service.progress!.completedSteps,
+        ]);
+        expect(stack.service.progress!.isComplete, isTrue);
+        expect(
+          stack.service.progress!.completedSteps,
           OnboardingStepCode.values,
-          reason: 'frozen order capability â†’ â€¦ â†’ tradeProof â†’ completed');
-    });
+          reason:
+              'frozen order capability â†’ â€¦ â†’ tradeProof â†’ completed',
+        );
+      },
+    );
 
     test('advance persists after every step (TV-10)', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.service.resume('u1');
       await stack.service.advance();
-      expect((await stack.store.read('u1'))!.step,
-          OnboardingStepCode.capability);
+      expect(
+        (await stack.store.read('u1'))!.step,
+        OnboardingStepCode.capability,
+      );
     });
 
-    test('selectCapability records the choice and advances to industry',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.service.resume('u1');
-      await stack.service.advance(); // profile → capability
-      await stack.service.selectCapability(EntityCapability.offer);
-      expect(stack.service.progress!.capability, EntityCapability.offer);
-      expect(stack.service.currentStep, OnboardingStepCode.industry);
-      expect((await stack.store.read('u1'))!.capability,
+    test(
+      'selectCapability records the choice and advances to industry',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.service.resume('u1');
+        await stack.service.advance(); // profile → capability
+        await stack.service.selectCapability(EntityCapability.offer);
+        expect(stack.service.progress!.capability, EntityCapability.offer);
+        expect(stack.service.currentStep, OnboardingStepCode.industry);
+        expect(
+          (await stack.store.read('u1'))!.capability,
           EntityCapability.offer,
-          reason: 'the capability decision persists for resume');
-      await stack.service.advance();
-      expect(stack.service.currentStep, OnboardingStepCode.identityDocument,
-          reason: 'offer keeps the professional steps');
-    });
+          reason: 'the capability decision persists for resume',
+        );
+        await stack.service.advance();
+        expect(
+          stack.service.currentStep,
+          OnboardingStepCode.identityDocument,
+          reason: 'offer keeps the professional steps',
+        );
+      },
+    );
 
-    test('hire resume skips professional steps and finishes after capability',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.service.resume('u1');
-      await stack.service.advance(); // profile → capability
-      await stack.service.selectCapability(EntityCapability.hire); // finishes
-      expect(stack.service.progress!.isComplete, isTrue);
-      expect(stack.service.progress!.requiredSteps, hasLength(2));
-    });
+    test(
+      'hire resume skips professional steps and finishes after capability',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.service.resume('u1');
+        await stack.service.advance(); // profile → capability
+        await stack.service.selectCapability(EntityCapability.hire); // finishes
+        expect(stack.service.progress!.isComplete, isTrue);
+        expect(stack.service.progress!.requiredSteps, hasLength(2));
+      },
+    );
 
     test('advance/back are no-ops before hydration', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
@@ -140,8 +151,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.service.resume('u1');
       final int uploadsBefore = stack.storage.uploadCallCount;
-      final EntityProfile profile = (await stack.service
-          .completeProfile(
+      final EntityProfile profile = (await stack.service.completeProfile(
         entityId: 'u1',
         legalName: 'Jane Doe',
         displayName: 'Jane',
@@ -174,26 +184,35 @@ void main() {
   });
 
   group('bindProfession + verification delegation (FV-21, FV-25)', () {
-    test('bindProfession validates taxonomy selection first (PLT003)',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.service.resume('u1');
-      await expectLater(
-        stack.service.bindProfession(
-          industryId: 'ind-tech',
-          professionId: 'prof-sw',
-        ),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'PLT003')),
-      );
-      expect(stack.remote.bindProfessionCallCount, 0,
-          reason: 'mismatched selection is rejected without a network call');
-    });
+    test(
+      'bindProfession validates taxonomy selection first (PLT003)',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.service.resume('u1');
+        await expectLater(
+          stack.service.bindProfession(
+            industryId: 'ind-tech',
+            professionId: 'prof-sw',
+          ),
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.code,
+              'code',
+              'PLT003',
+            ),
+          ),
+        );
+        expect(
+          stack.remote.bindProfessionCallCount,
+          0,
+          reason: 'mismatched selection is rejected without a network call',
+        );
+      },
+    );
 
     test('bindProfession maps PLT005 conflict unchanged (FV-52)', () async {
       final OnboardingTestStack stack = buildOnboardingStack(
-        remote: FakeEntityRemoteDataSource()
-          ..throwConflictOnBind = true,
+        remote: FakeEntityRemoteDataSource()..throwConflictOnBind = true,
       );
       await selectTechnologyProfession(stack.taxonomy);
       await stack.service.resume('u1');
@@ -202,33 +221,43 @@ void main() {
           industryId: 'ind-tech',
           professionId: 'prof-sw',
         ),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'PLT005')),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT005',
+          ),
+        ),
       );
     });
 
-    test('successful bind activates the professional role once (idempotent)',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await selectTechnologyProfession(stack.taxonomy);
-      await stack.service.resume('u1');
-      await stack.service.bindProfession(
-        industryId: 'ind-tech',
-        professionId: 'prof-sw',
-      );
-      expect(stack.remote.activateRoleCallCount, 1);
-      expect(stack.remote.lastActivatedRole, 'professional');
-      stack.remote.throwConflictOnBind = true;
-      await expectLater(
-        stack.service.bindProfession(
+    test(
+      'successful bind activates the professional role once (idempotent)',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await selectTechnologyProfession(stack.taxonomy);
+        await stack.service.resume('u1');
+        await stack.service.bindProfession(
           industryId: 'ind-tech',
           professionId: 'prof-sw',
-        ),
-        throwsA(isA<ApiException>()),
-      );
-      expect(stack.remote.activateRoleCallCount, 1,
-          reason: 'a failed bind never activates the role');
-    });
+        );
+        expect(stack.remote.activateRoleCallCount, 1);
+        expect(stack.remote.lastActivatedRole, 'professional');
+        stack.remote.throwConflictOnBind = true;
+        await expectLater(
+          stack.service.bindProfession(
+            industryId: 'ind-tech',
+            professionId: 'prof-sw',
+          ),
+          throwsA(isA<ApiException>()),
+        );
+        expect(
+          stack.remote.activateRoleCallCount,
+          1,
+          reason: 'a failed bind never activates the role',
+        );
+      },
+    );
 
     test('submitIdentity delegates 1:1 and sets the mirror flag', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
@@ -240,8 +269,11 @@ void main() {
         fileName: 'id.png',
       );
       expect(submission.id, 'sub-1');
-      expect(stack.service.progress!.hasIdentitySubmission, isTrue,
-          reason: 'flag is a UX mirror, never trust state');
+      expect(
+        stack.service.progress!.hasIdentitySubmission,
+        isTrue,
+        reason: 'flag is a UX mirror, never trust state',
+      );
       expect(stack.identityRepo.submitCallCount, 1);
     });
 
@@ -263,9 +295,9 @@ void main() {
     test('refreshTradeGate reads the server authority (SV-12)', () async {
       final OnboardingTestStack stack = buildOnboardingStack(
         tradeRepo: FakeTradeVerificationRepository(
-          status: tradeStatusEntity(statuses: <String, String>{
-            'prof-sw': 'approved',
-          }),
+          status: tradeStatusEntity(
+            statuses: <String, String>{'prof-sw': 'approved'},
+          ),
         ),
       );
       await selectTechnologyProfession(stack.taxonomy);
@@ -310,7 +342,7 @@ void main() {
       final LogEntry persist = sink.entries.firstWhere(
         (LogEntry e) => e.message == 'Onboarding progress persisted',
       );
-expect(persist.context['step'], 'capability');
+      expect(persist.context['step'], 'capability');
       expect(persist.context['isComplete'], isFalse);
     });
 
@@ -393,8 +425,7 @@ expect(persist.context['step'], 'capability');
       expect(stack.remote.lastAvatarPath, stack.storage.returnedKey);
       expect(
         sink.entries.any(
-          (LogEntry e) =>
-              e.message == 'Profile submission completed',
+          (LogEntry e) => e.message == 'Profile submission completed',
         ),
         isTrue,
       );
@@ -420,8 +451,13 @@ expect(persist.context['step'], 'capability');
           avatarFileName: 'me.png',
           avatarMimeType: 'image/png',
         ),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'PLT003')),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT003',
+          ),
+        ),
       );
       expect(
         sink.entries.any(
@@ -444,8 +480,7 @@ expect(persist.context['step'], 'capability');
       );
       expect(
         sink.entries.any(
-          (LogEntry e) =>
-              e.message == 'Profession binding completed',
+          (LogEntry e) => e.message == 'Profession binding completed',
         ),
         isTrue,
       );
@@ -456,15 +491,22 @@ expect(persist.context['step'], 'capability');
           industryId: 'ind-tech',
           professionId: 'prof-sw',
         ),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'PLT005')),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT005',
+          ),
+        ),
       );
       final LogEntry failure = sink.entries.firstWhere(
         (LogEntry e) => e.message == 'Profession binding failed',
       );
-      expect(failure.context['professionId'],
-          PiiRedactor().redact('prof-sw'),
-          reason: 'ids pass through the redactor; only PII shapes change');
+      expect(
+        failure.context['professionId'],
+        PiiRedactor().redact('prof-sw'),
+        reason: 'ids pass through the redactor; only PII shapes change',
+      );
     });
 
     test('PII-shaped ids are masked before they reach a log sink', () async {
@@ -518,14 +560,22 @@ expect(persist.context['step'], 'capability');
           industryId: 'ind-tech',
           professionId: 'jane.doe@example.com',
         ),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'PLT005')),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT005',
+          ),
+        ),
       );
       final LogEntry failure = sink.entries.firstWhere(
         (LogEntry e) => e.message == 'Profession binding failed',
       );
-      expect(failure.context['professionId'], '***@***.***',
-          reason: 'PiiRedactor strips email-shaped ids from logs (SV-10)');
+      expect(
+        failure.context['professionId'],
+        '***@***.***',
+        reason: 'PiiRedactor strips email-shaped ids from logs (SV-10)',
+      );
     });
 
     test('trade proof failure is logged and rethrown', () async {
@@ -548,8 +598,13 @@ expect(persist.context['step'], 'capability');
           mimeType: 'image/png',
           fileName: 'proof.png',
         ),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'PLT005')),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT005',
+          ),
+        ),
       );
       expect(
         sink.entries.any(
@@ -563,9 +618,9 @@ expect(persist.context['step'], 'capability');
       final RecordingSink sink = RecordingSink();
       final OnboardingTestStack stack = buildOnboardingStack(
         tradeRepo: FakeTradeVerificationRepository(
-          status: tradeStatusEntity(statuses: <String, String>{
-            'ind-tech': 'approved',
-          }),
+          status: tradeStatusEntity(
+            statuses: <String, String>{'ind-tech': 'approved'},
+          ),
         ),
         logger: makeLogger(sink),
       );
@@ -575,8 +630,11 @@ expect(persist.context['step'], 'capability');
       final LogEntry gate = sink.entries.firstWhere(
         (LogEntry e) => e.message == 'Trade gate refreshed',
       );
-      expect(gate.context['isTradeGateOpen'], isFalse,
-          reason: 'prof-sw remains unverified for this aggregate');
+      expect(
+        gate.context['isTradeGateOpen'],
+        isFalse,
+        reason: 'prof-sw remains unverified for this aggregate',
+      );
     });
   });
 
@@ -600,17 +658,19 @@ expect(persist.context['step'], 'capability');
       expect((await stack.store.read('u1'))!.exited, isFalse);
     });
 
-    test('continueRegistration clears the exit flag and keeps the step',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.service.resume('u1');
-      await stack.service.advance();
-      await stack.service.exitWizard();
-      await stack.service.continueRegistration();
-      expect(stack.service.progress!.exited, isFalse);
-      expect(stack.service.progress!.step, OnboardingStepCode.capability);
-      expect((await stack.store.read('u1'))!.exited, isFalse);
-    });
+    test(
+      'continueRegistration clears the exit flag and keeps the step',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.service.resume('u1');
+        await stack.service.advance();
+        await stack.service.exitWizard();
+        await stack.service.continueRegistration();
+        expect(stack.service.progress!.exited, isFalse);
+        expect(stack.service.progress!.step, OnboardingStepCode.capability);
+        expect((await stack.store.read('u1'))!.exited, isFalse);
+      },
+    );
 
     test('exit/continue are no-ops before hydration', () async {
       final OnboardingTestStack stack = buildOnboardingStack();

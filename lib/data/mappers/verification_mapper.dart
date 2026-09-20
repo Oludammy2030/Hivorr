@@ -28,32 +28,31 @@ abstract final class VerificationMapper {
   static VerificationSubmission submissionToEntity(
     VerificationSubmissionDto dto, {
     required DocumentType documentType,
-  }) =>
-      VerificationSubmission(
-        id: dto.id,
-        entityId: dto.entityId,
-        credentialId: dto.credentialId,
-        documentType: documentType,
-        status: VerificationStatusKind.fromServer(dto.status),
-        submittedAt: dto.submittedAt,
-        reviewedAt: dto.reviewedAt,
-        decisionNotes: _truncateNotes(dto.decisionNotes),
-      );
+  }) => VerificationSubmission(
+    id: dto.id,
+    entityId: dto.entityId,
+    credentialId: dto.credentialId,
+    documentType: documentType,
+    status: VerificationStatusKind.fromServer(dto.status),
+    submittedAt: dto.submittedAt,
+    reviewedAt: dto.reviewedAt,
+    decisionNotes: _truncateNotes(dto.decisionNotes),
+  );
 
   /// Maps a KYC level DTO into a domain [KycLevel].
   static KycLevel kycToEntity(KycLevelDto dto) => KycLevel(
-        tierCode: dto.tierCode,
-        status: dto.status,
-        limits: limitsToEntity(dto.limits),
-      );
+    tierCode: dto.tierCode,
+    status: dto.status,
+    limits: limitsToEntity(dto.limits),
+  );
 
   /// Maps a KYC limits DTO into a domain [KycLimits].
   static KycLimits limitsToEntity(KycLimitsDto dto) => KycLimits(
-        daily: dto.daily,
-        weekly: dto.weekly,
-        monthly: dto.monthly,
-        cashout: dto.cashout,
-      );
+    daily: dto.daily,
+    weekly: dto.weekly,
+    monthly: dto.monthly,
+    cashout: dto.cashout,
+  );
 
   /// Maps a trade-verification DTO into a domain [TradeVerification].
   static TradeVerification tradeToEntity(TradeVerificationDto dto) =>
@@ -66,13 +65,12 @@ abstract final class VerificationMapper {
   /// derivation; here we copy the per-profession entries + identity flag.
   static TradeVerificationStatus tradeStatusToEntity(
     TradeVerificationStatusDto dto,
-  ) =>
-      TradeVerificationStatus(
-        tradeVerifications: dto.tradeVerifications
-            .map(tradeToEntity)
-            .toList(growable: false),
-        identityVerified: dto.identityVerified,
-      );
+  ) => TradeVerificationStatus(
+    tradeVerifications: dto.tradeVerifications
+        .map(tradeToEntity)
+        .toList(growable: false),
+    identityVerified: dto.identityVerified,
+  );
 
   /// Maps the full status aggregate DTO into a domain [VerificationStatus].
   static VerificationStatus statusToEntity(VerificationStatusDto dto) =>

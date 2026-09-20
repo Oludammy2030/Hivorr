@@ -38,23 +38,21 @@ abstract final class FinancialMapper {
 
   /// Maps a balance DTO into a domain [Balance].
   static Balance balanceToEntity(BalanceDto dto) => Balance(
-        currencyCode: dto.currencyCode,
-        availableBalance: dto.availableBalance,
-        heldBalance: dto.heldBalance,
-        pendingBalance: dto.pendingBalance,
-        totalDeposited: dto.totalDeposited,
-        totalWithdrawn: dto.totalWithdrawn,
-        lastTransactionAt: dto.lastTransactionAt,
-      );
+    currencyCode: dto.currencyCode,
+    availableBalance: dto.availableBalance,
+    heldBalance: dto.heldBalance,
+    pendingBalance: dto.pendingBalance,
+    totalDeposited: dto.totalDeposited,
+    totalWithdrawn: dto.totalWithdrawn,
+    lastTransactionAt: dto.lastTransactionAt,
+  );
 
   /// Maps the full status aggregate DTO into a domain [FinancialStatus].
   static FinancialStatus statusToEntity(FinancialStatusDto dto) =>
       FinancialStatus(
         defaultCurrency: dto.defaultCurrency,
         profileStatus: dto.profileStatus,
-        balances: dto.balances
-            .map(balanceToEntity)
-            .toList(growable: false),
+        balances: dto.balances.map(balanceToEntity).toList(growable: false),
         activeEscrowCount: dto.activeEscrowCount,
         cashoutLimit: dto.cashoutLimit,
       );

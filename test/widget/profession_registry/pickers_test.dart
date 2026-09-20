@@ -11,13 +11,33 @@ import '../../support/harnesses/widget_harness.dart';
 
 void main() {
   final List<Industry> industries = <Industry>[
-    const Industry(id: 'ind-legal', slug: 'legal', name: 'Legal', isActive: true, sortOrder: 10),
-    const Industry(id: 'ind-tech', slug: 'technology', name: 'Technology', isActive: true, sortOrder: 20),
-    const Industry(id: 'ind-health', slug: 'healthcare', name: 'Healthcare', isActive: true, sortOrder: 30),
+    const Industry(
+      id: 'ind-legal',
+      slug: 'legal',
+      name: 'Legal',
+      isActive: true,
+      sortOrder: 10,
+    ),
+    const Industry(
+      id: 'ind-tech',
+      slug: 'technology',
+      name: 'Technology',
+      isActive: true,
+      sortOrder: 20,
+    ),
+    const Industry(
+      id: 'ind-health',
+      slug: 'healthcare',
+      name: 'Healthcare',
+      isActive: true,
+      sortOrder: 30,
+    ),
   ];
 
   group('IndustryPicker', () {
-    testWidgets('renders industries in given order and reports selection', (tester) async {
+    testWidgets('renders industries in given order and reports selection', (
+      tester,
+    ) async {
       Industry? selected;
       await pumpApp(
         tester,
@@ -38,11 +58,27 @@ void main() {
 
   group('ProfessionPicker', () {
     final List<Profession> professions = <Profession>[
-      const Profession(id: 'p1', industryId: 'ind-tech', slug: 'software-engineer', name: 'Software Engineer', isActive: true, sortOrder: 10),
-      const Profession(id: 'p2', industryId: 'ind-tech', slug: 'web-developer', name: 'Web Developer', isActive: true, sortOrder: 20),
+      const Profession(
+        id: 'p1',
+        industryId: 'ind-tech',
+        slug: 'software-engineer',
+        name: 'Software Engineer',
+        isActive: true,
+        sortOrder: 10,
+      ),
+      const Profession(
+        id: 'p2',
+        industryId: 'ind-tech',
+        slug: 'web-developer',
+        name: 'Web Developer',
+        isActive: true,
+        sortOrder: 20,
+      ),
     ];
 
-    testWidgets('renders professions with description subtitle', (tester) async {
+    testWidgets('renders professions with description subtitle', (
+      tester,
+    ) async {
       await pumpApp(tester, ProfessionPicker(professions: professions));
 
       expect(find.text('Software Engineer'), findsOneWidget);

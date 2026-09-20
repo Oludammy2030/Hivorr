@@ -51,8 +51,7 @@ enum ConversionLoadState {
 /// background history refreshes), a `_disposed` guard, and a one-shot
 /// "Currency converted" [HivorrNotification] hook (mirrors `FinancialProvider`)
 /// / `EscrowProvider` (§5.6).
-class ConversionProvider extends ChangeNotifier
-    with WidgetsBindingObserver {
+class ConversionProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Creates the provider bound to [service].
   ///
   /// [financialService] enables the authoritative post-execute balance
@@ -64,11 +63,11 @@ class ConversionProvider extends ChangeNotifier
     HivorrLogger? logger,
     NotificationProvider? notificationProvider,
     DateTime Function()? clock,
-  })  : _service = service,
-        _financialService = financialService,
-        _logger = logger,
-        _notificationProvider = notificationProvider,
-        _clock = clock ?? DateTime.now {
+  }) : _service = service,
+       _financialService = financialService,
+       _logger = logger,
+       _notificationProvider = notificationProvider,
+       _clock = clock ?? DateTime.now {
     try {
       WidgetsBinding.instance.addObserver(this);
     } on Object {
@@ -197,10 +196,7 @@ class ConversionProvider extends ChangeNotifier
     _rateUnavailable = false;
     notifyListeners();
     try {
-      _rate = await _service.getRate(
-        fromCurrency: from,
-        toCurrency: to,
-      );
+      _rate = await _service.getRate(fromCurrency: from, toCurrency: to);
     } on ConversionRateUnavailableException {
       _rateUnavailable = true;
     } on ApiException catch (e) {
@@ -327,10 +323,9 @@ class ConversionProvider extends ChangeNotifier
     if (service == null) return;
     try {
       final FinancialStatus status = await service.getStatus();
-      _logger?.info('Balances refreshed after conversion',
-          <String, Object?>{
-            'balanceCount': status.balances.length,
-          });
+      _logger?.info('Balances refreshed after conversion', <String, Object?>{
+        'balanceCount': status.balances.length,
+      });
     } on Object {
       // Best-effort — see method dartdoc.
     }

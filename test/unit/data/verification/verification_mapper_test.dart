@@ -17,24 +17,24 @@ void main() {
     String status = 'pending',
     DateTime? reviewedAt,
     String? decisionNotes,
-  }) =>
-      VerificationSubmissionDto(
-        id: 'sub-1',
-        entityId: 'u1',
-        credentialId: 'cred-1',
-        submissionType: 'identity_document',
-        status: status,
-        submittedAt: submitted,
-        reviewedAt: reviewedAt,
-        decisionNotes: decisionNotes,
-      );
+  }) => VerificationSubmissionDto(
+    id: 'sub-1',
+    entityId: 'u1',
+    credentialId: 'cred-1',
+    submissionType: 'identity_document',
+    status: status,
+    submittedAt: submitted,
+    reviewedAt: reviewedAt,
+    decisionNotes: decisionNotes,
+  );
 
   group('VerificationMapper.submissionToEntity', () {
     test('maps fields and injects the caller-supplied document type', () {
-      final VerificationSubmission entity = VerificationMapper.submissionToEntity(
-        submissionDto(),
-        documentType: DocumentType.passport,
-      );
+      final VerificationSubmission entity =
+          VerificationMapper.submissionToEntity(
+            submissionDto(),
+            documentType: DocumentType.passport,
+          );
 
       expect(entity.id, 'sub-1');
       expect(entity.entityId, 'u1');
@@ -53,35 +53,41 @@ void main() {
         'requires_resubmission': VerificationStatusKind.requiresResubmission,
       };
       map.forEach((String raw, VerificationStatusKind expected) {
-        final VerificationSubmission entity = VerificationMapper.submissionToEntity(
-          submissionDto(status: raw),
-          documentType: DocumentType.nationalId,
-        );
+        final VerificationSubmission entity =
+            VerificationMapper.submissionToEntity(
+              submissionDto(status: raw),
+              documentType: DocumentType.nationalId,
+            );
         expect(entity.status, expected, reason: 'for $raw');
       });
     });
 
     test('copies reviewedAt and truncates over-long decision notes', () {
       final String notes = 'x' * 6000;
-      final VerificationSubmission entity = VerificationMapper.submissionToEntity(
-        submissionDto(
-          status: 'rejected',
-          reviewedAt: reviewed,
-          decisionNotes: notes,
-        ),
-        documentType: DocumentType.driversLicense,
-      );
+      final VerificationSubmission entity =
+          VerificationMapper.submissionToEntity(
+            submissionDto(
+              status: 'rejected',
+              reviewedAt: reviewed,
+              decisionNotes: notes,
+            ),
+            documentType: DocumentType.driversLicense,
+          );
 
       expect(entity.reviewedAt, reviewed);
-      expect(entity.decisionNotes!.length, VerificationMapper.maxDecisionNotesLength);
+      expect(
+        entity.decisionNotes!.length,
+        VerificationMapper.maxDecisionNotesLength,
+      );
       expect(entity.decisionNotes!.startsWith('x' * 100), isTrue);
     });
 
     test('keeps short decision notes verbatim', () {
-      final VerificationSubmission entity = VerificationMapper.submissionToEntity(
-        submissionDto(status: 'rejected', decisionNotes: 'ID illegible'),
-        documentType: DocumentType.votersCard,
-      );
+      final VerificationSubmission entity =
+          VerificationMapper.submissionToEntity(
+            submissionDto(status: 'rejected', decisionNotes: 'ID illegible'),
+            documentType: DocumentType.votersCard,
+          );
       expect(entity.decisionNotes, 'ID illegible');
     });
   });
@@ -116,34 +122,37 @@ void main() {
   });
 
   group('VerificationMapper status aggregate', () {
-    test('statusToEntity maps the full aggregate incl. trade verifications',
-        () {
-      final VerificationStatusDto dto = VerificationStatusDto(
-        entityId: 'u1',
-        kyc: KycLevelDto(
-          tierCode: 'tier_1',
-          status: 'active',
-          limits: KycLimitsDto(daily: 1, weekly: 2, monthly: 3, cashout: 4),
-        ),
-        identityVerified: true,
-        tradeVerifications: const <TradeVerificationDto>[
-          TradeVerificationDto(professionId: 'p1', status: 'verified'),
-        ],
-        pendingSubmissions: 0,
-        totalSubmissions: 2,
-      );
+    test(
+      'statusToEntity maps the full aggregate incl. trade verifications',
+      () {
+        final VerificationStatusDto dto = VerificationStatusDto(
+          entityId: 'u1',
+          kyc: KycLevelDto(
+            tierCode: 'tier_1',
+            status: 'active',
+            limits: KycLimitsDto(daily: 1, weekly: 2, monthly: 3, cashout: 4),
+          ),
+          identityVerified: true,
+          tradeVerifications: const <TradeVerificationDto>[
+            TradeVerificationDto(professionId: 'p1', status: 'verified'),
+          ],
+          pendingSubmissions: 0,
+          totalSubmissions: 2,
+        );
 
-      final VerificationStatus entity =
-          VerificationMapper.statusToEntity(dto);
+        final VerificationStatus entity = VerificationMapper.statusToEntity(
+          dto,
+        );
 
-      expect(entity.entityId, 'u1');
-      expect(entity.identityVerified, isTrue);
-      expect(entity.kycLevel.tierCode, 'tier_1');
-      expect(entity.tradeVerifications.single.professionId, 'p1');
-      expect(entity.tradeVerifications.single.status, 'verified');
-      expect(entity.pendingSubmissions, 0);
-      expect(entity.totalSubmissions, 2);
-    });
+        expect(entity.entityId, 'u1');
+        expect(entity.identityVerified, isTrue);
+        expect(entity.kycLevel.tierCode, 'tier_1');
+        expect(entity.tradeVerifications.single.professionId, 'p1');
+        expect(entity.tradeVerifications.single.status, 'verified');
+        expect(entity.pendingSubmissions, 0);
+        expect(entity.totalSubmissions, 2);
+      },
+    );
 
     test('tradeToEntity maps profession + status', () {
       final TradeVerification trade = VerificationMapper.tradeToEntity(

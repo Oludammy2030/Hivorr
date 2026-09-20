@@ -13,10 +13,7 @@ void main() {
     test('isPositive reflects minorUnits sign', () {
       expect(const Amount(minorUnits: 1, currency: 'NGN').isPositive, isTrue);
       expect(const Amount(minorUnits: 0, currency: 'NGN').isPositive, isFalse);
-      expect(
-        const Amount(minorUnits: -5, currency: 'NGN').isPositive,
-        isFalse,
-      );
+      expect(const Amount(minorUnits: -5, currency: 'NGN').isPositive, isFalse);
     });
 
     test('equality compares minorUnits and currency', () {

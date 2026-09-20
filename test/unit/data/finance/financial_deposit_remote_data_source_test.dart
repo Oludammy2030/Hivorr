@@ -16,15 +16,14 @@ void main() {
   SupabaseFinancialDepositRemoteDataSource build(
     Map<String, List<Map<String, dynamic>>> queryResults, {
     User? currentUser,
-  }) =>
-      SupabaseFinancialDepositRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(
-          currentUser: currentUser,
-          queryResults: queryResults,
-        ),
-        exceptionMapper: const ApiExceptionMapper(),
-      );
+  }) => SupabaseFinancialDepositRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(
+      currentUser: currentUser,
+      queryResults: queryResults,
+    ),
+    exceptionMapper: const ApiExceptionMapper(),
+  );
 
   group('SupabaseFinancialDepositRemoteDataSource.listDeposits', () {
     test('maps financial_deposits rows to DepositDto newest-first', () async {
@@ -64,19 +63,16 @@ void main() {
     });
 
     test('filters by entity_id when signed in as a user', () async {
-      final source = build(
-        <String, List<Map<String, dynamic>>>{
-          'financial_deposits': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'id': 'dep-1',
-              'currency_code': 'NGN',
-              'amount': 100,
-              'name_match_status': 'unverified',
-            },
-          ],
-        },
-        currentUser: fakeUser('entity-42'),
-      );
+      final source = build(<String, List<Map<String, dynamic>>>{
+        'financial_deposits': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'dep-1',
+            'currency_code': 'NGN',
+            'amount': 100,
+            'name_match_status': 'unverified',
+          },
+        ],
+      }, currentUser: fakeUser('entity-42'));
 
       final List<DepositDto> deposits = await source.listDeposits();
 
@@ -119,11 +115,13 @@ void main() {
 
       await expectLater(
         source.listDeposits(),
-        throwsA(isA<ApiException>().having(
-          (ApiException e) => e.code,
-          'code',
-          'PLT999',
-        )),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT999',
+          ),
+        ),
       );
     });
   });

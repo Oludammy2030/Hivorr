@@ -14,17 +14,11 @@ void main() {
 
   group('KycLimitGuard.canTransact', () {
     test('true when amount within daily limit', () {
-      expect(
-        KycLimitGuard.canTransact(limits: tier1, amount: 50000),
-        isTrue,
-      );
+      expect(KycLimitGuard.canTransact(limits: tier1, amount: 50000), isTrue);
     });
 
     test('false when amount exceeds daily limit', () {
-      expect(
-        KycLimitGuard.canTransact(limits: tier1, amount: 50001),
-        isFalse,
-      );
+      expect(KycLimitGuard.canTransact(limits: tier1, amount: 50001), isFalse);
     });
 
     test('false for zero or negative amounts', () {
@@ -75,10 +69,7 @@ void main() {
         status: 'active',
         limits: tier1,
       );
-      expect(
-        KycLimitGuard.suggestedUpgrade(current, 50000),
-        isNull,
-      );
+      expect(KycLimitGuard.suggestedUpgrade(current, 50000), isNull);
     });
 
     test('suggests a higher tier when the amount exceeds cashout', () {
@@ -87,8 +78,10 @@ void main() {
         status: 'active',
         limits: tier1,
       );
-      final KycTier? suggestion =
-          KycLimitGuard.suggestedUpgrade(current, 600000);
+      final KycTier? suggestion = KycLimitGuard.suggestedUpgrade(
+        current,
+        600000,
+      );
       expect(suggestion, isNotNull);
       expect(suggestion!.index, greaterThan(KycTier.tier1.index));
     });

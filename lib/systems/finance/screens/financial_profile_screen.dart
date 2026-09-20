@@ -71,10 +71,7 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Financial Profile',
-          style: context.textTheme.titleLarge,
-        ),
+        title: Text('Financial Profile', style: context.textTheme.titleLarge),
         actions: <Widget>[
           Consumer<FinancialProvider>(
             builder: (BuildContext context, FinancialProvider provider, _) {
@@ -121,8 +118,8 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
           // Terminal status: balances still visible read-only, but surface a
           // warm state with a "Contact support" call to action (FV-34).
           final String profileStatus = provider.status?.profileStatus ?? '';
-          final bool terminal = profileStatus == 'suspended' ||
-              profileStatus == 'closed';
+          final bool terminal =
+              profileStatus == 'suspended' || profileStatus == 'closed';
           if (terminal) {
             return ListView(
               padding: const EdgeInsets.all(HivorrSpacing.lg),
@@ -139,8 +136,7 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
                   const SizedBox(height: HivorrSpacing.lg),
                   BalanceOverviewCard(
                     balances: provider.balances,
-                    defaultCurrencyCode:
-                        provider.profile!.defaultCurrency,
+                    defaultCurrencyCode: provider.profile!.defaultCurrency,
                   ),
                 ],
               ],
@@ -159,14 +155,16 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
                 // Balance overview.
                 BalanceOverviewCard(
                   balances: provider.balances,
-                  defaultCurrencyCode:
-                      provider.profile!.defaultCurrency,
+                  defaultCurrencyCode: provider.profile!.defaultCurrency,
                 ),
                 const SizedBox(height: HivorrSpacing.lg),
 
                 // Currency accounts list.
                 if (provider.accounts.isNotEmpty) ...<Widget>[
-                  Text('Receiving Accounts', style: context.textTheme.titleMedium),
+                  Text(
+                    'Receiving Accounts',
+                    style: context.textTheme.titleMedium,
+                  ),
                   const SizedBox(height: HivorrSpacing.sm),
                   ...provider.accounts.map(
                     (CurrencyAccount account) => Padding(
@@ -175,7 +173,10 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
                     ),
                   ),
                 ] else ...<Widget>[
-                  Text('Receiving Accounts', style: context.textTheme.titleMedium),
+                  Text(
+                    'Receiving Accounts',
+                    style: context.textTheme.titleMedium,
+                  ),
                   const SizedBox(height: HivorrSpacing.sm),
                   Text(
                     'No receiving accounts configured yet.',
@@ -192,8 +193,7 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
                 PayoutAccountView(
                   cashoutLimit: provider.status?.cashoutLimit,
                   currencyCode: provider.profile!.defaultCurrency,
-                  onWithdrawSuccess: (_) =>
-                      unawaited(provider.refreshStatus()),
+                  onWithdrawSuccess: (_) => unawaited(provider.refreshStatus()),
                 ),
 
                 // Activity history badge + deposits (EP-02-16).

@@ -36,14 +36,13 @@ class VerificationTimeline extends StatelessWidget {
   final String? decisionNotes;
 
   /// Maps a status to its step index in the 4-step progression.
-  static int stepIndexFor(VerificationStatusKind status) =>
-      switch (status) {
-        VerificationStatusKind.pending => 1,
-        VerificationStatusKind.inReview => 2,
-        VerificationStatusKind.approved ||
-        VerificationStatusKind.rejected ||
-        VerificationStatusKind.requiresResubmission => 3,
-      };
+  static int stepIndexFor(VerificationStatusKind status) => switch (status) {
+    VerificationStatusKind.pending => 1,
+    VerificationStatusKind.inReview => 2,
+    VerificationStatusKind.approved ||
+    VerificationStatusKind.rejected ||
+    VerificationStatusKind.requiresResubmission => 3,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -108,8 +107,7 @@ class VerificationTimeline extends StatelessWidget {
       switch (status) {
         VerificationStatusKind.approved => 'Approved',
         VerificationStatusKind.rejected => 'Rejected',
-        VerificationStatusKind.requiresResubmission =>
-          'Requires resubmission',
+        VerificationStatusKind.requiresResubmission => 'Requires resubmission',
         _ => 'Decision',
       };
 }
@@ -144,11 +142,11 @@ class _StepTile extends StatelessWidget {
   final String? caption;
 
   int get index => switch (step) {
-        VerificationTimelineStep.submitted => 0,
-        VerificationTimelineStep.pending => 1,
-        VerificationTimelineStep.inReview => 2,
-        VerificationTimelineStep.decided => 3,
-      };
+    VerificationTimelineStep.submitted => 0,
+    VerificationTimelineStep.pending => 1,
+    VerificationTimelineStep.inReview => 2,
+    VerificationTimelineStep.decided => 3,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -165,10 +163,7 @@ class _StepTile extends StatelessWidget {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: _Dot(
-              color: _dotColor(colors, ext),
-              filled: completed,
-            ),
+            child: _Dot(color: _dotColor(colors, ext), filled: completed),
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Expanded(

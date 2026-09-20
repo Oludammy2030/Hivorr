@@ -9,10 +9,7 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 /// (`onPressed: null`) — the client reflects the server hold and never claims
 /// to be the enforcement (DV-06).
 class EscrowDisputeBanner extends StatelessWidget {
-  const EscrowDisputeBanner({
-    super.key,
-    this.onViewDispute,
-  });
+  const EscrowDisputeBanner({super.key, this.onViewDispute});
 
   /// Routes to the EP-02-05 dispute screen. May be `null` to hide the action.
   final VoidCallback? onViewDispute;

@@ -28,8 +28,8 @@ class FinancialRepositoryImpl implements FinancialRepository {
   FinancialRepositoryImpl({
     required FinancialRemoteDataSource remote,
     PaymentGatewayFactory? paymentGatewayFactory,
-  })  : _remote = remote,
-        _paymentGatewayFactory = paymentGatewayFactory;
+  }) : _remote = remote,
+       _paymentGatewayFactory = paymentGatewayFactory;
 
   final FinancialRemoteDataSource _remote;
   final PaymentGatewayFactory? _paymentGatewayFactory;

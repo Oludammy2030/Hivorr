@@ -61,7 +61,9 @@ class OnboardingStepCard extends StatelessWidget {
           Icon(
             icon,
             size: 28,
-            color: isActive || isDone ? colors.primary : colors.onSurfaceVariant,
+            color: isActive || isDone
+                ? colors.primary
+                : colors.onSurfaceVariant,
           ),
           const SizedBox(width: HivorrSpacing.md),
           Expanded(

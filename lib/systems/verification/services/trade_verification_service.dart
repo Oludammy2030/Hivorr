@@ -25,10 +25,10 @@ class TradeVerificationService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _repo = repo,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _repo = repo,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final TradeVerificationRepository _repo;
   final HivorrLogger? _logger;
@@ -50,7 +50,10 @@ class TradeVerificationService {
     required String fileName,
     void Function(int sent, int total)? onProgress,
   }) async {
-    final span = _tracer?.startTransaction('trade.proof.submit', 'verification');
+    final span = _tracer?.startTransaction(
+      'trade.proof.submit',
+      'verification',
+    );
     _logger?.info('Trade proof submission started', <String, Object?>{
       'tradeType': type.name,
       'byteLength': bytes.length,

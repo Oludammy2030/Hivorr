@@ -38,8 +38,8 @@ class _DepositDetailsPanelState extends State<DepositDetailsPanel> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      final FinancialDepositProvider provider =
-          context.read<FinancialDepositProvider>();
+      final FinancialDepositProvider provider = context
+          .read<FinancialDepositProvider>();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(provider.load());
       });

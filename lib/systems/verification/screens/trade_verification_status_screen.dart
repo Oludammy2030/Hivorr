@@ -36,7 +36,8 @@ class TradeVerificationStatusScreen extends StatefulWidget {
 }
 
 class _TradeVerificationStatusScreenState
-    extends State<TradeVerificationStatusScreen> with WidgetsBindingObserver {
+    extends State<TradeVerificationStatusScreen>
+    with WidgetsBindingObserver {
   late final TradeVerificationProvider _provider;
 
   @override
@@ -91,10 +92,7 @@ class _TradeVerificationStatusScreenState
     }
     if (status.tradeVerifications.isEmpty) {
       return HivorrEmptyState(
-        icon: Icon(
-          Icons.work_outline,
-          color: context.colorScheme.primary,
-        ),
+        icon: Icon(Icons.work_outline, color: context.colorScheme.primary),
         title: 'No bound professions',
         subtitle:
             'Add a profession to your profile to begin trade verification.',
@@ -138,8 +136,9 @@ class _ProfessionSection extends StatelessWidget {
       children: <Widget>[
         Text(
           'Profession',
-          style: context.textTheme.bodySmall
-              ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+          style: context.textTheme.bodySmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: HivorrSpacing.xs),
         Card(
@@ -189,9 +188,8 @@ class _ProfessionSection extends StatelessWidget {
     );
   }
 
-  static String _shortId(String id) => id.length > 13
-      ? 'Profession ${id.substring(0, 8)}'
-      : 'Profession $id';
+  static String _shortId(String id) =>
+      id.length > 13 ? 'Profession ${id.substring(0, 8)}' : 'Profession $id';
 }
 
 class _BidLockPanel extends StatelessWidget {

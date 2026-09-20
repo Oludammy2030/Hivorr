@@ -31,10 +31,10 @@ class VerificationRepositoryImpl implements VerificationRepository {
     required StorageService storage,
     required SupabaseClient supabase,
     Uuid? uuid,
-  })  : _remote = remote,
-        _storage = storage,
-        _supabase = supabase,
-        _uuid = uuid ?? const Uuid();
+  }) : _remote = remote,
+       _storage = storage,
+       _supabase = supabase,
+       _uuid = uuid ?? const Uuid();
 
   final VerificationRemoteDataSource _remote;
   final StorageService _storage;
@@ -78,12 +78,11 @@ class VerificationRepositoryImpl implements VerificationRepository {
     );
 
     // 4. Create the trust-evidence credential row (server-scoped insert).
-    final Map<String, dynamic> credential =
-        await _insertCredential(
-          entityId: entityId,
-          title: documentType.label,
-          documentPath: storageKey,
-        );
+    final Map<String, dynamic> credential = await _insertCredential(
+      entityId: entityId,
+      title: documentType.label,
+      documentPath: storageKey,
+    );
 
     // 5. Queue the submission via the server RPC.
     final VerificationSubmissionDto dto = await _remote.submit(

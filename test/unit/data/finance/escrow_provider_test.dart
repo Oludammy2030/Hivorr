@@ -29,10 +29,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-        PiiRedactor(),
-      );
+    'hivorr.test',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+    PiiRedactor(),
+  );
 
   EscrowProvider build({
     FakeEscrowRepository? repo,
@@ -90,7 +90,10 @@ void main() {
         headers: <Escrow>[seedEscrowEntity(id: 'escrow-1')],
       );
       final provider = build(repo: repo);
-      await provider.loadForProject(projectId: 'project-x', escrowIds: const <String>[]);
+      await provider.loadForProject(
+        projectId: 'project-x',
+        escrowIds: const <String>[],
+      );
 
       expect(provider.loadState, EscrowLoadState.loaded);
       expect(provider.isLoaded, isTrue);
@@ -108,7 +111,10 @@ void main() {
           code: 'PLT999',
         );
       final provider = build(repo: repo);
-      await provider.loadForProject(projectId: 'project-x', escrowIds: const <String>[]);
+      await provider.loadForProject(
+        projectId: 'project-x',
+        escrowIds: const <String>[],
+      );
 
       expect(provider.loadState, EscrowLoadState.error);
       expect(provider.escrows, isEmpty);
@@ -188,36 +194,35 @@ void main() {
       provider.dispose();
     });
 
-    test('skips refresh while the app is backgrounded (lifecycle gate)',
-        () async {
-      final repo = FakeEscrowRepository(
-        detail: seedEscrowDetailEntity(id: 'escrow-1'),
-      );
-      final provider = build(repo: repo);
-      await provider.select('escrow-1');
-      final callsAfterSelect = repo.getByIdCallCount;
+    test(
+      'skips refresh while the app is backgrounded (lifecycle gate)',
+      () async {
+        final repo = FakeEscrowRepository(
+          detail: seedEscrowDetailEntity(id: 'escrow-1'),
+        );
+        final provider = build(repo: repo);
+        await provider.select('escrow-1');
+        final callsAfterSelect = repo.getByIdCallCount;
 
-      WidgetsBinding.instance.handleAppLifecycleStateChanged(
-        AppLifecycleState.paused,
-      );
-      await provider.refresh();
-      expect(repo.getByIdCallCount, callsAfterSelect);
+        WidgetsBinding.instance.handleAppLifecycleStateChanged(
+          AppLifecycleState.paused,
+        );
+        await provider.refresh();
+        expect(repo.getByIdCallCount, callsAfterSelect);
 
-      WidgetsBinding.instance.handleAppLifecycleStateChanged(
-        AppLifecycleState.resumed,
-      );
-      provider.dispose();
-    });
+        WidgetsBinding.instance.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        provider.dispose();
+      },
+    );
   });
 
   group('write actions', () {
     test('createEscrow applies the re-read detail', () async {
       final repo = FakeEscrowRepository(
         writeAvailable: true,
-        detail: seedEscrowDetailEntity(
-          id: 'escrow-9',
-          status: 'created',
-        ),
+        detail: seedEscrowDetailEntity(id: 'escrow-9', status: 'created'),
       );
       final provider = build(repo: repo);
       final EscrowDetail result = await provider.createEscrow(
@@ -265,8 +270,9 @@ void main() {
       final provider = build(repo: repo);
       await provider.select('escrow-1');
 
-      final EscrowDetail detail =
-          await provider.completeMilestone(milestoneId: 'ms-1');
+      final EscrowDetail detail = await provider.completeMilestone(
+        milestoneId: 'ms-1',
+      );
 
       expect(detail.escrow.status, 'released');
       expect(provider.milestones.single.isReleased, isTrue);
@@ -274,100 +280,110 @@ void main() {
       provider.dispose();
     });
 
-    test('write actions surface the seam exception when write unavailable',
-        () async {
-      final repo = FakeEscrowRepository(
-        writeAvailable: false,
-        detail: seedEscrowDetailEntity(id: 'escrow-1'),
-      );
-      final provider = build(repo: repo);
-      await provider.select('escrow-1');
+    test(
+      'write actions surface the seam exception when write unavailable',
+      () async {
+        final repo = FakeEscrowRepository(
+          writeAvailable: false,
+          detail: seedEscrowDetailEntity(id: 'escrow-1'),
+        );
+        final provider = build(repo: repo);
+        await provider.select('escrow-1');
 
-      await expectLater(
-        provider.completeMilestone(milestoneId: 'ms-1'),
-        throwsA(
-          isA<ApiException>()
-              .having(
-                (ApiException e) => e.kind,
-                'kind',
-                ApiExceptionKind.forbidden,
-              )
-              .having((ApiException e) => e.message, 'message', contains('support team')),
-        ),
-      );
-      await expectLater(
-        provider.releaseMilestone(milestoneId: 'ms-1'),
-        throwsA(isA<ApiException>()),
-      );
-      await expectLater(
-        provider.releaseFinal(),
-        throwsA(isA<ApiException>()),
-      );
-      await expectLater(
-        provider.refundEscrow(reason: 'no'),
-        throwsA(isA<ApiException>()),
-      );
-      provider.dispose();
-    });
+        await expectLater(
+          provider.completeMilestone(milestoneId: 'ms-1'),
+          throwsA(
+            isA<ApiException>()
+                .having(
+                  (ApiException e) => e.kind,
+                  'kind',
+                  ApiExceptionKind.forbidden,
+                )
+                .having(
+                  (ApiException e) => e.message,
+                  'message',
+                  contains('support team'),
+                ),
+          ),
+        );
+        await expectLater(
+          provider.releaseMilestone(milestoneId: 'ms-1'),
+          throwsA(isA<ApiException>()),
+        );
+        await expectLater(
+          provider.releaseFinal(),
+          throwsA(isA<ApiException>()),
+        );
+        await expectLater(
+          provider.refundEscrow(reason: 'no'),
+          throwsA(isA<ApiException>()),
+        );
+        provider.dispose();
+      },
+    );
 
-    test('releaseFinal with notifications wired posts a local notification',
-        () async {
-      final service = FakeNotificationService();
-      final notifications = buildNotifications(service);
-      final repo = FakeEscrowRepository(
-        writeAvailable: true,
-        detail: seedEscrowDetailEntity(
-          id: 'escrow-1',
-          status: 'released',
-          releasedAmount: 50000,
-          milestones: <EscrowMilestone>[
-            seedMilestoneEntity(id: 'ms-1', status: 'released'),
-          ],
-        ),
-      );
-      final provider = build(
-        repo: repo,
-        notificationProvider: notifications,
-        clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
-      );
-      await provider.select('escrow-1');
-      await provider.releaseFinal();
-      await pumpEventQueue();
+    test(
+      'releaseFinal with notifications wired posts a local notification',
+      () async {
+        final service = FakeNotificationService();
+        final notifications = buildNotifications(service);
+        final repo = FakeEscrowRepository(
+          writeAvailable: true,
+          detail: seedEscrowDetailEntity(
+            id: 'escrow-1',
+            status: 'released',
+            releasedAmount: 50000,
+            milestones: <EscrowMilestone>[
+              seedMilestoneEntity(id: 'ms-1', status: 'released'),
+            ],
+          ),
+        );
+        final provider = build(
+          repo: repo,
+          notificationProvider: notifications,
+          clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
+        );
+        await provider.select('escrow-1');
+        await provider.releaseFinal();
+        await pumpEventQueue();
 
-      expect(service.shown, hasLength(1));
-      final HivorrNotification shown = service.shown.single;
-      expect(shown.channelId, 'hivorr_default');
-      expect(shown.actionRoute, '/finance/escrow/escrow-1');
-      expect(shown.title, 'Milestone released');
-      expect(shown.body, contains('₦50,000.00'));
-      notifications.dispose();
-      provider.dispose();
-    });
+        expect(service.shown, hasLength(1));
+        final HivorrNotification shown = service.shown.single;
+        expect(shown.channelId, 'hivorr_default');
+        expect(shown.actionRoute, '/finance/escrow/escrow-1');
+        expect(shown.title, 'Milestone released');
+        expect(shown.body, contains('₦50,000.00'));
+        notifications.dispose();
+        provider.dispose();
+      },
+    );
   });
 
   group('structured logging', () {
-    test('loadForProject failure logs a warning with redacted context',
-        () async {
-      final sink = RecordingSink();
-      final repo = FakeEscrowRepository()
-        ..nextError = const ApiException(
-          kind: ApiExceptionKind.server,
-          message: 'boom',
-          code: 'PLT999',
+    test(
+      'loadForProject failure logs a warning with redacted context',
+      () async {
+        final sink = RecordingSink();
+        final repo = FakeEscrowRepository()
+          ..nextError = const ApiException(
+            kind: ApiExceptionKind.server,
+            message: 'boom',
+            code: 'PLT999',
+          );
+        final provider = build(repo: repo, logger: makeLogger(sink));
+
+        await provider.loadForProject(
+          projectId: 'project-x',
+          escrowIds: const <String>[],
         );
-      final provider = build(repo: repo, logger: makeLogger(sink));
 
-      await provider.loadForProject(
-        projectId: 'project-x',
-        escrowIds: const <String>[],
-      );
-
-      expect(
-        sink.entries.map((e) => e.message),
-        contains('Escrow list load failed'),
-      );
-      provider.dispose();
-    });
+        expect(
+          sink.entries.map((e) => e.message),
+          contains('Escrow list load failed'),
+        );
+        provider.dispose();
+      },
+    );
 
     test('select failure logs a warning with redacted context', () async {
       final sink = RecordingSink();
@@ -412,42 +428,46 @@ void main() {
   });
 
   group('write actions without a selection', () {
-    test('releaseMilestone / releaseFinal / refundEscrow throw PLT003',
-        () async {
-      final provider = build(repo: FakeEscrowRepository(writeAvailable: true));
+    test(
+      'releaseMilestone / releaseFinal / refundEscrow throw PLT003',
+      () async {
+        final provider = build(
+          repo: FakeEscrowRepository(writeAvailable: true),
+        );
 
-      await expectLater(
-        provider.releaseMilestone(milestoneId: 'ms-1'),
-        throwsA(
-          isA<ApiException>().having(
-            (ApiException e) => e.code,
-            'releaseMilestone code',
-            'PLT003',
+        await expectLater(
+          provider.releaseMilestone(milestoneId: 'ms-1'),
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.code,
+              'releaseMilestone code',
+              'PLT003',
+            ),
           ),
-        ),
-      );
-      await expectLater(
-        provider.releaseFinal(),
-        throwsA(
-          isA<ApiException>().having(
-            (ApiException e) => e.code,
-            'releaseFinal code',
-            'PLT003',
+        );
+        await expectLater(
+          provider.releaseFinal(),
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.code,
+              'releaseFinal code',
+              'PLT003',
+            ),
           ),
-        ),
-      );
-      await expectLater(
-        provider.refundEscrow(reason: 'missing'),
-        throwsA(
-          isA<ApiException>().having(
-            (ApiException e) => e.code,
-            'refundEscrow code',
-            'PLT003',
+        );
+        await expectLater(
+          provider.refundEscrow(reason: 'missing'),
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.code,
+              'refundEscrow code',
+              'PLT003',
+            ),
           ),
-        ),
-      );
-      provider.dispose();
-    });
+        );
+        provider.dispose();
+      },
+    );
   });
 
   group('write actions on a selected escrow', () {
@@ -459,8 +479,9 @@ void main() {
       final provider = build(repo: repo);
       await provider.select('escrow-1');
 
-      final EscrowDetail result =
-          await provider.refundEscrow(reason: 'No delivery');
+      final EscrowDetail result = await provider.refundEscrow(
+        reason: 'No delivery',
+      );
 
       expect(result.escrow.status, 'refunded');
       expect(provider.selected!.status, 'refunded');
@@ -470,24 +491,26 @@ void main() {
   });
 
   group('refresh in-flight', () {
-    test('exposes isRefreshing while the re-read is pending and clears after',
-        () async {
-      final repo = _PausableRepo(
-        detail: seedEscrowDetailEntity(id: 'escrow-1'),
-      );
-      final provider = build(repo: repo);
-      await provider.select('escrow-1');
+    test(
+      'exposes isRefreshing while the re-read is pending and clears after',
+      () async {
+        final repo = _PausableRepo(
+          detail: seedEscrowDetailEntity(id: 'escrow-1'),
+        );
+        final provider = build(repo: repo);
+        await provider.select('escrow-1');
 
-      repo.gate = Completer<void>();
-      final Future<void> refreshing = provider.refresh();
-      await pumpEventQueue();
-      expect(provider.isRefreshing, isTrue);
+        repo.gate = Completer<void>();
+        final Future<void> refreshing = provider.refresh();
+        await pumpEventQueue();
+        expect(provider.isRefreshing, isTrue);
 
-      repo.gate!.complete();
-      await refreshing;
-      expect(provider.isRefreshing, isFalse);
-      provider.dispose();
-    });
+        repo.gate!.complete();
+        await refreshing;
+        expect(provider.isRefreshing, isFalse);
+        provider.dispose();
+      },
+    );
   });
 
   group('milestone release notifications', () {
@@ -502,34 +525,36 @@ void main() {
       );
     }
 
-    test('completeMilestone posts a notification with the milestone ordinal',
-        () async {
-      final service = FakeNotificationService();
-      final detail = seedEscrowDetailEntity(
-        id: 'escrow-1',
-        status: 'partially_released',
-        releasedAmount: 50000,
-        milestones: <EscrowMilestone>[
-          seedMilestoneEntity(id: 'ms-1', status: 'released'),
-          seedMilestoneEntity(
-            id: 'ms-2',
-            milestoneNumber: 2,
-            sortOrder: 2,
-            status: 'pending',
-          ),
-        ],
-      );
-      final provider = buildNotifying(detail: detail, service: service);
-      await provider.select('escrow-1');
-      await provider.completeMilestone(milestoneId: 'ms-1');
-      await pumpEventQueue();
+    test(
+      'completeMilestone posts a notification with the milestone ordinal',
+      () async {
+        final service = FakeNotificationService();
+        final detail = seedEscrowDetailEntity(
+          id: 'escrow-1',
+          status: 'partially_released',
+          releasedAmount: 50000,
+          milestones: <EscrowMilestone>[
+            seedMilestoneEntity(id: 'ms-1', status: 'released'),
+            seedMilestoneEntity(
+              id: 'ms-2',
+              milestoneNumber: 2,
+              sortOrder: 2,
+              status: 'pending',
+            ),
+          ],
+        );
+        final provider = buildNotifying(detail: detail, service: service);
+        await provider.select('escrow-1');
+        await provider.completeMilestone(milestoneId: 'ms-1');
+        await pumpEventQueue();
 
-      final HivorrNotification shown = service.shown.single;
-      expect(shown.title, 'Escrow updated');
-      expect(shown.body, contains('milestone 1 of 2'));
-      expect(shown.actionRoute, '/finance/escrow/escrow-1');
-      provider.dispose();
-    });
+        final HivorrNotification shown = service.shown.single;
+        expect(shown.title, 'Escrow updated');
+        expect(shown.body, contains('milestone 1 of 2'));
+        expect(shown.actionRoute, '/finance/escrow/escrow-1');
+        provider.dispose();
+      },
+    );
 
     test('an unknown milestone id falls back to the list length', () async {
       final service = FakeNotificationService();
@@ -574,7 +599,7 @@ void main() {
 /// [Completer], letting tests observe in-flight provider refresh state.
 class _PausableRepo extends FakeEscrowRepository {
   _PausableRepo({required EscrowDetail detail})
-      : super(writeAvailable: true, detail: detail);
+    : super(writeAvailable: true, detail: detail);
 
   Completer<void>? gate;
 

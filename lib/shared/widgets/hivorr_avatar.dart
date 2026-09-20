@@ -40,17 +40,14 @@ class HivorrAvatar extends StatelessWidget {
         decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
         clipBehavior: Clip.antiAlias,
         child: image != null
-            ? Image(
-                image: image!,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-              )
+            ? Image(image: image!, width: size, height: size, fit: BoxFit.cover)
             : Center(
                 child: name.initials.isNotEmpty
                     ? Text(
                         name.initials,
-                        style: context.textTheme.titleMedium?.copyWith(color: fg),
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: fg,
+                        ),
                       )
                     : Icon(Icons.person, color: fg, size: size * 0.5),
               ),

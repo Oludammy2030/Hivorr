@@ -46,33 +46,34 @@ void main() {
       const SingleChildScrollView(child: DepositDetailsPanel()),
       dark: dark,
       providers: <SingleChildWidget>[
-        ChangeNotifierProvider<FinancialDepositProvider>.value(
-          value: provider,
-        ),
+        ChangeNotifierProvider<FinancialDepositProvider>.value(value: provider),
       ],
     );
     return provider;
   }
 
   group('DepositDetailsPanel', () {
-    testWidgets('shows the loading state while the initial load is pending',
-        (WidgetTester tester) async {
+    testWidgets('shows the loading state while the initial load is pending', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester, repo: _BlockingDepositRepo());
       await tester.pump();
 
       expect(find.text('Loading deposits...'), findsOneWidget);
     });
 
-    testWidgets('shows an empty state when no deposits are recorded',
-        (WidgetTester tester) async {
+    testWidgets('shows an empty state when no deposits are recorded', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester);
       await tester.pumpAndSettle();
 
       expect(find.text('No deposits recorded yet'), findsOneWidget);
     });
 
-    testWidgets('lists deposits with formatted amounts and credit status',
-        (WidgetTester tester) async {
+    testWidgets('lists deposits with formatted amounts and credit status', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(
         tester,
         repo: FakeFinancialDepositRepository(
@@ -96,8 +97,9 @@ void main() {
       expect(find.text('Awaiting credit'), findsOneWidget);
     });
 
-    testWidgets('renders a name-match indicator per deposit',
-        (WidgetTester tester) async {
+    testWidgets('renders a name-match indicator per deposit', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(
         tester,
         repo: FakeFinancialDepositRepository(
@@ -114,8 +116,9 @@ void main() {
       expect(find.text('Match: Pending'), findsOneWidget);
     });
 
-    testWidgets('shows the record-deposit showcase alongside the list',
-        (WidgetTester tester) async {
+    testWidgets('shows the record-deposit showcase alongside the list', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester);
       await tester.pumpAndSettle();
 
@@ -123,8 +126,9 @@ void main() {
       expect(find.text('Verify deposit server-side'), findsOneWidget);
     });
 
-    testWidgets('showcase explains the server-side name-verification path',
-        (WidgetTester tester) async {
+    testWidgets('showcase explains the server-side name-verification path', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester);
       await tester.pumpAndSettle();
 
@@ -134,8 +138,9 @@ void main() {
       );
     });
 
-    testWidgets('currency dropdown exposes NGN, GHS, USD, and GBP',
-        (WidgetTester tester) async {
+    testWidgets('currency dropdown exposes NGN, GHS, USD, and GBP', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester);
       await tester.pumpAndSettle();
 
@@ -149,8 +154,9 @@ void main() {
       expect(find.textContaining('British Pound'), findsOneWidget);
     });
 
-    testWidgets('entering an amount previews the credited value',
-        (WidgetTester tester) async {
+    testWidgets('entering an amount previews the credited value', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester);
       await tester.pumpAndSettle();
 
@@ -162,8 +168,9 @@ void main() {
       expect(find.textContaining('NGN'), findsWidgets);
     });
 
-    testWidgets('an empty or invalid amount shows the preview hint',
-        (WidgetTester tester) async {
+    testWidgets('an empty or invalid amount shows the preview hint', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester);
       await tester.pumpAndSettle();
 
@@ -173,8 +180,9 @@ void main() {
       );
     });
 
-    testWidgets('the verify button only confirms valid amounts',
-        (WidgetTester tester) async {
+    testWidgets('the verify button only confirms valid amounts', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(tester);
       await tester.pumpAndSettle();
 
@@ -182,18 +190,25 @@ void main() {
       await tester.ensureVisible(find.text('Verify deposit server-side'));
       await tester.tap(find.text('Verify deposit server-side'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('The processing service will run'), findsNothing);
+      expect(
+        find.textContaining('The processing service will run'),
+        findsNothing,
+      );
 
       // Valid amount → confirmation appears.
       await tester.enterText(find.byType(TextField).first, '150000');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Verify deposit server-side'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('The processing service will run'), findsOneWidget);
+      expect(
+        find.textContaining('The processing service will run'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('shows the error state when the initial load fails',
-        (WidgetTester tester) async {
+    testWidgets('shows the error state when the initial load fails', (
+      WidgetTester tester,
+    ) async {
       const ApiException failure = ApiException(
         kind: ApiExceptionKind.server,
         message: 'deposits down',
@@ -209,8 +224,9 @@ void main() {
       expect(find.text('deposits down'), findsOneWidget);
     });
 
-    testWidgets('draws on the dark theme without hardcoded colors',
-        (WidgetTester tester) async {
+    testWidgets('draws on the dark theme without hardcoded colors', (
+      WidgetTester tester,
+    ) async {
       await pumpPanel(
         tester,
         repo: FakeFinancialDepositRepository(

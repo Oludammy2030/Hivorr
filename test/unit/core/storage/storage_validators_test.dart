@@ -232,8 +232,10 @@ void main() {
         StorageValidators.extensionMatchesMime('a.pdf', 'image/jpeg'),
         isFalse,
       );
-      expect(StorageValidators.extensionMatchesMime('noext', 'image/png'),
-          isFalse);
+      expect(
+        StorageValidators.extensionMatchesMime('noext', 'image/png'),
+        isFalse,
+      );
     });
 
     test('isKnownBucket reflects the allowlist', () {

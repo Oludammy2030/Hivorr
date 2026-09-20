@@ -57,9 +57,7 @@ void main() {
 
   group('SyncEngine — enqueue', () {
     test('persists action when enabled', () async {
-      final dio = buildTestDio(ScriptedAdapter(
-        (_) async => successBody(),
-      ));
+      final dio = buildTestDio(ScriptedAdapter((_) async => successBody()));
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
       final engine_ = buildEngine(
@@ -70,10 +68,9 @@ void main() {
       );
       addTearDown(engine_.dispose);
 
-      final queued = await engine_.enqueue(testAction(
-        endpoint: '/rpc/create',
-        maxRetries: 3,
-      ));
+      final queued = await engine_.enqueue(
+        testAction(endpoint: '/rpc/create', maxRetries: 3),
+      );
 
       expect(queued.id, isNotEmpty);
       expect(queued.status, SyncActionStatus.pending);
@@ -81,9 +78,7 @@ void main() {
     });
 
     test('throws SyncException when feature gate is disabled', () async {
-      final dio = buildTestDio(ScriptedAdapter(
-        (_) async => successBody(),
-      ));
+      final dio = buildTestDio(ScriptedAdapter((_) async => successBody()));
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
       final engine_ = buildEngine(
@@ -103,9 +98,7 @@ void main() {
 
   group('SyncEngine — drain replay success', () {
     test('dequeues action after 2xx response', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
+      final adapter = ScriptedAdapter((_) async => successBody());
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -125,9 +118,7 @@ void main() {
     });
 
     test('processes multiple actions sequentially', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
+      final adapter = ScriptedAdapter((_) async => successBody());
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -184,9 +175,7 @@ void main() {
     });
 
     test('dead-letters after max retries exhausted', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => errorBody(500),
-      );
+      final adapter = ScriptedAdapter((_) async => errorBody(500));
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -232,9 +221,7 @@ void main() {
 
   group('SyncEngine — client error (4xx, non-401/409)', () {
     test('dead-letters without retry on 403 Forbidden', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => errorBody(403),
-      );
+      final adapter = ScriptedAdapter((_) async => errorBody(403));
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -254,9 +241,7 @@ void main() {
     });
 
     test('dead-letters without retry on 422 Validation', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => errorBody(422),
-      );
+      final adapter = ScriptedAdapter((_) async => errorBody(422));
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -278,9 +263,7 @@ void main() {
 
   group('SyncEngine — drain batch size', () {
     test('processes only drainBatchSize actions per cycle', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
+      final adapter = ScriptedAdapter((_) async => successBody());
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -315,9 +298,7 @@ void main() {
 
   group('SyncEngine — drain with empty queue', () {
     test('no-op when queue is empty', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
+      final adapter = ScriptedAdapter((_) async => successBody());
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -339,9 +320,7 @@ void main() {
 
   group('SyncEngine — connectivity-triggered drain', () {
     test('setOnline triggers drain', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
+      final adapter = ScriptedAdapter((_) async => successBody());
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider(
         initial: ConnectivityStatus.offline,
@@ -373,9 +352,7 @@ void main() {
     });
 
     test('setOffline sets status to offline', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
+      final adapter = ScriptedAdapter((_) async => successBody());
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -399,9 +376,7 @@ void main() {
 
   group('SyncEngine — disabled engine', () {
     test('drain is a no-op when disabled', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
+      final adapter = ScriptedAdapter((_) async => successBody());
       final dio = buildTestDio(adapter);
       final connectivity = ManualConnectivityProvider();
       final statusProvider = SyncStatusProvider();
@@ -422,40 +397,44 @@ void main() {
   });
 
   group('SyncEngine — connectivity stream error', () {
-    test('stream error sets status to error; engine remains functional', () async {
-      final adapter = ScriptedAdapter(
-        (_) async => successBody(),
-      );
-      final dio = buildTestDio(adapter);
-      final controller = StreamController<ConnectivityStatus>();
-      final connectivity = _ErrorConnectivityProvider(controller);
-      final statusProvider = SyncStatusProvider();
-      final engine_ = buildEngine(
-        dio: dio,
-        enabled: true,
-        connectivity: connectivity,
-        statusProvider: statusProvider,
-      );
-      addTearDown(engine_.dispose);
+    test(
+      'stream error sets status to error; engine remains functional',
+      () async {
+        final adapter = ScriptedAdapter((_) async => successBody());
+        final dio = buildTestDio(adapter);
+        final controller = StreamController<ConnectivityStatus>();
+        final connectivity = _ErrorConnectivityProvider(controller);
+        final statusProvider = SyncStatusProvider();
+        final engine_ = buildEngine(
+          dio: dio,
+          enabled: true,
+          connectivity: connectivity,
+          statusProvider: statusProvider,
+        );
+        addTearDown(engine_.dispose);
 
-      // Allow initial event to settle.
-      await Future<void>.delayed(Duration.zero);
+        // Allow initial event to settle.
+        await Future<void>.delayed(Duration.zero);
 
-      // Emit an error on the stream.
-      controller.addError('Platform connectivity error');
-      await Future<void>.delayed(Duration.zero);
+        // Emit an error on the stream.
+        controller.addError('Platform connectivity error');
+        await Future<void>.delayed(Duration.zero);
 
-      expect(statusProvider.status, SyncStatus.error);
-      expect(statusProvider.lastError, isNotNull);
-      expect(statusProvider.lastError!.message, contains('Connectivity stream error'));
+        expect(statusProvider.status, SyncStatus.error);
+        expect(statusProvider.lastError, isNotNull);
+        expect(
+          statusProvider.lastError!.message,
+          contains('Connectivity stream error'),
+        );
 
-      // Engine remains functional for manual drain.
-      await engine_.enqueue(testAction(maxRetries: 3));
-      await engine_.drain();
+        // Engine remains functional for manual drain.
+        await engine_.enqueue(testAction(maxRetries: 3));
+        await engine_.drain();
 
-      expect(adapter.captured.length, 1);
-      expect(statusProvider.pendingCount, 0);
-    });
+        expect(adapter.captured.length, 1);
+        expect(statusProvider.pendingCount, 0);
+      },
+    );
   });
 }
 

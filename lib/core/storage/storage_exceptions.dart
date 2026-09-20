@@ -17,12 +17,12 @@ class StorageException implements Exception {
 
   /// Builds a [StorageException] from an [ApiException], preserving kind/code.
   factory StorageException.fromApi(ApiException exception) => StorageException(
-        kind: exception.kind,
-        message: exception.message,
-        code: exception.code,
-        statusCode: exception.statusCode,
-        data: exception.data,
-      );
+    kind: exception.kind,
+    message: exception.message,
+    code: exception.code,
+    statusCode: exception.statusCode,
+    data: exception.data,
+  );
 
   /// The stable failure category.
   final ApiExceptionKind kind;
@@ -54,10 +54,7 @@ class StorageValidationException extends StorageException {
     this.field,
     super.code = 'PLT003',
     super.statusCode,
-  }) : super(
-          kind: ApiExceptionKind.validation,
-          message: message,
-        );
+  }) : super(kind: ApiExceptionKind.validation, message: message);
 
   /// The offending field (e.g. `mimeType`, `byteLength`, `path`), when known.
   final String? field;
@@ -72,10 +69,7 @@ class StorageAuthException extends StorageException {
     String message, {
     super.code = 'PLT001',
     super.statusCode,
-  }) : super(
-          kind: ApiExceptionKind.auth,
-          message: message,
-        );
+  }) : super(kind: ApiExceptionKind.auth, message: message);
 
   @override
   String toString() => 'StorageAuthException(${super.toString()})';
@@ -90,10 +84,7 @@ class StorageForbiddenException extends StorageException {
     String message, {
     super.code = 'PLT002',
     super.statusCode,
-  }) : super(
-          kind: ApiExceptionKind.forbidden,
-          message: message,
-        );
+  }) : super(kind: ApiExceptionKind.forbidden, message: message);
 
   @override
   String toString() => 'StorageForbiddenException(${super.toString()})';
@@ -105,10 +96,7 @@ class StorageNotFoundException extends StorageException {
     String message, {
     super.code = 'PLT004',
     super.statusCode,
-  }) : super(
-          kind: ApiExceptionKind.notFound,
-          message: message,
-        );
+  }) : super(kind: ApiExceptionKind.notFound, message: message);
 
   @override
   String toString() => 'StorageNotFoundException(${super.toString()})';

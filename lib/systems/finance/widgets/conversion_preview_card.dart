@@ -58,7 +58,10 @@ class ConversionPreviewCard extends StatelessWidget {
           ],
           Text('You receive', style: context.textTheme.labelMedium),
           Text(
-            BalanceFormatter.formatBalance(preview.toAmount, preview.toCurrency),
+            BalanceFormatter.formatBalance(
+              preview.toAmount,
+              preview.toCurrency,
+            ),
             style: context.textTheme.titleMedium?.copyWith(
               color: context.colorScheme.primary,
             ),

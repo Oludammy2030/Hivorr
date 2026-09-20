@@ -51,8 +51,9 @@ class HivorrEmptyState extends StatelessWidget {
               const SizedBox(height: HivorrSpacing.xs),
               Text(
                 subtitle!,
-                style: context.textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

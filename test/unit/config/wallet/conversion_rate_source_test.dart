@@ -20,12 +20,11 @@ void main() {
     },
   );
 
-  const WalletConversionPairsConfig disabledConfig = WalletConversionPairsConfig(
-    enabled: false,
-    baseCrossRates: <String, double>{
-      'NGN|USD': 0.0007,
-    },
-  );
+  const WalletConversionPairsConfig disabledConfig =
+      WalletConversionPairsConfig(
+        enabled: false,
+        baseCrossRates: <String, double>{'NGN|USD': 0.0007},
+      );
 
   group('WalletConversionPairsConfig.directedRate', () {
     test('returns the stored base rate for the forward direction', () {
@@ -33,11 +32,13 @@ void main() {
     });
 
     test('derives the inverse via the guarded reciprocal', () {
-      expect(enabledConfig.directedRate('USD', 'NGN'), closeTo(1 / 0.0007, 1e-12));
+      expect(
+        enabledConfig.directedRate('USD', 'NGN'),
+        closeTo(1 / 0.0007, 1e-12),
+      );
     });
 
-    test('derives the reciprocal for a lexicographically-uppercase pair',
-        () {
+    test('derives the reciprocal for a lexicographically-uppercase pair', () {
       expect(
         enabledConfig.directedRate('NGN', 'GHS'),
         closeTo(1 / 1111.1111111111111, 1e-12),
@@ -53,15 +54,17 @@ void main() {
       expect(enabledConfig.directedRate('NGN', 'XYZ'), isNull);
     });
 
-    test('returns null for non-positive base rates (never invents a fallback)',
-        () {
-      const WalletConversionPairsConfig bad = WalletConversionPairsConfig(
-        enabled: true,
-        baseCrossRates: <String, double>{'NGN|USD': 0},
-      );
-      expect(bad.directedRate('NGN', 'USD'), isNull);
-      expect(bad.directedRate('USD', 'NGN'), isNull);
-    });
+    test(
+      'returns null for non-positive base rates (never invents a fallback)',
+      () {
+        const WalletConversionPairsConfig bad = WalletConversionPairsConfig(
+          enabled: true,
+          baseCrossRates: <String, double>{'NGN|USD': 0},
+        );
+        expect(bad.directedRate('NGN', 'USD'), isNull);
+        expect(bad.directedRate('USD', 'NGN'), isNull);
+      },
+    );
 
     test('returns null for a missing pair', () {
       expect(enabledConfig.directedRate('GBP', 'USD'), isNull);
@@ -75,12 +78,7 @@ void main() {
       expect(pairs, hasLength(4));
       expect(
         pairs.map((ConversionPair p) => '${p.fromCode}|${p.toCode}').toSet(),
-        <String>{
-          'NGN|USD',
-          'USD|NGN',
-          'GHS|NGN',
-          'NGN|GHS',
-        },
+        <String>{'NGN|USD', 'USD|NGN', 'GHS|NGN', 'NGN|GHS'},
       );
     });
 
@@ -100,59 +98,69 @@ void main() {
       expect(dirty.availablePairs(), hasLength(2));
     });
 
-    test('the seeded authority exposes 12 directed pairs (6 base + 6 inverse)',
-        () {
-      const WalletConversionPairsConfig full = WalletConversionPairsConfig(
-        enabled: true,
-        baseCrossRates: WalletConversionRatesSeed.baseCrossRates,
-      );
-      final List<ConversionPair> pairs = full.availablePairs();
+    test(
+      'the seeded authority exposes 12 directed pairs (6 base + 6 inverse)',
+      () {
+        const WalletConversionPairsConfig full = WalletConversionPairsConfig(
+          enabled: true,
+          baseCrossRates: WalletConversionRatesSeed.baseCrossRates,
+        );
+        final List<ConversionPair> pairs = full.availablePairs();
 
-      expect(pairs, hasLength(12));
-      expect(
-        pairs.map((ConversionPair p) => '${p.fromCode}|${p.toCode}').toSet(),
-        <String>{
-          'NGN|USD',
-          'USD|NGN',
-          'GHS|NGN',
-          'NGN|GHS',
-          'NGN|GBP',
-          'GBP|NGN',
-          'GHS|USD',
-          'USD|GHS',
-          'GHS|GBP',
-          'GBP|GHS',
-          'USD|GBP',
-          'GBP|USD',
-        },
-      );
-      expect(
-        pairs.where((ConversionPair p) => p.fromCode == p.toCode),
-        isEmpty,
-      );
-    });
+        expect(pairs, hasLength(12));
+        expect(
+          pairs.map((ConversionPair p) => '${p.fromCode}|${p.toCode}').toSet(),
+          <String>{
+            'NGN|USD',
+            'USD|NGN',
+            'GHS|NGN',
+            'NGN|GHS',
+            'NGN|GBP',
+            'GBP|NGN',
+            'GHS|USD',
+            'USD|GHS',
+            'GHS|GBP',
+            'GBP|GHS',
+            'USD|GBP',
+            'GBP|USD',
+          },
+        );
+        expect(
+          pairs.where((ConversionPair p) => p.fromCode == p.toCode),
+          isEmpty,
+        );
+      },
+    );
   });
 
   group('ConfigConversionRateSource', () {
     test('returns the configured rate when enabled and supported', () async {
-      final ConfigConversionRateSource source =
-          ConfigConversionRateSource(enabledConfig);
-      expect(await source.rateFor(fromCurrency: 'NGN', toCurrency: 'USD'), 0.0007);
-    });
-
-    test('fails closed with ConversionRateUnavailableException when disabled',
-        () async {
-      final ConfigConversionRateSource source =
-          ConfigConversionRateSource(disabledConfig);
-      await expectLater(
-        source.rateFor(fromCurrency: 'NGN', toCurrency: 'USD'),
-        throwsA(isA<ConversionRateUnavailableException>()),
+      final ConfigConversionRateSource source = ConfigConversionRateSource(
+        enabledConfig,
+      );
+      expect(
+        await source.rateFor(fromCurrency: 'NGN', toCurrency: 'USD'),
+        0.0007,
       );
     });
 
+    test(
+      'fails closed with ConversionRateUnavailableException when disabled',
+      () async {
+        final ConfigConversionRateSource source = ConfigConversionRateSource(
+          disabledConfig,
+        );
+        await expectLater(
+          source.rateFor(fromCurrency: 'NGN', toCurrency: 'USD'),
+          throwsA(isA<ConversionRateUnavailableException>()),
+        );
+      },
+    );
+
     test('fails closed for unsupported/self/missing pairs', () async {
-      final ConfigConversionRateSource source =
-          ConfigConversionRateSource(enabledConfig);
+      final ConfigConversionRateSource source = ConfigConversionRateSource(
+        enabledConfig,
+      );
       await expectLater(
         source.rateFor(fromCurrency: 'GBP', toCurrency: 'USD'),
         throwsA(isA<ConversionRateUnavailableException>()),

@@ -17,8 +17,9 @@ void main() {
   }) async {
     final FakeAdminReviewRepository resolvedRepo =
         repo ?? FakeAdminReviewRepository();
-    final AdminReviewProvider provider =
-        AdminReviewProvider(repo: resolvedRepo);
+    final AdminReviewProvider provider = AdminReviewProvider(
+      repo: resolvedRepo,
+    );
     await pumpApp(
       tester,
       const AdminReviewQueueScreen(),
@@ -43,8 +44,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows the admin gate when the user is not an admin',
-        (WidgetTester tester) async {
+    testWidgets('shows the admin gate when the user is not an admin', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeAdminReviewRepository(isAdmin: false),
@@ -53,8 +55,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows the empty state when the queue is clear',
-        (WidgetTester tester) async {
+    testWidgets('shows the empty state when the queue is clear', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeAdminReviewRepository(queue: const <AdminReviewQueueEntry>[]),
@@ -68,10 +71,7 @@ void main() {
         tester,
         repo: FakeAdminReviewRepository(
           queue: <AdminReviewQueueEntry>[
-            adminQueueEntry(
-              submissionId: 'sub-1',
-              entityName: 'Test Entity',
-            ),
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Test Entity'),
           ],
         ),
       );
@@ -82,15 +82,13 @@ void main() {
   });
 
   group('initial load', () {
-    testWidgets('shows the loading state until the queue is fetched',
-        (WidgetTester tester) async {
+    testWidgets('shows the loading state until the queue is fetched', (
+      WidgetTester tester,
+    ) async {
       final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
-        queue: <AdminReviewQueueEntry>[
-          adminQueueEntry(submissionId: 'sub-1'),
-        ],
+        queue: <AdminReviewQueueEntry>[adminQueueEntry(submissionId: 'sub-1')],
       );
-      final AdminReviewProvider provider =
-          AdminReviewProvider(repo: repo);
+      final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
       await pumpApp(
         tester,
         const AdminReviewQueueScreen(),
@@ -105,8 +103,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('fetches the queue on first build when empty',
-        (WidgetTester tester) async {
+    testWidgets('fetches the queue on first build when empty', (
+      WidgetTester tester,
+    ) async {
       final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
         queue: <AdminReviewQueueEntry>[
           adminQueueEntry(submissionId: 'sub-1', entityName: 'Test Entity'),

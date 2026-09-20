@@ -31,28 +31,27 @@ class SupabaseOnboardingRemoteDataSource extends BaseApiService
 
   @override
   Future<OnboardingStatusDto> getStatus() => _guard(() async {
-        final Map<String, dynamic> envelope = await supabase
-            .rpc<Map<String, dynamic>>('entity_onboarding_status_get');
-        return OnboardingStatusDto.fromJson(_unwrap(envelope));
-      });
+    final Map<String, dynamic> envelope = await supabase
+        .rpc<Map<String, dynamic>>('entity_onboarding_status_get');
+    return OnboardingStatusDto.fromJson(_unwrap(envelope));
+  });
 
   @override
   Future<OnboardingStatusDto> updateStatus({
     String? capability,
     bool? completed,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{
-          'p_capability': ?capability,
-          'p_completed': ?completed,
-        };
-        final Map<String, dynamic> envelope = await supabase
-            .rpc<Map<String, dynamic>>(
-              'entity_onboarding_status_update',
-              params: params,
-            );
-        return OnboardingStatusDto.fromJson(_unwrap(envelope));
-      });
+  }) => _guard(() async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'p_capability': ?capability,
+      'p_completed': ?completed,
+    };
+    final Map<String, dynamic> envelope = await supabase
+        .rpc<Map<String, dynamic>>(
+          'entity_onboarding_status_update',
+          params: params,
+        );
+    return OnboardingStatusDto.fromJson(_unwrap(envelope));
+  });
 
   /// Extracts the `data` object from the canonical `{success, code, message,
   /// data}` RPC envelope.
@@ -82,11 +81,11 @@ class SupabaseOnboardingRemoteDataSource extends BaseApiService
   }
 
   static ApiExceptionKind _kindFor(String? code) => switch (code) {
-        'PLT001' => ApiExceptionKind.auth,
-        'PLT002' => ApiExceptionKind.forbidden,
-        'PLT003' => ApiExceptionKind.validation,
-        'PLT004' => ApiExceptionKind.notFound,
-        'PLT005' => ApiExceptionKind.conflict,
-        _ => ApiExceptionKind.server,
-      };
+    'PLT001' => ApiExceptionKind.auth,
+    'PLT002' => ApiExceptionKind.forbidden,
+    'PLT003' => ApiExceptionKind.validation,
+    'PLT004' => ApiExceptionKind.notFound,
+    'PLT005' => ApiExceptionKind.conflict,
+    _ => ApiExceptionKind.server,
+  };
 }

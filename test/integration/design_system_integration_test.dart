@@ -101,23 +101,27 @@ void main() {
         expect(bg, AppTheme.lightTheme.colorScheme.primary);
       });
 
-      testWidgets('renders HivorrTextField without overflow and applies tokens', (
-        WidgetTester tester,
-      ) async {
-        await _pumpScreenAt(
-          tester,
-          const HivorrTextField(label: 'Email', hint: 'you@example.com'),
-          width: 390,
-          height: 844,
-        );
-        await tester.pump();
+      testWidgets(
+        'renders HivorrTextField without overflow and applies tokens',
+        (WidgetTester tester) async {
+          await _pumpScreenAt(
+            tester,
+            const HivorrTextField(label: 'Email', hint: 'you@example.com'),
+            width: 390,
+            height: 844,
+          );
+          await tester.pump();
 
-        expect(tester.takeException(), isNull);
-        expect(find.byType(HivorrTextField), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          expect(find.byType(HivorrTextField), findsOneWidget);
 
-        final TextField tf = tester.widget<TextField>(find.byType(TextField));
-        expect(tf.decoration?.fillColor, AppTheme.lightTheme.colorScheme.surface);
-      });
+          final TextField tf = tester.widget<TextField>(find.byType(TextField));
+          expect(
+            tf.decoration?.fillColor,
+            AppTheme.lightTheme.colorScheme.surface,
+          );
+        },
+      );
 
       testWidgets('renders HivorrCard without overflow and applies tokens', (
         WidgetTester tester,
@@ -327,7 +331,10 @@ void main() {
             matching: find.byType(Scaffold),
           ),
         );
-        expect(scaffold.backgroundColor, AppTheme.lightTheme.colorScheme.surface);
+        expect(
+          scaffold.backgroundColor,
+          AppTheme.lightTheme.colorScheme.surface,
+        );
       });
     });
 
@@ -453,10 +460,22 @@ void _scanWidget(Widget widget, List<String> violations) {
     final InputDecoration d = widget.decoration;
     _checkColor(d.fillColor, 'InputDecoration.fillColor', violations);
     _checkInputBorder(d.border, 'InputDecoration.border', violations);
-    _checkInputBorder(d.enabledBorder, 'InputDecoration.enabledBorder', violations);
-    _checkInputBorder(d.focusedBorder, 'InputDecoration.focusedBorder', violations);
+    _checkInputBorder(
+      d.enabledBorder,
+      'InputDecoration.enabledBorder',
+      violations,
+    );
+    _checkInputBorder(
+      d.focusedBorder,
+      'InputDecoration.focusedBorder',
+      violations,
+    );
     _checkInputBorder(d.errorBorder, 'InputDecoration.errorBorder', violations);
-    _checkColor(d.labelStyle?.color, 'InputDecoration.labelStyle.color', violations);
+    _checkColor(
+      d.labelStyle?.color,
+      'InputDecoration.labelStyle.color',
+      violations,
+    );
     _checkFontFamily(
       d.labelStyle?.fontFamily,
       'InputDecoration.labelStyle',
@@ -487,7 +506,11 @@ void _checkInputBorder(
   }
 }
 
-void _checkFontFamily(String? fontFamily, String where, List<String> violations) {
+void _checkFontFamily(
+  String? fontFamily,
+  String where,
+  List<String> violations,
+) {
   if (fontFamily != null &&
       fontFamily != AppTextTheme.fontFamily &&
       !_allowedFontFamilies.contains(fontFamily)) {

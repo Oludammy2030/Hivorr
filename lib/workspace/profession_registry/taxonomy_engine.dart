@@ -55,14 +55,17 @@ class TaxonomyEngine {
       return scope;
     }
     final String needle = trimmed
-        .substring(0, trimmed.length > maxSearchQueryLength
-            ? maxSearchQueryLength
-            : trimmed.length)
+        .substring(
+          0,
+          trimmed.length > maxSearchQueryLength
+              ? maxSearchQueryLength
+              : trimmed.length,
+        )
         .toLowerCase();
     return scope
         .where((Profession p) {
-          final String haystack =
-              '${p.name} ${p.slug} ${p.description ?? ''}'.toLowerCase();
+          final String haystack = '${p.name} ${p.slug} ${p.description ?? ''}'
+              .toLowerCase();
           return haystack.contains(needle);
         })
         .toList(growable: false);
@@ -77,8 +80,9 @@ class TaxonomyEngine {
   Future<Industry?> industryForProfession(String professionId) async {
     final List<Industry> industries = await repository.getIndustries();
     for (final Industry industry in industries) {
-      final List<Profession> professions =
-          await repository.getProfessions(industryId: industry.id);
+      final List<Profession> professions = await repository.getProfessions(
+        industryId: industry.id,
+      );
       for (final Profession profession in professions) {
         if (profession.id == professionId) {
           return industry;

@@ -29,13 +29,14 @@ class SupabasePortfolioRemoteDataSource extends BaseApiService
   @override
   Future<PublicProfileDto> fetchPublicProfile(String entityId) =>
       _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'portfolio_public_profile_get',
-          params: <String, dynamic>{'p_entity_id': entityId},
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+              'portfolio_public_profile_get',
+              params: <String, dynamic>{'p_entity_id': entityId},
+            );
+        final Map<String, dynamic> data = PortfolioEnvelopeParser.unwrap(
+          response,
         );
-        final Map<String, dynamic> data =
-            PortfolioEnvelopeParser.unwrap(response);
         return PublicProfileDto.fromJson(data);
       });
 }

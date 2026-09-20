@@ -19,10 +19,14 @@ class FinanceHistoryBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
 
-    final int payoutCount =
-        context.watch<FinancialPayoutProvider>().accounts.length;
-    final int depositCount =
-        context.watch<FinancialDepositProvider>().deposits.length;
+    final int payoutCount = context
+        .watch<FinancialPayoutProvider>()
+        .accounts
+        .length;
+    final int depositCount = context
+        .watch<FinancialDepositProvider>()
+        .deposits
+        .length;
 
     return Container(
       padding: const EdgeInsets.symmetric(

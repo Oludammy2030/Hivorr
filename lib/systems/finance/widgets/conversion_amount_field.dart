@@ -27,8 +27,9 @@ class ConversionAmountField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SupportedCurrency? currency =
-        currencyCode == null ? null : SupportedCurrency.fromCode(currencyCode!);
+    final SupportedCurrency? currency = currencyCode == null
+        ? null
+        : SupportedCurrency.fromCode(currencyCode!);
     return HivorrTextField(
       controller: controller,
       label: currency == null ? 'Amount' : 'Amount (${currency.code})',

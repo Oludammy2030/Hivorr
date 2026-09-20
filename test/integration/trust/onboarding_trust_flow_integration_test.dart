@@ -135,22 +135,23 @@ void main() {
       expect(await stack.service.isResumable('u1'), isFalse);
     });
 
-    test('DoD-VP1b: exit at step 3 → relaunch resumes at same step',
-        () async {
+    test('DoD-VP1b: exit at step 3 → relaunch resumes at same step', () async {
       final InMemoryOnboardingProgressStore store =
           InMemoryOnboardingProgressStore();
 
       // Simulate partial progress persisted (profile → industry done, exit
       // resumes at industry's follow-on: identityDocument).
-      await store.save(OnboardingProgress(
-        entityId: 'u1',
-        step: OnboardingStepCode.identityDocument,
-        completedSteps: const <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-          OnboardingStepCode.industry,
-        ],
-      ));
+      await store.save(
+        OnboardingProgress(
+          entityId: 'u1',
+          step: OnboardingStepCode.identityDocument,
+          completedSteps: const <OnboardingStepCode>[
+            OnboardingStepCode.profile,
+            OnboardingStepCode.capability,
+            OnboardingStepCode.industry,
+          ],
+        ),
+      );
 
       final stack = buildOnboardingStack(store: store);
       addTearDown(stack.provider.dispose);
@@ -254,14 +255,16 @@ void main() {
       addTearDown(stack.provider.dispose);
 
       // Simulate an incomplete entity at home (resume point reached: industry).
-      await store.save(OnboardingProgress(
-        entityId: 'u1',
-        step: OnboardingStepCode.industry,
-        completedSteps: const <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-        ],
-      ));
+      await store.save(
+        OnboardingProgress(
+          entityId: 'u1',
+          step: OnboardingStepCode.industry,
+          completedSteps: const <OnboardingStepCode>[
+            OnboardingStepCode.profile,
+            OnboardingStepCode.capability,
+          ],
+        ),
+      );
 
       await stack.hydrate('u1');
 

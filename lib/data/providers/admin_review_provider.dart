@@ -18,8 +18,8 @@ class AdminReviewProvider extends ChangeNotifier {
   AdminReviewProvider({
     required AdminReviewRepository repo,
     HivorrLogger? logger,
-  })  : _repo = repo,
-        _logger = logger;
+  }) : _repo = repo,
+       _logger = logger;
 
   final AdminReviewRepository _repo;
   final HivorrLogger? _logger;
@@ -96,8 +96,10 @@ class AdminReviewProvider extends ChangeNotifier {
       _currentOffset = items.length;
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning('Admin queue load failed',
-          <String, Object?>{'kind': e.kind.name, 'code': e.code});
+      _logger?.warning('Admin queue load failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _loadingQueue = false;
       notifyListeners();
@@ -135,27 +137,31 @@ class AdminReviewProvider extends ChangeNotifier {
       await _repo.startReview(submissionId);
       _activeSubmissionId = submissionId;
       // Update the queue entry status in-place.
-      _queue = _queue.map((AdminReviewQueueEntry e) {
-        if (e.submissionId == submissionId) {
-          return AdminReviewQueueEntry(
-            submissionId: e.submissionId,
-            entityId: e.entityId,
-            entityName: e.entityName,
-            credentialId: e.credentialId,
-            credentialType: e.credentialType,
-            credentialName: e.credentialName,
-            submissionType: e.submissionType,
-            status: VerificationStatusKind.inReview.name,
-            submittedAt: e.submittedAt,
-            entityAvatarPath: e.entityAvatarPath,
-          );
-        }
-        return e;
-      }).toList(growable: false);
+      _queue = _queue
+          .map((AdminReviewQueueEntry e) {
+            if (e.submissionId == submissionId) {
+              return AdminReviewQueueEntry(
+                submissionId: e.submissionId,
+                entityId: e.entityId,
+                entityName: e.entityName,
+                credentialId: e.credentialId,
+                credentialType: e.credentialType,
+                credentialName: e.credentialName,
+                submissionType: e.submissionType,
+                status: VerificationStatusKind.inReview.name,
+                submittedAt: e.submittedAt,
+                entityAvatarPath: e.entityAvatarPath,
+              );
+            }
+            return e;
+          })
+          .toList(growable: false);
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning('Start review failed',
-          <String, Object?>{'kind': e.kind.name, 'code': e.code});
+      _logger?.warning('Start review failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _acting = false;
       notifyListeners();
@@ -163,7 +169,10 @@ class AdminReviewProvider extends ChangeNotifier {
   }
 
   /// Approves a submission and refreshes the queue.
-  Future<void> approveSubmission(String submissionId, {String notes = ''}) async {
+  Future<void> approveSubmission(
+    String submissionId, {
+    String notes = '',
+  }) async {
     _acting = true;
     _error = null;
     notifyListeners();
@@ -178,8 +187,10 @@ class AdminReviewProvider extends ChangeNotifier {
       }
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning('Approve failed',
-          <String, Object?>{'kind': e.kind.name, 'code': e.code});
+      _logger?.warning('Approve failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _acting = false;
       notifyListeners();
@@ -210,8 +221,10 @@ class AdminReviewProvider extends ChangeNotifier {
       }
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning('Reject failed',
-          <String, Object?>{'kind': e.kind.name, 'code': e.code});
+      _logger?.warning('Reject failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _acting = false;
       notifyListeners();

@@ -18,10 +18,7 @@ import 'package:provider/provider.dart';
 /// RPC (via [FinancialPayoutProvider]). Uses only [AppTheme] tokens
 /// (AGENT.md Rule 5).
 class PayoutAccountFormView extends StatefulWidget {
-  const PayoutAccountFormView({
-    super.key,
-    this.onBound,
-  });
+  const PayoutAccountFormView({super.key, this.onBound});
 
   /// Invoked with the server-confirmed account after a successful bind.
   final ValueChanged<PayoutAccount>? onBound;
@@ -49,8 +46,8 @@ class _PayoutAccountFormViewState extends State<PayoutAccountFormView> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final FocusScopeNode focus = FocusScope.of(context);
     if (focus.hasFocus) focus.unfocus();
-    final FinancialPayoutProvider provider =
-        context.read<FinancialPayoutProvider>();
+    final FinancialPayoutProvider provider = context
+        .read<FinancialPayoutProvider>();
     final PayoutAccount? account = await provider.bindAccount(
       currencyCode: _currencyCode,
       bankName: _bankName.text,
@@ -70,8 +67,8 @@ class _PayoutAccountFormViewState extends State<PayoutAccountFormView> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final FinancialPayoutProvider provider =
-        context.watch<FinancialPayoutProvider>();
+    final FinancialPayoutProvider provider = context
+        .watch<FinancialPayoutProvider>();
 
     return Form(
       key: _formKey,

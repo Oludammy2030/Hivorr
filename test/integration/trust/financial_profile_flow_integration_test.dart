@@ -26,11 +26,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   // ---- Scripted "server" state -------------------------------------------
   bool profileExists = false;
@@ -38,42 +38,43 @@ void main() {
   final List<Map<String, dynamic>> balanceRows = <Map<String, dynamic>>[];
 
   Map<String, dynamic> profileData() => <String, dynamic>{
-        'profile': profileExists
-            ? <String, dynamic>{
-                'id': 'p1',
+    'profile': profileExists
+        ? <String, dynamic>{
+            'id': 'p1',
+            'entity_id': 'u1',
+            'status': 'active',
+            'default_currency': defaultCurrency,
+            'created_at': '2026-01-01T00:00:00.000Z',
+            'currency_accounts': <dynamic>[
+              <String, dynamic>{
+                'id': 'a1',
+                'financial_profile_id': 'p1',
                 'entity_id': 'u1',
-                'status': 'active',
-                'default_currency': defaultCurrency,
-                'created_at': '2026-01-01T00:00:00.000Z',
-                'currency_accounts': <dynamic>[
-                  <String, dynamic>{
-                    'id': 'a1',
-                    'financial_profile_id': 'p1',
-                    'entity_id': 'u1',
-                    'currency_code': defaultCurrency,
-                    'account_status': 'active',
-                    'receiving_account_number': null,
-                    'receiving_bank_name': null,
-                    'activated_at': '2026-01-02T00:00:00.000Z',
-                  },
-                ],
-              }
-            : null,
-      };
+                'currency_code': defaultCurrency,
+                'account_status': 'active',
+                'receiving_account_number': null,
+                'receiving_bank_name': null,
+                'activated_at': '2026-01-02T00:00:00.000Z',
+              },
+            ],
+          }
+        : null,
+  };
 
   Map<String, dynamic> statusData() => <String, dynamic>{
-        'default_currency': defaultCurrency,
-        'profile_status': profileExists ? 'active' : 'closed',
-        'balances': profileExists ? balanceRows : <dynamic>[],
-        'active_escrow_count': 0,
-        'cashout_limit': 100000,
-      };
+    'default_currency': defaultCurrency,
+    'profile_status': profileExists ? 'active' : 'closed',
+    'balances': profileExists ? balanceRows : <dynamic>[],
+    'active_escrow_count': 0,
+    'cashout_limit': 100000,
+  };
 
   ({
     FinancialService service,
     FinancialProvider provider,
     FinancialRepositoryImpl repository,
-  }) buildFlow({
+  })
+  buildFlow({
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
   }) {
     final defaults = <String, Object? Function(Map<String, dynamic>)>{
@@ -98,19 +99,19 @@ void main() {
           'balance_id': 'b1',
         });
       },
-      'financial_balance_get': (Map<String, dynamic> body) => ok(
-            <String, dynamic>{
-              'currency_code': body['p_currency_code'],
-              'available_balance': 0,
-              'held_balance': 0,
-              'pending_balance': 0,
-              'total_deposited': 0,
-              'total_withdrawn': 0,
-            },
-          ),
+      'financial_balance_get': (Map<String, dynamic> body) =>
+          ok(<String, dynamic>{
+            'currency_code': body['p_currency_code'],
+            'available_balance': 0,
+            'held_balance': 0,
+            'pending_balance': 0,
+            'total_deposited': 0,
+            'total_withdrawn': 0,
+          }),
     };
     defaults.addAll(
-        rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final remote = SupabaseFinancialRemoteDataSource(
       dio: Dio(),
       supabase: MockSupabaseClientFactory.create(
@@ -141,8 +142,9 @@ void main() {
       expect(initial, isNull);
 
       // 2. Create profile with default NGN.
-      final FinancialProfile created =
-          await flow.repository.createProfile(defaultCurrency: 'NGN');
+      final FinancialProfile created = await flow.repository.createProfile(
+        defaultCurrency: 'NGN',
+      );
       expect(created.status, 'active');
       expect(created.defaultCurrency, 'NGN');
 
@@ -202,13 +204,15 @@ void main() {
       final FinancialStatus status = await flow.repository.getStatus();
       expect(status.balances, hasLength(2));
 
-      final Balance ngn = status.balances
-          .firstWhere((Balance b) => b.currencyCode == 'NGN');
+      final Balance ngn = status.balances.firstWhere(
+        (Balance b) => b.currencyCode == 'NGN',
+      );
       expect(ngn.availableBalance, 50000);
       expect(ngn.heldBalance, 10000);
 
-      final Balance usd = status.balances
-          .firstWhere((Balance b) => b.currencyCode == 'USD');
+      final Balance usd = status.balances.firstWhere(
+        (Balance b) => b.currencyCode == 'USD',
+      );
       expect(usd.availableBalance, 200);
       expect(usd.pendingBalance, 50);
     });
@@ -216,9 +220,8 @@ void main() {
     test('PLT004 not-found returns null profile', () async {
       final flow = buildFlow(
         rpcHandlers: {
-          'financial_profile_get': (_) => ok(<String, dynamic>{
-                'profile': null,
-              }),
+          'financial_profile_get': (_) =>
+              ok(<String, dynamic>{'profile': null}),
         },
       );
       addTearDown(flow.provider.dispose);

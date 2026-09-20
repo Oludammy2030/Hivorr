@@ -15,10 +15,7 @@ import 'package:hivorr/shared/validators/password_policy.dart';
 /// [PasswordPolicy] — never from length alone — and is guidance only; Supabase
 /// remains the authoritative enforcement layer.
 class PasswordStrengthIndicator extends StatelessWidget {
-  const PasswordStrengthIndicator({
-    super.key,
-    required this.strength,
-  });
+  const PasswordStrengthIndicator({super.key, required this.strength});
 
   /// The current classification of the password input.
   final PasswordStrength strength;

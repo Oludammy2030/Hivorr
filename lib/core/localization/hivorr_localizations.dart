@@ -1,9 +1,5 @@
 import 'package:flutter/widgets.dart'
-    show
-        BuildContext,
-        Localizations,
-        LocalizationsDelegate,
-        Locale;
+    show BuildContext, Localizations, LocalizationsDelegate, Locale;
 
 import 'localization_exception.dart';
 import 'localization_service.dart';
@@ -16,8 +12,8 @@ import 'supported_locales.dart';
 /// a missing/malformed file yields an empty table rather than crashing the
 /// widget tree.
 class HivorrLocalizations extends LocalizationsDelegate<HivorrLocalizations> {
-  const HivorrLocalizations(
-    [this._active = const <String, String>{},
+  const HivorrLocalizations([
+    this._active = const <String, String>{},
     this._fallback = const <String, String>{},
     this._locale,
   ]);
@@ -32,8 +28,9 @@ class HivorrLocalizations extends LocalizationsDelegate<HivorrLocalizations> {
   static const HivorrLocalizations delegate = HivorrLocalizations();
 
   @override
-  bool isSupported(Locale locale) => HivorrSupportedLocales.supported
-      .any((Locale l) => l.languageCode == locale.languageCode);
+  bool isSupported(Locale locale) => HivorrSupportedLocales.supported.any(
+    (Locale l) => l.languageCode == locale.languageCode,
+  );
 
   @override
   Future<HivorrLocalizations> load(Locale locale) async {
@@ -45,8 +42,9 @@ class HivorrLocalizations extends LocalizationsDelegate<HivorrLocalizations> {
       active = const <String, String>{};
     }
     try {
-      fallback =
-          await _service.loadTranslations(HivorrSupportedLocales.defaultLocale);
+      fallback = await _service.loadTranslations(
+        HivorrSupportedLocales.defaultLocale,
+      );
     } on LocalizationException {
       fallback = const <String, String>{};
     }
@@ -58,8 +56,10 @@ class HivorrLocalizations extends LocalizationsDelegate<HivorrLocalizations> {
 
   /// Convenience accessor mirroring [Localizations.of].
   static HivorrLocalizations of(BuildContext context) {
-    final HivorrLocalizations? result =
-        Localizations.of<HivorrLocalizations>(context, HivorrLocalizations);
+    final HivorrLocalizations? result = Localizations.of<HivorrLocalizations>(
+      context,
+      HivorrLocalizations,
+    );
     return result ??
         (throw LocalizationException(
           'No HivorrLocalizations found in widget context',
@@ -78,8 +78,13 @@ class HivorrLocalizations extends LocalizationsDelegate<HivorrLocalizations> {
   /// The `count` value is automatically exposed as the `{count}` parameter for
   /// templates such as `"{count} items"`.
   String plural(String key, int count, {Map<String, String>? params}) {
-    final String resolved =
-        _service.resolvePlural(key, count, _active, _fallback, locale: _locale);
+    final String resolved = _service.resolvePlural(
+      key,
+      count,
+      _active,
+      _fallback,
+      locale: _locale,
+    );
     final Map<String, String> merged = <String, String>{
       'count': count.toString(),
       ...?params,

@@ -25,10 +25,10 @@ class FakeVerificationRemoteDataSource implements VerificationRemoteDataSource {
     VerificationStatusDto? statusResult,
     KycLevelDto? kycResult,
     KycLevelDto? limitsResult,
-  })  : _submitResult = submitResult ?? seedSubmissionDto(),
-        _statusResult = statusResult ?? seedStatusDto(),
-        _kycResult = kycResult ?? seedKycDto(),
-        _limitsResult = limitsResult ?? seedKycDto(tierCode: 'tier_1');
+  }) : _submitResult = submitResult ?? seedSubmissionDto(),
+       _statusResult = statusResult ?? seedStatusDto(),
+       _kycResult = kycResult ?? seedKycDto(),
+       _limitsResult = limitsResult ?? seedKycDto(tierCode: 'tier_1');
 
   final VerificationSubmissionDto _submitResult;
   final VerificationStatusDto _statusResult;
@@ -139,16 +139,14 @@ class FakeStorageService implements StorageService {
     required String bucket,
     required String path,
     required int expiresInSeconds,
-  }) async =>
-      'https://example/sign/$path';
+  }) async => 'https://example/sign/$path';
 
   @override
   Future<List<FileObject>> list({
     required String bucket,
     required String path,
     int limit = 100,
-  }) async =>
-      <FileObject>[];
+  }) async => <FileObject>[];
 }
 
 /// In-memory [VerificationRepository] for provider/widget tests.
@@ -156,8 +154,8 @@ class FakeVerificationRepository implements VerificationRepository {
   FakeVerificationRepository({
     VerificationStatusKind defaultStatus = VerificationStatusKind.pending,
     bool identityVerified = false,
-  })  : _defaultStatus = defaultStatus,
-        _identityVerified = identityVerified {
+  }) : _defaultStatus = defaultStatus,
+       _identityVerified = identityVerified {
     _status = seedStatusEntity(
       identityVerified: identityVerified,
       totalSubmissions: identityVerified ? 1 : 0,
@@ -221,7 +219,12 @@ class FakeVerificationRepository implements VerificationRepository {
       return const KycLevel(
         tierCode: 'tier_1',
         status: 'active',
-        limits: KycLimits(daily: 500000, weekly: 2000000, monthly: 8000000, cashout: 1000000),
+        limits: KycLimits(
+          daily: 500000,
+          weekly: 2000000,
+          monthly: 8000000,
+          cashout: 1000000,
+        ),
       );
     }
     return const KycLevel(
@@ -246,15 +249,14 @@ VerificationSubmissionDto seedSubmissionDto({
   String credentialId = 'cred-1',
   String status = 'pending',
   DateTime? submittedAt,
-}) =>
-    VerificationSubmissionDto(
-      id: id,
-      entityId: entityId,
-      credentialId: credentialId,
-      submissionType: 'identity_document',
-      status: status,
-      submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => VerificationSubmissionDto(
+  id: id,
+  entityId: entityId,
+  credentialId: credentialId,
+  submissionType: 'identity_document',
+  status: status,
+  submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 /// A default (unverified) status aggregate DTO.
 VerificationStatusDto seedStatusDto({
@@ -264,15 +266,14 @@ VerificationStatusDto seedStatusDto({
   bool identityVerified = false,
   int pendingSubmissions = 1,
   int totalSubmissions = 1,
-}) =>
-    VerificationStatusDto(
-      entityId: entityId,
-      kyc: seedKycDto(tierCode: tierCode, status: kycStatus),
-      identityVerified: identityVerified,
-      tradeVerifications: const <TradeVerificationDto>[],
-      pendingSubmissions: pendingSubmissions,
-      totalSubmissions: totalSubmissions,
-    );
+}) => VerificationStatusDto(
+  entityId: entityId,
+  kyc: seedKycDto(tierCode: tierCode, status: kycStatus),
+  identityVerified: identityVerified,
+  tradeVerifications: const <TradeVerificationDto>[],
+  pendingSubmissions: pendingSubmissions,
+  totalSubmissions: totalSubmissions,
+);
 
 /// A default KYC level DTO.
 KycLevelDto seedKycDto({
@@ -282,17 +283,16 @@ KycLevelDto seedKycDto({
   num weekly = 0,
   num monthly = 0,
   num cashout = 0,
-}) =>
-    KycLevelDto(
-      tierCode: tierCode,
-      status: status,
-      limits: KycLimitsDto(
-        daily: daily,
-        weekly: weekly,
-        monthly: monthly,
-        cashout: cashout,
-      ),
-    );
+}) => KycLevelDto(
+  tierCode: tierCode,
+  status: status,
+  limits: KycLimitsDto(
+    daily: daily,
+    weekly: weekly,
+    monthly: monthly,
+    cashout: cashout,
+  ),
+);
 
 /// A default status entity.
 VerificationStatus seedStatusEntity({
@@ -301,17 +301,15 @@ VerificationStatus seedStatusEntity({
   bool identityVerified = false,
   int pendingSubmissions = 1,
   int totalSubmissions = 1,
-}) =>
-    VerificationStatus(
-      entityId: entityId,
-      kycLevel: KycLevel(
-        tierCode: tierCode,
-        status: 'pending',
-        limits: const KycLimits(
-          daily: 0, weekly: 0, monthly: 0, cashout: 0),
-      ),
-      identityVerified: identityVerified,
-      tradeVerifications: const <TradeVerification>[],
-      pendingSubmissions: pendingSubmissions,
-      totalSubmissions: totalSubmissions,
-    );
+}) => VerificationStatus(
+  entityId: entityId,
+  kycLevel: KycLevel(
+    tierCode: tierCode,
+    status: 'pending',
+    limits: const KycLimits(daily: 0, weekly: 0, monthly: 0, cashout: 0),
+  ),
+  identityVerified: identityVerified,
+  tradeVerifications: const <TradeVerification>[],
+  pendingSubmissions: pendingSubmissions,
+  totalSubmissions: totalSubmissions,
+);

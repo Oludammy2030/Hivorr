@@ -4,15 +4,17 @@ import 'package:hivorr/systems/finance/models/deposit_name_match_status.dart';
 
 void main() {
   group('DepositNameMatchStatus', () {
-    test('has exactly the four name-match states matching the schema',
-        () {
+    test('has exactly the four name-match states matching the schema', () {
       expect(DepositNameMatchStatus.values, hasLength(4));
-      expect(DepositNameMatchStatus.values, containsAll(<DepositNameMatchStatus>[
-        DepositNameMatchStatus.unverified,
-        DepositNameMatchStatus.pending,
-        DepositNameMatchStatus.matched,
-        DepositNameMatchStatus.mismatched,
-      ]));
+      expect(
+        DepositNameMatchStatus.values,
+        containsAll(<DepositNameMatchStatus>[
+          DepositNameMatchStatus.unverified,
+          DepositNameMatchStatus.pending,
+          DepositNameMatchStatus.matched,
+          DepositNameMatchStatus.mismatched,
+        ]),
+      );
     });
 
     test('fromPersisted maps each known value exactly', () {

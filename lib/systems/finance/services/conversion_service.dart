@@ -26,11 +26,11 @@ class ConversionService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _repository = repository,
-        _pairsConfig = pairsConfig,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _repository = repository,
+       _pairsConfig = pairsConfig,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final ConversionRepository _repository;
   final WalletConversionPairsConfig _pairsConfig;
@@ -47,47 +47,39 @@ class ConversionService {
   Future<double> getRate({
     required String fromCurrency,
     required String toCurrency,
-  }) =>
-      _tracedAndLogged(
-        'finance.conversion.rate.get',
-        () async {
-          final double rate = await _repository.getRate(
-            fromCurrency: fromCurrency,
-            toCurrency: toCurrency,
-          );
-          _logger?.info('Conversion rate fetched', <String, Object?>{
-            'fromCurrency': fromCurrency,
-            'toCurrency': toCurrency,
-            'rate': rate,
-          });
-          return rate;
-        },
-      );
+  }) => _tracedAndLogged('finance.conversion.rate.get', () async {
+    final double rate = await _repository.getRate(
+      fromCurrency: fromCurrency,
+      toCurrency: toCurrency,
+    );
+    _logger?.info('Conversion rate fetched', <String, Object?>{
+      'fromCurrency': fromCurrency,
+      'toCurrency': toCurrency,
+      'rate': rate,
+    });
+    return rate;
+  });
 
   /// Computes a local, zero-RPC conversion estimate.
   Future<ConversionPreview> previewConversion({
     required String fromCurrency,
     required String toCurrency,
     required double amount,
-  }) =>
-      _tracedAndLogged(
-        'finance.conversion.preview',
-        () async {
-          final preview = await _repository.previewConversion(
-            fromCurrency: fromCurrency,
-            toCurrency: toCurrency,
-            amount: amount,
-          );
-          _logger?.info('Conversion preview computed', <String, Object?>{
-            'fromCurrency': preview.fromCurrency,
-            'toCurrency': preview.toCurrency,
-            'fromAmount': preview.fromAmount,
-            'toAmount': preview.toAmount,
-            'fee': preview.fee,
-          });
-          return preview;
-        },
-      );
+  }) => _tracedAndLogged('finance.conversion.preview', () async {
+    final preview = await _repository.previewConversion(
+      fromCurrency: fromCurrency,
+      toCurrency: toCurrency,
+      amount: amount,
+    );
+    _logger?.info('Conversion preview computed', <String, Object?>{
+      'fromCurrency': preview.fromCurrency,
+      'toCurrency': preview.toCurrency,
+      'fromAmount': preview.fromAmount,
+      'toAmount': preview.toAmount,
+      'fee': preview.fee,
+    });
+    return preview;
+  });
 
   /// Executes a conversion via `financial_convert_currency`, then refreshes
   /// balances (repository-side best-effort).
@@ -95,39 +87,32 @@ class ConversionService {
     required String fromCurrency,
     required String toCurrency,
     required double amount,
-  }) =>
-      _tracedAndLogged(
-        'finance.conversion.execute',
-        () async {
-          final conversion = await _repository.executeConversion(
-            fromCurrency: fromCurrency,
-            toCurrency: toCurrency,
-            amount: amount,
-          );
-          _logger?.info('Currency conversion executed', <String, Object?>{
-            'conversionId': _redactor.redact(conversion.id),
-            'fromCurrency': conversion.fromCurrency,
-            'toCurrency': conversion.toCurrency,
-            'fromAmount': conversion.fromAmount,
-            'toAmount': conversion.toAmount,
-            'status': conversion.status,
-          });
-          return conversion;
-        },
-      );
+  }) => _tracedAndLogged('finance.conversion.execute', () async {
+    final conversion = await _repository.executeConversion(
+      fromCurrency: fromCurrency,
+      toCurrency: toCurrency,
+      amount: amount,
+    );
+    _logger?.info('Currency conversion executed', <String, Object?>{
+      'conversionId': _redactor.redact(conversion.id),
+      'fromCurrency': conversion.fromCurrency,
+      'toCurrency': conversion.toCurrency,
+      'fromAmount': conversion.fromAmount,
+      'toAmount': conversion.toAmount,
+      'status': conversion.status,
+    });
+    return conversion;
+  });
 
   /// Fetches the caller's conversion history.
   Future<List<CurrencyConversion>> getHistory() =>
-      _tracedAndLogged(
-        'finance.conversion.history.get',
-        () async {
-          final history = await _repository.getHistory();
-          _logger?.info('Conversion history fetched', <String, Object?>{
-            'count': history.length,
-          });
-          return history;
-        },
-      );
+      _tracedAndLogged('finance.conversion.history.get', () async {
+        final history = await _repository.getHistory();
+        _logger?.info('Conversion history fetched', <String, Object?>{
+          'count': history.length,
+        });
+        return history;
+      });
 
   /// Locale-aware preview string: `'₦50,000.00 → $35.00'`.
   String formatPreview(ConversionPreview preview) =>
@@ -138,12 +123,11 @@ class ConversionService {
     double rate, {
     required String fromCurrency,
     required String toCurrency,
-  }) =>
-      ConversionFormatter.rate(
-        rate,
-        fromCurrency: fromCurrency,
-        toCurrency: toCurrency,
-      );
+  }) => ConversionFormatter.rate(
+    rate,
+    fromCurrency: fromCurrency,
+    toCurrency: toCurrency,
+  );
 
   /// Wraps [action] in a `finance.conversion.*` [PerformanceTracer] span and
   /// surfaces failures via the logger with redacted context.

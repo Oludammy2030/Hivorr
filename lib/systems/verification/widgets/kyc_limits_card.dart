@@ -11,10 +11,7 @@ import 'package:hivorr/shared/widgets/hivorr_card.dart';
 /// Each value formatted via [HivorrFormatters] (`₦50,000`), rendered on an
 /// [HivorrCard] with token elevation/radius. Uses [AppTheme] tokens only.
 class KycLimitsCard extends StatelessWidget {
-  const KycLimitsCard({
-    super.key,
-    required this.level,
-  });
+  const KycLimitsCard({super.key, required this.level});
 
   /// The KYC level whose limits to display.
   final KycLevel level;
@@ -27,10 +24,7 @@ class KycLimitsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            'Transaction limits',
-            style: context.textTheme.titleMedium,
-          ),
+          Text('Transaction limits', style: context.textTheme.titleMedium),
           const SizedBox(height: HivorrSpacing.sm),
           Wrap(
             spacing: HivorrSpacing.xs,
@@ -47,7 +41,8 @@ class KycLimitsCard extends StatelessWidget {
     );
   }
 
-  static String _ngn(num value) => '₦${HivorrFormatters.number(value, decimals: 0)}';
+  static String _ngn(num value) =>
+      '₦${HivorrFormatters.number(value, decimals: 0)}';
 }
 
 class _LimitChip extends StatelessWidget {

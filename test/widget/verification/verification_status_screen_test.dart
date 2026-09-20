@@ -25,14 +25,17 @@ class _BlockingRepo implements VerificationRepository {
   final Completer<void> _never = Completer<void>();
 
   @override
-  Future<VerificationStatus> getStatus() => _never.future.then((_) => throw StateError('never'));
+  Future<VerificationStatus> getStatus() =>
+      _never.future.then((_) => throw StateError('never'));
 
   @override
-  Future<KycLevel> getKycLevel() => Future<KycLevel>.value(const KycLevel(
-        tierCode: 'tier_0',
-        status: 'pending',
-        limits: KycLimits(daily: 0, weekly: 0, monthly: 0, cashout: 0),
-      ));
+  Future<KycLevel> getKycLevel() => Future<KycLevel>.value(
+    const KycLevel(
+      tierCode: 'tier_0',
+      status: 'pending',
+      limits: KycLimits(daily: 0, weekly: 0, monthly: 0, cashout: 0),
+    ),
+  );
 
   @override
   Future<KycLevel> getLimits() => getKycLevel();
@@ -52,8 +55,9 @@ void main() {
     WidgetTester tester, {
     VerificationRepository? repo,
   }) async {
-    final VerificationProvider provider =
-        VerificationProvider(repo: repo ?? FakeVerificationRepository());
+    final VerificationProvider provider = VerificationProvider(
+      repo: repo ?? FakeVerificationRepository(),
+    );
     await pumpApp(
       tester,
       const VerificationStatusScreen(),
@@ -77,8 +81,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('unverified shows the upload CTA and header',
-        (WidgetTester tester) async {
+    testWidgets('unverified shows the upload CTA and header', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeVerificationRepository(identityVerified: false),
@@ -86,14 +91,17 @@ void main() {
       await tester.pump();
 
       expect(find.text('Upload a document'), findsOneWidget);
-      expect(find.textContaining('Complete your identity verification'),
-          findsOneWidget);
+      expect(
+        find.textContaining('Complete your identity verification'),
+        findsOneWidget,
+      );
       expect(find.text('Identity Verified'), findsNothing);
       await unmount(tester);
     });
 
-    testWidgets('verified shows the identity badge and no upload CTA',
-        (WidgetTester tester) async {
+    testWidgets('verified shows the identity badge and no upload CTA', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeVerificationRepository(identityVerified: true),
@@ -106,8 +114,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows the pending + total submission counters',
-        (WidgetTester tester) async {
+    testWidgets('shows the pending + total submission counters', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
       await tester.pump();
 
@@ -116,8 +125,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('renders the "Not verified" KYC card for a tier_0 account',
-        (WidgetTester tester) async {
+    testWidgets('renders the "Not verified" KYC card for a tier_0 account', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeVerificationRepository(identityVerified: false),
@@ -131,8 +141,9 @@ void main() {
   });
 
   group('status-derived timeline', () {
-    testWidgets('unverified timelines render the pending stage as current',
-        (WidgetTester tester) async {
+    testWidgets('unverified timelines render the pending stage as current', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeVerificationRepository(identityVerified: false),
@@ -147,8 +158,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('verified timelines render the approved stage as current',
-        (WidgetTester tester) async {
+    testWidgets('verified timelines render the approved stage as current', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeVerificationRepository(identityVerified: true),
@@ -160,8 +172,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('in-review derived from an existing submission with no review',
-        (WidgetTester tester) async {
+    testWidgets('in-review derived from an existing submission with no review', (
+      WidgetTester tester,
+    ) async {
       // A pending submission that has already been submitted maps to in-review.
       final VerificationStatus pendingWithSubmissions = VerificationStatus(
         entityId: 'u1',
@@ -175,7 +188,8 @@ void main() {
         pendingSubmissions: 1,
         totalSubmissions: 1,
       );
-      final repo = FakeVerificationRepository()..setStatus(pendingWithSubmissions);
+      final repo = FakeVerificationRepository()
+        ..setStatus(pendingWithSubmissions);
       await pumpScreenWith(tester, repo: repo);
       await tester.pump();
 
@@ -186,8 +200,9 @@ void main() {
   });
 
   group('KYC card for verified accounts', () {
-    testWidgets('renders limits for a verified tier_1 account',
-        (WidgetTester tester) async {
+    testWidgets('renders limits for a verified tier_1 account', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeVerificationRepository(identityVerified: true),
@@ -201,8 +216,9 @@ void main() {
   });
 
   group('async states', () {
-    testWidgets('shows loading while the first refresh is in flight',
-        (WidgetTester tester) async {
+    testWidgets('shows loading while the first refresh is in flight', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester, repo: _BlockingRepo());
       await tester.pump();
 
@@ -210,8 +226,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows an error state with retry after a failed refresh',
-        (WidgetTester tester) async {
+    testWidgets('shows an error state with retry after a failed refresh', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeVerificationRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -227,8 +244,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('recovers to content after tapping retry',
-        (WidgetTester tester) async {
+    testWidgets('recovers to content after tapping retry', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeVerificationRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -251,26 +269,34 @@ void main() {
   });
 
   group('action-required (resubmission)', () {
-    testWidgets('renders the error block with a Resubmit CTA instead of upload',
-        (WidgetTester tester) async {
-      final repo = FakeVerificationRepository()
-        ..setStatus(seedStatusEntity(
-          identityVerified: false,
-          pendingSubmissions: 0,
-          totalSubmissions: 1,
-        ));
-      await pumpScreenWith(tester, repo: repo);
-      await tester.pump();
+    testWidgets(
+      'renders the error block with a Resubmit CTA instead of upload',
+      (WidgetTester tester) async {
+        final repo = FakeVerificationRepository()
+          ..setStatus(
+            seedStatusEntity(
+              identityVerified: false,
+              pendingSubmissions: 0,
+              totalSubmissions: 1,
+            ),
+          );
+        await pumpScreenWith(tester, repo: repo);
+        await tester.pump();
 
-      expect(find.text("Your document couldn't be verified."), findsOneWidget);
-      expect(find.text('Resubmit'), findsOneWidget);
-      expect(find.text('Upload a document'), findsNothing);
-      expect(find.text('Identity Verified'), findsNothing);
-      await unmount(tester);
-    });
+        expect(
+          find.text("Your document couldn't be verified."),
+          findsOneWidget,
+        );
+        expect(find.text('Resubmit'), findsOneWidget);
+        expect(find.text('Upload a document'), findsNothing);
+        expect(find.text('Identity Verified'), findsNothing);
+        await unmount(tester);
+      },
+    );
 
-    testWidgets('does not render the action-required block while pending',
-        (WidgetTester tester) async {
+    testWidgets('does not render the action-required block while pending', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
       await tester.pump();
 
@@ -282,18 +308,15 @@ void main() {
   });
 
   group('pull-to-refresh', () {
-    testWidgets('dragging the list triggers a fresh status refresh',
-        (WidgetTester tester) async {
+    testWidgets('dragging the list triggers a fresh status refresh', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeVerificationRepository();
       await pumpScreenWith(tester, repo: repo);
       await tester.pump();
       final int callsBefore = repo.statusCallCount;
 
-      await tester.fling(
-        find.byType(ListView),
-        const Offset(0, 300),
-        1000,
-      );
+      await tester.fling(find.byType(ListView), const Offset(0, 300), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
 
@@ -303,20 +326,19 @@ void main() {
   });
 
   group('lifecycle-aware polling', () {
-    testWidgets('backgrounding pauses polling; foregrounding resumes it',
-        (WidgetTester tester) async {
+    testWidgets('backgrounding pauses polling; foregrounding resumes it', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeVerificationRepository();
       await pumpScreenWith(tester, repo: repo);
       await tester.pump();
       final int callsAfterInitial = repo.statusCallCount;
 
-      tester.binding
-          .handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pump(const Duration(seconds: 60));
       expect(repo.statusCallCount, callsAfterInitial);
 
-      tester.binding
-          .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump(const Duration(seconds: 16));
       expect(repo.statusCallCount, greaterThan(callsAfterInitial));
       await unmount(tester);

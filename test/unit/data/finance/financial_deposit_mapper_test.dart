@@ -54,23 +54,20 @@ void main() {
     });
 
     test('maps each persisted name-match value via the enum', () {
-      for (final (String value, DepositNameMatchStatus expected) in <
-          (String, DepositNameMatchStatus)>[
-        ('unverified', DepositNameMatchStatus.unverified),
-        ('pending', DepositNameMatchStatus.pending),
-        ('matched', DepositNameMatchStatus.matched),
-        ('mismatched', DepositNameMatchStatus.mismatched),
-      ]) {
+      for (final (String value, DepositNameMatchStatus expected)
+          in <(String, DepositNameMatchStatus)>[
+            ('unverified', DepositNameMatchStatus.unverified),
+            ('pending', DepositNameMatchStatus.pending),
+            ('matched', DepositNameMatchStatus.matched),
+            ('mismatched', DepositNameMatchStatus.mismatched),
+          ]) {
         final DepositDto dto = DepositDto(
           id: 'x',
           currencyCode: 'NGN',
           amount: 1,
           nameMatchStatus: value,
         );
-        expect(
-          FinancialDepositMapper.toEntity(dto).nameMatchStatus,
-          expected,
-        );
+        expect(FinancialDepositMapper.toEntity(dto).nameMatchStatus, expected);
       }
     });
 

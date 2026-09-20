@@ -22,8 +22,8 @@ class FakeDisputeRemoteDataSource implements DisputeRemoteDataSource {
     this.fileId = 'dispute-filed-1',
     this.withdrawId = 'dispute-withdrawn-1',
     this.evidenceId = 'evidence-1',
-  })  : _details = Map<String, DisputeCaseDetailEnvelopeDto>.from(details),
-        _list = List<DisputeCaseDto>.of(list);
+  }) : _details = Map<String, DisputeCaseDetailEnvelopeDto>.from(details),
+       _list = List<DisputeCaseDto>.of(list);
 
   final Map<String, DisputeCaseDetailEnvelopeDto> _details;
   List<DisputeCaseDto> _list;
@@ -69,7 +69,8 @@ class FakeDisputeRemoteDataSource implements DisputeRemoteDataSource {
   void setDetail(DisputeCaseDetailEnvelopeDto detail) =>
       _details[detail.caseDto.id] = detail;
 
-  void setList(List<DisputeCaseDto> list) => _list = List<DisputeCaseDto>.of(list);
+  void setList(List<DisputeCaseDto> list) =>
+      _list = List<DisputeCaseDto>.of(list);
 
   @override
   Future<DisputeListEnvelopeDto> listDisputes({String? status}) async {
@@ -174,20 +175,19 @@ DisputeCaseDto seedDisputeCaseDto({
   String? desiredOutcome = 'release_to_payee',
   String priority = 'medium',
   DateTime? filedAt,
-}) =>
-    DisputeCaseDto(
-      id: id,
-      escrowId: escrowId,
-      filerEntityId: filerEntityId,
-      counterpartyEntityId: counterpartyEntityId,
-      disputeType: disputeType,
-      status: status,
-      reason: reason,
-      desiredOutcome: desiredOutcome,
-      priority: priority,
-      filedAt: filedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-      metadata: const <String, dynamic>{},
-    );
+}) => DisputeCaseDto(
+  id: id,
+  escrowId: escrowId,
+  filerEntityId: filerEntityId,
+  counterpartyEntityId: counterpartyEntityId,
+  disputeType: disputeType,
+  status: status,
+  reason: reason,
+  desiredOutcome: desiredOutcome,
+  priority: priority,
+  filedAt: filedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+  metadata: const <String, dynamic>{},
+);
 
 DisputeEvidenceDto seedDisputeEvidenceDto({
   String id = 'evidence-1',
@@ -199,18 +199,17 @@ DisputeEvidenceDto seedDisputeEvidenceDto({
   String? fileUrl,
   Map<String, dynamic> fileMetadata = const <String, dynamic>{},
   DateTime? createdAt,
-}) =>
-    DisputeEvidenceDto(
-      id: id,
-      caseId: caseId,
-      submittedBy: submittedBy,
-      evidenceType: evidenceType,
-      title: title,
-      description: description,
-      fileUrl: fileUrl,
-      fileMetadata: fileMetadata,
-      createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => DisputeEvidenceDto(
+  id: id,
+  caseId: caseId,
+  submittedBy: submittedBy,
+  evidenceType: evidenceType,
+  title: title,
+  description: description,
+  fileUrl: fileUrl,
+  fileMetadata: fileMetadata,
+  createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 DisputeResolutionDto seedDisputeResolutionDto({
   String id = 'resolution-1',
@@ -223,27 +222,25 @@ DisputeResolutionDto seedDisputeResolutionDto({
   double payeeReleaseAmount = 0.0,
   String? notes,
   DateTime? resolvedAt,
-}) =>
-    DisputeResolutionDto(
-      id: id,
-      caseId: caseId,
-      resolvedBy: resolvedBy,
-      resolutionType: resolutionType,
-      reasoning: reasoning,
-      payerRefundAmount: payerRefundAmount,
-      payeeReleaseAmount: payeeReleaseAmount,
-      notes: notes,
-      resolvedAt: resolvedAt ?? DateTime.fromMillisecondsSinceEpoch(2000),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(2000),
-    );
+}) => DisputeResolutionDto(
+  id: id,
+  caseId: caseId,
+  resolvedBy: resolvedBy,
+  resolutionType: resolutionType,
+  reasoning: reasoning,
+  payerRefundAmount: payerRefundAmount,
+  payeeReleaseAmount: payeeReleaseAmount,
+  notes: notes,
+  resolvedAt: resolvedAt ?? DateTime.fromMillisecondsSinceEpoch(2000),
+  createdAt: DateTime.fromMillisecondsSinceEpoch(2000),
+);
 
 DisputeCaseDetailEnvelopeDto seedDisputeDetailDto({
   DisputeCaseDto? caseDto,
   List<DisputeEvidenceDto> evidence = const <DisputeEvidenceDto>[],
   DisputeResolutionDto? resolution,
-}) =>
-    DisputeCaseDetailEnvelopeDto(
-      caseDto: caseDto ?? seedDisputeCaseDto(),
-      evidence: evidence,
-      resolution: resolution,
-    );
+}) => DisputeCaseDetailEnvelopeDto(
+  caseDto: caseDto ?? seedDisputeCaseDto(),
+  evidence: evidence,
+  resolution: resolution,
+);

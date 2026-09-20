@@ -26,11 +26,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   // ---- Scripted "server" state -------------------------------------------
   final Map<String, Map<String, dynamic>> cases =
@@ -51,28 +51,25 @@ void main() {
     String? desiredOutcome,
     String priority = 'medium',
     String status = 'open',
-  }) =>
-      <String, dynamic>{
-        'id': id,
-        'escrow_id': escrowId,
-        'filer_entity_id': 'u1',
-        'counterparty_entity_id': 'entity-counterparty',
-        'dispute_type': disputeType,
-        'status': status,
-        'reason': reason,
-        'desired_outcome': desiredOutcome,
-        'priority': priority,
-        'filed_at': '2026-08-26T10:00:00.000Z',
-        'resolved_at': null,
-        'closed_at': null,
-        'withdrawn_at': status == 'withdrawn'
-            ? '2026-08-27T10:00:00.000Z'
-            : null,
-        'metadata': <String, dynamic>{},
-      };
+  }) => <String, dynamic>{
+    'id': id,
+    'escrow_id': escrowId,
+    'filer_entity_id': 'u1',
+    'counterparty_entity_id': 'entity-counterparty',
+    'dispute_type': disputeType,
+    'status': status,
+    'reason': reason,
+    'desired_outcome': desiredOutcome,
+    'priority': priority,
+    'filed_at': '2026-08-26T10:00:00.000Z',
+    'resolved_at': null,
+    'closed_at': null,
+    'withdrawn_at': status == 'withdrawn' ? '2026-08-27T10:00:00.000Z' : null,
+    'metadata': <String, dynamic>{},
+  };
 
-  final SupabaseDisputeRemoteDataSource dataSource =
-      SupabaseDisputeRemoteDataSource(
+  final SupabaseDisputeRemoteDataSource
+  dataSource = SupabaseDisputeRemoteDataSource(
     dio: Dio(),
     supabase: MockSupabaseClientFactory.create(
       currentUser: fakeUser('u1'),
@@ -146,7 +143,8 @@ void main() {
             return <String, dynamic>{
               'success': false,
               'code': 'PLT005',
-              'message': 'This dispute cannot be modified in its current state.',
+              'message':
+                  'This dispute cannot be modified in its current state.',
               'data': null,
             };
           }
@@ -160,8 +158,9 @@ void main() {
     exceptionMapper: const ApiExceptionMapper(),
   );
 
-  final DisputeRepositoryImpl repository =
-      DisputeRepositoryImpl(remote: dataSource);
+  final DisputeRepositoryImpl repository = DisputeRepositoryImpl(
+    remote: dataSource,
+  );
 
   final DisputeService service = DisputeService(repository: repository);
 

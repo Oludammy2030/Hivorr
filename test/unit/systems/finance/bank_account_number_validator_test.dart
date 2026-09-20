@@ -50,24 +50,15 @@ void main() {
 
     test('rejects blank input', () {
       expect(
-        BankAccountNumberValidator.validate(
-          value: '   ',
-          currencyCode: 'NGN',
-        ),
+        BankAccountNumberValidator.validate(value: '   ', currencyCode: 'NGN'),
         isNotNull,
       );
       expect(
-        BankAccountNumberValidator.validate(
-          value: '',
-          currencyCode: 'NGN',
-        ),
+        BankAccountNumberValidator.validate(value: '', currencyCode: 'NGN'),
         isNotNull,
       );
       expect(
-        BankAccountNumberValidator.validate(
-          value: null,
-          currencyCode: 'NGN',
-        ),
+        BankAccountNumberValidator.validate(value: null, currencyCode: 'NGN'),
         isNotNull,
       );
     });
@@ -93,23 +84,25 @@ void main() {
       }
     });
 
-    test('rejects account numbers outside 8-15 digits for non-NGN currencies',
-        () {
-      expect(
-        BankAccountNumberValidator.validate(
-          value: '1234567',
-          currencyCode: 'USD',
-        ),
-        isNotNull,
-      );
-      expect(
-        BankAccountNumberValidator.validate(
-          value: '1234567890123456',
-          currencyCode: 'USD',
-        ),
-        isNotNull,
-      );
-    });
+    test(
+      'rejects account numbers outside 8-15 digits for non-NGN currencies',
+      () {
+        expect(
+          BankAccountNumberValidator.validate(
+            value: '1234567',
+            currencyCode: 'USD',
+          ),
+          isNotNull,
+        );
+        expect(
+          BankAccountNumberValidator.validate(
+            value: '1234567890123456',
+            currencyCode: 'USD',
+          ),
+          isNotNull,
+        );
+      },
+    );
 
     test('isValid mirrors validate', () {
       expect(

@@ -78,10 +78,7 @@ void main() {
         await queue.enqueue(testAction());
       }
 
-      expect(
-        () => queue.enqueue(testAction()),
-        throwsA(isA<SyncException>()),
-      );
+      expect(() => queue.enqueue(testAction()), throwsA(isA<SyncException>()));
     });
   });
 
@@ -119,54 +116,70 @@ void main() {
       final now = DateTime.now();
 
       // Enqueue out of order: priority 10, then 5, then 10 (later).
-      await queue.enqueue(SyncAction(
-        id: '',
-        type: SyncActionType.update,
-        endpoint: '/rpc/a',
-        method: 'POST',
-        priority: 10,
-        status: SyncActionStatus.pending,
-        retryCount: 0,
-        maxRetries: 3,
-        createdAt: now.subtract(Duration(seconds: 30)),
-      ));
-      await queue.enqueue(SyncAction(
-        id: '',
-        type: SyncActionType.update,
-        endpoint: '/rpc/b',
-        method: 'POST',
-        priority: 5,
-        status: SyncActionStatus.pending,
-        retryCount: 0,
-        maxRetries: 3,
-        createdAt: now.subtract(Duration(seconds: 10)),
-      ));
-      await queue.enqueue(SyncAction(
-        id: '',
-        type: SyncActionType.update,
-        endpoint: '/rpc/c',
-        method: 'POST',
-        priority: 10,
-        status: SyncActionStatus.pending,
-        retryCount: 0,
-        maxRetries: 3,
-        createdAt: now.subtract(Duration(seconds: 5)),
-      ));
+      await queue.enqueue(
+        SyncAction(
+          id: '',
+          type: SyncActionType.update,
+          endpoint: '/rpc/a',
+          method: 'POST',
+          priority: 10,
+          status: SyncActionStatus.pending,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: now.subtract(Duration(seconds: 30)),
+        ),
+      );
+      await queue.enqueue(
+        SyncAction(
+          id: '',
+          type: SyncActionType.update,
+          endpoint: '/rpc/b',
+          method: 'POST',
+          priority: 5,
+          status: SyncActionStatus.pending,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: now.subtract(Duration(seconds: 10)),
+        ),
+      );
+      await queue.enqueue(
+        SyncAction(
+          id: '',
+          type: SyncActionType.update,
+          endpoint: '/rpc/c',
+          method: 'POST',
+          priority: 10,
+          status: SyncActionStatus.pending,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: now.subtract(Duration(seconds: 5)),
+        ),
+      );
 
       final actions = await queue.peek();
 
       // Expected order: priority 5 (b), then priority 10 older (a), then 10 newer (c).
-      expect(actions.map((a) => a.endpoint), <String>['/rpc/b', '/rpc/a', '/rpc/c']);
+      expect(actions.map((a) => a.endpoint), <String>[
+        '/rpc/b',
+        '/rpc/a',
+        '/rpc/c',
+      ]);
     });
 
     test('excludes inFlight, deadLettered, and conflicted actions', () async {
       await queue.enqueue(testAction(endpoint: '/rpc/pending'));
-      final queued2 = await queue.enqueue(testAction(endpoint: '/rpc/inflight'));
+      final queued2 = await queue.enqueue(
+        testAction(endpoint: '/rpc/inflight'),
+      );
       final queued3 = await queue.enqueue(testAction(endpoint: '/rpc/dead'));
-      final queued4 = await queue.enqueue(testAction(endpoint: '/rpc/conflict'));
+      final queued4 = await queue.enqueue(
+        testAction(endpoint: '/rpc/conflict'),
+      );
 
       await queue.update(queued2.copyWith(status: SyncActionStatus.inFlight));
-      await queue.update(queued3.copyWith(status: SyncActionStatus.deadLettered));
+      await queue.update(
+        queued3.copyWith(status: SyncActionStatus.deadLettered),
+      );
       await queue.update(queued4.copyWith(status: SyncActionStatus.conflicted));
 
       final actions = await queue.peek();

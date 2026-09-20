@@ -13,7 +13,8 @@ class ApiConfigBuilder {
       this.._connectTimeout = value;
   ApiConfigBuilder withReceiveTimeout(Duration value) =>
       this.._receiveTimeout = value;
-  ApiConfigBuilder withSendTimeout(Duration value) => this.._sendTimeout = value;
+  ApiConfigBuilder withSendTimeout(Duration value) =>
+      this.._sendTimeout = value;
   ApiConfigBuilder withMaxRetries(int value) => this.._maxRetries = value;
   ApiConfigBuilder withBaseRetryDelay(Duration value) =>
       this.._baseRetryDelay = value;
@@ -21,11 +22,11 @@ class ApiConfigBuilder {
       this.._maxRetryDelay = value;
 
   ApiConfig build() => ApiConfig(
-        connectTimeout: _connectTimeout,
-        receiveTimeout: _receiveTimeout,
-        sendTimeout: _sendTimeout,
-        maxRetries: _maxRetries,
-        baseRetryDelay: _baseRetryDelay,
-        maxRetryDelay: _maxRetryDelay,
-      );
+    connectTimeout: _connectTimeout,
+    receiveTimeout: _receiveTimeout,
+    sendTimeout: _sendTimeout,
+    maxRetries: _maxRetries,
+    baseRetryDelay: _baseRetryDelay,
+    maxRetryDelay: _maxRetryDelay,
+  );
 }

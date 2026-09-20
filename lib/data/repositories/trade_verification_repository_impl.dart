@@ -38,11 +38,11 @@ class TradeVerificationRepositoryImpl implements TradeVerificationRepository {
     required SupabaseClient supabase,
     TradeProfessionNameResolver? resolveProfessionName,
     Uuid? uuid,
-  })  : _remote = remote,
-        _storage = storage,
-        _supabase = supabase,
-        _resolveProfessionName = resolveProfessionName,
-        _uuid = uuid ?? const Uuid();
+  }) : _remote = remote,
+       _storage = storage,
+       _supabase = supabase,
+       _resolveProfessionName = resolveProfessionName,
+       _uuid = uuid ?? const Uuid();
 
   final TradeVerificationRemoteDataSource _remote;
   final StorageService _storage;

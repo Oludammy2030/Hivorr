@@ -21,8 +21,8 @@ abstract final class BankAccountNumberValidator {
     if (!RegExp(r'^\d+$').hasMatch(trimmed)) {
       return 'Account number must contain digits only';
     }
-    final bool isNgn = SupportedCurrency.isSupported(currencyCode) &&
-        currencyCode == 'NGN';
+    final bool isNgn =
+        SupportedCurrency.isSupported(currencyCode) && currencyCode == 'NGN';
     if (isNgn) {
       if (trimmed.length != 10) {
         return 'NGN account numbers are 10 digits (NUBAN)';

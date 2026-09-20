@@ -34,11 +34,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   // ---- Scripted "server" state -------------------------------------------
   int bindRpcCount = 0;
@@ -48,19 +48,17 @@ void main() {
   // A name-enquiry-verified account as it would arrive in the client mirror
   // after the service-role verification step (EP-02-20 §VP9).
   PayoutAccount verifiedPayoutAccount({required String id}) => PayoutAccount(
-        id: id,
-        currencyCode: 'NGN',
-        bankName: 'GTBank',
-        accountNumber: '0123456789',
-        accountName: 'Ada Lovelace',
-        status: PayoutAccountStatus.active,
-        isVerified: true,
-      );
+    id: id,
+    currencyCode: 'NGN',
+    bankName: 'GTBank',
+    accountNumber: '0123456789',
+    accountName: 'Ada Lovelace',
+    status: PayoutAccountStatus.active,
+    isVerified: true,
+  );
 
-  ({
-    FinancialPayoutService service,
-    FinancialPayoutProvider provider,
-  }) buildFlow({
+  ({FinancialPayoutService service, FinancialPayoutProvider provider})
+  buildFlow({
     List<PayoutAccount> seedAccounts = const <PayoutAccount>[],
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
   }) {
@@ -96,7 +94,8 @@ void main() {
       },
     };
     defaults.addAll(
-        rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final client = MockSupabaseClientFactory.create(
       currentUser: fakeUser('u1'),
       rpcHandlers: defaults,
@@ -107,9 +106,9 @@ void main() {
       exceptionMapper: const ApiExceptionMapper(),
     );
     final repo = FinancialPayoutRepositoryImpl(
-        remote: remote,
-        store: InMemoryPayoutAccountLocalStore(seed: seedAccounts),
-      );
+      remote: remote,
+      store: InMemoryPayoutAccountLocalStore(seed: seedAccounts),
+    );
     final service = FinancialPayoutService(repository: repo);
     final provider = FinancialPayoutProvider(service: service);
     return (service: service, provider: provider);
@@ -140,8 +139,8 @@ void main() {
       expect(bindRpcCount, 1);
 
       // List shows the bound account (client mirror).
-      final List<PayoutAccount> accounts =
-          await flow.service.listPayoutAccounts();
+      final List<PayoutAccount> accounts = await flow.service
+          .listPayoutAccounts();
       expect(accounts, hasLength(1));
       expect(accounts.first.id, 'pa-1');
     });
@@ -170,10 +169,7 @@ void main() {
       addTearDown(flow.provider.dispose);
 
       await expectLater(
-        flow.service.withdraw(
-          payoutAccountId: 'pa-1',
-          amount: 300000,
-        ),
+        flow.service.withdraw(payoutAccountId: 'pa-1', amount: 300000),
         throwsA(
           isA<ApiException>()
               .having((ApiException e) => e.code, 'code', 'PLT003')
@@ -197,15 +193,21 @@ void main() {
         limits: limits,
         amount: 300000,
       );
-      expect(allowed, isFalse,
-          reason: 'KycLimitGuard must block amounts exceeding cashout limit');
+      expect(
+        allowed,
+        isFalse,
+        reason: 'KycLimitGuard must block amounts exceeding cashout limit',
+      );
 
       final bool canTransact = KycLimitGuard.canTransact(
         limits: limits,
         amount: 300000,
       );
-      expect(canTransact, isTrue,
-          reason: 'canTransact checks daily limit (300000 < 500000)');
+      expect(
+        canTransact,
+        isTrue,
+        reason: 'canTransact checks daily limit (300000 < 500000)',
+      );
     });
 
     test('provider drives bind → list → withdraw lifecycle', () async {
@@ -240,10 +242,7 @@ void main() {
       addTearDown(flow.provider.dispose);
 
       await expectLater(
-        flow.service.withdraw(
-          payoutAccountId: 'nonexistent',
-          amount: 50000,
-        ),
+        flow.service.withdraw(payoutAccountId: 'nonexistent', amount: 50000),
         throwsA(isA<ApiException>()),
       );
     });

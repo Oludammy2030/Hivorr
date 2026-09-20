@@ -31,21 +31,21 @@ enum TradeProofType {
 
   /// Human-readable display label.
   String get label => switch (this) {
-        TradeProofType.certificate => 'Certificate',
-        TradeProofType.license => 'License',
-        TradeProofType.workSample => 'Work Sample',
-        TradeProofType.portfolio => 'Portfolio',
-        TradeProofType.other => 'Other',
-      };
+    TradeProofType.certificate => 'Certificate',
+    TradeProofType.license => 'License',
+    TradeProofType.workSample => 'Work Sample',
+    TradeProofType.portfolio => 'Portfolio',
+    TradeProofType.other => 'Other',
+  };
 
   /// A short one-line helper shown under the picker choice.
   String get helper => switch (this) {
-        TradeProofType.certificate => 'Trade certificate or qualification',
-        TradeProofType.license => 'Professional or occupational license',
-        TradeProofType.workSample => 'A documented sample of your work',
-        TradeProofType.portfolio => 'A portfolio of prior work',
-        TradeProofType.other => 'Any other acceptable trade proof',
-      };
+    TradeProofType.certificate => 'Trade certificate or qualification',
+    TradeProofType.license => 'Professional or occupational license',
+    TradeProofType.workSample => 'A documented sample of your work',
+    TradeProofType.portfolio => 'A portfolio of prior work',
+    TradeProofType.other => 'Any other acceptable trade proof',
+  };
 
   /// The `entity_credentials.kind` this proof maps to (always `trade_proof`).
   String get kind => tradeKind;

@@ -4,10 +4,7 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 
 /// Matches an [ApiException], optionally asserting its [kind] and that its
 /// [message] contains a substring. Produces a readable failure description.
-Matcher isApiException({
-  ApiExceptionKind? kind,
-  String? messageContains,
-}) =>
+Matcher isApiException({ApiExceptionKind? kind, String? messageContains}) =>
     _ApiExceptionMatcher(kind: kind, messageContains: messageContains);
 
 class _ApiExceptionMatcher extends Matcher {
@@ -24,8 +21,7 @@ class _ApiExceptionMatcher extends Matcher {
     if (kind != null && item.kind != kind) {
       return false;
     }
-    if (messageContains != null &&
-        !item.message.contains(messageContains!)) {
+    if (messageContains != null && !item.message.contains(messageContains!)) {
       return false;
     }
     return true;
@@ -57,8 +53,7 @@ class _ApiExceptionMatcher extends Matcher {
     if (kind != null && item.kind != kind) {
       reasons.add('kind was <${item.kind}>');
     }
-    if (messageContains != null &&
-        !item.message.contains(messageContains!)) {
+    if (messageContains != null && !item.message.contains(messageContains!)) {
       reasons.add('message was "${item.message}"');
     }
     return description.add(reasons.join(', '));

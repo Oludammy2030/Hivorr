@@ -42,11 +42,7 @@ void main() {
   }
 
   /// Builds a real [EnvironmentConfig] for [envName] from placeholder values.
-  EnvironmentConfig loadEnv(
-    String envName,
-    String url,
-    String key,
-  ) {
+  EnvironmentConfig loadEnv(String envName, String url, String key) {
     return EnvironmentLoader.load(
       source: MapEnvironmentValueSource(<String, String>{
         AppConstants.envEnvironment: envName,
@@ -58,44 +54,56 @@ void main() {
   }
 
   group('§5.13 Environment Isolation — config loading', () {
-    test('dev, staging, and prod load with distinct URL/anonKey/projectRef', () {
-      final EnvironmentConfig dev = loadEnv('development', devUrl, devKey);
-      final EnvironmentConfig staging =
-          loadEnv('staging', stagingUrl, stagingKey);
-      final EnvironmentConfig prod = loadEnv('production', prodUrl, prodKey);
+    test(
+      'dev, staging, and prod load with distinct URL/anonKey/projectRef',
+      () {
+        final EnvironmentConfig dev = loadEnv('development', devUrl, devKey);
+        final EnvironmentConfig staging = loadEnv(
+          'staging',
+          stagingUrl,
+          stagingKey,
+        );
+        final EnvironmentConfig prod = loadEnv('production', prodUrl, prodKey);
 
-      // Environment identity is correctly resolved.
-      expect(dev.environment, AppEnvironment.development);
-      expect(staging.environment, AppEnvironment.staging);
-      expect(prod.environment, AppEnvironment.production);
+        // Environment identity is correctly resolved.
+        expect(dev.environment, AppEnvironment.development);
+        expect(staging.environment, AppEnvironment.staging);
+        expect(prod.environment, AppEnvironment.production);
 
-      // Each environment exposes a unique Supabase URL.
-      expect(dev.supabaseConfig.url, devUrl);
-      expect(staging.supabaseConfig.url, stagingUrl);
-      expect(prod.supabaseConfig.url, prodUrl);
-      expect(dev.supabaseConfig.url, isNot(staging.supabaseConfig.url));
-      expect(dev.supabaseConfig.url, isNot(prod.supabaseConfig.url));
-      expect(staging.supabaseConfig.url, isNot(prod.supabaseConfig.url));
+        // Each environment exposes a unique Supabase URL.
+        expect(dev.supabaseConfig.url, devUrl);
+        expect(staging.supabaseConfig.url, stagingUrl);
+        expect(prod.supabaseConfig.url, prodUrl);
+        expect(dev.supabaseConfig.url, isNot(staging.supabaseConfig.url));
+        expect(dev.supabaseConfig.url, isNot(prod.supabaseConfig.url));
+        expect(staging.supabaseConfig.url, isNot(prod.supabaseConfig.url));
 
-      // Each environment exposes a unique anon key.
-      expect(dev.supabaseConfig.anonKey, devKey);
-      expect(staging.supabaseConfig.anonKey, stagingKey);
-      expect(prod.supabaseConfig.anonKey, prodKey);
-      expect(dev.supabaseConfig.anonKey, isNot(staging.supabaseConfig.anonKey));
-      expect(dev.supabaseConfig.anonKey, isNot(prod.supabaseConfig.anonKey));
-      expect(staging.supabaseConfig.anonKey, isNot(prod.supabaseConfig.anonKey));
+        // Each environment exposes a unique anon key.
+        expect(dev.supabaseConfig.anonKey, devKey);
+        expect(staging.supabaseConfig.anonKey, stagingKey);
+        expect(prod.supabaseConfig.anonKey, prodKey);
+        expect(
+          dev.supabaseConfig.anonKey,
+          isNot(staging.supabaseConfig.anonKey),
+        );
+        expect(dev.supabaseConfig.anonKey, isNot(prod.supabaseConfig.anonKey));
+        expect(
+          staging.supabaseConfig.anonKey,
+          isNot(prod.supabaseConfig.anonKey),
+        );
 
-      // Each environment exposes a unique project reference.
-      final String devRef = projectRef(dev.supabaseConfig.url);
-      final String stagingRef = projectRef(staging.supabaseConfig.url);
-      final String prodRef = projectRef(prod.supabaseConfig.url);
-      expect(devRef, 'dev-abc1234');
-      expect(stagingRef, 'staging-def5678');
-      expect(prodRef, 'prod-ghi9012');
-      expect(devRef, isNot(stagingRef));
-      expect(devRef, isNot(prodRef));
-      expect(stagingRef, isNot(prodRef));
-    });
+        // Each environment exposes a unique project reference.
+        final String devRef = projectRef(dev.supabaseConfig.url);
+        final String stagingRef = projectRef(staging.supabaseConfig.url);
+        final String prodRef = projectRef(prod.supabaseConfig.url);
+        expect(devRef, 'dev-abc1234');
+        expect(stagingRef, 'staging-def5678');
+        expect(prodRef, 'prod-ghi9012');
+        expect(devRef, isNot(stagingRef));
+        expect(devRef, isNot(prodRef));
+        expect(stagingRef, isNot(prodRef));
+      },
+    );
   });
 
   group('§5.13 Environment Isolation — no cross-contamination', () {
@@ -116,8 +124,11 @@ void main() {
     });
 
     test('Staging config contains no dev/prod values', () {
-      final EnvironmentConfig staging =
-          loadEnv('staging', stagingUrl, stagingKey);
+      final EnvironmentConfig staging = loadEnv(
+        'staging',
+        stagingUrl,
+        stagingKey,
+      );
 
       expect(staging.environment, AppEnvironment.staging);
       expect(staging.supabaseConfig.url, stagingUrl);
@@ -163,8 +174,11 @@ void main() {
 
       // Switch by reloading with the staging source (a fresh, immutable
       // EnvironmentConfig is produced — no shared mutable state).
-      final EnvironmentConfig staging =
-          loadEnv('staging', stagingUrl, stagingKey);
+      final EnvironmentConfig staging = loadEnv(
+        'staging',
+        stagingUrl,
+        stagingKey,
+      );
 
       // Every value must reflect the new environment.
       expect(staging.environment, AppEnvironment.staging);
@@ -176,28 +190,36 @@ void main() {
 
       // No cached dev values persist: reloading again yields staging again,
       // and the previously captured dev values are nowhere present.
-      final EnvironmentConfig reloadedStaging =
-          loadEnv('staging', stagingUrl, stagingKey);
+      final EnvironmentConfig reloadedStaging = loadEnv(
+        'staging',
+        stagingUrl,
+        stagingKey,
+      );
       expect(reloadedStaging.supabaseConfig.url, stagingUrl);
       expect(reloadedStaging.supabaseConfig.anonKey, stagingKey);
       expect(reloadedStaging.supabaseConfig.url, isNot(capturedDevUrl));
       expect(reloadedStaging.supabaseConfig.anonKey, isNot(capturedDevKey));
     });
 
-    test('switching staging -> prod updates all values and drops staging state',
-        () {
-      final EnvironmentConfig staging =
-          loadEnv('staging', stagingUrl, stagingKey);
-      final String capturedStagingUrl = staging.supabaseConfig.url;
-      final String capturedStagingKey = staging.supabaseConfig.anonKey;
+    test(
+      'switching staging -> prod updates all values and drops staging state',
+      () {
+        final EnvironmentConfig staging = loadEnv(
+          'staging',
+          stagingUrl,
+          stagingKey,
+        );
+        final String capturedStagingUrl = staging.supabaseConfig.url;
+        final String capturedStagingKey = staging.supabaseConfig.anonKey;
 
-      final EnvironmentConfig prod = loadEnv('production', prodUrl, prodKey);
+        final EnvironmentConfig prod = loadEnv('production', prodUrl, prodKey);
 
-      expect(prod.environment, AppEnvironment.production);
-      expect(prod.supabaseConfig.url, prodUrl);
-      expect(prod.supabaseConfig.url, isNot(capturedStagingUrl));
-      expect(prod.supabaseConfig.anonKey, prodKey);
-      expect(prod.supabaseConfig.anonKey, isNot(capturedStagingKey));
-    });
+        expect(prod.environment, AppEnvironment.production);
+        expect(prod.supabaseConfig.url, prodUrl);
+        expect(prod.supabaseConfig.url, isNot(capturedStagingUrl));
+        expect(prod.supabaseConfig.anonKey, prodKey);
+        expect(prod.supabaseConfig.anonKey, isNot(capturedStagingKey));
+      },
+    );
   });
 }

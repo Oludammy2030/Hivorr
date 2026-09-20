@@ -34,7 +34,8 @@ class OnboardingStepController extends ChangeNotifier {
     VoidCallback? onPrimary,
     bool loading = false,
   }) {
-    final bool changed = label != _primaryLabel ||
+    final bool changed =
+        label != _primaryLabel ||
         canPrimary != _canPrimary ||
         loading != _primaryLoading ||
         onPrimary != _onPrimary;

@@ -44,9 +44,7 @@ class _IndustryProfessionSelectionScreenState
   String? _conflictMessage;
 
   @override
-  void didUpdateWidget(
-    covariant IndustryProfessionSelectionScreen oldWidget,
-  ) {
+  void didUpdateWidget(covariant IndustryProfessionSelectionScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.active && !oldWidget.active) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -114,7 +112,8 @@ class _IndustryProfessionSelectionScreenState
 
     widget.controller.configure(
       label: 'Save & continue',
-      canPrimary: taxonomy.selectedIndustry != null &&
+      canPrimary:
+          taxonomy.selectedIndustry != null &&
           taxonomy.selectedProfession != null,
       onPrimary: () => unawaited(_submit()),
     );
@@ -128,8 +127,9 @@ class _IndustryProfessionSelectionScreenState
     }
 
     final Industry? industry = taxonomy.selectedIndustry;
-    final List<Profession> professions =
-        List<Profession>.of(taxonomy.professionsForSelectedIndustry);
+    final List<Profession> professions = List<Profession>.of(
+      taxonomy.professionsForSelectedIndustry,
+    );
     professions.sort((Profession a, Profession b) {
       final int byOrder = a.sortOrder.compareTo(b.sortOrder);
       return byOrder != 0 ? byOrder : a.name.compareTo(b.name);
@@ -161,18 +161,15 @@ class _IndustryProfessionSelectionScreenState
             initialSelection: industry,
             dropdownMenuEntries: <DropdownMenuEntry<Industry>>[
               for (final Industry item in _sortedIndustries(taxonomy))
-                DropdownMenuEntry<Industry>(
-                  value: item,
-                  label: item.name,
-                ),
+                DropdownMenuEntry<Industry>(value: item, label: item.name),
             ],
             onSelected: (Industry? value) {
               if (value == null) {
                 return;
               }
               setState(() => _conflictMessage = null);
-              final TaxonomyProvider provider =
-                  context.read<TaxonomyProvider>();
+              final TaxonomyProvider provider = context
+                  .read<TaxonomyProvider>();
               provider.selectIndustry(value.id);
               unawaited(provider.loadProfessions(value.id));
             },
@@ -205,9 +202,7 @@ class _IndustryProfessionSelectionScreenState
             const SizedBox(height: HivorrSpacing.sm),
             Text(
               _conflictMessage!,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: colors.error,
-              ),
+              style: context.textTheme.bodySmall?.copyWith(color: colors.error),
             ),
           ],
           if (taxonomy.state == TaxonomyProviderState.error &&
@@ -215,9 +210,7 @@ class _IndustryProfessionSelectionScreenState
             const SizedBox(height: HivorrSpacing.md),
             Text(
               taxonomy.error!.message,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: colors.error,
-              ),
+              style: context.textTheme.bodySmall?.copyWith(color: colors.error),
             ),
           ],
         ],
@@ -284,10 +277,7 @@ class _IndustryProfessionSelectionScreenState
           initialSelection: profession,
           dropdownMenuEntries: <DropdownMenuEntry<Profession>>[
             for (final Profession item in professions)
-              DropdownMenuEntry<Profession>(
-                value: item,
-                label: item.name,
-              ),
+              DropdownMenuEntry<Profession>(value: item, label: item.name),
           ],
           onSelected: (Profession? value) {
             if (value == null) {
@@ -305,20 +295,15 @@ class _IndustryProfessionSelectionScreenState
               color: colors.onSurfaceVariant,
             ),
           )
-        else if (!loadingProfessions &&
-            industryHasNoProfessions(professions))
+        else if (!loadingProfessions && industryHasNoProfessions(professions))
           Text(
             'No professions are available for this industry yet.',
-            style: context.textTheme.bodySmall?.copyWith(
-              color: colors.error,
-            ),
+            style: context.textTheme.bodySmall?.copyWith(color: colors.error),
           )
         else if (!loadingProfessions && profession == null)
           Text(
             'Select a profession to continue.',
-            style: context.textTheme.bodySmall?.copyWith(
-              color: colors.error,
-            ),
+            style: context.textTheme.bodySmall?.copyWith(color: colors.error),
           ),
       ],
     );

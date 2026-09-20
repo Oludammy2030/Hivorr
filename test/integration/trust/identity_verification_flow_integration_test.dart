@@ -34,18 +34,70 @@ void main() {
   const String fileName = 'nin.png';
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   // ---- Scripted "server" state -------------------------------------------
   bool approved = false;
 
   Map<String, dynamic> statusData() => <String, dynamic>{
-        'entity_id': 'u1',
-        'kyc': approved
+    'entity_id': 'u1',
+    'kyc': approved
+        ? <String, dynamic>{
+            'tier_code': 'tier_1',
+            'status': 'active',
+            'limits': <String, dynamic>{
+              'daily': 500000,
+              'weekly': 2000000,
+              'monthly': 8000000,
+              'cashout': 1000000,
+            },
+          }
+        : <String, dynamic>{
+            'tier_code': 'tier_0',
+            'status': 'pending',
+            'limits': <String, dynamic>{
+              'daily': 0,
+              'weekly': 0,
+              'monthly': 0,
+              'cashout': 0,
+            },
+          },
+    'identity_verified': approved,
+    'trade_verifications': <dynamic>[],
+    'pending_submissions': approved ? 0 : 1,
+    'total_submissions': 1,
+  };
+
+  ({
+    VerificationRepositoryImpl repository,
+    FakeStorageService storage,
+    IdentityVerificationService service,
+    VerificationProvider provider,
+  })
+  buildFlow({
+    Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
+    bool signedIn = true,
+  }) {
+    final FakeStorageService storage = FakeStorageService();
+    final Map<String, Object? Function(Map<String, dynamic>)> defaults = {
+      'verification_submit': (Map<String, dynamic> params) =>
+          ok(<String, dynamic>{
+            'id': 'sub-9001',
+            'entity_id': 'u1',
+            'credential_id': 'cred-1',
+            'submission_type': 'identity_document',
+            'status': 'pending',
+            'submitted_at': '2026-01-01T00:00:00.000Z',
+            'reviewed_at': null,
+            'decision_notes': null,
+          }),
+      'verification_status_get': (_) => ok(statusData()),
+      'verification_kyc_level_get': (_) => ok(
+        approved
             ? <String, dynamic>{
                 'tier_code': 'tier_1',
                 'status': 'active',
@@ -66,66 +118,17 @@ void main() {
                   'cashout': 0,
                 },
               },
-        'identity_verified': approved,
-        'trade_verifications': <dynamic>[],
-        'pending_submissions': approved ? 0 : 1,
-        'total_submissions': 1,
-      };
-
-  ({
-    VerificationRepositoryImpl repository,
-    FakeStorageService storage,
-    IdentityVerificationService service,
-    VerificationProvider provider,
-  }) buildFlow({
-    Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
-    bool signedIn = true,
-  }) {
-    final FakeStorageService storage = FakeStorageService();
-    final Map<String, Object? Function(Map<String, dynamic>)> defaults = {
-      'verification_submit': (Map<String, dynamic> params) => ok(<String, dynamic>{
-            'id': 'sub-9001',
-            'entity_id': 'u1',
-            'credential_id': 'cred-1',
-            'submission_type': 'identity_document',
-            'status': 'pending',
-            'submitted_at': '2026-01-01T00:00:00.000Z',
-            'reviewed_at': null,
-            'decision_notes': null,
-          }),
-      'verification_status_get': (_) => ok(statusData()),
-      'verification_kyc_level_get': (_) => ok(
-            approved
-                ? <String, dynamic>{
-                    'tier_code': 'tier_1',
-                    'status': 'active',
-                    'limits': <String, dynamic>{
-                      'daily': 500000,
-                      'weekly': 2000000,
-                      'monthly': 8000000,
-                      'cashout': 1000000,
-                    },
-                  }
-                : <String, dynamic>{
-                    'tier_code': 'tier_0',
-                    'status': 'pending',
-                    'limits': <String, dynamic>{
-                      'daily': 0,
-                      'weekly': 0,
-                      'monthly': 0,
-                      'cashout': 0,
-                    },
-                  },
-          ),
+      ),
       'verification_limits_get': (_) => ok(<String, dynamic>{
-            'daily': 0,
-            'weekly': 0,
-            'monthly': 0,
-            'cashout': 0,
-          }),
+        'daily': 0,
+        'weekly': 0,
+        'monthly': 0,
+        'cashout': 0,
+      }),
     };
     defaults.addAll(
-        rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final client = MockSupabaseClientFactory.create(
       currentUser: signedIn ? fakeUser('u1') : null,
       rpcHandlers: defaults,
@@ -154,7 +157,12 @@ void main() {
     );
     final service = IdentityVerificationService(repo: repo);
     final provider = VerificationProvider(repo: repo);
-    return (repository: repo, storage: storage, service: service, provider: provider);
+    return (
+      repository: repo,
+      storage: storage,
+      service: service,
+      provider: provider,
+    );
   }
 
   group('VP3: Identity verification flow', () {
@@ -209,9 +217,11 @@ void main() {
           mimeType: mimeType,
           fileName: fileName,
         ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
-            .having((ApiException e) => e.code, 'code', 'PLT001')),
+        throwsA(
+          isA<ApiException>()
+              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
+              .having((ApiException e) => e.code, 'code', 'PLT001'),
+        ),
       );
     });
 
@@ -230,20 +240,22 @@ void main() {
       final flow = buildFlow(
         rpcHandlers: {
           'verification_status_get': (_) => <String, dynamic>{
-                'code': 'PLT005',
-                'data': <String, dynamic>{},
-              },
+            'code': 'PLT005',
+            'data': <String, dynamic>{},
+          },
         },
       );
       addTearDown(flow.provider.dispose);
 
       expect(
         () => flow.repository.getStatus(),
-        throwsA(isA<ApiException>().having(
-          (ApiException e) => e.kind,
-          'kind',
-          ApiExceptionKind.conflict,
-        )),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
 

@@ -69,7 +69,9 @@ class _LoginScreenState extends State<LoginScreen> {
             suffix: IconButton(
               onPressed: () => setState(() => _obscure = !_obscure),
               icon: Icon(
-                _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                _obscure
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
               ),
             ),
           ),
@@ -99,9 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
           TextButton(
             onPressed: _submitting
                 ? null
-                : () => context.go(
-                    _target(RoutePaths.signup),
-                  ),
+                : () => context.go(_target(RoutePaths.signup)),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.primary,
             ),
@@ -113,15 +113,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   bool get _canSubmit =>
-      _email.text.trim().isNotEmpty && _password.text.isNotEmpty && !_submitting;
+      _email.text.trim().isNotEmpty &&
+      _password.text.isNotEmpty &&
+      !_submitting;
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
     final AuthProvider auth = context.read<AuthProvider>();
     final String email = _email.text.trim();
-    await auth.signIn(
-      AuthCredentials(email: email, password: _password.text),
-    );
+    await auth.signIn(AuthCredentials(email: email, password: _password.text));
     if (!mounted) {
       return;
     }

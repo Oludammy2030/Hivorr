@@ -24,7 +24,11 @@ void main() {
     test('all values are non-empty strings', () {
       for (final MapEntry<String, dynamic> entry in json.entries) {
         final String value = entry.value as String;
-        expect(value.isNotEmpty, isTrue, reason: 'empty value for ${entry.key}');
+        expect(
+          value.isNotEmpty,
+          isTrue,
+          reason: 'empty value for ${entry.key}',
+        );
       }
     });
 
@@ -34,8 +38,11 @@ void main() {
         final String value = entry.value as String;
         for (final Match m in placeholder.allMatches(value)) {
           final String name = m.group(1)!;
-          expect(name, matches(RegExp(r'^[a-zA-Z][a-zA-Z0-9]*$')),
-              reason: 'malformed placeholder {$name} in ${entry.key}');
+          expect(
+            name,
+            matches(RegExp(r'^[a-zA-Z][a-zA-Z0-9]*$')),
+            reason: 'malformed placeholder {$name} in ${entry.key}',
+          );
         }
       }
     });
@@ -47,7 +54,7 @@ void main() {
         'two',
         'few',
         'many',
-        'other'
+        'other',
       ];
       final Map<String, Set<String>> groups = <String, Set<String>>{};
       for (final String key in json.keys) {
@@ -60,8 +67,11 @@ void main() {
         }
       }
       for (final MapEntry<String, Set<String>> group in groups.entries) {
-        expect(group.value.contains('other'), isTrue,
-            reason: 'plural group "${group.key}" missing .other form');
+        expect(
+          group.value.contains('other'),
+          isTrue,
+          reason: 'plural group "${group.key}" missing .other form',
+        );
       }
     });
 

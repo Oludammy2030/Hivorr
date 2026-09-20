@@ -37,64 +37,65 @@ void main() {
   const String professionId = 'prof-sw';
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   // ---- Scripted "server" state -------------------------------------------
   String tradeStatus = 'unverified';
 
   Map<String, dynamic> statusData() => <String, dynamic>{
-        'entity_id': 'u1',
-        'kyc': <String, dynamic>{
-          'tier_code': 'tier_0',
-          'status': 'pending',
-          'limits': <String, dynamic>{
-            'daily': 0,
-            'weekly': 0,
-            'monthly': 0,
-            'cashout': 0,
-          },
-        },
-        'identity_verified': false,
-        'trade_verifications': <dynamic>[
-          <String, dynamic>{
-            'profession_id': professionId,
-            'trade_verification_status': tradeStatus,
-          },
-        ],
-        'pending_submissions': tradeStatus == 'pending' ? 1 : 0,
-        'total_submissions':
-            tradeStatus == 'unverified' ? 0 : 1,
-      };
+    'entity_id': 'u1',
+    'kyc': <String, dynamic>{
+      'tier_code': 'tier_0',
+      'status': 'pending',
+      'limits': <String, dynamic>{
+        'daily': 0,
+        'weekly': 0,
+        'monthly': 0,
+        'cashout': 0,
+      },
+    },
+    'identity_verified': false,
+    'trade_verifications': <dynamic>[
+      <String, dynamic>{
+        'profession_id': professionId,
+        'trade_verification_status': tradeStatus,
+      },
+    ],
+    'pending_submissions': tradeStatus == 'pending' ? 1 : 0,
+    'total_submissions': tradeStatus == 'unverified' ? 0 : 1,
+  };
 
   ({
     TradeVerificationRepositoryImpl repository,
     FakeStorageService storage,
     TradeVerificationService service,
     TradeVerificationProvider provider,
-  }) buildFlow({
+  })
+  buildFlow({
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
     bool signedIn = true,
   }) {
     final FakeStorageService storage = FakeStorageService();
     final Map<String, Object? Function(Map<String, dynamic>)> defaults = {
       'verification_submit': (_) => ok(<String, dynamic>{
-            'id': 'trade-sub-9001',
-            'entity_id': 'u1',
-            'credential_id': 'cred-1',
-            'submission_type': 'trade_proof',
-            'status': 'pending',
-            'submitted_at': '2026-01-01T00:00:00.000Z',
-            'reviewed_at': null,
-            'decision_notes': null,
-          }),
+        'id': 'trade-sub-9001',
+        'entity_id': 'u1',
+        'credential_id': 'cred-1',
+        'submission_type': 'trade_proof',
+        'status': 'pending',
+        'submitted_at': '2026-01-01T00:00:00.000Z',
+        'reviewed_at': null,
+        'decision_notes': null,
+      }),
       'verification_status_get': (_) => ok(statusData()),
     };
     defaults.addAll(
-        rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final client = MockSupabaseClientFactory.create(
       currentUser: signedIn ? fakeUser('u1') : null,
       rpcHandlers: defaults,
@@ -123,7 +124,12 @@ void main() {
     );
     final service = TradeVerificationService(repo: repo);
     final provider = TradeVerificationProvider(repo: repo);
-    return (repository: repo, storage: storage, service: service, provider: provider);
+    return (
+      repository: repo,
+      storage: storage,
+      service: service,
+      provider: provider,
+    );
   }
 
   group('VP4: Trade verification gate', () {
@@ -146,15 +152,19 @@ void main() {
       // profession's `trade_verification_status` column stays `unverified`
       // until the service-role review flips it (`approved`, migration
       // 20260829090003:476-482). No client write can fake `pending`.
-      expect(flow.provider.status?.kindFor(professionId),
-          TradeVerificationStatusKind.unverified);
+      expect(
+        flow.provider.status?.kindFor(professionId),
+        TradeVerificationStatusKind.unverified,
+      );
 
       // Simulate admin approval (server side effect).
       tradeStatus = 'approved';
       await flow.provider.refreshStatus();
 
-      expect(flow.provider.status?.kindFor(professionId),
-          TradeVerificationStatusKind.approved);
+      expect(
+        flow.provider.status?.kindFor(professionId),
+        TradeVerificationStatusKind.approved,
+      );
     });
 
     test('trade proof upload goes to private bucket', () async {
@@ -185,9 +195,11 @@ void main() {
           mimeType: mimeType,
           fileName: fileName,
         ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
-            .having((ApiException e) => e.code, 'code', 'PLT001')),
+        throwsA(
+          isA<ApiException>()
+              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
+              .having((ApiException e) => e.code, 'code', 'PLT001'),
+        ),
       );
     });
 
@@ -197,8 +209,10 @@ void main() {
       addTearDown(flow.provider.dispose);
 
       final TradeVerificationStatus status = await flow.repository.getStatus();
-      expect(status.kindFor(professionId),
-          TradeVerificationStatusKind.approved);
+      expect(
+        status.kindFor(professionId),
+        TradeVerificationStatusKind.approved,
+      );
     });
 
     test('rejected path surfaces rejection_reason', () async {
@@ -207,8 +221,10 @@ void main() {
       addTearDown(flow.provider.dispose);
 
       final TradeVerificationStatus status = await flow.repository.getStatus();
-      expect(status.kindFor(professionId),
-          TradeVerificationStatusKind.rejected);
+      expect(
+        status.kindFor(professionId),
+        TradeVerificationStatusKind.rejected,
+      );
     });
 
     test('client never mutates gate columns', () async {

@@ -37,7 +37,8 @@ class WalletConversionPairsConfig {
   /// base rates, and missing pairs — callers must not invent a fallback rate.
   double? directedRate(String from, String to) {
     if (from.isEmpty || to.isEmpty || from == to) return null;
-    if (!SupportedCurrency.isSupported(from) || !SupportedCurrency.isSupported(to)) {
+    if (!SupportedCurrency.isSupported(from) ||
+        !SupportedCurrency.isSupported(to)) {
       return null;
     }
     final bool fromIsLower = from.compareTo(to) < 0;
@@ -62,9 +63,13 @@ class WalletConversionPairsConfig {
       final SupportedCurrency? lower = SupportedCurrency.fromCode(legs[0]);
       final SupportedCurrency? upper = SupportedCurrency.fromCode(legs[1]);
       if (lower == null || upper == null) continue;
-      final ConversionPair? forward = ConversionPair.tryCreate(from: lower, to: upper);
-      final ConversionPair? reverse =
-          forward == null ? null : ConversionPair.tryCreate(from: forward.to, to: forward.from);
+      final ConversionPair? forward = ConversionPair.tryCreate(
+        from: lower,
+        to: upper,
+      );
+      final ConversionPair? reverse = forward == null
+          ? null
+          : ConversionPair.tryCreate(from: forward.to, to: forward.from);
       if (forward != null) result.add(forward);
       if (reverse != null) result.add(reverse);
     }

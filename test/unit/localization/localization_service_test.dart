@@ -11,8 +11,9 @@ void main() {
 
   group('HivorrLocalizationService.loadTranslations', () {
     test('loads en.json into a non-empty flat map', () async {
-      final Map<String, String> map =
-          await service.loadTranslations(HivorrSupportedLocales.defaultLocale);
+      final Map<String, String> map = await service.loadTranslations(
+        HivorrSupportedLocales.defaultLocale,
+      );
       expect(map, isNotEmpty);
       expect(map['common.ok'], 'OK');
       expect(map['app.title'], 'Hivorr');
@@ -63,10 +64,7 @@ void main() {
 
     test('replaces multiple placeholders', () {
       expect(
-        service.interpolate(
-          '{a} {b}',
-          <String, String>{'a': '1', 'b': '2'},
-        ),
+        service.interpolate('{a} {b}', <String, String>{'a': '1', 'b': '2'}),
         '1 2',
       );
     });
@@ -90,10 +88,7 @@ void main() {
     });
 
     test('does not recursively interpolate param values', () {
-      expect(
-        service.interpolate('{a}', <String, String>{'a': '{b}'}),
-        '{b}',
-      );
+      expect(service.interpolate('{a}', <String, String>{'a': '{b}'}), '{b}');
     });
   });
 
@@ -118,8 +113,7 @@ void main() {
     });
 
     test('falls back to .other when the specific form is missing', () {
-      const Map<String, String> onlyOther =
-          <String, String>{'x.other': 'many'};
+      const Map<String, String> onlyOther = <String, String>{'x.other': 'many'};
       expect(service.resolvePlural('x', 1, onlyOther, null), 'many');
     });
   });

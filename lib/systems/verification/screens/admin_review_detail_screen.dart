@@ -16,10 +16,7 @@ import 'package:provider/provider.dart';
 /// Displays the submission details, credential document viewer (via signed
 /// URL), approve/reject actions, and audit trail for a single submission.
 class AdminReviewDetailScreen extends StatefulWidget {
-  const AdminReviewDetailScreen({
-    super.key,
-    required this.submissionId,
-  });
+  const AdminReviewDetailScreen({super.key, required this.submissionId});
 
   final String submissionId;
 
@@ -78,10 +75,7 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
     );
   }
 
-  Widget _body(
-    AdminReviewQueueEntry entry,
-    AdminReviewProvider provider,
-  ) {
+  Widget _body(AdminReviewQueueEntry entry, AdminReviewProvider provider) {
     return ListView(
       padding: const EdgeInsets.all(HivorrSpacing.lg),
       children: <Widget>[
@@ -91,7 +85,9 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                entry.entityName.isNotEmpty ? entry.entityName : 'Unknown entity',
+                entry.entityName.isNotEmpty
+                    ? entry.entityName
+                    : 'Unknown entity',
                 style: context.textTheme.titleMedium,
               ),
               const SizedBox(height: HivorrSpacing.xs),
@@ -141,9 +137,8 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
                   child: Image.network(
                     _signedUrl!,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => const Center(
-                      child: Text('Unable to load document.'),
-                    ),
+                    errorBuilder: (_, _, _) =>
+                        const Center(child: Text('Unable to load document.')),
                   ),
                 )
               else
@@ -215,8 +210,7 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
             ),
           )
         else
-          for (final audit in provider.auditTrail)
-            _AuditTile(audit: audit),
+          for (final audit in provider.auditTrail) _AuditTile(audit: audit),
       ],
     );
   }
@@ -252,7 +246,9 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
       await Future<void>.delayed(const Duration(milliseconds: 500));
       if (mounted) Navigator.of(context).pop();
     } else if (mounted) {
-      setState(() => _feedback = 'Approve failed: ${provider.lastError?.message}');
+      setState(
+        () => _feedback = 'Approve failed: ${provider.lastError?.message}',
+      );
     }
   }
 
@@ -269,7 +265,9 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
       await Future<void>.delayed(const Duration(milliseconds: 500));
       if (mounted) Navigator.of(context).pop();
     } else if (mounted) {
-      setState(() => _feedback = 'Reject failed: ${provider.lastError?.message}');
+      setState(
+        () => _feedback = 'Reject failed: ${provider.lastError?.message}',
+      );
     }
   }
 

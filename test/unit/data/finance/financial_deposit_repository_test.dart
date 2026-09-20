@@ -50,9 +50,7 @@ void main() {
     });
 
     test('returns an empty list when no deposits exist', () async {
-      final repo = FinancialDepositRepositoryImpl(
-        remote: FakeDepositRemote(),
-      );
+      final repo = FinancialDepositRepositoryImpl(remote: FakeDepositRemote());
 
       expect(await repo.listDeposits(), isEmpty);
     });
@@ -66,10 +64,7 @@ void main() {
       final remote = FakeDepositRemote()..nextError = failure;
       final repo = FinancialDepositRepositoryImpl(remote: remote);
 
-      await expectLater(
-        repo.listDeposits(),
-        throwsA(same(failure)),
-      );
+      await expectLater(repo.listDeposits(), throwsA(same(failure)));
     });
   });
 }

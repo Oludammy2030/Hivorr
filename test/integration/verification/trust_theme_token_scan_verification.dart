@@ -55,11 +55,7 @@ String _computeProjectRoot(String scriptPath) {
   return Directory.current.path;
 }
 
-void _collectDartFiles(
-  Directory dir,
-  String scriptPath,
-  List<String> files,
-) {
+void _collectDartFiles(Directory dir, String scriptPath, List<String> files) {
   for (final entity in dir.listSync()) {
     if (entity is Directory) {
       final base = _basename(entity.path);
@@ -83,8 +79,9 @@ int _lineOf(String content, int index) {
 
 String _snippetAt(String content, int index, int length) {
   final start = index < 0 ? 0 : index;
-  final end =
-      (start + length) > content.length ? content.length : start + length;
+  final end = (start + length) > content.length
+      ? content.length
+      : start + length;
   return content.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
@@ -125,31 +122,37 @@ void main() {
 
     for (final (pattern, label) in _tokenPatterns) {
       for (final m in pattern.allMatches(content)) {
-        findings.add(_TokenFinding(
-          filePath,
-          _lineOf(content, m.start),
-          label,
-          _snippetAt(content, m.start, 60),
-        ));
+        findings.add(
+          _TokenFinding(
+            filePath,
+            _lineOf(content, m.start),
+            label,
+            _snippetAt(content, m.start, 60),
+          ),
+        );
       }
     }
   }
 
   group('DoD-C3: Design token scan (Rule 5)', () {
-    test('no Colors.*, Color(0xFF...), fontFamily: in trust system widgets',
-        () {
-      final buffer = StringBuffer();
-      buffer.writeln(
-          'Theme token scan found ${findings.length} finding(s):');
-      for (final f in findings) {
-        buffer.writeln('  - $f');
-      }
-      expect(findings, isEmpty, reason: buffer.toString());
-    });
+    test(
+      'no Colors.*, Color(0xFF...), fontFamily: in trust system widgets',
+      () {
+        final buffer = StringBuffer();
+        buffer.writeln('Theme token scan found ${findings.length} finding(s):');
+        for (final f in findings) {
+          buffer.writeln('  - $f');
+        }
+        expect(findings, isEmpty, reason: buffer.toString());
+      },
+    );
 
     test('scanned a non-trivial set of trust system files', () {
-      expect(files.length, greaterThan(0),
-          reason: 'must scan at least one trust-system dart file');
+      expect(
+        files.length,
+        greaterThan(0),
+        reason: 'must scan at least one trust-system dart file',
+      );
     });
   });
 }

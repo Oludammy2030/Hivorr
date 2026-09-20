@@ -14,7 +14,7 @@ import 'package:hivorr/data/repositories/portfolio_repository.dart';
 /// not-found state without leaking entity existence.
 class PortfolioRepositoryImpl implements PortfolioRepository {
   PortfolioRepositoryImpl({required PortfolioRemoteDataSource remote})
-      : _remote = remote;
+    : _remote = remote;
 
   final PortfolioRemoteDataSource _remote;
 

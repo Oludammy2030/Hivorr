@@ -50,10 +50,9 @@ class SupabaseConversionRemoteDataSource extends BaseApiService
     required String toCurrency,
     required double amount,
     required double rate,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'financial_convert_currency',
           params: <String, dynamic>{
             'p_from_currency': fromCurrency,
@@ -62,34 +61,34 @@ class SupabaseConversionRemoteDataSource extends BaseApiService
             'p_rate': rate,
           },
         );
-        final Map<String, dynamic> data = FinancialEnvelopeParser.unwrap(response);
-        return CurrencyConversionDto.fromRpc(
-          conversionId: data['conversion_id'] as String,
-          fromCurrency: fromCurrency,
-          toCurrency: toCurrency,
-          fromAmount: (data['from_amount'] as num).toDouble(),
-          toAmount: (data['to_amount'] as num).toDouble(),
-          rate: (data['rate'] as num).toDouble(),
-        );
-      });
+    final Map<String, dynamic> data = FinancialEnvelopeParser.unwrap(response);
+    return CurrencyConversionDto.fromRpc(
+      conversionId: data['conversion_id'] as String,
+      fromCurrency: fromCurrency,
+      toCurrency: toCurrency,
+      fromAmount: (data['from_amount'] as num).toDouble(),
+      toAmount: (data['to_amount'] as num).toDouble(),
+      rate: (data['rate'] as num).toDouble(),
+    );
+  });
 
   @override
   Future<List<CurrencyConversionDto>> getHistory() => _guard(() async {
-        if (!historyReadEnabled) {
-          return const <CurrencyConversionDto>[];
-        }
-        final String? entityId = supabase.auth.currentUser?.id;
-        final String table = 'financial_conversions';
-        final PostgrestFilterBuilder<PostgrestList> filtered = supabase
-            .from(table)
-            .select();
-        final PostgrestTransformBuilder<PostgrestList> query =
-            (entityId == null || entityId.isEmpty)
-                ? filtered.order('created_at', ascending: false)
-                : filtered
-                    .eq('entity_id', entityId)
-                    .order('created_at', ascending: false);
-        final PostgrestList rows = await query;
-        return rows.map(CurrencyConversionDto.fromJson).toList(growable: false);
-      });
+    if (!historyReadEnabled) {
+      return const <CurrencyConversionDto>[];
+    }
+    final String? entityId = supabase.auth.currentUser?.id;
+    final String table = 'financial_conversions';
+    final PostgrestFilterBuilder<PostgrestList> filtered = supabase
+        .from(table)
+        .select();
+    final PostgrestTransformBuilder<PostgrestList> query =
+        (entityId == null || entityId.isEmpty)
+        ? filtered.order('created_at', ascending: false)
+        : filtered
+              .eq('entity_id', entityId)
+              .order('created_at', ascending: false);
+    final PostgrestList rows = await query;
+    return rows.map(CurrencyConversionDto.fromJson).toList(growable: false);
+  });
 }

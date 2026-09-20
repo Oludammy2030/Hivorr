@@ -35,18 +35,20 @@ void main() {
   );
 
   group('TaxonomyProvider', () {
-    test('loadIndustries transitions idle -> loaded and exposes industries',
-        () async {
-      final repo = FakeTaxonomyRepository(industries: <Industry>[industry()]);
-      final provider = TaxonomyProvider(repository: repo);
+    test(
+      'loadIndustries transitions idle -> loaded and exposes industries',
+      () async {
+        final repo = FakeTaxonomyRepository(industries: <Industry>[industry()]);
+        final provider = TaxonomyProvider(repository: repo);
 
-      expect(provider.state, TaxonomyProviderState.idle);
-      await provider.loadIndustries();
+        expect(provider.state, TaxonomyProviderState.idle);
+        await provider.loadIndustries();
 
-      expect(provider.state, TaxonomyProviderState.loaded);
-      expect(provider.industries.length, 1);
-      expect(provider.error, isNull);
-    });
+        expect(provider.state, TaxonomyProviderState.loaded);
+        expect(provider.industries.length, 1);
+        expect(provider.error, isNull);
+      },
+    );
 
     test('loadProfessions populates professionsByIndustry', () async {
       final repo = FakeTaxonomyRepository(
@@ -63,24 +65,27 @@ void main() {
       expect(provider.professionsByIndustry['ind-tech']!.length, 1);
     });
 
-    test('selectIndustry sets selection and resets selectedProfession', () async {
-      final repo = FakeTaxonomyRepository(
-        industries: <Industry>[industry()],
-        professionsByIndustry: <String, List<Profession>>{
-          'ind-tech': <Profession>[profession()],
-        },
-      );
-      final provider = TaxonomyProvider(repository: repo);
+    test(
+      'selectIndustry sets selection and resets selectedProfession',
+      () async {
+        final repo = FakeTaxonomyRepository(
+          industries: <Industry>[industry()],
+          professionsByIndustry: <String, List<Profession>>{
+            'ind-tech': <Profession>[profession()],
+          },
+        );
+        final provider = TaxonomyProvider(repository: repo);
 
-      await provider.loadIndustries();
-      provider.selectIndustry('ind-tech');
-      provider.selectProfession(profession());
-      expect(provider.selectedIndustry?.id, 'ind-tech');
-      expect(provider.selectedProfession, isNotNull);
+        await provider.loadIndustries();
+        provider.selectIndustry('ind-tech');
+        provider.selectProfession(profession());
+        expect(provider.selectedIndustry?.id, 'ind-tech');
+        expect(provider.selectedProfession, isNotNull);
 
-      provider.selectIndustry('ind-tech');
-      expect(provider.selectedProfession, isNull);
-    });
+        provider.selectIndustry('ind-tech');
+        expect(provider.selectedProfession, isNull);
+      },
+    );
 
     test('professionsForSelectedIndustry returns the scoped list', () async {
       final repo = FakeTaxonomyRepository(
@@ -99,7 +104,9 @@ void main() {
     });
 
     test('error state surfaces ApiException', () async {
-      final provider = TaxonomyProvider(repository: ThrowingTaxonomyRepository());
+      final provider = TaxonomyProvider(
+        repository: ThrowingTaxonomyRepository(),
+      );
 
       await provider.loadIndustries();
 

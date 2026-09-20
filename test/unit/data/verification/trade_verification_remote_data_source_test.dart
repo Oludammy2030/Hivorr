@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/api/exceptions/api_exception_mapper.dart';
-import 'package:hivorr/data/datasources/remote/data_exception_mapper.dart' as norm;
+import 'package:hivorr/data/datasources/remote/data_exception_mapper.dart'
+    as norm;
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/verification_envelope_parser.dart';
 import 'package:hivorr/data/models/verification_status_dto.dart';
@@ -21,15 +22,15 @@ import '../../../support/factories/mock_supabase_client_factory.dart';
 /// leaking a raw transport/Postgrest error (TT-01).
 void main() {
   Map<String, dynamic> submissionData() => <String, dynamic>{
-        'id': 'trade-sub-a',
-        'entity_id': 'u1',
-        'credential_id': 'cred-1',
-        'submission_type': 'trade_proof',
-        'status': 'pending',
-        'submitted_at': '2026-01-01T00:00:00.000Z',
-        'reviewed_at': null,
-        'decision_notes': null,
-      };
+    'id': 'trade-sub-a',
+    'entity_id': 'u1',
+    'credential_id': 'cred-1',
+    'submission_type': 'trade_proof',
+    'status': 'pending',
+    'submitted_at': '2026-01-01T00:00:00.000Z',
+    'reviewed_at': null,
+    'decision_notes': null,
+  };
 
   Map<String, dynamic> statusData({String tradeStatus = 'approved'}) =>
       <String, dynamic>{
@@ -68,18 +69,24 @@ void main() {
     Map<String, dynamic>? capturedSubmitParams,
     Map<String, dynamic>? capturedStatusParams,
   }) {
-    final Map<String, Object? Function(Map<String, dynamic>)> handlers = <String,
-        Object? Function(Map<String, dynamic>)>{
-      'verification_submit': (Map<String, dynamic> params) {
-        capturedSubmitParams?..clear()..addAll(params);
-        return envelope(submissionData());
-      },
-      'verification_status_get': (Map<String, dynamic> params) {
-        capturedStatusParams?..clear()..addAll(params);
-        return envelope(statusData());
-      },
-    };
-    handlers.addAll(rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+    final Map<String, Object? Function(Map<String, dynamic>)> handlers =
+        <String, Object? Function(Map<String, dynamic>)>{
+          'verification_submit': (Map<String, dynamic> params) {
+            capturedSubmitParams
+              ?..clear()
+              ..addAll(params);
+            return envelope(submissionData());
+          },
+          'verification_status_get': (Map<String, dynamic> params) {
+            capturedStatusParams
+              ?..clear()
+              ..addAll(params);
+            return envelope(statusData());
+          },
+        };
+    handlers.addAll(
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final client = MockSupabaseClientFactory.create(rpcHandlers: handlers);
     return SupabaseTradeVerificationRemoteDataSource(
       dio: Dio(),
@@ -89,22 +96,25 @@ void main() {
   }
 
   group('submit()', () {
-    test('forwards credentialId and the default trade_proof submission type',
-        () async {
-      final Map<String, dynamic> params = <String, dynamic>{};
-      final ds = build(capturedSubmitParams: params);
+    test(
+      'forwards credentialId and the default trade_proof submission type',
+      () async {
+        final Map<String, dynamic> params = <String, dynamic>{};
+        final ds = build(capturedSubmitParams: params);
 
-      final VerificationSubmissionDto dto =
-          await ds.submit(credentialId: 'cred-1');
+        final VerificationSubmissionDto dto = await ds.submit(
+          credentialId: 'cred-1',
+        );
 
-      expect(params['p_credential_id'], 'cred-1');
-      expect(params['p_submission_type'], 'trade_proof');
-      expect(dto.id, 'trade-sub-a');
-      expect(dto.entityId, 'u1');
-      expect(dto.credentialId, 'cred-1');
-      expect(dto.submissionType, 'trade_proof');
-      expect(dto.status, 'pending');
-    });
+        expect(params['p_credential_id'], 'cred-1');
+        expect(params['p_submission_type'], 'trade_proof');
+        expect(dto.id, 'trade-sub-a');
+        expect(dto.entityId, 'u1');
+        expect(dto.credentialId, 'cred-1');
+        expect(dto.submissionType, 'trade_proof');
+        expect(dto.status, 'pending');
+      },
+    );
 
     test('honors an explicit submission type override', () async {
       final Map<String, dynamic> params = <String, dynamic>{};
@@ -122,8 +132,9 @@ void main() {
     test('unwraps the PLT000 envelope into a submission DTO', () async {
       final ds = build();
 
-      final VerificationSubmissionDto dto =
-          await ds.submit(credentialId: 'cred-1');
+      final VerificationSubmissionDto dto = await ds.submit(
+        credentialId: 'cred-1',
+      );
 
       expect(dto.id, 'trade-sub-a');
       expect(dto.submittedAt, DateTime.utc(2026, 1, 1));

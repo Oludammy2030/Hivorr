@@ -33,29 +33,38 @@ void main() {
   }
 
   group('TradeProofStepScreen (FV-23, FV-26)', () {
-    testWidgets('renders the bound profession chip + proof-type labels',
-        (WidgetTester tester) async {
+    testWidgets('renders the bound profession chip + proof-type labels', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, _) = await pumpTrade(tester);
       await tester.pumpAndSettle();
       expect(find.text('Profession'), findsOneWidget);
       expect(find.text('Software Engineer'), findsOneWidget);
-      expect(find.text('Proof of your trade unlocks bidding. Choose a proof '
-          'type, then upload a clear photo or PDF.'), findsOneWidget);
+      expect(
+        find.text(
+          'Proof of your trade unlocks bidding. Choose a proof '
+          'type, then upload a clear photo or PDF.',
+        ),
+        findsOneWidget,
+      );
       for (final TradeProofType type in TradeProofType.values) {
         expect(find.text(type.label), findsOneWidget);
       }
       stack.provider.dispose();
     });
 
-    testWidgets('pending gate shows the locked copy', (WidgetTester tester) async {
+    testWidgets('pending gate shows the locked copy', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, _) = await pumpTrade(tester);
       await tester.pumpAndSettle();
       expect(find.text('Bidding will unlock after approval'), findsOneWidget);
       stack.provider.dispose();
     });
 
-    testWidgets('approved gate shows the unlocked copy',
-        (WidgetTester tester) async {
+    testWidgets('approved gate shows the unlocked copy', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, _) = await pumpTrade(
         tester,
         stack: buildOnboardingStack(
@@ -72,25 +81,31 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('gate refreshes on activation and a pending result locks bidding',
-        (WidgetTester tester) async {
-      final OnboardingTestStack stack = buildOnboardingStack(
-        tradeRepo: FakeTradeVerificationRepository(
-          status: tradeStatusEntity(
-            statuses: const <String, String>{'prof-sw': 'pending'},
+    testWidgets(
+      'gate refreshes on activation and a pending result locks bidding',
+      (WidgetTester tester) async {
+        final OnboardingTestStack stack = buildOnboardingStack(
+          tradeRepo: FakeTradeVerificationRepository(
+            status: tradeStatusEntity(
+              statuses: const <String, String>{'prof-sw': 'pending'},
+            ),
           ),
-        ),
-      );
-      final (_, _) = await pumpTrade(tester, stack: stack);
-      await tester.pumpAndSettle();
-      expect(stack.tradeRepo.statusCallCount, 1,
-          reason: 'activation triggers one gate refresh');
-      expect(find.text('Bidding will unlock after approval'), findsOneWidget);
-      stack.provider.dispose();
-    });
+        );
+        final (_, _) = await pumpTrade(tester, stack: stack);
+        await tester.pumpAndSettle();
+        expect(
+          stack.tradeRepo.statusCallCount,
+          1,
+          reason: 'activation triggers one gate refresh',
+        );
+        expect(find.text('Bidding will unlock after approval'), findsOneWidget);
+        stack.provider.dispose();
+      },
+    );
 
-    testWidgets('primary is enabled once a type + file are chosen',
-        (WidgetTester tester) async {
+    testWidgets('primary is enabled once a type + file are chosen', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpTrade(tester, pickFile: () async => seedPickedFile());
       await tester.pumpAndSettle();
@@ -104,8 +119,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('submit binds the profession id and routes to completion',
-        (WidgetTester tester) async {
+    testWidgets('submit binds the profession id and routes to completion', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpTrade(tester, pickFile: () async => seedPickedFile());
       await tester.pumpAndSettle();
@@ -118,8 +134,11 @@ void main() {
 
       expect(stack.tradeRepo.submitCallCount, 1);
       expect(stack.tradeRepo.lastProfessionId, 'prof-sw');
-      expect(stack.provider.progress!.hasTradeProofSubmission, isTrue,
-          reason: 'mirror flag set after a successful submission');
+      expect(
+        stack.provider.progress!.hasTradeProofSubmission,
+        isTrue,
+        reason: 'mirror flag set after a successful submission',
+      );
       expect(find.text('ONBOARDING-COMPLETE'), findsOneWidget);
       controller.dispose();
       stack.provider.dispose();

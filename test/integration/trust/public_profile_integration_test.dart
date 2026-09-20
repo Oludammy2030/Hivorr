@@ -38,29 +38,30 @@ void main() {
 
   group('VP12: Public profile (anon + SEO + responsive)', () {
     testWidgets(
-        'DoD-VP12a: approved entity → single RPC → header + badges + credentials + grid render',
-        (WidgetTester tester) async {
-      final stack = buildPortfolioStack();
-      addTearDown(stack.provider.dispose);
+      'DoD-VP12a: approved entity → single RPC → header + badges + credentials + grid render',
+      (WidgetTester tester) async {
+        final stack = buildPortfolioStack();
+        addTearDown(stack.provider.dispose);
 
-      await pumpProfile(tester, stack);
+        await pumpProfile(tester, stack);
 
-      expect(stack.remote.lastEntityId, 'entity-1');
-      expect(stack.remote.callCount, 1);
-      expect(find.byType(HivorrLoadingState), findsNothing);
-      expect(find.byType(HivorrEmptyState), findsNothing);
-      expect(find.byType(ProfileHeaderCard), findsOneWidget);
-      expect(find.text('Ada Lovelace'), findsOneWidget);
-      expect(find.text('2 Approved Credentials'), findsOneWidget);
-      expect(find.byType(CredentialCard), findsNWidgets(2));
-      // Portfolio items render (may be below the fold).
-      await tester.scrollUntilVisible(find.text('Portfolio'), 200);
-      expect(find.byType(PortfolioItemCard), findsNWidgets(2));
-    });
+        expect(stack.remote.lastEntityId, 'entity-1');
+        expect(stack.remote.callCount, 1);
+        expect(find.byType(HivorrLoadingState), findsNothing);
+        expect(find.byType(HivorrEmptyState), findsNothing);
+        expect(find.byType(ProfileHeaderCard), findsOneWidget);
+        expect(find.text('Ada Lovelace'), findsOneWidget);
+        expect(find.text('2 Approved Credentials'), findsOneWidget);
+        expect(find.byType(CredentialCard), findsNWidgets(2));
+        // Portfolio items render (may be below the fold).
+        await tester.scrollUntilVisible(find.text('Portfolio'), 200);
+        expect(find.byType(PortfolioItemCard), findsNWidgets(2));
+      },
+    );
 
-    testWidgets(
-        '390px mobile layout renders without overflow',
-        (WidgetTester tester) async {
+    testWidgets('390px mobile layout renders without overflow', (
+      WidgetTester tester,
+    ) async {
       // 390×844 LOGICAL pixels (iPhone-class) → 1170×2532 physical @ dpr 3.
       tester.view.physicalSize = const Size(1170, 2532);
       tester.view.devicePixelRatio = 3.0;
@@ -77,9 +78,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-        '1280px web layout renders without overflow',
-        (WidgetTester tester) async {
+    testWidgets('1280px web layout renders without overflow', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -96,28 +97,33 @@ void main() {
     });
 
     testWidgets(
-        'DoD-VP12b: PLT004 renders identical not-found state (no oracle)',
-        (WidgetTester tester) async {
-      final stack = buildPortfolioStack(
-        error: const ApiException(
-          kind: ApiExceptionKind.notFound,
-          message: 'Professional profile not found.',
-          code: 'PLT004',
-        ),
-      );
-      addTearDown(stack.provider.dispose);
+      'DoD-VP12b: PLT004 renders identical not-found state (no oracle)',
+      (WidgetTester tester) async {
+        final stack = buildPortfolioStack(
+          error: const ApiException(
+            kind: ApiExceptionKind.notFound,
+            message: 'Professional profile not found.',
+            code: 'PLT004',
+          ),
+        );
+        addTearDown(stack.provider.dispose);
 
-      await pumpProfile(tester, stack);
+        await pumpProfile(tester, stack);
 
-      expect(find.byType(HivorrEmptyState), findsOneWidget);
-      expect(find.text('Profile not found'), findsOneWidget);
-      expect(find.text('Ada Lovelace'), findsNothing,
-          reason: 'no display-name leak on not-found');
-      expect(find.byType(HivorrErrorState), findsNothing);
-    });
+        expect(find.byType(HivorrEmptyState), findsOneWidget);
+        expect(find.text('Profile not found'), findsOneWidget);
+        expect(
+          find.text('Ada Lovelace'),
+          findsNothing,
+          reason: 'no display-name leak on not-found',
+        );
+        expect(find.byType(HivorrErrorState), findsNothing);
+      },
+    );
 
-    testWidgets('network failure renders retry state that recovers',
-        (WidgetTester tester) async {
+    testWidgets('network failure renders retry state that recovers', (
+      WidgetTester tester,
+    ) async {
       final stack = buildPortfolioStack(
         error: const ApiException(
           kind: ApiExceptionKind.network,
@@ -138,33 +144,40 @@ void main() {
     });
 
     test(
-        'ProfessionalProfileService.verifiedIdentity derives from credential + KYC tier',
-        () async {
-      final stack = buildPortfolioStack();
-      addTearDown(stack.provider.dispose);
+      'ProfessionalProfileService.verifiedIdentity derives from credential + KYC tier',
+      () async {
+        final stack = buildPortfolioStack();
+        addTearDown(stack.provider.dispose);
 
-      await stack.provider.load('entity-1');
+        await stack.provider.load('entity-1');
 
-      // Loaded profile has an approved identity_document credential AND tier_1.
-      expect(stack.service.verifiedIdentity, isTrue,
-          reason: 'approved identity_document credential → verified');
-      expect(stack.service.tradeVerified, isTrue);
-      expect(stack.service.kycTierCode, 'tier_1');
-      expect(stack.service.kycStatus, 'active');
-      expect(stack.service.professions, hasLength(1));
-      expect(stack.service.credentials, hasLength(2));
-    });
+        // Loaded profile has an approved identity_document credential AND tier_1.
+        expect(
+          stack.service.verifiedIdentity,
+          isTrue,
+          reason: 'approved identity_document credential → verified',
+        );
+        expect(stack.service.tradeVerified, isTrue);
+        expect(stack.service.kycTierCode, 'tier_1');
+        expect(stack.service.kycStatus, 'active');
+        expect(stack.service.professions, hasLength(1));
+        expect(stack.service.credentials, hasLength(2));
+      },
+    );
 
-    test('seoMeta emits title from profession name (never legal_name)', () async {
-      final stack = buildPortfolioStack();
-      addTearDown(stack.provider.dispose);
+    test(
+      'seoMeta emits title from profession name (never legal_name)',
+      () async {
+        final stack = buildPortfolioStack();
+        addTearDown(stack.provider.dispose);
 
-      // Simulate a loaded profile.
-      await stack.provider.load('entity-1');
-      // seoMeta is derived synchronously from the loaded profile.
-      // For the test we invoke it directly on the service.
-      expect(stack.service.seoMeta(), isNotNull);
-    });
+        // Simulate a loaded profile.
+        await stack.provider.load('entity-1');
+        // seoMeta is derived synchronously from the loaded profile.
+        // For the test we invoke it directly on the service.
+        expect(stack.service.seoMeta(), isNotNull);
+      },
+    );
 
     test('PLT004 on PLT004 returns null profile (no oracle)', () async {
       final stack = buildPortfolioStack(
@@ -181,16 +194,23 @@ void main() {
       // _ProfileNotFoundView off `profile == null`).
       final result = await stack.provider.load('nonexistent-entity');
       expect(result, isNull);
-      expect(stack.provider.profile, isNull,
-          reason: 'no profile payload on not-found');
+      expect(
+        stack.provider.profile,
+        isNull,
+        reason: 'no profile payload on not-found',
+      );
       expect(
         stack.provider.lastError,
         isNull,
-        reason: 'PLT004 is normalized to null at the repository boundary, '
+        reason:
+            'PLT004 is normalized to null at the repository boundary, '
             'not surfaced as an error',
       );
-      expect(stack.service.seoMeta(), isNull,
-          reason: 'no SEO payload for a hidden profile');
+      expect(
+        stack.service.seoMeta(),
+        isNull,
+        reason: 'no SEO payload for a hidden profile',
+      );
     });
   });
 }

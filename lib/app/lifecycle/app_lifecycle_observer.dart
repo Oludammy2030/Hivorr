@@ -20,8 +20,9 @@ class AppLifecycleObserver with WidgetsBindingObserver {
   }
 
   void _notify(AppLifecycleState state) {
-    for (final LifecycleCallback callback
-        in List<LifecycleCallback>.of(_callbacks)) {
+    for (final LifecycleCallback callback in List<LifecycleCallback>.of(
+      _callbacks,
+    )) {
       callback(state);
     }
   }

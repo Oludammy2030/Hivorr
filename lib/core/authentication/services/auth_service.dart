@@ -62,7 +62,9 @@ abstract class AuthService {
 
   /// Registers with staged identity; default delegates to [signUp].
   Future<AuthResult> signUpWithIdentity(RegistrationIdentity identity) =>
-      signUp(AuthCredentials(email: identity.email, password: identity.password));
+      signUp(
+        AuthCredentials(email: identity.email, password: identity.password),
+      );
 
   /// Sends a one-time verification code to [email] (email-OTP sign-in).
   ///

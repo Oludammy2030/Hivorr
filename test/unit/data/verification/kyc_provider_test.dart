@@ -82,10 +82,11 @@ void main() {
     });
 
     test('enters error state on a failing remote', () async {
-      final remote = FakeKycRemoteDataSource()..nextError = const ApiException(
-            kind: ApiExceptionKind.server,
-            message: 'boom',
-          );
+      final remote = FakeKycRemoteDataSource()
+        ..nextError = const ApiException(
+          kind: ApiExceptionKind.server,
+          message: 'boom',
+        );
       final provider = build(remote: remote);
 
       await provider.load();
@@ -122,9 +123,7 @@ void main() {
       final mock = MockKycProvider(
         result: const KycVerificationResult(status: 'pending'),
       );
-      final provider = build(
-        registry: KycProviderRegistry(primary: mock),
-      );
+      final provider = build(registry: KycProviderRegistry(primary: mock));
 
       final result = await provider.requestUpgrade(targetTier: KycTier.tier1);
 
@@ -143,8 +142,14 @@ void main() {
       final result = await provider.requestUpgrade(targetTier: KycTier.tier1);
 
       expect(result, isNull);
-      expect(provider.lastError, isA<ApiException>()
-          .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.validation));
+      expect(
+        provider.lastError,
+        isA<ApiException>().having(
+          (ApiException e) => e.kind,
+          'kind',
+          ApiExceptionKind.validation,
+        ),
+      );
       provider.dispose();
     });
   });
@@ -216,7 +221,10 @@ void main() {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_0', status: 'active'),
       );
-      final provider = build(remote: remote, notifications: buildNotifications(service));
+      final provider = build(
+        remote: remote,
+        notifications: buildNotifications(service),
+      );
 
       // Baseline established at tier_0 — no notification yet.
       await provider.refreshStatus();
@@ -272,8 +280,9 @@ void main() {
       );
       await provider.load();
 
-      final KycLevel? next =
-          await provider.requestUpgrade(targetTier: KycTier.tier1);
+      final KycLevel? next = await provider.requestUpgrade(
+        targetTier: KycTier.tier1,
+      );
 
       expect(provider.kycLevel, isNotNull);
       expect(provider.lastError, isNull);

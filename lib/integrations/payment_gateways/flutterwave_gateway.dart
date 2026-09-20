@@ -206,8 +206,7 @@ class FlutterwaveGateway implements PaymentGateway {
     Map<String, String> headers,
   ) {
     final String? event = rawBody['event'] as String?;
-    final Map<String, dynamic>? data =
-        rawBody['data'] is Map<String, dynamic>
+    final Map<String, dynamic>? data = rawBody['data'] is Map<String, dynamic>
         ? rawBody['data'] as Map<String, dynamic>
         : null;
     final String? dataStatus = data?['status'] as String?;
@@ -235,17 +234,11 @@ class FlutterwaveGateway implements PaymentGateway {
     required String rawBody,
     required String signatureHeader,
   }) {
-    return _constantTimeEquals(
-      signatureHeader,
-      config.flutterwaveSecretKey,
-    );
+    return _constantTimeEquals(signatureHeader, config.flutterwaveSecretKey);
   }
 
   /// Case-insensitive header lookup; also accepts camelCase `verif_hash`.
-  static String? headerValue(
-    Map<String, String> headers,
-    String name,
-  ) {
+  static String? headerValue(Map<String, String> headers, String name) {
     for (final MapEntry<String, String> entry in headers.entries) {
       if (entry.key.toLowerCase() == name.toLowerCase()) {
         return entry.value;
@@ -260,8 +253,7 @@ class FlutterwaveGateway implements PaymentGateway {
   static int _toMinorUnits(int majorUnits) => majorUnits * _minorUnitsPerMajor;
 
   /// Minor units to major units (kobo → NGN), truncating any sub-unit.
-  static int _toMajorUnits(int minorUnits) =>
-      minorUnits ~/ _minorUnitsPerMajor;
+  static int _toMajorUnits(int minorUnits) => minorUnits ~/ _minorUnitsPerMajor;
 
   static bool _isOk(Map<String, dynamic> body) =>
       body['status'] == 'success' ||
@@ -275,7 +267,9 @@ class FlutterwaveGateway implements PaymentGateway {
       final bool isServerError = status == 'error' && message == null;
       throw logicalProviderError(
         message: _safeMessage(message),
-        kind: isServerError ? ApiExceptionKind.server : ApiExceptionKind.validation,
+        kind: isServerError
+            ? ApiExceptionKind.server
+            : ApiExceptionKind.validation,
         code: isServerError ? 'PLT999' : 'PLT003',
       );
     }

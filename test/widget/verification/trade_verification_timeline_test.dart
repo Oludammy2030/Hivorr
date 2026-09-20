@@ -14,17 +14,17 @@ void main() {
   final DateTime submitted = DateTime.utc(2026, 1, 1);
   final DateTime reviewed = DateTime.utc(2026, 1, 2);
 
-  Widget wrap(TradeVerification entry, {
+  Widget wrap(
+    TradeVerification entry, {
     DateTime? submittedAt,
     DateTime? reviewedAt,
     String? decisionNotes,
-  }) =>
-      TradeVerificationTimeline(
-        entry: entry,
-        submittedAt: submittedAt,
-        reviewedAt: reviewedAt,
-        decisionNotes: decisionNotes,
-      );
+  }) => TradeVerificationTimeline(
+    entry: entry,
+    submittedAt: submittedAt,
+    reviewedAt: reviewedAt,
+    decisionNotes: decisionNotes,
+  );
 
   TradeVerification entry(String status) =>
       TradeVerification(professionId: 'p1', status: status);
@@ -46,8 +46,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('decided step is bold for an approved entry',
-        (WidgetTester tester) async {
+    testWidgets('decided step is bold for an approved entry', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(tester, wrap(entry('approved')));
       await tester.pump();
 
@@ -56,8 +57,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('pending step is bold while review is pending',
-        (WidgetTester tester) async {
+    testWidgets('pending step is bold while review is pending', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(tester, wrap(entry('pending')));
       await tester.pump();
 
@@ -66,8 +68,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('unverified step is bold when nothing has been submitted',
-        (WidgetTester tester) async {
+    testWidgets('unverified step is bold when nothing has been submitted', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(tester, wrap(entry('unverified')));
       await tester.pump();
 
@@ -76,8 +79,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('rejected entry titles the decided step Rejected',
-        (WidgetTester tester) async {
+    testWidgets('rejected entry titles the decided step Rejected', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(tester, wrap(entry('rejected')));
       await tester.pump();
 
@@ -88,8 +92,9 @@ void main() {
   });
 
   group('decision notes', () {
-    testWidgets('rejected entry surfaces the admin notes in error tone',
-        (WidgetTester tester) async {
+    testWidgets('rejected entry surfaces the admin notes in error tone', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(
         tester,
         wrap(
@@ -106,8 +111,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('rejected entry without notes renders no notes line',
-        (WidgetTester tester) async {
+    testWidgets('rejected entry without notes renders no notes line', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(tester, wrap(entry('rejected')));
       await tester.pump();
 
@@ -115,8 +121,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('approved entry never renders rejection notes',
-        (WidgetTester tester) async {
+    testWidgets('approved entry never renders rejection notes', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(
         tester,
         wrap(entry('approved'), decisionNotes: 'stale rejection notes'),
@@ -129,15 +136,12 @@ void main() {
   });
 
   group('captions + semantics', () {
-    testWidgets('renders submitted and reviewed captions once each',
-        (WidgetTester tester) async {
+    testWidgets('renders submitted and reviewed captions once each', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(
         tester,
-        wrap(
-          entry('approved'),
-          submittedAt: submitted,
-          reviewedAt: reviewed,
-        ),
+        wrap(entry('approved'), submittedAt: submitted, reviewedAt: reviewed),
       );
       await tester.pump();
 
@@ -146,8 +150,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('no captions render when the timestamps are null',
-        (WidgetTester tester) async {
+    testWidgets('no captions render when the timestamps are null', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(tester, wrap(entry('approved')));
       await tester.pump();
 
@@ -155,20 +160,19 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('marks the current step as Semantics.selected',
-        (WidgetTester tester) async {
+    testWidgets('marks the current step as Semantics.selected', (
+      WidgetTester tester,
+    ) async {
       await pumpApp(tester, wrap(entry('approved')));
       await tester.pump();
 
       final Finder decidedSemantics = find
-          .ancestor(
-            of: find.text('Approved'),
-            matching: find.byType(Semantics),
-          )
+          .ancestor(of: find.text('Approved'), matching: find.byType(Semantics))
           .first;
       expect(
-          tester.getSemantics(decidedSemantics).flagsCollection.isSelected,
-          Tristate.isTrue);
+        tester.getSemantics(decidedSemantics).flagsCollection.isSelected,
+        Tristate.isTrue,
+      );
 
       final Finder submittedSemantics = find
           .ancestor(
@@ -177,8 +181,9 @@ void main() {
           )
           .first;
       expect(
-          tester.getSemantics(submittedSemantics).flagsCollection.isSelected,
-          Tristate.isFalse);
+        tester.getSemantics(submittedSemantics).flagsCollection.isSelected,
+        Tristate.isFalse,
+      );
       await unmount(tester);
     });
   });

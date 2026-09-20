@@ -11,8 +11,9 @@ import '../../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('BalanceChip', () {
-    testWidgets('renders available balance with formatted amount',
-        (WidgetTester tester) async {
+    testWidgets('renders available balance with formatted amount', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const BalanceChip(
@@ -25,7 +26,9 @@ void main() {
       expect(find.text('\u20A650,000.00'), findsOneWidget);
     });
 
-    testWidgets('uses successContainer for available', (WidgetTester tester) async {
+    testWidgets('uses successContainer for available', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const BalanceChip(
@@ -59,7 +62,9 @@ void main() {
       expect(find.text('\u20A60.00'), findsOneWidget);
     });
 
-    testWidgets('uses warningContainer for pending', (WidgetTester tester) async {
+    testWidgets('uses warningContainer for pending', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const BalanceChip(
@@ -89,8 +94,9 @@ void main() {
   });
 
   group('BalanceOverviewCard', () {
-    testWidgets('renders a Balances title and per-currency label',
-        (WidgetTester tester) async {
+    testWidgets('renders a Balances title and per-currency label', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         BalanceOverviewCard(
@@ -104,8 +110,9 @@ void main() {
       expect(find.textContaining('(NGN)'), findsOneWidget);
     });
 
-    testWidgets('renders available, held, and pending chips for a currency',
-        (WidgetTester tester) async {
+    testWidgets('renders available, held, and pending chips for a currency', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         BalanceOverviewCard(
@@ -127,8 +134,9 @@ void main() {
       expect(find.text('\$5.00'), findsOneWidget);
     });
 
-    testWidgets('renders nothing when there are no balances',
-        (WidgetTester tester) async {
+    testWidgets('renders nothing when there are no balances', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const BalanceOverviewCard(balances: <String, Balance>{}),
@@ -136,8 +144,9 @@ void main() {
       expect(find.text('Balances'), findsNothing);
     });
 
-    testWidgets('sort default currency first then alphabetical',
-        (WidgetTester tester) async {
+    testWidgets('sort default currency first then alphabetical', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         BalanceOverviewCard(

@@ -18,7 +18,8 @@ class InMemorySecureStorage implements SecureStorage {
   Future<String?> readString(String key) async => _data[key];
 
   @override
-  Future<void> writeString(String key, String value) async => _data[key] = value;
+  Future<void> writeString(String key, String value) async =>
+      _data[key] = value;
 
   @override
   Future<Map<String, dynamic>?> readJson(String key) async {
@@ -70,7 +71,7 @@ class InMemorySecureStorage implements SecureStorage {
 /// the [FlutterSecureStorageImpl] namespacing behavior.
 class FakeFlutterSecureStorage extends FlutterSecureStorage {
   FakeFlutterSecureStorage([Map<String, String>? store])
-      : store = store ?? <String, String>{};
+    : store = store ?? <String, String>{};
 
   final Map<String, String> store;
 
@@ -83,8 +84,7 @@ class FakeFlutterSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) async =>
-      store[key];
+  }) async => store[key];
 
   @override
   Future<void> write({
@@ -113,8 +113,7 @@ class FakeFlutterSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) async =>
-      store.remove(key);
+  }) async => store.remove(key);
 
   @override
   Future<void> deleteAll({
@@ -124,8 +123,7 @@ class FakeFlutterSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) async =>
-      store.clear();
+  }) async => store.clear();
 }
 
 /// In-memory [StorageEngine] for bootstrap and locale-provider tests.

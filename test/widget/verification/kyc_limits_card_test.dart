@@ -14,17 +14,16 @@ void main() {
     num weekly = 200000,
     num monthly = 800000,
     num cashout = 100000,
-  }) =>
-      KycLevel(
-        tierCode: code,
-        status: status,
-        limits: KycLimits(
-          daily: daily,
-          weekly: weekly,
-          monthly: monthly,
-          cashout: cashout,
-        ),
-      );
+  }) => KycLevel(
+    tierCode: code,
+    status: status,
+    limits: KycLimits(
+      daily: daily,
+      weekly: weekly,
+      monthly: monthly,
+      cashout: cashout,
+    ),
+  );
 
   Future<void> pumpCard(WidgetTester tester, KycLevel level) =>
       pumpTheme(tester, KycLimitsCard(level: level));
@@ -43,8 +42,9 @@ void main() {
       expect(find.text('Cashout'), findsOneWidget);
     });
 
-    testWidgets('formats each limit in NGN with thousands separators',
-        (WidgetTester tester) async {
+    testWidgets('formats each limit in NGN with thousands separators', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(tester, tier());
       expect(find.text('₦50,000'), findsOneWidget);
       expect(find.text('₦200,000'), findsOneWidget);
@@ -54,8 +54,9 @@ void main() {
   });
 
   group('KycLimitsCard values', () {
-    testWidgets('renders zero limits for a tier0 account',
-        (WidgetTester tester) async {
+    testWidgets('renders zero limits for a tier0 account', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         tier(
@@ -86,23 +87,26 @@ void main() {
   });
 
   group('KycLimitsCard design tokens', () {
-    testWidgets('labels use the onSurfaceVariant color',
-        (WidgetTester tester) async {
+    testWidgets('labels use the onSurfaceVariant color', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(tester, tier());
       final Text label = tester.widget<Text>(find.text('Daily'));
       expect(label.style?.color, isNotNull);
       expect(label.style?.color, isNot(Colors.black));
     });
 
-    testWidgets('values use the bodyMedium text style',
-        (WidgetTester tester) async {
+    testWidgets('values use the bodyMedium text style', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(tester, tier());
       final Text value = tester.widget<Text>(find.text('₦50,000'));
       expect(value.style, isNotNull);
     });
 
-    testWidgets('lays out the chips in a wrapping row',
-        (WidgetTester tester) async {
+    testWidgets('lays out the chips in a wrapping row', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(tester, tier());
       expect(find.byType(Wrap), findsOneWidget);
       expect(find.byType(Container), findsWidgets);

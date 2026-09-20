@@ -7,7 +7,9 @@ import 'test_helpers.dart';
 
 void main() {
   group('HivorrButton', () {
-    testWidgets('renders label and fires onPressed', (WidgetTester tester) async {
+    testWidgets('renders label and fires onPressed', (
+      WidgetTester tester,
+    ) async {
       bool tapped = false;
       await pumpTheme(
         tester,
@@ -18,7 +20,9 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('shows loader when loading and hides label', (WidgetTester tester) async {
+    testWidgets('shows loader when loading and hides label', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         HivorrButton(label: 'L', isLoading: true, onPressed: () {}),
@@ -27,7 +31,9 @@ void main() {
       expect(find.text('L'), findsNothing);
     });
 
-    testWidgets('is disabled when onPressed is null', (WidgetTester tester) async {
+    testWidgets('is disabled when onPressed is null', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, HivorrButton(label: 'D', onPressed: null));
       final ElevatedButton button = tester.widget<ElevatedButton>(
         find.byType(ElevatedButton),
@@ -35,7 +41,9 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
-    testWidgets('renders in dark theme without throwing', (WidgetTester tester) async {
+    testWidgets('renders in dark theme without throwing', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         HivorrButton(label: 'Dark', onPressed: () {}),
@@ -44,7 +52,9 @@ void main() {
       expect(find.text('Dark'), findsOneWidget);
     });
 
-    testWidgets('primary variant background uses colorScheme.primary', (WidgetTester tester) async {
+    testWidgets('primary variant background uses colorScheme.primary', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, HivorrButton(label: 'X', onPressed: () {}));
       final ElevatedButton btn = tester.widget<ElevatedButton>(
         find.byType(ElevatedButton),
@@ -53,13 +63,12 @@ void main() {
       expect(bg, AppTheme.lightTheme.colorScheme.primary);
     });
 
-    testWidgets('enabled primary label renders in onPrimary for contrast', (WidgetTester tester) async {
+    testWidgets('enabled primary label renders in onPrimary for contrast', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, HivorrButton(label: 'X', onPressed: () {}));
       final Text text = tester.widget<Text>(find.text('X'));
-      expect(
-        text.style?.color,
-        AppTheme.lightTheme.colorScheme.onPrimary,
-      );
+      expect(text.style?.color, AppTheme.lightTheme.colorScheme.onPrimary);
     });
   });
 
@@ -103,10 +112,7 @@ void main() {
   group('HivorrBadge', () {
     testWidgets('renders label for every variant', (WidgetTester tester) async {
       for (final HivorrBadgeVariant variant in HivorrBadgeVariant.values) {
-        await pumpTheme(
-          tester,
-          HivorrBadge(label: 'X', variant: variant),
-        );
+        await pumpTheme(tester, HivorrBadge(label: 'X', variant: variant));
         expect(find.text('X'), findsOneWidget);
       }
     });
@@ -148,7 +154,9 @@ void main() {
       expect(find.text('JD'), findsOneWidget);
     });
 
-    testWidgets('shows person icon when name empty', (WidgetTester tester) async {
+    testWidgets('shows person icon when name empty', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, const HivorrAvatar(name: ''));
       expect(find.byIcon(Icons.person), findsOneWidget);
     });
@@ -163,7 +171,9 @@ void main() {
   });
 
   group('HivorrEmptyState', () {
-    testWidgets('shows title, subtitle and action', (WidgetTester tester) async {
+    testWidgets('shows title, subtitle and action', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         HivorrEmptyState(
@@ -192,7 +202,9 @@ void main() {
   });
 
   group('HivorrSnackbar', () {
-    testWidgets('builds a SnackBar with the message', (WidgetTester tester) async {
+    testWidgets('builds a SnackBar with the message', (
+      WidgetTester tester,
+    ) async {
       late SnackBar sb;
       await tester.pumpWidget(
         MaterialApp(

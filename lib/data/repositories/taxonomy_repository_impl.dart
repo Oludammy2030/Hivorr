@@ -16,10 +16,7 @@ import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 /// contains only active rows still respects the flag.
 class TaxonomyRepositoryImpl implements TaxonomyRepository {
   /// Creates the repository from its two datasource dependencies.
-  TaxonomyRepositoryImpl({
-    required this.remote,
-    required this.local,
-  });
+  TaxonomyRepositoryImpl({required this.remote, required this.local});
 
   /// The remote (Supabase) datasource.
   final TaxonomyRemoteDataSource remote;
@@ -28,9 +25,7 @@ class TaxonomyRepositoryImpl implements TaxonomyRepository {
   final TaxonomyLocalDataSource local;
 
   @override
-  Future<List<Industry>> getIndustries({
-    bool includeInactive = false,
-  }) async {
+  Future<List<Industry>> getIndustries({bool includeInactive = false}) async {
     final List<IndustryDto>? cached = await local.getIndustries();
     if (cached != null && cached.isNotEmpty) {
       return _mapIndustries(cached, includeInactive);
@@ -68,10 +63,7 @@ class TaxonomyRepositoryImpl implements TaxonomyRepository {
   @override
   Future<void> invalidate() => local.invalidate();
 
-  List<Industry> _mapIndustries(
-    List<IndustryDto> dtos,
-    bool includeInactive,
-  ) {
+  List<Industry> _mapIndustries(List<IndustryDto> dtos, bool includeInactive) {
     return dtos
         .map(IndustryMapper.toEntity)
         .where((Industry i) => includeInactive || i.isActive)

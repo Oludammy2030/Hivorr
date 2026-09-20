@@ -74,9 +74,9 @@ class _EscrowListScreenState extends State<EscrowListScreen>
   }
 
   Future<void> _load() => _provider.loadForProject(
-        projectId: widget.projectId,
-        escrowIds: widget.escrowIds,
-      );
+    projectId: widget.projectId,
+    escrowIds: widget.escrowIds,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -116,16 +116,13 @@ class _EscrowListScreenState extends State<EscrowListScreen>
             child: ListView.separated(
               padding: const EdgeInsets.all(HivorrSpacing.lg),
               itemCount: provider.escrows.length,
-              separatorBuilder:
-                  (BuildContext context, int index) =>
-                      const SizedBox(height: HivorrSpacing.md),
+              separatorBuilder: (BuildContext context, int index) =>
+                  const SizedBox(height: HivorrSpacing.md),
               itemBuilder: (BuildContext context, int index) {
                 final escrow = provider.escrows[index];
                 return EscrowCard(
                   escrow: escrow,
-                  onTap: () => context.push(
-                    '/finance/escrow/${escrow.id}',
-                  ),
+                  onTap: () => context.push('/finance/escrow/${escrow.id}'),
                 );
               },
             ),

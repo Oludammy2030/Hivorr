@@ -59,12 +59,16 @@ const List<String> _placeholderSupabaseHosts = <String>[
 // ----- Patterns (conservative, high-signal only) -----
 
 // Private key blocks.
-final RegExp _privateKeyPattern = RegExp(r'-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----');
+final RegExp _privateKeyPattern = RegExp(
+  r'-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----',
+);
 
 // Real Supabase project URLs. A genuine Supabase project reference is exactly a
 // 20-character lowercase alphanumeric subdomain. Placeholder hosts (example,
 // dev.hivorr, etc.) never satisfy this, so they are never flagged.
-final RegExp _supabaseUrlPattern = RegExp(r'https?://([a-z0-9]{20})\.supabase\.co');
+final RegExp _supabaseUrlPattern = RegExp(
+  r'https?://([a-z0-9]{20})\.supabase\.co',
+);
 
 // JWTs: three base64url segments, each at least 16 chars, with the first two
 // starting with `eyJ`. Placeholder fakes like `eyJhbGciOi.eyJzdWIi.signed`
@@ -110,8 +114,9 @@ String _relative(String path) {
 }
 
 String _basename(String path) {
-  final normalized =
-      path.endsWith(Platform.pathSeparator) ? path.substring(0, path.length - 1) : path;
+  final normalized = path.endsWith(Platform.pathSeparator)
+      ? path.substring(0, path.length - 1)
+      : path;
   final idx = normalized.lastIndexOf(Platform.pathSeparator);
   return idx == -1 ? normalized : normalized.substring(idx + 1);
 }
@@ -132,11 +137,7 @@ String _computeProjectRoot(String scriptPath) {
   return Directory.current.path;
 }
 
-void _collectDartFiles(
-  Directory dir,
-  String scriptPath,
-  List<String> files,
-) {
+void _collectDartFiles(Directory dir, String scriptPath, List<String> files) {
   for (final entity in dir.listSync()) {
     if (entity is Directory) {
       final base = _basename(entity.path);
@@ -160,7 +161,9 @@ int _lineOf(String content, int index) {
 
 String _snippetAt(String content, int index, int length) {
   final start = index < 0 ? 0 : index;
-  final end = (start + length) > content.length ? content.length : start + length;
+  final end = (start + length) > content.length
+      ? content.length
+      : start + length;
   return content.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
@@ -198,46 +201,55 @@ ScanResult _scanCodebase() {
     final content = file.readAsStringSync();
 
     for (final m in _privateKeyPattern.allMatches(content)) {
-      privateKeys.add(SecretFinding(
-        'private-key',
-        filePath,
-        _lineOf(content, m.start),
-        _snippetAt(content, m.start, 40),
-      ));
+      privateKeys.add(
+        SecretFinding(
+          'private-key',
+          filePath,
+          _lineOf(content, m.start),
+          _snippetAt(content, m.start, 40),
+        ),
+      );
     }
 
     for (final m in _supabaseUrlPattern.allMatches(content)) {
       final host = m.group(1);
-      if (host != null && _placeholderSupabaseHosts.contains('$host.supabase.co')) {
+      if (host != null &&
+          _placeholderSupabaseHosts.contains('$host.supabase.co')) {
         continue;
       }
-      supabaseUrls.add(SecretFinding(
-        'supabase-url',
-        filePath,
-        _lineOf(content, m.start),
-        _snippetAt(content, m.start, 60),
-      ));
+      supabaseUrls.add(
+        SecretFinding(
+          'supabase-url',
+          filePath,
+          _lineOf(content, m.start),
+          _snippetAt(content, m.start, 60),
+        ),
+      );
     }
 
     for (final m in _jwtPattern.allMatches(content)) {
-      jwts.add(SecretFinding(
-        'jwt',
-        filePath,
-        _lineOf(content, m.start),
-        _snippetAt(content, m.start, 60),
-      ));
+      jwts.add(
+        SecretFinding(
+          'jwt',
+          filePath,
+          _lineOf(content, m.start),
+          _snippetAt(content, m.start, 60),
+        ),
+      );
     }
 
     for (final m in _secretAssignmentPattern.allMatches(content)) {
       final literal = m.group(2);
       if (literal == null) continue;
       if (!_realSecretValue.hasMatch(literal)) continue;
-      secretAssignments.add(SecretFinding(
-        'secret-assignment',
-        filePath,
-        _lineOf(content, m.start),
-        _snippetAt(content, m.start, 80),
-      ));
+      secretAssignments.add(
+        SecretFinding(
+          'secret-assignment',
+          filePath,
+          _lineOf(content, m.start),
+          _snippetAt(content, m.start, 80),
+        ),
+      );
     }
   }
 

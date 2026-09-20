@@ -1,8 +1,4 @@
-import 'package:flutter/widgets.dart'
-    show
-        BuildContext,
-        Localizations,
-        Locale;
+import 'package:flutter/widgets.dart' show BuildContext, Localizations, Locale;
 
 import 'hivorr_localizations.dart';
 

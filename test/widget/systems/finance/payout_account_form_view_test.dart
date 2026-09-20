@@ -31,17 +31,16 @@ class _PendingBindRepo implements FinancialPayoutRepository {
     required String bankName,
     required String accountNumber,
     required String accountName,
-  }) =>
-      _gate.future.then(
-        (_) => PayoutAccount(
-          id: 'acc-new',
-          currencyCode: currencyCode,
-          bankName: bankName,
-          accountNumber: accountNumber,
-          accountName: accountName,
-          status: PayoutAccountStatus.pending,
-        ),
-      );
+  }) => _gate.future.then(
+    (_) => PayoutAccount(
+      id: 'acc-new',
+      currencyCode: currencyCode,
+      bankName: bankName,
+      accountNumber: accountNumber,
+      accountName: accountName,
+      status: PayoutAccountStatus.pending,
+    ),
+  );
 
   @override
   Future<List<PayoutAccount>> listPayoutAccounts() async => const [];
@@ -50,8 +49,7 @@ class _PendingBindRepo implements FinancialPayoutRepository {
   Future<WithdrawalResult> withdraw({
     required String payoutAccountId,
     required double amount,
-  }) async =>
-      throw StateError('not used');
+  }) async => throw StateError('not used');
 }
 
 void main() {
@@ -83,24 +81,27 @@ void main() {
   }
 
   group('PayoutAccountFormView', () {
-    testWidgets('renders currency dropdown with the four supported currencies',
-        (WidgetTester tester) async {
-      await pumpForm(tester);
-      await tester.pumpAndSettle();
+    testWidgets(
+      'renders currency dropdown with the four supported currencies',
+      (WidgetTester tester) async {
+        await pumpForm(tester);
+        await tester.pumpAndSettle();
 
-      expect(find.text('Currency'), findsOneWidget);
-      expect(find.textContaining('Nigerian Naira'), findsOneWidget);
+        expect(find.text('Currency'), findsOneWidget);
+        expect(find.textContaining('Nigerian Naira'), findsOneWidget);
 
-      await tester.tap(find.text('Currency'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Currency'));
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('Ghanaian Cedi'), findsOneWidget);
-      expect(find.textContaining('US Dollar'), findsOneWidget);
-      expect(find.textContaining('British Pound'), findsOneWidget);
-    });
+        expect(find.textContaining('Ghanaian Cedi'), findsOneWidget);
+        expect(find.textContaining('US Dollar'), findsOneWidget);
+        expect(find.textContaining('British Pound'), findsOneWidget);
+      },
+    );
 
-    testWidgets('renders the three inputs and the bind button',
-        (WidgetTester tester) async {
+    testWidgets('renders the three inputs and the bind button', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(tester);
       await tester.pumpAndSettle();
 
@@ -110,8 +111,9 @@ void main() {
       expect(find.text('Bind payout account'), findsOneWidget);
     });
 
-    testWidgets('empty submit surfaces the required-field + NUBAN errors',
-        (WidgetTester tester) async {
+    testWidgets('empty submit surfaces the required-field + NUBAN errors', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(tester);
       await tester.pumpAndSettle();
 
@@ -134,11 +136,15 @@ void main() {
       await tester.tap(find.text('Bind payout account'));
       await tester.pumpAndSettle();
 
-      expect(find.text('NGN account numbers are 10 digits (NUBAN)'), findsOneWidget);
+      expect(
+        find.text('NGN account numbers are 10 digits (NUBAN)'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('non-numeric account numbers are rejected',
-        (WidgetTester tester) async {
+    testWidgets('non-numeric account numbers are rejected', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(tester);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).at(1), 'abcdefghij');
@@ -154,8 +160,9 @@ void main() {
       );
     });
 
-    testWidgets('non-NGN currencies accept 8-15 digit account numbers',
-        (WidgetTester tester) async {
+    testWidgets('non-NGN currencies accept 8-15 digit account numbers', (
+      WidgetTester tester,
+    ) async {
       await pumpForm(tester);
       await tester.pumpAndSettle();
 
@@ -179,8 +186,9 @@ void main() {
       );
     });
 
-    testWidgets('a successful bind invokes onBound and clears the form',
-        (WidgetTester tester) async {
+    testWidgets('a successful bind invokes onBound and clears the form', (
+      WidgetTester tester,
+    ) async {
       PayoutAccount? bound;
       await pumpForm(
         tester,
@@ -198,8 +206,9 @@ void main() {
       expect(find.text('Bank name'), findsOneWidget);
     });
 
-    testWidgets('a bind failure surfaces the typed message inline',
-        (WidgetTester tester) async {
+    testWidgets('a bind failure surfaces the typed message inline', (
+      WidgetTester tester,
+    ) async {
       const ApiException conflict = ApiException(
         kind: ApiExceptionKind.conflict,
         message: 'Account number already bound.',
@@ -217,8 +226,9 @@ void main() {
       expect(find.text('Account number already bound.'), findsOneWidget);
     });
 
-    testWidgets('shows the branded loader while a bind is in flight',
-        (WidgetTester tester) async {
+    testWidgets('shows the branded loader while a bind is in flight', (
+      WidgetTester tester,
+    ) async {
       final blocking = _PendingBindRepo();
       await pumpForm(tester, repo: blocking);
 
@@ -234,8 +244,9 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('renders on the dark theme without hardcoded colors',
-        (WidgetTester tester) async {
+    testWidgets('renders on the dark theme without hardcoded colors', (
+      WidgetTester tester,
+    ) async {
       final provider = FinancialPayoutProvider(
         service: FinancialPayoutService(
           repository: FakeFinancialPayoutRepository(),

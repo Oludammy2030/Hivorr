@@ -27,8 +27,8 @@ export 'package:hivorr/data/providers/submit_state.dart';
 class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Creates the provider bound to [service]; [logger] enables PII-safe logs.
   OnboardingProvider({required OnboardingService service, HivorrLogger? logger})
-      : _service = service,
-        _logger = logger {
+    : _service = service,
+      _logger = logger {
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -155,20 +155,22 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
     void Function(int sent, int total)? onAvatarProgress,
   }) async {
     final String entityId = _entityId ?? _progress?.entityId ?? '';
-    await _runAsSubmit(() => _service.completeProfile(
-          entityId: entityId,
-          legalName: legalName,
-          displayName: displayName,
-          firstName: firstName,
-          middleName: middleName,
-          lastName: lastName,
-          phoneNumber: phoneNumber,
-          bio: bio,
-          avatarBytes: avatarBytes,
-          avatarFileName: avatarFileName,
-          avatarMimeType: avatarMimeType,
-          onAvatarProgress: onAvatarProgress,
-        ));
+    await _runAsSubmit(
+      () => _service.completeProfile(
+        entityId: entityId,
+        legalName: legalName,
+        displayName: displayName,
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
+        bio: bio,
+        avatarBytes: avatarBytes,
+        avatarFileName: avatarFileName,
+        avatarMimeType: avatarMimeType,
+        onAvatarProgress: onAvatarProgress,
+      ),
+    );
   }
 
   /// Binds the selected profession via `entity_profession_bind` (FV-21).
@@ -176,8 +178,12 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
     required String industryId,
     required String professionId,
   }) async {
-    await _runAsSubmit(() => _service.bindProfession(
-        industryId: industryId, professionId: professionId));
+    await _runAsSubmit(
+      () => _service.bindProfession(
+        industryId: industryId,
+        professionId: professionId,
+      ),
+    );
   }
 
   /// Submits an identity document (FV-22, FV-25).
@@ -188,13 +194,15 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
     required String fileName,
     void Function(int sent, int total)? onProgress,
   }) async {
-    await _runAsSubmit(() => _service.submitIdentityDocument(
-          documentType: documentType,
-          bytes: bytes,
-          mimeType: mimeType,
-          fileName: fileName,
-          onProgress: onProgress,
-        ));
+    await _runAsSubmit(
+      () => _service.submitIdentityDocument(
+        documentType: documentType,
+        bytes: bytes,
+        mimeType: mimeType,
+        fileName: fileName,
+        onProgress: onProgress,
+      ),
+    );
   }
 
   /// Submits a trade proof bound to [professionId] (FV-23, FV-25).
@@ -206,14 +214,16 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
     required String fileName,
     void Function(int sent, int total)? onProgress,
   }) async {
-    await _runAsSubmit(() => _service.submitTradeProof(
-          type: type,
-          professionId: professionId,
-          bytes: bytes,
-          mimeType: mimeType,
-          fileName: fileName,
-          onProgress: onProgress,
-        ));
+    await _runAsSubmit(
+      () => _service.submitTradeProof(
+        type: type,
+        professionId: professionId,
+        bytes: bytes,
+        mimeType: mimeType,
+        fileName: fileName,
+        onProgress: onProgress,
+      ),
+    );
   }
 
   /// Refreshes `isTradeGateOpen` from the server (FV-26).

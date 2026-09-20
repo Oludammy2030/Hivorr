@@ -24,10 +24,10 @@ class IdentityVerificationService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _repo = repo,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _repo = repo,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final VerificationRepository _repo;
   final HivorrLogger? _logger;
@@ -57,13 +57,14 @@ class IdentityVerificationService {
       'mimeType': mimeType,
     });
     try {
-      final VerificationSubmission submission = await _repo.submitIdentityDocument(
-        documentType: documentType,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-        onProgress: onProgress,
-      );
+      final VerificationSubmission submission = await _repo
+          .submitIdentityDocument(
+            documentType: documentType,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+            onProgress: onProgress,
+          );
       await _tracer?.finishSpan(span, status: SpanStatus.ok());
       _logger?.info('Identity document submission completed', <String, Object?>{
         'documentType': documentType.name,

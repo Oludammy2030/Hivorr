@@ -36,19 +36,47 @@ void main() {
   );
 
   final List<Industry> industries = <Industry>[
-    industry(id: 'ind-tech', slug: 'technology', name: 'Technology', sortOrder: 20),
+    industry(
+      id: 'ind-tech',
+      slug: 'technology',
+      name: 'Technology',
+      sortOrder: 20,
+    ),
     industry(id: 'ind-legal', slug: 'legal', name: 'Legal', sortOrder: 10),
-    industry(id: 'ind-health', slug: 'healthcare', name: 'Healthcare', sortOrder: 30),
+    industry(
+      id: 'ind-health',
+      slug: 'healthcare',
+      name: 'Healthcare',
+      sortOrder: 30,
+    ),
   ];
 
   final Map<String, List<Profession>> professionsByIndustry =
       <String, List<Profession>>{
-    'ind-tech': <Profession>[
-      profession(id: 'prof-sw', industryId: 'ind-tech', name: 'Software Engineer', slug: 'software-engineer', sortOrder: 10),
-      profession(id: 'prof-mobile', industryId: 'ind-tech', name: 'Mobile Developer', slug: 'mobile-developer', sortOrder: 30),
-      profession(id: 'prof-web', industryId: 'ind-tech', name: 'Web Developer', slug: 'web-developer', sortOrder: 20),
-    ],
-  };
+        'ind-tech': <Profession>[
+          profession(
+            id: 'prof-sw',
+            industryId: 'ind-tech',
+            name: 'Software Engineer',
+            slug: 'software-engineer',
+            sortOrder: 10,
+          ),
+          profession(
+            id: 'prof-mobile',
+            industryId: 'ind-tech',
+            name: 'Mobile Developer',
+            slug: 'mobile-developer',
+            sortOrder: 30,
+          ),
+          profession(
+            id: 'prof-web',
+            industryId: 'ind-tech',
+            name: 'Web Developer',
+            slug: 'web-developer',
+            sortOrder: 20,
+          ),
+        ],
+      };
 
   group('TaxonomyEngine', () {
     test('browseIndustries sorts by sortOrder', () async {
@@ -58,8 +86,11 @@ void main() {
 
       final List<Industry> result = await engine.browseIndustries();
 
-      expect(result.map((Industry i) => i.slug),
-          <String>['legal', 'technology', 'healthcare']);
+      expect(result.map((Industry i) => i.slug), <String>[
+        'legal',
+        'technology',
+        'healthcare',
+      ]);
     });
 
     test('browseProfessions enforces hierarchical scope and order', () async {
@@ -70,20 +101,23 @@ void main() {
         ),
       );
 
-      final List<Profession> result = await engine.browseProfessions('ind-tech');
+      final List<Profession> result = await engine.browseProfessions(
+        'ind-tech',
+      );
 
       expect(result.map((Profession p) => p.slug), <String>[
         'software-engineer',
         'web-developer',
         'mobile-developer',
       ]);
-      expect(result.every((Profession p) => p.industryId == 'ind-tech'), isTrue);
+      expect(
+        result.every((Profession p) => p.industryId == 'ind-tech'),
+        isTrue,
+      );
     });
 
     test('search matches substring across name/slug case-insensitively', () {
-      final engine = TaxonomyEngine(
-        repository: FakeTaxonomyRepository(),
-      );
+      final engine = TaxonomyEngine(repository: FakeTaxonomyRepository());
       final List<Profession> scope = professionsByIndustry['ind-tech']!;
 
       final List<Profession> result = engine.search('soft', scope);
@@ -107,17 +141,20 @@ void main() {
       expect(engine.search(longQuery, scope), isEmpty);
     });
 
-    test('industryForProfession reverse-lookup returns owning industry', () async {
-      final engine = TaxonomyEngine(
-        repository: FakeTaxonomyRepository(
-          industries: industries,
-          professionsByIndustry: professionsByIndustry,
-        ),
-      );
+    test(
+      'industryForProfession reverse-lookup returns owning industry',
+      () async {
+        final engine = TaxonomyEngine(
+          repository: FakeTaxonomyRepository(
+            industries: industries,
+            professionsByIndustry: professionsByIndustry,
+          ),
+        );
 
-      final Industry? owner = await engine.industryForProfession('prof-web');
-      expect(owner?.slug, 'technology');
-    });
+        final Industry? owner = await engine.industryForProfession('prof-web');
+        expect(owner?.slug, 'technology');
+      },
+    );
 
     test('industryForProfession returns null for unknown profession', () async {
       final engine = TaxonomyEngine(
@@ -127,7 +164,9 @@ void main() {
         ),
       );
 
-      final Industry? owner = await engine.industryForProfession('does-not-exist');
+      final Industry? owner = await engine.industryForProfession(
+        'does-not-exist',
+      );
       expect(owner, isNull);
     });
   });

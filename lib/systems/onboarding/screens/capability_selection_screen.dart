@@ -126,11 +126,7 @@ class _CapabilityCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            _iconFor(capability),
-            size: 28,
-            color: colors.primary,
-          ),
+          Icon(_iconFor(capability), size: 28, color: colors.primary),
           const SizedBox(width: HivorrSpacing.md),
           Expanded(
             child: Column(
@@ -155,8 +151,8 @@ class _CapabilityCard extends StatelessWidget {
   }
 
   static IconData _iconFor(EntityCapability capability) => switch (capability) {
-        EntityCapability.hire => Icons.search_rounded,
-        EntityCapability.offer => Icons.work_outline,
-        EntityCapability.both => Icons.swap_horiz_rounded,
-      };
+    EntityCapability.hire => Icons.search_rounded,
+    EntityCapability.offer => Icons.work_outline,
+    EntityCapability.both => Icons.swap_horiz_rounded,
+  };
 }

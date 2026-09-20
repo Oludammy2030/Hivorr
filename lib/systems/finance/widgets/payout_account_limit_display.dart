@@ -26,9 +26,7 @@ class PayoutAccountLimitDisplay extends StatelessWidget {
       padding: const EdgeInsets.all(HivorrSpacing.sm),
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(
-          context.appExtension.radiusSm,
-        ),
+        borderRadius: BorderRadius.circular(context.appExtension.radiusSm),
       ),
       child: Row(
         children: <Widget>[

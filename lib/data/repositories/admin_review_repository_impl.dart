@@ -11,9 +11,8 @@ import 'package:hivorr/data/repositories/admin_review_repository.dart';
 /// [StorageService] for signed-URL creation (the server RLS policy grants
 /// SELECT to platform admins only).
 class AdminReviewRepositoryImpl implements AdminReviewRepository {
-  AdminReviewRepositoryImpl({
-    required AdminReviewRemoteDataSource remote,
-  }) : _remote = remote;
+  AdminReviewRepositoryImpl({required AdminReviewRemoteDataSource remote})
+    : _remote = remote;
 
   final AdminReviewRemoteDataSource _remote;
 
@@ -50,17 +49,17 @@ class AdminReviewRepositoryImpl implements AdminReviewRepository {
     String submissionId, {
     String notes = '',
     bool requiresResubmission = false,
-  }) =>
-      _remote.rejectSubmission(
-        submissionId,
-        notes: notes,
-        requiresResubmission: requiresResubmission,
-      );
+  }) => _remote.rejectSubmission(
+    submissionId,
+    notes: notes,
+    requiresResubmission: requiresResubmission,
+  );
 
   @override
   Future<List<AdminReviewAuditEntry>> getAuditTrail(String submissionId) async {
-    final List<AdminReviewAuditEntryDto> dtos =
-        await _remote.getAuditTrail(submissionId);
+    final List<AdminReviewAuditEntryDto> dtos = await _remote.getAuditTrail(
+      submissionId,
+    );
     return dtos.map(_auditEntryToEntity).toList(growable: false);
   }
 
@@ -68,8 +67,7 @@ class AdminReviewRepositoryImpl implements AdminReviewRepository {
   Future<String> createDocumentSignedUrl(
     String credentialId, {
     int expiresIn = 60,
-  }) =>
-      _remote.createDocumentSignedUrl(credentialId, expiresIn: expiresIn);
+  }) => _remote.createDocumentSignedUrl(credentialId, expiresIn: expiresIn);
 
   AdminReviewQueueEntry _queueEntryToEntity(AdminReviewQueueEntryDto dto) {
     return AdminReviewQueueEntry(

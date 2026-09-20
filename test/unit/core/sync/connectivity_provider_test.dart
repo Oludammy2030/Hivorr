@@ -89,14 +89,11 @@ void main() {
       provider.setOffline();
       await Future<void>.delayed(Duration.zero);
 
-      expect(
-        statuses,
-        <ConnectivityStatus>[
-          ConnectivityStatus.offline,
-          ConnectivityStatus.online,
-          ConnectivityStatus.offline,
-        ],
-      );
+      expect(statuses, <ConnectivityStatus>[
+        ConnectivityStatus.offline,
+        ConnectivityStatus.online,
+        ConnectivityStatus.offline,
+      ]);
     });
   });
 }

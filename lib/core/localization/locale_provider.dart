@@ -15,10 +15,7 @@ import 'supported_locales.dart';
 /// to Hive through the injected [StorageEngine]. Persistence is best-effort:
 /// a failed write never blocks the in-memory locale update.
 class LocaleProvider extends ChangeNotifier {
-  LocaleProvider({
-    required this.config,
-    required this.storage,
-  });
+  LocaleProvider({required this.config, required this.storage});
 
   /// Locale allow-list and defaults sourced from [HivorrSupportedLocales].
   final LocalizationConfig config;
@@ -40,8 +37,9 @@ class LocaleProvider extends ChangeNotifier {
   /// The fallback locale used when no preference is persisted.
   Locale get defaultLocale => config.defaultLocale;
 
-  bool _isSupported(Locale locale) => config.supportedLocales
-      .any((Locale l) => l.languageCode == locale.languageCode);
+  bool _isSupported(Locale locale) => config.supportedLocales.any(
+    (Locale l) => l.languageCode == locale.languageCode,
+  );
 
   Locale _deviceLocale() => PlatformDispatcher.instance.locale;
 
@@ -75,11 +73,9 @@ class LocaleProvider extends ChangeNotifier {
     _currentLocale = locale;
     notifyListeners();
     try {
-      await storage.put(
-        _box,
-        _key,
-        <String, dynamic>{'code': locale.languageCode},
-      );
+      await storage.put(_box, _key, <String, dynamic>{
+        'code': locale.languageCode,
+      });
     } catch (_) {
       // Best-effort persistence; in-memory locale already applied.
     }

@@ -15,8 +15,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('HomeScreen (exit-and-continue gate, B1)', () {
-    testWidgets('offers Continue registration after a deliberate exit',
-        (WidgetTester tester) async {
+    testWidgets('offers Continue registration after a deliberate exit', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
       await stack.provider.advance();
@@ -31,14 +32,22 @@ void main() {
 
       await tester.tap(find.text('Continue registration'));
       await tester.pumpAndSettle();
-      expect(stack.provider.exited, isFalse,
-          reason: 'continue clears the exit flag so the guard resumes');
-      expect(find.text('ONBOARDING-CAPABILITY'), findsOneWidget,
-          reason: 'registration resumes at the saved step');
+      expect(
+        stack.provider.exited,
+        isFalse,
+        reason: 'continue clears the exit flag so the guard resumes',
+      );
+      expect(
+        find.text('ONBOARDING-CAPABILITY'),
+        findsOneWidget,
+        reason: 'registration resumes at the saved step',
+      );
       stack.provider.dispose();
     });
 
-    testWidgets('fresh session shows the plain home state', (WidgetTester tester) async {
+    testWidgets('fresh session shows the plain home state', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
       await pumpOnboardingScreen(
@@ -52,8 +61,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('an auto-resuming wizard gets no Continue card',
-        (WidgetTester tester) async {
+    testWidgets('an auto-resuming wizard gets no Continue card', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
       await stack.provider.advance();
@@ -63,13 +73,17 @@ void main() {
         path: '/',
         providers: stack.buildProviders(),
       );
-      expect(find.text('Continue registration'), findsNothing,
-          reason: 'the guard force-resumes; the card is only for explicit exits');
+      expect(
+        find.text('Continue registration'),
+        findsNothing,
+        reason: 'the guard force-resumes; the card is only for explicit exits',
+      );
       stack.provider.dispose();
     });
 
-    testWidgets('a completed wizard gets no Continue card',
-        (WidgetTester tester) async {
+    testWidgets('a completed wizard gets no Continue card', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
       for (int i = 0; i < OnboardingStepCode.values.length; i++) {
@@ -90,10 +104,10 @@ void main() {
 
   group('HomeScreen admin console entry point (EP-02-11)', () {
     GoRoute adminMarker(String path, String label) => GoRoute(
-          path: path,
-          builder: (BuildContext context, GoRouterState state) =>
-              Scaffold(body: Center(child: Text(label))),
-        );
+      path: path,
+      builder: (BuildContext context, GoRouterState state) =>
+          Scaffold(body: Center(child: Text(label))),
+    );
 
     Future<void> pumpHomeAsAdmin(
       WidgetTester tester, {
@@ -122,32 +136,36 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('hides the console for non-admins',
-        (WidgetTester tester) async {
+    testWidgets('hides the console for non-admins', (
+      WidgetTester tester,
+    ) async {
       await pumpHomeAsAdmin(tester, isAdmin: false);
       expect(find.text('Review queue'), findsNothing);
       expect(find.text('Manage users'), findsNothing);
       expect(find.text('Welcome to Hivorr'), findsOneWidget);
     });
 
-    testWidgets('shows the console for platform admins',
-        (WidgetTester tester) async {
+    testWidgets('shows the console for platform admins', (
+      WidgetTester tester,
+    ) async {
       await pumpHomeAsAdmin(tester, isAdmin: true);
       expect(find.text('Review queue'), findsOneWidget);
       expect(find.text('Manage users'), findsOneWidget);
       expect(find.text('Welcome to Hivorr'), findsOneWidget);
     });
 
-    testWidgets('Review queue button opens the approval console',
-        (WidgetTester tester) async {
+    testWidgets('Review queue button opens the approval console', (
+      WidgetTester tester,
+    ) async {
       await pumpHomeAsAdmin(tester, isAdmin: true);
       await tester.tap(find.text('Review queue'));
       await tester.pumpAndSettle();
       expect(find.text('ADMIN-REVIEW-QUEUE'), findsOneWidget);
     });
 
-    testWidgets('Manage users button opens the directory',
-        (WidgetTester tester) async {
+    testWidgets('Manage users button opens the directory', (
+      WidgetTester tester,
+    ) async {
       await pumpHomeAsAdmin(tester, isAdmin: true);
       await tester.tap(find.text('Manage users'));
       await tester.pumpAndSettle();

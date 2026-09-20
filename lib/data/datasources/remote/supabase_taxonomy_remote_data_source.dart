@@ -31,18 +31,17 @@ class SupabaseTaxonomyRemoteDataSource extends BaseApiService
   }
 
   @override
-  Future<List<IndustryDto>> getIndustries({
-    bool includeInactive = false,
-  }) => _guard(() async {
-    final Map<String, dynamic> response =
-        await supabase.rpc<Map<String, dynamic>>(
-      'taxonomy_industries_list',
-      params: <String, dynamic>{'p_include_inactive': includeInactive},
-    );
-    final List<Map<String, dynamic>> rows =
-        TaxonomyEnvelopeParser.unwrapData(response);
-    return rows.map(IndustryDto.fromJson).toList(growable: false);
-  });
+  Future<List<IndustryDto>> getIndustries({bool includeInactive = false}) =>
+      _guard(() async {
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+              'taxonomy_industries_list',
+              params: <String, dynamic>{'p_include_inactive': includeInactive},
+            );
+        final List<Map<String, dynamic>> rows =
+            TaxonomyEnvelopeParser.unwrapData(response);
+        return rows.map(IndustryDto.fromJson).toList(growable: false);
+      });
 
   @override
   Future<List<ProfessionDto>> getProfessions({
@@ -55,13 +54,11 @@ class SupabaseTaxonomyRemoteDataSource extends BaseApiService
     if (industryId != null && industryId.isNotEmpty) {
       params['p_industry_id'] = industryId;
     }
-    final Map<String, dynamic> response =
-        await supabase.rpc<Map<String, dynamic>>(
-      'taxonomy_professions_list',
-      params: params,
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('taxonomy_professions_list', params: params);
+    final List<Map<String, dynamic>> rows = TaxonomyEnvelopeParser.unwrapData(
+      response,
     );
-    final List<Map<String, dynamic>> rows =
-        TaxonomyEnvelopeParser.unwrapData(response);
     return rows.map(ProfessionDto.fromJson).toList(growable: false);
   });
 }

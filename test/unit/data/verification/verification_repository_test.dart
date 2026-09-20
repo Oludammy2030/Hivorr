@@ -19,13 +19,13 @@ void main() {
   const String fileName = 'nin.png';
 
   Map<String, dynamic> credentialRow() => <String, dynamic>{
-        'id': 'cred-1',
-        'entity_id': 'u1',
-        'kind': 'identity_document',
-        'title': DocumentType.nationalId.label,
-        'document_path': 'credential-documents/u1/abc.bin',
-        'profession_id': null,
-      };
+    'id': 'cred-1',
+    'entity_id': 'u1',
+    'kind': 'identity_document',
+    'title': DocumentType.nationalId.label,
+    'document_path': 'credential-documents/u1/abc.bin',
+    'profession_id': null,
+  };
 
   VerificationRepositoryImpl build({
     FakeVerificationRemoteDataSource? remote,
@@ -50,12 +50,13 @@ void main() {
       final remote = FakeVerificationRemoteDataSource();
       final repo = build(remote: remote);
 
-      final VerificationSubmission submission = await repo.submitIdentityDocument(
-        documentType: DocumentType.nationalId,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-      );
+      final VerificationSubmission submission = await repo
+          .submitIdentityDocument(
+            documentType: DocumentType.nationalId,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+          );
 
       expect(submission.documentType, DocumentType.nationalId);
       expect(submission.status, VerificationStatusKind.pending);
@@ -77,10 +78,7 @@ void main() {
 
       // Storage assertions are captured via the FakeStorageService injected
       // above; the repository must target the private bucket, not public.
-      expect(
-        StorageBuckets.credentialDocuments,
-        isNot('public'),
-      );
+      expect(StorageBuckets.credentialDocuments, isNot('public'));
     });
 
     test('passes mime type and byte length to storage', () async {
@@ -134,8 +132,13 @@ void main() {
           mimeType: 'text/html',
           fileName: fileName,
         ),
-        throwsA(isA<ApiException>().having((ApiException e) => e.code,
-            'code', 'PLT003')),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT003',
+          ),
+        ),
       );
       expect(remote.submitCallCount, 0);
       expect(storage.uploadCallCount, 0);
@@ -202,50 +205,60 @@ void main() {
       expect(level.tierCode, 'tier_0');
     });
 
-    test('propagates a generic upload throw as a server ApiException',
-        () async {
-      final storage = FakeStorageService();
-      storage.nextError = const ApiException(
-        kind: ApiExceptionKind.server,
-        message: 'storage down',
-        code: 'PLT999',
-      );
-      final repo = VerificationRepositoryImpl(
-        remote: FakeVerificationRemoteDataSource(),
-        storage: storage,
-        supabase: MockSupabaseClientFactory.create(
-          currentUser: fakeUser('u1'),
-          queryResults: <String, List<Map<String, dynamic>>>{
-            'entity_credentials': <Map<String, dynamic>>[credentialRow()],
-          },
-        ),
-      );
+    test(
+      'propagates a generic upload throw as a server ApiException',
+      () async {
+        final storage = FakeStorageService();
+        storage.nextError = const ApiException(
+          kind: ApiExceptionKind.server,
+          message: 'storage down',
+          code: 'PLT999',
+        );
+        final repo = VerificationRepositoryImpl(
+          remote: FakeVerificationRemoteDataSource(),
+          storage: storage,
+          supabase: MockSupabaseClientFactory.create(
+            currentUser: fakeUser('u1'),
+            queryResults: <String, List<Map<String, dynamic>>>{
+              'entity_credentials': <Map<String, dynamic>>[credentialRow()],
+            },
+          ),
+        );
 
-      await expectLater(
-        repo.submitIdentityDocument(
-          documentType: DocumentType.nationalId,
-          bytes: bytes,
-          mimeType: mimeType,
-          fileName: fileName,
-        ),
-        throwsA(isA<ApiException>().having((ApiException e) => e.kind,
-            'kind', ApiExceptionKind.server)),
-      );
-    });
+        await expectLater(
+          repo.submitIdentityDocument(
+            documentType: DocumentType.nationalId,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+          ),
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.kind,
+              'kind',
+              ApiExceptionKind.server,
+            ),
+          ),
+        );
+      },
+    );
 
-    test('returns entity mapped with the caller-supplied document type',
-        () async {
-      final repo = build();
+    test(
+      'returns entity mapped with the caller-supplied document type',
+      () async {
+        final repo = build();
 
-      final VerificationSubmission submission = await repo.submitIdentityDocument(
-        documentType: DocumentType.votersCard,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-      );
+        final VerificationSubmission submission = await repo
+            .submitIdentityDocument(
+              documentType: DocumentType.votersCard,
+              bytes: bytes,
+              mimeType: mimeType,
+              fileName: fileName,
+            );
 
-      expect(submission.documentType, DocumentType.votersCard);
-    });
+        expect(submission.documentType, DocumentType.votersCard);
+      },
+    );
 
     test('throws PLT001 auth when no entity is signed in', () async {
       final repo = build(signedIn: false);
@@ -257,9 +270,11 @@ void main() {
           mimeType: mimeType,
           fileName: fileName,
         ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
-            .having((ApiException e) => e.code, 'code', 'PLT001')),
+        throwsA(
+          isA<ApiException>()
+              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
+              .having((ApiException e) => e.code, 'code', 'PLT001'),
+        ),
       );
     });
 
@@ -289,9 +304,13 @@ void main() {
           mimeType: mimeType,
           fileName: fileName,
         ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
+        ),
       );
       expect(remote.submitCallCount, 0);
     });
@@ -322,36 +341,48 @@ void main() {
           mimeType: mimeType,
           fileName: fileName,
         ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
       expect(remote.submitCallCount, 0);
     });
 
-    test('throws PLT999 when the credential row insert returns no rows',
-        () async {
-      final repo = VerificationRepositoryImpl(
-        remote: FakeVerificationRemoteDataSource(),
-        storage: FakeStorageService(),
-        supabase: MockSupabaseClientFactory.create(
-          currentUser: fakeUser('u1'),
-          queryResults: <String, List<Map<String, dynamic>>>{
-            'entity_credentials': <Map<String, dynamic>>[],
-          },
-        ),
-      );
+    test(
+      'throws PLT999 when the credential row insert returns no rows',
+      () async {
+        final repo = VerificationRepositoryImpl(
+          remote: FakeVerificationRemoteDataSource(),
+          storage: FakeStorageService(),
+          supabase: MockSupabaseClientFactory.create(
+            currentUser: fakeUser('u1'),
+            queryResults: <String, List<Map<String, dynamic>>>{
+              'entity_credentials': <Map<String, dynamic>>[],
+            },
+          ),
+        );
 
-      expect(
-        () => repo.submitIdentityDocument(
-          documentType: DocumentType.nationalId,
-          bytes: bytes,
-          mimeType: mimeType,
-          fileName: fileName,
-        ),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'PLT999')),
-      );
-    });
+        expect(
+          () => repo.submitIdentityDocument(
+            documentType: DocumentType.nationalId,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+          ),
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.code,
+              'code',
+              'PLT999',
+            ),
+          ),
+        );
+      },
+    );
 
     test('surfaces a remote conflict (PLT005) from the RPC layer', () async {
       final remote = FakeVerificationRemoteDataSource()
@@ -369,9 +400,13 @@ void main() {
           mimeType: mimeType,
           fileName: fileName,
         ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.conflict)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
   });
@@ -379,7 +414,10 @@ void main() {
   group('getStatus', () {
     test('returns mapped status aggregate from remote', () async {
       final remote = FakeVerificationRemoteDataSource(
-        statusResult: seedStatusDto(identityVerified: true, totalSubmissions: 2),
+        statusResult: seedStatusDto(
+          identityVerified: true,
+          totalSubmissions: 2,
+        ),
       );
       final repo = build(remote: remote);
 
@@ -444,9 +482,13 @@ void main() {
 
       expect(
         () => repo.getStatus(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.notFound)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.notFound,
+          ),
+        ),
       );
     });
 
@@ -461,8 +503,9 @@ void main() {
 
       expect(
         () => repo.getKycLevel(),
-        throwsA(isA<ApiException>().having(
-            (ApiException e) => e.code, 'code', 'X9')),
+        throwsA(
+          isA<ApiException>().having((ApiException e) => e.code, 'code', 'X9'),
+        ),
       );
     });
   });

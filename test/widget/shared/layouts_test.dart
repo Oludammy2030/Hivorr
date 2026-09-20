@@ -40,7 +40,9 @@ void main() {
       expect(find.text('side'), findsNothing);
     });
 
-    testWidgets('shows NavigationRail sidebar when wide', (WidgetTester tester) async {
+    testWidgets('shows NavigationRail sidebar when wide', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(() {
@@ -68,7 +70,9 @@ void main() {
       expect(find.byType(NavigationRail), findsOneWidget);
     });
 
-    testWidgets('falls back to mobile when sidebar is null', (WidgetTester tester) async {
+    testWidgets('falls back to mobile when sidebar is null', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(() {

@@ -6,8 +6,9 @@ import '../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('PasswordRequirementsChecklist', () {
-    testWidgets('shows all four requirements as unsatisfied when empty',
-        (tester) async {
+    testWidgets('shows all four requirements as unsatisfied when empty', (
+      tester,
+    ) async {
       final result = PasswordPolicy.supabase.evaluate('');
       await pumpTheme(
         tester,
@@ -36,10 +37,7 @@ void main() {
 
       // Only lowercase satisfied
       expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
-      expect(
-        find.byIcon(Icons.circle_outlined),
-        findsNWidgets(3),
-      );
+      expect(find.byIcon(Icons.circle_outlined), findsNWidgets(3));
     });
 
     testWidgets('all satisfied shows four check icons', (tester) async {
@@ -89,20 +87,16 @@ void main() {
 
   group('PasswordMatchIndicator', () {
     testWidgets('shows positive state when passwords match', (tester) async {
-      await pumpTheme(
-        tester,
-        const PasswordMatchIndicator(matches: true),
-      );
+      await pumpTheme(tester, const PasswordMatchIndicator(matches: true));
 
       expect(find.text('Passwords match'), findsOneWidget);
       expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
     });
 
-    testWidgets('shows error state when passwords do not match', (tester) async {
-      await pumpTheme(
-        tester,
-        const PasswordMatchIndicator(matches: false),
-      );
+    testWidgets('shows error state when passwords do not match', (
+      tester,
+    ) async {
+      await pumpTheme(tester, const PasswordMatchIndicator(matches: false));
 
       expect(find.text('Passwords do not match'), findsOneWidget);
       expect(find.byIcon(Icons.cancel_outlined), findsOneWidget);

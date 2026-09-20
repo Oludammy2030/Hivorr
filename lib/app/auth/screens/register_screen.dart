@@ -64,25 +64,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final AuthProvider auth = context.watch<AuthProvider>();
     final bool alreadyRegistered =
         auth.lastErrorCode == 'user_already_exists' && _attempted;
-    final String? firstNameError =
-        _attempted && !_isFirstNameValid ? _firstNameError : null;
-    final String? lastNameError =
-        _attempted && !_isLastNameValid ? _lastNameError : null;
-    final String? displayNameError =
-        _attempted && !_isDisplayNameValid ? _displayNameError : null;
-    final String? emailError = _attempted && !_isEmailValid ? _emailError : null;
-    final String? phoneError = _attempted && !_isPhoneValid ? _phoneError : null;
-    final String? passwordError =
-        _attempted && !_isPasswordValid ? _passwordError : null;
+    final String? firstNameError = _attempted && !_isFirstNameValid
+        ? _firstNameError
+        : null;
+    final String? lastNameError = _attempted && !_isLastNameValid
+        ? _lastNameError
+        : null;
+    final String? displayNameError = _attempted && !_isDisplayNameValid
+        ? _displayNameError
+        : null;
+    final String? emailError = _attempted && !_isEmailValid
+        ? _emailError
+        : null;
+    final String? phoneError = _attempted && !_isPhoneValid
+        ? _phoneError
+        : null;
+    final String? passwordError = _attempted && !_isPasswordValid
+        ? _passwordError
+        : null;
     final String? confirmError = _confirm.text.isNotEmpty && !_passwordsMatch
         ? _confirmError
         : null;
     final String? error = alreadyRegistered
         ? 'An account already exists with this email address. '
-            'Please log in to continue.'
+              'Please log in to continue.'
         : _attempted
-            ? (auth.lastError?.message ?? _validationError)
-            : null;
+        ? (auth.lastError?.message ?? _validationError)
+        : null;
 
     return AuthScaffold(
       title: 'Create your free account',
@@ -245,7 +253,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: HivorrSpacing.md),
           TextButton(
-            onPressed: _submitting ? null : () => context.go(_target(RoutePaths.login)),
+            onPressed: _submitting
+                ? null
+                : () => context.go(_target(RoutePaths.login)),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.primary,
             ),
@@ -263,20 +273,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       HivorrValidators.required(_lastName.text, field: 'Last name') == null;
 
   bool get _isDisplayNameValid =>
-      HivorrValidators.required(_displayName.text, field: 'Display name') == null;
+      HivorrValidators.required(_displayName.text, field: 'Display name') ==
+      null;
 
-  bool get _isEmailValid =>
-      HivorrValidators.email(_email.text) == null;
+  bool get _isEmailValid => HivorrValidators.email(_email.text) == null;
 
-  bool get _isPhoneValid =>
-      HivorrValidators.phone(_phone.text) == null;
+  bool get _isPhoneValid => HivorrValidators.phone(_phone.text) == null;
 
   PasswordPolicyResult get _passwordPolicy =>
       PasswordPolicy.supabase.evaluate(_password.text);
 
   bool get _isPasswordValid => _passwordPolicy.isValid;
 
-  bool get _passwordsMatch => _confirm.text.isNotEmpty && _confirm.text == _password.text;
+  bool get _passwordsMatch =>
+      _confirm.text.isNotEmpty && _confirm.text == _password.text;
 
   String? get _firstNameError =>
       HivorrValidators.required(_firstName.text, field: 'First name');
@@ -291,9 +301,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? get _phoneError => HivorrValidators.phone(_phone.text);
 
-  String? get _passwordError => _isPasswordValid ? null : PasswordPolicy.supabase.invalidMessage;
+  String? get _passwordError =>
+      _isPasswordValid ? null : PasswordPolicy.supabase.invalidMessage;
 
-  String? get _confirmError => _passwordsMatch ? null : 'Passwords do not match.';
+  String? get _confirmError =>
+      _passwordsMatch ? null : 'Passwords do not match.';
 
   String? get _validationError {
     if (!_attempted) {
@@ -349,7 +361,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           email: _email.text.trim(),
           password: _password.text,
           firstName: _firstName.text.trim(),
-          middleName: _middleName.text.trim().isEmpty ? null : _middleName.text.trim(),
+          middleName: _middleName.text.trim().isEmpty
+              ? null
+              : _middleName.text.trim(),
           lastName: _lastName.text.trim(),
           displayName: _displayName.text.trim(),
           phoneNumber: _phone.text.trim(),
@@ -357,10 +371,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } on NoSuchMethodError {
       await auth.signUp(
-        AuthCredentials(
-          email: _email.text.trim(),
-          password: _password.text,
-        ),
+        AuthCredentials(email: _email.text.trim(), password: _password.text),
       );
     }
     if (!mounted) {
@@ -386,8 +397,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   /// Routes to the confirmation gate, carrying the email + preserved target.
   String _confirmationTarget() {
-    final String email =
-        Uri.encodeQueryComponent(_email.text.trim());
+    final String email = Uri.encodeQueryComponent(_email.text.trim());
     final String? next = EntryQuery.nextFrom(GoRouterState.of(context));
     final String nextParam = (next == null || next.isEmpty)
         ? ''

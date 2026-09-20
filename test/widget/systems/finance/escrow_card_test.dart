@@ -14,20 +14,15 @@ void main() {
     });
 
     test('masks longer references to last 4 characters', () {
-      expect(
-        EscrowCard.truncateReference('ORD-2026-000123'),
-        '***0123',
-      );
+      expect(EscrowCard.truncateReference('ORD-2026-000123'), '***0123');
     });
   });
 
   group('EscrowCard', () {
-    testWidgets('renders badge, formatted amount, held value and masked ref',
-        (WidgetTester tester) async {
-      await pumpTheme(
-        tester,
-        EscrowCard(escrow: seedEscrowEntity()),
-      );
+    testWidgets('renders badge, formatted amount, held value and masked ref', (
+      WidgetTester tester,
+    ) async {
+      await pumpTheme(tester, EscrowCard(escrow: seedEscrowEntity()));
 
       expect(find.text('\u20A650,000.00'), findsOneWidget);
       expect(find.text('Held: \u20A650,000.00'), findsOneWidget);
@@ -37,29 +32,22 @@ void main() {
     });
 
     testWidgets('includes the created date', (WidgetTester tester) async {
-      await pumpTheme(
-        tester,
-        EscrowCard(escrow: seedEscrowEntity()),
-      );
+      await pumpTheme(tester, EscrowCard(escrow: seedEscrowEntity()));
 
       final DateTime created = DateTime.fromMillisecondsSinceEpoch(1000);
       expect(
-        find.text(
-          '${created.day}/${created.month}/${created.year}',
-        ),
+        find.text('${created.day}/${created.month}/${created.year}'),
         findsOneWidget,
       );
     });
 
-    testWidgets('renders released_held split when amounts differ',
-        (WidgetTester tester) async {
+    testWidgets('renders released_held split when amounts differ', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         EscrowCard(
-          escrow: seedEscrowEntity(
-            totalAmount: 50000,
-            releasedAmount: 20000,
-          ),
+          escrow: seedEscrowEntity(totalAmount: 50000, releasedAmount: 20000),
         ),
       );
 
@@ -71,10 +59,7 @@ void main() {
       var tapped = false;
       await pumpTheme(
         tester,
-        EscrowCard(
-          escrow: seedEscrowEntity(),
-          onTap: () => tapped = true,
-        ),
+        EscrowCard(escrow: seedEscrowEntity(), onTap: () => tapped = true),
       );
 
       await tester.tap(find.text('Funded & held'));

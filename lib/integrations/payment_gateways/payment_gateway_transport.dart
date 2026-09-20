@@ -72,9 +72,7 @@ void validateAmount(
 /// any network call (EP-02-09 §5.5, DV-06).
 String requireValidNuban(String accountNumber) {
   if (!_nubanRegExp.hasMatch(accountNumber)) {
-    throw logicalProviderError(
-      message: 'Account number must be 10 digits.',
-    );
+    throw logicalProviderError(message: 'Account number must be 10 digits.');
   }
   return accountNumber;
 }
@@ -82,20 +80,13 @@ String requireValidNuban(String accountNumber) {
 /// Validates a 3-digit CBN bank code fail-fast.
 String requireValidBankCode(String bankCode) {
   if (!_bankCodeRegExp.hasMatch(bankCode)) {
-    throw logicalProviderError(
-      message: 'Bank code must be 3 digits.',
-    );
+    throw logicalProviderError(message: 'Bank code must be 3 digits.');
   }
   return bankCode;
 }
 
 /// Supported currencies per EP-02:189 (4-currency financial infra).
-const Set<String> _defaultCurrencies = <String>{
-  'NGN',
-  'GHS',
-  'USD',
-  'GBP',
-};
+const Set<String> _defaultCurrencies = <String>{'NGN', 'GHS', 'USD', 'GBP'};
 
 final RegExp _nubanRegExp = RegExp(r'^\d{10}$');
 final RegExp _bankCodeRegExp = RegExp(r'^\d{3}$');

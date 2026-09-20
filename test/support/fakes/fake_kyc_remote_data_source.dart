@@ -16,9 +16,9 @@ class FakeKycRemoteDataSource implements KycRemoteDataSource {
     KycLevelDto? kycResult,
     KycLimitsDto? limitsResult,
     VerificationStatusDto? statusResult,
-  })  : kycResult = kycResult ?? seedKycDto(),
-        limitsResult = limitsResult ?? seedKycLimitsDto(),
-        statusResult = statusResult ?? seedKycStatusDto();
+  }) : kycResult = kycResult ?? seedKycDto(),
+       limitsResult = limitsResult ?? seedKycLimitsDto(),
+       statusResult = statusResult ?? seedKycStatusDto();
 
   KycLevelDto kycResult;
   KycLimitsDto limitsResult;
@@ -75,17 +75,16 @@ KycLevelDto seedKycDto({
   num weekly = 0,
   num monthly = 0,
   num cashout = 0,
-}) =>
-    KycLevelDto(
-      tierCode: tierCode,
-      status: status,
-      limits: KycLimitsDto(
-        daily: daily,
-        weekly: weekly,
-        monthly: monthly,
-        cashout: cashout,
-      ),
-    );
+}) => KycLevelDto(
+  tierCode: tierCode,
+  status: status,
+  limits: KycLimitsDto(
+    daily: daily,
+    weekly: weekly,
+    monthly: monthly,
+    cashout: cashout,
+  ),
+);
 
 /// A default KYC limits DTO (tier_1-style limits).
 KycLimitsDto seedKycLimitsDto({
@@ -93,13 +92,12 @@ KycLimitsDto seedKycLimitsDto({
   num weekly = 2000000,
   num monthly = 8000000,
   num cashout = 1000000,
-}) =>
-    KycLimitsDto(
-      daily: daily,
-      weekly: weekly,
-      monthly: monthly,
-      cashout: cashout,
-    );
+}) => KycLimitsDto(
+  daily: daily,
+  weekly: weekly,
+  monthly: monthly,
+  cashout: cashout,
+);
 
 /// A default status aggregate DTO.
 VerificationStatusDto seedKycStatusDto({
@@ -108,12 +106,11 @@ VerificationStatusDto seedKycStatusDto({
   bool identityVerified = false,
   int pending = 1,
   int total = 1,
-}) =>
-    VerificationStatusDto(
-      entityId: entityId,
-      kyc: seedKycDto(tierCode: tierCode, status: 'pending'),
-      identityVerified: identityVerified,
-      tradeVerifications: const <TradeVerificationDto>[],
-      pendingSubmissions: pending,
-      totalSubmissions: total,
-    );
+}) => VerificationStatusDto(
+  entityId: entityId,
+  kyc: seedKycDto(tierCode: tierCode, status: 'pending'),
+  identityVerified: identityVerified,
+  tradeVerifications: const <TradeVerificationDto>[],
+  pendingSubmissions: pending,
+  totalSubmissions: total,
+);

@@ -9,9 +9,7 @@ class DisputeListEnvelopeDto {
   const DisputeListEnvelopeDto({required this.disputes});
 
   factory DisputeListEnvelopeDto.fromJson(Map<String, dynamic> json) =>
-      DisputeListEnvelopeDto(
-        disputes: _parseDisputes(json['disputes']),
-      );
+      DisputeListEnvelopeDto(disputes: _parseDisputes(json['disputes']));
 
   final List<DisputeCaseDto> disputes;
 

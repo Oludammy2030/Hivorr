@@ -239,33 +239,40 @@ void main() {
       expect(remote.withdrawCallCount, 0);
     });
 
-    test('delegates a verified withdrawal to the RPC and maps the result',
-        () async {
-      final remote = FakePayoutRemote();
-      final store = InMemoryPayoutAccountLocalStore(
-        seed: <PayoutAccount>[usableAccount()],
-      );
-      final repo = FinancialPayoutRepositoryImpl(remote: remote, store: store);
+    test(
+      'delegates a verified withdrawal to the RPC and maps the result',
+      () async {
+        final remote = FakePayoutRemote();
+        final store = InMemoryPayoutAccountLocalStore(
+          seed: <PayoutAccount>[usableAccount()],
+        );
+        final repo = FinancialPayoutRepositoryImpl(
+          remote: remote,
+          store: store,
+        );
 
-      final WithdrawalResult result =
-          await repo.withdraw(payoutAccountId: 'acc-1', amount: 50000);
+        final WithdrawalResult result = await repo.withdraw(
+          payoutAccountId: 'acc-1',
+          amount: 50000,
+        );
 
-      expect(remote.withdrawCallCount, 1);
-      expect(remote.lastWithdrawalAccountId, 'acc-1');
-      expect(remote.lastWithdrawalAmount, 50000);
-      expect(result.payoutId, 'pay-1');
-      expect(result.netAmount, 50000);
-      expect(result.cashoutRemaining, 450000);
-    });
+        expect(remote.withdrawCallCount, 1);
+        expect(remote.lastWithdrawalAccountId, 'acc-1');
+        expect(remote.lastWithdrawalAmount, 50000);
+        expect(result.payoutId, 'pay-1');
+        expect(result.netAmount, 50000);
+        expect(result.cashoutRemaining, 450000);
+      },
+    );
   });
 }
 
 PayoutAccount usableAccount() => PayoutAccount(
-      id: 'acc-1',
-      currencyCode: 'NGN',
-      bankName: 'Guaranty Trust',
-      accountNumber: '0123456789',
-      accountName: 'John Doe',
-      status: PayoutAccountStatus.active,
-      isVerified: true,
-    );
+  id: 'acc-1',
+  currencyCode: 'NGN',
+  bankName: 'Guaranty Trust',
+  accountNumber: '0123456789',
+  accountName: 'John Doe',
+  status: PayoutAccountStatus.active,
+  isVerified: true,
+);

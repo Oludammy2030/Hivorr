@@ -36,23 +36,24 @@ class _BlockingRepo implements TradeVerificationRepository {
     required String mimeType,
     required String fileName,
     void Function(int sent, int total)? onProgress,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }
-
 
 void main() {
   Future<TradeVerificationProvider> pumpScreenWith(
     WidgetTester tester, {
     TradeVerificationRepository? repo,
   }) async {
-    final TradeVerificationProvider provider =
-        TradeVerificationProvider(repo: repo ?? FakeTradeVerificationRepository());
+    final TradeVerificationProvider provider = TradeVerificationProvider(
+      repo: repo ?? FakeTradeVerificationRepository(),
+    );
     await pumpApp(
       tester,
       const TradeVerificationStatusScreen(),
       providers: <SingleChildWidget>[
-        ChangeNotifierProvider<TradeVerificationProvider>.value(value: provider),
+        ChangeNotifierProvider<TradeVerificationProvider>.value(
+          value: provider,
+        ),
       ],
     );
     return provider;
@@ -87,8 +88,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('pending profession shows the bid-lock panel',
-        (WidgetTester tester) async {
+    testWidgets('pending profession shows the bid-lock panel', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -99,15 +101,13 @@ void main() {
       );
       await tester.pump();
 
-      expect(
-        find.textContaining('bidding is locked'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('bidding is locked'), findsOneWidget);
       await unmount(tester);
     });
 
-    testWidgets('no bound professions renders the empty state',
-        (WidgetTester tester) async {
+    testWidgets('no bound professions renders the empty state', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -120,8 +120,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('renders one section per bound profession',
-        (WidgetTester tester) async {
+    testWidgets('renders one section per bound profession', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -141,8 +142,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('wraps content in a pull-to-refresh indicator',
-        (WidgetTester tester) async {
+    testWidgets('wraps content in a pull-to-refresh indicator', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -159,8 +161,9 @@ void main() {
   });
 
   group('status-derived timelines', () {
-    testWidgets('approved timeline marks the decided step bold',
-        (WidgetTester tester) async {
+    testWidgets('approved timeline marks the decided step bold', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -176,8 +179,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('pending timeline marks pending review bold',
-        (WidgetTester tester) async {
+    testWidgets('pending timeline marks pending review bold', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -195,8 +199,9 @@ void main() {
   });
 
   group('rejected action', () {
-    testWidgets('rejected profession renders the error state + Resubmit CTA',
-        (WidgetTester tester) async {
+    testWidgets('rejected profession renders the error state + Resubmit CTA', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -212,8 +217,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('rejected detail guides a resubmission',
-        (WidgetTester tester) async {
+    testWidgets('rejected detail guides a resubmission', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -233,12 +239,10 @@ void main() {
   });
 
   group('async states', () {
-    testWidgets('shows loading while the aggregate is null',
-        (WidgetTester tester) async {
-      await pumpScreenWith(
-        tester,
-        repo: _BlockingRepo(),
-      );
+    testWidgets('shows loading while the aggregate is null', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(tester, repo: _BlockingRepo());
       await tester.pump();
 
       expect(find.byType(HivorrLoadingState), findsOneWidget);

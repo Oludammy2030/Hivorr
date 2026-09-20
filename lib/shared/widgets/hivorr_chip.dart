@@ -4,11 +4,7 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 
 /// Semantic color variants for [HivorrChip].
-enum HivorrChipVariant {
-  primary,
-  secondary,
-  surface,
-}
+enum HivorrChipVariant { primary, secondary, surface }
 
 /// Selectable / dismissible chip built from [AppTheme] tokens (AGENT.md Rule 5).
 ///
@@ -61,9 +57,7 @@ class HivorrChip extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 48),
       decoration: BoxDecoration(
         color: isSelected ? fill : null,
-        border: Border.all(
-          color: isSelected ? border : colors.outline,
-        ),
+        border: Border.all(color: isSelected ? border : colors.outline),
         borderRadius: BorderRadius.circular(ext.radiusLg),
       ),
       padding: const EdgeInsets.symmetric(
@@ -84,11 +78,7 @@ class HivorrChip extends StatelessWidget {
             InkWell(
               onTap: onDismissed,
               borderRadius: BorderRadius.circular(ext.radiusSm),
-              child: Icon(
-                Icons.cancel,
-                size: 16,
-                color: textColor,
-              ),
+              child: Icon(Icons.cancel, size: 16, color: textColor),
             ),
           ],
         ],

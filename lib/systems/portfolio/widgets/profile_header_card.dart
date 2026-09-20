@@ -90,7 +90,8 @@ class ProfileHeaderCard extends StatelessWidget {
               ),
             ],
           ),
-          if (profile.bio != null && profile.bio!.trim().isNotEmpty) ...<Widget>[
+          if (profile.bio != null &&
+              profile.bio!.trim().isNotEmpty) ...<Widget>[
             const SizedBox(height: HivorrSpacing.md),
             Text(
               profile.bio!.trim(),

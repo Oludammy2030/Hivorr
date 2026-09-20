@@ -14,10 +14,7 @@ void main() {
   });
 
   test('redacts Nigerian phone numbers', () {
-    expect(
-      redactor.redact('Call +234 801 234 5678'),
-      'Call ***-****-****',
-    );
+    expect(redactor.redact('Call +234 801 234 5678'), 'Call ***-****-****');
   });
 
   test('redacts generic phone numbers', () {
@@ -29,10 +26,7 @@ void main() {
   });
 
   test('redacts JWTs', () {
-    expect(
-      redactor.redact('Token: eyJhbGciOi.eyJzdWIi.signed'),
-      'Token: ***',
-    );
+    expect(redactor.redact('Token: eyJhbGciOi.eyJzdWIi.signed'), 'Token: ***');
   });
 
   test('redacts 10-digit account numbers', () {
@@ -73,10 +67,7 @@ void main() {
   });
 
   test('redacts multiple PII instances in one message', () {
-    expect(
-      redactor.redact('user@example.com 1234567890'),
-      '***@***.*** ***',
-    );
+    expect(redactor.redact('user@example.com 1234567890'), '***@***.*** ***');
   });
 
   test('handles empty and null-like input gracefully', () {
@@ -86,10 +77,7 @@ void main() {
 
   test('disabled redactor passes text through unchanged', () {
     final disabled = PiiRedactor(enabled: false);
-    expect(
-      disabled.redact('user@example.com'),
-      'user@example.com',
-    );
+    expect(disabled.redact('user@example.com'), 'user@example.com');
     expect(
       disabled.redactContext(<String, Object?>{'password': 'x'})['password'],
       'x',

@@ -82,9 +82,7 @@ void main() {
               id: 'dispute-1',
               status: 'under_review',
             ),
-            evidence: <DisputeEvidenceDto>[
-              seedDisputeEvidenceDto(id: 'ev-1'),
-            ],
+            evidence: <DisputeEvidenceDto>[seedDisputeEvidenceDto(id: 'ev-1')],
             resolution: seedDisputeResolutionDto(),
           ),
         },
@@ -125,8 +123,11 @@ void main() {
       await expectLater(
         repo.getCase('missing'),
         throwsA(
-          isA<ApiException>()
-              .having((ApiException e) => e.code, 'code', 'PLT004'),
+          isA<ApiException>().having(
+            (ApiException e) => e.code,
+            'code',
+            'PLT004',
+          ),
         ),
       );
     });
@@ -263,43 +264,45 @@ void main() {
       expect(remote.fileCallCount, 0);
     });
 
-    test('valid file passes params through and re-reads the authoritative case',
-        () async {
-      final remote = FakeDisputeRemoteDataSource(
-        fileId: 'dispute-filed-9',
-        details: <String, DisputeCaseDetailEnvelopeDto>{
-          'dispute-filed-9': seedDisputeDetailDto(
-            caseDto: seedDisputeCaseDto(
-              id: 'dispute-filed-9',
-              escrowId: 'escrow-1',
-              disputeType: 'milestone_disagreement',
-              desiredOutcome: 'split',
-              priority: 'high',
-              status: 'open',
+    test(
+      'valid file passes params through and re-reads the authoritative case',
+      () async {
+        final remote = FakeDisputeRemoteDataSource(
+          fileId: 'dispute-filed-9',
+          details: <String, DisputeCaseDetailEnvelopeDto>{
+            'dispute-filed-9': seedDisputeDetailDto(
+              caseDto: seedDisputeCaseDto(
+                id: 'dispute-filed-9',
+                escrowId: 'escrow-1',
+                disputeType: 'milestone_disagreement',
+                desiredOutcome: 'split',
+                priority: 'high',
+                status: 'open',
+              ),
+              resolution: null,
             ),
-            resolution: null,
-          ),
-        },
-      );
-      final repo = build(remote: remote);
+          },
+        );
+        final repo = build(remote: remote);
 
-      final DisputeCase filed = await repo.fileDispute(
-        escrowId: 'escrow-1',
-        disputeType: 'milestone_disagreement',
-        reason: 'Work did not match the agreed milestone description.',
-        desiredOutcome: 'split',
-        priority: 'high',
-      );
+        final DisputeCase filed = await repo.fileDispute(
+          escrowId: 'escrow-1',
+          disputeType: 'milestone_disagreement',
+          reason: 'Work did not match the agreed milestone description.',
+          desiredOutcome: 'split',
+          priority: 'high',
+        );
 
-      expect(remote.fileCallCount, 1);
-      expect(remote.lastEscrowId, 'escrow-1');
-      expect(remote.lastDisputeType, 'milestone_disagreement');
-      expect(remote.lastDesiredOutcome, 'split');
-      expect(remote.lastPriority, 'high');
-      // Post-write re-read: the repository calls getCase for authoritative state.
-      expect(remote.getCaseCallCount, 1);
-      expect(filed.id, 'dispute-filed-9');
-    });
+        expect(remote.fileCallCount, 1);
+        expect(remote.lastEscrowId, 'escrow-1');
+        expect(remote.lastDisputeType, 'milestone_disagreement');
+        expect(remote.lastDesiredOutcome, 'split');
+        expect(remote.lastPriority, 'high');
+        // Post-write re-read: the repository calls getCase for authoritative state.
+        expect(remote.getCaseCallCount, 1);
+        expect(filed.id, 'dispute-filed-9');
+      },
+    );
   });
 
   group('DisputeRepositoryImpl.submitEvidence validation', () {
@@ -324,28 +327,30 @@ void main() {
       expect(remote.submitEvidenceCallCount, 0);
     });
 
-    test('rejects a description longer than 2000 chars before the RPC',
-        () async {
-      final remote = FakeDisputeRemoteDataSource();
-      final repo = build(remote: remote);
+    test(
+      'rejects a description longer than 2000 chars before the RPC',
+      () async {
+        final remote = FakeDisputeRemoteDataSource();
+        final repo = build(remote: remote);
 
-      await expectLater(
-        repo.submitEvidence(
-          caseId: 'dispute-1',
-          evidenceType: 'description',
-          title: 'Written account',
-          description: 'x' * 2001,
-        ),
-        throwsA(
-          isA<ApiException>().having(
-            (ApiException e) => e.code,
-            'code',
-            'PLT003',
+        await expectLater(
+          repo.submitEvidence(
+            caseId: 'dispute-1',
+            evidenceType: 'description',
+            title: 'Written account',
+            description: 'x' * 2001,
           ),
-        ),
-      );
-      expect(remote.submitEvidenceCallCount, 0);
-    });
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.code,
+              'code',
+              'PLT003',
+            ),
+          ),
+        );
+        expect(remote.submitEvidenceCallCount, 0);
+      },
+    );
 
     test('rejects an invalid evidence type before the RPC', () async {
       final remote = FakeDisputeRemoteDataSource();
@@ -390,18 +395,20 @@ void main() {
   });
 
   group('DisputeRepositoryImpl.withdrawDispute', () {
-    test('maps the withdrawn case returned by the SECURITY DEFINER RPC',
-        () async {
-      final remote = FakeDisputeRemoteDataSource();
-      final repo = build(remote: remote);
+    test(
+      'maps the withdrawn case returned by the SECURITY DEFINER RPC',
+      () async {
+        final remote = FakeDisputeRemoteDataSource();
+        final repo = build(remote: remote);
 
-      final DisputeCase withdrawn = await repo.withdrawDispute('dispute-1');
+        final DisputeCase withdrawn = await repo.withdrawDispute('dispute-1');
 
-      expect(remote.withdrawCallCount, 1);
-      expect(remote.lastCaseId, 'dispute-1');
-      expect(withdrawn.status, 'withdrawn');
-      expect(withdrawn.isWithdrawn, isTrue);
-    });
+        expect(remote.withdrawCallCount, 1);
+        expect(remote.lastCaseId, 'dispute-1');
+        expect(withdrawn.status, 'withdrawn');
+        expect(withdrawn.isWithdrawn, isTrue);
+      },
+    );
 
     test('rejects an empty case id before the RPC', () async {
       final remote = FakeDisputeRemoteDataSource();

@@ -26,8 +26,7 @@ class FakeAuthService implements AuthService {
   bool get isSignedIn => false;
 
   @override
-  Stream<AuthStatus> get onStatusChanged =>
-      const Stream<AuthStatus>.empty();
+  Stream<AuthStatus> get onStatusChanged => const Stream<AuthStatus>.empty();
 
   // Captured for registration-restructuring assertions.
   AuthCredentials? lastSignUpCredentials;
@@ -86,8 +85,8 @@ class FakeAuthService implements AuthService {
 /// [AuthProvider] whose [status] is directly controllable for routing tests.
 class FakeAuthProvider extends AuthProvider {
   FakeAuthProvider({AuthStatus initialStatus = AuthStatus.unauthenticated})
-      : _status = initialStatus,
-        super(service: FakeAuthService());
+    : _status = initialStatus,
+      super(service: FakeAuthService());
 
   AuthStatus _status;
 

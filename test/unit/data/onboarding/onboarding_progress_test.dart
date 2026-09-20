@@ -13,8 +13,7 @@ void main() {
 
   group('OnboardingProgress entity (FV-02, DV-11)', () {
     test('starts at profile (Basic Information) with empty completedSteps', () {
-      final OnboardingProgress progress =
-          OnboardingProgress(entityId: 'u1');
+      final OnboardingProgress progress = OnboardingProgress(entityId: 'u1');
       expect(progress.entityId, 'u1');
       expect(progress.step, OnboardingStepCode.profile);
       expect(progress.completedSteps, isEmpty);
@@ -25,35 +24,27 @@ void main() {
     });
 
     test('advanceTo marks all preceding steps completed (monotonic)', () {
-      final OnboardingProgress progress =
-          OnboardingProgress(entityId: 'u1');
-      final OnboardingProgress industry =
-          progress.advanceTo(OnboardingStepCode.industry);
-      expect(industry.step, OnboardingStepCode.industry);
-      expect(
-        industry.completedSteps,
-        <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-        ],
+      final OnboardingProgress progress = OnboardingProgress(entityId: 'u1');
+      final OnboardingProgress industry = progress.advanceTo(
+        OnboardingStepCode.industry,
       );
+      expect(industry.step, OnboardingStepCode.industry);
+      expect(industry.completedSteps, <OnboardingStepCode>[
+        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
+      ]);
       final OnboardingProgress identity = industry.advanceTo(
         OnboardingStepCode.identityDocument,
       );
-      expect(
-        identity.completedSteps,
-        <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-          OnboardingStepCode.industry,
-        ],
-        reason: 'completedSteps advances monotonically in frozen order',
-      );
+      expect(identity.completedSteps, <OnboardingStepCode>[
+        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
+        OnboardingStepCode.industry,
+      ], reason: 'completedSteps advances monotonically in frozen order');
     });
 
     test('nextStep follows the frozen professional order for offer/both', () {
-      final OnboardingProgress progress =
-          OnboardingProgress(entityId: 'u1');
+      final OnboardingProgress progress = OnboardingProgress(entityId: 'u1');
       expect(progress.nextStep, OnboardingStepCode.capability);
       expect(
         progress.advanceTo(OnboardingStepCode.profile).nextStep,
@@ -64,34 +55,33 @@ void main() {
         OnboardingStepCode.industry,
       );
       expect(
-        progress
-            .advanceTo(OnboardingStepCode.industry)
-            .nextStep,
+        progress.advanceTo(OnboardingStepCode.industry).nextStep,
         OnboardingStepCode.identityDocument,
       );
       expect(
-        progress
-            .advanceTo(OnboardingStepCode.identityDocument)
-            .nextStep,
+        progress.advanceTo(OnboardingStepCode.identityDocument).nextStep,
         OnboardingStepCode.tradeProof,
       );
       expect(
-        progress
-            .advanceTo(OnboardingStepCode.tradeProof)
-            .nextStep,
+        progress.advanceTo(OnboardingStepCode.tradeProof).nextStep,
         isNull,
       );
     });
 
     test('hire-only nextStep finishes after the capability step', () {
-      final OnboardingProgress freshHire =
-          OnboardingProgress(entityId: 'u1',
-            capability: EntityCapability.hire);
+      final OnboardingProgress freshHire = OnboardingProgress(
+        entityId: 'u1',
+        capability: EntityCapability.hire,
+      );
       expect(freshHire.nextStep, OnboardingStepCode.capability);
-      final OnboardingProgress hireAtCapability = freshHire
-          .advanceTo(OnboardingStepCode.capability);
-      expect(hireAtCapability.nextStep, isNull,
-          reason: 'hire-only entities finish after the capability step');
+      final OnboardingProgress hireAtCapability = freshHire.advanceTo(
+        OnboardingStepCode.capability,
+      );
+      expect(
+        hireAtCapability.nextStep,
+        isNull,
+        reason: 'hire-only entities finish after the capability step',
+      );
     });
 
     test('isComplete derives false for partial professional progress', () {
@@ -128,19 +118,13 @@ void main() {
         entityId: 'u1',
         step: OnboardingStepCode.capability,
         capability: EntityCapability.hire,
-        completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-        ],
+        completedSteps: <OnboardingStepCode>[OnboardingStepCode.profile],
       ).finish();
       expect(hireDone.isComplete, isTrue);
-      expect(
-        hireDone.completedSteps,
-        <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-        ],
-        reason: 'hire-only never traverses the professional steps',
-      );
+      expect(hireDone.completedSteps, <OnboardingStepCode>[
+        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
+      ], reason: 'hire-only never traverses the professional steps');
     });
 
     test('withCapability preserves position and rebinds the path', () {
@@ -169,16 +153,18 @@ void main() {
       final OnboardingProgress back = progress.stepBack();
       expect(back.step, OnboardingStepCode.capability);
       expect(back.completedSteps, progress.completedSteps);
-      expect(progress.stepBack().stepBack().stepBack().step,
-          OnboardingStepCode.profile,
-          reason: 'stays put at the first step');
+      expect(
+        progress.stepBack().stepBack().stepBack().step,
+        OnboardingStepCode.profile,
+        reason: 'stays put at the first step',
+      );
     });
 
     test('immutability: copies never mutate the original', () {
-      final OnboardingProgress original =
-          OnboardingProgress(entityId: 'u1');
-      final OnboardingProgress next =
-          original.advanceTo(OnboardingStepCode.industry);
+      final OnboardingProgress original = OnboardingProgress(entityId: 'u1');
+      final OnboardingProgress next = original.advanceTo(
+        OnboardingStepCode.industry,
+      );
       expect(original.step, OnboardingStepCode.profile);
       expect(identical(original, next), isFalse);
     });
@@ -189,8 +175,9 @@ void main() {
         step: OnboardingStepCode.identityDocument,
       ).withIdentitySubmission(true);
       expect(flagged.hasIdentitySubmission, isTrue);
-      final OnboardingProgress advanced =
-          flagged.advanceTo(OnboardingStepCode.tradeProof);
+      final OnboardingProgress advanced = flagged.advanceTo(
+        OnboardingStepCode.tradeProof,
+      );
       expect(advanced.hasIdentitySubmission, isTrue);
       final OnboardingProgress trade = advanced.withTradeProofSubmission(true);
       expect(trade.hasTradeProofSubmission, isTrue);
@@ -200,9 +187,7 @@ void main() {
       final OnboardingProgress rebound = OnboardingProgress(
         entityId: 'u1',
         step: OnboardingStepCode.industry,
-        completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-        ],
+        completedSteps: <OnboardingStepCode>[OnboardingStepCode.profile],
       ).forEntity('u2');
       expect(rebound.entityId, 'u2');
       expect(rebound.step, OnboardingStepCode.industry);
@@ -227,78 +212,92 @@ void main() {
       expect(resumed.step, OnboardingStepCode.industry);
     });
 
-    test('the exit flag survives advanceTo, stepBack, finish and forEntity',
-        () {
-      final OnboardingProgress exited = OnboardingProgress(
-        entityId: 'u1',
-        step: OnboardingStepCode.industry,
-      ).withExited(true);
-      expect(exited.advanceTo(OnboardingStepCode.identityDocument).exited,
-          isTrue);
-      expect(exited.finish().exited, isTrue);
-      expect(exited.forEntity('u2').exited, isTrue);
-      expect(exited.stepBack().exited, isTrue);
-      expect(
-        exited.withIdentitySubmission(true).withTradeProofSubmission(true)
-            .exited,
-        isTrue,
-      );
-    });
+    test(
+      'the exit flag survives advanceTo, stepBack, finish and forEntity',
+      () {
+        final OnboardingProgress exited = OnboardingProgress(
+          entityId: 'u1',
+          step: OnboardingStepCode.industry,
+        ).withExited(true);
+        expect(
+          exited.advanceTo(OnboardingStepCode.identityDocument).exited,
+          isTrue,
+        );
+        expect(exited.finish().exited, isTrue);
+        expect(exited.forEntity('u2').exited, isTrue);
+        expect(exited.stepBack().exited, isTrue);
+        expect(
+          exited
+              .withIdentitySubmission(true)
+              .withTradeProofSubmission(true)
+              .exited,
+          isTrue,
+        );
+      },
+    );
   });
 
   group('Serialization parity (DV-16, TT-05)', () {
-    test('store round-trip preserves every field including capability',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      final OnboardingProgress progress = OnboardingProgress(
-        entityId: 'u1',
-        step: OnboardingStepCode.tradeProof,
-        completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-          OnboardingStepCode.industry,
-          OnboardingStepCode.identityDocument,
-        ],
-        capability: EntityCapability.offer,
-        hasIdentitySubmission: true,
-        hasTradeProofSubmission: true,
-        exited: true,
-      );
-      await stack.store.save(progress);
-      final OnboardingProgress? restored =
-          await stack.store.read('u1');
-      expect(restored, isNotNull);
-      expect(restored!.entityId, 'u1');
-      expect(restored.step, progress.step);
-      expect(restored.completedSteps, progress.completedSteps);
-      expect(restored.capability, EntityCapability.offer);
-      expect(restored.hasIdentitySubmission, isTrue);
-      expect(restored.hasTradeProofSubmission, isTrue);
-      expect(restored.exited, isTrue);
-    });
+    test(
+      'store round-trip preserves every field including capability',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        final OnboardingProgress progress = OnboardingProgress(
+          entityId: 'u1',
+          step: OnboardingStepCode.tradeProof,
+          completedSteps: <OnboardingStepCode>[
+            OnboardingStepCode.profile,
+            OnboardingStepCode.capability,
+            OnboardingStepCode.industry,
+            OnboardingStepCode.identityDocument,
+          ],
+          capability: EntityCapability.offer,
+          hasIdentitySubmission: true,
+          hasTradeProofSubmission: true,
+          exited: true,
+        );
+        await stack.store.save(progress);
+        final OnboardingProgress? restored = await stack.store.read('u1');
+        expect(restored, isNotNull);
+        expect(restored!.entityId, 'u1');
+        expect(restored.step, progress.step);
+        expect(restored.completedSteps, progress.completedSteps);
+        expect(restored.capability, EntityCapability.offer);
+        expect(restored.hasIdentitySubmission, isTrue);
+        expect(restored.hasTradeProofSubmission, isTrue);
+        expect(restored.exited, isTrue);
+      },
+    );
 
-    test('legacy rows without capability default to both (safe superset)',
-        () async {
-      final LocalStore local = LocalStore(FakeStorageEngine());
-      await local.write(
-        OnboardingProgressBox.name,
-        onboardingProgressKey('u1'),
-        <String, dynamic>{
-          'entityId': 'u1',
-          'step': 'profile',
-          'completedSteps': <String>[],
-          'hasIdentitySubmission': false,
-          'hasTradeProofSubmission': false,
-          'updatedAt': 0,
-        },
-        (Map<String, dynamic> json) => json,
-      );
-      final HiveOnboardingProgressStore hive = hiveProgressStore(store: local);
-      final OnboardingProgress? restored = await hive.read('u1');
-      expect(restored, isNotNull);
-      expect(restored!.capability, EntityCapability.both);
-      expect(restored.exited, isFalse,
-          reason: 'legacy rows default to not-exited');
-    });
+    test(
+      'legacy rows without capability default to both (safe superset)',
+      () async {
+        final LocalStore local = LocalStore(FakeStorageEngine());
+        await local.write(
+          OnboardingProgressBox.name,
+          onboardingProgressKey('u1'),
+          <String, dynamic>{
+            'entityId': 'u1',
+            'step': 'profile',
+            'completedSteps': <String>[],
+            'hasIdentitySubmission': false,
+            'hasTradeProofSubmission': false,
+            'updatedAt': 0,
+          },
+          (Map<String, dynamic> json) => json,
+        );
+        final HiveOnboardingProgressStore hive = hiveProgressStore(
+          store: local,
+        );
+        final OnboardingProgress? restored = await hive.read('u1');
+        expect(restored, isNotNull);
+        expect(restored!.capability, EntityCapability.both);
+        expect(
+          restored.exited,
+          isFalse,
+          reason: 'legacy rows default to not-exited',
+        );
+      },
+    );
   });
 }

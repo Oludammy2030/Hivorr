@@ -47,13 +47,15 @@ void main() {
       );
 
       // The same composition through the factory yields a typed response.
-      final service = MockApiServiceFactory.createService(
-        accessToken: 'tok',
-        enableAuthInterceptor: true,
-        responses: const <ScriptedResponse>[
-          ScriptedResponse(path: '/secure', body: '{"ok":true}'),
-        ],
-      ) as TestApiService;
+      final service =
+          MockApiServiceFactory.createService(
+                accessToken: 'tok',
+                enableAuthInterceptor: true,
+                responses: const <ScriptedResponse>[
+                  ScriptedResponse(path: '/secure', body: '{"ok":true}'),
+                ],
+              )
+              as TestApiService;
 
       final dynamic result = await service.getJson('/secure');
       final Map<String, dynamic> body = result as Map<String, dynamic>;
@@ -61,96 +63,105 @@ void main() {
     });
 
     // ── Scenario 2: unauthenticated request denied (401 -> auth, no header) ──
-    test('unauthenticated request is denied and omits the auth header', ()
-        async {
-      // No token available -> real AuthInterceptor must not attach a header.
-      final noTokenProvider = FakeTokenProvider();
-      final noHeaderAdapter = StubAdapter(
-        (RequestOptions options) async => jsonBody(401),
-      );
-      final noHeaderDio = Dio()..httpClientAdapter = noHeaderAdapter;
-      noHeaderDio.interceptors.add(
-        AuthInterceptor(tokenProvider: noTokenProvider),
-      );
-      // 401 is expected here; accept it so we can assert on the captured
-      // request headers rather than letting Dio throw on the status code.
-      noHeaderDio.options.validateStatus = (_) => true;
+    test(
+      'unauthenticated request is denied and omits the auth header',
+      () async {
+        // No token available -> real AuthInterceptor must not attach a header.
+        final noTokenProvider = FakeTokenProvider();
+        final noHeaderAdapter = StubAdapter(
+          (RequestOptions options) async => jsonBody(401),
+        );
+        final noHeaderDio = Dio()..httpClientAdapter = noHeaderAdapter;
+        noHeaderDio.interceptors.add(
+          AuthInterceptor(tokenProvider: noTokenProvider),
+        );
+        // 401 is expected here; accept it so we can assert on the captured
+        // request headers rather than letting Dio throw on the status code.
+        noHeaderDio.options.validateStatus = (_) => true;
 
-      await noHeaderDio.get<dynamic>('/secure');
+        await noHeaderDio.get<dynamic>('/secure');
 
-      expect(
-        noHeaderAdapter.captured.last.headers.containsKey('Authorization'),
-        isFalse,
-      );
+        expect(
+          noHeaderAdapter.captured.last.headers.containsKey('Authorization'),
+          isFalse,
+        );
 
-      // A 401 from the server is normalized to a typed auth ApiException.
-      final dio = MockApiServiceFactory.create(
-        accessToken: null,
-        enableAuthInterceptor: true,
-        responses: const <ScriptedResponse>[
-          ScriptedResponse(path: '/secure', statusCode: 401, body: '{}'),
-        ],
-      );
-      dio.interceptors.add(
-        ErrorInterceptor(exceptionMapper: const ApiExceptionMapper()),
-      );
+        // A 401 from the server is normalized to a typed auth ApiException.
+        final dio = MockApiServiceFactory.create(
+          accessToken: null,
+          enableAuthInterceptor: true,
+          responses: const <ScriptedResponse>[
+            ScriptedResponse(path: '/secure', statusCode: 401, body: '{}'),
+          ],
+        );
+        dio.interceptors.add(
+          ErrorInterceptor(exceptionMapper: const ApiExceptionMapper()),
+        );
 
-      Object? caught;
-      try {
-        await dio.get<dynamic>('/secure');
-      } on DioException catch (e) {
-        caught = e;
-      }
-
-      expect(caught, isA<DioException>());
-      expect(
-        (caught as DioException).error,
-        isApiException(kind: ApiExceptionKind.auth),
-      );
-    });
-
-    // ── Scenario 3: error normalization across status codes ──
-    test('error responses are normalized to the correct ApiException kind', ()
-        async {
-      final dio = MockApiServiceFactory.create(
-        enableRetryInterceptor: true,
-        responses: const <ScriptedResponse>[
-          ScriptedResponse(path: '/bad', statusCode: 400, body: '{}'),
-          ScriptedResponse(path: '/forbidden', statusCode: 403, body: '{}'),
-          ScriptedResponse(path: '/missing', statusCode: 404, body: '{}'),
-          ScriptedResponse(path: '/server', statusCode: 500, body: '{}'),
-        ],
-      );
-      dio.interceptors.add(
-        ErrorInterceptor(exceptionMapper: const ApiExceptionMapper()),
-      );
-
-      final Map<String, ApiExceptionKind> expectations =
-          <String, ApiExceptionKind>{
-        '/bad': ApiExceptionKind.validation,
-        '/forbidden': ApiExceptionKind.forbidden,
-        '/missing': ApiExceptionKind.notFound,
-        '/server': ApiExceptionKind.server,
-      };
-
-      for (final MapEntry<String, ApiExceptionKind> entry
-          in expectations.entries) {
         Object? caught;
         try {
-          await dio.get<dynamic>(entry.key);
+          await dio.get<dynamic>('/secure');
         } on DioException catch (e) {
           caught = e;
         }
 
-        expect(caught, isA<DioException>(), reason: 'expected failure for '
-            '${entry.key}');
+        expect(caught, isA<DioException>());
         expect(
           (caught as DioException).error,
-          isApiException(kind: entry.value),
-          reason: 'status ${entry.key} should map to ${entry.value}',
+          isApiException(kind: ApiExceptionKind.auth),
         );
-      }
-    });
+      },
+    );
+
+    // ── Scenario 3: error normalization across status codes ──
+    test(
+      'error responses are normalized to the correct ApiException kind',
+      () async {
+        final dio = MockApiServiceFactory.create(
+          enableRetryInterceptor: true,
+          responses: const <ScriptedResponse>[
+            ScriptedResponse(path: '/bad', statusCode: 400, body: '{}'),
+            ScriptedResponse(path: '/forbidden', statusCode: 403, body: '{}'),
+            ScriptedResponse(path: '/missing', statusCode: 404, body: '{}'),
+            ScriptedResponse(path: '/server', statusCode: 500, body: '{}'),
+          ],
+        );
+        dio.interceptors.add(
+          ErrorInterceptor(exceptionMapper: const ApiExceptionMapper()),
+        );
+
+        final Map<String, ApiExceptionKind> expectations =
+            <String, ApiExceptionKind>{
+              '/bad': ApiExceptionKind.validation,
+              '/forbidden': ApiExceptionKind.forbidden,
+              '/missing': ApiExceptionKind.notFound,
+              '/server': ApiExceptionKind.server,
+            };
+
+        for (final MapEntry<String, ApiExceptionKind> entry
+            in expectations.entries) {
+          Object? caught;
+          try {
+            await dio.get<dynamic>(entry.key);
+          } on DioException catch (e) {
+            caught = e;
+          }
+
+          expect(
+            caught,
+            isA<DioException>(),
+            reason:
+                'expected failure for '
+                '${entry.key}',
+          );
+          expect(
+            (caught as DioException).error,
+            isApiException(kind: entry.value),
+            reason: 'status ${entry.key} should map to ${entry.value}',
+          );
+        }
+      },
+    );
 
     // ── Scenario 4: retry on transient failure ──
     test('retries transient 500 failures then succeeds', () async {

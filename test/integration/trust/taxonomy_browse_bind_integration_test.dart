@@ -32,11 +32,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   final List<Map<String, dynamic>> industryRows = <Map<String, dynamic>>[
     <String, dynamic>{
@@ -92,49 +92,53 @@ void main() {
 
   final SupabaseTaxonomyRemoteDataSource dataSource =
       SupabaseTaxonomyRemoteDataSource(
-    dio: Dio(),
-    supabase: MockSupabaseClientFactory.create(
-      currentUser: fakeUser('u1'),
-      rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
-        'taxonomy_industries_list': (_) => ok(industryRows),
-        'taxonomy_professions_list': (Map<String, dynamic> body) {
-          final String industryId = body['p_industry_id'] as String;
-          return ok(professionRows
-              .where((Map<String, dynamic> r) =>
-                  r['industry_id'] == industryId)
-              .toList());
-        },
-        'entity_profession_bind': (Map<String, dynamic> body) {
-          bindRpcCount++;
-          lastBoundProfessionId = body['p_profession_id'] as String;
-          return ok(<String, dynamic>{
-            'profession_id': lastBoundProfessionId,
-            'status': 'unverified',
-          });
-        },
-      },
-    ),
-    exceptionMapper: const ApiExceptionMapper(),
-  );
+        dio: Dio(),
+        supabase: MockSupabaseClientFactory.create(
+          currentUser: fakeUser('u1'),
+          rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
+            'taxonomy_industries_list': (_) => ok(industryRows),
+            'taxonomy_professions_list': (Map<String, dynamic> body) {
+              final String industryId = body['p_industry_id'] as String;
+              return ok(
+                professionRows
+                    .where(
+                      (Map<String, dynamic> r) =>
+                          r['industry_id'] == industryId,
+                    )
+                    .toList(),
+              );
+            },
+            'entity_profession_bind': (Map<String, dynamic> body) {
+              bindRpcCount++;
+              lastBoundProfessionId = body['p_profession_id'] as String;
+              return ok(<String, dynamic>{
+                'profession_id': lastBoundProfessionId,
+                'status': 'unverified',
+              });
+            },
+          },
+        ),
+        exceptionMapper: const ApiExceptionMapper(),
+      );
 
   final SupabaseEntityRemoteDataSource entityDataSource =
       SupabaseEntityRemoteDataSource(
-    dio: Dio(),
-    supabase: MockSupabaseClientFactory.create(
-      currentUser: fakeUser('u1'),
-      rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
-        'entity_profession_bind': (Map<String, dynamic> body) {
-          bindRpcCount++;
-          lastBoundProfessionId = body['p_profession_id'] as String;
-          return ok(<String, dynamic>{
-            'profession_id': lastBoundProfessionId,
-            'status': 'unverified',
-          });
-        },
-      },
-    ),
-    exceptionMapper: const ApiExceptionMapper(),
-  );
+        dio: Dio(),
+        supabase: MockSupabaseClientFactory.create(
+          currentUser: fakeUser('u1'),
+          rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
+            'entity_profession_bind': (Map<String, dynamic> body) {
+              bindRpcCount++;
+              lastBoundProfessionId = body['p_profession_id'] as String;
+              return ok(<String, dynamic>{
+                'profession_id': lastBoundProfessionId,
+                'status': 'unverified',
+              });
+            },
+          },
+        ),
+        exceptionMapper: const ApiExceptionMapper(),
+      );
 
   late TaxonomyRepositoryImpl repository;
   late EntityRepository entityRepository;
@@ -159,68 +163,81 @@ void main() {
   });
 
   group('VP2: Taxonomy browse → select → bind', () {
-    test('industries listed → profession filtered by industry → bind succeeds',
-        () async {
-      await provider.loadIndustries();
-      expect(provider.industries, hasLength(2));
-      expect(provider.industries.first.name, 'Technology');
+    test(
+      'industries listed → profession filtered by industry → bind succeeds',
+      () async {
+        await provider.loadIndustries();
+        expect(provider.industries, hasLength(2));
+        expect(provider.industries.first.name, 'Technology');
 
-      provider.selectIndustry('ind-tech');
-      expect(provider.selectedIndustry?.id, 'ind-tech');
+        provider.selectIndustry('ind-tech');
+        expect(provider.selectedIndustry?.id, 'ind-tech');
 
-      await provider.loadProfessions('ind-tech');
-      expect(provider.professionsForSelectedIndustry, hasLength(2));
-      expect(provider.professionsForSelectedIndustry.first.name,
-          'Software Engineer');
+        await provider.loadProfessions('ind-tech');
+        expect(provider.professionsForSelectedIndustry, hasLength(2));
+        expect(
+          provider.professionsForSelectedIndustry.first.name,
+          'Software Engineer',
+        );
 
-      // filteredProfessions search (250ms debounce).
-      provider.setSearchQuery('Dev');
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-      expect(provider.filteredProfessions, hasLength(1));
-      expect(provider.filteredProfessions.first.name, 'DevOps Engineer');
+        // filteredProfessions search (250ms debounce).
+        provider.setSearchQuery('Dev');
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        expect(provider.filteredProfessions, hasLength(1));
+        expect(provider.filteredProfessions.first.name, 'DevOps Engineer');
 
-      provider.setSearchQuery('');
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-      expect(provider.filteredProfessions, hasLength(2));
+        provider.setSearchQuery('');
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        expect(provider.filteredProfessions, hasLength(2));
 
-      // Select a profession.
-      provider.selectProfession(provider.professionsForSelectedIndustry.first);
-      expect(provider.selectedProfession?.id, 'prof-sw');
+        // Select a profession.
+        provider.selectProfession(
+          provider.professionsForSelectedIndustry.first,
+        );
+        expect(provider.selectedProfession?.id, 'prof-sw');
 
-      // Bind via the entity repository (real datasource + RPC).
-      await entityRepository.bindProfession(professionId: 'prof-sw');
-      expect(bindRpcCount, 1);
-      expect(lastBoundProfessionId, 'prof-sw');
-    });
+        // Bind via the entity repository (real datasource + RPC).
+        await entityRepository.bindProfession(professionId: 'prof-sw');
+        expect(bindRpcCount, 1);
+        expect(lastBoundProfessionId, 'prof-sw');
+      },
+    );
 
-    test('selectedProfession survives re-selection (navigation proxy)', () async {
-      await provider.loadIndustries();
-      provider.selectIndustry('ind-tech');
-      await provider.loadProfessions('ind-tech');
-      provider.selectProfession(provider.professionsForSelectedIndustry.first);
-      expect(provider.selectedProfession?.id, 'prof-sw');
+    test(
+      'selectedProfession survives re-selection (navigation proxy)',
+      () async {
+        await provider.loadIndustries();
+        provider.selectIndustry('ind-tech');
+        await provider.loadProfessions('ind-tech');
+        provider.selectProfession(
+          provider.professionsForSelectedIndustry.first,
+        );
+        expect(provider.selectedProfession?.id, 'prof-sw');
 
-      // Simulate navigation pop and re-entry: selection is preserved.
-      expect(provider.selectedProfession?.id, 'prof-sw');
-      expect(provider.selectedIndustry?.id, 'ind-tech');
-    });
+        // Simulate navigation pop and re-entry: selection is preserved.
+        expect(provider.selectedProfession?.id, 'prof-sw');
+        expect(provider.selectedIndustry?.id, 'ind-tech');
+      },
+    );
 
-    test('PLT005 duplicate bind normalizes to conflict (server-enforced)',
-        () async {
-      // The one-binding-per-profession conflict is enforced server-side
-      // (see `entity_remote_data_source.dart`); the client must normalize the
-      // raised `PLT005` to a typed conflict ApiException. This validates that
-      // normalization contract, which `SupabaseEntityRemoteDataSource._guard`
-      // applies to every RPC failure.
-      final PostgrestException raised = PostgrestException(
-        message: 'sqlstate detail',
-        code: 'P0001',
-        details: 'PLT005',
-      );
-      final ApiException e = mapDataException(raised);
-      expect(e.kind, ApiExceptionKind.conflict);
-      expect(e.code, 'PLT005');
-    });
+    test(
+      'PLT005 duplicate bind normalizes to conflict (server-enforced)',
+      () async {
+        // The one-binding-per-profession conflict is enforced server-side
+        // (see `entity_remote_data_source.dart`); the client must normalize the
+        // raised `PLT005` to a typed conflict ApiException. This validates that
+        // normalization contract, which `SupabaseEntityRemoteDataSource._guard`
+        // applies to every RPC failure.
+        final PostgrestException raised = PostgrestException(
+          message: 'sqlstate detail',
+          code: 'P0001',
+          details: 'PLT005',
+        );
+        final ApiException e = mapDataException(raised);
+        expect(e.kind, ApiExceptionKind.conflict);
+        expect(e.code, 'PLT005');
+      },
+    );
 
     test('envelope normalization: PLT000→domain, PLT004→not-found', () async {
       // PLT004 on empty industry list. The provider surfaces the normalized
@@ -230,11 +247,11 @@ void main() {
         currentUser: fakeUser('u1'),
         rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
           'taxonomy_industries_list': (_) => <String, dynamic>{
-                'success': false,
-                'code': 'PLT004',
-                'message': 'not found',
-                'data': null,
-              },
+            'success': false,
+            'code': 'PLT004',
+            'message': 'not found',
+            'data': null,
+          },
         },
       );
       final emptyRemote = SupabaseTaxonomyRemoteDataSource(
@@ -249,8 +266,11 @@ void main() {
       final emptyProvider = TaxonomyProvider(repository: emptyRepo);
 
       await emptyProvider.loadIndustries();
-      expect(emptyProvider.state, TaxonomyProviderState.error,
-          reason: 'PLT004 load surfaces the error state');
+      expect(
+        emptyProvider.state,
+        TaxonomyProviderState.error,
+        reason: 'PLT004 load surfaces the error state',
+      );
       expect(
         emptyProvider.error,
         isA<ApiException>()

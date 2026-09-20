@@ -20,9 +20,8 @@ void main() {
 
   setUp(() {
     httpMock = MockDioAdapter();
-    dio = Dio(
-      BaseOptions(baseUrl: FlutterwaveGateway.baseUrl),
-    )..httpClientAdapter = httpMock;
+    dio = Dio(BaseOptions(baseUrl: FlutterwaveGateway.baseUrl))
+      ..httpClientAdapter = httpMock;
     config = PaymentGatewayConfig.fromEnvironment(paymentEnvSource());
     gateway = FlutterwaveGateway(dio: dio, mapper: mapper, config: config);
   });
@@ -70,8 +69,11 @@ void main() {
           ),
         ),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
       expect(httpMock.requests, isEmpty);
@@ -129,10 +131,7 @@ void main() {
     test('converts to major units on the v3/transfers endpoint', () async {
       httpMock.body = <String, dynamic>{
         'status': 'success',
-        'data': <String, dynamic>{
-          'id': 42,
-          'status': 'pending',
-        },
+        'data': <String, dynamic>{'id': 42, 'status': 'pending'},
       };
 
       final result = await gateway.createTransfer(
@@ -191,10 +190,7 @@ void main() {
     test('maps a refund to reversed', () async {
       httpMock.body = <String, dynamic>{
         'status': 'success',
-        'data': <String, dynamic>{
-          'amount': 5000,
-          'currency': 'NGN',
-        },
+        'data': <String, dynamic>{'amount': 5000, 'currency': 'NGN'},
       };
       final result = await gateway.refundPayment(
         RefundRequest(transactionReference: 'tx-1'),
@@ -209,12 +205,13 @@ void main() {
         'message': 'Cannot refund',
       };
       await expectLater(
-        gateway.refundPayment(
-          RefundRequest(transactionReference: 'tx-1'),
-        ),
+        gateway.refundPayment(RefundRequest(transactionReference: 'tx-1')),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -241,13 +238,10 @@ void main() {
 
   group('parseWebhookEvent', () {
     test('parses a charge.completed event', () {
-      final event = gateway.parseWebhookEvent(
-        <String, dynamic>{
-          'event': 'charge.completed',
-          'data': <String, dynamic>{'tx_ref': 'uuid-1'},
-        },
-        const <String, String>{},
-      );
+      final event = gateway.parseWebhookEvent(<String, dynamic>{
+        'event': 'charge.completed',
+        'data': <String, dynamic>{'tx_ref': 'uuid-1'},
+      }, const <String, String>{});
       expect(event.provider, 'flutterwave');
       expect(event.eventType, 'charge.completed');
       expect(event.reference, 'uuid-1');
@@ -255,28 +249,24 @@ void main() {
     });
 
     test('falls back to data.status when event is absent', () {
-      final event = gateway.parseWebhookEvent(
-        <String, dynamic>{
-          'data': <String, dynamic>{
-            'status': 'successful',
-            'tx_ref': 'uuid-2',
-          },
-        },
-        const <String, String>{},
-      );
+      final event = gateway.parseWebhookEvent(<String, dynamic>{
+        'data': <String, dynamic>{'status': 'successful', 'tx_ref': 'uuid-2'},
+      }, const <String, String>{});
       expect(event.reference, 'uuid-2');
       expect(event.status, PaymentStatus.success);
     });
 
     test('throws validation when no event or status is present', () {
       expect(
-        () => gateway.parseWebhookEvent(
-          const <String, dynamic>{'data': <String, dynamic>{'tx_ref': 'x'}},
-          const <String, String>{},
-        ),
+        () => gateway.parseWebhookEvent(const <String, dynamic>{
+          'data': <String, dynamic>{'tx_ref': 'x'},
+        }, const <String, String>{}),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -311,10 +301,9 @@ void main() {
 
     test('headerValue matches case-insensitively', () {
       expect(
-        FlutterwaveGateway.headerValue(
-          const <String, String>{'Verif-Hash': 'abc'},
-          'verif-hash',
-        ),
+        FlutterwaveGateway.headerValue(const <String, String>{
+          'Verif-Hash': 'abc',
+        }, 'verif-hash'),
         'abc',
       );
     });
@@ -329,10 +318,7 @@ void main() {
     );
 
     test('maps status:error without message to server PLT999', () async {
-      httpMock.body = <String, dynamic>{
-        'status': 'error',
-        'data': null,
-      };
+      httpMock.body = <String, dynamic>{'status': 'error', 'data': null};
       await expectLater(
         gateway.initializePayment(request),
         throwsA(

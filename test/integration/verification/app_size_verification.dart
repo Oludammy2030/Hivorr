@@ -40,10 +40,7 @@ String resolveProjectRoot(String scriptPath) {
 /// (e.g. `  dio: 5.11.0`) while the section is active. Nested keys (e.g. the
 /// `sdk: flutter` sub-key of the `flutter:` SDK entry) are indented further and
 /// are not counted.
-List<String> parseDirectDependencies(
-  List<String> lines,
-  String section,
-) {
+List<String> parseDirectDependencies(List<String> lines, String section) {
   final List<String> names = <String>[];
   bool inSection = false;
   final RegExp sectionStart = RegExp('^\\s*$section\\s*:\\s*\$');
@@ -92,13 +89,17 @@ void main() {
       expect(pubspecFile.existsSync(), isTrue);
       expect(pubspecContent, isNotEmpty);
 
-      debugPrint('── Direct runtime dependencies '
-          '(${dependencies.length}) ──');
+      debugPrint(
+        '── Direct runtime dependencies '
+        '(${dependencies.length}) ──',
+      );
       for (final String name in dependencies) {
         debugPrint('  • $name');
       }
-      debugPrint('── Direct dev_dependencies '
-          '(${devDependencies.length}) ──');
+      debugPrint(
+        '── Direct dev_dependencies '
+        '(${devDependencies.length}) ──',
+      );
       for (final String name in devDependencies) {
         debugPrint('  • $name');
       }
@@ -107,10 +108,7 @@ void main() {
       // must be a positive, finite, well-formed list.
       expect(dependencies.length, greaterThan(0));
       expect(devDependencies.length, greaterThan(0));
-      expect(
-        dependencies.length + devDependencies.length,
-        greaterThan(0),
-      );
+      expect(dependencies.length + devDependencies.length, greaterThan(0));
       // Lenient guard: no obviously heavy media/engine packages were added by
       // this task. The parsed list is non-empty, confirming the parse succeeded.
       expect(dependencies, isNotEmpty);
@@ -127,7 +125,8 @@ void main() {
       const double perRuntimeDepMb = 0.6;
       const double perDevDepMb = 0.05;
 
-      final double estimatedSizeMb = baselineMb +
+      final double estimatedSizeMb =
+          baselineMb +
           dependencies.length * perRuntimeDepMb +
           devDependencies.length * perDevDepMb;
 
@@ -138,12 +137,16 @@ void main() {
       debugPrint('── App Size Estimation (dependency-based) ──');
       debugPrint('  Runtime dependencies : ${dependencies.length}');
       debugPrint('  Dev dependencies     : ${devDependencies.length}');
-      debugPrint('  Estimated size       : ${estimatedSizeMb.toStringAsFixed(2)} MB');
+      debugPrint(
+        '  Estimated size       : ${estimatedSizeMb.toStringAsFixed(2)} MB',
+      );
       debugPrint('  Target range         : $targetMinMb–$targetMaxMb MB');
       final bool withinTarget =
           estimatedSizeMb >= targetMinMb && estimatedSizeMb <= targetMaxMb;
-      debugPrint('  Within target        : $withinTarget '
-          '(full CI release build measures the real size)');
+      debugPrint(
+        '  Within target        : $withinTarget '
+        '(full CI release build measures the real size)',
+      );
 
       // The estimate must be a positive, finite, plausible value. The full CI
       // release build (flutter build apk --release / flutter build web) is the

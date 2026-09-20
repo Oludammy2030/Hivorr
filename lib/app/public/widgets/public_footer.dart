@@ -18,9 +18,7 @@ class PublicFooter extends StatelessWidget {
       color: colors.surface,
       child: Container(
         decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: colors.outlineVariant),
-          ),
+          border: Border(top: BorderSide(color: colors.outlineVariant)),
         ),
         child: SafeArea(
           top: false,
@@ -56,10 +54,7 @@ class PublicFooter extends StatelessWidget {
                   links: const <_FooterLink>[
                     _FooterLink('Create account', RoutePaths.signup),
                     _FooterLink('Sign in', RoutePaths.login),
-                    _FooterLink(
-                      'Forgot password',
-                      RoutePaths.forgotPassword,
-                    ),
+                    _FooterLink('Forgot password', RoutePaths.forgotPassword),
                   ],
                 ),
                 const SizedBox(height: HivorrSpacing.xl),
@@ -141,9 +136,6 @@ class _FooterDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    return Container(
-      height: 1,
-      color: colors.outlineVariant,
-    );
+    return Container(height: 1, color: colors.outlineVariant);
   }
 }

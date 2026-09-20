@@ -34,13 +34,11 @@ class RouteGuard {
     this.entryStateProvider,
     this.environment = AppEnvironment.production,
     Uri? baseUri,
-  }) : guard = AuthGuard(
-          isAuthenticated: () => authProvider.isSignedIn,
-        ),
-        _developmentOnboardingDeepLink = _resolveDevelopmentOnboardingDeepLink(
-          environment,
-          baseUri ?? Uri.base,
-        );
+  }) : guard = AuthGuard(isAuthenticated: () => authProvider.isSignedIn),
+       _developmentOnboardingDeepLink = _resolveDevelopmentOnboardingDeepLink(
+         environment,
+         baseUri ?? Uri.base,
+       );
 
   final AuthProvider authProvider;
   final OnboardingProvider? onboardingProvider;
@@ -88,9 +86,9 @@ class RouteGuard {
       final String? sessionEmail = session?.email;
       final bool unverified =
           session != null &&
-              !session.isEmailConfirmed &&
-              sessionEmail != null &&
-              sessionEmail.isNotEmpty;
+          !session.isEmailConfirmed &&
+          sessionEmail != null &&
+          sessionEmail.isNotEmpty;
       if (unverified) {
         // The verification gate is the only permitted destination; allow it
         // outright (its resume mode sends the code), redirect others to it.
@@ -110,8 +108,7 @@ class RouteGuard {
       // locking platform admins out of the review console entirely. Only the
       // authentication walls above apply.
 
-      final String? onboardingRedirect =
-          _onboardingResumeRedirect(location);
+      final String? onboardingRedirect = _onboardingResumeRedirect(location);
       if (onboardingRedirect != null) {
         return onboardingRedirect;
       }
@@ -212,9 +209,7 @@ class RouteGuard {
     // offline hydration failure).
     final bool complete =
         onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
-    if (location == RoutePaths.home &&
-        !complete &&
-        !onboarding.exited) {
+    if (location == RoutePaths.home && !complete && !onboarding.exited) {
       return RoutePaths.onboardingRouteFor(step);
     }
     if (location.startsWith(RoutePaths.onboarding) && complete) {

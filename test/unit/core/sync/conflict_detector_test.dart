@@ -9,31 +9,30 @@ void main() {
   group('ConflictDetector', () {
     test('409 with version mismatch flags as conflicted', () {
       final action = testAction(lastKnownVersion: 5);
-      final result = detector.detect(action, <String, dynamic>{
-        'version': 10,
-      });
+      final result = detector.detect(action, <String, dynamic>{'version': 10});
 
       expect(result.status, SyncActionStatus.conflicted);
       expect(result.errorMessage, contains('Client version: 5'));
       expect(result.errorMessage, contains('Server version: 10'));
     });
 
-    test('409 without version info still flags as conflicted (conservative)', () {
-      final action = testAction(lastKnownVersion: 5);
-      final result = detector.detect(action, null);
+    test(
+      '409 without version info still flags as conflicted (conservative)',
+      () {
+        final action = testAction(lastKnownVersion: 5);
+        final result = detector.detect(action, null);
 
-      expect(result.status, SyncActionStatus.conflicted);
-      expect(result.errorMessage, contains('Conflict detected (HTTP 409)'));
-      expect(result.errorMessage, contains('Client version: 5'));
-      // No server version extracted.
-      expect(result.errorMessage, isNot(contains('Server version')));
-    });
+        expect(result.status, SyncActionStatus.conflicted);
+        expect(result.errorMessage, contains('Conflict detected (HTTP 409)'));
+        expect(result.errorMessage, contains('Client version: 5'));
+        // No server version extracted.
+        expect(result.errorMessage, isNot(contains('Server version')));
+      },
+    );
 
     test('409 with null lastKnownVersion still flags as conflicted', () {
       final action = testAction(lastKnownVersion: null);
-      final result = detector.detect(action, <String, dynamic>{
-        'version': 42,
-      });
+      final result = detector.detect(action, <String, dynamic>{'version': 42});
 
       expect(result.status, SyncActionStatus.conflicted);
       expect(result.errorMessage, contains('Server version: 42'));
@@ -75,9 +74,7 @@ void main() {
         createdAt: DateTime(2026, 1, 1),
       );
 
-      final result = detector.detect(action, <String, dynamic>{
-        'version': 9,
-      });
+      final result = detector.detect(action, <String, dynamic>{'version': 9});
 
       expect(result.id, 'abc-123');
       expect(result.endpoint, '/rpc/update');

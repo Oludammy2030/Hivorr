@@ -31,8 +31,9 @@ void main() {
     FakeFinancialRepository? repo,
   }) async {
     final r = repo ?? FakeFinancialRepository();
-    final FinancialProvider provider =
-        FinancialProvider(service: FinancialService(repository: r));
+    final FinancialProvider provider = FinancialProvider(
+      service: FinancialService(repository: r),
+    );
     await pumpApp(
       tester,
       const FinancialProfileCreationFlow(),
@@ -51,7 +52,9 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('shows four currency options with symbols', (WidgetTester tester) async {
+    testWidgets('shows four currency options with symbols', (
+      WidgetTester tester,
+    ) async {
       await pumpFlowWith(tester);
       await tester.pumpAndSettle();
 
@@ -62,8 +65,9 @@ void main() {
       expect(find.text('Create Profile'), findsOneWidget);
     });
 
-    testWidgets('shows success state when profile already exists',
-        (WidgetTester tester) async {
+    testWidgets('shows success state when profile already exists', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(defaultCurrency: 'NGN'),
       );
@@ -76,8 +80,9 @@ void main() {
       expect(find.text('View Profile'), findsOneWidget);
     });
 
-    testWidgets('defaults the selected currency to NGN',
-        (WidgetTester tester) async {
+    testWidgets('defaults the selected currency to NGN', (
+      WidgetTester tester,
+    ) async {
       await pumpFlowWith(tester);
       await tester.pumpAndSettle();
 
@@ -85,8 +90,9 @@ void main() {
       expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(3));
     });
 
-    testWidgets('creating with a selected currency delegates it to the repo',
-        (WidgetTester tester) async {
+    testWidgets('creating with a selected currency delegates it to the repo', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository();
       await pumpFlowWith(tester, repo: repo);
       await tester.pumpAndSettle();
@@ -104,8 +110,9 @@ void main() {
       expect(repo.lastDefaultCurrency, 'GHS');
     });
 
-    testWidgets('shows inline error on creation failure',
-        (WidgetTester tester) async {
+    testWidgets('shows inline error on creation failure', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.validation,
@@ -122,8 +129,9 @@ void main() {
       expect(find.text('Unsupported currency'), findsOneWidget);
     });
 
-    testWidgets('shows exactly the four supported currencies',
-        (WidgetTester tester) async {
+    testWidgets('shows exactly the four supported currencies', (
+      WidgetTester tester,
+    ) async {
       await pumpFlowWith(tester);
       await tester.pumpAndSettle();
 
@@ -134,8 +142,9 @@ void main() {
       expect(find.text('EUR'), findsNothing);
     });
 
-    testWidgets('shows loading state while creation is in flight',
-        (WidgetTester tester) async {
+    testWidgets('shows loading state while creation is in flight', (
+      WidgetTester tester,
+    ) async {
       await pumpFlowWith(tester, repo: _BlockingCreateRepo());
       await tester.pumpAndSettle();
 
@@ -143,10 +152,7 @@ void main() {
       await tester.tap(find.text('Create Profile'));
       await tester.pump();
 
-      expect(
-        find.text('Creating your financial profile...'),
-        findsOneWidget,
-      );
+      expect(find.text('Creating your financial profile...'), findsOneWidget);
       // Unmount to drop the pending never-completing future.
       await tester.pumpWidget(const SizedBox());
     });

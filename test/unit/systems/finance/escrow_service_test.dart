@@ -17,9 +17,7 @@ import '../../../support/fakes/fake_logging.dart';
 import '../../../support/fakes/finance/fake_escrow_repository.dart';
 
 void main() {
-  EscrowService serviceWith({
-    required FakeEscrowRepository repository,
-  }) =>
+  EscrowService serviceWith({required FakeEscrowRepository repository}) =>
       EscrowService(repository: repository);
 
   group('EscrowService vocabulary + helpers', () {
@@ -44,8 +42,7 @@ void main() {
     test('exposes the full vocabularies statically', () {
       expect(EscrowService.escrowStatusList, hasLength(7));
       expect(
-        EscrowService.escrowStatusList
-            .map((final status) => status.code),
+        EscrowService.escrowStatusList.map((final status) => status.code),
         containsAll(<String>[
           'created',
           'funded',
@@ -193,7 +190,10 @@ void main() {
       final repository = FakeEscrowRepository(writeAvailable: true);
       final service = EscrowService(repository: repository);
 
-      await service.completeMilestone(escrowId: 'escrow-1', milestoneId: 'ms-1');
+      await service.completeMilestone(
+        escrowId: 'escrow-1',
+        milestoneId: 'ms-1',
+      );
 
       expect(repository.completeMilestoneCallCount, 1);
       expect(repository.lastMilestoneId, 'ms-1');
@@ -224,23 +224,25 @@ void main() {
 
       await expectLater(
         service.getById('escrow-1'),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.code, 'code', 'PLT004')
-            .having(
-              (ApiException e) => e.kind,
-              'kind',
-              ApiExceptionKind.notFound,
-            )),
+        throwsA(
+          isA<ApiException>()
+              .having((ApiException e) => e.code, 'code', 'PLT004')
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.notFound,
+              ),
+        ),
       );
     });
   });
 
   group('EscrowService instrumentation with logger', () {
     HivorrLogger logged(RecordingSink sink) => HivorrLogger(
-          'hivorr.test',
-          LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-          PiiRedactor(),
-        );
+      'hivorr.test',
+      LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+      PiiRedactor(),
+    );
 
     test('reads log redacted context on success', () async {
       final sink = RecordingSink();
@@ -261,10 +263,7 @@ void main() {
 
       expect(
         sink.entries.map((e) => e.message),
-        containsAll(<String>[
-          'Escrow detail fetched',
-          'Escrow list fetched',
-        ]),
+        containsAll(<String>['Escrow detail fetched', 'Escrow list fetched']),
       );
     });
 
@@ -283,7 +282,10 @@ void main() {
         totalAmount: 100000,
         milestones: const <EscrowMilestoneInput>[],
       );
-      await service.completeMilestone(escrowId: 'escrow-1', milestoneId: 'ms-1');
+      await service.completeMilestone(
+        escrowId: 'escrow-1',
+        milestoneId: 'ms-1',
+      );
       await service.releaseMilestone(escrowId: 'escrow-1', milestoneId: 'ms-2');
       await service.releaseFinal(escrowId: 'escrow-1');
       await service.refundEscrow(escrowId: 'escrow-1', reason: 'No delivery');

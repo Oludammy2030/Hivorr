@@ -53,7 +53,11 @@ void main() {
       final uuid = name.split('_').first;
       expect(
         uuid,
-        matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')),
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          ),
+        ),
       );
       expect(name, endsWith('passport.scan.pdf'));
     });
@@ -68,7 +72,15 @@ void main() {
       expect(name.contains('_'), isFalse);
       expect(
         name,
-        matches(RegExp(r'^[0-9a-f]{8}-' r'[0-9a-f]{4}-' r'[0-9a-f]{4}-' r'[0-9a-f]{4}-' r'[0-9a-f]{12}$')),
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-'
+            r'[0-9a-f]{4}-'
+            r'[0-9a-f]{4}-'
+            r'[0-9a-f]{4}-'
+            r'[0-9a-f]{12}$',
+          ),
+        ),
       );
     });
 
@@ -104,21 +116,27 @@ void main() {
       final name = parts.last;
       expect(name.contains('..'), isFalse);
       expect(name.contains('/'), isFalse);
-      expect(StoragePaths.sanitize('..\\..\\etc/Passwd.PDF'),
-          matches(RegExp(r'^[a-z0-9._-]+$')));
+      expect(
+        StoragePaths.sanitize('..\\..\\etc/Passwd.PDF'),
+        matches(RegExp(r'^[a-z0-9._-]+$')),
+      );
       expect(parts, hasLength(3));
     });
   });
 
   group('StoragePaths.avatar', () {
     test('produces {entityId}/avatar.{ext}', () {
-      expect(StoragePaths.avatar(entityId: 'user-1', ext: 'png'),
-          'user-1/avatar.png');
+      expect(
+        StoragePaths.avatar(entityId: 'user-1', ext: 'png'),
+        'user-1/avatar.png',
+      );
     });
 
     test('lower-cases an uppercase extension', () {
-      expect(StoragePaths.avatar(entityId: 'user-1', ext: 'JPG'),
-          'user-1/avatar.jpg');
+      expect(
+        StoragePaths.avatar(entityId: 'user-1', ext: 'JPG'),
+        'user-1/avatar.jpg',
+      );
     });
 
     test('rejects an empty extension', () {

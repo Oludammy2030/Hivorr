@@ -16,34 +16,33 @@ import '../../../support/fakes/finance/fake_escrow_repository.dart'
 
 void main() {
   EscrowDto escrowDto() => EscrowDto.fromJson(<String, dynamic>{
-        'id': 'escrow-1',
-        'financial_profile_id': 'profile-1',
-        'payer_entity_id': 'entity-payer',
-        'payee_entity_id': 'entity-payee',
-        'currency_code': 'NGN',
-        'total_amount': 50000,
-        'released_amount': 15000,
-        'refunded_amount': 0,
-        'status': 'partially_released',
-        'created_at': '2026-01-01T00:00:00.000Z',
-        'external_reference': 'ORD-2026-000123',
-        'funded_at': '2026-01-02T00:00:00.000Z',
-      });
+    'id': 'escrow-1',
+    'financial_profile_id': 'profile-1',
+    'payer_entity_id': 'entity-payer',
+    'payee_entity_id': 'entity-payee',
+    'currency_code': 'NGN',
+    'total_amount': 50000,
+    'released_amount': 15000,
+    'refunded_amount': 0,
+    'status': 'partially_released',
+    'created_at': '2026-01-01T00:00:00.000Z',
+    'external_reference': 'ORD-2026-000123',
+    'funded_at': '2026-01-02T00:00:00.000Z',
+  });
 
-  EscrowMilestoneDto milestoneDto() => EscrowMilestoneDto.fromJson(
-        <String, dynamic>{
-          'id': 'ms-1',
-          'escrow_id': 'escrow-1',
-          'milestone_number': 1,
-          'title': 'Design sign-off',
-          'description': 'Deliver design',
-          'amount': 25000,
-          'status': 'completed',
-          'sort_order': 1,
-          'created_at': '2026-01-01T00:00:00.000Z',
-          'completed_at': '2026-01-05T00:00:00.000Z',
-        },
-      );
+  EscrowMilestoneDto milestoneDto() =>
+      EscrowMilestoneDto.fromJson(<String, dynamic>{
+        'id': 'ms-1',
+        'escrow_id': 'escrow-1',
+        'milestone_number': 1,
+        'title': 'Design sign-off',
+        'description': 'Deliver design',
+        'amount': 25000,
+        'status': 'completed',
+        'sort_order': 1,
+        'created_at': '2026-01-01T00:00:00.000Z',
+        'completed_at': '2026-01-05T00:00:00.000Z',
+      });
 
   EscrowTransactionDto transactionDto() =>
       EscrowTransactionDto.fromJson(<String, dynamic>{
@@ -111,10 +110,7 @@ void main() {
   group('EscrowMapper.detailToEntity', () {
     test('maps the aggregate with unmodifiable child lists', () {
       final dto = EscrowDetailDto.fromJson(<String, dynamic>{
-        'escrow': <String, dynamic>{
-          'id': 'escrow-1',
-          'status': 'funded',
-        },
+        'escrow': <String, dynamic>{'id': 'escrow-1', 'status': 'funded'},
         'milestones': <dynamic>[
           <String, dynamic>{'id': 'ms-1', 'status': 'pending'},
         ],
@@ -167,9 +163,12 @@ void main() {
 
         expect(entity.status, status);
         expect(entity.isDisputed, status == 'disputed');
-        expect(entity.isActive, status == 'created' ||
-            status == 'funded' ||
-            status == 'partially_released');
+        expect(
+          entity.isActive,
+          status == 'created' ||
+              status == 'funded' ||
+              status == 'partially_released',
+        );
       }
     });
 

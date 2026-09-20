@@ -12,9 +12,7 @@ import 'package:hivorr/systems/verification/models/kyc_tier.dart';
 /// [forcedStatus]). Proves the seam without live NIN/BVN credentials —
 /// `EP-02:175` deferred provider selection mitigation.
 class MockKycProvider implements KycVerificationProvider {
-  MockKycProvider({
-    KycVerificationResult? result,
-  }) : _result = result;
+  MockKycProvider({KycVerificationResult? result}) : _result = result;
 
   KycVerificationResult? _result;
 

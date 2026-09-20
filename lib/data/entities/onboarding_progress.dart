@@ -74,14 +74,14 @@ class OnboardingProgress {
   /// steps (industry & profession selection → identity → tradeProof) are only
   /// required when [EntityCapability.requiresProfessionalWizard] holds.
   List<OnboardingStepCode> get requiredSteps => <OnboardingStepCode>[
-        OnboardingStepCode.profile,
-        OnboardingStepCode.capability,
-        if (capability.requiresProfessionalWizard) ...<OnboardingStepCode>[
-          OnboardingStepCode.industry,
-          OnboardingStepCode.identityDocument,
-          OnboardingStepCode.tradeProof,
-        ],
-      ];
+    OnboardingStepCode.profile,
+    OnboardingStepCode.capability,
+    if (capability.requiresProfessionalWizard) ...<OnboardingStepCode>[
+      OnboardingStepCode.industry,
+      OnboardingStepCode.identityDocument,
+      OnboardingStepCode.tradeProof,
+    ],
+  ];
 
   /// The step that follows [step] for the current capability, or `null` when
   /// the wizard has reached its final input step and should finish.
@@ -95,9 +95,10 @@ class OnboardingProgress {
     }
     return switch (step) {
       OnboardingStepCode.profile => OnboardingStepCode.capability,
-      OnboardingStepCode.capability => capability.requiresProfessionalWizard
-          ? OnboardingStepCode.industry
-          : null,
+      OnboardingStepCode.capability =>
+        capability.requiresProfessionalWizard
+            ? OnboardingStepCode.industry
+            : null,
       OnboardingStepCode.industry => OnboardingStepCode.identityDocument,
       OnboardingStepCode.identityDocument => OnboardingStepCode.tradeProof,
       OnboardingStepCode.tradeProof => null,
@@ -105,9 +106,9 @@ class OnboardingProgress {
   }
 
   /// Whether every step on this capability's path is complete.
-  bool get isComplete =>
-      requiredSteps.every((OnboardingStepCode step) =>
-          completedSteps.contains(step));
+  bool get isComplete => requiredSteps.every(
+    (OnboardingStepCode step) => completedSteps.contains(step),
+  );
 
   /// A copy advanced so [next] becomes the resume point.
   ///

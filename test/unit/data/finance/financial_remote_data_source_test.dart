@@ -13,34 +13,32 @@ import '../../../support/factories/mock_supabase_client_factory.dart';
 void main() {
   SupabaseFinancialRemoteDataSource build([
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
-  ]) =>
-      SupabaseFinancialRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
-        exceptionMapper: const ApiExceptionMapper(),
-      );
+  ]) => SupabaseFinancialRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
+    exceptionMapper: const ApiExceptionMapper(),
+  );
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   Map<String, dynamic> profileData({
     String status = 'active',
     String defaultCurrency = 'NGN',
-  }) =>
-      <String, dynamic>{
-        'profile': <String, dynamic>{
-          'id': 'p1',
-          'entity_id': 'u1',
-          'status': status,
-          'default_currency': defaultCurrency,
-          'created_at': '2026-01-01T00:00:00.000Z',
-        },
-        'currency_accounts': <dynamic>[],
-      };
+  }) => <String, dynamic>{
+    'profile': <String, dynamic>{
+      'id': 'p1',
+      'entity_id': 'u1',
+      'status': status,
+      'default_currency': defaultCurrency,
+      'created_at': '2026-01-01T00:00:00.000Z',
+    },
+    'currency_accounts': <dynamic>[],
+  };
 
   Map<String, dynamic> balanceData({
     String currencyCode = 'NGN',
@@ -49,29 +47,25 @@ void main() {
     double pending = 0,
     double totalDeposited = 50000,
     double totalWithdrawn = 0,
-  }) =>
-      <String, dynamic>{
-        'currency_code': currencyCode,
-        'available_balance': available,
-        'held_balance': held,
-        'pending_balance': pending,
-        'total_deposited': totalDeposited,
-        'total_withdrawn': totalWithdrawn,
-      };
+  }) => <String, dynamic>{
+    'currency_code': currencyCode,
+    'available_balance': available,
+    'held_balance': held,
+    'pending_balance': pending,
+    'total_deposited': totalDeposited,
+    'total_withdrawn': totalWithdrawn,
+  };
 
   Map<String, dynamic> statusData({
     String defaultCurrency = 'NGN',
     double cashoutLimit = 100000,
-  }) =>
-      <String, dynamic>{
-        'default_currency': defaultCurrency,
-        'profile_status': 'active',
-        'balances': <dynamic>[
-          balanceData(currencyCode: 'NGN'),
-        ],
-        'active_escrow_count': 0,
-        'cashout_limit': cashoutLimit,
-      };
+  }) => <String, dynamic>{
+    'default_currency': defaultCurrency,
+    'profile_status': 'active',
+    'balances': <dynamic>[balanceData(currencyCode: 'NGN')],
+    'active_escrow_count': 0,
+    'cashout_limit': cashoutLimit,
+  };
 
   group('SupabaseFinancialRemoteDataSource.getProfile', () {
     test('calls financial_profile_get and maps profile', () async {
@@ -97,9 +91,9 @@ void main() {
     test('returns null when no profile row exists', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_profile_get': (_) => ok(<String, dynamic>{
-              'profile': null,
-              'currency_accounts': <dynamic>[],
-            }),
+          'profile': null,
+          'currency_accounts': <dynamic>[],
+        }),
       });
 
       final FinancialProfileDto? dto = await source.getProfile();
@@ -131,13 +125,13 @@ void main() {
     test('defaults zero balances when no row exists', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_balance_get': (_) => ok(<String, dynamic>{
-              'currency_code': 'NGN',
-              'available_balance': 0,
-              'held_balance': 0,
-              'pending_balance': 0,
-              'total_deposited': 0,
-              'total_withdrawn': 0,
-            }),
+          'currency_code': 'NGN',
+          'available_balance': 0,
+          'held_balance': 0,
+          'pending_balance': 0,
+          'total_deposited': 0,
+          'total_withdrawn': 0,
+        }),
       });
 
       final BalanceDto dto = await source.getBalance('NGN');
@@ -184,8 +178,9 @@ void main() {
         'financial_profile_get': (_) => ok(profileData()),
       });
 
-      final FinancialProfileDto dto =
-          await source.createProfile(defaultCurrency: 'NGN');
+      final FinancialProfileDto dto = await source.createProfile(
+        defaultCurrency: 'NGN',
+      );
 
       expect(seenFn, 'financial_profile_create');
       expect(seenParams!['p_default_currency'], 'NGN');
@@ -197,66 +192,83 @@ void main() {
     test('maps PLT005 conflict to conflict kind', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_profile_create': (_) => <String, dynamic>{
-              'code': 'PLT005',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT005',
+          'data': <String, dynamic>{},
+        },
       });
 
       expect(
         () => source.createProfile(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.conflict)
-            .having((ApiException e) => e.code, 'code', 'PLT005')),
+        throwsA(
+          isA<ApiException>()
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.conflict,
+              )
+              .having((ApiException e) => e.code, 'code', 'PLT005'),
+        ),
       );
     });
 
     test('maps PLT004 to notFound', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_balance_get': (_) => <String, dynamic>{
-              'code': 'PLT004',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT004',
+          'data': <String, dynamic>{},
+        },
       });
 
       expect(
         () => source.getBalance('XYZ'),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.notFound)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.notFound,
+          ),
+        ),
       );
     });
 
     test('throws server when data is malformed (not an object)', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_status_get': (_) => <String, dynamic>{
-              'success': true,
-              'code': 'PLT000',
-              'data': <dynamic>[1, 2],
-            },
+          'success': true,
+          'code': 'PLT000',
+          'data': <dynamic>[1, 2],
+        },
       });
 
       expect(
         () => source.getStatus(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
 
     test('maps 42501 SQL error to forbidden', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_status_get': (_) => <String, dynamic>{
-              'code': '42501',
-              'data': <String, dynamic>{},
-            },
+          'code': '42501',
+          'data': <String, dynamic>{},
+        },
       });
 
       expect(
         () => source.getStatus(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.forbidden)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.forbidden,
+          ),
+        ),
       );
     });
   });

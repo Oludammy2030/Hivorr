@@ -39,10 +39,7 @@ class BalanceOverviewCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          'Balances',
-          style: context.textTheme.titleMedium,
-        ),
+        Text('Balances', style: context.textTheme.titleMedium),
         const SizedBox(height: HivorrSpacing.sm),
         ...entries.map((entry) {
           final currency = SupportedCurrency.fromCode(entry.key);

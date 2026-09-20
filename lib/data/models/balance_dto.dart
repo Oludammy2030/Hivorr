@@ -15,16 +15,16 @@ class BalanceDto {
   });
 
   factory BalanceDto.fromJson(Map<String, dynamic> json) => BalanceDto(
-        currencyCode: (json['currency_code'] as String?) ?? '',
-        availableBalance: _toDouble(json['available_balance']),
-        heldBalance: _toDouble(json['held_balance']),
-        pendingBalance: _toDouble(json['pending_balance']),
-        totalDeposited: _toDouble(json['total_deposited']),
-        totalWithdrawn: _toDouble(json['total_withdrawn']),
-        lastTransactionAt: json['last_transaction_at'] != null
-            ? _parseDateTime(json['last_transaction_at'])
-            : null,
-      );
+    currencyCode: (json['currency_code'] as String?) ?? '',
+    availableBalance: _toDouble(json['available_balance']),
+    heldBalance: _toDouble(json['held_balance']),
+    pendingBalance: _toDouble(json['pending_balance']),
+    totalDeposited: _toDouble(json['total_deposited']),
+    totalWithdrawn: _toDouble(json['total_withdrawn']),
+    lastTransactionAt: json['last_transaction_at'] != null
+        ? _parseDateTime(json['last_transaction_at'])
+        : null,
+  );
 
   final String currencyCode;
   final double availableBalance;

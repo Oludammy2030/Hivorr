@@ -30,38 +30,37 @@ class SupabaseKycRemoteDataSource extends BaseApiService
 
   @override
   Future<KycLevelDto> getKycLevel() => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_kyc_level_get',
-        );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return KycLevelDto.fromJson(data);
-      });
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('verification_kyc_level_get');
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
+    );
+    return KycLevelDto.fromJson(data);
+  });
 
   @override
   Future<KycLimitsDto> getLimits() => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_limits_get',
-        );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return KycLimitsDto.fromJson(data);
-      });
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('verification_limits_get');
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
+    );
+    return KycLimitsDto.fromJson(data);
+  });
 
   @override
   Future<VerificationStatusDto> getStatus({String? entityId}) =>
       _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_status_get',
-          params: entityId == null
-              ? null
-              : <String, dynamic>{'p_entity_id': entityId},
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+              'verification_status_get',
+              params: entityId == null
+                  ? null
+                  : <String, dynamic>{'p_entity_id': entityId},
+            );
+        final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+          response,
         );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
         return VerificationStatusDto.fromJson(data);
       });
 }

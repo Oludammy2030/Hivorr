@@ -23,16 +23,20 @@ void main() {
       );
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-        PiiRedactor(),
-      );
+    'hivorr.test',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+    PiiRedactor(),
+  );
 
   group('KycService.supportedTiers', () {
     test('exposes the full tier vocabulary', () {
       final service = build(FakeKycRemoteDataSource());
-      expect(service.supportedTiers,
-          <KycTier>[KycTier.tier0, KycTier.tier1, KycTier.tier2, KycTier.tier3]);
+      expect(service.supportedTiers, <KycTier>[
+        KycTier.tier0,
+        KycTier.tier1,
+        KycTier.tier2,
+        KycTier.tier3,
+      ]);
     });
   });
 
@@ -81,8 +85,9 @@ void main() {
       );
       final service = build(remote);
 
-      final KycLevel next =
-          await service.requestUpgrade(targetTier: KycTier.tier1);
+      final KycLevel next = await service.requestUpgrade(
+        targetTier: KycTier.tier1,
+      );
 
       expect(next.tierCode, 'tier_0');
     });
@@ -95,9 +100,13 @@ void main() {
 
       await expectLater(
         service.requestUpgrade(targetTier: KycTier.tier1),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
+        ),
       );
     });
 
@@ -111,9 +120,13 @@ void main() {
 
       await expectLater(
         service.requestUpgrade(targetTier: KycTier.tier1),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
   });
@@ -131,12 +144,15 @@ void main() {
         throwsA(isA<ApiException>()),
       );
 
-      final messages =
-          sink.entries.map((LogEntry e) => e.message).toList();
-      expect(messages.any((String m) => m.contains('KYC upgrade requested')),
-          isTrue);
-      expect(messages.any((String m) => m.contains('KYC upgrade failed')),
-          isTrue);
+      final messages = sink.entries.map((LogEntry e) => e.message).toList();
+      expect(
+        messages.any((String m) => m.contains('KYC upgrade requested')),
+        isTrue,
+      );
+      expect(
+        messages.any((String m) => m.contains('KYC upgrade failed')),
+        isTrue,
+      );
     });
 
     test('logs the resolved outcome on a successful upgrade', () async {
@@ -148,10 +164,11 @@ void main() {
 
       await service.requestUpgrade(targetTier: KycTier.tier1);
 
-      final messages =
-          sink.entries.map((LogEntry e) => e.message).toList();
-      expect(messages.any((String m) => m.contains('KYC upgrade resolved')),
-          isTrue);
+      final messages = sink.entries.map((LogEntry e) => e.message).toList();
+      expect(
+        messages.any((String m) => m.contains('KYC upgrade resolved')),
+        isTrue,
+      );
     });
 
     test('logs a failing read via the tracel catch path', () async {
@@ -165,15 +182,20 @@ void main() {
 
       await expectLater(
         service.getKycLevel(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
 
-      final messages =
-          sink.entries.map((LogEntry e) => e.message).toList();
-      expect(messages.any((String m) => m.contains('kyc.level.get failed')),
-          isTrue);
+      final messages = sink.entries.map((LogEntry e) => e.message).toList();
+      expect(
+        messages.any((String m) => m.contains('kyc.level.get failed')),
+        isTrue,
+      );
     });
   });
 }

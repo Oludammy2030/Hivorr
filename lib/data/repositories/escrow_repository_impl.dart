@@ -19,7 +19,7 @@ import 'package:hivorr/systems/finance/models/supported_currency.dart';
 /// escrow tables directly (AGENT.md Rule 4).
 class EscrowRepositoryImpl implements EscrowRepository {
   EscrowRepositoryImpl({required EscrowRemoteDataSource remote})
-      : _remote = remote;
+    : _remote = remote;
 
   final EscrowRemoteDataSource _remote;
 

@@ -54,8 +54,8 @@ class _PayoutAccountViewState extends State<PayoutAccountView> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      final FinancialPayoutProvider provider =
-          context.read<FinancialPayoutProvider>();
+      final FinancialPayoutProvider provider = context
+          .read<FinancialPayoutProvider>();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(provider.load());
       });

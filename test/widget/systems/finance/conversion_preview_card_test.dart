@@ -34,16 +34,14 @@ void main() {
     exchangeRate: 0.0009,
   );
 
-  Future<void> pumpCard(
-    WidgetTester tester,
-    ConversionPreviewCard card,
-  ) async {
+  Future<void> pumpCard(WidgetTester tester, ConversionPreviewCard card) async {
     await pumpTheme(tester, card);
   }
 
   group('ConversionPreviewCard estimate lines', () {
-    testWidgets('renders the You give label and locale-aware amount',
-        (WidgetTester tester) async {
+    testWidgets('renders the You give label and locale-aware amount', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         ConversionPreviewCard(
@@ -57,8 +55,9 @@ void main() {
       expect(find.text('\u20A650,000.00'), findsOneWidget);
     });
 
-    testWidgets('renders the You receive net amount',
-        (WidgetTester tester) async {
+    testWidgets('renders the You receive net amount', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         ConversionPreviewCard(
@@ -72,22 +71,29 @@ void main() {
       expect(find.text('\$35.00'), findsOneWidget);
     });
 
-    testWidgets('emphasizes the net with titleMedium in the theme primary color',
-        (WidgetTester tester) async {
-      await pumpCard(
-        tester,
-        ConversionPreviewCard(
-          preview: estimate,
-          onExecute: null,
-          isExecuting: false,
-        ),
-      );
-      final BuildContext context = tester.element(find.byType(ConversionPreviewCard));
+    testWidgets(
+      'emphasizes the net with titleMedium in the theme primary color',
+      (WidgetTester tester) async {
+        await pumpCard(
+          tester,
+          ConversionPreviewCard(
+            preview: estimate,
+            onExecute: null,
+            isExecuting: false,
+          ),
+        );
+        final BuildContext context = tester.element(
+          find.byType(ConversionPreviewCard),
+        );
 
-      final Text netText = tester.widget<Text>(find.text('\$35.00'));
-      expect(netText.style?.fontSize, Theme.of(context).textTheme.titleMedium?.fontSize);
-      expect(netText.style?.color, Theme.of(context).colorScheme.primary);
-    });
+        final Text netText = tester.widget<Text>(find.text('\$35.00'));
+        expect(
+          netText.style?.fontSize,
+          Theme.of(context).textTheme.titleMedium?.fontSize,
+        );
+        expect(netText.style?.color, Theme.of(context).colorScheme.primary);
+      },
+    );
 
     testWidgets('renders the estimate microcopy', (WidgetTester tester) async {
       await pumpCard(
@@ -109,8 +115,9 @@ void main() {
   });
 
   group('ConversionPreviewCard fee handling', () {
-    testWidgets('hides the fee line when the fee is zero',
-        (WidgetTester tester) async {
+    testWidgets('hides the fee line when the fee is zero', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         ConversionPreviewCard(
@@ -123,8 +130,9 @@ void main() {
       expect(find.text('Fee'), findsNothing);
     });
 
-    testWidgets('renders the fee line when the fee is positive',
-        (WidgetTester tester) async {
+    testWidgets('renders the fee line when the fee is positive', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         ConversionPreviewCard(
@@ -140,8 +148,9 @@ void main() {
   });
 
   group('ConversionPreviewCard CTA', () {
-    testWidgets('renders the Convert now button and invokes onExecute',
-        (WidgetTester tester) async {
+    testWidgets('renders the Convert now button and invokes onExecute', (
+      WidgetTester tester,
+    ) async {
       int taps = 0;
       await pumpCard(
         tester,
@@ -158,8 +167,9 @@ void main() {
       expect(taps, 1);
     });
 
-    testWidgets('shows the loader while executing and disables the CTA',
-        (WidgetTester tester) async {
+    testWidgets('shows the loader while executing and disables the CTA', (
+      WidgetTester tester,
+    ) async {
       int taps = 0;
       await pumpCard(
         tester,
@@ -177,8 +187,9 @@ void main() {
       expect(taps, 0);
     });
 
-    testWidgets('renders a disabled CTA when onExecute is null',
-        (WidgetTester tester) async {
+    testWidgets('renders a disabled CTA when onExecute is null', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         ConversionPreviewCard(
@@ -188,8 +199,9 @@ void main() {
         ),
       );
 
-      final HivorrButton button =
-          tester.widget<HivorrButton>(find.byType(HivorrButton));
+      final HivorrButton button = tester.widget<HivorrButton>(
+        find.byType(HivorrButton),
+      );
       expect(button.onPressed, isNull);
     });
   });

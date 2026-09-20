@@ -79,8 +79,7 @@ class OnboardingCompleteScreen extends StatelessWidget {
                 gateOpen: provider.isTradeGateOpen,
                 onViewStatus: () =>
                     context.goNamed(RouteNames.verificationStatus),
-                onFinancialProfile: () =>
-                    context.goNamed(RouteNames.finance),
+                onFinancialProfile: () => context.goNamed(RouteNames.finance),
               ),
           ],
         ),
@@ -105,20 +104,20 @@ class OnboardingCompleteScreen extends StatelessWidget {
 
   static String _subtitleFor(EntityCapability capability) =>
       capability == EntityCapability.hire
-          ? 'Your account is ready. Browse professionals and hire with '
-              'confidence — no verification needed to get started.'
-          : 'Your profile is live. You can start work right away — '
-              'bidding unlocks once your trade proof is approved.';
+      ? 'Your account is ready. Browse professionals and hire with '
+            'confidence — no verification needed to get started.'
+      : 'Your profile is live. You can start work right away — '
+            'bidding unlocks once your trade proof is approved.';
 
   static IconData _iconFor(OnboardingStep step) => switch (step) {
-        OnboardingStep.capability => Icons.all_inclusive_outlined,
-        OnboardingStep.profile => Icons.person_outline,
-        OnboardingStep.industry => Icons.dashboard_outlined,
-        OnboardingStep.profession => Icons.work_outline,
-        OnboardingStep.identityDocument => Icons.badge_outlined,
-        OnboardingStep.tradeProof => Icons.verified_outlined,
-        OnboardingStep.completed => Icons.check_circle_outline,
-      };
+    OnboardingStep.capability => Icons.all_inclusive_outlined,
+    OnboardingStep.profile => Icons.person_outline,
+    OnboardingStep.industry => Icons.dashboard_outlined,
+    OnboardingStep.profession => Icons.work_outline,
+    OnboardingStep.identityDocument => Icons.badge_outlined,
+    OnboardingStep.tradeProof => Icons.verified_outlined,
+    OnboardingStep.completed => Icons.check_circle_outline,
+  };
 }
 
 /// Read-only trust-loop summary: identity/trade submission status + Rule 2

@@ -16,17 +16,16 @@ void main() {
   FinancialDepositService build({
     FakeFinancialDepositRepository? repo,
     HivorrLogger? logger,
-  }) =>
-      FinancialDepositService(
-        repository: repo ?? FakeFinancialDepositRepository(),
-        logger: logger,
-      );
+  }) => FinancialDepositService(
+    repository: repo ?? FakeFinancialDepositRepository(),
+    logger: logger,
+  );
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test.deposit',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.info),
-        PiiRedactor(),
-      );
+    'hivorr.test.deposit',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.info),
+    PiiRedactor(),
+  );
 
   group('listDeposits', () {
     test('delegates and returns the RLS-scoped list', () async {
@@ -44,29 +43,25 @@ void main() {
       expect(repo.listCallCount, 1);
       expect(deposits, hasLength(2));
       expect(deposits[0].id, 'dep-matched');
-      expect(
-        sink.entries.map((e) => e.message),
-        contains('Deposits listed'),
-      );
+      expect(sink.entries.map((e) => e.message), contains('Deposits listed'));
     });
 
-    test('surfaces repository failures while keeping payer names out of logs',
-        () async {
-      final repo = FakeFinancialDepositRepository()
-        ..nextError = const ApiException(
-          kind: ApiExceptionKind.server,
-          message: 'deposits down',
-          code: 'PLT999',
-        );
-      final sink = RecordingSink();
-      final service = build(repo: repo, logger: makeLogger(sink));
+    test(
+      'surfaces repository failures while keeping payer names out of logs',
+      () async {
+        final repo = FakeFinancialDepositRepository()
+          ..nextError = const ApiException(
+            kind: ApiExceptionKind.server,
+            message: 'deposits down',
+            code: 'PLT999',
+          );
+        final sink = RecordingSink();
+        final service = build(repo: repo, logger: makeLogger(sink));
 
-      await expectLater(
-        service.listDeposits(),
-        throwsA(isA<ApiException>()),
-      );
-      expect(sink.entries, isNotEmpty);
-      expect(sink.entries.join('\n'), isNot(contains('John Doe')));
-    });
+        await expectLater(service.listDeposits(), throwsA(isA<ApiException>()));
+        expect(sink.entries, isNotEmpty);
+        expect(sink.entries.join('\n'), isNot(contains('John Doe')));
+      },
+    );
   });
 }

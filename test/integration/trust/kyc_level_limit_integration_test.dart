@@ -26,35 +26,35 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   // ---- Scripted "server" state -------------------------------------------
   String tierCode = 'tier_0';
   String tierStatus = 'pending';
 
   Map<String, dynamic> levelData() => <String, dynamic>{
-        'tier_code': tierCode,
-        'status': tierStatus,
-        'limits': <String, dynamic>{
-          'daily': tierCode == 'tier_1' ? 500000 : 0,
-          'weekly': tierCode == 'tier_1' ? 2000000 : 0,
-          'monthly': tierCode == 'tier_1' ? 8000000 : 0,
-          'cashout': tierCode == 'tier_1' ? 200000 : 0,
-        },
-      };
+    'tier_code': tierCode,
+    'status': tierStatus,
+    'limits': <String, dynamic>{
+      'daily': tierCode == 'tier_1' ? 500000 : 0,
+      'weekly': tierCode == 'tier_1' ? 2000000 : 0,
+      'monthly': tierCode == 'tier_1' ? 8000000 : 0,
+      'cashout': tierCode == 'tier_1' ? 200000 : 0,
+    },
+  };
 
   Map<String, dynamic> statusData() => <String, dynamic>{
-        'entity_id': 'u1',
-        'kyc': levelData(),
-        'identity_verified': tierCode != 'tier_0',
-        'trade_verifications': <dynamic>[],
-        'pending_submissions': 0,
-        'total_submissions': 0,
-      };
+    'entity_id': 'u1',
+    'kyc': levelData(),
+    'identity_verified': tierCode != 'tier_0',
+    'trade_verifications': <dynamic>[],
+    'pending_submissions': 0,
+    'total_submissions': 0,
+  };
 
   KycProvider buildProvider({
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
@@ -62,17 +62,18 @@ void main() {
     final defaults = <String, Object? Function(Map<String, dynamic>)>{
       'verification_kyc_level_get': (_) => ok(levelData()),
       'verification_limits_get': (_) => ok(<String, dynamic>{
-            'tier_code': tierCode,
-            'status': tierStatus,
-            'daily': tierCode == 'tier_1' ? 500000 : 0,
-            'weekly': tierCode == 'tier_1' ? 2000000 : 0,
-            'monthly': tierCode == 'tier_1' ? 8000000 : 0,
-            'cashout': tierCode == 'tier_1' ? 200000 : 0,
-          }),
+        'tier_code': tierCode,
+        'status': tierStatus,
+        'daily': tierCode == 'tier_1' ? 500000 : 0,
+        'weekly': tierCode == 'tier_1' ? 2000000 : 0,
+        'monthly': tierCode == 'tier_1' ? 8000000 : 0,
+        'cashout': tierCode == 'tier_1' ? 200000 : 0,
+      }),
       'verification_status_get': (_) => ok(statusData()),
     };
     defaults.addAll(
-        rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final client = MockSupabaseClientFactory.create(
       currentUser: fakeUser('u1'),
       rpcHandlers: defaults,
@@ -114,15 +115,21 @@ void main() {
         limits: limits,
         amount: 50000,
       );
-      expect(allowed, isFalse,
-          reason: 'tier_0 with cashout=0 must block any withdrawal');
+      expect(
+        allowed,
+        isFalse,
+        reason: 'tier_0 with cashout=0 must block any withdrawal',
+      );
 
       final bool canTransact = KycLimitGuard.canTransact(
         limits: limits,
         amount: 100,
       );
-      expect(canTransact, isFalse,
-          reason: 'tier_0 with daily limit 0 must block all operations');
+      expect(
+        canTransact,
+        isFalse,
+        reason: 'tier_0 with daily limit 0 must block all operations',
+      );
     });
 
     test('server approval → tier_1 lifts limits', () async {
@@ -157,42 +164,50 @@ void main() {
         limits: limits,
         amount: 150000,
       );
-      expect(allowed, isTrue,
-          reason: 'tier_1 with cashout=200000 must allow 150000');
+      expect(
+        allowed,
+        isTrue,
+        reason: 'tier_1 with cashout=200000 must allow 150000',
+      );
 
       final bool blocked = KycLimitGuard.isCashoutAllowed(
         limits: limits,
         amount: 250000,
       );
-      expect(blocked, isFalse,
-          reason: 'tier_1 with cashout=200000 must block 250000');
-    });
-
-    test('PLT003 envelope surfaces as validation ApiException on refreshStatus',
-        () async {
-      final provider = buildProvider(
-        rpcHandlers: {
-          'verification_kyc_level_get': (_) => <String, dynamic>{
-                'code': 'PLT003',
-                'data': <String, dynamic>{},
-              },
-        },
-      );
-      addTearDown(provider.dispose);
-
-      // `refreshStatus` swallows transport/validation failures into the
-      // provider's state surface (documented contract — the unit test
-      // kyc_provider_test.dart asserts loadState == error + lastError).
-      await provider.refreshStatus();
       expect(
-        provider.lastError,
-        isA<ApiException>().having(
-          (ApiException e) => e.kind,
-          'kind',
-          ApiExceptionKind.validation,
-        ),
+        blocked,
+        isFalse,
+        reason: 'tier_1 with cashout=200000 must block 250000',
       );
-      expect(provider.lastError?.code, 'PLT003');
     });
+
+    test(
+      'PLT003 envelope surfaces as validation ApiException on refreshStatus',
+      () async {
+        final provider = buildProvider(
+          rpcHandlers: {
+            'verification_kyc_level_get': (_) => <String, dynamic>{
+              'code': 'PLT003',
+              'data': <String, dynamic>{},
+            },
+          },
+        );
+        addTearDown(provider.dispose);
+
+        // `refreshStatus` swallows transport/validation failures into the
+        // provider's state surface (documented contract — the unit test
+        // kyc_provider_test.dart asserts loadState == error + lastError).
+        await provider.refreshStatus();
+        expect(
+          provider.lastError,
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
+        );
+        expect(provider.lastError?.code, 'PLT003');
+      },
+    );
   });
 }

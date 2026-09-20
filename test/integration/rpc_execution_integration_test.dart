@@ -88,47 +88,54 @@ void main() {
     });
 
     // ── Scenario 3: RPC error handling and normalized logging ──
-    test('normalizes RPC errors to ApiException and logs via HivorrLogger',
-        () async {
-      final RecordingSink recordingSink = RecordingSink();
-      final LogRouter router = LogRouter(
-        sinks: <LogSink>[recordingSink],
-        minimumLevel: LogLevel.debug,
-      );
-      final LoggerFactory loggerFactory =
-          LoggerFactory(router, PiiRedactor());
-      final HivorrLogger logger = loggerFactory.named('hivorr.integration.rpc');
-
-      final client = MockSupabaseClientFactory.create(
-        rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
-          'entity_profile_update': (_) => throw Exception('boom'),
-        },
-      );
-
-      final SupabaseEntityRemoteDataSource remote = SupabaseEntityRemoteDataSource(
-        dio: buildTestDio(StubAdapter((_) async => jsonBody(200))),
-        supabase: client,
-        exceptionMapper: const ApiExceptionMapper(),
-      );
-
-      ApiException? caught;
-      try {
-        await remote.updateProfile(
-          entityId: 'e1',
-          legalName: 'X',
-          displayName: 'Y',
+    test(
+      'normalizes RPC errors to ApiException and logs via HivorrLogger',
+      () async {
+        final RecordingSink recordingSink = RecordingSink();
+        final LogRouter router = LogRouter(
+          sinks: <LogSink>[recordingSink],
+          minimumLevel: LogLevel.debug,
         );
-        fail('Expected an ApiException to be thrown');
-      } on ApiException catch (e) {
-        caught = e;
-      }
+        final LoggerFactory loggerFactory = LoggerFactory(
+          router,
+          PiiRedactor(),
+        );
+        final HivorrLogger logger = loggerFactory.named(
+          'hivorr.integration.rpc',
+        );
 
-      expect(caught, isNotNull);
-      logger.error('RPC execution failed', error: caught);
+        final client = MockSupabaseClientFactory.create(
+          rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
+            'entity_profile_update': (_) => throw Exception('boom'),
+          },
+        );
 
-      expect(recordingSink.entries, isNotEmpty);
-      expect(recordingSink.entries.last.hasError, isTrue);
-      expect(recordingSink.entries.last.error, isA<ApiException>());
-    });
+        final SupabaseEntityRemoteDataSource remote =
+            SupabaseEntityRemoteDataSource(
+              dio: buildTestDio(StubAdapter((_) async => jsonBody(200))),
+              supabase: client,
+              exceptionMapper: const ApiExceptionMapper(),
+            );
+
+        ApiException? caught;
+        try {
+          await remote.updateProfile(
+            entityId: 'e1',
+            legalName: 'X',
+            displayName: 'Y',
+          );
+          fail('Expected an ApiException to be thrown');
+        } on ApiException catch (e) {
+          caught = e;
+        }
+
+        expect(caught, isNotNull);
+        logger.error('RPC execution failed', error: caught);
+
+        expect(recordingSink.entries, isNotEmpty);
+        expect(recordingSink.entries.last.hasError, isTrue);
+        expect(recordingSink.entries.last.error, isA<ApiException>());
+      },
+    );
   });
 }

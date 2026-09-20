@@ -83,10 +83,8 @@ void main() {
     test('same key in different boxes is independent', () async {
       await engine.put(boxA, 'same', <String, dynamic>{'v': 'a'});
       await engine.put(boxB, 'same', <String, dynamic>{'v': 'b'});
-      expect(await engine.get(boxA, 'same'),
-          <String, dynamic>{'v': 'a'});
-      expect(await engine.get(boxB, 'same'),
-          <String, dynamic>{'v': 'b'});
+      expect(await engine.get(boxA, 'same'), <String, dynamic>{'v': 'a'});
+      expect(await engine.get(boxB, 'same'), <String, dynamic>{'v': 'b'});
     });
   });
 

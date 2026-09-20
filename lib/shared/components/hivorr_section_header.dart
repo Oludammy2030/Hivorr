@@ -6,11 +6,7 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 /// Section header with a title and an optional trailing action (e.g. a
 /// [HivorrButton] or [HivorrChip]).
 class HivorrSectionHeader extends StatelessWidget {
-  const HivorrSectionHeader({
-    super.key,
-    required this.title,
-    this.action,
-  });
+  const HivorrSectionHeader({super.key, required this.title, this.action});
 
   /// Section title.
   final String title;
@@ -21,9 +17,7 @@ class HivorrSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Widget> children = <Widget>[
-      Expanded(
-        child: Text(title, style: context.textTheme.titleMedium),
-      ),
+      Expanded(child: Text(title, style: context.textTheme.titleMedium)),
     ];
     if (action != null) {
       children.add(action!);

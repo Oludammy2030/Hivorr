@@ -47,7 +47,10 @@ class HowItWorksScreen extends StatelessWidget {
           TextButton(
             onPressed: () => context.go(RoutePaths.features),
             style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text('See what you can do', style: context.textTheme.labelLarge),
+            child: Text(
+              'See what you can do',
+              style: context.textTheme.labelLarge,
+            ),
           ),
         ],
       ),
@@ -148,11 +151,7 @@ class _StepCard extends StatelessWidget {
 }
 
 class _Step {
-  const _Step({
-    required this.number,
-    required this.title,
-    required this.body,
-  });
+  const _Step({required this.number, required this.title, required this.body});
 
   final int number;
   final String title;

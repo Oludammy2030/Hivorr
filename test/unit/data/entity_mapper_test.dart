@@ -26,8 +26,10 @@ void main() {
       expect(entity.avatarPath, 'a.png');
       expect(entity.countryCode, 'NG');
 
-      final EntityProfileDto back =
-          EntityProfileMapper.fromEntity(entity, 'e1');
+      final EntityProfileDto back = EntityProfileMapper.fromEntity(
+        entity,
+        'e1',
+      );
       expect(back.legalName, dto.legalName);
       expect(back.countryCode, dto.countryCode);
     });
@@ -44,8 +46,10 @@ void main() {
       expect(entity.avatarPath, isNull);
       expect(entity.countryCode, isNull);
 
-      final EntityProfileDto back =
-          EntityProfileMapper.fromEntity(entity, 'e1');
+      final EntityProfileDto back = EntityProfileMapper.fromEntity(
+        entity,
+        'e1',
+      );
       expect(back.bio, isNull);
     });
   });

@@ -29,7 +29,9 @@ Widget _buildApp(LocaleProvider provider, Widget home) =>
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('tr returns the correct translation', (WidgetTester tester) async {
+  testWidgets('tr returns the correct translation', (
+    WidgetTester tester,
+  ) async {
     final LocaleProvider provider = FakeLocaleProvider();
     await tester.pumpWidget(
       _buildApp(
@@ -43,8 +45,9 @@ void main() {
     expect(find.text('OK'), findsOneWidget);
   });
 
-  testWidgets('tr with params returns interpolated text',
-      (WidgetTester tester) async {
+  testWidgets('tr with params returns interpolated text', (
+    WidgetTester tester,
+  ) async {
     final LocaleProvider provider = FakeLocaleProvider();
     await tester.pumpWidget(
       _buildApp(
@@ -71,9 +74,7 @@ void main() {
         Builder(
           builder: (BuildContext c) {
             final List<int> list = <int>[1, 2, 3];
-            return Text(
-              c.plural(TranslationKeys.commonItemCount, list.length),
-            );
+            return Text(c.plural(TranslationKeys.commonItemCount, list.length));
           },
         ),
       ),
@@ -82,8 +83,9 @@ void main() {
     expect(find.text('3 items'), findsOneWidget);
   });
 
-  testWidgets('currentLocale returns the active locale',
-      (WidgetTester tester) async {
+  testWidgets('currentLocale returns the active locale', (
+    WidgetTester tester,
+  ) async {
     final LocaleProvider provider = FakeLocaleProvider();
     await tester.pumpWidget(
       _buildApp(
@@ -97,8 +99,9 @@ void main() {
     expect(find.text('en'), findsOneWidget);
   });
 
-  testWidgets('l10n returns the active HivorrLocalizations instance',
-      (WidgetTester tester) async {
+  testWidgets('l10n returns the active HivorrLocalizations instance', (
+    WidgetTester tester,
+  ) async {
     final LocaleProvider provider = FakeLocaleProvider();
     HivorrLocalizations? captured;
     await tester.pumpWidget(

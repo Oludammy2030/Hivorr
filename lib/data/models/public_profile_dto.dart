@@ -31,14 +31,20 @@ class PublicProfileDto {
         avatarPath: json['avatar_path'] as String?,
         bio: json['bio'] as String?,
         countryCode: json['country_code'] as String?,
-        professions: (json['professions'] as List<dynamic>?)
-                ?.map((e) => PublicProfessionDto.fromJson(
-                    e as Map<String, dynamic>))
+        professions:
+            (json['professions'] as List<dynamic>?)
+                ?.map(
+                  (e) =>
+                      PublicProfessionDto.fromJson(e as Map<String, dynamic>),
+                )
                 .toList(growable: false) ??
             const <PublicProfessionDto>[],
-        credentials: (json['credentials'] as List<dynamic>?)
-                ?.map((e) => PublicCredentialDto.fromJson(
-                    e as Map<String, dynamic>))
+        credentials:
+            (json['credentials'] as List<dynamic>?)
+                ?.map(
+                  (e) =>
+                      PublicCredentialDto.fromJson(e as Map<String, dynamic>),
+                )
                 .toList(growable: false) ??
             const <PublicCredentialDto>[],
         kycTierCode: json['kyc'] is Map
@@ -47,9 +53,11 @@ class PublicProfileDto {
         kycStatus: json['kyc'] is Map
             ? (json['kyc'] as Map<String, dynamic>)['status'] as String?
             : null,
-        portfolioItems: (json['portfolio_items'] as List<dynamic>?)
-                ?.map((e) =>
-                    PortfolioItemDto.fromJson(e as Map<String, dynamic>))
+        portfolioItems:
+            (json['portfolio_items'] as List<dynamic>?)
+                ?.map(
+                  (e) => PortfolioItemDto.fromJson(e as Map<String, dynamic>),
+                )
                 .toList(growable: false) ??
             const <PortfolioItemDto>[],
         professionSlug: json['profession_slug'] as String?,
@@ -80,14 +88,14 @@ class PublicProfileDto {
     if (bio != null) 'bio': bio,
     if (countryCode != null) 'country_code': countryCode,
     'professions': professions.map((e) => e.toJson()).toList(growable: false),
-    'credentials':
-        credentials.map((e) => e.toJson()).toList(growable: false),
+    'credentials': credentials.map((e) => e.toJson()).toList(growable: false),
     'kyc': <String, dynamic>{
       if (kycTierCode != null) 'tier_code': kycTierCode,
       if (kycStatus != null) 'status': kycStatus,
     },
-    'portfolio_items':
-        portfolioItems.map((e) => e.toJson()).toList(growable: false),
+    'portfolio_items': portfolioItems
+        .map((e) => e.toJson())
+        .toList(growable: false),
     if (professionSlug != null) 'profession_slug': professionSlug,
     if (professionName != null) 'profession_name': professionName,
     if (industrySlug != null) 'industry_slug': industrySlug,

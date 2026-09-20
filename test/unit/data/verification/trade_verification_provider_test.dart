@@ -27,7 +27,9 @@ void main() {
 
   group('initial state', () {
     test('starts idle with no aggregate', () {
-      final provider = TradeVerificationProvider(repo: FakeTradeVerificationRepository());
+      final provider = TradeVerificationProvider(
+        repo: FakeTradeVerificationRepository(),
+      );
       expect(provider.submitState, SubmitState.idle);
       expect(provider.status, isNull);
       expect(provider.isSubmitting, isFalse);
@@ -41,8 +43,9 @@ void main() {
 
   group('submitTradeProof', () {
     test('transitions idle -> submitting -> success and refreshes', () async {
-      final provider =
-          TradeVerificationProvider(repo: FakeTradeVerificationRepository());
+      final provider = TradeVerificationProvider(
+        repo: FakeTradeVerificationRepository(),
+      );
       final states = <SubmitState>[];
       provider.addListener(() => states.add(provider.submitState));
 
@@ -106,8 +109,9 @@ void main() {
 
   group('refreshStatus', () {
     test('populates the aggregate and clears error', () async {
-      final provider =
-          TradeVerificationProvider(repo: FakeTradeVerificationRepository());
+      final provider = TradeVerificationProvider(
+        repo: FakeTradeVerificationRepository(),
+      );
       await provider.refreshStatus();
 
       expect(provider.status, isNotNull);
@@ -147,8 +151,7 @@ void main() {
       });
     });
 
-    test('startPolling stops ticking once every profession is terminal',
-        () {
+    test('startPolling stops ticking once every profession is terminal', () {
       fakeAsync((FakeAsync async) {
         final repo = FakeTradeVerificationRepository(defaultStatus: 'approved');
         final provider = TradeVerificationProvider(
@@ -186,12 +189,15 @@ void main() {
   });
 
   group('decision notifications', () {
-    NotificationProvider buildNotificationProvider(FakeNotificationService service) {
+    NotificationProvider buildNotificationProvider(
+      FakeNotificationService service,
+    ) {
       return NotificationProvider(
         service,
         NotificationPermissionManager(
           platform: FakeNotificationPermissionPlatform(
-              nextStatus: NotificationPermissionStatus.granted),
+            nextStatus: NotificationPermissionStatus.granted,
+          ),
         ),
       );
     }
@@ -205,9 +211,9 @@ void main() {
       );
 
       await provider.refreshStatus();
-      repo.setStatus(tradeStatusEntity(
-        statuses: <String, String>{'p1': 'approved'},
-      ));
+      repo.setStatus(
+        tradeStatusEntity(statuses: <String, String>{'p1': 'approved'}),
+      );
       await provider.refreshStatus();
 
       expect(service.shown, hasLength(1));
@@ -223,15 +229,17 @@ void main() {
         notificationProvider: buildNotificationProvider(service),
       );
 
-      repo.setStatus(tradeStatusEntity(
-        statuses: <String, String>{'p1': 'rejected'},
-      ));
+      repo.setStatus(
+        tradeStatusEntity(statuses: <String, String>{'p1': 'rejected'}),
+      );
       await provider.refreshStatus();
       await provider.refreshStatus();
 
       expect(service.shown, hasLength(1));
-      expect(service.shown.single.title,
-          'Trade verification requires attention');
+      expect(
+        service.shown.single.title,
+        'Trade verification requires attention',
+      );
       provider.dispose();
     });
 
@@ -243,9 +251,9 @@ void main() {
         notificationProvider: buildNotificationProvider(service),
       );
 
-      repo.setStatus(tradeStatusEntity(
-        statuses: <String, String>{'p1': 'approved'},
-      ));
+      repo.setStatus(
+        tradeStatusEntity(statuses: <String, String>{'p1': 'approved'}),
+      );
       await provider.refreshStatus();
       await provider.refreshStatus();
 
@@ -274,7 +282,9 @@ void main() {
     });
 
     test('true when the aggregate is absent', () {
-      final provider = TradeVerificationProvider(repo: FakeTradeVerificationRepository());
+      final provider = TradeVerificationProvider(
+        repo: FakeTradeVerificationRepository(),
+      );
       expect(provider.isAwaitingDecision, isTrue);
       provider.dispose();
     });

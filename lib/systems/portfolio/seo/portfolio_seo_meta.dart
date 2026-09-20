@@ -51,7 +51,8 @@ abstract final class PortfolioSeoMetaBuilder {
         ? profile.displayName
         : '${profile.displayName} · $professionName';
 
-    final String slug = profile.professionSlug ??
+    final String slug =
+        profile.professionSlug ??
         ((routeSlug == null || routeSlug.isEmpty)
             ? profile.entityId
             : routeSlug);
@@ -73,7 +74,9 @@ abstract final class PortfolioSeoMetaBuilder {
     if (bio != null && bio.isNotEmpty) {
       return bio.truncate(maxDescriptionLength);
     }
-    final String noun = professionName.isEmpty ? 'professional' : professionName;
+    final String noun = professionName.isEmpty
+        ? 'professional'
+        : professionName;
     return 'Verified professional profile of ${profile.displayName} — $noun.'
         .truncate(maxDescriptionLength);
   }

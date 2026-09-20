@@ -151,20 +151,19 @@ EscrowDto seedEscrowDto({
   double refundedAmount = 0,
   String status = 'funded',
   String? externalReference = 'ORD-2026-000123',
-}) =>
-    EscrowDto(
-      id: id,
-      financialProfileId: financialProfileId,
-      payerEntityId: payerEntityId,
-      payeeEntityId: payeeEntityId,
-      currencyCode: currencyCode,
-      totalAmount: totalAmount,
-      releasedAmount: releasedAmount,
-      refundedAmount: refundedAmount,
-      status: status,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-      externalReference: externalReference,
-    );
+}) => EscrowDto(
+  id: id,
+  financialProfileId: financialProfileId,
+  payerEntityId: payerEntityId,
+  payeeEntityId: payeeEntityId,
+  currencyCode: currencyCode,
+  totalAmount: totalAmount,
+  releasedAmount: releasedAmount,
+  refundedAmount: refundedAmount,
+  status: status,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+  externalReference: externalReference,
+);
 
 EscrowMilestoneDto seedMilestoneDto({
   String id = 'ms-1',
@@ -175,18 +174,17 @@ EscrowMilestoneDto seedMilestoneDto({
   double amount = 50000,
   String status = 'pending',
   int sortOrder = 1,
-}) =>
-    EscrowMilestoneDto(
-      id: id,
-      escrowId: escrowId,
-      milestoneNumber: milestoneNumber,
-      title: title,
-      description: description,
-      amount: amount,
-      status: status,
-      sortOrder: sortOrder,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => EscrowMilestoneDto(
+  id: id,
+  escrowId: escrowId,
+  milestoneNumber: milestoneNumber,
+  title: title,
+  description: description,
+  amount: amount,
+  status: status,
+  sortOrder: sortOrder,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 EscrowTransactionDto seedTransactionDto({
   String id = 'txn-1',
@@ -196,25 +194,23 @@ EscrowTransactionDto seedTransactionDto({
   String direction = 'out',
   String entityId = 'entity-payee',
   String reference = 'RELEASE-1',
-}) =>
-    EscrowTransactionDto(
-      id: id,
-      escrowId: escrowId,
-      type: type,
-      amount: amount,
-      direction: direction,
-      entityId: entityId,
-      reference: reference,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => EscrowTransactionDto(
+  id: id,
+  escrowId: escrowId,
+  type: type,
+  amount: amount,
+  direction: direction,
+  entityId: entityId,
+  reference: reference,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 EscrowDetailDto seedDetailDto({
   EscrowDto? escrow,
   List<EscrowMilestoneDto> milestones = const <EscrowMilestoneDto>[],
   List<EscrowTransactionDto> transactions = const <EscrowTransactionDto>[],
-}) =>
-    EscrowDetailDto(
-      escrow: escrow ?? seedEscrowDto(),
-      milestones: milestones,
-      transactions: transactions,
-    );
+}) => EscrowDetailDto(
+  escrow: escrow ?? seedEscrowDto(),
+  milestones: milestones,
+  transactions: transactions,
+);

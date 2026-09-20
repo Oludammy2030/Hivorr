@@ -188,8 +188,7 @@ class PaystackGateway implements PaymentGateway {
           code: 'PLT999',
         );
       }
-      final Map<String, dynamic>? data =
-          body['data'] is Map<String, dynamic>
+      final Map<String, dynamic>? data = body['data'] is Map<String, dynamic>
           ? body['data'] as Map<String, dynamic>
           : null;
       final int amount =
@@ -241,15 +240,17 @@ class PaystackGateway implements PaymentGateway {
       );
     }
     final Object? data = rawBody['data'];
-    final Map<String, dynamic>? dataMap =
-        data is Map<String, dynamic> ? data : null;
-    final Object? transfer =
-        dataMap?['transfer'] is Map<String, dynamic>
+    final Map<String, dynamic>? dataMap = data is Map<String, dynamic>
+        ? data
+        : null;
+    final Object? transfer = dataMap?['transfer'] is Map<String, dynamic>
         ? dataMap!['transfer']
         : null;
     final String reference =
         (dataMap?['reference'] as String?) ??
-        (transfer is Map<String, dynamic> ? transfer['reference'] as String? : null) ??
+        (transfer is Map<String, dynamic>
+            ? transfer['reference'] as String?
+            : null) ??
         '';
     return WebhookEvent(
       provider: provider.name,
@@ -271,10 +272,7 @@ class PaystackGateway implements PaymentGateway {
   }
 
   /// Returns the value of a case-insensitive header [name], or `null`.
-  static String? headerValue(
-    Map<String, String> headers,
-    String name,
-  ) {
+  static String? headerValue(Map<String, String> headers, String name) {
     for (final MapEntry<String, String> entry in headers.entries) {
       if (entry.key.toLowerCase() == name.toLowerCase()) {
         return entry.value;
@@ -291,16 +289,12 @@ class PaystackGateway implements PaymentGateway {
   /// Extracts the provider `data` map, mapping `status:false` logical errors.
   static Map<String, dynamic> _requireData(Map<String, dynamic> body) {
     if (!_isOk(body)) {
-      throw logicalProviderError(
-        message: _safeMessage(body['message']),
-      );
+      throw logicalProviderError(message: _safeMessage(body['message']));
     }
     final Object? data = body['data'];
     if (data is Map) {
       return data
-          .map(
-            (dynamic k, dynamic v) => MapEntry<dynamic, dynamic>(k, v),
-          )
+          .map((dynamic k, dynamic v) => MapEntry<dynamic, dynamic>(k, v))
           .cast<String, dynamic>();
     }
     throw logicalProviderError(

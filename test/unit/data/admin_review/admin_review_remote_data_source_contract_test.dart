@@ -31,25 +31,24 @@ void main() {
     String submittedAt = '2026-01-15T10:30:00Z',
     String? assignedReviewer,
     String? decisionNotes,
-  }) =>
-      <String, dynamic>{
-        'id': id,
-        'entity_id': entityId,
-        'entity_display_name': entityDisplayName,
-        'entity_legal_name': entityLegalName,
-        'entity_avatar_path': entityAvatarPath,
-        'credential_id': credentialId,
-        'credential_title': credentialTitle,
-        'credential_kind': credentialKind,
-        'document_path': documentPath,
-        'profession_id': professionId,
-        'profession_name': professionName,
-        'submission_type': submissionType,
-        'status': status,
-        'submitted_at': submittedAt,
-        'assigned_reviewer': assignedReviewer,
-        'decision_notes': decisionNotes,
-      };
+  }) => <String, dynamic>{
+    'id': id,
+    'entity_id': entityId,
+    'entity_display_name': entityDisplayName,
+    'entity_legal_name': entityLegalName,
+    'entity_avatar_path': entityAvatarPath,
+    'credential_id': credentialId,
+    'credential_title': credentialTitle,
+    'credential_kind': credentialKind,
+    'document_path': documentPath,
+    'profession_id': professionId,
+    'profession_name': professionName,
+    'submission_type': submissionType,
+    'status': status,
+    'submitted_at': submittedAt,
+    'assigned_reviewer': assignedReviewer,
+    'decision_notes': decisionNotes,
+  };
 
   Map<String, dynamic> auditEntryData({
     String id = 'aabbccdd-0000-0000-0000-000000000001',
@@ -61,38 +60,36 @@ void main() {
     String? actorId = '22222222-2222-2222-2222-222222222222',
     Map<String, dynamic>? details,
     String createdAt = '2026-01-15T10:30:00Z',
-  }) =>
-      <String, dynamic>{
-        'id': id,
-        'event_type': eventType,
-        'subject_type': subjectType,
-        'subject_id': subjectId,
-        'from_state': fromState,
-        'to_state': toState,
-        'actor_id': actorId,
-        'details': details,
-        'created_at': createdAt,
-      };
+  }) => <String, dynamic>{
+    'id': id,
+    'event_type': eventType,
+    'subject_type': subjectType,
+    'subject_id': subjectId,
+    'from_state': fromState,
+    'to_state': toState,
+    'actor_id': actorId,
+    'details': details,
+    'created_at': createdAt,
+  };
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   SupabaseAdminReviewRemoteDataSource build([
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
     Map<String, List<Map<String, dynamic>>>? queryResults,
-  ]) =>
-      SupabaseAdminReviewRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(
-          rpcHandlers: rpcHandlers,
-          queryResults: queryResults,
-        ),
-        exceptionMapper: const ApiExceptionMapper(),
-      );
+  ]) => SupabaseAdminReviewRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(
+      rpcHandlers: rpcHandlers,
+      queryResults: queryResults,
+    ),
+    exceptionMapper: const ApiExceptionMapper(),
+  );
 
   group('getReviewQueue — canonical envelope', () {
     test('parses the data.submissions array into DTOs', () async {
@@ -116,8 +113,8 @@ void main() {
         },
       });
 
-      final List<AdminReviewQueueEntryDto> entries =
-          await source.getReviewQueue(limit: 20, offset: 0);
+      final List<AdminReviewQueueEntryDto> entries = await source
+          .getReviewQueue(limit: 20, offset: 0);
 
       expect(seenParams, isNotNull);
       expect(seenParams!['p_limit'], 20);
@@ -187,13 +184,12 @@ void main() {
 
     test('returns empty list when submissions is missing', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'verification_review_queue_get': (_) => ok(<String, dynamic>{
-              'total_count': 0,
-            }),
+        'verification_review_queue_get': (_) =>
+            ok(<String, dynamic>{'total_count': 0}),
       });
 
-      final List<AdminReviewQueueEntryDto> entries =
-          await source.getReviewQueue(limit: 20, offset: 0);
+      final List<AdminReviewQueueEntryDto> entries = await source
+          .getReviewQueue(limit: 20, offset: 0);
 
       expect(entries, isEmpty);
     });
@@ -201,23 +197,23 @@ void main() {
     test('maps null optional fields gracefully', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_review_queue_get': (_) => ok(<String, dynamic>{
-              'submissions': <dynamic>[
-                queueEntryData(
-                  entityLegalName: null,
-                  entityAvatarPath: null,
-                  documentPath: null,
-                  professionId: null,
-                  professionName: null,
-                  assignedReviewer: null,
-                  decisionNotes: null,
-                ),
-              ],
-              'total_count': 1,
-            }),
+          'submissions': <dynamic>[
+            queueEntryData(
+              entityLegalName: null,
+              entityAvatarPath: null,
+              documentPath: null,
+              professionId: null,
+              professionName: null,
+              assignedReviewer: null,
+              decisionNotes: null,
+            ),
+          ],
+          'total_count': 1,
+        }),
       });
 
-      final List<AdminReviewQueueEntryDto> entries =
-          await source.getReviewQueue(limit: 20, offset: 0);
+      final List<AdminReviewQueueEntryDto> entries = await source
+          .getReviewQueue(limit: 20, offset: 0);
 
       expect(entries, hasLength(1));
       expect(entries.first.entityLegalName, isNull);
@@ -234,23 +230,22 @@ void main() {
     test('parses the data.audit_entries array into DTOs', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_review_audit_get': (_) => ok(<String, dynamic>{
-              'audit_entries': <dynamic>[
-                auditEntryData(),
-                auditEntryData(
-                  id: 'aabbccdd-0000-0000-0000-000000000002',
-                  eventType: 'submission_assigned',
-                  fromState: 'pending',
-                  toState: 'in_review',
-                  details: <String, dynamic>{
-                    'submission_type': 'trade_proof',
-                  },
-                ),
-              ],
-            }),
+          'audit_entries': <dynamic>[
+            auditEntryData(),
+            auditEntryData(
+              id: 'aabbccdd-0000-0000-0000-000000000002',
+              eventType: 'submission_assigned',
+              fromState: 'pending',
+              toState: 'in_review',
+              details: <String, dynamic>{'submission_type': 'trade_proof'},
+            ),
+          ],
+        }),
       });
 
-      final List<AdminReviewAuditEntryDto> entries =
-          await source.getAuditTrail('ffffffff-0000-0000-0000-000000000073');
+      final List<AdminReviewAuditEntryDto> entries = await source.getAuditTrail(
+        'ffffffff-0000-0000-0000-000000000073',
+      );
 
       expect(entries, hasLength(2));
 
@@ -278,8 +273,9 @@ void main() {
         'verification_review_audit_get': (_) => ok(<String, dynamic>{}),
       });
 
-      final List<AdminReviewAuditEntryDto> entries =
-          await source.getAuditTrail('ffffffff-0000-0000-0000-000000000073');
+      final List<AdminReviewAuditEntryDto> entries = await source.getAuditTrail(
+        'ffffffff-0000-0000-0000-000000000073',
+      );
 
       expect(entries, isEmpty);
     });
@@ -288,9 +284,7 @@ void main() {
   group('checkAdmin — canonical envelope', () {
     test('parses data.is_admin true', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'platform_admin_check': (_) => ok(<String, dynamic>{
-              'is_admin': true,
-            }),
+        'platform_admin_check': (_) => ok(<String, dynamic>{'is_admin': true}),
       });
 
       final AdminCheckResultDto result = await source.checkAdmin();
@@ -300,9 +294,7 @@ void main() {
 
     test('parses data.is_admin false', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'platform_admin_check': (_) => ok(<String, dynamic>{
-              'is_admin': false,
-            }),
+        'platform_admin_check': (_) => ok(<String, dynamic>{'is_admin': false}),
       });
 
       final AdminCheckResultDto result = await source.checkAdmin();
@@ -323,17 +315,22 @@ void main() {
     test('maps PLT002 to a forbidden ApiException', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'platform_admin_check': (_) => <String, dynamic>{
-              'code': 'PLT002',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT002',
+          'data': <String, dynamic>{},
+        },
       });
 
       expect(
         () => source.checkAdmin(),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.forbidden)
-            .having((ApiException e) => e.code, 'code', 'PLT002')),
+        throwsA(
+          isA<ApiException>()
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.forbidden,
+              )
+              .having((ApiException e) => e.code, 'code', 'PLT002'),
+        ),
       );
     });
   });
@@ -342,34 +339,44 @@ void main() {
     test('maps PLT003 to a validation ApiException', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_review_queue_get': (_) => <String, dynamic>{
-              'code': 'PLT003',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT003',
+          'data': <String, dynamic>{},
+        },
       });
 
       expect(
         () => source.getReviewQueue(limit: 20, offset: 0),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)
-            .having((ApiException e) => e.code, 'code', 'PLT003')),
+        throwsA(
+          isA<ApiException>()
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.validation,
+              )
+              .having((ApiException e) => e.code, 'code', 'PLT003'),
+        ),
       );
     });
 
     test('maps unknown codes to a server ApiException', () {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_review_audit_get': (_) => <String, dynamic>{
-              'code': 'PLT999',
-              'data': <String, dynamic>{},
-            },
+          'code': 'PLT999',
+          'data': <String, dynamic>{},
+        },
       });
 
       expect(
         () => source.getAuditTrail('00000000-0000-0000-0000-000000000000'),
-        throwsA(isA<ApiException>()
-            .having(
-                (ApiException e) => e.kind, 'kind', ApiExceptionKind.server)
-            .having((ApiException e) => e.code, 'code', 'PLT999')),
+        throwsA(
+          isA<ApiException>()
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.server,
+              )
+              .having((ApiException e) => e.code, 'code', 'PLT999'),
+        ),
       );
     });
   });

@@ -214,11 +214,7 @@ class TransferResult {
 
 /// Request to refund a previously completed transaction.
 class RefundRequest {
-  RefundRequest({
-    required this.transactionReference,
-    this.amount,
-    this.reason,
-  });
+  RefundRequest({required this.transactionReference, this.amount, this.reason});
 
   /// The provider transaction reference to refund.
   final String transactionReference;

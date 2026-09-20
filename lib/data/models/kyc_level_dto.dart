@@ -18,11 +18,11 @@ class KycLimitsDto {
   });
 
   factory KycLimitsDto.fromJson(Map<String, dynamic> json) => KycLimitsDto(
-        daily: _num(json['daily']) ?? 0,
-        weekly: _num(json['weekly']) ?? 0,
-        monthly: _num(json['monthly']) ?? 0,
-        cashout: _num(json['cashout']) ?? 0,
-      );
+    daily: _num(json['daily']) ?? 0,
+    weekly: _num(json['weekly']) ?? 0,
+    monthly: _num(json['monthly']) ?? 0,
+    cashout: _num(json['cashout']) ?? 0,
+  );
 
   final num daily;
   final num weekly;
@@ -46,17 +46,12 @@ class KycLevelDto {
   });
 
   factory KycLevelDto.fromJson(Map<String, dynamic> json) => KycLevelDto(
-        tierCode: (json['tier_code'] as String?) ?? 'tier_0',
-        status: (json['status'] as String?) ?? 'pending',
-        limits: json['limits'] is Map<String, dynamic>
-            ? KycLimitsDto.fromJson(json['limits'] as Map<String, dynamic>)
-            : const KycLimitsDto(
-                daily: 0,
-                weekly: 0,
-                monthly: 0,
-                cashout: 0,
-              ),
-      );
+    tierCode: (json['tier_code'] as String?) ?? 'tier_0',
+    status: (json['status'] as String?) ?? 'pending',
+    limits: json['limits'] is Map<String, dynamic>
+        ? KycLimitsDto.fromJson(json['limits'] as Map<String, dynamic>)
+        : const KycLimitsDto(daily: 0, weekly: 0, monthly: 0, cashout: 0),
+  );
 
   final String tierCode;
   final String status;
@@ -73,8 +68,7 @@ class TradeVerificationDto {
   factory TradeVerificationDto.fromJson(Map<String, dynamic> json) =>
       TradeVerificationDto(
         professionId: (json['profession_id'] as String?) ?? '',
-        status:
-            (json['trade_verification_status'] as String?) ?? 'unverified',
+        status: (json['trade_verification_status'] as String?) ?? 'unverified',
       );
 
   final String professionId;

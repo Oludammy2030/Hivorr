@@ -12,10 +12,10 @@ class PayoutBindDto {
 
   /// Parses the bind RPC `data` object.
   static PayoutBindDto fromJson(Map<String, dynamic> json) => PayoutBindDto(
-        payoutAccountId: (json['payout_account_id'] as String?) ?? '',
-        currencyCode: (json['currency_code'] as String?) ?? '',
-        status: (json['status'] as String?) ?? 'pending',
-      );
+    payoutAccountId: (json['payout_account_id'] as String?) ?? '',
+    currencyCode: (json['currency_code'] as String?) ?? '',
+    status: (json['status'] as String?) ?? 'pending',
+  );
 
   final String payoutAccountId;
   final String currencyCode;

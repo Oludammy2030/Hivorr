@@ -30,14 +30,13 @@ abstract final class FinancialPayoutMapper {
     required String accountNumber,
     required String accountName,
     DateTime? createdAt,
-  }) =>
-      PayoutAccount(
-        id: bind.payoutAccountId,
-        currencyCode: bind.currencyCode,
-        bankName: bankName.trim(),
-        accountNumber: accountNumber.trim(),
-        accountName: accountName.trim(),
-        status: PayoutAccountStatus.fromPersisted(bind.status),
-        createdAt: createdAt,
-      );
+  }) => PayoutAccount(
+    id: bind.payoutAccountId,
+    currencyCode: bind.currencyCode,
+    bankName: bankName.trim(),
+    accountNumber: accountNumber.trim(),
+    accountName: accountName.trim(),
+    status: PayoutAccountStatus.fromPersisted(bind.status),
+    createdAt: createdAt,
+  );
 }

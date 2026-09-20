@@ -92,7 +92,8 @@ class SupabaseAuthService implements AuthService {
     // the persisted session: the exchange is single-use and must win over any
     // stale persisted session (which is also why restore is skipped once a
     // callback was handled).
-    final bool recoveryCallbackHandled = await _consumeRecoveryCallbackIfPresent();
+    final bool recoveryCallbackHandled =
+        await _consumeRecoveryCallbackIfPresent();
     if (!recoveryCallbackHandled) {
       final Session? session = _authClient.currentSession;
       if (session != null && session.user.id.isNotEmpty) {
@@ -544,8 +545,9 @@ class SupabaseAuthService implements AuthService {
       _ => _safeKindForStatus(status),
     };
     final String message = switch (kind) {
-      ApiExceptionKind.conflict => 'An account already exists with this '
-          'email address. Please log in to continue.',
+      ApiExceptionKind.conflict =>
+        'An account already exists with this '
+            'email address. Please log in to continue.',
       ApiExceptionKind.auth => _emailAuthMessage(code),
       ApiExceptionKind.validation when code == 'otp_expired' =>
         'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
@@ -581,7 +583,8 @@ class SupabaseAuthService implements AuthService {
   String _emailAuthMessage(String code) => switch (code) {
     'email_not_confirmed' ||
     'email_not_verified' => 'Your email address has not been verified yet.',
-    'invalid_otp' => 'The code you entered is incorrect. Please check the code and try again.',
+    'invalid_otp' =>
+      'The code you entered is incorrect. Please check the code and try again.',
     _ => 'Invalid email or password.',
   };
 

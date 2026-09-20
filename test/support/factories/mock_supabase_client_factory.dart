@@ -15,14 +15,14 @@ class ScriptedSupabaseClient extends SupabaseClient {
     this.queryResults,
     this.queryError,
   }) : super(
-          'https://example.supabase.co',
-          'public-anon-key',
-          httpClient: ScriptedHttpClient(
-            queryResults: queryResults,
-            queryError: queryError,
-            rpcHandlers: rpcHandlers,
-          ),
-        );
+         'https://example.supabase.co',
+         'public-anon-key',
+         httpClient: ScriptedHttpClient(
+           queryResults: queryResults,
+           queryError: queryError,
+           rpcHandlers: rpcHandlers,
+         ),
+       );
 
   /// Controllable auth client for state assertions.
   ///

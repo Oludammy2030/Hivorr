@@ -66,22 +66,24 @@ void main() {
       expect(repo.queueCallCount, 1);
     });
 
-    test('loadQueue surfaces errors without leaving stale data behind',
-        () async {
-      final FakeAdminReviewRepository repo = FakeAdminReviewRepository()
-        ..nextError = const ApiException(
-          kind: ApiExceptionKind.server,
-          message: 'boom',
-          code: 'PLT999',
-        );
-      final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
+    test(
+      'loadQueue surfaces errors without leaving stale data behind',
+      () async {
+        final FakeAdminReviewRepository repo = FakeAdminReviewRepository()
+          ..nextError = const ApiException(
+            kind: ApiExceptionKind.server,
+            message: 'boom',
+            code: 'PLT999',
+          );
+        final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
 
-      await provider.loadQueue();
+        await provider.loadQueue();
 
-      expect(provider.lastError, isNotNull);
-      expect(provider.queue, isEmpty);
-      expect(provider.isLoadingQueue, isFalse);
-    });
+        expect(provider.lastError, isNotNull);
+        expect(provider.queue, isEmpty);
+        expect(provider.isLoadingQueue, isFalse);
+      },
+    );
 
     test('approveSubmission removes the entry from the queue', () async {
       final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
@@ -101,27 +103,29 @@ void main() {
       expect(provider.isActing, isFalse);
     });
 
-    test('rejectSubmission removes the entry and forwards resubmit flag',
-        () async {
-      final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
-        queue: <AdminReviewQueueEntry>[
-          adminQueueEntry(submissionId: 'sub-1', entityName: 'One'),
-        ],
-      );
-      final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
-      await provider.loadQueue();
+    test(
+      'rejectSubmission removes the entry and forwards resubmit flag',
+      () async {
+        final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'One'),
+          ],
+        );
+        final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
+        await provider.loadQueue();
 
-      await provider.rejectSubmission(
-        'sub-1',
-        notes: 'bad doc',
-        requiresResubmission: true,
-      );
+        await provider.rejectSubmission(
+          'sub-1',
+          notes: 'bad doc',
+          requiresResubmission: true,
+        );
 
-      expect(repo.rejectCallCount, 1);
-      expect(repo.lastRejectedId, 'sub-1');
-      expect(repo.lastRequiresResubmission, isTrue);
-      expect(provider.queue, isEmpty);
-    });
+        expect(repo.rejectCallCount, 1);
+        expect(repo.lastRejectedId, 'sub-1');
+        expect(repo.lastRequiresResubmission, isTrue);
+        expect(provider.queue, isEmpty);
+      },
+    );
 
     test('loadAuditTrail exposes the audit entries', () async {
       final FakeAdminReviewRepository repo = FakeAdminReviewRepository()

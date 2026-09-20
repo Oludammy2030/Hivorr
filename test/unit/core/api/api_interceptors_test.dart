@@ -64,7 +64,9 @@ void main() {
       final dio = Dio()..httpClientAdapter = adapter;
       dio.interceptors.add(LoggingInterceptor(logSink: sink));
       dio.interceptors.add(
-        AuthInterceptor(tokenProvider: FakeTokenProvider(token: 'secret-token')),
+        AuthInterceptor(
+          tokenProvider: FakeTokenProvider(token: 'secret-token'),
+        ),
       );
 
       await dio.get<dynamic>('/secure');

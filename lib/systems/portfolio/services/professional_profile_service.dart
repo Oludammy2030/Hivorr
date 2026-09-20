@@ -12,7 +12,8 @@ import 'package:hivorr/data/entities/public_profile.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
 import 'package:hivorr/systems/portfolio/seo/portfolio_seo_meta.dart';
 import 'package:hivorr/systems/verification/models/kyc_tier.dart';
-import 'package:sentry_flutter/sentry_flutter.dart' show SpanStatus, ISentrySpan;
+import 'package:sentry_flutter/sentry_flutter.dart'
+    show SpanStatus, ISentrySpan;
 
 /// Thin orchestration facade for the public professional profile (EP-02-19
 /// §5.5). Consumed **only** by [ProfessionalProfileScreen] — never imported by
@@ -43,12 +44,12 @@ class ProfessionalProfileService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _provider = provider,
-        _storage = storage,
-        _seoBaseUrl = seoBaseUrl,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _provider = provider,
+       _storage = storage,
+       _seoBaseUrl = seoBaseUrl,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final PortfolioProvider _provider;
   final StorageService? _storage;

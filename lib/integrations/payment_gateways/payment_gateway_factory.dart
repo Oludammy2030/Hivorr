@@ -72,8 +72,7 @@ class PaymentGatewayFactory {
     final bool paystackReady =
         preferred == PaymentProvider.paystack && config.hasPaystackSecret;
     final bool flutterwaveReady =
-        preferred == PaymentProvider.flutterwave &&
-        config.hasFlutterwaveSecret;
+        preferred == PaymentProvider.flutterwave && config.hasFlutterwaveSecret;
 
     if (paystackReady) return create(PaymentProvider.paystack);
     if (flutterwaveReady) return create(PaymentProvider.flutterwave);

@@ -44,8 +44,9 @@ class CurrencyAccountCard extends StatelessWidget {
         statusLabel = 'Closed';
     }
 
-    final SupportedCurrency? currency =
-        SupportedCurrency.fromCode(account.currencyCode);
+    final SupportedCurrency? currency = SupportedCurrency.fromCode(
+      account.currencyCode,
+    );
     final String currencyDisplay = currency != null
         ? '${currency.code} \u2014 ${currency.symbol} ${currency.name}'
         : account.currencyCode;
@@ -62,7 +63,9 @@ class CurrencyAccountCard extends StatelessWidget {
           Icon(
             Icons.account_balance,
             size: 24,
-            color: account.isActive ? colors.secondary : colors.onSurfaceVariant,
+            color: account.isActive
+                ? colors.secondary
+                : colors.onSurfaceVariant,
           ),
           const SizedBox(width: HivorrSpacing.md),
           Expanded(

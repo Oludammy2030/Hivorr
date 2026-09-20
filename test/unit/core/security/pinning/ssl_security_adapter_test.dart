@@ -15,14 +15,17 @@ void main() {
     final String pin = sha256Base64(spki);
     final CertificatePinner pinner = CertificatePinner(<String>[pin]);
 
-    test('verifyDer accepts the matching SPKI pin (fail-closed enforcement)',
-        () {
-      expect(SslSecurityAdapter.verifyDer(pinner, cert), isTrue);
-    });
+    test(
+      'verifyDer accepts the matching SPKI pin (fail-closed enforcement)',
+      () {
+        expect(SslSecurityAdapter.verifyDer(pinner, cert), isTrue);
+      },
+    );
 
     test('verifyDer rejects a non-matching pin', () {
-      final CertificatePinner wrong =
-          CertificatePinner(<String>['AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=']);
+      final CertificatePinner wrong = CertificatePinner(<String>[
+        'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+      ]);
       expect(SslSecurityAdapter.verifyDer(wrong, cert), isFalse);
     });
 
@@ -30,11 +33,14 @@ void main() {
       expect(SslSecurityAdapter.verifyDer(pinner, Uint8List(0)), isFalse);
     });
 
-    test('installSslPinning wires a SslSecurityAdapter onto the Dio client', () {
-      final Dio dio = Dio();
-      installSslPinning(dio, pinner: pinner, enablePinning: true);
-      expect(dio.httpClientAdapter, isA<SslSecurityAdapter>());
-    });
+    test(
+      'installSslPinning wires a SslSecurityAdapter onto the Dio client',
+      () {
+        final Dio dio = Dio();
+        installSslPinning(dio, pinner: pinner, enablePinning: true);
+        expect(dio.httpClientAdapter, isA<SslSecurityAdapter>());
+      },
+    );
   });
 }
 

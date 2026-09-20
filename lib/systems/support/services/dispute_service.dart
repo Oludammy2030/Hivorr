@@ -27,10 +27,10 @@ class DisputeService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _repository = repository,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _repository = repository,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final DisputeRepository _repository;
   final HivorrLogger? _logger;
@@ -89,31 +89,26 @@ class DisputeService {
   // ─── Data operations (delegate to repository, traced + logged) ──────────
 
   Future<List<DisputeCase>> listDisputes({String? status}) =>
-      _tracedAndLogged(
-        'support.dispute.list',
-        () async {
-          final cases = await _repository.listDisputes(status: status);
-          _logger?.info('Dispute list fetched', <String, Object?>{
-            'statusFilter': status,
-            'disputeCount': cases.length,
-          });
-          return cases;
-        },
-      );
+      _tracedAndLogged('support.dispute.list', () async {
+        final cases = await _repository.listDisputes(status: status);
+        _logger?.info('Dispute list fetched', <String, Object?>{
+          'statusFilter': status,
+          'disputeCount': cases.length,
+        });
+        return cases;
+      });
 
-  Future<DisputeCaseDetail> getCase(String caseId) => _tracedAndLogged(
-        'support.dispute.get',
-        () async {
-          final detail = await _repository.getCase(caseId);
-          _logger?.info('Dispute detail fetched', <String, Object?>{
-            'caseId': _redactor.redact(detail.disputeCase.id),
-            'escrowId': _redactor.redact(detail.disputeCase.escrowId),
-            'status': detail.disputeCase.status,
-            'evidenceCount': detail.evidence.length,
-          });
-          return detail;
-        },
-      );
+  Future<DisputeCaseDetail> getCase(String caseId) =>
+      _tracedAndLogged('support.dispute.get', () async {
+        final detail = await _repository.getCase(caseId);
+        _logger?.info('Dispute detail fetched', <String, Object?>{
+          'caseId': _redactor.redact(detail.disputeCase.id),
+          'escrowId': _redactor.redact(detail.disputeCase.escrowId),
+          'status': detail.disputeCase.status,
+          'evidenceCount': detail.evidence.length,
+        });
+        return detail;
+      });
 
   Future<DisputeCase> fileDispute({
     required String escrowId,
@@ -121,30 +116,26 @@ class DisputeService {
     required String reason,
     String? desiredOutcome,
     String priority = 'medium',
-  }) =>
-      _tracedAndLogged(
-        'support.dispute.file',
-        () async {
-          _logger?.info('Filing dispute', <String, Object?>{
-            'escrowId': _redactor.redact(escrowId),
-            'disputeType': disputeType,
-            'desiredOutcome': desiredOutcome,
-            'priority': priority,
-          });
-          final case_ = await _repository.fileDispute(
-            escrowId: escrowId,
-            disputeType: disputeType,
-            reason: reason,
-            desiredOutcome: desiredOutcome,
-            priority: priority,
-          );
-          _logger?.info('Dispute filed — escrow held', <String, Object?>{
-            'caseId': _redactor.redact(case_.id),
-            'status': case_.status,
-          });
-          return case_;
-        },
-      );
+  }) => _tracedAndLogged('support.dispute.file', () async {
+    _logger?.info('Filing dispute', <String, Object?>{
+      'escrowId': _redactor.redact(escrowId),
+      'disputeType': disputeType,
+      'desiredOutcome': desiredOutcome,
+      'priority': priority,
+    });
+    final case_ = await _repository.fileDispute(
+      escrowId: escrowId,
+      disputeType: disputeType,
+      reason: reason,
+      desiredOutcome: desiredOutcome,
+      priority: priority,
+    );
+    _logger?.info('Dispute filed — escrow held', <String, Object?>{
+      'caseId': _redactor.redact(case_.id),
+      'status': case_.status,
+    });
+    return case_;
+  });
 
   Future<DisputeEvidence> submitEvidence({
     required String caseId,
@@ -153,38 +144,32 @@ class DisputeService {
     String? description,
     String? fileUrl,
     Map<String, dynamic> fileMetadata = const <String, dynamic>{},
-  }) =>
-      _tracedAndLogged(
-        'support.dispute.submit_evidence',
-        () async {
-          final evidence = await _repository.submitEvidence(
-            caseId: caseId,
-            evidenceType: evidenceType,
-            title: title,
-            description: description,
-            fileUrl: fileUrl,
-            fileMetadata: fileMetadata,
-          );
-          _logger?.info('Dispute evidence submitted', <String, Object?>{
-            'caseId': _redactor.redact(caseId),
-            'evidenceType': evidenceType,
-            'hasAttachment': fileUrl != null,
-          });
-          return evidence;
-        },
-      );
+  }) => _tracedAndLogged('support.dispute.submit_evidence', () async {
+    final evidence = await _repository.submitEvidence(
+      caseId: caseId,
+      evidenceType: evidenceType,
+      title: title,
+      description: description,
+      fileUrl: fileUrl,
+      fileMetadata: fileMetadata,
+    );
+    _logger?.info('Dispute evidence submitted', <String, Object?>{
+      'caseId': _redactor.redact(caseId),
+      'evidenceType': evidenceType,
+      'hasAttachment': fileUrl != null,
+    });
+    return evidence;
+  });
 
-  Future<DisputeCase> withdrawDispute(String caseId) => _tracedAndLogged(
-        'support.dispute.withdraw',
-        () async {
-          final case_ = await _repository.withdrawDispute(caseId);
-          _logger?.info('Dispute withdrawn — escrow released', <String, Object?>{
-            'caseId': _redactor.redact(caseId),
-            'status': case_.status,
-          });
-          return case_;
-        },
-      );
+  Future<DisputeCase> withdrawDispute(String caseId) =>
+      _tracedAndLogged('support.dispute.withdraw', () async {
+        final case_ = await _repository.withdrawDispute(caseId);
+        _logger?.info('Dispute withdrawn — escrow released', <String, Object?>{
+          'caseId': _redactor.redact(caseId),
+          'status': case_.status,
+        });
+        return case_;
+      });
 
   /// Wraps [action] in a `support.dispute.*` [PerformanceTracer] span and
   /// surfaces failures via the logger with redacted context.

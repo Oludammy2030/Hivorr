@@ -35,9 +35,9 @@ class PortfolioTestStack {
   final ProfessionalProfileService service;
 
   List<SingleChildWidget> buildProviders() => <SingleChildWidget>[
-        ChangeNotifierProvider<PortfolioProvider>.value(value: provider),
-        Provider<ProfessionalProfileService>.value(value: service),
-      ];
+    ChangeNotifierProvider<PortfolioProvider>.value(value: provider),
+    Provider<ProfessionalProfileService>.value(value: service),
+  ];
 }
 
 /// Builds the fake portfolio stack with in-memory collaborators.
@@ -53,10 +53,10 @@ PortfolioTestStack buildPortfolioStack({
     error: error,
   );
   remote.gate = gate;
-  final PortfolioRepositoryImpl repository =
-      PortfolioRepositoryImpl(remote: remote);
-  final PortfolioProvider provider =
-      PortfolioProvider(repository: repository);
+  final PortfolioRepositoryImpl repository = PortfolioRepositoryImpl(
+    remote: remote,
+  );
+  final PortfolioProvider provider = PortfolioProvider(repository: repository);
   final ProfessionalProfileService service = ProfessionalProfileService(
     provider: provider,
     storage: storage,
@@ -81,9 +81,9 @@ GoRouter portfolioTestRouter({required String path}) {
         name: RouteNames.publicProfile,
         builder: (BuildContext context, GoRouterState state) =>
             ProfessionalProfileScreen(
-          profileId: state.pathParameters['id'] ?? '',
-          routeSlug: state.pathParameters['slug'],
-        ),
+              profileId: state.pathParameters['id'] ?? '',
+              routeSlug: state.pathParameters['slug'],
+            ),
       ),
     ],
   );
@@ -104,7 +104,5 @@ Future<void> pumpPortfolioScreen(
     theme: AppTheme.lightTheme,
     debugShowCheckedModeBanner: false,
   );
-  await tester.pumpWidget(
-    MultiProvider(providers: providers, child: app),
-  );
+  await tester.pumpWidget(MultiProvider(providers: providers, child: app));
 }

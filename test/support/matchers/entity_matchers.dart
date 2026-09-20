@@ -5,10 +5,7 @@ import 'package:hivorr/data/entities/entity_role.dart';
 
 /// Matches an [EntityProfile], optionally asserting [legalName] and
 /// [displayName] fields.
-Matcher isEntityProfile({
-  String? legalName,
-  String? displayName,
-}) =>
+Matcher isEntityProfile({String? legalName, String? displayName}) =>
     _EntityProfileMatcher(legalName: legalName, displayName: displayName);
 
 class _EntityProfileMatcher extends Matcher {
@@ -86,10 +83,9 @@ class _HasEntityId extends Matcher {
     Description description,
     Map<dynamic, dynamic> matchState,
     bool verbose,
-  ) =>
-      item is Entity
-          ? description.add('had id "${item.id}"')
-          : description.add('was not an Entity');
+  ) => item is Entity
+      ? description.add('had id "${item.id}"')
+      : description.add('was not an Entity');
 }
 
 /// Matches an [Entity] or [EntityRole] bound to [roleName].

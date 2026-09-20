@@ -60,8 +60,10 @@ void main() {
     });
 
     test('forCode resolves known codes and rejects unknown ones', () {
-      expect(MilestoneStatus.forCode('completed')?.label,
-          'Completed — awaiting release');
+      expect(
+        MilestoneStatus.forCode('completed')?.label,
+        'Completed — awaiting release',
+      );
       expect(MilestoneStatus.forCode('bogus'), isNull);
     });
   });

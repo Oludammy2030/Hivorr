@@ -18,10 +18,10 @@ class FakeFinancialRepository implements FinancialRepository {
     List<CurrencyAccount> accounts = const <CurrencyAccount>[],
     FinancialStatus? status,
     Map<String, Balance> balances = const <String, Balance>{},
-  })  : _profile = profile,
-        _accounts = accounts,
-        _status = status,
-        _balances = balances;
+  }) : _profile = profile,
+       _accounts = accounts,
+       _status = status,
+       _balances = balances;
 
   FinancialProfile? _profile;
   List<CurrencyAccount> _accounts;
@@ -113,14 +113,13 @@ FinancialProfile seedProfileEntity({
   String entityId = 'u1',
   String status = 'active',
   String defaultCurrency = 'NGN',
-}) =>
-    FinancialProfile(
-      id: id,
-      entityId: entityId,
-      status: status,
-      defaultCurrency: defaultCurrency,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => FinancialProfile(
+  id: id,
+  entityId: entityId,
+  status: status,
+  defaultCurrency: defaultCurrency,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 CurrencyAccount seedAccountEntity({
   String id = 'acc-1',
@@ -130,16 +129,15 @@ CurrencyAccount seedAccountEntity({
   String accountStatus = 'active',
   String? receivingBankName,
   String? receivingAccountNumber,
-}) =>
-    CurrencyAccount(
-      id: id,
-      financialProfileId: financialProfileId,
-      entityId: entityId,
-      currencyCode: currencyCode,
-      accountStatus: accountStatus,
-      receivingBankName: receivingBankName,
-      receivingAccountNumber: receivingAccountNumber,
-    );
+}) => CurrencyAccount(
+  id: id,
+  financialProfileId: financialProfileId,
+  entityId: entityId,
+  currencyCode: currencyCode,
+  accountStatus: accountStatus,
+  receivingBankName: receivingBankName,
+  receivingAccountNumber: receivingAccountNumber,
+);
 
 Balance seedBalanceEntity({
   String currencyCode = 'NGN',
@@ -148,15 +146,14 @@ Balance seedBalanceEntity({
   double pending = 0,
   double totalDeposited = 50000,
   double totalWithdrawn = 0,
-}) =>
-    Balance(
-      currencyCode: currencyCode,
-      availableBalance: available,
-      heldBalance: held,
-      pendingBalance: pending,
-      totalDeposited: totalDeposited,
-      totalWithdrawn: totalWithdrawn,
-    );
+}) => Balance(
+  currencyCode: currencyCode,
+  availableBalance: available,
+  heldBalance: held,
+  pendingBalance: pending,
+  totalDeposited: totalDeposited,
+  totalWithdrawn: totalWithdrawn,
+);
 
 FinancialStatus seedStatusEntity({
   String defaultCurrency = 'NGN',
@@ -164,11 +161,10 @@ FinancialStatus seedStatusEntity({
   List<Balance> balances = const <Balance>[],
   int activeEscrowCount = 0,
   double cashoutLimit = 100000,
-}) =>
-    FinancialStatus(
-      defaultCurrency: defaultCurrency,
-      profileStatus: profileStatus,
-      balances: balances,
-      activeEscrowCount: activeEscrowCount,
-      cashoutLimit: cashoutLimit,
-    );
+}) => FinancialStatus(
+  defaultCurrency: defaultCurrency,
+  profileStatus: profileStatus,
+  balances: balances,
+  activeEscrowCount: activeEscrowCount,
+  cashoutLimit: cashoutLimit,
+);

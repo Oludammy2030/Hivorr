@@ -59,9 +59,11 @@ class _IntroScreenState extends State<IntroScreen> {
       return;
     }
     final String? next = EntryQuery.nextFrom(GoRouterState.of(context));
-    context.go(next == null || next.isEmpty
-        ? RoutePaths.login
-        : '${RoutePaths.login}?next=$next');
+    context.go(
+      next == null || next.isEmpty
+          ? RoutePaths.login
+          : '${RoutePaths.login}?next=$next',
+    );
   }
 
   @override
@@ -83,13 +85,8 @@ class _IntroScreenState extends State<IntroScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: isLast ? null : _skip,
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.primary,
-                  ),
-                  child: Text(
-                    'Skip',
-                    style: context.textTheme.labelLarge,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: colors.primary),
+                  child: Text('Skip', style: context.textTheme.labelLarge),
                 ),
               ),
             ),
@@ -98,9 +95,8 @@ class _IntroScreenState extends State<IntroScreen> {
                 controller: _controller,
                 itemCount: _pageCount,
                 onPageChanged: (int page) => setState(() => _page = page),
-                itemBuilder: (BuildContext context, int index) => _IntroPage(
-                  data: _pages[index],
-                ),
+                itemBuilder: (BuildContext context, int index) =>
+                    _IntroPage(data: _pages[index]),
               ),
             ),
             const SizedBox(height: HivorrSpacing.md),
@@ -111,8 +107,8 @@ class _IntroScreenState extends State<IntroScreen> {
                 label: isLast
                     ? 'Get started'
                     : _page == 0
-                        ? "Let's begin"
-                        : 'Next',
+                    ? "Let's begin"
+                    : 'Next',
                 isExpanded: true,
                 size: HivorrButtonSize.large,
                 onPressed: _next,

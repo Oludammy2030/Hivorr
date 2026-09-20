@@ -26,8 +26,6 @@ class EscrowDetail {
   final List<EscrowTransaction> transactions;
 
   /// Sum of amounts across all milestones.
-  double get milestonesTotal => milestones.fold(
-        0.0,
-        (double sum, EscrowMilestone m) => sum + m.amount,
-      );
+  double get milestonesTotal =>
+      milestones.fold(0.0, (double sum, EscrowMilestone m) => sum + m.amount);
 }

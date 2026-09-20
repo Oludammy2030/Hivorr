@@ -26,10 +26,7 @@ abstract class EntityRepository {
   });
 
   /// Activates a role for the entity (fluid shift).
-  Future<void> activateRole({
-    required String entityId,
-    required String role,
-  });
+  Future<void> activateRole({required String entityId, required String role});
 
   /// Returns the entity's role bindings.
   Future<List<EntityRole>> getRoles(String entityId);

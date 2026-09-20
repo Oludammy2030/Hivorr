@@ -135,9 +135,7 @@ class AdminReviewAuditEntryDto {
 /// Canonical server data: `{ 'is_admin': bool }`. There is intentionally no
 /// entity_id on the wire; the client only consumes the boolean.
 class AdminCheckResultDto {
-  const AdminCheckResultDto({
-    required this.isPlatformAdmin,
-  });
+  const AdminCheckResultDto({required this.isPlatformAdmin});
 
   factory AdminCheckResultDto.fromJson(Map<String, dynamic> json) {
     return AdminCheckResultDto(

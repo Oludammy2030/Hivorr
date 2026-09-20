@@ -21,61 +21,64 @@ void main() {
     FakeFinancialPayoutRepository? repo,
     HivorrLogger? logger,
     PerformanceTracer? tracer,
-  }) =>
-      FinancialPayoutService(
-        repository: repo ?? FakeFinancialPayoutRepository(),
-        logger: logger,
-        tracer: tracer,
-      );
+  }) => FinancialPayoutService(
+    repository: repo ?? FakeFinancialPayoutRepository(),
+    logger: logger,
+    tracer: tracer,
+  );
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test.payout',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.info),
-        PiiRedactor(),
-      );
+    'hivorr.test.payout',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.info),
+    PiiRedactor(),
+  );
 
   PerformanceTracer disabledTracer() => PerformanceTracer(
-        MonitoringConfig.fromSource(MapEnvironmentValueSource(
-          <String, String>{
-            'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
-            'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
-          },
-        )),
-        const FeatureFlags(
-          enableVerboseLogging: false,
-          enableOfflineSync: false,
-          enableAnalyticsTracking: false,
-          enableDynamicWorkspaceLoading: false,
-          enablePayloadOptimization: false,
-          enablePushNotifications: false,
-        ),
-      );
+    MonitoringConfig.fromSource(
+      MapEnvironmentValueSource(<String, String>{
+        'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
+        'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
+      }),
+    ),
+    const FeatureFlags(
+      enableVerboseLogging: false,
+      enableOfflineSync: false,
+      enableAnalyticsTracking: false,
+      enableDynamicWorkspaceLoading: false,
+      enablePayloadOptimization: false,
+      enablePushNotifications: false,
+    ),
+  );
 
   group('bindAccount', () {
-    test('delegates and logs a masked account number, never the raw value',
-        () async {
-      final repo = FakeFinancialPayoutRepository();
-      final sink = RecordingSink();
-      final service = build(
-        repo: repo,
-        logger: makeLogger(sink),
-        tracer: disabledTracer(),
-      );
+    test(
+      'delegates and logs a masked account number, never the raw value',
+      () async {
+        final repo = FakeFinancialPayoutRepository();
+        final sink = RecordingSink();
+        final service = build(
+          repo: repo,
+          logger: makeLogger(sink),
+          tracer: disabledTracer(),
+        );
 
-      final PayoutAccount account = await service.bindAccount(
-        currencyCode: 'NGN',
-        bankName: 'Guaranty Trust',
-        accountNumber: '0123456789',
-        accountName: 'John Doe',
-      );
+        final PayoutAccount account = await service.bindAccount(
+          currencyCode: 'NGN',
+          bankName: 'Guaranty Trust',
+          accountNumber: '0123456789',
+          accountName: 'John Doe',
+        );
 
-      expect(repo.bindCallCount, 1);
-      expect(account.id, 'acc-0123456789');
-      final List<String> messages = sink.entries.map((e) => e.message).toList();
-      expect(messages, contains('Binding payout account'));
-      expect(messages, contains('Payout account bound'));
-      expect(messages.join('\n'), isNot(contains('0123456789')));
-    });
+        expect(repo.bindCallCount, 1);
+        expect(account.id, 'acc-0123456789');
+        final List<String> messages = sink.entries
+            .map((e) => e.message)
+            .toList();
+        expect(messages, contains('Binding payout account'));
+        expect(messages, contains('Payout account bound'));
+        expect(messages.join('\n'), isNot(contains('0123456789')));
+      },
+    );
 
     test('surfaces repository failures and logs the error', () async {
       const ApiException failure = ApiException(

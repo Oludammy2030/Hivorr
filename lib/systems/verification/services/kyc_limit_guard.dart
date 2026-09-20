@@ -12,8 +12,10 @@ abstract final class KycLimitGuard {
       amount > 0 && amount <= limits.daily;
 
   /// Whether a cashout of [amount] is within the cashout limit.
-  static bool isCashoutAllowed({required KycLimits limits, required num amount}) =>
-      amount > 0 && amount <= limits.cashout;
+  static bool isCashoutAllowed({
+    required KycLimits limits,
+    required num amount,
+  }) => amount > 0 && amount <= limits.cashout;
 
   /// Returns the remaining limit for the given [window] after [spent].
   ///

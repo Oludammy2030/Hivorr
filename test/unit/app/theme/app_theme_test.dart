@@ -36,7 +36,10 @@ void main() {
     });
 
     test('headline styles use semi-bold weight', () {
-      expect(AppTextTheme.textTheme.headlineMedium?.fontWeight, FontWeight.w600);
+      expect(
+        AppTextTheme.textTheme.headlineMedium?.fontWeight,
+        FontWeight.w600,
+      );
     });
   });
 
@@ -54,8 +57,14 @@ void main() {
     });
 
     test('scaffold background equals documented background token', () {
-      expect(AppTheme.lightTheme.scaffoldBackgroundColor, AppColors.lightBackground);
-      expect(AppTheme.darkTheme.scaffoldBackgroundColor, AppColors.darkBackground);
+      expect(
+        AppTheme.lightTheme.scaffoldBackgroundColor,
+        AppColors.lightBackground,
+      );
+      expect(
+        AppTheme.darkTheme.scaffoldBackgroundColor,
+        AppColors.darkBackground,
+      );
     });
 
     test('text theme fontFamily is Inter', () {

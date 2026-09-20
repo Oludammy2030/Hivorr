@@ -22,7 +22,9 @@ abstract final class BalanceFormatter {
     if (amount < 0) {
       throw ArgumentError('Balance amount must not be negative: $amount');
     }
-    final SupportedCurrency? currency = SupportedCurrency.fromCode(currencyCode);
+    final SupportedCurrency? currency = SupportedCurrency.fromCode(
+      currencyCode,
+    );
     if (currency == null) return '$amount $currencyCode';
     final NumberFormat formatter = NumberFormat.currency(
       symbol: currency.symbol,

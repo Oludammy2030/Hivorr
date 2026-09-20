@@ -38,10 +38,7 @@ class FatalErrorScreen extends StatelessWidget {
                 style: theme.textTheme.bodyLarge,
               ),
               const SizedBox(height: 24),
-              FilledButton(
-                onPressed: onRetry,
-                child: const Text('Retry'),
-              ),
+              FilledButton(onPressed: onRetry, child: const Text('Retry')),
             ],
           ),
         ),

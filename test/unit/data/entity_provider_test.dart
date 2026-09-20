@@ -10,29 +10,31 @@ import 'entity_fakes.dart';
 
 void main() {
   group('EntityProvider', () {
-    test('loadProfile transitions idle -> loaded and exposes profile',
-        () async {
-      final FakeEntityRemoteDataSource remote = FakeEntityRemoteDataSource();
-      remote.profile = const EntityProfileDto(
-        entityId: 'e1',
-        legalName: 'Ada',
-        displayName: 'Ada L.',
-      );
-      final EntityProvider provider = EntityProvider(
-        repository: EntityRepositoryImpl(
-          remote: remote,
-          local: FakeEntityLocalDataSource(),
-        ),
-      );
+    test(
+      'loadProfile transitions idle -> loaded and exposes profile',
+      () async {
+        final FakeEntityRemoteDataSource remote = FakeEntityRemoteDataSource();
+        remote.profile = const EntityProfileDto(
+          entityId: 'e1',
+          legalName: 'Ada',
+          displayName: 'Ada L.',
+        );
+        final EntityProvider provider = EntityProvider(
+          repository: EntityRepositoryImpl(
+            remote: remote,
+            local: FakeEntityLocalDataSource(),
+          ),
+        );
 
-      expect(provider.state, EntityProviderState.idle);
+        expect(provider.state, EntityProviderState.idle);
 
-      await provider.loadProfile('e1');
+        await provider.loadProfile('e1');
 
-      expect(provider.state, EntityProviderState.loaded);
-      expect(provider.profile?.legalName, 'Ada');
-      expect(provider.error, isNull);
-    });
+        expect(provider.state, EntityProviderState.loaded);
+        expect(provider.profile?.legalName, 'Ada');
+        expect(provider.error, isNull);
+      },
+    );
 
     test('error state surfaces ApiException and does not crash', () async {
       final FakeEntityRemoteDataSource remote = FakeEntityRemoteDataSource()

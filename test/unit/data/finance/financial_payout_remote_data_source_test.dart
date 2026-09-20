@@ -12,26 +12,25 @@ import '../../../support/factories/mock_supabase_client_factory.dart';
 void main() {
   SupabaseFinancialPayoutRemoteDataSource build(
     Map<String, Object? Function(Map<String, dynamic>)> rpcHandlers,
-  ) =>
-      SupabaseFinancialPayoutRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
-        exceptionMapper: const ApiExceptionMapper(),
-      );
+  ) => SupabaseFinancialPayoutRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
+    exceptionMapper: const ApiExceptionMapper(),
+  );
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   Map<String, dynamic> error(String code) => <String, dynamic>{
-        'success': false,
-        'code': code,
-        'message': 'fail',
-        'data': <String, dynamic>{},
-      };
+    'success': false,
+    'code': code,
+    'message': 'fail',
+    'data': <String, dynamic>{},
+  };
 
   group('SupabaseFinancialPayoutRemoteDataSource.bindAccount', () {
     test('calls financial_payout_account_bind with the form params', () async {
@@ -63,30 +62,32 @@ void main() {
       expect(dto.status, 'pending');
     });
 
-    test('maps PLT003 validation envelope to a validation ApiException',
-        () async {
-      final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'financial_payout_account_bind': (_) => error('PLT003'),
-      });
+    test(
+      'maps PLT003 validation envelope to a validation ApiException',
+      () async {
+        final source = build(<String, Object? Function(Map<String, dynamic>)>{
+          'financial_payout_account_bind': (_) => error('PLT003'),
+        });
 
-      await expectLater(
-        source.bindAccount(
-          currencyCode: 'NGN',
-          bankName: 'B',
-          accountNumber: '0123456789',
-          accountName: 'N',
-        ),
-        throwsA(
-          isA<ApiException>()
-              .having((ApiException e) => e.code, 'code', 'PLT003')
-              .having(
-                (ApiException e) => e.kind,
-                'kind',
-                ApiExceptionKind.validation,
-              ),
-        ),
-      );
-    });
+        await expectLater(
+          source.bindAccount(
+            currencyCode: 'NGN',
+            bankName: 'B',
+            accountNumber: '0123456789',
+            accountName: 'N',
+          ),
+          throwsA(
+            isA<ApiException>()
+                .having((ApiException e) => e.code, 'code', 'PLT003')
+                .having(
+                  (ApiException e) => e.kind,
+                  'kind',
+                  ApiExceptionKind.validation,
+                ),
+          ),
+        );
+      },
+    );
 
     test('maps PLT001 envelope to an auth ApiException', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
@@ -113,10 +114,10 @@ void main() {
     test('throws a server ApiException on a malformed envelope', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_payout_account_bind': (_) => <String, dynamic>{
-            'success': true,
-            'code': 'PLT000',
-            'data': 'not-an-object',
-          },
+          'success': true,
+          'code': 'PLT000',
+          'data': 'not-an-object',
+        },
       });
 
       await expectLater(

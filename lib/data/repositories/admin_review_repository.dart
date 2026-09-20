@@ -30,10 +30,7 @@ abstract class AdminReviewRepository {
   Future<List<AdminReviewAuditEntry>> getAuditTrail(String submissionId);
 
   /// Creates a short-lived signed URL for viewing a credential document.
-  Future<String> createDocumentSignedUrl(
-    String credentialId, {
-    int expiresIn,
-  });
+  Future<String> createDocumentSignedUrl(String credentialId, {int expiresIn});
 }
 
 /// A single entry in the admin review queue.

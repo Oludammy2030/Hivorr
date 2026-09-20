@@ -33,19 +33,18 @@ enum VerificationStatusKind {
 
   /// Whether this status is terminal (no further transitions are expected).
   bool get isTerminal => switch (this) {
-        VerificationStatusKind.approved ||
-        VerificationStatusKind.rejected ||
-        VerificationStatusKind.requiresResubmission => true,
-        VerificationStatusKind.pending ||
-        VerificationStatusKind.inReview => false,
-      };
+    VerificationStatusKind.approved ||
+    VerificationStatusKind.rejected ||
+    VerificationStatusKind.requiresResubmission => true,
+    VerificationStatusKind.pending || VerificationStatusKind.inReview => false,
+  };
 
   /// Whether this status represents a non-approved decision that needs action.
   bool get needsAction => switch (this) {
-        VerificationStatusKind.rejected ||
-        VerificationStatusKind.requiresResubmission => true,
-        _ => false,
-      };
+    VerificationStatusKind.rejected ||
+    VerificationStatusKind.requiresResubmission => true,
+    _ => false,
+  };
 }
 
 /// A single identity-document verification submission (EP-02-10).

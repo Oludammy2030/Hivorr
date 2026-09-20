@@ -17,10 +17,7 @@ import 'package:hivorr/config/demo/demo_identity.dart';
 /// (with retry) on `error`. The [lifecycleObserver] is registered once by the
 /// bootstrap entrypoint and disposed here at teardown (EP-01-15 §5.4, §5.6).
 class InitializationScreen extends StatefulWidget {
-  const InitializationScreen({
-    super.key,
-    required this.lifecycleObserver,
-  });
+  const InitializationScreen({super.key, required this.lifecycleObserver});
 
   final AppLifecycleObserver lifecycleObserver;
 
@@ -82,44 +79,44 @@ class _InitializationScreenState extends State<InitializationScreen> {
   Widget build(BuildContext context) {
     return switch (_state) {
       InitializationError(:final message) => MaterialApp(
-          home: FatalErrorScreen(message: message, onRetry: _start),
-        ),
+        home: FatalErrorScreen(message: message, onRetry: _start),
+      ),
       InitializationReady() => HivorrApp(
-          authProvider: _result!.authLayer.provider,
-          localeProvider: _result!.localeProvider,
-          lifecycleObserver: widget.lifecycleObserver,
-          taxonomyRepository: _result!.taxonomyRepository,
-          taxonomyProvider: _result!.taxonomyProvider,
-          verificationRepository: _result!.verificationRepository,
-          verificationProvider: _result!.verificationProvider,
-          escrowRepository: _result!.escrowRepository,
-          escrowProvider: _result!.escrowProvider,
-          financialRepository: _result!.financialRepository,
-          financialProvider: _result!.financialProvider,
-          payoutRepository: _result!.payoutRepository,
-          payoutProvider: _result!.payoutProvider,
-          depositRepository: _result!.depositRepository,
-          depositProvider: _result!.depositProvider,
-          disputeRepository: _result!.disputeRepository,
-          disputeProvider: _result!.disputeProvider,
-          onboardingService: _result!.onboardingService,
-          onboardingProvider: _result!.onboardingProvider,
-          onboardingStore: _result!.onboardingStore,
-          portfolioRepository: _result!.portfolioRepository,
-          portfolioProvider: _result!.portfolioProvider,
-          portfolioService: _result!.portfolioService,
-          adminReviewRepository: _result!.adminReviewRepository,
-          adminReviewProvider: _result!.adminReviewProvider,
-          entryStateProvider: _result!.entryStateProvider,
-          environment: _result!.appConfig.environment,
-        ),
+        authProvider: _result!.authLayer.provider,
+        localeProvider: _result!.localeProvider,
+        lifecycleObserver: widget.lifecycleObserver,
+        taxonomyRepository: _result!.taxonomyRepository,
+        taxonomyProvider: _result!.taxonomyProvider,
+        verificationRepository: _result!.verificationRepository,
+        verificationProvider: _result!.verificationProvider,
+        escrowRepository: _result!.escrowRepository,
+        escrowProvider: _result!.escrowProvider,
+        financialRepository: _result!.financialRepository,
+        financialProvider: _result!.financialProvider,
+        payoutRepository: _result!.payoutRepository,
+        payoutProvider: _result!.payoutProvider,
+        depositRepository: _result!.depositRepository,
+        depositProvider: _result!.depositProvider,
+        disputeRepository: _result!.disputeRepository,
+        disputeProvider: _result!.disputeProvider,
+        onboardingService: _result!.onboardingService,
+        onboardingProvider: _result!.onboardingProvider,
+        onboardingStore: _result!.onboardingStore,
+        portfolioRepository: _result!.portfolioRepository,
+        portfolioProvider: _result!.portfolioProvider,
+        portfolioService: _result!.portfolioService,
+        adminReviewRepository: _result!.adminReviewRepository,
+        adminReviewProvider: _result!.adminReviewProvider,
+        entryStateProvider: _result!.entryStateProvider,
+        environment: _result!.appConfig.environment,
+      ),
       _ => MaterialApp(
-          home: const SplashScreen(),
-          onGenerateRoute: (RouteSettings settings) => MaterialPageRoute<void>(
-            settings: settings,
-            builder: (BuildContext context) => const SplashScreen(),
-          ),
+        home: const SplashScreen(),
+        onGenerateRoute: (RouteSettings settings) => MaterialPageRoute<void>(
+          settings: settings,
+          builder: (BuildContext context) => const SplashScreen(),
         ),
+      ),
     };
   }
 }

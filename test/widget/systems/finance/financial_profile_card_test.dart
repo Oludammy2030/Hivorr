@@ -7,8 +7,9 @@ import '../../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('FinancialProfileCard', () {
-    testWidgets('renders active status chip and default currency',
-        (WidgetTester tester) async {
+    testWidgets('renders active status chip and default currency', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         FinancialProfileCard(
@@ -23,9 +24,7 @@ void main() {
     testWidgets('renders suspended status', (WidgetTester tester) async {
       await pumpTheme(
         tester,
-        FinancialProfileCard(
-          profile: seedProfileEntity(status: 'suspended'),
-        ),
+        FinancialProfileCard(profile: seedProfileEntity(status: 'suspended')),
       );
       expect(find.text('Suspended'), findsOneWidget);
     });
@@ -33,9 +32,7 @@ void main() {
     testWidgets('renders closed status', (WidgetTester tester) async {
       await pumpTheme(
         tester,
-        FinancialProfileCard(
-          profile: seedProfileEntity(status: 'closed'),
-        ),
+        FinancialProfileCard(profile: seedProfileEntity(status: 'closed')),
       );
       expect(find.text('Closed'), findsOneWidget);
     });

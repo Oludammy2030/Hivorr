@@ -46,11 +46,11 @@ class TradeVerificationProvider extends ChangeNotifier {
     HivorrLogger? logger,
     Duration? pollInterval,
     DateTime Function()? clock,
-  })  : _repo = repo,
-        _notificationProvider = notificationProvider,
-        _logger = logger,
-        _pollInterval = pollInterval ?? const Duration(seconds: 15),
-        _clock = clock ?? DateTime.now;
+  }) : _repo = repo,
+       _notificationProvider = notificationProvider,
+       _logger = logger,
+       _pollInterval = pollInterval ?? const Duration(seconds: 15),
+       _clock = clock ?? DateTime.now;
 
   final TradeVerificationRepository _repo;
   final NotificationProvider? _notificationProvider;
@@ -148,8 +148,10 @@ class TradeVerificationProvider extends ChangeNotifier {
       _maybeNotify(next);
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning('Trade verification status refresh failed',
-          <String, Object?>{'kind': e.kind.name, 'code': e.code});
+      _logger?.warning(
+        'Trade verification status refresh failed',
+        <String, Object?>{'kind': e.kind.name, 'code': e.code},
+      );
     } finally {
       _refreshing = false;
       notifyListeners();
@@ -222,19 +224,24 @@ class TradeVerificationProvider extends ChangeNotifier {
       if (entry.statusKind == TradeVerificationStatusKind.approved &&
           !_notifiedApproved.contains(professionId)) {
         _notifiedApproved.add(professionId);
-        unawaited(_maybeShowNotification(
-          id: _notificationId('approved', professionId),
-          title: 'Trade verification approved',
-          body: 'Your trade proof has been approved. You can now bid.',
-        ));
+        unawaited(
+          _maybeShowNotification(
+            id: _notificationId('approved', professionId),
+            title: 'Trade verification approved',
+            body: 'Your trade proof has been approved. You can now bid.',
+          ),
+        );
       } else if (entry.statusKind == TradeVerificationStatusKind.rejected &&
           !_notifiedRejected.contains(professionId)) {
         _notifiedRejected.add(professionId);
-        unawaited(_maybeShowNotification(
-          id: _notificationId('rejected', professionId),
-          title: 'Trade verification requires attention',
-          body: 'Your trade proof was not approved. Please review and resubmit.',
-        ));
+        unawaited(
+          _maybeShowNotification(
+            id: _notificationId('rejected', professionId),
+            title: 'Trade verification requires attention',
+            body:
+                'Your trade proof was not approved. Please review and resubmit.',
+          ),
+        );
       }
     }
   }
@@ -246,15 +253,17 @@ class TradeVerificationProvider extends ChangeNotifier {
   }) async {
     final NotificationProvider? provider = _notificationProvider;
     if (provider == null || _disposed) return;
-    await provider.showLocal(HivorrNotification(
-      id: id,
-      title: title,
-      body: body,
-      channelId: TradeVerificationNotificationChannel.system,
-      priority: NotificationPriority.high,
-      timestamp: _clock(),
-      actionRoute: '/verification/trade/status',
-    ));
+    await provider.showLocal(
+      HivorrNotification(
+        id: id,
+        title: title,
+        body: body,
+        channelId: TradeVerificationNotificationChannel.system,
+        priority: NotificationPriority.high,
+        timestamp: _clock(),
+        actionRoute: '/verification/trade/status',
+      ),
+    );
   }
 
   int _notificationId(String kind, String professionId) =>

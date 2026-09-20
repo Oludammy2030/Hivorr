@@ -53,8 +53,14 @@ class PaymentGatewayConfig {
   /// throw [EnvironmentConfigException]. The default provider defaults to
   /// `paystack` when absent.
   static PaymentGatewayConfig fromEnvironment(EnvironmentValueSource source) {
-    final paystackPublic = _readOptional(source, AppConstants.envPaystackPublicKey);
-    final paystackSecret = _requireSecret(source, AppConstants.envPaystackSecretKey);
+    final paystackPublic = _readOptional(
+      source,
+      AppConstants.envPaystackPublicKey,
+    );
+    final paystackSecret = _requireSecret(
+      source,
+      AppConstants.envPaystackSecretKey,
+    );
     final flutterwavePublic = _readOptional(
       source,
       AppConstants.envFlutterwavePublicKey,
@@ -88,10 +94,7 @@ class PaymentGatewayConfig {
 
   /// Reads an optional (non-required) variable, returning `null` when absent
   /// or empty.
-  static String? _readOptional(
-    EnvironmentValueSource source,
-    String key,
-  ) {
+  static String? _readOptional(EnvironmentValueSource source, String key) {
     final String? value = source.read(key);
     if (value == null || value.trim().isEmpty) {
       return null;

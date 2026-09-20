@@ -25,7 +25,9 @@ void main() {
 
       expect(trade.identityVerified, isTrue);
       expect(
-        trade.tradeVerifications.map((TradeVerificationDto e) => e.professionId),
+        trade.tradeVerifications.map(
+          (TradeVerificationDto e) => e.professionId,
+        ),
         <String>['p1', 'p2'],
       );
     });
@@ -50,8 +52,9 @@ void main() {
     });
 
     test('falls back to empty id + unverified when keys are absent', () {
-      final TradeVerificationDto dto =
-          TradeVerificationDto.fromJson(<String, dynamic>{});
+      final TradeVerificationDto dto = TradeVerificationDto.fromJson(
+        <String, dynamic>{},
+      );
       expect(dto.professionId, '');
       expect(dto.status, 'unverified');
     });
@@ -61,14 +64,14 @@ void main() {
     test('maps entries and the identity flag from the trade DTO', () {
       final TradeVerificationStatus entity =
           VerificationMapper.tradeStatusToEntity(
-        TradeVerificationStatusDto(
-          identityVerified: true,
-          tradeVerifications: const <TradeVerificationDto>[
-            TradeVerificationDto(professionId: 'p1', status: 'approved'),
-            TradeVerificationDto(professionId: 'p2', status: 'pending'),
-          ],
-        ),
-      );
+            TradeVerificationStatusDto(
+              identityVerified: true,
+              tradeVerifications: const <TradeVerificationDto>[
+                TradeVerificationDto(professionId: 'p1', status: 'approved'),
+                TradeVerificationDto(professionId: 'p2', status: 'pending'),
+              ],
+            ),
+          );
 
       expect(entity.identityVerified, isTrue);
       expect(entity.tradeVerifications, hasLength(2));
@@ -81,15 +84,18 @@ void main() {
     test('derives statusKind across the server vocabulary', () {
       final TradeVerificationStatus entity =
           VerificationMapper.tradeStatusToEntity(
-        TradeVerificationStatusDto(
-          tradeVerifications: const <TradeVerificationDto>[
-            TradeVerificationDto(professionId: 'a', status: 'approved'),
-            TradeVerificationDto(professionId: 'i', status: 'in_review'),
-            TradeVerificationDto(professionId: 'r', status: 'requires_resubmission'),
-            TradeVerificationDto(professionId: 'u', status: 'mystery'),
-          ],
-        ),
-      );
+            TradeVerificationStatusDto(
+              tradeVerifications: const <TradeVerificationDto>[
+                TradeVerificationDto(professionId: 'a', status: 'approved'),
+                TradeVerificationDto(professionId: 'i', status: 'in_review'),
+                TradeVerificationDto(
+                  professionId: 'r',
+                  status: 'requires_resubmission',
+                ),
+                TradeVerificationDto(professionId: 'u', status: 'mystery'),
+              ],
+            ),
+          );
 
       expect(entity.kindFor('a'), TradeVerificationStatusKind.approved);
       expect(entity.kindFor('i'), TradeVerificationStatusKind.pending);
@@ -100,12 +106,12 @@ void main() {
     test('produces a fixed-size list (immutable copy)', () {
       final TradeVerificationStatus entity =
           VerificationMapper.tradeStatusToEntity(
-        TradeVerificationStatusDto(
-          tradeVerifications: const <TradeVerificationDto>[
-            TradeVerificationDto(professionId: 'p1', status: 'approved'),
-          ],
-        ),
-      );
+            TradeVerificationStatusDto(
+              tradeVerifications: const <TradeVerificationDto>[
+                TradeVerificationDto(professionId: 'p1', status: 'approved'),
+              ],
+            ),
+          );
 
       expect(
         () => entity.tradeVerifications.add(
@@ -116,15 +122,15 @@ void main() {
     });
 
     test('round-trips the fake aggregate fixture', () {
-      final TradeVerificationStatus entity = VerificationMapper
-          .tradeStatusToEntity(
-        TradeVerificationStatusDto.fromStatusDto(
-          tradeStatusDto(
-            identityVerified: true,
-            statuses: const <String, String>{'p1': 'approved'},
-          ),
-        ),
-      );
+      final TradeVerificationStatus entity =
+          VerificationMapper.tradeStatusToEntity(
+            TradeVerificationStatusDto.fromStatusDto(
+              tradeStatusDto(
+                identityVerified: true,
+                statuses: const <String, String>{'p1': 'approved'},
+              ),
+            ),
+          );
 
       expect(entity.kindFor('p1'), TradeVerificationStatusKind.approved);
       expect(entity.identityVerified, isTrue);

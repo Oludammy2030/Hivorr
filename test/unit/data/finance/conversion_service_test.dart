@@ -31,59 +31,55 @@ void main() {
     WalletConversionPairsConfig? pairsConfig,
     HivorrLogger? logger,
     PerformanceTracer? tracer,
-  }) =>
-      ConversionService(
-        repository: repo ?? FakeConversionRepository(),
-        pairsConfig:
-            pairsConfig ??
-            const WalletConversionPairsConfig(
-              enabled: true,
-              baseCrossRates: <String, double>{
-                'NGN|USD': 0.0007,
-              },
-            ),
-        logger: logger,
-        tracer: tracer,
-      );
+  }) => ConversionService(
+    repository: repo ?? FakeConversionRepository(),
+    pairsConfig:
+        pairsConfig ??
+        const WalletConversionPairsConfig(
+          enabled: true,
+          baseCrossRates: <String, double>{'NGN|USD': 0.0007},
+        ),
+    logger: logger,
+    tracer: tracer,
+  );
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test.conversion',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.info),
-        PiiRedactor(),
-      );
+    'hivorr.test.conversion',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.info),
+    PiiRedactor(),
+  );
 
   PerformanceTracer disabledTracer() => PerformanceTracer(
-        MonitoringConfig.fromSource(MapEnvironmentValueSource(
-          <String, String>{
-            'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
-            'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
-          },
-        )),
-        const FeatureFlags(
-          enableVerboseLogging: false,
-          enableOfflineSync: false,
-          enableAnalyticsTracking: false,
-          enableDynamicWorkspaceLoading: false,
-          enablePayloadOptimization: false,
-          enablePushNotifications: false,
-        ),
-      );
+    MonitoringConfig.fromSource(
+      MapEnvironmentValueSource(<String, String>{
+        'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
+        'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
+      }),
+    ),
+    const FeatureFlags(
+      enableVerboseLogging: false,
+      enableOfflineSync: false,
+      enableAnalyticsTracking: false,
+      enableDynamicWorkspaceLoading: false,
+      enablePayloadOptimization: false,
+      enablePushNotifications: false,
+    ),
+  );
 
   group('availablePairs', () {
-    test('yields the directed pairs from the rate authority when enabled',
-        () {
+    test('yields the directed pairs from the rate authority when enabled', () {
       final service = build(
         pairsConfig: const WalletConversionPairsConfig(
           enabled: true,
-          baseCrossRates: <String, double>{
-            'NGN|USD': 0.0007,
-          },
+          baseCrossRates: <String, double>{'NGN|USD': 0.0007},
         ),
       );
 
       expect(service.availablePairs, hasLength(2));
       expect(
-        service.availablePairs.map((ConversionPair p) => '${p.fromCode}|${p.toCode}'),
+        service.availablePairs.map(
+          (ConversionPair p) => '${p.fromCode}|${p.toCode}',
+        ),
         containsAll(<String>['NGN|USD', 'USD|NGN']),
       );
     });
@@ -127,8 +123,7 @@ void main() {
 
   group('getRate', () {
     test('delegates to the repository with the directed pair', () async {
-      final repo = FakeConversionRepository()
-        ..setRate('NGN', 'USD', 0.0007);
+      final repo = FakeConversionRepository()..setRate('NGN', 'USD', 0.0007);
       final sink = RecordingSink();
       final service = build(
         repo: repo,
@@ -169,8 +164,7 @@ void main() {
 
   group('previewConversion', () {
     test('delegates and returns the local estimate', () async {
-      final repo = FakeConversionRepository()
-        ..setRate('NGN', 'USD', 0.0007);
+      final repo = FakeConversionRepository()..setRate('NGN', 'USD', 0.0007);
       final sink = RecordingSink();
       final service = build(
         repo: repo,
@@ -187,10 +181,7 @@ void main() {
       expect(preview.grossAmount, closeTo(35, 1e-9));
       expect(preview.fromAmount, 50000);
       expect(repo.previewCallCount, 1);
-      expect(
-        sink.entries.any((e) => e.message.contains('preview')),
-        isTrue,
-      );
+      expect(sink.entries.any((e) => e.message.contains('preview')), isTrue);
     });
   });
 
@@ -198,9 +189,7 @@ void main() {
     test('delegates to the repository and returns the conversion', () async {
       final repo = FakeConversionRepository()
         ..setRate('NGN', 'USD', 0.0007)
-        ..setConversion(
-          seedConversionEntity(id: 'conversion-x', toAmount: 35),
-        );
+        ..setConversion(seedConversionEntity(id: 'conversion-x', toAmount: 35));
       final sink = RecordingSink();
       final service = build(
         repo: repo,
@@ -217,19 +206,14 @@ void main() {
       expect(conversion.id, 'conversion-x');
       expect(conversion.status, 'completed');
       expect(repo.executeCallCount, 1);
-      expect(
-        sink.entries.any((e) => e.message.contains('executed')),
-        isTrue,
-      );
+      expect(sink.entries.any((e) => e.message.contains('executed')), isTrue);
     });
   });
 
   group('getHistory', () {
     test('delegates to the repository and returns mapped rows', () async {
       final repo = FakeConversionRepository(
-        history: <CurrencyConversion>[
-          seedConversionEntity(id: 'c-1'),
-        ],
+        history: <CurrencyConversion>[seedConversionEntity(id: 'c-1')],
       );
       final sink = RecordingSink();
       final service = build(
@@ -243,10 +227,7 @@ void main() {
       expect(history, hasLength(1));
       expect(history.single.id, 'c-1');
       expect(repo.historyCallCount, 1);
-      expect(
-        sink.entries.any((e) => e.message.contains('history')),
-        isTrue,
-      );
+      expect(sink.entries.any((e) => e.message.contains('history')), isTrue);
     });
   });
 
@@ -271,8 +252,7 @@ void main() {
     test('rate copy keeps significant decimals for sub-unit rates', () {
       final service = build();
       expect(
-        service.formatRate(0.0007,
-            fromCurrency: 'NGN', toCurrency: 'USD'),
+        service.formatRate(0.0007, fromCurrency: 'NGN', toCurrency: 'USD'),
         '1 NGN = 0.0007 USD',
       );
     });
@@ -280,8 +260,11 @@ void main() {
     test('rate copy uses two decimals for whole rates', () {
       final service = build();
       expect(
-        service.formatRate(1111.1111111111111,
-            fromCurrency: 'GHS', toCurrency: 'NGN'),
+        service.formatRate(
+          1111.1111111111111,
+          fromCurrency: 'GHS',
+          toCurrency: 'NGN',
+        ),
         '1 GHS = 1111.11 NGN',
       );
     });

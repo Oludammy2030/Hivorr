@@ -19,8 +19,10 @@ void main() {
         displayName: 'Ada L.',
       );
       final FakeEntityLocalDataSource local = FakeEntityLocalDataSource();
-      final EntityRepositoryImpl repo =
-          EntityRepositoryImpl(remote: remote, local: local);
+      final EntityRepositoryImpl repo = EntityRepositoryImpl(
+        remote: remote,
+        local: local,
+      );
 
       final EntityProfile profile = await repo.getProfile('e1');
 
@@ -36,8 +38,10 @@ void main() {
         legalName: 'Cached',
         displayName: 'C',
       );
-      final EntityRepositoryImpl repo =
-          EntityRepositoryImpl(remote: remote, local: local);
+      final EntityRepositoryImpl repo = EntityRepositoryImpl(
+        remote: remote,
+        local: local,
+      );
 
       final EntityProfile profile = await repo.getProfile('e1');
 
@@ -47,8 +51,10 @@ void main() {
     test('updateProfile returns mapped entity and caches it', () async {
       final FakeEntityRemoteDataSource remote = FakeEntityRemoteDataSource();
       final FakeEntityLocalDataSource local = FakeEntityLocalDataSource();
-      final EntityRepositoryImpl repo =
-          EntityRepositoryImpl(remote: remote, local: local);
+      final EntityRepositoryImpl repo = EntityRepositoryImpl(
+        remote: remote,
+        local: local,
+      );
 
       final EntityProfile profile = await repo.updateProfile(
         entityId: 'e1',
@@ -65,8 +71,10 @@ void main() {
       final FakeEntityRemoteDataSource remote = FakeEntityRemoteDataSource()
         ..throwOnActivate = true;
       final FakeEntityLocalDataSource local = FakeEntityLocalDataSource();
-      final EntityRepositoryImpl repo =
-          EntityRepositoryImpl(remote: remote, local: local);
+      final EntityRepositoryImpl repo = EntityRepositoryImpl(
+        remote: remote,
+        local: local,
+      );
 
       expect(
         () => repo.activateRole(entityId: 'e1', role: 'merchant'),
@@ -80,8 +88,10 @@ void main() {
         const EntityRoleDto(entityId: 'e1', role: 'rider', isActive: true),
       ];
       final FakeEntityLocalDataSource local = FakeEntityLocalDataSource();
-      final EntityRepositoryImpl repo =
-          EntityRepositoryImpl(remote: remote, local: local);
+      final EntityRepositoryImpl repo = EntityRepositoryImpl(
+        remote: remote,
+        local: local,
+      );
 
       final List<EntityRole> roles = await repo.getRoles('e1');
 

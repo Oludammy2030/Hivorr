@@ -6,23 +6,25 @@ import 'package:hivorr/data/datasources/remote/portfolio_envelope_parser.dart';
 void main() {
   group('PortfolioEnvelopeParser (TT-07 / FV-11)', () {
     test('unwraps the profile data map on PLT000 success', () {
-      final Map<String, dynamic> data =
-          PortfolioEnvelopeParser.unwrap(<String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': <String, dynamic>{'entity_id': 'entity-1'},
-      });
+      final Map<String, dynamic> data = PortfolioEnvelopeParser.unwrap(
+        <String, dynamic>{
+          'success': true,
+          'code': 'PLT000',
+          'message': 'ok',
+          'data': <String, dynamic>{'entity_id': 'entity-1'},
+        },
+      );
 
       expect(data, containsPair('entity_id', 'entity-1'));
     });
 
     test('accepts a Dart Map payload through the dynamic bridge', () {
-      final Map<String, dynamic> data =
-          PortfolioEnvelopeParser.unwrap(<String, dynamic>{
-        'code': 'PLT000',
-        'data': <String, dynamic>{'display_name': 'Ada'},
-      });
+      final Map<String, dynamic> data = PortfolioEnvelopeParser.unwrap(
+        <String, dynamic>{
+          'code': 'PLT000',
+          'data': <String, dynamic>{'display_name': 'Ada'},
+        },
+      );
 
       expect(data['display_name'], 'Ada');
     });
@@ -72,8 +74,13 @@ void main() {
           'message': 'conflict',
           'data': <String, dynamic>{},
         }),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.conflict)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
 
@@ -84,8 +91,13 @@ void main() {
           'message': 'internal error',
           'data': <String, dynamic>{},
         }),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
 
@@ -95,8 +107,13 @@ void main() {
           'code': 'PLT777',
           'data': <String, dynamic>{},
         }),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
 
@@ -120,11 +137,15 @@ void main() {
 
     test('throws server when data is missing entirely', () {
       expect(
-        () => PortfolioEnvelopeParser.unwrap(<String, dynamic>{
-          'code': 'PLT000',
-        }),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)),
+        () =>
+            PortfolioEnvelopeParser.unwrap(<String, dynamic>{'code': 'PLT000'}),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
     });
   });

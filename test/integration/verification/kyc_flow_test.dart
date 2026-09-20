@@ -39,48 +39,48 @@ void main() {
   String status = 'pending';
 
   Map<String, dynamic> levelEnvelope() => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': <String, dynamic>{
-          'tier_code': tierCode,
-          'status': status,
-          'limits': <String, dynamic>{
-            'daily': tierCode == 'tier_1' ? 500000 : 0,
-            'weekly': tierCode == 'tier_1' ? 2000000 : 0,
-            'monthly': tierCode == 'tier_1' ? 8000000 : 0,
-            'cashout': tierCode == 'tier_1' ? 200000 : 0,
-          },
-        },
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': <String, dynamic>{
+      'tier_code': tierCode,
+      'status': status,
+      'limits': <String, dynamic>{
+        'daily': tierCode == 'tier_1' ? 500000 : 0,
+        'weekly': tierCode == 'tier_1' ? 2000000 : 0,
+        'monthly': tierCode == 'tier_1' ? 8000000 : 0,
+        'cashout': tierCode == 'tier_1' ? 200000 : 0,
+      },
+    },
+  };
 
   Map<String, dynamic> limitsEnvelope() => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': <String, dynamic>{
-          'tier_code': tierCode,
-          'status': status,
-          'daily': tierCode == 'tier_1' ? 500000 : 0,
-          'weekly': tierCode == 'tier_1' ? 2000000 : 0,
-          'monthly': tierCode == 'tier_1' ? 8000000 : 0,
-          'cashout': tierCode == 'tier_1' ? 200000 : 0,
-        },
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': <String, dynamic>{
+      'tier_code': tierCode,
+      'status': status,
+      'daily': tierCode == 'tier_1' ? 500000 : 0,
+      'weekly': tierCode == 'tier_1' ? 2000000 : 0,
+      'monthly': tierCode == 'tier_1' ? 8000000 : 0,
+      'cashout': tierCode == 'tier_1' ? 200000 : 0,
+    },
+  };
 
   Map<String, dynamic> statusEnvelope() => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': <String, dynamic>{
-          'entity_id': 'u1',
-          'kyc': levelEnvelope()['data'],
-          'identity_verified': tierCode != 'tier_0',
-          'trade_verifications': <dynamic>[],
-          'pending_submissions': 0,
-          'total_submissions': 0,
-        },
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': <String, dynamic>{
+      'entity_id': 'u1',
+      'kyc': levelEnvelope()['data'],
+      'identity_verified': tierCode != 'tier_0',
+      'trade_verifications': <dynamic>[],
+      'pending_submissions': 0,
+      'total_submissions': 0,
+    },
+  };
 
   KycProvider buildFlow({
     required MockKycProvider mock,
@@ -105,7 +105,10 @@ void main() {
       providerRegistry: KycProviderRegistry(primary: mock),
       logger: HivorrLogger(
         'kyc-flow',
-        LogRouter(sinks: <LogSink>[RecordingSink()], minimumLevel: LogLevel.debug),
+        LogRouter(
+          sinks: <LogSink>[RecordingSink()],
+          minimumLevel: LogLevel.debug,
+        ),
         PiiRedactor(),
       ),
     );
@@ -113,7 +116,10 @@ void main() {
       repo: repository,
       logger: HivorrLogger(
         'kyc-flow-provider',
-        LogRouter(sinks: <LogSink>[RecordingSink()], minimumLevel: LogLevel.debug),
+        LogRouter(
+          sinks: <LogSink>[RecordingSink()],
+          minimumLevel: LogLevel.debug,
+        ),
         PiiRedactor(),
       ),
       notificationProvider: notifications,
@@ -138,7 +144,9 @@ void main() {
     final KycProvider provider = buildFlow(mock: mock);
     await provider.refreshStatus();
 
-    final KycLevel? next = await provider.requestUpgrade(targetTier: KycTier.tier1);
+    final KycLevel? next = await provider.requestUpgrade(
+      targetTier: KycTier.tier1,
+    );
 
     expect(mock.lastEntityId, 'u1');
     expect(mock.lastTargetTier, KycTier.tier1);
@@ -147,30 +155,32 @@ void main() {
     provider.dispose();
   });
 
-  test('requestUpgrade still surfaces guidance when no provider is configured',
-      () async {
-    // Providerless registry → repository logs guidance, level unchanged.
-    final client = MockSupabaseClientFactory.create(
-      currentUser: fakeUser('u1'),
-      rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
-        'verification_kyc_level_get': (_) => levelEnvelope(),
-        'verification_status_get': (_) => statusEnvelope(),
-      },
-    );
-    final SupabaseKycRemoteDataSource remote = SupabaseKycRemoteDataSource(
-      dio: Dio(),
-      supabase: client,
-      exceptionMapper: const ApiExceptionMapper(),
-    );
-    final KycRepositoryImpl repository = KycRepositoryImpl(remote: remote);
-    final KycProvider provider = KycProvider(repo: repository);
-    await provider.refreshStatus();
+  test(
+    'requestUpgrade still surfaces guidance when no provider is configured',
+    () async {
+      // Providerless registry → repository logs guidance, level unchanged.
+      final client = MockSupabaseClientFactory.create(
+        currentUser: fakeUser('u1'),
+        rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
+          'verification_kyc_level_get': (_) => levelEnvelope(),
+          'verification_status_get': (_) => statusEnvelope(),
+        },
+      );
+      final SupabaseKycRemoteDataSource remote = SupabaseKycRemoteDataSource(
+        dio: Dio(),
+        supabase: client,
+        exceptionMapper: const ApiExceptionMapper(),
+      );
+      final KycRepositoryImpl repository = KycRepositoryImpl(remote: remote);
+      final KycProvider provider = KycProvider(repo: repository);
+      await provider.refreshStatus();
 
-    await provider.requestUpgrade(targetTier: KycTier.tier1);
+      await provider.requestUpgrade(targetTier: KycTier.tier1);
 
-    expect(provider.currentTier, KycTier.tier0);
-    provider.dispose();
-  });
+      expect(provider.currentTier, KycTier.tier0);
+      provider.dispose();
+    },
+  );
 
   test('server approval → refreshStatus → tier_1 + limits unlock', () async {
     final MockKycProvider mock = MockKycProvider();
@@ -201,8 +211,14 @@ void main() {
     provider.dispose();
 
     final KycLimits limits = provider.kycLevel!.limits;
-    expect(KycLimitGuard.isCashoutAllowed(limits: limits, amount: 150000), isTrue);
-    expect(KycLimitGuard.isCashoutAllowed(limits: limits, amount: 250000), isFalse);
+    expect(
+      KycLimitGuard.isCashoutAllowed(limits: limits, amount: 150000),
+      isTrue,
+    );
+    expect(
+      KycLimitGuard.isCashoutAllowed(limits: limits, amount: 250000),
+      isFalse,
+    );
   });
 
   test('polling on the real stack resolves pending → active, stops, and '

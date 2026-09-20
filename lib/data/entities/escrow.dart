@@ -73,8 +73,7 @@ class Escrow {
   final DateTime? refundedAt;
 
   /// Amount still held within the escrow (unreleased and unrefunded).
-  double get heldAmount =>
-      totalAmount - releasedAmount - refundedAmount;
+  double get heldAmount => totalAmount - releasedAmount - refundedAmount;
 
   /// Whether the escrow is under active dispute (frozen UI state).
   bool get isDisputed => status == 'disputed';

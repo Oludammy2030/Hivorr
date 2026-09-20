@@ -15,11 +15,10 @@ void main() {
   KycProvider buildProvider({
     FakeKycRemoteDataSource? remote,
     Duration? pollInterval,
-  }) =>
-      KycProvider(
-        repo: KycRepositoryImpl(remote: remote ?? FakeKycRemoteDataSource()),
-        pollInterval: pollInterval ?? const Duration(seconds: 15),
-      );
+  }) => KycProvider(
+    repo: KycRepositoryImpl(remote: remote ?? FakeKycRemoteDataSource()),
+    pollInterval: pollInterval ?? const Duration(seconds: 15),
+  );
 
   Future<KycProvider> pumpStatus(
     WidgetTester tester, {
@@ -56,8 +55,9 @@ void main() {
   });
 
   group('KycStatusScreen loading', () {
-    testWidgets('shows a loading state while the level is not yet loaded',
-        (WidgetTester tester) async {
+    testWidgets('shows a loading state while the level is not yet loaded', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource()..blockLevel = true;
       await pumpStatus(tester, remote: remote);
       await tester.pump();
@@ -67,8 +67,9 @@ void main() {
   });
 
   group('KycStatusScreen error', () {
-    testWidgets('shows an error state with retry after a failed load',
-        (WidgetTester tester) async {
+    testWidgets('shows an error state with retry after a failed load', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -81,8 +82,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('recovers to content after tapping retry',
-        (WidgetTester tester) async {
+    testWidgets('recovers to content after tapping retry', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -102,8 +104,9 @@ void main() {
   });
 
   group('KycStatusScreen loaded tier_0', () {
-    testWidgets('renders the badge and limits for an unverified account',
-        (WidgetTester tester) async {
+    testWidgets('renders the badge and limits for an unverified account', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
       );
@@ -115,8 +118,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows the upgrade CTA when a higher tier is reachable',
-        (WidgetTester tester) async {
+    testWidgets('shows the upgrade CTA when a higher tier is reachable', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
       );
@@ -130,8 +134,9 @@ void main() {
   });
 
   group('KycStatusScreen loaded tier_3', () {
-    testWidgets('hides the upgrade CTA and shows the fully verified state',
-        (WidgetTester tester) async {
+    testWidgets('hides the upgrade CTA and shows the fully verified state', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_3', status: 'active'),
       );
@@ -157,8 +162,9 @@ void main() {
   });
 
   group('KycStatusScreen loaded tier_1', () {
-    testWidgets('renders the verified badge and Active chip',
-        (WidgetTester tester) async {
+    testWidgets('renders the verified badge and Active chip', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_1', status: 'active'),
       );
@@ -193,8 +199,9 @@ void main() {
   });
 
   group('KycStatusScreen pull-to-refresh', () {
-    testWidgets('refreshes status when the list is pulled down',
-        (WidgetTester tester) async {
+    testWidgets('refreshes status when the list is pulled down', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
       );
@@ -202,11 +209,7 @@ void main() {
       await settle(tester);
       final int callsBefore = remote.kycCallCount;
 
-      await tester.fling(
-        find.byType(ListView),
-        const Offset(0, 300),
-        1000,
-      );
+      await tester.fling(find.byType(ListView), const Offset(0, 300), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
 
@@ -216,8 +219,9 @@ void main() {
   });
 
   group('KycStatusScreen lifecycle polling', () {
-    testWidgets('backgrounding pauses polling; foregrounding resumes it',
-        (WidgetTester tester) async {
+    testWidgets('backgrounding pauses polling; foregrounding resumes it', (
+      WidgetTester tester,
+    ) async {
       final remote = FakeKycRemoteDataSource(
         kycResult: seedKycDto(tierCode: 'tier_0', status: 'pending'),
       );

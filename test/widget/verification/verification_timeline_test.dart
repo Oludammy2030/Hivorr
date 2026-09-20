@@ -26,44 +26,50 @@ void main() {
       expect(find.text('Decision'), findsOneWidget);
     });
 
-    testWidgets('marks the pending step as the current selection', (WidgetTester tester) async {
+    testWidgets('marks the pending step as the current selection', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(status: VerificationStatusKind.pending),
       );
 
-      final Text pendingTitle =
-          tester.widget<Text>(find.text('Pending review'));
+      final Text pendingTitle = tester.widget<Text>(
+        find.text('Pending review'),
+      );
       expect(pendingTitle.style?.fontWeight, FontWeight.w600);
     });
 
-    testWidgets('marks the in-review step as current when in review', (WidgetTester tester) async {
+    testWidgets('marks the in-review step as current when in review', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(status: VerificationStatusKind.inReview),
       );
 
-      final Text inReviewTitle =
-          tester.widget<Text>(find.text('In review'));
+      final Text inReviewTitle = tester.widget<Text>(find.text('In review'));
       expect(inReviewTitle.style?.fontWeight, FontWeight.w600);
     });
 
-    testWidgets('approved uses the Approved label and selected-decided step',
-        (WidgetTester tester) async {
+    testWidgets('approved uses the Approved label and selected-decided step', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(status: VerificationStatusKind.approved),
       );
 
       expect(find.text('Approved'), findsOneWidget);
-      final Text approvedTitle =
-          tester.widget<Text>(find.text('Approved'));
+      final Text approvedTitle = tester.widget<Text>(find.text('Approved'));
       expect(approvedTitle.style?.fontWeight, FontWeight.w600);
     });
   });
 
   group('VerificationTimeline captions & decisions', () {
-    testWidgets('renders the submitted date caption', (WidgetTester tester) async {
+    testWidgets('renders the submitted date caption', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(
@@ -75,7 +81,9 @@ void main() {
       expect(find.text('Mar 14, 2026 · 9:30 AM'), findsOneWidget);
     });
 
-    testWidgets('renders the reviewed date caption on the decided step', (WidgetTester tester) async {
+    testWidgets('renders the reviewed date caption on the decided step', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(
@@ -100,7 +108,9 @@ void main() {
       expect(find.text('ID was illegible'), findsOneWidget);
     });
 
-    testWidgets('requiresResubmission shows its label + notes', (WidgetTester tester) async {
+    testWidgets('requiresResubmission shows its label + notes', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(
@@ -113,7 +123,9 @@ void main() {
       expect(find.text('Please sharpen the photo'), findsOneWidget);
     });
 
-    testWidgets('approved does not render decision notes', (WidgetTester tester) async {
+    testWidgets('approved does not render decision notes', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(
@@ -125,7 +137,9 @@ void main() {
       expect(find.text('ignored'), findsNothing);
     });
 
-    testWidgets('omits captions when dates are absent', (WidgetTester tester) async {
+    testWidgets('omits captions when dates are absent', (
+      WidgetTester tester,
+    ) async {
       await pump(
         tester,
         VerificationTimeline(status: VerificationStatusKind.pending),
@@ -137,7 +151,10 @@ void main() {
 
   group('VerificationTimeline.stepIndexFor', () {
     test('maps each status to the expected step index', () {
-      expect(VerificationTimeline.stepIndexFor(VerificationStatusKind.pending), 1);
+      expect(
+        VerificationTimeline.stepIndexFor(VerificationStatusKind.pending),
+        1,
+      );
       expect(
         VerificationTimeline.stepIndexFor(VerificationStatusKind.inReview),
         2,
@@ -152,10 +169,10 @@ void main() {
       );
       expect(
         VerificationTimeline.stepIndexFor(
-            VerificationStatusKind.requiresResubmission),
+          VerificationStatusKind.requiresResubmission,
+        ),
         3,
       );
     });
   });
 }
-

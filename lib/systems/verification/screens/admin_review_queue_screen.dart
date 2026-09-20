@@ -37,12 +37,14 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
       if (!mounted) return;
       final provider = context.read<AdminReviewProvider>();
       // Ensure admin flag is hydrated, then load queue.
-      unawaited(provider.checkAdmin().then((_) {
-        if (!mounted) return;
-        if (AdminGate.isAdmin(provider)) {
-          unawaited(provider.loadQueue());
-        }
-      }));
+      unawaited(
+        provider.checkAdmin().then((_) {
+          if (!mounted) return;
+          if (AdminGate.isAdmin(provider)) {
+            unawaited(provider.loadQueue());
+          }
+        }),
+      );
     });
   }
 
@@ -101,20 +103,14 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
     }
     if (provider.lastError != null && provider.queue.isEmpty) {
       return HivorrEmptyState(
-        icon: Icon(
-          Icons.error_outline,
-          color: context.colorScheme.error,
-        ),
+        icon: Icon(Icons.error_outline, color: context.colorScheme.error),
         title: 'Failed to load queue',
         subtitle: provider.lastError!.message,
       );
     }
     if (provider.queue.isEmpty) {
       return HivorrEmptyState(
-        icon: Icon(
-          Icons.task_alt,
-          color: context.colorScheme.primary,
-        ),
+        icon: Icon(Icons.task_alt, color: context.colorScheme.primary),
         title: 'Queue is clear',
         subtitle: 'No submissions are awaiting review.',
       );
@@ -158,11 +154,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
 }
 
 class _QueueCard extends StatelessWidget {
-  const _QueueCard({
-    super.key,
-    required this.entry,
-    required this.onTap,
-  });
+  const _QueueCard({super.key, required this.entry, required this.onTap});
 
   final AdminReviewQueueEntry entry;
   final VoidCallback onTap;

@@ -24,10 +24,10 @@ class ConversionRepositoryImpl implements ConversionRepository {
     required ConversionRateSource rateSource,
     required FinancialRepository financialRepository,
     double fee = 0,
-  })  : _remote = remote,
-        _rateSource = rateSource,
-        _financialRepository = financialRepository,
-        _fee = fee;
+  }) : _remote = remote,
+       _rateSource = rateSource,
+       _financialRepository = financialRepository,
+       _fee = fee;
 
   final ConversionRemoteDataSource _remote;
   final ConversionRateSource _rateSource;
@@ -101,7 +101,9 @@ class ConversionRepositoryImpl implements ConversionRepository {
       amount: amount,
       rate: rate,
     );
-    final CurrencyConversion conversion = ConversionMapper.conversionToEntity(dto);
+    final CurrencyConversion conversion = ConversionMapper.conversionToEntity(
+      dto,
+    );
     await _refreshBalancesBestEffort();
     return conversion;
   }
@@ -109,7 +111,9 @@ class ConversionRepositoryImpl implements ConversionRepository {
   @override
   Future<List<CurrencyConversion>> getHistory() async {
     final List<CurrencyConversionDto> rows = await _remote.getHistory();
-    return rows.map(ConversionMapper.conversionToEntity).toList(growable: false);
+    return rows
+        .map(ConversionMapper.conversionToEntity)
+        .toList(growable: false);
   }
 
   /// Best-effort post-execution balance refresh via `financial_status_get`.
@@ -133,7 +137,8 @@ class ConversionRepositoryImpl implements ConversionRepository {
         !SupportedCurrency.isSupported(toCurrency)) {
       throw const ApiException(
         kind: ApiExceptionKind.validation,
-        message: 'Unsupported currency. Supported currencies are NGN, GHS, USD, GBP.',
+        message:
+            'Unsupported currency. Supported currencies are NGN, GHS, USD, GBP.',
         code: 'PLT003',
       );
     }

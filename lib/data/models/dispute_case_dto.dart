@@ -23,22 +23,23 @@ class DisputeCaseDto {
   });
 
   factory DisputeCaseDto.fromJson(Map<String, dynamic> json) => DisputeCaseDto(
-        id: (json['id'] as String?) ?? '',
-        escrowId: (json['escrow_id'] as String?) ?? '',
-        filerEntityId: (json['filer_entity_id'] as String?) ?? '',
-        counterpartyEntityId: (json['counterparty_entity_id'] as String?) ?? '',
-        disputeType: (json['dispute_type'] as String?) ?? '',
-        status: (json['status'] as String?) ?? 'open',
-        reason: (json['reason'] as String?) ?? '',
-        desiredOutcome: json['desired_outcome'] as String?,
-        priority: (json['priority'] as String?) ?? 'medium',
-        filedAt: _parseDateTime(json['filed_at']),
-        resolvedAt: _parseNullableDateTime(json['resolved_at']),
-        closedAt: _parseNullableDateTime(json['closed_at']),
-        withdrawnAt: _parseNullableDateTime(json['withdrawn_at']),
-        metadata:
-            (json['metadata'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
-      );
+    id: (json['id'] as String?) ?? '',
+    escrowId: (json['escrow_id'] as String?) ?? '',
+    filerEntityId: (json['filer_entity_id'] as String?) ?? '',
+    counterpartyEntityId: (json['counterparty_entity_id'] as String?) ?? '',
+    disputeType: (json['dispute_type'] as String?) ?? '',
+    status: (json['status'] as String?) ?? 'open',
+    reason: (json['reason'] as String?) ?? '',
+    desiredOutcome: json['desired_outcome'] as String?,
+    priority: (json['priority'] as String?) ?? 'medium',
+    filedAt: _parseDateTime(json['filed_at']),
+    resolvedAt: _parseNullableDateTime(json['resolved_at']),
+    closedAt: _parseNullableDateTime(json['closed_at']),
+    withdrawnAt: _parseNullableDateTime(json['withdrawn_at']),
+    metadata:
+        (json['metadata'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{},
+  );
 
   final String id;
   final String escrowId;

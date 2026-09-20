@@ -15,9 +15,7 @@ import '../../../support/fakes/fake_notifications.dart';
 import '../../../support/fakes/finance/fake_financial_repository.dart';
 
 void main() {
-  FinancialProvider build({
-    FakeFinancialRepository? repo,
-  }) {
+  FinancialProvider build({FakeFinancialRepository? repo}) {
     final r = repo ?? FakeFinancialRepository();
     return FinancialProvider(service: FinancialService(repository: r));
   }
@@ -172,8 +170,10 @@ void main() {
       expect(service.shown.single.body, 'Your default currency is NGN.');
       expect(service.shown.single.channelId, 'hivorr_default');
       expect(service.shown.single.actionRoute, '/finance');
-      expect(service.shown.single.timestamp,
-          DateTime.fromMillisecondsSinceEpoch(1000));
+      expect(
+        service.shown.single.timestamp,
+        DateTime.fromMillisecondsSinceEpoch(1000),
+      );
       provider.dispose();
     });
 

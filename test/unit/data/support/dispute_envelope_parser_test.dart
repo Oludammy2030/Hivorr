@@ -10,13 +10,12 @@ void main() {
     String code = successCode,
     String? message,
     Object? data,
-  }) =>
-      <String, dynamic>{
-        'success': code == successCode,
-        'code': code,
-        'message': message,
-        'data': data,
-      };
+  }) => <String, dynamic>{
+    'success': code == successCode,
+    'code': code,
+    'message': message,
+    'data': data,
+  };
 
   group('DisputeEnvelopeParser.unwrap', () {
     test('returns the data object for a PLT000 success envelope', () {
@@ -32,8 +31,16 @@ void main() {
         () => DisputeEnvelopeParser.unwrap(envelope(data: 'not-a-map')),
         throwsA(
           isA<ApiException>()
-              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)
-              .having((ApiException e) => e.message, 'message', contains('Malformed')),
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.server,
+              )
+              .having(
+                (ApiException e) => e.message,
+                'message',
+                contains('Malformed'),
+              ),
         ),
       );
     });
@@ -105,7 +112,9 @@ void main() {
 
     test('an unrecognized or missing code maps to server', () {
       expect(
-        () => DisputeEnvelopeParser.unwrap(envelope(code: 'PLT999', message: 'x')),
+        () => DisputeEnvelopeParser.unwrap(
+          envelope(code: 'PLT999', message: 'x'),
+        ),
         throwsA(
           isA<ApiException>()
               .having(
@@ -132,8 +141,12 @@ void main() {
     test('carries the server-provided safe message through', () {
       expect(
         () => DisputeEnvelopeParser.unwrap(
-          envelope(code: 'PLT003', message: 'Reason must be at least 10 '
-              'characters when provided.'),
+          envelope(
+            code: 'PLT003',
+            message:
+                'Reason must be at least 10 '
+                'characters when provided.',
+          ),
         ),
         throwsA(
           isA<ApiException>().having(
@@ -148,7 +161,9 @@ void main() {
     test('falls back to a typed default message when the server message is '
         'blank', () {
       expect(
-        () => DisputeEnvelopeParser.unwrap(envelope(code: 'PLT004', message: '  ')),
+        () => DisputeEnvelopeParser.unwrap(
+          envelope(code: 'PLT004', message: '  '),
+        ),
         throwsA(
           isA<ApiException>().having(
             (ApiException e) => e.message,

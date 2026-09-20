@@ -7,12 +7,12 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import '../test_sentry_helper.dart';
 
 MonitoringConfig _activeConfig() => MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
-        'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
-        'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
-        'HIVORR_MONITORING_ENABLE_PII_REDACTION': 'true',
-      }),
-    );
+  MapEnvironmentValueSource(<String, String>{
+    'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
+    'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
+    'HIVORR_MONITORING_ENABLE_PII_REDACTION': 'true',
+  }),
+);
 
 Future<SentryEvent> _flush() async {
   await Sentry.captureMessage('__flush__');

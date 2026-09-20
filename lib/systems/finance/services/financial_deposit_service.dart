@@ -16,9 +16,9 @@ class FinancialDepositService {
     required FinancialDepositRepository repository,
     HivorrLogger? logger,
     PerformanceTracer? tracer,
-  })  : _repository = repository,
-        _logger = logger,
-        _tracer = tracer;
+  }) : _repository = repository,
+       _logger = logger,
+       _tracer = tracer;
 
   final FinancialDepositRepository _repository;
   final HivorrLogger? _logger;
@@ -26,18 +26,16 @@ class FinancialDepositService {
 
   /// Lists the authenticated entity's deposits (RLS-scoped read).
   Future<List<Deposit>> listDeposits() => _tracedAndLogged(
-        'finance.deposit.list',
-        () async {
-          final List<Deposit> deposits = await _repository.listDeposits();
-          _logger?.info('Deposits listed', <String, Object?>{
-            'count': deposits.length,
-            'matched': deposits
-                .where((Deposit d) => d.status == 'credited')
-                .length,
-          });
-          return deposits;
-        },
-      );
+    'finance.deposit.list',
+    () async {
+      final List<Deposit> deposits = await _repository.listDeposits();
+      _logger?.info('Deposits listed', <String, Object?>{
+        'count': deposits.length,
+        'matched': deposits.where((Deposit d) => d.status == 'credited').length,
+      });
+      return deposits;
+    },
+  );
 
   /// Wraps [action] in a `finance.deposit.*` [PerformanceTracer] span and
   /// surfaces failures via the logger.

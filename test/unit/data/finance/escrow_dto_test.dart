@@ -104,10 +104,7 @@ void main() {
   group('EscrowDetailDto.fromJson', () {
     test('parses escrow + milestones + transactions', () {
       final dto = EscrowDetailDto.fromJson(<String, dynamic>{
-        'escrow': <String, dynamic>{
-          'id': 'escrow-1',
-          'status': 'funded',
-        },
+        'escrow': <String, dynamic>{'id': 'escrow-1', 'status': 'funded'},
         'milestones': <dynamic>[
           <String, dynamic>{'id': 'ms-1', 'status': 'pending'},
           <String, dynamic>{'id': 'ms-2', 'status': 'released'},

@@ -22,15 +22,20 @@ void main() {
   }
 
   group('EscrowStatusBadge (7-state tone map)', () {
-    testWidgets('created → "Awaiting funding" on warningContainer',
-        (WidgetTester tester) async {
+    testWidgets('created → "Awaiting funding" on warningContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[0]));
       expect(find.text('Awaiting funding'), findsOneWidget);
-      expect(chipColor(tester, EscrowStatusBadge), extension().warningContainer);
+      expect(
+        chipColor(tester, EscrowStatusBadge),
+        extension().warningContainer,
+      );
     });
 
-    testWidgets('funded → "Funded & held" on primaryContainer',
-        (WidgetTester tester) async {
+    testWidgets('funded → "Funded & held" on primaryContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[1]));
       expect(find.text('Funded & held'), findsOneWidget);
       expect(
@@ -39,25 +44,32 @@ void main() {
       );
     });
 
-    testWidgets('partially_released → "Milestones releasing" on primaryContainer',
-        (WidgetTester tester) async {
-      await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[2]));
-      expect(find.text('Milestones releasing'), findsOneWidget);
+    testWidgets(
+      'partially_released → "Milestones releasing" on primaryContainer',
+      (WidgetTester tester) async {
+        await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[2]));
+        expect(find.text('Milestones releasing'), findsOneWidget);
+        expect(
+          chipColor(tester, EscrowStatusBadge),
+          AppTheme.lightTheme.colorScheme.primaryContainer,
+        );
+      },
+    );
+
+    testWidgets('released → "Released to provider" on successContainer', (
+      WidgetTester tester,
+    ) async {
+      await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[3]));
+      expect(find.text('Released to provider'), findsOneWidget);
       expect(
         chipColor(tester, EscrowStatusBadge),
-        AppTheme.lightTheme.colorScheme.primaryContainer,
+        extension().successContainer,
       );
     });
 
-    testWidgets('released → "Released to provider" on successContainer',
-        (WidgetTester tester) async {
-      await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[3]));
-      expect(find.text('Released to provider'), findsOneWidget);
-      expect(chipColor(tester, EscrowStatusBadge), extension().successContainer);
-    });
-
-    testWidgets('refunded → "Refunded to payer" on surfaceVariant neutral',
-        (WidgetTester tester) async {
+    testWidgets('refunded → "Refunded to payer" on surfaceVariant neutral', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[4]));
       expect(find.text('Refunded to payer'), findsOneWidget);
       expect(
@@ -66,8 +78,9 @@ void main() {
       );
     });
 
-    testWidgets('cancelled → "Cancelled" on surfaceVariant neutral',
-        (WidgetTester tester) async {
+    testWidgets('cancelled → "Cancelled" on surfaceVariant neutral', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[5]));
       expect(find.text('Cancelled'), findsOneWidget);
       expect(
@@ -76,8 +89,9 @@ void main() {
       );
     });
 
-    testWidgets('disputed → "In dispute — frozen" on errorContainer',
-        (WidgetTester tester) async {
+    testWidgets('disputed → "In dispute — frozen" on errorContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, EscrowStatusBadge(status: escrowStatuses[6]));
       expect(find.text('In dispute — frozen'), findsOneWidget);
       expect(
@@ -88,8 +102,9 @@ void main() {
   });
 
   group('MilestoneStatusBadge (3-state tone map)', () {
-    testWidgets('pending → "Pending" on surfaceContainerHighest',
-        (WidgetTester tester) async {
+    testWidgets('pending → "Pending" on surfaceContainerHighest', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         MilestoneStatusBadge(status: milestoneStatuses[0]),
@@ -101,21 +116,24 @@ void main() {
       );
     });
 
-    testWidgets('completed → "Completed — awaiting release" on primaryContainer',
-        (WidgetTester tester) async {
-      await pumpTheme(
-        tester,
-        MilestoneStatusBadge(status: milestoneStatuses[1]),
-      );
-      expect(find.text('Completed — awaiting release'), findsOneWidget);
-      expect(
-        chipColor(tester, MilestoneStatusBadge),
-        AppTheme.lightTheme.colorScheme.primaryContainer,
-      );
-    });
+    testWidgets(
+      'completed → "Completed — awaiting release" on primaryContainer',
+      (WidgetTester tester) async {
+        await pumpTheme(
+          tester,
+          MilestoneStatusBadge(status: milestoneStatuses[1]),
+        );
+        expect(find.text('Completed — awaiting release'), findsOneWidget);
+        expect(
+          chipColor(tester, MilestoneStatusBadge),
+          AppTheme.lightTheme.colorScheme.primaryContainer,
+        );
+      },
+    );
 
-    testWidgets('released → "Released" on successContainer',
-        (WidgetTester tester) async {
+    testWidgets('released → "Released" on successContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         MilestoneStatusBadge(status: milestoneStatuses[2]),

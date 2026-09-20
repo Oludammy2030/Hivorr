@@ -30,9 +30,9 @@ class ConversionFormatter {
     final String value = rate >= 1
         ? rate.toStringAsFixed(2)
         : rate
-            .toStringAsFixed(6)
-            .replaceFirst(RegExp(r'0+$'), '')
-            .replaceFirst(RegExp(r'\.$'), '');
+              .toStringAsFixed(6)
+              .replaceFirst(RegExp(r'0+$'), '')
+              .replaceFirst(RegExp(r'\.$'), '');
     return '1 $fromCurrency = $value $toCurrency';
   }
 }

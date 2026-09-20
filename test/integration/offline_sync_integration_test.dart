@@ -85,10 +85,10 @@ void main() {
   }
 
   NetworkStatus onlineStatus() => NetworkStatus(
-        isConnected: true,
-        networkType: NetworkType.wifi,
-        timestamp: DateTime.now(),
-      );
+    isConnected: true,
+    networkType: NetworkType.wifi,
+    timestamp: DateTime.now(),
+  );
 
   NetworkStatus offlineStatus() => NetworkStatus.disconnected();
 
@@ -134,67 +134,70 @@ void main() {
     });
 
     group('2. Replay on reconnection', () {
-      test('queued actions replay in FIFO order when connectivity returns',
-          () async {
-        final ScriptedAdapter adapter = ScriptedAdapter(
-          (_) async => successBody(),
-        );
-        final Dio dio = buildTestDio(adapter);
-        final FakeNetworkMonitor monitor = FakeNetworkMonitor(
-          initial: offlineStatus(),
-        );
-        final SyncStatusProvider statusProvider = SyncStatusProvider();
-        final SyncConfig cfg = testSyncConfig();
-        final ActionQueue queue = buildQueue(cfg);
-        final SyncEngine engine = makeEngine(
-          dio: dio,
-          monitor: monitor,
-          statusProvider: statusProvider,
-          queue: queue,
-        );
-        addTearDown(engine.dispose);
-        addTearDown(() async => monitor.dispose());
+      test(
+        'queued actions replay in FIFO order when connectivity returns',
+        () async {
+          final ScriptedAdapter adapter = ScriptedAdapter(
+            (_) async => successBody(),
+          );
+          final Dio dio = buildTestDio(adapter);
+          final FakeNetworkMonitor monitor = FakeNetworkMonitor(
+            initial: offlineStatus(),
+          );
+          final SyncStatusProvider statusProvider = SyncStatusProvider();
+          final SyncConfig cfg = testSyncConfig();
+          final ActionQueue queue = buildQueue(cfg);
+          final SyncEngine engine = makeEngine(
+            dio: dio,
+            monitor: monitor,
+            statusProvider: statusProvider,
+            queue: queue,
+          );
+          addTearDown(engine.dispose);
+          addTearDown(() async => monitor.dispose());
 
-        await Future<void>.delayed(const Duration(milliseconds: 50));
+          await Future<void>.delayed(const Duration(milliseconds: 50));
 
-        // Enqueue three actions while offline.
-        await engine.enqueue(
-          testAction(endpoint: '/rpc/order_a', maxRetries: 3),
-        );
-        await Future<void>.delayed(const Duration(milliseconds: 1));
-        await engine.enqueue(
-          testAction(endpoint: '/rpc/order_b', maxRetries: 3),
-        );
-        await Future<void>.delayed(const Duration(milliseconds: 1));
-        await engine.enqueue(
-          testAction(endpoint: '/rpc/order_c', maxRetries: 3),
-        );
+          // Enqueue three actions while offline.
+          await engine.enqueue(
+            testAction(endpoint: '/rpc/order_a', maxRetries: 3),
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+          await engine.enqueue(
+            testAction(endpoint: '/rpc/order_b', maxRetries: 3),
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+          await engine.enqueue(
+            testAction(endpoint: '/rpc/order_c', maxRetries: 3),
+          );
 
-        // No replay happened while offline.
-        expect(adapter.captured, isEmpty);
-        expect(statusProvider.pendingCount, 3);
+          // No replay happened while offline.
+          expect(adapter.captured, isEmpty);
+          expect(statusProvider.pendingCount, 3);
 
-        // Reconnect — the adapter (and thus the engine) detects the change and
-        // drains the queue.
-        monitor.setStatus(onlineStatus());
-        await waitFor(() => statusProvider.pendingCount == 0);
+          // Reconnect — the adapter (and thus the engine) detects the change and
+          // drains the queue.
+          monitor.setStatus(onlineStatus());
+          await waitFor(() => statusProvider.pendingCount == 0);
 
-        // Replay occurred and respected FIFO enqueue order. Captured paths are
-        // de-duplicated (the initial connectivity emit can trigger a second
-        // drain that re-sends the same actions) before asserting order.
-        final List<String> replayed = adapter.captured
-            .map((RequestOptions o) => o.path)
-            .toList();
-        final List<String> ordered = <String>[];
-        for (final String p in replayed) {
-          if (!ordered.contains(p)) ordered.add(p);
-        }
-        expect(
-          ordered,
-          <String>['/rpc/order_a', '/rpc/order_b', '/rpc/order_c'],
-        );
-        expect(statusProvider.pendingCount, 0);
-      });
+          // Replay occurred and respected FIFO enqueue order. Captured paths are
+          // de-duplicated (the initial connectivity emit can trigger a second
+          // drain that re-sends the same actions) before asserting order.
+          final List<String> replayed = adapter.captured
+              .map((RequestOptions o) => o.path)
+              .toList();
+          final List<String> ordered = <String>[];
+          for (final String p in replayed) {
+            if (!ordered.contains(p)) ordered.add(p);
+          }
+          expect(ordered, <String>[
+            '/rpc/order_a',
+            '/rpc/order_b',
+            '/rpc/order_c',
+          ]);
+          expect(statusProvider.pendingCount, 0);
+        },
+      );
     });
 
     group('3. Retry with backoff', () {
@@ -236,135 +239,140 @@ void main() {
         expect(sw.elapsedMilliseconds, greaterThan(25));
       });
 
-      test('dead-letters after exhausting max retries (backoff applied)',
-          () async {
-        final ScriptedAdapter adapter = ScriptedAdapter(
-          (_) async => errorBody(500),
-        );
-        final Dio dio = buildTestDio(adapter);
-        final FakeNetworkMonitor monitor = FakeNetworkMonitor(
-          initial: onlineStatus(),
-        );
-        final SyncStatusProvider statusProvider = SyncStatusProvider();
-        final SyncConfig cfg = testSyncConfig();
-        final ActionQueue queue = buildQueue(cfg);
-        final SyncEngine engine = makeEngine(
-          dio: dio,
-          monitor: monitor,
-          statusProvider: statusProvider,
-          queue: queue,
-        );
-        addTearDown(engine.dispose);
-        addTearDown(() async => monitor.dispose());
+      test(
+        'dead-letters after exhausting max retries (backoff applied)',
+        () async {
+          final ScriptedAdapter adapter = ScriptedAdapter(
+            (_) async => errorBody(500),
+          );
+          final Dio dio = buildTestDio(adapter);
+          final FakeNetworkMonitor monitor = FakeNetworkMonitor(
+            initial: onlineStatus(),
+          );
+          final SyncStatusProvider statusProvider = SyncStatusProvider();
+          final SyncConfig cfg = testSyncConfig();
+          final ActionQueue queue = buildQueue(cfg);
+          final SyncEngine engine = makeEngine(
+            dio: dio,
+            monitor: monitor,
+            statusProvider: statusProvider,
+            queue: queue,
+          );
+          addTearDown(engine.dispose);
+          addTearDown(() async => monitor.dispose());
 
-        await engine.enqueue(testAction(maxRetries: 2));
-        final Stopwatch sw = Stopwatch()..start();
-        await engine.drain();
-        sw.stop();
+          await engine.enqueue(testAction(maxRetries: 2));
+          final Stopwatch sw = Stopwatch()..start();
+          await engine.drain();
+          sw.stop();
 
-        // Two attempts then dead-letter (no retry on the final failure).
-        expect(adapter.captured.length, 2);
-        expect(statusProvider.deadLetterCount, 1);
-        // At least one exponential-backoff delay separated the two attempts.
-        expect(sw.elapsedMilliseconds, greaterThan(10));
-      });
+          // Two attempts then dead-letter (no retry on the final failure).
+          expect(adapter.captured.length, 2);
+          expect(statusProvider.deadLetterCount, 1);
+          // At least one exponential-backoff delay separated the two attempts.
+          expect(sw.elapsedMilliseconds, greaterThan(10));
+        },
+      );
     });
 
     group('4. Conflict detection', () {
-      test('server 409 flags action as conflicted via ConflictDetector',
-          () async {
-        final ScriptedAdapter adapter = ScriptedAdapter(
-          (_) async => errorBody(409, body: '{"version": 99}'),
-        );
-        final Dio dio = buildTestDio(adapter);
-        final FakeNetworkMonitor monitor = FakeNetworkMonitor(
-          initial: onlineStatus(),
-        );
-        final SyncStatusProvider statusProvider = SyncStatusProvider();
-        final SyncConfig cfg = testSyncConfig();
-        final ActionQueue queue = buildQueue(cfg);
-        final SyncEngine engine = makeEngine(
-          dio: dio,
-          monitor: monitor,
-          statusProvider: statusProvider,
-          queue: queue,
-        );
-        addTearDown(engine.dispose);
-        addTearDown(() async => monitor.dispose());
+      test(
+        'server 409 flags action as conflicted via ConflictDetector',
+        () async {
+          final ScriptedAdapter adapter = ScriptedAdapter(
+            (_) async => errorBody(409, body: '{"version": 99}'),
+          );
+          final Dio dio = buildTestDio(adapter);
+          final FakeNetworkMonitor monitor = FakeNetworkMonitor(
+            initial: onlineStatus(),
+          );
+          final SyncStatusProvider statusProvider = SyncStatusProvider();
+          final SyncConfig cfg = testSyncConfig();
+          final ActionQueue queue = buildQueue(cfg);
+          final SyncEngine engine = makeEngine(
+            dio: dio,
+            monitor: monitor,
+            statusProvider: statusProvider,
+            queue: queue,
+          );
+          addTearDown(engine.dispose);
+          addTearDown(() async => monitor.dispose());
 
-        final SyncAction queued = await engine.enqueue(
-          testAction(endpoint: '/rpc/update_entity', maxRetries: 3, lastKnownVersion: 5),
-        );
-        await engine.drain();
+          final SyncAction queued = await engine.enqueue(
+            testAction(
+              endpoint: '/rpc/update_entity',
+              maxRetries: 3,
+              lastKnownVersion: 5,
+            ),
+          );
+          await engine.drain();
 
-        // The action is flagged as conflicted (counted as a dead-letter) and
-        // retains the conflict diagnostics produced by ConflictDetector.
-        expect(statusProvider.deadLetterCount, 1);
+          // The action is flagged as conflicted (counted as a dead-letter) and
+          // retains the conflict diagnostics produced by ConflictDetector.
+          expect(statusProvider.deadLetterCount, 1);
 
-        final Map<String, dynamic>? raw = await storage.get(
-          AppBoxes.syncQueue,
-          queued.id,
-        );
-        expect(raw, isNotNull);
-        final SyncAction stored = SyncAction.fromJson(
-          raw as Map<String, dynamic>,
-        );
-        expect(stored.status, SyncActionStatus.conflicted);
-        expect(stored.errorMessage, contains('Client version: 5'));
-        expect(stored.errorMessage, contains('Server version: 99'));
-      });
+          final Map<String, dynamic>? raw = await storage.get(
+            AppBoxes.syncQueue,
+            queued.id,
+          );
+          expect(raw, isNotNull);
+          final SyncAction stored = SyncAction.fromJson(
+            raw as Map<String, dynamic>,
+          );
+          expect(stored.status, SyncActionStatus.conflicted);
+          expect(stored.errorMessage, contains('Client version: 5'));
+          expect(stored.errorMessage, contains('Server version: 99'));
+        },
+      );
     });
 
     group('5. Sync status observation', () {
-      test('emits offline -> syncing -> idle across multiple actions', () async {
-        final ScriptedAdapter adapter = ScriptedAdapter(
-          (_) async => successBody(),
-        );
-        final Dio dio = buildTestDio(adapter);
-        final FakeNetworkMonitor monitor = FakeNetworkMonitor(
-          initial: offlineStatus(),
-        );
-        final SyncStatusProvider statusProvider = SyncStatusProvider();
-        final SyncConfig cfg = testSyncConfig();
-        final ActionQueue queue = buildQueue(cfg);
-        final SyncEngine engine = makeEngine(
-          dio: dio,
-          monitor: monitor,
-          statusProvider: statusProvider,
-          queue: queue,
-        );
-        addTearDown(engine.dispose);
-        addTearDown(() async => monitor.dispose());
+      test(
+        'emits offline -> syncing -> idle across multiple actions',
+        () async {
+          final ScriptedAdapter adapter = ScriptedAdapter(
+            (_) async => successBody(),
+          );
+          final Dio dio = buildTestDio(adapter);
+          final FakeNetworkMonitor monitor = FakeNetworkMonitor(
+            initial: offlineStatus(),
+          );
+          final SyncStatusProvider statusProvider = SyncStatusProvider();
+          final SyncConfig cfg = testSyncConfig();
+          final ActionQueue queue = buildQueue(cfg);
+          final SyncEngine engine = makeEngine(
+            dio: dio,
+            monitor: monitor,
+            statusProvider: statusProvider,
+            queue: queue,
+          );
+          addTearDown(engine.dispose);
+          addTearDown(() async => monitor.dispose());
 
-        // Settle the initial offline emission.
-        await Future<void>.delayed(Duration.zero);
-        expect(statusProvider.status, SyncStatus.offline);
+          // Settle the initial offline emission.
+          await Future<void>.delayed(Duration.zero);
+          expect(statusProvider.status, SyncStatus.offline);
 
-        final List<SyncStatus> transitions = <SyncStatus>[];
-        statusProvider.addListener(() {
-          transitions.add(statusProvider.status);
-        });
+          final List<SyncStatus> transitions = <SyncStatus>[];
+          statusProvider.addListener(() {
+            transitions.add(statusProvider.status);
+          });
 
-        await engine.enqueue(
-          testAction(endpoint: '/rpc/x', maxRetries: 3),
-        );
-        await engine.enqueue(
-          testAction(endpoint: '/rpc/y', maxRetries: 3),
-        );
-        await engine.enqueue(
-          testAction(endpoint: '/rpc/z', maxRetries: 3),
-        );
+          await engine.enqueue(testAction(endpoint: '/rpc/x', maxRetries: 3));
+          await engine.enqueue(testAction(endpoint: '/rpc/y', maxRetries: 3));
+          await engine.enqueue(testAction(endpoint: '/rpc/z', maxRetries: 3));
 
-        // Reconnect — the engine drains the queue and broadcasts status.
-        monitor.setStatus(onlineStatus());
-        await waitFor(() => statusProvider.pendingCount == 0);
+          // Reconnect — the engine drains the queue and broadcasts status.
+          monitor.setStatus(onlineStatus());
+          await waitFor(() => statusProvider.pendingCount == 0);
 
-        expect(transitions, isNotEmpty);
-        expect(transitions, contains(SyncStatus.offline));
-        expect(transitions, contains(SyncStatus.syncing));
-        expect(transitions.last, SyncStatus.idle);
-        expect(statusProvider.pendingCount, 0);
-      });
+          expect(transitions, isNotEmpty);
+          expect(transitions, contains(SyncStatus.offline));
+          expect(transitions, contains(SyncStatus.syncing));
+          expect(transitions.last, SyncStatus.idle);
+          expect(statusProvider.pendingCount, 0);
+        },
+      );
     });
   });
 }

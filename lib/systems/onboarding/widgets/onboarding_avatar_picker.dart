@@ -105,9 +105,7 @@ class _OnboardingAvatarPickerState extends State<OnboardingAvatarPicker> {
               image: value == null
                   ? null
                   : MemoryImage(Uint8List.fromList(value.bytes)),
-              name: value == null
-                  ? widget.nameForFallback
-                  : value.fileName,
+              name: value == null ? widget.nameForFallback : value.fileName,
               size: 72,
             ),
             const SizedBox(width: HivorrSpacing.md),
@@ -116,9 +114,7 @@ class _OnboardingAvatarPickerState extends State<OnboardingAvatarPicker> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    value == null
-                        ? 'No avatar selected'
-                        : value.fileName,
+                    value == null ? 'No avatar selected' : value.fileName,
                     style: context.textTheme.bodyMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -135,8 +131,9 @@ class _OnboardingAvatarPickerState extends State<OnboardingAvatarPicker> {
                   if (value != null) ...<Widget>[
                     const SizedBox(height: HivorrSpacing.xs),
                     TextButton(
-                      onPressed:
-                          widget.isUploading ? null : () => widget.onChanged(null),
+                      onPressed: widget.isUploading
+                          ? null
+                          : () => widget.onChanged(null),
                       style: TextButton.styleFrom(
                         foregroundColor: colors.error,
                         minimumSize: const Size(48, 48),

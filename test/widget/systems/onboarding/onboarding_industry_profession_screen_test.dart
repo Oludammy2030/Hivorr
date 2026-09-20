@@ -32,20 +32,18 @@ void main() {
   }
 
   group('IndustryProfessionSelectionScreen (FV-19..FV-21, merged)', () {
-    testWidgets('renders both questions, the connector, and both dropdowns',
-        (WidgetTester tester) async {
+    testWidgets('renders both questions, the connector, and both dropdowns', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, _) = await pumpCombined(tester);
       await tester.pumpAndSettle();
+      expect(find.text('Which industry best describes you?'), findsOneWidget);
+      expect(find.text('Which profession best describes you?'), findsOneWidget);
       expect(
-        find.text('Which industry best describes you?'),
+        find.byIcon(Icons.arrow_downward),
         findsOneWidget,
+        reason: 'the ↓ connector visually links industry to profession',
       );
-      expect(
-        find.text('Which profession best describes you?'),
-        findsOneWidget,
-      );
-      expect(find.byIcon(Icons.arrow_downward), findsOneWidget,
-          reason: 'the ↓ connector visually links industry to profession');
       expect(find.byType(DropdownMenu<Industry>), findsOneWidget);
       expect(find.byType(DropdownMenu<Profession>), findsOneWidget);
       expect(
@@ -58,8 +56,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('profession stays disabled until an industry is selected',
-        (WidgetTester tester) async {
+    testWidgets('profession stays disabled until an industry is selected', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpCombined(tester);
       await tester.pumpAndSettle();
@@ -68,13 +67,17 @@ void main() {
         findsOneWidget,
       );
       expect(controller.primaryLabel, 'Save & continue');
-      expect(controller.canPrimary, isFalse,
-          reason: 'both selections are required before continuing');
+      expect(
+        controller.canPrimary,
+        isFalse,
+        reason: 'both selections are required before continuing',
+      );
       stack.provider.dispose();
     });
 
-    testWidgets('industry-only selection shows a validation message',
-        (WidgetTester tester) async {
+    testWidgets('industry-only selection shows a validation message', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpCombined(tester);
       await tester.pumpAndSettle();
@@ -92,8 +95,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('industry + profession then Save & continue bind + advance',
-        (WidgetTester tester) async {
+    testWidgets('industry + profession then Save & continue bind + advance', (
+      WidgetTester tester,
+    ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
           await pumpCombined(tester);
       await tester.pumpAndSettle();
@@ -115,8 +119,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('PLT005 conflict keeps the wizard on the combined step',
-        (WidgetTester tester) async {
+    testWidgets('PLT005 conflict keeps the wizard on the combined step', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack s = buildOnboardingStack();
       s.remote.throwConflictOnBind = true;
       final (OnboardingTestStack stack, OnboardingStepController controller) =
@@ -143,8 +148,9 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('changing the industry clears a previously chosen profession',
-        (WidgetTester tester) async {
+    testWidgets('changing the industry clears a previously chosen profession', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack s = buildOnboardingStack(
         taxonomyRepo: FakeTaxonomyRepository(
           industries: <Industry>[
@@ -189,23 +195,31 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(s.taxonomy.selectedIndustry?.id, 'ind-tech');
-      expect(s.taxonomy.selectedProfession?.id, 'prof-sw',
-          reason: 'the preserved selection is carried back into the dropdown');
+      expect(
+        s.taxonomy.selectedProfession?.id,
+        'prof-sw',
+        reason: 'the preserved selection is carried back into the dropdown',
+      );
       await tester.tap(find.byType(DropdownMenu<Industry>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Legal').last);
       await tester.pumpAndSettle();
       expect(s.taxonomy.selectedIndustry?.id, 'ind-legal');
-      expect(s.taxonomy.selectedProfession, isNull,
-          reason: 'the profession is the dependent value — re-selecting the '
-              'industry invalidates it');
+      expect(
+        s.taxonomy.selectedProfession,
+        isNull,
+        reason:
+            'the profession is the dependent value — re-selecting the '
+            'industry invalidates it',
+      );
       expect(controller.canPrimary, isFalse);
       controller.dispose();
       s.provider.dispose();
     });
 
-    testWidgets('industries render sorted by sortOrder then name in the menu',
-        (WidgetTester tester) async {
+    testWidgets('industries render sorted by sortOrder then name in the menu', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack s = buildOnboardingStack(
         taxonomyRepo: FakeTaxonomyRepository(
           industries: <Industry>[
@@ -227,20 +241,26 @@ void main() {
           professionsByIndustry: const <String, List<Profession>>{},
         ),
       );
-      final (OnboardingTestStack stack, _) =
-          await pumpCombined(tester, stack: s);
+      final (OnboardingTestStack stack, _) = await pumpCombined(
+        tester,
+        stack: s,
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.byType(DropdownMenu<Industry>));
       await tester.pumpAndSettle();
       final Offset legal = tester.getTopLeft(find.text('Legal').last);
       final Offset tech = tester.getTopLeft(find.text('Technology').last);
-      expect(legal.dy, lessThan(tech.dy),
-          reason: 'sortOrder 10 (Legal) lists before 30 (Technology)');
+      expect(
+        legal.dy,
+        lessThan(tech.dy),
+        reason: 'sortOrder 10 (Legal) lists before 30 (Technology)',
+      );
       stack.provider.dispose();
     });
 
-    testWidgets('shows the loading state before industries resolve',
-        (WidgetTester tester) async {
+    testWidgets('shows the loading state before industries resolve', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack s = buildOnboardingStack();
       await s.hydrate('u1');
       final OnboardingStepController controller = OnboardingStepController();

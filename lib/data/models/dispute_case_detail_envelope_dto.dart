@@ -15,7 +15,8 @@ class DisputeCaseDetailEnvelopeDto {
   });
 
   factory DisputeCaseDetailEnvelopeDto.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic>? caseData = json['case'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? caseData =
+        json['case'] as Map<String, dynamic>?;
     final Map<String, dynamic>? resolutionData =
         json['resolution'] as Map<String, dynamic>?;
     return DisputeCaseDetailEnvelopeDto(

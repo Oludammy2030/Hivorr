@@ -31,10 +31,9 @@ class MilestoneListCard extends StatelessWidget {
 
   /// Sum of amounts on milestones with status `released`.
   double get releasedTotal => milestones.fold(
-        0.0,
-        (double acc, EscrowMilestone m) =>
-            acc + (m.isReleased ? m.amount : 0.0),
-      );
+    0.0,
+    (double acc, EscrowMilestone m) => acc + (m.isReleased ? m.amount : 0.0),
+  );
 
   /// Progress fraction clamped to `0..1`; `0` when nothing released.
   double get progressValue {
@@ -48,8 +47,10 @@ class MilestoneListCard extends StatelessWidget {
     final ColorScheme colors = context.colorScheme;
     final AppThemeExtension ext = context.appExtension;
     final List<EscrowMilestone> sorted = <EscrowMilestone>[...milestones]
-      ..sort((EscrowMilestone a, EscrowMilestone b) =>
-          a.sortOrder.compareTo(b.sortOrder));
+      ..sort(
+        (EscrowMilestone a, EscrowMilestone b) =>
+            a.sortOrder.compareTo(b.sortOrder),
+      );
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -83,10 +84,7 @@ class MilestoneListCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           for (final EscrowMilestone milestone in sorted)
-            _MilestoneRow(
-              milestone: milestone,
-              currencyCode: currencyCode,
-            ),
+            _MilestoneRow(milestone: milestone, currencyCode: currencyCode),
         ],
       ),
     );
@@ -94,10 +92,7 @@ class MilestoneListCard extends StatelessWidget {
 }
 
 class _MilestoneRow extends StatelessWidget {
-  const _MilestoneRow({
-    required this.milestone,
-    required this.currencyCode,
-  });
+  const _MilestoneRow({required this.milestone, required this.currencyCode});
 
   final EscrowMilestone milestone;
   final String currencyCode;

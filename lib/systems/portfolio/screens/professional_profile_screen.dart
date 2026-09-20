@@ -96,9 +96,7 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
     }
 
     if (_service.state == PortfolioLoadState.error) {
-      return _ScaffoldChild(
-        child: _buildError(context),
-      );
+      return _ScaffoldChild(child: _buildError(context));
     }
 
     if (_service.state == PortfolioLoadState.loaded) {
@@ -191,9 +189,7 @@ class _ScaffoldChild extends StatelessWidget {
       appBar: AppBar(
         title: Text('Profile', style: context.textTheme.titleLarge),
       ),
-      body: SafeArea(
-        child: HivorrContentPane(child: child),
-      ),
+      body: SafeArea(child: HivorrContentPane(child: child)),
     );
   }
 }

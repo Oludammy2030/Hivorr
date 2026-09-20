@@ -113,7 +113,10 @@ void main() {
       expect(profile.portfolioItems[0].id, 'item-1');
       expect(profile.portfolioItems[0].itemType, 'video');
       expect(profile.portfolioItems[0].title, 'Demo Reel');
-      expect(profile.portfolioItems[0].mediaPath, 'portfolio-items/ent-1/reel.mp4');
+      expect(
+        profile.portfolioItems[0].mediaPath,
+        'portfolio-items/ent-1/reel.mp4',
+      );
       expect(profile.portfolioItems[0].sortOrder, 3);
     });
 
@@ -172,7 +175,9 @@ void main() {
         industryName: 'Manufacturing',
       );
 
-      final PublicProfession profession = PortfolioMappers.toPublicProfession(dto);
+      final PublicProfession profession = PortfolioMappers.toPublicProfession(
+        dto,
+      );
 
       expect(profession.id, 'ep-1');
       expect(profession.professionId, 'prof-1');
@@ -192,7 +197,9 @@ void main() {
         verificationStatus: 'approved',
       );
 
-      final PublicCredential credential = PortfolioMappers.toPublicCredential(dto);
+      final PublicCredential credential = PortfolioMappers.toPublicCredential(
+        dto,
+      );
 
       expect(credential.kind, 'trade_proof');
       expect(credential.title, 'Trade License');

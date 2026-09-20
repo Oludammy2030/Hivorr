@@ -5,11 +5,7 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/systems/finance/helpers/balance_formatter.dart';
 
 /// Per-currency balance chip variant used in the balance overview (EP-02-13 §5.6).
-enum BalanceChipKind {
-  available,
-  held,
-  pending,
-}
+enum BalanceChipKind { available, held, pending }
 
 /// A single balance chip displaying an amount with its semantic color (EP-02-13).
 ///
@@ -50,7 +46,10 @@ class BalanceChip extends StatelessWidget {
         label = 'Pending';
     }
 
-    final String formatted = BalanceFormatter.formatBalance(amount, currencyCode);
+    final String formatted = BalanceFormatter.formatBalance(
+      amount,
+      currencyCode,
+    );
 
     return Semantics(
       label: '$label balance $formatted',

@@ -36,10 +36,7 @@ class HivorrSuccessState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             IconTheme.merge(
-              data: IconThemeData(
-                size: 48,
-                color: ext.success,
-              ),
+              data: IconThemeData(size: 48, color: ext.success),
               child: icon ?? const Icon(Icons.check_circle_outline),
             ),
             const SizedBox(height: HivorrSpacing.md),
@@ -52,8 +49,9 @@ class HivorrSuccessState extends StatelessWidget {
               const SizedBox(height: HivorrSpacing.xs),
               Text(
                 subtitle!,
-                style: context.textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

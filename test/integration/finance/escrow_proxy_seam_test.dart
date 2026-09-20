@@ -30,34 +30,34 @@ void main() {
   late List<Map<String, dynamic>> milestoneRows;
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   Map<String, dynamic> escrowRow() => <String, dynamic>{
-        'id': 'escrow-1',
-        'financial_profile_id': 'p1',
-        'payer_entity_id': 'u1',
-        'payee_entity_id': 'u2',
-        'currency_code': 'NGN',
-        'total_amount': 150000.0,
-        'released_amount': 0.0,
-        'refunded_amount': 0.0,
-        'status': 'funded',
-        'external_reference': 'order-9f9f9f9f9f9f',
-        'created_at': '2026-01-01T00:00:00.000Z',
-        'funded_at': '2026-01-02T00:00:00.000Z',
-        'released_at': null,
-        'refunded_at': null,
-      };
+    'id': 'escrow-1',
+    'financial_profile_id': 'p1',
+    'payer_entity_id': 'u1',
+    'payee_entity_id': 'u2',
+    'currency_code': 'NGN',
+    'total_amount': 150000.0,
+    'released_amount': 0.0,
+    'refunded_amount': 0.0,
+    'status': 'funded',
+    'external_reference': 'order-9f9f9f9f9f9f',
+    'created_at': '2026-01-01T00:00:00.000Z',
+    'funded_at': '2026-01-02T00:00:00.000Z',
+    'released_at': null,
+    'refunded_at': null,
+  };
 
   Map<String, dynamic> envelope() => ok(<String, dynamic>{
-        'escrow': escrowRow(),
-        'milestones': milestoneRows,
-        'transactions': <dynamic>[],
-      });
+    'escrow': escrowRow(),
+    'milestones': milestoneRows,
+    'transactions': <dynamic>[],
+  });
 
   SupabaseEscrowRemoteDataSource realDataSource({required bool writeViaProxy}) {
     return SupabaseEscrowRemoteDataSource(
@@ -106,114 +106,124 @@ void main() {
     late EscrowRepositoryImpl repository;
 
     setUp(() {
-      repository =
-          EscrowRepositoryImpl(remote: realDataSource(writeViaProxy: false));
-    });
-
-    test('getByProject enumerates the scripted escrow then renders milestones',
-        () async {
-      // getByProject('project-x') → financial_escrow_get per known id.
-      final List<Escrow> escrows = await repository.getByProject(
-        projectId: 'project-x',
-        escrowIds: <String>['escrow-1'],
+      repository = EscrowRepositoryImpl(
+        remote: realDataSource(writeViaProxy: false),
       );
-      expect(escrows, hasLength(1));
-      final Escrow escrow = escrows.single;
-      expect(escrow.id, 'escrow-1');
-      expect(escrow.status, 'funded');
-      expect(escrow.currencyCode, 'NGN');
-      expect(escrow.totalAmount, 150000.0);
-      expect(escrow.heldAmount, 150000.0);
-      expect(escrow.isActive, isTrue);
-      expect(escrow.isDisputed, isFalse);
-
-      // select(escrow.id): milestones rendered from the envelope.
-      final EscrowDetail detail = await repository.getById(escrow.id);
-      expect(detail.escrow.id, escrow.id);
-      expect(detail.milestones, hasLength(2));
-      expect(detail.milestones.map((m) => m.status), <String>[
-        'pending',
-        'pending',
-      ]);
-      expect(detail.milestones.map((m) => m.title), <String>[
-        'Design approval',
-        'Final delivery',
-      ]);
-      expect(detail.milestonesTotal, 150000.0);
-      expect(detail.transactions, isEmpty);
-
-      // The seam flag is visible to the caller.
-      expect(repository.writeAvailable, isFalse);
     });
 
-    test('completeMilestone throws the support-team guard, never a silent no-op',
-        () async {
-      await expectLater(
-        repository.completeMilestone(
-          escrowId: 'escrow-1',
-          milestoneId: 'ms-1',
-        ),
-        throwsA(
-          isA<EscrowWriteUnavailableException>().having(
-            (Object? e) => (e as EscrowWriteUnavailableException).message,
-            'message',
-            contains('support team'),
+    test(
+      'getByProject enumerates the scripted escrow then renders milestones',
+      () async {
+        // getByProject('project-x') → financial_escrow_get per known id.
+        final List<Escrow> escrows = await repository.getByProject(
+          projectId: 'project-x',
+          escrowIds: <String>['escrow-1'],
+        );
+        expect(escrows, hasLength(1));
+        final Escrow escrow = escrows.single;
+        expect(escrow.id, 'escrow-1');
+        expect(escrow.status, 'funded');
+        expect(escrow.currencyCode, 'NGN');
+        expect(escrow.totalAmount, 150000.0);
+        expect(escrow.heldAmount, 150000.0);
+        expect(escrow.isActive, isTrue);
+        expect(escrow.isDisputed, isFalse);
+
+        // select(escrow.id): milestones rendered from the envelope.
+        final EscrowDetail detail = await repository.getById(escrow.id);
+        expect(detail.escrow.id, escrow.id);
+        expect(detail.milestones, hasLength(2));
+        expect(detail.milestones.map((m) => m.status), <String>[
+          'pending',
+          'pending',
+        ]);
+        expect(detail.milestones.map((m) => m.title), <String>[
+          'Design approval',
+          'Final delivery',
+        ]);
+        expect(detail.milestonesTotal, 150000.0);
+        expect(detail.transactions, isEmpty);
+
+        // The seam flag is visible to the caller.
+        expect(repository.writeAvailable, isFalse);
+      },
+    );
+
+    test(
+      'completeMilestone throws the support-team guard, never a silent no-op',
+      () async {
+        await expectLater(
+          repository.completeMilestone(
+            escrowId: 'escrow-1',
+            milestoneId: 'ms-1',
           ),
-        ),
-      );
+          throwsA(
+            isA<EscrowWriteUnavailableException>().having(
+              (Object? e) => (e as EscrowWriteUnavailableException).message,
+              'message',
+              contains('support team'),
+            ),
+          ),
+        );
 
-      // The guard never touched the server state.
-      final EscrowDetail detail = await repository.getById('escrow-1');
-      expect(detail.milestones.first.status, 'pending');
-    });
+        // The guard never touched the server state.
+        final EscrowDetail detail = await repository.getById('escrow-1');
+        expect(detail.milestones.first.status, 'pending');
+      },
+    );
   });
 
   group('proxy handoff with the seam on (writeViaProxy=true)', () {
-    test('the real datasource routes to the proxy branch, never a direct RPC',
-        () async {
-      final SupabaseEscrowRemoteDataSource on =
-          realDataSource(writeViaProxy: true);
-      expect(on.writeViaProxy, isTrue);
+    test(
+      'the real datasource routes to the proxy branch, never a direct RPC',
+      () async {
+        final SupabaseEscrowRemoteDataSource on = realDataSource(
+          writeViaProxy: true,
+        );
+        expect(on.writeViaProxy, isTrue);
 
-      await expectLater(
-        on.completeMilestone(escrowId: 'escrow-1', milestoneId: 'ms-1'),
-        throwsA(
-          isA<UnimplementedError>().having(
-            (Object? e) => (e as UnimplementedError).message ?? '',
-            'message',
-            contains('EP-02-18'),
+        await expectLater(
+          on.completeMilestone(escrowId: 'escrow-1', milestoneId: 'ms-1'),
+          throwsA(
+            isA<UnimplementedError>().having(
+              (Object? e) => (e as UnimplementedError).message ?? '',
+              'message',
+              contains('EP-02-18'),
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
 
-    test('completeMilestone proxies, then re-reads the completed milestone',
-        () async {
-      // The real data source is used for every read; the proxy stand-in
-      // simulates only EP-02-18's missing HTTP success response by mutating the
-      // scripted server state the RPC handler serves.
-      final _FakeProxyRemoteDataSource proxy =
-          _FakeProxyRemoteDataSource(
-        reads: realDataSource(writeViaProxy: false),
-        milestoneRows: milestoneRows,
-      );
-      final EscrowRepositoryImpl repository = EscrowRepositoryImpl(remote: proxy);
-      expect(repository.writeAvailable, isTrue);
+    test(
+      'completeMilestone proxies, then re-reads the completed milestone',
+      () async {
+        // The real data source is used for every read; the proxy stand-in
+        // simulates only EP-02-18's missing HTTP success response by mutating the
+        // scripted server state the RPC handler serves.
+        final _FakeProxyRemoteDataSource proxy = _FakeProxyRemoteDataSource(
+          reads: realDataSource(writeViaProxy: false),
+          milestoneRows: milestoneRows,
+        );
+        final EscrowRepositoryImpl repository = EscrowRepositoryImpl(
+          remote: proxy,
+        );
+        expect(repository.writeAvailable, isTrue);
 
-      final EscrowDetail completed =
-          await repository.completeMilestone(
-            escrowId: 'escrow-1',
-            milestoneId: 'ms-1',
-          );
+        final EscrowDetail completed = await repository.completeMilestone(
+          escrowId: 'escrow-1',
+          milestoneId: 'ms-1',
+        );
 
-      // Re-read after the proxy call: server-authoritative state.
-      expect(completed.milestones, hasLength(2));
-      expect(completed.milestones.first.id, 'ms-1');
-      expect(completed.milestones.first.isCompleted, isTrue);
-      expect(completed.milestones.first.status, 'completed');
-      expect(completed.milestones.last.status, 'pending');
-      expect(completed.milestonesTotal, 150000.0);
-    });
+        // Re-read after the proxy call: server-authoritative state.
+        expect(completed.milestones, hasLength(2));
+        expect(completed.milestones.first.id, 'ms-1');
+        expect(completed.milestones.first.isCompleted, isTrue);
+        expect(completed.milestones.first.status, 'completed');
+        expect(completed.milestones.last.status, 'pending');
+        expect(completed.milestonesTotal, 150000.0);
+      },
+    );
   });
 }
 
@@ -283,9 +293,7 @@ class _FakeProxyRemoteDataSource implements EscrowRemoteDataSource {
 
   @override
   Future<void> releaseFinal({required String escrowId}) async {
-    throw UnimplementedError(
-      'releaseFinal is not exercised by the seam test.',
-    );
+    throw UnimplementedError('releaseFinal is not exercised by the seam test.');
   }
 
   @override

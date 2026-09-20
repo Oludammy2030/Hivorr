@@ -31,69 +31,67 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
 
   @override
   Future<AdminCheckResultDto> checkAdmin() => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>('platform_admin_check');
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return AdminCheckResultDto.fromJson(data);
-      });
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('platform_admin_check');
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
+    );
+    return AdminCheckResultDto.fromJson(data);
+  });
 
   @override
   Future<List<AdminReviewQueueEntryDto>> getReviewQueue({
     String? submissionType,
     int limit = 50,
     int offset = 0,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{
-          'p_limit': limit,
-          'p_offset': offset,
-        };
-        if (submissionType != null && submissionType.isNotEmpty) {
-          params['p_submission_type'] = submissionType;
-        }
-        final Map<String, dynamic> envelope =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'p_limit': limit,
+      'p_offset': offset,
+    };
+    if (submissionType != null && submissionType.isNotEmpty) {
+      params['p_submission_type'] = submissionType;
+    }
+    final Map<String, dynamic> envelope = await supabase
+        .rpc<Map<String, dynamic>>(
           'verification_review_queue_get',
           params: params,
         );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(envelope);
-        final Object? items = data['submissions'];
-        if (items is List) {
-          return items
-              .cast<Map<String, dynamic>>()
-              .map(AdminReviewQueueEntryDto.fromJson)
-              .toList(growable: false);
-        }
-        return const <AdminReviewQueueEntryDto>[];
-      });
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      envelope,
+    );
+    final Object? items = data['submissions'];
+    if (items is List) {
+      return items
+          .cast<Map<String, dynamic>>()
+          .map(AdminReviewQueueEntryDto.fromJson)
+          .toList(growable: false);
+    }
+    return const <AdminReviewQueueEntryDto>[];
+  });
 
   @override
   Future<void> startReview(String submissionId) => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'verification_review_start',
           params: <String, dynamic>{'p_submission_id': submissionId},
         );
-        VerificationEnvelopeParser.unwrap(response);
-      });
+    VerificationEnvelopeParser.unwrap(response);
+  });
 
   @override
-  Future<void> approveSubmission(
-    String submissionId, {
-    String notes = '',
-  }) =>
+  Future<void> approveSubmission(String submissionId, {String notes = ''}) =>
       _guard(() async {
         final Map<String, dynamic> params = <String, dynamic>{
           'p_submission_id': submissionId,
           'p_notes': notes,
         };
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_review_approve',
-          params: params,
-        );
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+              'verification_review_approve',
+              params: params,
+            );
         VerificationEnvelopeParser.unwrap(response);
       });
 
@@ -102,33 +100,31 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
     String submissionId, {
     String notes = '',
     bool requiresResubmission = false,
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{
-          'p_submission_id': submissionId,
-          'p_notes': notes,
-          'p_requires_resubmission': requiresResubmission,
-        };
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'p_submission_id': submissionId,
+      'p_notes': notes,
+      'p_requires_resubmission': requiresResubmission,
+    };
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'verification_review_reject',
           params: params,
         );
-        VerificationEnvelopeParser.unwrap(response);
-      });
+    VerificationEnvelopeParser.unwrap(response);
+  });
 
   @override
-  Future<List<AdminReviewAuditEntryDto>> getAuditTrail(
-    String submissionId,
-  ) =>
+  Future<List<AdminReviewAuditEntryDto>> getAuditTrail(String submissionId) =>
       _guard(() async {
-        final Map<String, dynamic> envelope =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_review_audit_get',
-          params: <String, dynamic>{'p_submission_id': submissionId},
+        final Map<String, dynamic> envelope = await supabase
+            .rpc<Map<String, dynamic>>(
+              'verification_review_audit_get',
+              params: <String, dynamic>{'p_submission_id': submissionId},
+            );
+        final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+          envelope,
         );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(envelope);
         final Object? items = data['audit_entries'];
         if (items is List) {
           return items
@@ -143,23 +139,22 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
   Future<String> createDocumentSignedUrl(
     String credentialId, {
     int expiresIn = 60,
-  }) =>
-      _guard(() async {
-        final List<Map<String, dynamic>> rows = await supabase
-            .from('entity_credentials')
-            .select('document_path')
-            .eq('id', credentialId)
-            .limit(1);
-        if (rows.isEmpty) {
-          throw Exception('Credential not found.');
-        }
-        final String? documentPath = rows.first['document_path'] as String?;
-        if (documentPath == null || documentPath.isEmpty) {
-          throw Exception('Credential has no attached document.');
-        }
-        final String signedUrl = await supabase.storage
-            .from(StorageBuckets.credentialDocuments)
-            .createSignedUrl(documentPath, expiresIn);
-        return signedUrl;
-      });
+  }) => _guard(() async {
+    final List<Map<String, dynamic>> rows = await supabase
+        .from('entity_credentials')
+        .select('document_path')
+        .eq('id', credentialId)
+        .limit(1);
+    if (rows.isEmpty) {
+      throw Exception('Credential not found.');
+    }
+    final String? documentPath = rows.first['document_path'] as String?;
+    if (documentPath == null || documentPath.isEmpty) {
+      throw Exception('Credential has no attached document.');
+    }
+    final String signedUrl = await supabase.storage
+        .from(StorageBuckets.credentialDocuments)
+        .createSignedUrl(documentPath, expiresIn);
+    return signedUrl;
+  });
 }

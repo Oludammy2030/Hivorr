@@ -25,10 +25,10 @@ class FinancialService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _repository = repository,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _repository = repository,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final FinancialRepository _repository;
   final HivorrLogger? _logger;
@@ -46,88 +46,73 @@ class FinancialService {
 
   /// Fetches the financial profile.
   Future<FinancialProfile?> getProfile() => _tracedAndLogged(
-        'finance.profile.get',
-        () async {
-          final profile = await _repository.getProfile();
-          _logger?.info('Financial profile fetched', <String, Object?>{
-            'hasProfile': profile != null,
-            'status': profile?.status,
-            'defaultCurrency': profile?.defaultCurrency,
-            'entityId':
-                profile == null ? null : _redactor.redact(profile.entityId),
-          });
-          return profile;
-        },
-      );
+    'finance.profile.get',
+    () async {
+      final profile = await _repository.getProfile();
+      _logger?.info('Financial profile fetched', <String, Object?>{
+        'hasProfile': profile != null,
+        'status': profile?.status,
+        'defaultCurrency': profile?.defaultCurrency,
+        'entityId': profile == null ? null : _redactor.redact(profile.entityId),
+      });
+      return profile;
+    },
+  );
 
   /// Fetches the aggregated financial status.
-  Future<FinancialStatus> getStatus() => _tracedAndLogged(
-        'finance.status.get',
-        () async {
-          final status = await _repository.getStatus();
-          _logger?.info('Financial status fetched', <String, Object?>{
-            'balanceCount': status.balances.length,
-            'activeEscrowCount': status.activeEscrowCount,
-            'cashoutLimit': status.cashoutLimit,
-          });
-          return status;
-        },
-      );
+  Future<FinancialStatus> getStatus() =>
+      _tracedAndLogged('finance.status.get', () async {
+        final status = await _repository.getStatus();
+        _logger?.info('Financial status fetched', <String, Object?>{
+          'balanceCount': status.balances.length,
+          'activeEscrowCount': status.activeEscrowCount,
+          'cashoutLimit': status.cashoutLimit,
+        });
+        return status;
+      });
 
   /// Fetches a single-currency balance.
-  Future<Balance?> getBalance(String currencyCode) => _tracedAndLogged(
-        'finance.balance.get',
-        () async {
-          final balance = await _repository.getBalance(currencyCode);
-          _logger?.info('Balance fetched', <String, Object?>{
-            'currencyCode': currencyCode,
-            'hasBalance': balance != null,
-            'available': balance?.availableBalance,
-          });
-          return balance;
-        },
-      );
+  Future<Balance?> getBalance(String currencyCode) =>
+      _tracedAndLogged('finance.balance.get', () async {
+        final balance = await _repository.getBalance(currencyCode);
+        _logger?.info('Balance fetched', <String, Object?>{
+          'currencyCode': currencyCode,
+          'hasBalance': balance != null,
+          'available': balance?.availableBalance,
+        });
+        return balance;
+      });
 
   /// Creates a financial profile with a default currency.
-  Future<FinancialProfile> createProfile({
-    String defaultCurrency = 'NGN',
-  }) =>
-      _tracedAndLogged(
-        'finance.profile.create',
-        () async {
-          _logger?.info('Creating financial profile', <String, Object?>{
-            'defaultCurrency': defaultCurrency,
-          });
-          final profile = await _repository.createProfile(
-            defaultCurrency: defaultCurrency,
-          );
-          _logger?.info('Financial profile created', <String, Object?>{
-            'profileId': _redactor.redact(profile.id),
-            'defaultCurrency': profile.defaultCurrency,
-            'entityId': _redactor.redact(profile.entityId),
-          });
-          return profile;
-        },
-      );
+  Future<FinancialProfile> createProfile({String defaultCurrency = 'NGN'}) =>
+      _tracedAndLogged('finance.profile.create', () async {
+        _logger?.info('Creating financial profile', <String, Object?>{
+          'defaultCurrency': defaultCurrency,
+        });
+        final profile = await _repository.createProfile(
+          defaultCurrency: defaultCurrency,
+        );
+        _logger?.info('Financial profile created', <String, Object?>{
+          'profileId': _redactor.redact(profile.id),
+          'defaultCurrency': profile.defaultCurrency,
+          'entityId': _redactor.redact(profile.entityId),
+        });
+        return profile;
+      });
 
   /// Requests activation guidance for a pending account in [currencyCode].
   Future<AccountActivationGuidance> requestAccountActivation({
     required String currencyCode,
-  }) =>
-      _tracedAndLogged(
-        'finance.account.activation',
-        () async {
-          final guidance = await _repository.requestAccountActivation(
-            currencyCode: currencyCode,
-          );
-          _logger?.info('Account activation guidance resolved',
-              <String, Object?>{
-                'currencyCode': guidance.currencyCode,
-                'providerName': guidance.providerName,
-              });
-          return guidance;
-        },
-      );
+  }) => _tracedAndLogged('finance.account.activation', () async {
+    final guidance = await _repository.requestAccountActivation(
+      currencyCode: currencyCode,
+    );
+    _logger?.info('Account activation guidance resolved', <String, Object?>{
+      'currencyCode': guidance.currencyCode,
+      'providerName': guidance.providerName,
+    });
+    return guidance;
+  });
 
   /// Wraps [action] in a `finance.*` [PerformanceTracer] span and surfaces
   /// failures via the logger with redacted context.

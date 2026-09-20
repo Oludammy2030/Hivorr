@@ -133,7 +133,8 @@ class _EscrowDetailScreenState extends State<EscrowDetailScreen>
                   onCompleteMilestone: _completeAction(provider),
                   onReleaseMilestone: _releaseAction(provider),
                   onReleaseFinal: () => provider.releaseFinal(),
-                  onRefund: () => provider.refundEscrow(reason: 'Requested via support'),
+                  onRefund: () =>
+                      provider.refundEscrow(reason: 'Requested via support'),
                 ),
               ],
             ),

@@ -6,22 +6,22 @@ import 'package:hivorr/core/network/network_type.dart';
 
 void main() {
   NetworkStatus wifiStatus() => NetworkStatus(
-        isConnected: true,
-        networkType: NetworkType.wifi,
-        timestamp: DateTime.now(),
-      );
+    isConnected: true,
+    networkType: NetworkType.wifi,
+    timestamp: DateTime.now(),
+  );
 
   NetworkStatus mobileStatus() => NetworkStatus(
-        isConnected: true,
-        networkType: NetworkType.mobile,
-        timestamp: DateTime.now(),
-      );
+    isConnected: true,
+    networkType: NetworkType.mobile,
+    timestamp: DateTime.now(),
+  );
 
   NetworkStatus offlineStatus() => NetworkStatus(
-        isConnected: false,
-        networkType: NetworkType.none,
-        timestamp: DateTime.now(),
-      );
+    isConnected: false,
+    networkType: NetworkType.none,
+    timestamp: DateTime.now(),
+  );
 
   group('NetworkStatusProvider', () {
     test('initial status reflects monitor initial status', () {

@@ -31,7 +31,10 @@ class ContactScreen extends StatelessWidget {
           TextButton(
             onPressed: () => context.go(RoutePaths.help),
             style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text('Open the Help center', style: context.textTheme.labelLarge),
+            child: Text(
+              'Open the Help center',
+              style: context.textTheme.labelLarge,
+            ),
           ),
           const SizedBox(height: HivorrSpacing.xl),
           PublicInfoRow(
@@ -43,7 +46,10 @@ class ContactScreen extends StatelessWidget {
           TextButton(
             onPressed: () => context.go(RoutePaths.security),
             style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text('See our trust model', style: context.textTheme.labelLarge),
+            child: Text(
+              'See our trust model',
+              style: context.textTheme.labelLarge,
+            ),
           ),
           const SizedBox(height: HivorrSpacing.xl),
           PublicInfoRow(

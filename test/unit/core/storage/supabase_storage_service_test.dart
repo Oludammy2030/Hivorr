@@ -58,23 +58,30 @@ void main() {
       expect(storage.buckets[credential]!.containsKey('u/sub/doc.pdf'), isTrue);
     });
 
-    test('validation runs before the SDK: oversize never hits the fake', () async {
-      final limit = StorageLimits.forBucket(credential)!;
-      await expectLater(
-        service.upload(
-          bucket: credential,
-          path: 'u/sub/doc.pdf',
-          bytes: Uint8List(limit + 1),
-          mimeType: 'application/pdf',
-        ),
-        throwsA(
-          isA<StorageValidationException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation)
-              .having((e) => e.code, 'code', 'PLT003'),
-        ),
-      );
-      expect(storage.capturedUpsert, isNull, reason: 'SDK must not be invoked');
-    });
+    test(
+      'validation runs before the SDK: oversize never hits the fake',
+      () async {
+        final limit = StorageLimits.forBucket(credential)!;
+        await expectLater(
+          service.upload(
+            bucket: credential,
+            path: 'u/sub/doc.pdf',
+            bytes: Uint8List(limit + 1),
+            mimeType: 'application/pdf',
+          ),
+          throwsA(
+            isA<StorageValidationException>()
+                .having((e) => e.kind, 'kind', ApiExceptionKind.validation)
+                .having((e) => e.code, 'code', 'PLT003'),
+          ),
+        );
+        expect(
+          storage.capturedUpsert,
+          isNull,
+          reason: 'SDK must not be invoked',
+        );
+      },
+    );
 
     test('invalid MIME for bucket throws PLT003 before network', () async {
       await expectLater(
@@ -85,8 +92,11 @@ void main() {
           mimeType: 'application/pdf',
         ),
         throwsA(
-          isA<StorageValidationException>()
-              .having((e) => e.code, 'code', 'PLT003'),
+          isA<StorageValidationException>().having(
+            (e) => e.code,
+            'code',
+            'PLT003',
+          ),
         ),
       );
       expect(storage.capturedUpsert, isNull);
@@ -135,48 +145,50 @@ void main() {
       expect(storage.capturedUpsert, isFalse);
     });
 
-    test('onProgress with Dio routes through the Dio POST and invokes callback',
-        () async {
-      final withDio = SupabaseStorageService(
-        storageClient: storage,
-        dio: dio,
-        tokenProvider: tokens,
-      );
-      final progress = <List<int>>[];
-      final key = await withDio.upload(
-        bucket: credential,
-        path: 'u/s/doc.pdf',
-        bytes: Uint8List.fromList(<int>[1, 2, 3]),
-        mimeType: 'application/pdf',
-        fileName: 'doc.pdf',
-        onProgress: (sent, total) => progress.add(<int>[sent, total]),
-      );
-      expect(key, isNotEmpty);
-      expect(progress, isNotEmpty);
-      expect(progress.last, <int>[10, 100]);
-      expect(dioHarness.capturedEndpoint, contains('/storage/v1/object/'));
-      expect(dioHarness.capturedData, isA<FormData>());
-      expect(dioHarness.capturedAuthHeader, 'Bearer test-token');
-    });
+    test(
+      'onProgress with Dio routes through the Dio POST and invokes callback',
+      () async {
+        final withDio = SupabaseStorageService(
+          storageClient: storage,
+          dio: dio,
+          tokenProvider: tokens,
+        );
+        final progress = <List<int>>[];
+        final key = await withDio.upload(
+          bucket: credential,
+          path: 'u/s/doc.pdf',
+          bytes: Uint8List.fromList(<int>[1, 2, 3]),
+          mimeType: 'application/pdf',
+          fileName: 'doc.pdf',
+          onProgress: (sent, total) => progress.add(<int>[sent, total]),
+        );
+        expect(key, isNotEmpty);
+        expect(progress, isNotEmpty);
+        expect(progress.last, <int>[10, 100]);
+        expect(dioHarness.capturedEndpoint, contains('/storage/v1/object/'));
+        expect(dioHarness.capturedData, isA<FormData>());
+        expect(dioHarness.capturedAuthHeader, 'Bearer test-token');
+      },
+    );
 
-    test('onProgress without Dio falls back to the SDK (no progress events)',
-        () async {
-      final progress = <List<int>>[];
-      final key = await service.upload(
-        bucket: credential,
-        path: 'u/s/doc.pdf',
-        bytes: Uint8List(2),
-        mimeType: 'application/pdf',
-        onProgress: (sent, total) => progress.add(<int>[sent, total]),
-      );
-      expect(key, 'u/s/doc.pdf');
-      expect(progress, isEmpty);
-    });
+    test(
+      'onProgress without Dio falls back to the SDK (no progress events)',
+      () async {
+        final progress = <List<int>>[];
+        final key = await service.upload(
+          bucket: credential,
+          path: 'u/s/doc.pdf',
+          bytes: Uint8List(2),
+          mimeType: 'application/pdf',
+          onProgress: (sent, total) => progress.add(<int>[sent, total]),
+        );
+        expect(key, 'u/s/doc.pdf');
+        expect(progress, isEmpty);
+      },
+    );
 
     test('bytes round-trip intact via upload then download', () async {
-      final bytes = Uint8List.fromList(
-        List<int>.generate(256, (int i) => i),
-      );
+      final bytes = Uint8List.fromList(List<int>.generate(256, (int i) => i));
       await service.upload(
         bucket: credential,
         path: 'u/s/doc.pdf',
@@ -206,25 +218,29 @@ void main() {
       expect(bytes, <int>[5, 6, 7]);
     });
 
-    test('download of a missing object maps SDK 404 to notFound PLT004',
-        () async {
-      await expectLater(
-        service.download(bucket: credential, path: 'missing.pdf'),
-        throwsA(
-          isA<StorageNotFoundException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.notFound)
-              .having((e) => e.code, 'code', 'PLT004'),
-        ),
-      );
-    });
+    test(
+      'download of a missing object maps SDK 404 to notFound PLT004',
+      () async {
+        await expectLater(
+          service.download(bucket: credential, path: 'missing.pdf'),
+          throwsA(
+            isA<StorageNotFoundException>()
+                .having((e) => e.kind, 'kind', ApiExceptionKind.notFound)
+                .having((e) => e.code, 'code', 'PLT004'),
+          ),
+        );
+      },
+    );
 
-    test('download on an unknown bucket throws StorageValidationException',
-        () async {
-      await expectLater(
-        service.download(bucket: 'nope', path: 'x'),
-        throwsA(isA<StorageValidationException>()),
-      );
-    });
+    test(
+      'download on an unknown bucket throws StorageValidationException',
+      () async {
+        await expectLater(
+          service.download(bucket: 'nope', path: 'x'),
+          throwsA(isA<StorageValidationException>()),
+        );
+      },
+    );
   });
 
   group('remove', () {
@@ -235,10 +251,7 @@ void main() {
         bytes: Uint8List(2),
         mimeType: 'application/pdf',
       );
-      await service.remove(
-        bucket: credential,
-        paths: <String>['u/s/doc.pdf'],
-      );
+      await service.remove(bucket: credential, paths: <String>['u/s/doc.pdf']);
       expect(storage.buckets[credential]!.containsKey('u/s/doc.pdf'), isFalse);
       await expectLater(
         service.download(bucket: credential, path: 'u/s/doc.pdf'),
@@ -246,26 +259,29 @@ void main() {
       );
     });
 
-    test('remove on an unknown bucket throws StorageValidationException',
-        () async {
-      await expectLater(
-        service.remove(bucket: 'nope', paths: <String>['x']),
-        throwsA(isA<StorageValidationException>()),
-      );
-    });
+    test(
+      'remove on an unknown bucket throws StorageValidationException',
+      () async {
+        await expectLater(
+          service.remove(bucket: 'nope', paths: <String>['x']),
+          throwsA(isA<StorageValidationException>()),
+        );
+      },
+    );
   });
 
   group('getPublicUrl', () {
     test('public avatar bucket returns /object/public/ URL', () {
-      final url =
-          service.getPublicUrl(bucket: avatarBucket, path: 'u/avatar.png');
+      final url = service.getPublicUrl(
+        bucket: avatarBucket,
+        path: 'u/avatar.png',
+      );
       expect(url, contains('/storage/v1/object/public/'));
       expect(url, contains('profile-avatars'));
     });
 
     test('public portfolio bucket returns public URL', () {
-      final url =
-          service.getPublicUrl(bucket: portfolio, path: 'u/item.png');
+      final url = service.getPublicUrl(bucket: portfolio, path: 'u/item.png');
       expect(url, contains('/object/public/portfolio-items/'));
     });
 
@@ -273,8 +289,11 @@ void main() {
       expect(
         () => service.getPublicUrl(bucket: credential, path: 'u/s/doc.pdf'),
         throwsA(
-          isA<StorageValidationException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<StorageValidationException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -318,10 +337,7 @@ void main() {
         bytes: Uint8List(1),
         mimeType: 'image/png',
       );
-      final objects = await service.list(
-        bucket: portfolio,
-        path: 'u/item/',
-      );
+      final objects = await service.list(bucket: portfolio, path: 'u/item/');
       expect(objects, hasLength(2));
     });
 
@@ -342,13 +358,15 @@ void main() {
       expect(objects.length, lessThanOrEqualTo(3));
     });
 
-    test('list on an unknown bucket throws StorageValidationException',
-        () async {
-      await expectLater(
-        service.list(bucket: 'nope', path: 'x'),
-        throwsA(isA<StorageValidationException>()),
-      );
-    });
+    test(
+      'list on an unknown bucket throws StorageValidationException',
+      () async {
+        await expectLater(
+          service.list(bucket: 'nope', path: 'x'),
+          throwsA(isA<StorageValidationException>()),
+        );
+      },
+    );
   });
 
   group('error mapping', () {
@@ -369,7 +387,10 @@ void main() {
     });
 
     test('SDK 401 maps to auth PLT001', () async {
-      storage.nextError = supabase.StorageException('no auth', statusCode: '401');
+      storage.nextError = supabase.StorageException(
+        'no auth',
+        statusCode: '401',
+      );
       await expectLater(
         service.download(bucket: credential, path: 'x'),
         throwsA(
@@ -381,20 +402,27 @@ void main() {
     });
 
     test('SDK 413 maps to validation PLT003', () async {
-      storage.nextError =
-          supabase.StorageException('too large', statusCode: '413');
+      storage.nextError = supabase.StorageException(
+        'too large',
+        statusCode: '413',
+      );
       await expectLater(
         service.download(bucket: credential, path: 'x'),
         throwsA(
-          isA<StorageValidationException>()
-              .having((e) => e.code, 'code', 'PLT003'),
+          isA<StorageValidationException>().having(
+            (e) => e.code,
+            'code',
+            'PLT003',
+          ),
         ),
       );
     });
 
     test('SDK 500 maps to server PLT999', () async {
-      storage.nextError =
-          supabase.StorageException('server exploded', statusCode: '500');
+      storage.nextError = supabase.StorageException(
+        'server exploded',
+        statusCode: '500',
+      );
       await expectLater(
         service.download(bucket: credential, path: 'x'),
         throwsA(
@@ -406,8 +434,10 @@ void main() {
     });
 
     test('unknown SDK status maps to unknown PLT999', () async {
-      storage.nextError =
-          supabase.StorageException('teapot', statusCode: '418');
+      storage.nextError = supabase.StorageException(
+        'teapot',
+        statusCode: '418',
+      );
       await expectLater(
         service.download(bucket: credential, path: 'x'),
         throwsA(
@@ -444,26 +474,29 @@ void main() {
       );
     });
 
-    test('instrumented DioException routes through logger and mapper', () async {
-      dioHarness.throwOnPost = DioException(
-        requestOptions: RequestOptions(path: 'x'),
-        type: DioExceptionType.connectionError,
-      );
-      await expectLater(
-        instrumented.upload(
-          bucket: credential,
-          path: 'u/s/doc.pdf',
-          bytes: Uint8List(2),
-          mimeType: 'application/pdf',
-          onProgress: (sent, total) {},
-        ),
-        throwsA(
-          isA<StorageException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.network)
-              .having((e) => e.code, 'code', 'PLT999'),
-        ),
-      );
-    });
+    test(
+      'instrumented DioException routes through logger and mapper',
+      () async {
+        dioHarness.throwOnPost = DioException(
+          requestOptions: RequestOptions(path: 'x'),
+          type: DioExceptionType.connectionError,
+        );
+        await expectLater(
+          instrumented.upload(
+            bucket: credential,
+            path: 'u/s/doc.pdf',
+            bytes: Uint8List(2),
+            mimeType: 'application/pdf',
+            onProgress: (sent, total) {},
+          ),
+          throwsA(
+            isA<StorageException>()
+                .having((e) => e.kind, 'kind', ApiExceptionKind.network)
+                .having((e) => e.code, 'code', 'PLT999'),
+          ),
+        );
+      },
+    );
 
     test('validateForBucket delegate surfaces validation PLT003', () {
       expect(
@@ -509,8 +542,11 @@ void main() {
           mimeType: 'application/pdf',
         ),
         throwsA(
-          isA<StorageException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<StorageException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -529,24 +565,36 @@ void main() {
       expect(bytes, <int>[1, 2, 3]);
     });
 
-    test('instrumented download error traces span and maps SDK error', () async {
-      storage.nextError = supabase.StorageException('boom', statusCode: '500');
-      await expectLater(
-        instrumented.download(bucket: credential, path: 'x'),
-        throwsA(
-          isA<StorageException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.server),
-        ),
-      );
-    });
+    test(
+      'instrumented download error traces span and maps SDK error',
+      () async {
+        storage.nextError = supabase.StorageException(
+          'boom',
+          statusCode: '500',
+        );
+        await expectLater(
+          instrumented.download(bucket: credential, path: 'x'),
+          throwsA(
+            isA<StorageException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiExceptionKind.server,
+            ),
+          ),
+        );
+      },
+    );
 
     test('instrumented remove error maps SDK error', () async {
       storage.nextError = supabase.StorageException('boom', statusCode: '403');
       await expectLater(
         instrumented.remove(bucket: credential, paths: <String>['x']),
         throwsA(
-          isA<StorageForbiddenException>()
-              .having((e) => e.code, 'code', 'PLT002'),
+          isA<StorageForbiddenException>().having(
+            (e) => e.code,
+            'code',
+            'PLT002',
+          ),
         ),
       );
     });
@@ -560,8 +608,11 @@ void main() {
           expiresInSeconds: 60,
         ),
         throwsA(
-          isA<StorageNotFoundException>()
-              .having((e) => e.code, 'code', 'PLT004'),
+          isA<StorageNotFoundException>().having(
+            (e) => e.code,
+            'code',
+            'PLT004',
+          ),
         ),
       );
     });
@@ -571,8 +622,7 @@ void main() {
       await expectLater(
         instrumented.list(bucket: credential, path: 'x'),
         throwsA(
-          isA<StorageAuthException>()
-              .having((e) => e.code, 'code', 'PLT001'),
+          isA<StorageAuthException>().having((e) => e.code, 'code', 'PLT001'),
         ),
       );
     });
@@ -594,27 +644,32 @@ void main() {
       expect(key, 'u/s/keyed.pdf');
     });
 
-    test('Dio progress response with no usable data falls back to path', () async {
-      final withDio = SupabaseStorageService(
-        storageClient: storage,
-        dio: dio,
-        tokenProvider: tokens,
-      );
-      dioHarness.responseData = <String, dynamic>{};
-      final key = await withDio.upload(
-        bucket: credential,
-        path: 'u/s/fallback.pdf',
-        bytes: Uint8List(2),
-        mimeType: 'application/pdf',
-        onProgress: (sent, total) {},
-      );
-      expect(key, 'u/s/fallback.pdf');
-    });
+    test(
+      'Dio progress response with no usable data falls back to path',
+      () async {
+        final withDio = SupabaseStorageService(
+          storageClient: storage,
+          dio: dio,
+          tokenProvider: tokens,
+        );
+        dioHarness.responseData = <String, dynamic>{};
+        final key = await withDio.upload(
+          bucket: credential,
+          path: 'u/s/fallback.pdf',
+          bytes: Uint8List(2),
+          mimeType: 'application/pdf',
+          onProgress: (sent, total) {},
+        );
+        expect(key, 'u/s/fallback.pdf');
+      },
+    );
 
     test('SDK error message is truncated to a safe length', () async {
       final longMessage = 'A' * 500;
-      storage.nextError =
-          supabase.StorageException(longMessage, statusCode: '500');
+      storage.nextError = supabase.StorageException(
+        longMessage,
+        statusCode: '500',
+      );
       await expectLater(
         service.download(bucket: credential, path: 'x'),
         throwsA(
@@ -713,9 +768,7 @@ class FakeAccessTokenProvider implements AccessTokenProvider {
 /// progress fallback path can be tested without any network.
 class FakeDioHarness {
   FakeDioHarness() {
-    dio = Dio(
-      BaseOptions(baseUrl: 'https://example.supabase.co/storage/v1'),
-    );
+    dio = Dio(BaseOptions(baseUrl: 'https://example.supabase.co/storage/v1'));
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {

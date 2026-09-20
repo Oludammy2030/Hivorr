@@ -175,13 +175,17 @@ void main() {
       provider.dispose();
     });
 
-    test('keeps kyc from the previous refresh if a later fetch fails',
-        () async {
-      final provider = VerificationProvider(repo: FakeVerificationRepository());
-      await provider.refreshStatus();
-      expect(provider.kycLevel, isNotNull);
-      provider.dispose();
-    });
+    test(
+      'keeps kyc from the previous refresh if a later fetch fails',
+      () async {
+        final provider = VerificationProvider(
+          repo: FakeVerificationRepository(),
+        );
+        await provider.refreshStatus();
+        expect(provider.kycLevel, isNotNull);
+        provider.dispose();
+      },
+    );
   });
 
   group('terminal transition', () {
@@ -292,33 +296,38 @@ void main() {
       });
     });
 
-    test('stopPolling stays stopped; a later resumePolling also stays dead', () {
-      fakeAsync((FakeAsync async) {
-        final repo = FakeVerificationRepository();
-        final provider = VerificationProvider(
-          repo: repo,
-          pollInterval: const Duration(seconds: 15),
-        );
-        provider.startPolling();
-        provider.stopPolling();
-        provider.resumePolling();
-        final countAfterStop = repo.statusCallCount;
+    test(
+      'stopPolling stays stopped; a later resumePolling also stays dead',
+      () {
+        fakeAsync((FakeAsync async) {
+          final repo = FakeVerificationRepository();
+          final provider = VerificationProvider(
+            repo: repo,
+            pollInterval: const Duration(seconds: 15),
+          );
+          provider.startPolling();
+          provider.stopPolling();
+          provider.resumePolling();
+          final countAfterStop = repo.statusCallCount;
 
-        async.elapse(const Duration(seconds: 60));
-        expect(repo.statusCallCount, countAfterStop);
-        provider.dispose();
-      });
-    });
+          async.elapse(const Duration(seconds: 60));
+          expect(repo.statusCallCount, countAfterStop);
+          provider.dispose();
+        });
+      },
+    );
 
     test('startPolling stops ticking once the submission is decided without '
         'approval (action required)', () {
       fakeAsync((FakeAsync async) {
         final repo = FakeVerificationRepository()
-          ..setStatus(seedStatusEntity(
-            identityVerified: false,
-            totalSubmissions: 1,
-            pendingSubmissions: 0,
-          ));
+          ..setStatus(
+            seedStatusEntity(
+              identityVerified: false,
+              totalSubmissions: 1,
+              pendingSubmissions: 0,
+            ),
+          );
         final provider = VerificationProvider(
           repo: repo,
           pollInterval: const Duration(seconds: 15),
@@ -343,11 +352,13 @@ void main() {
 
     test('is pending when nothing has been submitted yet', () async {
       final repo = FakeVerificationRepository()
-        ..setStatus(seedStatusEntity(
-          identityVerified: false,
-          totalSubmissions: 0,
-          pendingSubmissions: 0,
-        ));
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            totalSubmissions: 0,
+            pendingSubmissions: 0,
+          ),
+        );
       final provider = VerificationProvider(repo: repo);
       await provider.refreshStatus();
       expect(provider.stage, VerificationStage.pending);
@@ -356,30 +367,36 @@ void main() {
 
     test('is inReview while a submission is awaiting review', () async {
       final repo = FakeVerificationRepository()
-        ..setStatus(seedStatusEntity(
-          identityVerified: false,
-          totalSubmissions: 1,
-          pendingSubmissions: 1,
-        ));
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            totalSubmissions: 1,
+            pendingSubmissions: 1,
+          ),
+        );
       final provider = VerificationProvider(repo: repo);
       await provider.refreshStatus();
       expect(provider.stage, VerificationStage.inReview);
       provider.dispose();
     });
 
-    test('is actionRequired when the submission was decided without approval',
-        () async {
-      final repo = FakeVerificationRepository()
-        ..setStatus(seedStatusEntity(
-          identityVerified: false,
-          totalSubmissions: 1,
-          pendingSubmissions: 0,
-        ));
-      final provider = VerificationProvider(repo: repo);
-      await provider.refreshStatus();
-      expect(provider.stage, VerificationStage.actionRequired);
-      provider.dispose();
-    });
+    test(
+      'is actionRequired when the submission was decided without approval',
+      () async {
+        final repo = FakeVerificationRepository()
+          ..setStatus(
+            seedStatusEntity(
+              identityVerified: false,
+              totalSubmissions: 1,
+              pendingSubmissions: 0,
+            ),
+          );
+        final provider = VerificationProvider(repo: repo);
+        await provider.refreshStatus();
+        expect(provider.stage, VerificationStage.actionRequired);
+        provider.dispose();
+      },
+    );
 
     test('is approved when identity is verified', () async {
       final repo = FakeVerificationRepository(identityVerified: true);
@@ -397,7 +414,9 @@ void main() {
       return NotificationProvider(
         service,
         NotificationPermissionManager(
-          platform: FakeNotificationPermissionPlatform(nextStatus: NotificationPermissionStatus.granted),
+          platform: FakeNotificationPermissionPlatform(
+            nextStatus: NotificationPermissionStatus.granted,
+          ),
         ),
       );
     }
@@ -417,36 +436,42 @@ void main() {
       provider.dispose();
     });
 
-    test('notifies once when a submission is declined (action required)',
-        () async {
-      final service = FakeNotificationService();
-      final repo = FakeVerificationRepository()
-        ..setStatus(seedStatusEntity(
-          identityVerified: false,
-          totalSubmissions: 1,
-          pendingSubmissions: 0,
-        ));
-      final provider = VerificationProvider(
-        repo: repo,
-        notificationProvider: buildNotificationProvider(service),
-      );
+    test(
+      'notifies once when a submission is declined (action required)',
+      () async {
+        final service = FakeNotificationService();
+        final repo = FakeVerificationRepository()
+          ..setStatus(
+            seedStatusEntity(
+              identityVerified: false,
+              totalSubmissions: 1,
+              pendingSubmissions: 0,
+            ),
+          );
+        final provider = VerificationProvider(
+          repo: repo,
+          notificationProvider: buildNotificationProvider(service),
+        );
 
-      await provider.refreshStatus();
-      await provider.refreshStatus();
+        await provider.refreshStatus();
+        await provider.refreshStatus();
 
-      expect(service.shown, hasLength(1));
-      expect(service.shown.single.title, 'Verification action required');
-      provider.dispose();
-    });
+        expect(service.shown, hasLength(1));
+        expect(service.shown.single.title, 'Verification action required');
+        provider.dispose();
+      },
+    );
 
     test('emits approved after a resubmitted document is approved', () async {
       final service = FakeNotificationService();
       final repo = FakeVerificationRepository()
-        ..setStatus(seedStatusEntity(
-          identityVerified: false,
-          totalSubmissions: 1,
-          pendingSubmissions: 0,
-        ));
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            totalSubmissions: 1,
+            pendingSubmissions: 0,
+          ),
+        );
       final provider = VerificationProvider(
         repo: repo,
         notificationProvider: buildNotificationProvider(service),
@@ -455,11 +480,13 @@ void main() {
       await provider.refreshStatus();
       expect(service.shown.single.title, 'Verification action required');
 
-      repo.setStatus(seedStatusEntity(
-        identityVerified: true,
-        totalSubmissions: 2,
-        pendingSubmissions: 0,
-      ));
+      repo.setStatus(
+        seedStatusEntity(
+          identityVerified: true,
+          totalSubmissions: 2,
+          pendingSubmissions: 0,
+        ),
+      );
       await provider.refreshStatus();
 
       expect(service.shown, hasLength(2));

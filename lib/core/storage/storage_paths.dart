@@ -1,5 +1,6 @@
 import 'package:hivorr/core/storage/storage_exceptions.dart';
 import 'package:uuid/uuid.dart';
+
 /// Pure path-convention helpers for the three EP-02-06 buckets.
 ///
 /// Every helper produces a path whose first segment is the entity id

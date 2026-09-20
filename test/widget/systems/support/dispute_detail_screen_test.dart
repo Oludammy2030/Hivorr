@@ -68,7 +68,8 @@ void main() {
     Widget? screen,
     GoRouter? router,
   }) async {
-    final Widget child = screen ?? const DisputeDetailScreen(caseId: 'dispute-1');
+    final Widget child =
+        screen ?? const DisputeDetailScreen(caseId: 'dispute-1');
     if (router == null) {
       await pumpApp(
         tester,
@@ -93,8 +94,9 @@ void main() {
   }
 
   group('DisputeDetailScreen', () {
-    testWidgets('renders the Dispute app bar title',
-        (WidgetTester tester) async {
+    testWidgets('renders the Dispute app bar title', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(detail: detail(id: 'dispute-1')),
       );
@@ -105,8 +107,9 @@ void main() {
       expect(find.widgetWithText(AppBar, 'Dispute'), findsOneWidget);
     });
 
-    testWidgets('shows HivorrLoadingState while loading',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrLoadingState while loading', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(_HangingDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -123,8 +126,9 @@ void main() {
       expect(find.text('Loading dispute...'), findsOneWidget);
     });
 
-    testWidgets('shows HivorrErrorState on read failure',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrErrorState on read failure', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.notFound,
@@ -141,8 +145,9 @@ void main() {
       expect(find.text('Missing'), findsOneWidget);
     });
 
-    testWidgets('renders the case header with type badge and idRef suffix',
-        (WidgetTester tester) async {
+    testWidgets('renders the case header with type badge and idRef suffix', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(
           detail: detail(
@@ -161,8 +166,7 @@ void main() {
       expect(find.text('Case ${idRefSuffix('dispute-1')}'), findsOneWidget);
     });
 
-    testWidgets('renders the filed reason card',
-        (WidgetTester tester) async {
+    testWidgets('renders the filed reason card', (WidgetTester tester) async {
       final provider = providerWith(
         FakeDisputeRepository(
           detail: detail(reason: 'The delivered work missed the milestone.'),
@@ -179,10 +183,13 @@ void main() {
       );
     });
 
-    testWidgets('renders the priority and outcome meta chips',
-        (WidgetTester tester) async {
+    testWidgets('renders the priority and outcome meta chips', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
-        FakeDisputeRepository(detail: detail(priority: 'high', desiredOutcome: 'split')),
+        FakeDisputeRepository(
+          detail: detail(priority: 'high', desiredOutcome: 'split'),
+        ),
       );
       addTearDown(provider.dispose);
 
@@ -192,11 +199,10 @@ void main() {
       expect(find.text('Outcome: Split the amount'), findsOneWidget);
     });
 
-    testWidgets('shows the View escrow action when onViewEscrow provided',
-        (WidgetTester tester) async {
-      final provider = providerWith(
-        FakeDisputeRepository(detail: detail()),
-      );
+    testWidgets('shows the View escrow action when onViewEscrow provided', (
+      WidgetTester tester,
+    ) async {
+      final provider = providerWith(FakeDisputeRepository(detail: detail()));
       addTearDown(provider.dispose);
       bool viewed = false;
 
@@ -213,8 +219,9 @@ void main() {
       expect(viewed, isTrue);
     });
 
-    testWidgets('renders ordered evidence cards with preview hooks',
-        (WidgetTester tester) async {
+    testWidgets('renders ordered evidence cards with preview hooks', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(
           detail: detail(
@@ -223,9 +230,7 @@ void main() {
                 id: 'ev-1',
                 title: 'Mismatch screenshot',
                 fileUrl: 'entity-filer/dispute-1/shot.png',
-                fileMetadata: <String, dynamic>{
-                  'originalName': 'shot.png',
-                },
+                fileMetadata: <String, dynamic>{'originalName': 'shot.png'},
               ),
               seedDisputeEvidenceEntity(
                 id: 'ev-2',
@@ -247,11 +252,10 @@ void main() {
       expect(find.text('Full details.'), findsOneWidget);
     });
 
-    testWidgets('shows the no-evidence copy when the case has none',
-        (WidgetTester tester) async {
-      final provider = providerWith(
-        FakeDisputeRepository(detail: detail()),
-      );
+    testWidgets('shows the no-evidence copy when the case has none', (
+      WidgetTester tester,
+    ) async {
+      final provider = providerWith(FakeDisputeRepository(detail: detail()));
       addTearDown(provider.dispose);
 
       await pumpDetail(tester, provider);
@@ -260,8 +264,9 @@ void main() {
       expect(find.textContaining('No evidence yet'), findsOneWidget);
     });
 
-    testWidgets('renders the resolution outcome when bound',
-        (WidgetTester tester) async {
+    testWidgets('renders the resolution outcome when bound', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(
           detail: detail(
@@ -289,8 +294,9 @@ void main() {
       );
     });
 
-    testWidgets('does not render a resolution card when none exists',
-        (WidgetTester tester) async {
+    testWidgets('does not render a resolution card when none exists', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository(detail: detail()));
       addTearDown(provider.dispose);
 
@@ -299,8 +305,9 @@ void main() {
       expect(find.text('Resolution'), findsNothing);
     });
 
-    testWidgets('shows the withdraw action while the case is open',
-        (WidgetTester tester) async {
+    testWidgets('shows the withdraw action while the case is open', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(detail: detail(status: 'open')),
       );
@@ -311,8 +318,9 @@ void main() {
       expect(find.text('Withdraw dispute'), findsOneWidget);
     });
 
-    testWidgets('hides the withdraw action when the case is not open',
-        (WidgetTester tester) async {
+    testWidgets('hides the withdraw action when the case is not open', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(detail: detail(status: 'resolved')),
       );
@@ -323,11 +331,10 @@ void main() {
       expect(find.text('Withdraw dispute'), findsNothing);
     });
 
-    testWidgets('withdraw flow requires confirmation and updates state',
-        (WidgetTester tester) async {
-      final repository = FakeDisputeRepository(
-        detail: detail(status: 'open'),
-      );
+    testWidgets('withdraw flow requires confirmation and updates state', (
+      WidgetTester tester,
+    ) async {
+      final repository = FakeDisputeRepository(detail: detail(status: 'open'));
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
       await pumpDetail(tester, provider);
@@ -344,8 +351,9 @@ void main() {
       expect(find.text('Withdrawn'), findsOneWidget); // status badge
     });
 
-    testWidgets('withdraw cancelled keeps the case open',
-        (WidgetTester tester) async {
+    testWidgets('withdraw cancelled keeps the case open', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository(detail: detail(status: 'open'));
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -360,8 +368,9 @@ void main() {
       expect(find.text('Open'), findsOneWidget);
     });
 
-    testWidgets('renders the immutability and audit-awareness note',
-        (WidgetTester tester) async {
+    testWidgets('renders the immutability and audit-awareness note', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(detail: detail(status: 'resolved')),
       );
@@ -373,21 +382,22 @@ void main() {
         find.textContaining('evidence and resolutions cannot be edited'),
         findsOneWidget,
       );
-      expect(
-        find.textContaining('server-side audit trail'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('server-side audit trail'), findsOneWidget);
     });
 
-    testWidgets('Add evidence pushes the evidence-new route when can submit',
-        (WidgetTester tester) async {
+    testWidgets('Add evidence pushes the evidence-new route when can submit', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeDisputeRepository(detail: detail(status: 'open')),
       );
       addTearDown(provider.dispose);
 
       final GoRouter router = GoRouter(
-        initialLocation: RoutePaths.disputeDetail.replaceAll(':id', 'dispute-1'),
+        initialLocation: RoutePaths.disputeDetail.replaceAll(
+          ':id',
+          'dispute-1',
+        ),
         routes: <RouteBase>[
           GoRoute(
             path: RoutePaths.disputeDetail,
@@ -395,9 +405,8 @@ void main() {
           ),
           GoRoute(
             path: RoutePaths.disputesEvidenceNew,
-            builder: (_, _) => const Scaffold(
-              body: Center(child: Text('evidence-screen')),
-            ),
+            builder: (_, _) =>
+                const Scaffold(body: Center(child: Text('evidence-screen'))),
           ),
         ],
       );
@@ -414,8 +423,8 @@ void main() {
 
 extension DisputeCaseDetailTest on DisputeCaseDetail {
   DisputeCaseDetail withCase(DisputeCase case_) => DisputeCaseDetail(
-        disputeCase: case_,
-        evidence: evidence,
-        resolution: resolution,
-      );
+    disputeCase: case_,
+    evidence: evidence,
+    resolution: resolution,
+  );
 }

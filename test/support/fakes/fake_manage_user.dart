@@ -14,9 +14,9 @@ class FakeManageUserRepository implements ManageUserRepository {
     List<ManageUserListItem>? users,
     ManageUserDetail? detail,
     ApiException? nextError,
-  })  : _users = users ?? const <ManageUserListItem>[],
-        _detail = detail,
-        nextError = nextError;
+  }) : _users = users ?? const <ManageUserListItem>[],
+       _detail = detail,
+       nextError = nextError;
 
   List<ManageUserListItem> _users;
   ManageUserDetail? _detail;
@@ -74,21 +74,23 @@ class FakeManageUserRepository implements ManageUserRepository {
     setStatusCallCount++;
     lastStatusChange = status;
     if (nextError != null) throw _consumeError();
-    _users = _users.map((ManageUserListItem e) {
-      if (e.id != userId) return e;
-      return ManageUserListItem(
-        id: e.id,
-        displayName: e.displayName,
-        legalName: e.legalName,
-        avatarPath: e.avatarPath,
-        status: status,
-        roles: e.roles,
-        kycTier: e.kycTier,
-        isAdmin: e.isAdmin,
-        onboardingCompleted: e.onboardingCompleted,
-        createdAt: e.createdAt,
-      );
-    }).toList(growable: false);
+    _users = _users
+        .map((ManageUserListItem e) {
+          if (e.id != userId) return e;
+          return ManageUserListItem(
+            id: e.id,
+            displayName: e.displayName,
+            legalName: e.legalName,
+            avatarPath: e.avatarPath,
+            status: status,
+            roles: e.roles,
+            kycTier: e.kycTier,
+            isAdmin: e.isAdmin,
+            onboardingCompleted: e.onboardingCompleted,
+            createdAt: e.createdAt,
+          );
+        })
+        .toList(growable: false);
     final ManageUserDetail? detail = _detail;
     if (detail != null && detail.entity.id == userId) {
       _detail = ManageUserDetail(
@@ -151,19 +153,18 @@ ManageUserListItem manageUserListItem({
   bool isAdmin = false,
   bool onboardingCompleted = true,
   DateTime? createdAt,
-}) =>
-    ManageUserListItem(
-      id: id,
-      displayName: displayName,
-      legalName: legalName,
-      avatarPath: avatarPath,
-      status: status,
-      roles: roles,
-      kycTier: kycTier,
-      isAdmin: isAdmin,
-      onboardingCompleted: onboardingCompleted,
-      createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => ManageUserListItem(
+  id: id,
+  displayName: displayName,
+  legalName: legalName,
+  avatarPath: avatarPath,
+  status: status,
+  roles: roles,
+  kycTier: kycTier,
+  isAdmin: isAdmin,
+  onboardingCompleted: onboardingCompleted,
+  createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 /// A full posture fixture for [ManageUserDetail].
 ManageUserDetail manageUserDetail({
@@ -178,28 +179,27 @@ ManageUserDetail manageUserDetail({
     status: 'verified',
   ),
   bool isAdmin = false,
-  ManageUserVerificationSummary summary =
-      const ManageUserVerificationSummary(credentialCount: 2),
-}) =>
-    ManageUserDetail(
-      entity: ManageUserEntityCore(
-        id: id,
-        status: status,
-        capability: capability,
-        onboardingCompletedAt:
-            (onboardingCompleted ?? false)
-                ? DateTime.fromMillisecondsSinceEpoch(2000)
-                : null,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-      ),
-      profile: ManageUserProfile(
-        displayName: displayName,
-        legalName: 'Legal $displayName',
-        bio: 'Sample bio',
-        countryCode: 'US',
-      ),
-      roles: roles,
-      kyc: kyc,
-      isAdmin: isAdmin,
-      summary: summary,
-    );
+  ManageUserVerificationSummary summary = const ManageUserVerificationSummary(
+    credentialCount: 2,
+  ),
+}) => ManageUserDetail(
+  entity: ManageUserEntityCore(
+    id: id,
+    status: status,
+    capability: capability,
+    onboardingCompletedAt: (onboardingCompleted ?? false)
+        ? DateTime.fromMillisecondsSinceEpoch(2000)
+        : null,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+  ),
+  profile: ManageUserProfile(
+    displayName: displayName,
+    legalName: 'Legal $displayName',
+    bio: 'Sample bio',
+    countryCode: 'US',
+  ),
+  roles: roles,
+  kyc: kyc,
+  isAdmin: isAdmin,
+  summary: summary,
+);

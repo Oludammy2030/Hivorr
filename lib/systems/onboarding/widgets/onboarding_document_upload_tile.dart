@@ -77,9 +77,7 @@ class OnboardingDocumentUploadTile extends StatelessWidget {
             Row(
               children: <Widget>[
                 Icon(
-                  _isPdf
-                      ? Icons.picture_as_pdf_outlined
-                      : Icons.image_outlined,
+                  _isPdf ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
                   color: colors.primary,
                   size: 28,
                 ),

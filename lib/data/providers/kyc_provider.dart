@@ -35,11 +35,11 @@ class KycProvider extends ChangeNotifier {
     NotificationProvider? notificationProvider,
     Duration? pollInterval,
     DateTime Function()? clock,
-  })  : _repo = repo,
-        _logger = logger,
-        _notificationProvider = notificationProvider,
-        _pollInterval = pollInterval ?? const Duration(seconds: 15),
-        _clock = clock ?? DateTime.now;
+  }) : _repo = repo,
+       _logger = logger,
+       _notificationProvider = notificationProvider,
+       _pollInterval = pollInterval ?? const Duration(seconds: 15),
+       _clock = clock ?? DateTime.now;
 
   final KycRepository _repo;
   final HivorrLogger? _logger;

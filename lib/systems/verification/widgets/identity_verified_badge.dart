@@ -8,11 +8,7 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 /// Uses `colorScheme.secondary` for the checkmark tint and a soft
 /// `successContainer` surface with `radiusSm` — premium, never a hard shadow.
 class IdentityVerifiedBadge extends StatelessWidget {
-  const IdentityVerifiedBadge({
-    super.key,
-    required this.label,
-    this.subtitle,
-  });
+  const IdentityVerifiedBadge({super.key, required this.label, this.subtitle});
 
   /// Primary line, e.g. "Identity Verified".
   final String label;

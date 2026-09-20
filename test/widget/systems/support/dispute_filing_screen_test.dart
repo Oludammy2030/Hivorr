@@ -76,24 +76,22 @@ void main() {
   }
 
   Future<void> enterReason(WidgetTester tester, String reason) async {
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Reason'),
-      reason,
-    );
+    await tester.enterText(find.widgetWithText(TextField, 'Reason'), reason);
     await tester.pumpAndSettle();
   }
 
   Future<void> tapSubmit(WidgetTester tester) async {
-    await tester.tap(find.descendant(
-      of: find.byType(HivorrButton),
-      matching: find.text('File dispute'),
-    ));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(HivorrButton),
+        matching: find.text('File dispute'),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
-  HivorrButton submitWidget(WidgetTester tester) => tester.widget<HivorrButton>(
-        find.byType(HivorrButton),
-      );
+  HivorrButton submitWidget(WidgetTester tester) =>
+      tester.widget<HivorrButton>(find.byType(HivorrButton));
 
   Future<void> tapDropdown(WidgetTester tester, String label) async {
     await tester.ensureVisible(find.text(label));
@@ -105,8 +103,9 @@ void main() {
   }
 
   group('DisputeFilingScreen', () {
-    testWidgets('renders the File dispute app bar and the freeze copy',
-        (WidgetTester tester) async {
+    testWidgets('renders the File dispute app bar and the freeze copy', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -114,13 +113,16 @@ void main() {
 
       expect(find.widgetWithText(AppBar, 'File dispute'), findsOneWidget);
       expect(
-        find.textContaining('Filing freezes escrow ${idRefSuffix('escrow-abc')}'),
+        find.textContaining(
+          'Filing freezes escrow ${idRefSuffix('escrow-abc')}',
+        ),
         findsOneWidget,
       );
     });
 
-    testWidgets('offers the 5-type dispute vocabulary',
-        (WidgetTester tester) async {
+    testWidgets('offers the 5-type dispute vocabulary', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -140,8 +142,9 @@ void main() {
       }
     });
 
-    testWidgets('submit is disabled until a type and valid reason are chosen',
-        (WidgetTester tester) async {
+    testWidgets('submit is disabled until a type and valid reason are chosen', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -159,8 +162,9 @@ void main() {
       expect(submit().onPressed, isNotNull);
     });
 
-    testWidgets('a too-short reason keeps submit disabled',
-        (WidgetTester tester) async {
+    testWidgets('a too-short reason keeps submit disabled', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -171,8 +175,9 @@ void main() {
       expect(submitWidget(tester).onPressed, isNull);
     });
 
-    testWidgets('filing passes the type, reason, priority and outcome',
-        (WidgetTester tester) async {
+    testWidgets('filing passes the type, reason, priority and outcome', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository();
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -199,8 +204,9 @@ void main() {
       expect(repository.lastDesiredOutcome, 'split');
     });
 
-    testWidgets('defaults priority to medium when not chosen',
-        (WidgetTester tester) async {
+    testWidgets('defaults priority to medium when not chosen', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository();
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -215,23 +221,27 @@ void main() {
       expect(repository.lastDesiredOutcome, isNull);
     });
 
-    testWidgets('navigates to the dispute detail after a successful filing',
-        (WidgetTester tester) async {
+    testWidgets('navigates to the dispute detail after a successful filing', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
       final GoRouter router = GoRouter(
-        initialLocation: RoutePaths.disputesNew.replaceAll(':escrowId', 'escrow-abc'),
+        initialLocation: RoutePaths.disputesNew.replaceAll(
+          ':escrowId',
+          'escrow-abc',
+        ),
         routes: <RouteBase>[
           GoRoute(
             path: RoutePaths.disputesNew,
-            builder: (_, _) => const DisputeFilingScreen(escrowId: 'escrow-abc'),
+            builder: (_, _) =>
+                const DisputeFilingScreen(escrowId: 'escrow-abc'),
           ),
           GoRoute(
             path: RoutePaths.disputeDetail,
-            builder: (_, _) => const Scaffold(
-              body: Center(child: Text('filed-detail')),
-            ),
+            builder: (_, _) =>
+                const Scaffold(body: Center(child: Text('filed-detail'))),
           ),
         ],
       );
@@ -245,8 +255,9 @@ void main() {
       expect(find.text('filed-detail'), findsOneWidget);
     });
 
-    testWidgets('shows a submit error when filing fails',
-        (WidgetTester tester) async {
+    testWidgets('shows a submit error when filing fails', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -265,8 +276,9 @@ void main() {
       expect(find.textContaining('boom'), findsOneWidget);
     });
 
-    testWidgets('the reason field shows the 10-character helper hint',
-        (WidgetTester tester) async {
+    testWidgets('the reason field shows the 10-character helper hint', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -304,32 +316,35 @@ void main() {
       expect(repository.fileCallCount, 0);
     });
 
-    testWidgets('a non-disputed escrow shows no conflict banner and can submit',
-        (WidgetTester tester) async {
-      final repository = FakeDisputeRepository();
-      final provider = providerWith(repository);
-      addTearDown(provider.dispose);
+    testWidgets(
+      'a non-disputed escrow shows no conflict banner and can submit',
+      (WidgetTester tester) async {
+        final repository = FakeDisputeRepository();
+        final provider = providerWith(repository);
+        addTearDown(provider.dispose);
 
-      await pumpFiling(
-        tester,
-        provider,
-        escrowDetail: seedEscrowDetailEntity(
-          id: 'escrow-abc',
-          status: 'funded',
-        ),
-      );
-      await selectType(tester, 'Fraud');
-      await enterReason(tester, 'A valid reason that is long enough');
+        await pumpFiling(
+          tester,
+          provider,
+          escrowDetail: seedEscrowDetailEntity(
+            id: 'escrow-abc',
+            status: 'funded',
+          ),
+        );
+        await selectType(tester, 'Fraud');
+        await enterReason(tester, 'A valid reason that is long enough');
 
-      expect(
-        find.text('An active dispute already exists for this escrow.'),
-        findsNothing,
-      );
-      expect(submitWidget(tester).onPressed, isNotNull);
-    });
+        expect(
+          find.text('An active dispute already exists for this escrow.'),
+          findsNothing,
+        );
+        expect(submitWidget(tester).onPressed, isNotNull);
+      },
+    );
 
-    testWidgets('labels the submit button "File dispute"',
-        (WidgetTester tester) async {
+    testWidgets('labels the submit button "File dispute"', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 

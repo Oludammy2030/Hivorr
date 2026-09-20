@@ -33,8 +33,9 @@ void main() {
       expect(find.text('1 NGN = 0.0007 USD'), findsOneWidget);
     });
 
-    testWidgets('renders the guarded inverse rate copy',
-        (WidgetTester tester) async {
+    testWidgets('renders the guarded inverse rate copy', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         const ConversionRateCard(
@@ -49,8 +50,9 @@ void main() {
       expect(find.text('1 USD = 1428.57 NGN'), findsOneWidget);
     });
 
-    testWidgets('labels the source as a platform rate',
-        (WidgetTester tester) async {
+    testWidgets('labels the source as a platform rate', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         const ConversionRateCard(
@@ -65,8 +67,9 @@ void main() {
       expect(find.text('Platform rate'), findsOneWidget);
     });
 
-    testWidgets('styles the directed rate with the theme primary token',
-        (WidgetTester tester) async {
+    testWidgets('styles the directed rate with the theme primary token', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const ConversionRateCard(
@@ -77,28 +80,26 @@ void main() {
           isUnavailable: false,
         ),
       );
-      final BuildContext context = tester.element(find.byType(ConversionRateCard));
+      final BuildContext context = tester.element(
+        find.byType(ConversionRateCard),
+      );
 
       expect(find.text('Rate'), findsOneWidget);
       expect(
-        find
-            .text('1 NGN = 0.0007 USD')
-            .evaluate()
-            .single
-            .widget, isA<Text>(),
+        find.text('1 NGN = 0.0007 USD').evaluate().single.widget,
+        isA<Text>(),
       );
-      final Text rateText =
-          tester.widget<Text>(find.text('1 NGN = 0.0007 USD'));
-      expect(
-        rateText.style?.color,
-        Theme.of(context).colorScheme.primary,
+      final Text rateText = tester.widget<Text>(
+        find.text('1 NGN = 0.0007 USD'),
       );
+      expect(rateText.style?.color, Theme.of(context).colorScheme.primary);
     });
   });
 
   group('ConversionRateCard transition states', () {
-    testWidgets('loading shows the branded loading state',
-        (WidgetTester tester) async {
+    testWidgets('loading shows the branded loading state', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         const ConversionRateCard(
@@ -114,8 +115,9 @@ void main() {
       expect(find.text('Fetching rate...'), findsOneWidget);
     });
 
-    testWidgets('unavailable shows the fail-closed error state',
-        (WidgetTester tester) async {
+    testWidgets('unavailable shows the fail-closed error state', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         const ConversionRateCard(
@@ -131,8 +133,9 @@ void main() {
       expect(find.text('Rate unavailable for this pair'), findsOneWidget);
     });
 
-    testWidgets('retry fires the retry callback from the unavailable state',
-        (WidgetTester tester) async {
+    testWidgets('retry fires the retry callback from the unavailable state', (
+      WidgetTester tester,
+    ) async {
       int retries = 0;
       await pumpCard(
         tester,
@@ -155,8 +158,9 @@ void main() {
   });
 
   group('ConversionRateCard placeholder', () {
-    testWidgets('shows guidance while no rate is loaded',
-        (WidgetTester tester) async {
+    testWidgets('shows guidance while no rate is loaded', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         const ConversionRateCard(
@@ -174,8 +178,9 @@ void main() {
       );
     });
 
-    testWidgets('a non-positive rate still shows the placeholder (guarded)',
-        (WidgetTester tester) async {
+    testWidgets('a non-positive rate still shows the placeholder (guarded)', (
+      WidgetTester tester,
+    ) async {
       await pumpCard(
         tester,
         const ConversionRateCard(

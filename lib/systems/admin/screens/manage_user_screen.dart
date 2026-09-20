@@ -40,12 +40,14 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
       final AdminReviewProvider admin = context.read<AdminReviewProvider>();
       final ManageUserProvider manage = context.read<ManageUserProvider>();
       // Hydrate the shared admin flag, then load the directory for admins.
-      unawaited(admin.checkAdmin().then((_) {
-        if (!mounted) return;
-        if (AdminGate.isAdmin(admin)) {
-          unawaited(manage.loadUsers());
-        }
-      }));
+      unawaited(
+        admin.checkAdmin().then((_) {
+          if (!mounted) return;
+          if (AdminGate.isAdmin(admin)) {
+            unawaited(manage.loadUsers());
+          }
+        }),
+      );
     });
   }
 
@@ -67,8 +69,12 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
-            onPressed: () =>
-                unawaited(provider.loadUsers(search: provider.search, status: provider.statusFilter)),
+            onPressed: () => unawaited(
+              provider.loadUsers(
+                search: provider.search,
+                status: provider.statusFilter,
+              ),
+            ),
           ),
         ],
       ),
@@ -137,8 +143,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
                 ),
               );
             },
-            itemBuilder: (BuildContext context) =>
-                <PopupMenuEntry<String?>>[
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String?>>[
               const PopupMenuItem<String?>(
                 value: null,
                 child: Text('All statuses'),
@@ -172,20 +177,14 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
     }
     if (provider.lastError != null && provider.users.isEmpty) {
       return HivorrEmptyState(
-        icon: Icon(
-          Icons.error_outline,
-          color: context.colorScheme.error,
-        ),
+        icon: Icon(Icons.error_outline, color: context.colorScheme.error),
         title: 'Failed to load users',
         subtitle: provider.lastError!.message,
       );
     }
     if (provider.users.isEmpty) {
       return HivorrEmptyState(
-        icon: Icon(
-          Icons.group_outlined,
-          color: context.colorScheme.primary,
-        ),
+        icon: Icon(Icons.group_outlined, color: context.colorScheme.primary),
         title: 'No users found',
         subtitle: 'No users match the current search and filters.',
       );
@@ -228,11 +227,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
 }
 
 class _UserCard extends StatelessWidget {
-  const _UserCard({
-    super.key,
-    required this.user,
-    required this.onTap,
-  });
+  const _UserCard({super.key, required this.user, required this.onTap});
 
   final ManageUserListItem user;
   final VoidCallback onTap;
@@ -254,10 +249,7 @@ class _UserCard extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     Expanded(
-                      child: Text(
-                        name,
-                        style: context.textTheme.titleMedium,
-                      ),
+                      child: Text(name, style: context.textTheme.titleMedium),
                     ),
                     _StatusChip(status: user.status),
                   ],
@@ -309,8 +301,9 @@ class _UserCard extends StatelessWidget {
   }
 
   static String _displayName(ManageUserListItem user) {
-    final String name =
-        user.displayName.isNotEmpty ? user.displayName : (user.legalName ?? '');
+    final String name = user.displayName.isNotEmpty
+        ? user.displayName
+        : (user.legalName ?? '');
     return name.isNotEmpty ? name : 'Unnamed user';
   }
 }

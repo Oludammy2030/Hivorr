@@ -261,7 +261,10 @@ class _HowItWorks extends StatelessWidget {
         TextButton(
           onPressed: () => context.go(RoutePaths.howItWorks),
           style: TextButton.styleFrom(foregroundColor: colors.primary),
-          child: Text('Learn how it works', style: context.textTheme.labelLarge),
+          child: Text(
+            'Learn how it works',
+            style: context.textTheme.labelLarge,
+          ),
         ),
       ],
     );

@@ -15,9 +15,11 @@ void main() {
   // ---------------------------------------------------------------------------
   group('PortfolioRepositoryImpl', () {
     test('returns the PublicProfile on a successful fetch', () async {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource();
-      final PortfolioRepositoryImpl repo =
-          PortfolioRepositoryImpl(remote: remote);
+      final FakePortfolioRemoteDataSource remote =
+          FakePortfolioRemoteDataSource();
+      final PortfolioRepositoryImpl repo = PortfolioRepositoryImpl(
+        remote: remote,
+      );
 
       final PublicProfile? profile = await repo.getPublicProfile('entity-1');
 
@@ -28,15 +30,17 @@ void main() {
     });
 
     test('returns null when the server raises PLT004 (not-found)', () async {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource(
-        error: const ApiException(
-          kind: ApiExceptionKind.notFound,
-          message: 'not found',
-          code: 'PLT004',
-        ),
+      final FakePortfolioRemoteDataSource remote =
+          FakePortfolioRemoteDataSource(
+            error: const ApiException(
+              kind: ApiExceptionKind.notFound,
+              message: 'not found',
+              code: 'PLT004',
+            ),
+          );
+      final PortfolioRepositoryImpl repo = PortfolioRepositoryImpl(
+        remote: remote,
       );
-      final PortfolioRepositoryImpl repo =
-          PortfolioRepositoryImpl(remote: remote);
 
       final PublicProfile? profile = await repo.getPublicProfile('unknown');
 
@@ -44,42 +48,53 @@ void main() {
     });
 
     test('rethrows ApiException for non-PLT004 server errors', () async {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource(
-        error: const ApiException(
-          kind: ApiExceptionKind.server,
-          message: 'internal error',
-          code: 'PLT999',
-        ),
+      final FakePortfolioRemoteDataSource remote =
+          FakePortfolioRemoteDataSource(
+            error: const ApiException(
+              kind: ApiExceptionKind.server,
+              message: 'internal error',
+              code: 'PLT999',
+            ),
+          );
+      final PortfolioRepositoryImpl repo = PortfolioRepositoryImpl(
+        remote: remote,
       );
-      final PortfolioRepositoryImpl repo =
-          PortfolioRepositoryImpl(remote: remote);
 
       expect(
         () => repo.getPublicProfile('entity-1'),
         throwsA(
           isA<ApiException>()
-              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.server,
+              )
               .having((ApiException e) => e.code, 'code', 'PLT999'),
         ),
       );
     });
 
     test('forwards validation errors without swallowing', () async {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource(
-        error: const ApiException(
-          kind: ApiExceptionKind.validation,
-          message: 'bad id',
-          code: 'PLT003',
-        ),
+      final FakePortfolioRemoteDataSource remote =
+          FakePortfolioRemoteDataSource(
+            error: const ApiException(
+              kind: ApiExceptionKind.validation,
+              message: 'bad id',
+              code: 'PLT003',
+            ),
+          );
+      final PortfolioRepositoryImpl repo = PortfolioRepositoryImpl(
+        remote: remote,
       );
-      final PortfolioRepositoryImpl repo =
-          PortfolioRepositoryImpl(remote: remote);
 
       expect(
         () => repo.getPublicProfile('bad-id'),
         throwsA(
-          isA<ApiException>()
-              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
@@ -90,7 +105,8 @@ void main() {
   // ---------------------------------------------------------------------------
   group('PortfolioProvider', () {
     test('starts in idle state with no profile', () {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource();
+      final FakePortfolioRemoteDataSource remote =
+          FakePortfolioRemoteDataSource();
       final PortfolioProvider provider = PortfolioProvider(
         repository: PortfolioRepositoryImpl(remote: remote),
       );
@@ -105,7 +121,8 @@ void main() {
     });
 
     test('transitions idle → loaded with profile on success', () async {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource();
+      final FakePortfolioRemoteDataSource remote =
+          FakePortfolioRemoteDataSource();
       final PortfolioProvider provider = PortfolioProvider(
         repository: PortfolioRepositoryImpl(remote: remote),
       );
@@ -145,25 +162,29 @@ void main() {
       provider.dispose();
     });
 
-    test('returns null profile for PLT004 (not-found) without error state', () async {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource(
-        error: const ApiException(
-          kind: ApiExceptionKind.notFound,
-          message: 'not found',
-          code: 'PLT004',
-        ),
-      );
-      final PortfolioProvider provider = PortfolioProvider(
-        repository: PortfolioRepositoryImpl(remote: remote),
-      );
+    test(
+      'returns null profile for PLT004 (not-found) without error state',
+      () async {
+        final FakePortfolioRemoteDataSource remote =
+            FakePortfolioRemoteDataSource(
+              error: const ApiException(
+                kind: ApiExceptionKind.notFound,
+                message: 'not found',
+                code: 'PLT004',
+              ),
+            );
+        final PortfolioProvider provider = PortfolioProvider(
+          repository: PortfolioRepositoryImpl(remote: remote),
+        );
 
-      final PublicProfile? profile = await provider.load('unknown');
+        final PublicProfile? profile = await provider.load('unknown');
 
-      expect(profile, isNull);
-      expect(provider.state, PortfolioLoadState.loaded);
-      expect(provider.lastError, isNull);
-      provider.dispose();
-    });
+        expect(profile, isNull);
+        expect(provider.state, PortfolioLoadState.loaded);
+        expect(provider.lastError, isNull);
+        provider.dispose();
+      },
+    );
 
     test('is a no-op while a load is in flight', () async {
       final Completer<void> gate = Completer<void>();
@@ -179,8 +200,11 @@ void main() {
 
       expect(remote.callCount, 1);
       expect(provider.isLoading, isTrue);
-      expect(secondResult, isNull,
-          reason: 'in-flight re-entry returns the current (not loaded) profile');
+      expect(
+        secondResult,
+        isNull,
+        reason: 'in-flight re-entry returns the current (not loaded) profile',
+      );
 
       gate.complete();
       await first;
@@ -190,13 +214,14 @@ void main() {
     });
 
     test('clears a prior error when a later load succeeds', () async {
-      final FakePortfolioRemoteDataSource remote = FakePortfolioRemoteDataSource(
-        error: const ApiException(
-          kind: ApiExceptionKind.server,
-          message: 'offline',
-          code: 'PLT999',
-        ),
-      );
+      final FakePortfolioRemoteDataSource remote =
+          FakePortfolioRemoteDataSource(
+            error: const ApiException(
+              kind: ApiExceptionKind.server,
+              message: 'offline',
+              code: 'PLT999',
+            ),
+          );
       final PortfolioProvider provider = PortfolioProvider(
         repository: PortfolioRepositoryImpl(remote: remote),
       );
@@ -204,8 +229,13 @@ void main() {
       // First call fails with a re-thrown server error.
       await expectLater(
         () => provider.load('entity-1'),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
+        ),
       );
       expect(provider.state, PortfolioLoadState.error);
 

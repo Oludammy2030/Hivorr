@@ -44,11 +44,11 @@ abstract final class StorageLimits {
 
   /// Returns the configured byte limit for [bucket], or `null` if unknown.
   static int? forBucket(String bucket) => switch (bucket) {
-        StorageBuckets.credentialDocuments => credentialDocuments,
-        StorageBuckets.profileAvatars => profileAvatars,
-        StorageBuckets.portfolioItems => portfolioItems,
-        _ => null,
-      };
+    StorageBuckets.credentialDocuments => credentialDocuments,
+    StorageBuckets.profileAvatars => profileAvatars,
+    StorageBuckets.portfolioItems => portfolioItems,
+    _ => null,
+  };
 }
 
 /// `allowed_mime_types` per bucket (mirrors `storage.buckets`).
@@ -80,11 +80,11 @@ abstract final class StorageMimeTypes {
 
   /// Returns the allowed MIME set for [bucket], or `null` if unknown.
   static Set<String>? forBucket(String bucket) => switch (bucket) {
-        StorageBuckets.credentialDocuments => credentialDocuments,
-        StorageBuckets.profileAvatars => profileAvatars,
-        StorageBuckets.portfolioItems => portfolioItems,
-        _ => null,
-      };
+    StorageBuckets.credentialDocuments => credentialDocuments,
+    StorageBuckets.profileAvatars => profileAvatars,
+    StorageBuckets.portfolioItems => portfolioItems,
+    _ => null,
+  };
 }
 
 /// Whether a bucket is public-read, by bucket ID (mirrors `storage.buckets`).
@@ -102,9 +102,9 @@ abstract final class StorageBucketVisibilities {
 
   /// Returns the public-read flag for [bucket], or `null` if unknown.
   static bool? forBucket(String bucket) => switch (bucket) {
-        StorageBuckets.credentialDocuments => credentialDocuments,
-        StorageBuckets.profileAvatars => profileAvatars,
-        StorageBuckets.portfolioItems => portfolioItems,
-        _ => null,
-      };
+    StorageBuckets.credentialDocuments => credentialDocuments,
+    StorageBuckets.profileAvatars => profileAvatars,
+    StorageBuckets.portfolioItems => portfolioItems,
+    _ => null,
+  };
 }

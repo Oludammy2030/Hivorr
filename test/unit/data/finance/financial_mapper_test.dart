@@ -15,11 +15,7 @@ void main() {
   group('FinancialMapper.profileToEntity', () {
     test('maps all profile fields', () {
       final FinancialProfile profile = FinancialMapper.profileToEntity(
-        seedProfileDto(
-          id: 'p1',
-          status: 'suspended',
-          defaultCurrency: 'GBP',
-        ),
+        seedProfileDto(id: 'p1', status: 'suspended', defaultCurrency: 'GBP'),
       );
       expect(profile.id, 'p1');
       expect(profile.entityId, 'u1');
@@ -177,14 +173,12 @@ void main() {
 
   group('BalanceDto.fromJson', () {
     test('parses and defaults numeric types', () {
-      final BalanceDto dto = BalanceDto.fromJson(
-        <String, dynamic>{
-          'currency_code': 'NGN',
-          'available_balance': '50000',
-          'held_balance': 1000,
-          'pending_balance': null,
-        },
-      );
+      final BalanceDto dto = BalanceDto.fromJson(<String, dynamic>{
+        'currency_code': 'NGN',
+        'available_balance': '50000',
+        'held_balance': 1000,
+        'pending_balance': null,
+      });
       expect(dto.currencyCode, 'NGN');
       expect(dto.availableBalance, 50000);
       expect(dto.heldBalance, 1000);

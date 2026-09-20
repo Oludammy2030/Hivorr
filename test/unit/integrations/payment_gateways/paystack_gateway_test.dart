@@ -24,9 +24,7 @@ void main() {
 
   setUp(() {
     httpMock = MockDioAdapter();
-    dio = Dio(
-      BaseOptions(baseUrl: PaystackGateway.baseUrl),
-    )
+    dio = Dio(BaseOptions(baseUrl: PaystackGateway.baseUrl))
       ..httpClientAdapter = httpMock
       ..options.headers['Authorization'] = 'Bearer sk_test_abc123';
     config = PaymentGatewayConfig.fromEnvironment(paymentEnvSource());
@@ -102,8 +100,11 @@ void main() {
           ),
         ),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
       expect(httpMock.requests, isEmpty);
@@ -161,7 +162,10 @@ void main() {
       expect(result.reference, 'uuid-1');
       expect(result.status, PaymentStatus.success);
       expect(result.amount, const Amount(minorUnits: 500000, currency: 'NGN'));
-      expect(result.gatewayFee, const Amount(minorUnits: 15000, currency: 'NGN'));
+      expect(
+        result.gatewayFee,
+        const Amount(minorUnits: 15000, currency: 'NGN'),
+      );
       expect(result.paidAt, isNotNull);
       expect(httpMock.capturedUrl, contains('/transaction/verify/uuid-1'));
     });
@@ -214,10 +218,7 @@ void main() {
       expect(result.reference, 'trans-1');
       expect(result.status, TransferStatus.success);
       expect(responses[0].requests.length, 1, reason: 'recipient creation');
-      expect(
-        responses[0].requests.first.path,
-        '/transferrecipient',
-      );
+      expect(responses[0].requests.first.path, '/transferrecipient');
       expect(responses[1].requests.length, 1, reason: 'transfer creation');
       expect(responses[1].requests.first.path, '/transfer');
     });
@@ -261,10 +262,7 @@ void main() {
     test('posts a full refund and maps to reversed', () async {
       httpMock.body = <String, dynamic>{
         'status': true,
-        'data': <String, dynamic>{
-          'amount': 500000,
-          'currency': 'NGN',
-        },
+        'data': <String, dynamic>{'amount': 500000, 'currency': 'NGN'},
       };
 
       final result = await gateway.refundPayment(
@@ -280,12 +278,13 @@ void main() {
         'message': 'Refund failed',
       };
       await expectLater(
-        gateway.refundPayment(
-          RefundRequest(transactionReference: 'tx-1'),
-        ),
+        gateway.refundPayment(RefundRequest(transactionReference: 'tx-1')),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.server),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.server,
+          ),
         ),
       );
     });
@@ -314,13 +313,10 @@ void main() {
 
   group('parseWebhookEvent', () {
     test('parses a charge.success event', () {
-      final event = gateway.parseWebhookEvent(
-        <String, dynamic>{
-          'event': 'charge.success',
-          'data': <String, dynamic>{'reference': 'uuid-1'},
-        },
-        const <String, String>{},
-      );
+      final event = gateway.parseWebhookEvent(<String, dynamic>{
+        'event': 'charge.success',
+        'data': <String, dynamic>{'reference': 'uuid-1'},
+      }, const <String, String>{});
 
       expect(event.provider, 'paystack');
       expect(event.eventType, 'charge.success');
@@ -330,10 +326,9 @@ void main() {
 
     test('throws validation when the event field is missing', () {
       expect(
-        () => gateway.parseWebhookEvent(
-          const <String, dynamic>{'data': <String, dynamic>{}},
-          const <String, String>{},
-        ),
+        () => gateway.parseWebhookEvent(const <String, dynamic>{
+          'data': <String, dynamic>{},
+        }, const <String, String>{}),
         throwsA(
           isA<ApiException>()
               .having((e) => e.kind, 'kind', ApiExceptionKind.validation)
@@ -343,15 +338,12 @@ void main() {
     });
 
     test('extracts reference from nested transfer data', () {
-      final event = gateway.parseWebhookEvent(
-        <String, dynamic>{
-          'event': 'transfer.success',
-          'data': <String, dynamic>{
-            'transfer': <String, dynamic>{'reference': 'trans-9'},
-          },
+      final event = gateway.parseWebhookEvent(<String, dynamic>{
+        'event': 'transfer.success',
+        'data': <String, dynamic>{
+          'transfer': <String, dynamic>{'reference': 'trans-9'},
         },
-        const <String, String>{},
-      );
+      }, const <String, String>{});
       expect(event.reference, 'trans-9');
     });
   });
@@ -402,10 +394,9 @@ void main() {
 
     test('headerValue matches case-insensitively', () {
       expect(
-        PaystackGateway.headerValue(
-          const <String, String>{'X-PAYSTACK-SIGNATURE': 'abc'},
-          'x-paystack-signature',
-        ),
+        PaystackGateway.headerValue(const <String, String>{
+          'X-PAYSTACK-SIGNATURE': 'abc',
+        }, 'x-paystack-signature'),
         'abc',
       );
       expect(
@@ -424,9 +415,7 @@ void main() {
     );
 
     DioException dioError(int statusCode, [Map<String, dynamic>? data]) {
-      final RequestOptions ro = RequestOptions(
-        path: '/transaction/initialize',
-      );
+      final RequestOptions ro = RequestOptions(path: '/transaction/initialize');
       return DioException(
         requestOptions: ro,
         type: DioExceptionType.badResponse,

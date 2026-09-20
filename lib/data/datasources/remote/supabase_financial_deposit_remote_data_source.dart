@@ -30,16 +30,17 @@ class SupabaseFinancialDepositRemoteDataSource extends BaseApiService
 
   @override
   Future<List<DepositDto>> listDeposits() => _guard(() async {
-        final String? entityId = supabase.auth.currentUser?.id;
-        final PostgrestFilterBuilder<PostgrestList> filtered =
-            supabase.from('financial_deposits').select();
-        final PostgrestTransformBuilder<PostgrestList> query =
-            (entityId == null || entityId.isEmpty)
-                ? filtered.order('created_at', ascending: false)
-                : filtered
-                    .eq('entity_id', entityId)
-                    .order('created_at', ascending: false);
-        final PostgrestList rows = await query;
-        return rows.map(DepositDto.fromJson).toList(growable: false);
-      });
+    final String? entityId = supabase.auth.currentUser?.id;
+    final PostgrestFilterBuilder<PostgrestList> filtered = supabase
+        .from('financial_deposits')
+        .select();
+    final PostgrestTransformBuilder<PostgrestList> query =
+        (entityId == null || entityId.isEmpty)
+        ? filtered.order('created_at', ascending: false)
+        : filtered
+              .eq('entity_id', entityId)
+              .order('created_at', ascending: false);
+    final PostgrestList rows = await query;
+    return rows.map(DepositDto.fromJson).toList(growable: false);
+  });
 }

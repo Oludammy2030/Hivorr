@@ -12,10 +12,7 @@ import 'package:hivorr/systems/verification/models/kyc_tier.dart';
 /// `successContainer`, `expired`/`unassigned` → grey `outline`. Uses [AppTheme]
 /// tokens only — never `Colors.*` or inline hex.
 class KycTierBadge extends StatelessWidget {
-  const KycTierBadge({
-    super.key,
-    required this.level,
-  });
+  const KycTierBadge({super.key, required this.level});
 
   /// The KYC level (tier + status) to render.
   final KycLevel level;
@@ -26,8 +23,11 @@ class KycTierBadge extends StatelessWidget {
     final AppThemeExtension ext = context.appExtension;
     final KycTier tier = KycTier.fromCode(level.tierCode);
 
-    final (Color surface, Color foreground, String label) =
-        _statusTone(colors, ext, level.status);
+    final (Color surface, Color foreground, String label) = _statusTone(
+      colors,
+      ext,
+      level.status,
+    );
 
     return Container(
       padding: const EdgeInsets.all(HivorrSpacing.md),
@@ -48,10 +48,7 @@ class KycTierBadge extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  tier.displayLabel,
-                  style: context.textTheme.titleMedium,
-                ),
+                Text(tier.displayLabel, style: context.textTheme.titleMedium),
                 const SizedBox(height: 2),
                 Text(
                   level.tierCode,
@@ -74,9 +71,7 @@ class KycTierBadge extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: context.textTheme.labelMedium?.copyWith(
-                color: foreground,
-              ),
+              style: context.textTheme.labelMedium?.copyWith(color: foreground),
             ),
           ),
         ],
@@ -95,7 +90,11 @@ class KycTierBadge extends StatelessWidget {
       case 'pending':
         return (ext.warningContainer, ext.onWarningContainer, 'Pending');
       default:
-        return (colors.surfaceContainerHighest, colors.onSurfaceVariant, 'Expired');
+        return (
+          colors.surfaceContainerHighest,
+          colors.onSurfaceVariant,
+          'Expired',
+        );
     }
   }
 }

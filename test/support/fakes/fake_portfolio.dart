@@ -15,10 +15,8 @@ import 'package:hivorr/data/models/public_profile_dto.dart';
 /// [gate] is set, the fetch waits on the completer before resolving so tests
 /// can hold the loading state open.
 class FakePortfolioRemoteDataSource implements PortfolioRemoteDataSource {
-  FakePortfolioRemoteDataSource({
-    PublicProfileDto? result,
-    this.error,
-  }) : result = result ?? seedPublicProfileDto();
+  FakePortfolioRemoteDataSource({PublicProfileDto? result, this.error})
+    : result = result ?? seedPublicProfileDto();
 
   /// The DTO served on every successful fetch.
   PublicProfileDto result;
@@ -70,47 +68,47 @@ PublicProfileDto seedPublicProfileDto({
   String? professionName = 'Software Engineer',
   String? industrySlug = 'technology',
   String? industryName = 'Technology',
-}) =>
-    PublicProfileDto(
-      entityId: entityId,
-      displayName: displayName,
-      avatarPath: avatarPath,
-      bio: bio,
-      countryCode: countryCode,
-      professions: professions ??
-          <PublicProfessionDto>[seedPublicProfessionDto()],
-      credentials: credentials ??
-          <PublicCredentialDto>[
-            seedPublicCredentialDto(),
-            seedPublicCredentialDto(
-              kind: 'certification',
-              title: 'AWS Solutions Architect',
-            ),
-          ],
-      kycTierCode: kycTierCode,
-      kycStatus: kycStatus,
-      portfolioItems: portfolioItems ??
-          <PortfolioItemDto>[
-            seedPortfolioItemDto(
-              id: 'item-2',
-              title: 'Lakehouse Migration',
-              description: 'Data lakehouse migration for a fintech.',
-              sortOrder: 2,
-              mediaPath: 'portfolio-items/entity-1/lakehouse.jpg',
-            ),
-            seedPortfolioItemDto(
-              id: 'item-1',
-              title: 'Escrow Platform',
-              description: 'Milestone payment engine.',
-              sortOrder: 1,
-              mediaPath: 'portfolio-items/entity-1/escrow.jpg',
-            ),
-          ],
-      professionSlug: professionSlug,
-      professionName: professionName,
-      industrySlug: industrySlug,
-      industryName: industryName,
-    );
+}) => PublicProfileDto(
+  entityId: entityId,
+  displayName: displayName,
+  avatarPath: avatarPath,
+  bio: bio,
+  countryCode: countryCode,
+  professions: professions ?? <PublicProfessionDto>[seedPublicProfessionDto()],
+  credentials:
+      credentials ??
+      <PublicCredentialDto>[
+        seedPublicCredentialDto(),
+        seedPublicCredentialDto(
+          kind: 'certification',
+          title: 'AWS Solutions Architect',
+        ),
+      ],
+  kycTierCode: kycTierCode,
+  kycStatus: kycStatus,
+  portfolioItems:
+      portfolioItems ??
+      <PortfolioItemDto>[
+        seedPortfolioItemDto(
+          id: 'item-2',
+          title: 'Lakehouse Migration',
+          description: 'Data lakehouse migration for a fintech.',
+          sortOrder: 2,
+          mediaPath: 'portfolio-items/entity-1/lakehouse.jpg',
+        ),
+        seedPortfolioItemDto(
+          id: 'item-1',
+          title: 'Escrow Platform',
+          description: 'Milestone payment engine.',
+          sortOrder: 1,
+          mediaPath: 'portfolio-items/entity-1/escrow.jpg',
+        ),
+      ],
+  professionSlug: professionSlug,
+  professionName: professionName,
+  industrySlug: industrySlug,
+  industryName: industryName,
+);
 
 /// A default approved public profession badge.
 PublicProfessionDto seedPublicProfessionDto({
@@ -121,28 +119,26 @@ PublicProfessionDto seedPublicProfessionDto({
   String professionName = 'Software Engineer',
   String industrySlug = 'technology',
   String industryName = 'Technology',
-}) =>
-    PublicProfessionDto(
-      id: id,
-      professionId: professionId,
-      isPrimary: isPrimary,
-      professionSlug: professionSlug,
-      professionName: professionName,
-      industrySlug: industrySlug,
-      industryName: industryName,
-    );
+}) => PublicProfessionDto(
+  id: id,
+  professionId: professionId,
+  isPrimary: isPrimary,
+  professionSlug: professionSlug,
+  professionName: professionName,
+  industrySlug: industrySlug,
+  industryName: industryName,
+);
 
 /// A default approved credential DTO.
 PublicCredentialDto seedPublicCredentialDto({
   String kind = 'identity_document',
   String title = 'National ID',
   String verificationStatus = 'approved',
-}) =>
-    PublicCredentialDto(
-      kind: kind,
-      title: title,
-      verificationStatus: verificationStatus,
-    );
+}) => PublicCredentialDto(
+  kind: kind,
+  title: title,
+  verificationStatus: verificationStatus,
+);
 
 /// A default portfolio item DTO.
 PortfolioItemDto seedPortfolioItemDto({
@@ -152,12 +148,11 @@ PortfolioItemDto seedPortfolioItemDto({
   String? description = 'Milestone payment engine.',
   String? mediaPath = 'portfolio-items/entity-1/escrow.jpg',
   int? sortOrder = 1,
-}) =>
-    PortfolioItemDto(
-      id: id,
-      itemType: itemType,
-      title: title,
-      description: description,
-      mediaPath: mediaPath,
-      sortOrder: sortOrder,
-    );
+}) => PortfolioItemDto(
+  id: id,
+  itemType: itemType,
+  title: title,
+  description: description,
+  mediaPath: mediaPath,
+  sortOrder: sortOrder,
+);

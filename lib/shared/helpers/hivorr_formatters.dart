@@ -67,8 +67,7 @@ class HivorrFormatters {
       buffer.write(body[i]);
       count++;
     }
-    final String reversed =
-        buffer.toString().split('').reversed.join();
+    final String reversed = buffer.toString().split('').reversed.join();
     return negative ? '-$reversed' : reversed;
   }
 

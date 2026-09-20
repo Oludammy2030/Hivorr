@@ -11,10 +11,7 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 /// the frozen escrow is hidden — the client reflects the server hold and never
 /// presents an actionable control on a disputed escrow (EP-02-17 §11).
 class EscrowFrozenBanner extends StatelessWidget {
-  const EscrowFrozenBanner({
-    super.key,
-    this.onViewDispute,
-  });
+  const EscrowFrozenBanner({super.key, this.onViewDispute});
 
   /// Routes to the dispute detail screen. May be `null` to hide the action.
   final VoidCallback? onViewDispute;

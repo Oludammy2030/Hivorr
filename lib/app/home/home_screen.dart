@@ -76,7 +76,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final OnboardingProvider onboarding = context.watch<OnboardingProvider>();
     final bool complete =
         onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
-    final bool showResume = onboarding.progress != null && !complete && onboarding.exited;
+    final bool showResume =
+        onboarding.progress != null && !complete && onboarding.exited;
 
     final AdminReviewProvider? admin = _maybeAdmin(context, listen: true);
     final bool isAdmin = AdminGate.isAdmin(admin);

@@ -17,10 +17,8 @@ void main() {
     String userId = 'u1',
   }) async {
     final FakeManageUserRepository resolvedRepo =
-        repo ??
-        FakeManageUserRepository(detail: manageUserDetail(id: userId));
-    final ManageUserProvider provider =
-        ManageUserProvider(repo: resolvedRepo);
+        repo ?? FakeManageUserRepository(detail: manageUserDetail(id: userId));
+    final ManageUserProvider provider = ManageUserProvider(repo: resolvedRepo);
     await pumpApp(
       tester,
       ManageUserDetailScreen(userId: userId),
@@ -64,8 +62,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('shows the not-found state for an unknown user',
-        (WidgetTester tester) async {
+    testWidgets('shows the not-found state for an unknown user', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeManageUserRepository(detail: manageUserDetail(id: 'other')),
@@ -77,8 +76,9 @@ void main() {
   });
 
   group('lifecycle actions', () {
-    testWidgets('active users show suspend + deactivate actions',
-        (WidgetTester tester) async {
+    testWidgets('active users show suspend + deactivate actions', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
       await scrollTo(tester, find.text('Suspend'));
       expect(find.text('Suspend'), findsOneWidget);
@@ -99,8 +99,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('suspend confirms and issues the status change',
-        (WidgetTester tester) async {
+    testWidgets('suspend confirms and issues the status change', (
+      WidgetTester tester,
+    ) async {
       final FakeManageUserRepository repo = FakeManageUserRepository(
         detail: manageUserDetail(id: 'u1', status: 'active'),
       );
@@ -123,8 +124,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('reset onboarding confirms and resets',
-        (WidgetTester tester) async {
+    testWidgets('reset onboarding confirms and resets', (
+      WidgetTester tester,
+    ) async {
       final FakeManageUserRepository repo = FakeManageUserRepository(
         detail: manageUserDetail(id: 'u1', status: 'active'),
       );
@@ -134,9 +136,7 @@ void main() {
         tester,
         find.widgetWithText(HivorrButton, 'Reset onboarding'),
       );
-      await tester.tap(
-        find.widgetWithText(HivorrButton, 'Reset onboarding'),
-      );
+      await tester.tap(find.widgetWithText(HivorrButton, 'Reset onboarding'));
       await tester.pumpAndSettle();
       expect(find.text('Cancel'), findsOneWidget);
       await tester.tap(find.widgetWithText(TextButton, 'Reset'));
@@ -144,10 +144,7 @@ void main() {
 
       expect(repo.resetCallCount, 1);
       expect(repo.lastResetId, 'u1');
-      expect(
-        find.textContaining('Onboarding reset'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Onboarding reset'), findsOneWidget);
       await unmount(tester);
     });
   });

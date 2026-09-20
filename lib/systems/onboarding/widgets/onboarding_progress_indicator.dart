@@ -23,7 +23,8 @@ class OnboardingProgressIndicator extends StatelessWidget {
     final AppThemeExtension ext = context.appExtension;
     final OnboardingProgress? p = progress;
     final List<OnboardingStepCode> requiredSteps =
-        p?.requiredSteps ?? const <OnboardingStepCode>[
+        p?.requiredSteps ??
+        const <OnboardingStepCode>[
           OnboardingStepCode.capability,
           OnboardingStepCode.profile,
           OnboardingStepCode.industry,
@@ -31,9 +32,7 @@ class OnboardingProgressIndicator extends StatelessWidget {
           OnboardingStepCode.tradeProof,
         ];
     final int total = requiredSteps.length;
-    final int position = p == null
-        ? 0
-        : requiredSteps.indexOf(p.step) + 1;
+    final int position = p == null ? 0 : requiredSteps.indexOf(p.step) + 1;
     final int filled = position.clamp(0, total);
 
     return Semantics(

@@ -33,8 +33,7 @@ void main() {
     });
 
     test('InMemory clear removes the row', () async {
-      final OnboardingProgress progress =
-          OnboardingProgress(entityId: 'u1');
+      final OnboardingProgress progress = OnboardingProgress(entityId: 'u1');
       final InMemoryOnboardingProgressStore store =
           InMemoryOnboardingProgressStore();
       await store.save(progress);
@@ -44,14 +43,15 @@ void main() {
 
     test('key format is onboarding_progress:{entityId}', () {
       expect(onboardingProgressKey('u1'), 'onboarding_progress:u1');
-      expect(onboardingProgressKey('u-abc-123'),
-          'onboarding_progress:u-abc-123');
+      expect(
+        onboardingProgressKey('u-abc-123'),
+        'onboarding_progress:u-abc-123',
+      );
     });
 
     test('Hive-backed store round-trips through the engine box', () async {
       final LocalStore local = LocalStore(FakeStorageEngine());
-      final HiveOnboardingProgressStore store =
-          hiveProgressStore(store: local);
+      final HiveOnboardingProgressStore store = hiveProgressStore(store: local);
       final OnboardingProgress progress = OnboardingProgress(
         entityId: 'u1',
         step: OnboardingStepCode.identityDocument,
@@ -69,19 +69,18 @@ void main() {
 
     test('cross-user isolation (DV-05): u2 never sees u1 progress', () async {
       final HiveOnboardingProgressStore store = hiveProgressStore();
-      await store.save(OnboardingProgress(
-        entityId: 'u1',
-        step: OnboardingStepCode.tradeProof,
-      ));
+      await store.save(
+        OnboardingProgress(entityId: 'u1', step: OnboardingStepCode.tradeProof),
+      );
       expect(await store.read('u2'), isNull);
       expect(await store.read('u1'), isNotNull);
     });
 
     test('graceful no-op when the storage engine is unavailable', () async {
-      final LocalStore broken =
-          LocalStore(_ThrowingStorageEngine());
-      final HiveOnboardingProgressStore store =
-          HiveOnboardingProgressStore(store: broken);
+      final LocalStore broken = LocalStore(_ThrowingStorageEngine());
+      final HiveOnboardingProgressStore store = HiveOnboardingProgressStore(
+        store: broken,
+      );
       expect(await store.read('u1'), isNull);
       await store.save(OnboardingProgress(entityId: 'u1'));
       await store.clear('u1');
@@ -90,8 +89,9 @@ void main() {
 
     test('save swallows a write failure (no-op, never throws)', () async {
       final LocalStore broken = LocalStore(_ThrowingWriteStorageEngine());
-      final HiveOnboardingProgressStore store =
-          HiveOnboardingProgressStore(store: broken);
+      final HiveOnboardingProgressStore store = HiveOnboardingProgressStore(
+        store: broken,
+      );
       await store.save(
         OnboardingProgress(entityId: 'u1', step: OnboardingStepCode.industry),
       );
@@ -99,37 +99,39 @@ void main() {
     });
 
     test('clear swallows a remove failure (no-op, never throws)', () async {
-      final LocalStore broken =
-          LocalStore(_ThrowingWriteStorageEngine()..seedRemove('onboarding'));
-      final HiveOnboardingProgressStore store =
-          HiveOnboardingProgressStore(store: broken);
+      final LocalStore broken = LocalStore(
+        _ThrowingWriteStorageEngine()..seedRemove('onboarding'),
+      );
+      final HiveOnboardingProgressStore store = HiveOnboardingProgressStore(
+        store: broken,
+      );
       await store.clear('u1');
       expect(await store.read('u1'), isNull);
     });
 
     test('read falls back to profile for an unknown step name', () async {
       final FakeStorageEngine engine = FakeStorageEngine();
-      await engine.put(
-        'onboarding',
-        'onboarding_progress:u1',
-        <String, dynamic>{
-          'entityId': 'u1',
-          'step': 'warp-drive',
-          'completedSteps': <String>[],
-          'updatedAt': 0,
-        },
+      await engine
+          .put('onboarding', 'onboarding_progress:u1', <String, dynamic>{
+            'entityId': 'u1',
+            'step': 'warp-drive',
+            'completedSteps': <String>[],
+            'updatedAt': 0,
+          });
+      final HiveOnboardingProgressStore store = HiveOnboardingProgressStore(
+        store: LocalStore(engine),
       );
-      final HiveOnboardingProgressStore store =
-          HiveOnboardingProgressStore(store: LocalStore(engine));
       final OnboardingProgress? restored = await store.read('u1');
       expect(restored, isNotNull);
-      expect(restored!.step, OnboardingStepCode.profile,
-          reason: 'unknown step names degrade to the entry step');
+      expect(
+        restored!.step,
+        OnboardingStepCode.profile,
+        reason: 'unknown step names degrade to the entry step',
+      );
       expect(restored.completedSteps, isEmpty);
     });
 
-    test('valid completed steps round-trip; unknown names fall back',
-        () async {
+    test('valid completed steps round-trip; unknown names fall back', () async {
       final FakeStorageEngine engine = FakeStorageEngine();
       await engine.put(
         'onboarding',
@@ -143,19 +145,16 @@ void main() {
           'updatedAt': 5000,
         },
       );
-      final HiveOnboardingProgressStore store =
-          HiveOnboardingProgressStore(store: LocalStore(engine));
+      final HiveOnboardingProgressStore store = HiveOnboardingProgressStore(
+        store: LocalStore(engine),
+      );
       final OnboardingProgress? restored = await store.read('u1');
       expect(restored, isNotNull);
-      expect(
-        restored!.completedSteps,
-        <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.industry,
-          OnboardingStepCode.profile,
-        ],
-        reason: 'known names decode in order; the unknown one degrades',
-      );
+      expect(restored!.completedSteps, <OnboardingStepCode>[
+        OnboardingStepCode.profile,
+        OnboardingStepCode.industry,
+        OnboardingStepCode.profile,
+      ], reason: 'known names decode in order; the unknown one degrades');
       expect(restored.hasIdentitySubmission, isTrue);
       expect(restored.updatedAt.millisecondsSinceEpoch, 5000);
     });

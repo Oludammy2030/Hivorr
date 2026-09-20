@@ -7,8 +7,9 @@ import '../../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('EscrowFrozenBanner', () {
-    testWidgets('renders the gavel icon and the freeze copy',
-        (WidgetTester tester) async {
+    testWidgets('renders the gavel icon and the freeze copy', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, const EscrowFrozenBanner());
 
       expect(find.byIcon(Icons.gavel), findsOneWidget);
@@ -20,14 +21,16 @@ void main() {
       );
     });
 
-    testWidgets('hides the View dispute action when callback is null',
-        (WidgetTester tester) async {
+    testWidgets('hides the View dispute action when callback is null', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, const EscrowFrozenBanner());
       expect(find.text('View dispute'), findsNothing);
     });
 
-    testWidgets('shows the View dispute action when callback provided',
-        (WidgetTester tester) async {
+    testWidgets('shows the View dispute action when callback provided', (
+      WidgetTester tester,
+    ) async {
       bool tapped = false;
       await pumpTheme(
         tester,
@@ -39,8 +42,9 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('uses the error container theme tokens (no hardcoded hex)',
-        (WidgetTester tester) async {
+    testWidgets('uses the error container theme tokens (no hardcoded hex)', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, const EscrowFrozenBanner());
 
       final Container container = tester.widget<Container>(

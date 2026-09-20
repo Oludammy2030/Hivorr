@@ -23,11 +23,7 @@ const Map<String, String> _ciBuildCommands = <String, String>{
 };
 
 /// Project-root directories that are the real build inputs for each platform.
-const List<String> _platformDirectories = <String>[
-  'android',
-  'ios',
-  'web',
-];
+const List<String> _platformDirectories = <String>['android', 'ios', 'web'];
 
 /// Build inputs that must exist for cross-platform compilation to be possible.
 const List<String> _requiredBuildInputs = <String>[
@@ -69,7 +65,10 @@ void main() {
 
     test('documents the Android release build command', () {
       debugPrint('Android build command: ${_ciBuildCommands['android']}');
-      expect(_ciBuildCommands['android'], equals('flutter build apk --release'));
+      expect(
+        _ciBuildCommands['android'],
+        equals('flutter build apk --release'),
+      );
     });
 
     test('documents the iOS release build command (no codesign)', () {
@@ -99,26 +98,34 @@ void main() {
       }
     });
 
-    test('verifies prerequisites and produces a non-empty verification record',
-        () {
-      // Real checks: every platform directory is present.
-      final Directory projectRoot = Directory.current;
-      for (final String dir in _platformDirectories) {
-        final Directory entity =
-            Directory('${projectRoot.path}/$dir');
-        expect(entity.existsSync(), isTrue,
-            reason: 'Platform directory "$dir" is required for build verification.');
-      }
+    test(
+      'verifies prerequisites and produces a non-empty verification record',
+      () {
+        // Real checks: every platform directory is present.
+        final Directory projectRoot = Directory.current;
+        for (final String dir in _platformDirectories) {
+          final Directory entity = Directory('${projectRoot.path}/$dir');
+          expect(
+            entity.existsSync(),
+            isTrue,
+            reason:
+                'Platform directory "$dir" is required for build verification.',
+          );
+        }
 
-      // Real check: the shared Dart entry point exists.
-      final File mainEntry = File('${projectRoot.path}/lib/main.dart');
-      expect(mainEntry.existsSync(), isTrue,
-          reason: 'lib/main.dart is required for all platform builds.');
+        // Real check: the shared Dart entry point exists.
+        final File mainEntry = File('${projectRoot.path}/lib/main.dart');
+        expect(
+          mainEntry.existsSync(),
+          isTrue,
+          reason: 'lib/main.dart is required for all platform builds.',
+        );
 
-      // Real check: the verification record is produced and non-empty.
-      final String record = _buildVerificationRecord();
-      expect(record, isNotEmpty);
-      debugPrint(record);
-    });
+        // Real check: the verification record is produced and non-empty.
+        final String record = _buildVerificationRecord();
+        expect(record, isNotEmpty);
+        debugPrint(record);
+      },
+    );
   });
 }

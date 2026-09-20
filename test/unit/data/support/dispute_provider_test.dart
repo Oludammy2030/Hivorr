@@ -27,10 +27,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-        PiiRedactor(),
-      );
+    'hivorr.test',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+    PiiRedactor(),
+  );
 
   DisputeProvider build({
     FakeDisputeRepository? repo,
@@ -132,9 +132,7 @@ void main() {
         detail: seedDisputeDetailEntity(
           id: 'dispute-1',
           status: 'under_review',
-          evidence: <DisputeEvidence>[
-            seedDisputeEvidenceEntity(id: 'ev-1'),
-          ],
+          evidence: <DisputeEvidence>[seedDisputeEvidenceEntity(id: 'ev-1')],
           resolution: seedDisputeResolutionEntity(),
         ),
       );
@@ -203,97 +201,105 @@ void main() {
       provider.dispose();
     });
 
-    test('skips refresh while the app is backgrounded (lifecycle gate)',
-        () async {
-      final repo = FakeDisputeRepository(
-        detail: seedDisputeDetailEntity(id: 'dispute-1'),
-      );
-      final provider = build(repo: repo);
-      await provider.select('dispute-1');
-      final callsAfterSelect = repo.getCaseCallCount;
+    test(
+      'skips refresh while the app is backgrounded (lifecycle gate)',
+      () async {
+        final repo = FakeDisputeRepository(
+          detail: seedDisputeDetailEntity(id: 'dispute-1'),
+        );
+        final provider = build(repo: repo);
+        await provider.select('dispute-1');
+        final callsAfterSelect = repo.getCaseCallCount;
 
-      WidgetsBinding.instance.handleAppLifecycleStateChanged(
-        AppLifecycleState.paused,
-      );
-      await provider.refresh();
-      expect(repo.getCaseCallCount, callsAfterSelect);
+        WidgetsBinding.instance.handleAppLifecycleStateChanged(
+          AppLifecycleState.paused,
+        );
+        await provider.refresh();
+        expect(repo.getCaseCallCount, callsAfterSelect);
 
-      WidgetsBinding.instance.handleAppLifecycleStateChanged(
-        AppLifecycleState.resumed,
-      );
-      provider.dispose();
-    });
+        WidgetsBinding.instance.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        provider.dispose();
+      },
+    );
 
-    test('exposes isRefreshing while the re-read is pending and clears after',
-        () async {
-      final repo = _PausableRepo(
-        detail: seedDisputeDetailEntity(id: 'dispute-1'),
-      );
-      final provider = build(repo: repo);
-      await provider.select('dispute-1');
+    test(
+      'exposes isRefreshing while the re-read is pending and clears after',
+      () async {
+        final repo = _PausableRepo(
+          detail: seedDisputeDetailEntity(id: 'dispute-1'),
+        );
+        final provider = build(repo: repo);
+        await provider.select('dispute-1');
 
-      repo.gate = Completer<void>();
-      final Future<void> refreshing = provider.refresh();
-      await pumpEventQueue();
-      expect(provider.isRefreshing, isTrue);
+        repo.gate = Completer<void>();
+        final Future<void> refreshing = provider.refresh();
+        await pumpEventQueue();
+        expect(provider.isRefreshing, isTrue);
 
-      repo.gate!.complete();
-      await refreshing;
-      expect(provider.isRefreshing, isFalse);
-      provider.dispose();
-    });
+        repo.gate!.complete();
+        await refreshing;
+        expect(provider.isRefreshing, isFalse);
+        provider.dispose();
+      },
+    );
   });
 
   group('write actions', () {
-    test('file selects the filed case with empty evidence and null resolution',
-        () async {
-      final repo = FakeDisputeRepository();
-      final provider = build(repo: repo);
-      final DisputeCase filed = await provider.file(
-        escrowId: 'escrow-1',
-        disputeType: 'milestone_disagreement',
-        reason: 'Work did not match the agreed milestone description.',
-        desiredOutcome: 'split',
-        priority: 'high',
-      );
+    test(
+      'file selects the filed case with empty evidence and null resolution',
+      () async {
+        final repo = FakeDisputeRepository();
+        final provider = build(repo: repo);
+        final DisputeCase filed = await provider.file(
+          escrowId: 'escrow-1',
+          disputeType: 'milestone_disagreement',
+          reason: 'Work did not match the agreed milestone description.',
+          desiredOutcome: 'split',
+          priority: 'high',
+        );
 
-      expect(filed.id, 'dispute-filed-1');
-      expect(filed.status, 'open');
-      expect(repo.lastEscrowId, 'escrow-1');
-      expect(repo.lastDisputeType, 'milestone_disagreement');
-      expect(repo.lastDesiredOutcome, 'split');
-      expect(repo.lastPriority, 'high');
-      expect(provider.selected!.id, 'dispute-filed-1');
-      expect(provider.evidence, isEmpty);
-      expect(provider.resolution, isNull);
-      expect(provider.lastError, isNull);
-      provider.dispose();
-    });
+        expect(filed.id, 'dispute-filed-1');
+        expect(filed.status, 'open');
+        expect(repo.lastEscrowId, 'escrow-1');
+        expect(repo.lastDisputeType, 'milestone_disagreement');
+        expect(repo.lastDesiredOutcome, 'split');
+        expect(repo.lastPriority, 'high');
+        expect(provider.selected!.id, 'dispute-filed-1');
+        expect(provider.evidence, isEmpty);
+        expect(provider.resolution, isNull);
+        expect(provider.lastError, isNull);
+        provider.dispose();
+      },
+    );
 
-    test('file posts a local notification with a redacted escrow suffix',
-        () async {
-      final service = FakeNotificationService();
-      final provider = build(
-        repo: FakeDisputeRepository(),
-        notificationProvider: buildNotifications(service),
-        clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
-      );
-      await provider.file(
-        escrowId: 'escrow-1',
-        disputeType: 'service_quality',
-        reason: 'Work did not match the agreed milestone description.',
-      );
-      await pumpEventQueue();
+    test(
+      'file posts a local notification with a redacted escrow suffix',
+      () async {
+        final service = FakeNotificationService();
+        final provider = build(
+          repo: FakeDisputeRepository(),
+          notificationProvider: buildNotifications(service),
+          clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
+        );
+        await provider.file(
+          escrowId: 'escrow-1',
+          disputeType: 'service_quality',
+          reason: 'Work did not match the agreed milestone description.',
+        );
+        await pumpEventQueue();
 
-      final HivorrNotification shown = service.shown.single;
-      expect(shown.channelId, 'hivorr_default');
-      expect(shown.title, 'Dispute filed');
-      expect(shown.body, contains('now frozen')); // escrow hold
-      expect(shown.body, isNot(contains('escrow-1'))); // PII-safe suffix only
-      expect(shown.body, contains('***'));
-      expect(shown.actionRoute, '/support/disputes/dispute-filed-1');
-      provider.dispose();
-    });
+        final HivorrNotification shown = service.shown.single;
+        expect(shown.channelId, 'hivorr_default');
+        expect(shown.title, 'Dispute filed');
+        expect(shown.body, contains('now frozen')); // escrow hold
+        expect(shown.body, isNot(contains('escrow-1'))); // PII-safe suffix only
+        expect(shown.body, contains('***'));
+        expect(shown.actionRoute, '/support/disputes/dispute-filed-1');
+        provider.dispose();
+      },
+    );
 
     test('submitEvidence appends to the selected evidence', () async {
       final repo = FakeDisputeRepository(
@@ -310,7 +316,10 @@ void main() {
 
       expect(submitted.title, 'Mismatch screenshot');
       expect(provider.evidence, hasLength(1));
-      expect(provider.evidence.single.fileUrl, 'entity-filer/dispute-1/abc.jpg');
+      expect(
+        provider.evidence.single.fileUrl,
+        'entity-filer/dispute-1/abc.jpg',
+      );
       expect(repo.lastCaseId, 'dispute-1');
       provider.dispose();
     });
@@ -329,26 +338,28 @@ void main() {
       provider.dispose();
     });
 
-    test('withdraw posts a local notification saying the escrow is unfrozen',
-        () async {
-      final service = FakeNotificationService();
-      final provider = build(
-        repo: FakeDisputeRepository(
-          detail: seedDisputeDetailEntity(id: 'dispute-1'),
-        ),
-        notificationProvider: buildNotifications(service),
-        clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
-      );
-      await provider.select('dispute-1');
-      await provider.withdraw('dispute-1');
-      await pumpEventQueue();
+    test(
+      'withdraw posts a local notification saying the escrow is unfrozen',
+      () async {
+        final service = FakeNotificationService();
+        final provider = build(
+          repo: FakeDisputeRepository(
+            detail: seedDisputeDetailEntity(id: 'dispute-1'),
+          ),
+          notificationProvider: buildNotifications(service),
+          clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
+        );
+        await provider.select('dispute-1');
+        await provider.withdraw('dispute-1');
+        await pumpEventQueue();
 
-      final HivorrNotification shown = service.shown.single;
-      expect(shown.title, 'Dispute withdrawn');
-      expect(shown.body, contains('unfrozen'));
-      expect(shown.actionRoute, '/support/disputes/dispute-1');
-      provider.dispose();
-    });
+        final HivorrNotification shown = service.shown.single;
+        expect(shown.title, 'Dispute withdrawn');
+        expect(shown.body, contains('unfrozen'));
+        expect(shown.actionRoute, '/support/disputes/dispute-1');
+        provider.dispose();
+      },
+    );
   });
 
   group('structured logging', () {

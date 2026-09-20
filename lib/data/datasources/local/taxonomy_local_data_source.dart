@@ -17,7 +17,10 @@ abstract class TaxonomyLocalDataSource {
   Future<List<ProfessionDto>?> getProfessions(String industryId);
 
   /// Caches [professions] under the `taxonomy:professions:<industryId>` key.
-  Future<void> saveProfessions(String industryId, List<ProfessionDto> professions);
+  Future<void> saveProfessions(
+    String industryId,
+    List<ProfessionDto> professions,
+  );
 
   /// Clears all taxonomy-scoped cache entries.
   Future<void> invalidate();
@@ -50,8 +53,9 @@ class CacheManagerTaxonomyLocalDataSource implements TaxonomyLocalDataSource {
   Future<List<IndustryDto>?> getIndustries() async {
     final CacheManager? cache = _resolved;
     if (cache != null) {
-      final List<IndustryDto>? cached =
-          cache.get<List<IndustryDto>>('${taxonomyCachePrefix}industries');
+      final List<IndustryDto>? cached = cache.get<List<IndustryDto>>(
+        '${taxonomyCachePrefix}industries',
+      );
       return cached;
     }
     final List<Map<String, dynamic>>? raw =
@@ -94,10 +98,7 @@ class CacheManagerTaxonomyLocalDataSource implements TaxonomyLocalDataSource {
     final String key = '${taxonomyCachePrefix}professions:$industryId';
     final CacheManager? cache = _resolved;
     if (cache != null) {
-      cache.put<List<ProfessionDto>>(
-        key,
-        professions,
-      );
+      cache.put<List<ProfessionDto>>(key, professions);
     } else {
       _fallback[key] = professions
           .map((ProfessionDto dto) => dto.toJson())
@@ -122,8 +123,9 @@ class InMemoryTaxonomyLocalDataSource implements TaxonomyLocalDataSource {
   InMemoryTaxonomyLocalDataSource({
     List<IndustryDto>? industries,
     Map<String, List<ProfessionDto>>? professionsByIndustry,
-  })  : _industries = industries ?? <IndustryDto>[],
-        _professionsByIndustry = professionsByIndustry ?? <String, List<ProfessionDto>>{};
+  }) : _industries = industries ?? <IndustryDto>[],
+       _professionsByIndustry =
+           professionsByIndustry ?? <String, List<ProfessionDto>>{};
 
   List<IndustryDto> _industries;
   final Map<String, List<ProfessionDto>> _professionsByIndustry;

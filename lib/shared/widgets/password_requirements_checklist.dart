@@ -39,9 +39,7 @@ class PasswordRequirementsChecklist extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: HivorrSpacing.xs),
             child: Text(
               'Password requirements',
-              style: text.labelMedium?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
+              style: text.labelMedium?.copyWith(color: colors.onSurfaceVariant),
             ),
           ),
           for (final PasswordCharacterClass cls in requirements)

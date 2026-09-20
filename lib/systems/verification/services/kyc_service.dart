@@ -22,10 +22,10 @@ class KycService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _repo = repo,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _repo = repo,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final KycRepository _repo;
   final HivorrLogger? _logger;
@@ -85,11 +85,7 @@ class KycService {
       return result;
     } catch (error, stackTrace) {
       await _tracer?.finishSpan(span, status: SpanStatus.internalError());
-      _logger?.error(
-        '$name failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
+      _logger?.error('$name failed', error: error, stackTrace: stackTrace);
       rethrow;
     }
   }

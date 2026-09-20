@@ -9,8 +9,9 @@ import '../../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('EvidenceAttachmentCard', () {
-    testWidgets('renders the title and the type icon',
-        (WidgetTester tester) async {
+    testWidgets('renders the title and the type icon', (
+      WidgetTester tester,
+    ) async {
       final evidence = seedDisputeEvidenceEntity(
         evidenceType: 'screenshot',
         title: 'Mismatch screenshot',
@@ -21,8 +22,9 @@ void main() {
       expect(find.byIcon(Icons.screenshot_monitor), findsOneWidget);
     });
 
-    testWidgets('renders the description when present',
-        (WidgetTester tester) async {
+    testWidgets('renders the description when present', (
+      WidgetTester tester,
+    ) async {
       final evidence = seedDisputeEvidenceEntity(
         evidenceType: 'description',
         title: 'Written account',
@@ -33,8 +35,9 @@ void main() {
       expect(find.text('Full account of events.'), findsOneWidget);
     });
 
-    testWidgets('shows an attachment chip with name and formatted size',
-        (WidgetTester tester) async {
+    testWidgets('shows an attachment chip with name and formatted size', (
+      WidgetTester tester,
+    ) async {
       final evidence = seedDisputeEvidenceEntity(
         evidenceType: 'photo',
         title: 'Delivery photo',
@@ -52,30 +55,33 @@ void main() {
       );
     });
 
-    testWidgets('shows the Preview action only when onPreview and file present',
-        (WidgetTester tester) async {
-      final evidence = seedDisputeEvidenceEntity(
-        evidenceType: 'photo',
-        title: 'Delivery photo',
-        fileUrl: 'entity-filer/dispute-1/photo.jpg',
-        fileMetadata: <String, dynamic>{'originalName': 'delivery.jpg'},
-      );
-      bool previewed = false;
-      await pumpTheme(
-        tester,
-        EvidenceAttachmentCard(
-          evidence: evidence,
-          onPreview: () => previewed = true,
-        ),
-      );
+    testWidgets(
+      'shows the Preview action only when onPreview and file present',
+      (WidgetTester tester) async {
+        final evidence = seedDisputeEvidenceEntity(
+          evidenceType: 'photo',
+          title: 'Delivery photo',
+          fileUrl: 'entity-filer/dispute-1/photo.jpg',
+          fileMetadata: <String, dynamic>{'originalName': 'delivery.jpg'},
+        );
+        bool previewed = false;
+        await pumpTheme(
+          tester,
+          EvidenceAttachmentCard(
+            evidence: evidence,
+            onPreview: () => previewed = true,
+          ),
+        );
 
-      expect(find.text('Preview'), findsOneWidget);
-      await tester.tap(find.text('Preview'));
-      expect(previewed, isTrue);
-    });
+        expect(find.text('Preview'), findsOneWidget);
+        await tester.tap(find.text('Preview'));
+        expect(previewed, isTrue);
+      },
+    );
 
-    testWidgets('hides the Preview action when no onPreview is provided',
-        (WidgetTester tester) async {
+    testWidgets('hides the Preview action when no onPreview is provided', (
+      WidgetTester tester,
+    ) async {
       final evidence = seedDisputeEvidenceEntity(
         evidenceType: 'photo',
         title: 'Delivery photo',

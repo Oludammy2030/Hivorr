@@ -27,21 +27,15 @@ import '../../../support/harnesses/widget_harness.dart';
 void main() {
   const WalletConversionPairsConfig enabledPairs = WalletConversionPairsConfig(
     enabled: true,
-    baseCrossRates: <String, double>{
-      'NGN|USD': 0.0007,
-    },
+    baseCrossRates: <String, double>{'NGN|USD': 0.0007},
   );
 
   ConversionProvider providerWith(
     FakeConversionRepository repo, {
     WalletConversionPairsConfig pairsConfig = enabledPairs,
-  }) =>
-      ConversionProvider(
-        service: ConversionService(
-          repository: repo,
-          pairsConfig: pairsConfig,
-        ),
-      );
+  }) => ConversionProvider(
+    service: ConversionService(repository: repo, pairsConfig: pairsConfig),
+  );
 
   Future<void> pumpScreen(
     WidgetTester tester,
@@ -69,12 +63,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  FakeConversionRepository seededRepo() => FakeConversionRepository()
-    ..setRate('NGN', 'USD', 0.0007);
+  FakeConversionRepository seededRepo() =>
+      FakeConversionRepository()..setRate('NGN', 'USD', 0.0007);
 
   group('ConversionScreen', () {
-    testWidgets('renders the Convert app bar title and the history header',
-        (WidgetTester tester) async {
+    testWidgets('renders the Convert app bar title and the history header', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(seededRepo());
       addTearDown(provider.dispose);
 
@@ -84,8 +79,9 @@ void main() {
       expect(find.text('History'), findsOneWidget);
     });
 
-    testWidgets('shows the empty state while conversion is flag-gated off',
-        (WidgetTester tester) async {
+    testWidgets('shows the empty state while conversion is flag-gated off', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(
         FakeConversionRepository(),
         pairsConfig: const WalletConversionPairsConfig(),
@@ -99,23 +95,28 @@ void main() {
       expect(find.text('Convert now'), findsNothing);
     });
 
-    testWidgets('selecting a pair reveals the trusted directed + inverse rate',
-        (WidgetTester tester) async {
-      final provider = providerWith(seededRepo());
-      addTearDown(provider.dispose);
+    testWidgets(
+      'selecting a pair reveals the trusted directed + inverse rate',
+      (WidgetTester tester) async {
+        final provider = providerWith(seededRepo());
+        addTearDown(provider.dispose);
 
-      await pumpScreen(tester, provider);
-      expect(find.text('Select a pair and an amount to see today\u2019s rate.'),
-          findsOneWidget);
+        await pumpScreen(tester, provider);
+        expect(
+          find.text('Select a pair and an amount to see today\u2019s rate.'),
+          findsOneWidget,
+        );
 
-      await selectPair(tester, from: 'NGN', to: 'USD');
+        await selectPair(tester, from: 'NGN', to: 'USD');
 
-      expect(find.text('1 NGN = 0.0007 USD'), findsOneWidget);
-      expect(find.text('Platform rate'), findsOneWidget);
-    });
+        expect(find.text('1 NGN = 0.0007 USD'), findsOneWidget);
+        expect(find.text('Platform rate'), findsOneWidget);
+      },
+    );
 
-    testWidgets('amount entry prefixes the source currency symbol and label',
-        (WidgetTester tester) async {
+    testWidgets('amount entry prefixes the source currency symbol and label', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(seededRepo());
       addTearDown(provider.dispose);
 
@@ -126,20 +127,22 @@ void main() {
       expect(find.text('\u20A6'), findsOneWidget);
     });
 
-    testWidgets('shows the rate loading state while a rate fetch is in flight',
-        (WidgetTester tester) async {
-      final provider = providerWith(_HangingConversionRepository());
-      addTearDown(provider.dispose);
+    testWidgets(
+      'shows the rate loading state while a rate fetch is in flight',
+      (WidgetTester tester) async {
+        final provider = providerWith(_HangingConversionRepository());
+        addTearDown(provider.dispose);
 
-      await pumpScreen(tester, provider);
-      await tester.tap(find.widgetWithText(HivorrChip, 'NGN').first);
-      await tester.pump();
-      await tester.tap(find.widgetWithText(HivorrChip, 'USD').last);
-      await tester.pump();
+        await pumpScreen(tester, provider);
+        await tester.tap(find.widgetWithText(HivorrChip, 'NGN').first);
+        await tester.pump();
+        await tester.tap(find.widgetWithText(HivorrChip, 'USD').last);
+        await tester.pump();
 
-      expect(find.byType(HivorrLoadingState), findsOneWidget);
-      expect(find.text('Fetching rate...'), findsOneWidget);
-    });
+        expect(find.byType(HivorrLoadingState), findsOneWidget);
+        expect(find.text('Fetching rate...'), findsOneWidget);
+      },
+    );
 
     testWidgets('shows the unavailable state when the pair has no configured '
         'rate', (WidgetTester tester) async {
@@ -152,8 +155,9 @@ void main() {
       expect(find.text('Rate unavailable for this pair'), findsOneWidget);
     });
 
-    testWidgets('a self-pair tap swaps safely without crashing and resolves',
-        (WidgetTester tester) async {
+    testWidgets('a self-pair tap swaps safely without crashing and resolves', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(seededRepo());
       addTearDown(provider.dispose);
 
@@ -165,8 +169,10 @@ void main() {
 
       // The temporary self-pair shows the placeholder rate card, then the
       // choice lands on a valid pair without throwing.
-      expect(find.text('Select a pair and an amount to see today\u2019s rate.'),
-          findsOneWidget);
+      expect(
+        find.text('Select a pair and an amount to see today\u2019s rate.'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.widgetWithText(HivorrChip, 'USD').last);
       await tester.pumpAndSettle();
@@ -196,8 +202,9 @@ void main() {
       expect(find.text('Convert now'), findsOneWidget);
     });
 
-    testWidgets('executing a conversion renders the completion result card',
-        (WidgetTester tester) async {
+    testWidgets('executing a conversion renders the completion result card', (
+      WidgetTester tester,
+    ) async {
       final repo = seededRepo()
         ..setConversion(seedConversionEntity(id: 'conversion-abc'));
       final provider = providerWith(repo);
@@ -220,8 +227,9 @@ void main() {
       expect(repo.executeCallCount, 1);
     });
 
-    testWidgets('a failed estimate surfaces the inline error with retry',
-        (WidgetTester tester) async {
+    testWidgets('a failed estimate surfaces the inline error with retry', (
+      WidgetTester tester,
+    ) async {
       final repo = seededRepo()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.conflict,
@@ -243,8 +251,9 @@ void main() {
       expect(find.text('Retry'), findsOneWidget);
     });
 
-    testWidgets('retry after a failed estimate recomputes the estimate',
-        (WidgetTester tester) async {
+    testWidgets('retry after a failed estimate recomputes the estimate', (
+      WidgetTester tester,
+    ) async {
       final repo = seededRepo()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -270,8 +279,9 @@ void main() {
       expect(find.text('You receive'), findsOneWidget);
     });
 
-    testWidgets('renders history tiles with status chips',
-        (WidgetTester tester) async {
+    testWidgets('renders history tiles with status chips', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeConversionRepository(
         history: <CurrencyConversion>[
           seedConversionEntity(id: 'c-1'),
@@ -293,8 +303,9 @@ void main() {
       expect(find.text('Completed'), findsNWidgets(2));
     });
 
-    testWidgets('shows the empty history state when there are no conversions',
-        (WidgetTester tester) async {
+    testWidgets('shows the empty history state when there are no conversions', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeConversionRepository());
       addTearDown(provider.dispose);
 
@@ -303,8 +314,9 @@ void main() {
       expect(find.text('No conversions yet'), findsOneWidget);
     });
 
-    testWidgets('reloads history on pull-to-refresh',
-        (WidgetTester tester) async {
+    testWidgets('reloads history on pull-to-refresh', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeConversionRepository(
         history: <CurrencyConversion>[seedConversionEntity()],
       );
@@ -320,8 +332,9 @@ void main() {
       expect(repo.historyCallCount, greaterThan(initial));
     });
 
-    testWidgets('reloads history when the app resumes from background',
-        (WidgetTester tester) async {
+    testWidgets('reloads history when the app resumes from background', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeConversionRepository(
         history: <CurrencyConversion>[seedConversionEntity()],
       );
@@ -337,45 +350,50 @@ void main() {
       expect(repo.historyCallCount, greaterThan(initial));
     });
 
-    testWidgets('uses AppTheme tokens for the preview, spacing, and card radius '
-        '(TT-09)', (WidgetTester tester) async {
-      final provider = providerWith(seededRepo());
-      addTearDown(provider.dispose);
+    testWidgets(
+      'uses AppTheme tokens for the preview, spacing, and card radius '
+      '(TT-09)',
+      (WidgetTester tester) async {
+        final provider = providerWith(seededRepo());
+        addTearDown(provider.dispose);
 
-      await pumpScreen(tester, provider);
-      await selectPair(tester, from: 'NGN', to: 'USD');
-      await tester.enterText(find.byType(TextField), '50000');
-      await tester.pump();
-      await tester.tap(find.text('See estimate'));
-      await tester.pumpAndSettle();
+        await pumpScreen(tester, provider);
+        await selectPair(tester, from: 'NGN', to: 'USD');
+        await tester.enterText(find.byType(TextField), '50000');
+        await tester.pump();
+        await tester.tap(find.text('See estimate'));
+        await tester.pumpAndSettle();
 
-      final BuildContext context = tester.element(find.byType(ConversionScreen));
-      final AppThemeExtension ext = context.appExtension;
+        final BuildContext context = tester.element(
+          find.byType(ConversionScreen),
+        );
+        final AppThemeExtension ext = context.appExtension;
 
-      // Net emphasized via textTheme.titleMedium + colorScheme.primary.
-      final Text netText = tester.widget<Text>(find.text('\$35.00'));
-      expect(
-        netText.style?.fontSize,
-        Theme.of(context).textTheme.titleMedium?.fontSize,
-      );
-      expect(netText.style?.color, Theme.of(context).colorScheme.primary);
+        // Net emphasized via textTheme.titleMedium + colorScheme.primary.
+        final Text netText = tester.widget<Text>(find.text('\$35.00'));
+        expect(
+          netText.style?.fontSize,
+          Theme.of(context).textTheme.titleMedium?.fontSize,
+        );
+        expect(netText.style?.color, Theme.of(context).colorScheme.primary);
 
-      // Cards carry the AppTheme radiusMd (16dp) surface.
-      final Iterable<Container> cardContainers = tester.widgetList<Container>(
-        find.descendant(
-          of: find.byType(HivorrCard),
-          matching: find.byType(Container),
-        ),
-      );
-      expect(
-        cardContainers.any(
-          (Container c) =>
-              (c.decoration as BoxDecoration).borderRadius ==
-              BorderRadius.circular(ext.radiusMd),
-        ),
-        isTrue,
-      );
-    });
+        // Cards carry the AppTheme radiusMd (16dp) surface.
+        final Iterable<Container> cardContainers = tester.widgetList<Container>(
+          find.descendant(
+            of: find.byType(HivorrCard),
+            matching: find.byType(Container),
+          ),
+        );
+        expect(
+          cardContainers.any(
+            (Container c) =>
+                (c.decoration as BoxDecoration).borderRadius ==
+                BorderRadius.circular(ext.radiusMd),
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 }
 
@@ -385,6 +403,5 @@ class _HangingConversionRepository extends FakeConversionRepository {
   Future<double> getRate({
     required String fromCurrency,
     required String toCurrency,
-  }) =>
-      Completer<double>().future;
+  }) => Completer<double>().future;
 }

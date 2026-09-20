@@ -26,12 +26,13 @@ class _BlockingPayoutRepo implements FinancialPayoutRepository {
 
   void release() => _never.complete();
 
-  Future<T> _neverCompletes<T>() =>
-      _never.future.then<T>((_) => throw const ApiException(
-            kind: ApiExceptionKind.server,
-            message: 'load down',
-            code: 'PLT999',
-          ));
+  Future<T> _neverCompletes<T>() => _never.future.then<T>(
+    (_) => throw const ApiException(
+      kind: ApiExceptionKind.server,
+      message: 'load down',
+      code: 'PLT999',
+    ),
+  );
 
   @override
   Future<PayoutAccount> bindAccount({
@@ -39,8 +40,7 @@ class _BlockingPayoutRepo implements FinancialPayoutRepository {
     required String bankName,
     required String accountNumber,
     required String accountName,
-  }) =>
-      _neverCompletes();
+  }) => _neverCompletes();
 
   @override
   Future<List<PayoutAccount>> listPayoutAccounts() => _neverCompletes();
@@ -49,8 +49,7 @@ class _BlockingPayoutRepo implements FinancialPayoutRepository {
   Future<WithdrawalResult> withdraw({
     required String payoutAccountId,
     required double amount,
-  }) =>
-      _neverCompletes();
+  }) => _neverCompletes();
 }
 
 void main() {
@@ -59,7 +58,9 @@ void main() {
     FinancialPayoutRepository? repo,
   }) async {
     final provider = FinancialPayoutProvider(
-      service: FinancialPayoutService(repository: repo ?? FakeFinancialPayoutRepository()),
+      service: FinancialPayoutService(
+        repository: repo ?? FakeFinancialPayoutRepository(),
+      ),
     );
     addTearDown(provider.dispose);
     await pumpScreen(
@@ -73,8 +74,9 @@ void main() {
   }
 
   group('PayoutAccountView', () {
-    testWidgets('renders the Accounts / Withdraw tab selector',
-        (WidgetTester tester) async {
+    testWidgets('renders the Accounts / Withdraw tab selector', (
+      WidgetTester tester,
+    ) async {
       await pumpView(tester);
       await tester.pumpAndSettle();
 
@@ -82,8 +84,9 @@ void main() {
       expect(find.text('Withdraw'), findsOneWidget);
     });
 
-    testWidgets('empty mirror shows the bind empty state and CTA',
-        (WidgetTester tester) async {
+    testWidgets('empty mirror shows the bind empty state and CTA', (
+      WidgetTester tester,
+    ) async {
       await pumpView(tester);
       await tester.pumpAndSettle();
 
@@ -91,8 +94,9 @@ void main() {
       expect(find.text('Bind payout account'), findsOneWidget);
     });
 
-    testWidgets('tapping "Bind payout account" reveals the bind form',
-        (WidgetTester tester) async {
+    testWidgets('tapping "Bind payout account" reveals the bind form', (
+      WidgetTester tester,
+    ) async {
       await pumpView(tester);
       await tester.pumpAndSettle();
 
@@ -103,8 +107,9 @@ void main() {
       expect(find.text('Bank name'), findsOneWidget);
     });
 
-    testWidgets('bound accounts render as payout cards',
-        (WidgetTester tester) async {
+    testWidgets('bound accounts render as payout cards', (
+      WidgetTester tester,
+    ) async {
       await pumpView(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -122,8 +127,9 @@ void main() {
       expect(find.text('Verification pending'), findsOneWidget);
     });
 
-    testWidgets('Accounts tab keeps listing cards after the post-frame load',
-        (WidgetTester tester) async {
+    testWidgets('Accounts tab keeps listing cards after the post-frame load', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialPayoutRepository(
         seed: <PayoutAccount>[FakeFinancialPayoutRepository.verified()],
       );
@@ -134,19 +140,22 @@ void main() {
       expect(find.text('Account ending ***6789'), findsOneWidget);
     });
 
-    testWidgets('switching to the Withdraw tab shows the empty verified state',
-        (WidgetTester tester) async {
-      await pumpView(tester);
-      await tester.pumpAndSettle();
+    testWidgets(
+      'switching to the Withdraw tab shows the empty verified state',
+      (WidgetTester tester) async {
+        await pumpView(tester);
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Withdraw'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Withdraw'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('No verified payout accounts'), findsOneWidget);
-    });
+        expect(find.text('No verified payout accounts'), findsOneWidget);
+      },
+    );
 
-    testWidgets('Withdraw tab offers only verified accounts through a form',
-        (WidgetTester tester) async {
+    testWidgets('Withdraw tab offers only verified accounts through a form', (
+      WidgetTester tester,
+    ) async {
       await pumpView(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -166,8 +175,9 @@ void main() {
       expect(find.textContaining('Zenith Bank'), findsNothing);
     });
 
-    testWidgets('Withdraw tab surfaces the cashout limit when provided',
-        (WidgetTester tester) async {
+    testWidgets('Withdraw tab surfaces the cashout limit when provided', (
+      WidgetTester tester,
+    ) async {
       await pumpView(
         tester,
         repo: FakeFinancialPayoutRepository(
@@ -184,8 +194,9 @@ void main() {
       expect(find.text('\u20A6500,000.00'), findsOneWidget);
     });
 
-    testWidgets('shows the loading state while the initial load is pending',
-        (WidgetTester tester) async {
+    testWidgets('shows the loading state while the initial load is pending', (
+      WidgetTester tester,
+    ) async {
       final blocking = _BlockingPayoutRepo();
       await pumpView(tester, repo: blocking);
       await tester.pump();
@@ -195,8 +206,9 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('shows the error state when the initial load fails',
-        (WidgetTester tester) async {
+    testWidgets('shows the error state when the initial load fails', (
+      WidgetTester tester,
+    ) async {
       const ApiException failure = ApiException(
         kind: ApiExceptionKind.server,
         message: 'load down',
@@ -211,8 +223,9 @@ void main() {
       expect(find.text('Retry'), findsOneWidget);
     });
 
-    testWidgets('retry after a failed load recovers the mirror',
-        (WidgetTester tester) async {
+    testWidgets('retry after a failed load recovers the mirror', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialPayoutRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -230,8 +243,9 @@ void main() {
       expect(find.text('No payout accounts bound'), findsOneWidget);
     });
 
-    testWidgets('renders on the dark theme without hardcoded colors',
-        (WidgetTester tester) async {
+    testWidgets('renders on the dark theme without hardcoded colors', (
+      WidgetTester tester,
+    ) async {
       final provider = FinancialPayoutProvider(
         service: FinancialPayoutService(
           repository: FakeFinancialPayoutRepository(),

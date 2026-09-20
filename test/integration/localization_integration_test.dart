@@ -11,8 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import '../support/harnesses/widget_harness.dart';
-import '../test_helpers.dart'
-    show FakeLocalizationsDelegate, FakeStorageEngine;
+import '../test_helpers.dart' show FakeLocalizationsDelegate, FakeStorageEngine;
 
 /// Integration config that mirrors the EP-01-17 engine but extends the
 /// supported set with `fr` so the language-switching scenario can exercise a
@@ -51,8 +50,9 @@ void main() {
 
   group('Localization integration — translation loading', () {
     test('loads en.json from assets and translates a real key', () async {
-      final Map<String, String> en =
-          await service.loadTranslations(const Locale('en'));
+      final Map<String, String> en = await service.loadTranslations(
+        const Locale('en'),
+      );
       expect(en, isNotEmpty);
       expect(en['common.ok'], 'OK');
 
@@ -67,8 +67,9 @@ void main() {
   });
 
   group('Localization integration — language switching', () {
-    testWidgets('LocaleProvider emits a new locale and translations update',
-        (WidgetTester tester) async {
+    testWidgets('LocaleProvider emits a new locale and translations update', (
+      WidgetTester tester,
+    ) async {
       final LocaleProvider provider = LocaleProvider(
         config: integrationConfig,
         storage: FakeStorageEngine(),
@@ -81,8 +82,7 @@ void main() {
           child: _localizedApp(
             provider,
             Builder(
-              builder: (BuildContext c) =>
-                  Text(c.tr(TranslationKeys.commonOk)),
+              builder: (BuildContext c) => Text(c.tr(TranslationKeys.commonOk)),
             ),
           ),
         ),
@@ -98,23 +98,28 @@ void main() {
   });
 
   group('Localization integration — typed key access', () {
-    test('resolves typed TranslationKeys constants to correct values',
-        () async {
-      final Map<String, String> en =
-          await service.loadTranslations(const Locale('en'));
-      final HivorrLocalizations l = HivorrLocalizations(
-        en,
-        const <String, String>{},
-        const Locale('en'),
-      );
+    test(
+      'resolves typed TranslationKeys constants to correct values',
+      () async {
+        final Map<String, String> en = await service.loadTranslations(
+          const Locale('en'),
+        );
+        final HivorrLocalizations l = HivorrLocalizations(
+          en,
+          const <String, String>{},
+          const Locale('en'),
+        );
 
-      expect(l.translate(TranslationKeys.commonOk), 'OK');
-      expect(l.translate(TranslationKeys.commonCancel), 'Cancel');
-      expect(l.translate(TranslationKeys.appTitle), 'Hivorr');
-      expect(l.translate(TranslationKeys.authLoginTitle), 'Sign In');
-      expect(l.translate(TranslationKeys.errorServer),
-          'A server error occurred. Please try again later.');
-    });
+        expect(l.translate(TranslationKeys.commonOk), 'OK');
+        expect(l.translate(TranslationKeys.commonCancel), 'Cancel');
+        expect(l.translate(TranslationKeys.appTitle), 'Hivorr');
+        expect(l.translate(TranslationKeys.authLoginTitle), 'Sign In');
+        expect(
+          l.translate(TranslationKeys.errorServer),
+          'A server error occurred. Please try again later.',
+        );
+      },
+    );
   });
 
   group('Localization integration — pluralization', () {
@@ -159,15 +164,12 @@ void main() {
     });
 
     test('widget plural accessor interpolates count into the form', () {
-      final HivorrLocalizations l = HivorrLocalizations(
-        const <String, String>{},
-        <String, String>{
-          'common.itemCount.zero': 'No items',
-          'common.itemCount.one': '1 item',
-          'common.itemCount.other': '{count} items',
-        },
-        const Locale('en'),
-      );
+      final HivorrLocalizations l =
+          HivorrLocalizations(const <String, String>{}, <String, String>{
+            'common.itemCount.zero': 'No items',
+            'common.itemCount.one': '1 item',
+            'common.itemCount.other': '{count} items',
+          }, const Locale('en'));
 
       expect(l.plural(TranslationKeys.commonItemCount, 0), 'No items');
       expect(l.plural(TranslationKeys.commonItemCount, 1), '1 item');
@@ -177,10 +179,10 @@ void main() {
   });
 
   group('Localization integration — missing key fallback', () {
-    test('returns the key itself when absent in active and fallback',
-        () async {
-      final Map<String, String> en =
-          await service.loadTranslations(const Locale('en'));
+    test('returns the key itself when absent in active and fallback', () async {
+      final Map<String, String> en = await service.loadTranslations(
+        const Locale('en'),
+      );
       final HivorrLocalizations l = HivorrLocalizations(
         en,
         const <String, String>{},
@@ -203,8 +205,9 @@ void main() {
   });
 
   group('Localization integration — widget via pumpApp harness', () {
-    testWidgets('rendered text matches and updates on locale switch',
-        (WidgetTester tester) async {
+    testWidgets('rendered text matches and updates on locale switch', (
+      WidgetTester tester,
+    ) async {
       final LocaleProvider provider = LocaleProvider(
         config: integrationConfig,
         storage: FakeStorageEngine(),

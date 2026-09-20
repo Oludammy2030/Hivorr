@@ -9,9 +9,8 @@ import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
 /// Returns `null` when the name cannot be resolved; the submit flow falls back
 /// to the proof type label in that case. Injectable so the data layer stays
 /// free of a concrete taxonomy dependency (ARCHITECTURE.md unidirectional).
-typedef TradeProfessionNameResolver = Future<String?> Function(
-  String professionId,
-);
+typedef TradeProfessionNameResolver =
+    Future<String?> Function(String professionId);
 
 /// Abstract contract for trade-verification data operations (EP-02-11 §5.3).
 ///

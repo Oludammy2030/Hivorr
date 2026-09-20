@@ -36,9 +36,7 @@ Future<void> pumpApp(
   if (providers == null || providers.isEmpty) {
     await tester.pumpWidget(app);
   } else {
-    await tester.pumpWidget(
-      MultiProvider(providers: providers, child: app),
-    );
+    await tester.pumpWidget(MultiProvider(providers: providers, child: app));
   }
 }
 

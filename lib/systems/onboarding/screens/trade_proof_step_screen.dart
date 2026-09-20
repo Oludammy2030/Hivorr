@@ -108,7 +108,10 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
               children: <Widget>[
                 Text('Profession', style: context.textTheme.titleSmall),
                 const SizedBox(width: HivorrSpacing.sm),
-                HivorrChip(label: profession.name, variant: HivorrChipVariant.surface),
+                HivorrChip(
+                  label: profession.name,
+                  variant: HivorrChipVariant.surface,
+                ),
               ],
             ),
             const SizedBox(height: HivorrSpacing.lg),
@@ -272,7 +275,8 @@ class _GatePanel extends StatelessWidget {
     if (open == null) {
       icon = Icons.lock_clock_outlined;
       title = 'Checking your trade status…';
-      body = 'You can start work immediately — bidding unlocks once your '
+      body =
+          'You can start work immediately — bidding unlocks once your '
           'trade proof is approved.';
       accent = colors.onSurfaceVariant;
     } else if (open) {
@@ -283,7 +287,8 @@ class _GatePanel extends StatelessWidget {
     } else {
       icon = Icons.lock_outline;
       title = 'Bidding will unlock after approval';
-      body = 'You can start work immediately — bidding unlocks once your '
+      body =
+          'You can start work immediately — bidding unlocks once your '
           'trade proof is approved.';
       accent = colors.onSurfaceVariant;
     }

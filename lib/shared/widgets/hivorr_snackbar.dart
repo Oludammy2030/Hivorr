@@ -3,12 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 
 /// Semantic color variants for [HivorrSnackbar].
-enum HivorrSnackbarVariant {
-  success,
-  error,
-  warning,
-  info,
-}
+enum HivorrSnackbarVariant { success, error, warning, info }
 
 /// Factory for themed [SnackBar]s with semantic feedback colors sourced from
 /// [AppThemeExtension] (AGENT.md Rule 5 — never hardcoded colors).

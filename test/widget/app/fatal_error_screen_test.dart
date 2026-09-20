@@ -14,10 +14,15 @@ void main() {
       ),
     );
 
-    expect(find.text('Something went wrong. Please try again.'), findsOneWidget);
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('FatalErrorScreen renders a working Retry button', (tester) async {
+  testWidgets('FatalErrorScreen renders a working Retry button', (
+    tester,
+  ) async {
     var retryCount = 0;
     await tester.pumpWidget(
       MaterialApp(

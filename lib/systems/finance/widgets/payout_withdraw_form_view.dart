@@ -35,8 +35,7 @@ class PayoutWithdrawFormView extends StatefulWidget {
   final ValueChanged<WithdrawalResult>? onWithdrawSuccess;
 
   @override
-  State<PayoutWithdrawFormView> createState() =>
-      _PayoutWithdrawFormViewState();
+  State<PayoutWithdrawFormView> createState() => _PayoutWithdrawFormViewState();
 }
 
 class _PayoutWithdrawFormViewState extends State<PayoutWithdrawFormView> {
@@ -58,8 +57,8 @@ class _PayoutWithdrawFormViewState extends State<PayoutWithdrawFormView> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final FocusScopeNode focus = FocusScope.of(context);
     if (focus.hasFocus) focus.unfocus();
-    final FinancialPayoutProvider provider =
-        context.read<FinancialPayoutProvider>();
+    final FinancialPayoutProvider provider = context
+        .read<FinancialPayoutProvider>();
     final List<PayoutAccount> verified = _verifiedAccounts(provider);
     if (verified.isEmpty) return;
     final String accountId = _selectedAccountId ?? verified.first.id;
@@ -91,8 +90,8 @@ class _PayoutWithdrawFormViewState extends State<PayoutWithdrawFormView> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final FinancialPayoutProvider provider =
-        context.watch<FinancialPayoutProvider>();
+    final FinancialPayoutProvider provider = context
+        .watch<FinancialPayoutProvider>();
     final List<PayoutAccount> verified = _verifiedAccounts(provider);
 
     if (verified.isEmpty) {
@@ -130,15 +129,17 @@ class _PayoutWithdrawFormViewState extends State<PayoutWithdrawFormView> {
               ),
             ),
             items: verified
-                .map((PayoutAccount a) => DropdownMenuItem<String>(
-                      value: a.id,
-                      child: Text(
-                        '${a.bankName} \u2022 ${a.maskedAccountNumber} '
-                        '(${a.currencyCode})',
-                        style: context.textTheme.bodyMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ))
+                .map(
+                  (PayoutAccount a) => DropdownMenuItem<String>(
+                    value: a.id,
+                    child: Text(
+                      '${a.bankName} \u2022 ${a.maskedAccountNumber} '
+                      '(${a.currencyCode})',
+                      style: context.textTheme.bodyMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
                 .toList(growable: false),
             onChanged: (String? value) {
               if (value != null) {

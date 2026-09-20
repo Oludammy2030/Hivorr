@@ -44,8 +44,9 @@ void main() {
       final repo = FakeFinancialRepository();
       final service = FinancialService(repository: repo);
 
-      final FinancialProfile profile =
-          await service.createProfile(defaultCurrency: 'USD');
+      final FinancialProfile profile = await service.createProfile(
+        defaultCurrency: 'USD',
+      );
 
       expect(profile.defaultCurrency, 'USD');
       expect(repo.createCallCount, 1);
@@ -63,9 +64,13 @@ void main() {
 
       expect(
         () => service.createProfile(defaultCurrency: 'NGN'),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.conflict)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
   });

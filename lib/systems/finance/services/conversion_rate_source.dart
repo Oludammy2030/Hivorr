@@ -8,11 +8,11 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 /// rate — the operation is blocked (fail closed).
 class ConversionRateUnavailableException extends ApiException {
   const ConversionRateUnavailableException()
-      : super(
-          kind: ApiExceptionKind.validation,
-          message:
-              'No conversion rate is currently available for this currency pair.',
-        );
+    : super(
+        kind: ApiExceptionKind.validation,
+        message:
+            'No conversion rate is currently available for this currency pair.',
+      );
 }
 
 /// The trusted rate seam for wallet currency conversion (EP-02-15 §5.3).

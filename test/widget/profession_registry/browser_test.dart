@@ -13,17 +13,43 @@ import '../../support/harnesses/widget_harness.dart';
 
 void main() {
   final List<Industry> industries = <Industry>[
-    const Industry(id: 'ind-legal', slug: 'legal', name: 'Legal', isActive: true, sortOrder: 10),
-    const Industry(id: 'ind-tech', slug: 'technology', name: 'Technology', isActive: true, sortOrder: 20),
+    const Industry(
+      id: 'ind-legal',
+      slug: 'legal',
+      name: 'Legal',
+      isActive: true,
+      sortOrder: 10,
+    ),
+    const Industry(
+      id: 'ind-tech',
+      slug: 'technology',
+      name: 'Technology',
+      isActive: true,
+      sortOrder: 20,
+    ),
   ];
 
   final Map<String, List<Profession>> professionsByIndustry =
       <String, List<Profession>>{
-    'ind-tech': <Profession>[
-      const Profession(id: 'prof-web', industryId: 'ind-tech', slug: 'web-developer', name: 'Web Developer', isActive: true, sortOrder: 20),
-      const Profession(id: 'prof-sw', industryId: 'ind-tech', slug: 'software-engineer', name: 'Software Engineer', isActive: true, sortOrder: 10),
-    ],
-  };
+        'ind-tech': <Profession>[
+          const Profession(
+            id: 'prof-web',
+            industryId: 'ind-tech',
+            slug: 'web-developer',
+            name: 'Web Developer',
+            isActive: true,
+            sortOrder: 20,
+          ),
+          const Profession(
+            id: 'prof-sw',
+            industryId: 'ind-tech',
+            slug: 'software-engineer',
+            name: 'Software Engineer',
+            isActive: true,
+            sortOrder: 10,
+          ),
+        ],
+      };
 
   Future<void> pumpBrowser(
     WidgetTester tester,
@@ -44,11 +70,11 @@ void main() {
   }
 
   TaxonomyProvider newProvider() => TaxonomyProvider(
-        repository: FakeTaxonomyRepository(
-          industries: industries,
-          professionsByIndustry: professionsByIndustry,
-        ),
-      );
+    repository: FakeTaxonomyRepository(
+      industries: industries,
+      professionsByIndustry: professionsByIndustry,
+    ),
+  );
 
   testWidgets('renders industry picker in Step 1', (tester) async {
     await pumpBrowser(tester, newProvider());
@@ -57,8 +83,9 @@ void main() {
     expect(find.text('Technology'), findsOneWidget);
   });
 
-  testWidgets('selecting an industry advances to Step 2 with professions',
-      (tester) async {
+  testWidgets('selecting an industry advances to Step 2 with professions', (
+    tester,
+  ) async {
     await pumpBrowser(tester, newProvider());
 
     await tester.tap(find.text('Technology'));
@@ -70,27 +97,29 @@ void main() {
   });
 
   testWidgets(
-      'Continue is disabled until a profession is selected and reports it',
-      (tester) async {
-    Profession? selected;
-    await pumpBrowser(
-      tester,
-      newProvider(),
-      build: () => ProfessionRegistryBrowser(
-        onContinue: (Profession p) => selected = p,
-      ),
-    );
+    'Continue is disabled until a profession is selected and reports it',
+    (tester) async {
+      Profession? selected;
+      await pumpBrowser(
+        tester,
+        newProvider(),
+        build: () => ProfessionRegistryBrowser(
+          onContinue: (Profession p) => selected = p,
+        ),
+      );
 
-    await tester.tap(find.text('Technology'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Technology'));
+      await tester.pumpAndSettle();
 
-    final ElevatedButton button =
-        tester.widget<ElevatedButton>(find.byType(ElevatedButton));
-    expect(button.onPressed, isNull);
+      final ElevatedButton button = tester.widget<ElevatedButton>(
+        find.byType(ElevatedButton),
+      );
+      expect(button.onPressed, isNull);
 
-    await tester.tap(find.text('Web Developer'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Continue'));
-    expect(selected?.name, 'Web Developer');
-  });
+      await tester.tap(find.text('Web Developer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      expect(selected?.name, 'Web Developer');
+    },
+  );
 }

@@ -76,8 +76,11 @@ void main() {
   group('Onboarding fake-E2E flow', () {
     test('TT-17: fresh entity completes the full 5-step wizard', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
-      expect(await stack.service.isResumable('u1'), isFalse,
-          reason: 'a fresh entity must not be dropped into a resume point');
+      expect(
+        await stack.service.isResumable('u1'),
+        isFalse,
+        reason: 'a fresh entity must not be dropped into a resume point',
+      );
 
       await stack.hydrate('u1');
       expect(stack.provider.currentStep, OnboardingStepCode.profile);
@@ -95,8 +98,11 @@ void main() {
       await runTaxonomySteps(stack);
       expect(stack.remote.bindProfessionCallCount, 1);
       expect(stack.remote.lastBoundProfessionId, 'prof-sw');
-      expect(stack.remote.activateRoleCallCount, 1,
-          reason: 'the professional role activates on the profession bind');
+      expect(
+        stack.remote.activateRoleCallCount,
+        1,
+        reason: 'the professional role activates on the profession bind',
+      );
       expect(stack.remote.lastActivatedRole, 'professional');
       expect(stack.provider.currentStep, OnboardingStepCode.identityDocument);
 
@@ -104,207 +110,255 @@ void main() {
 
       expect(stack.provider.isComplete, isTrue);
       expect(stack.provider.progress!.hasIdentitySubmission, isTrue);
-      expect(stack.provider.progress!.hasTradeProofSubmission, isTrue,
-          reason: 'UX mirrors set after successful submissions');
+      expect(
+        stack.provider.progress!.hasTradeProofSubmission,
+        isTrue,
+        reason: 'UX mirrors set after successful submissions',
+      );
       final OnboardingProgress saved = (await stack.store.read('u1'))!;
-      expect(saved.isComplete, isTrue,
-          reason: 'finish persists to the resume key');
-      expect(await stack.service.isResumable('u1'), isFalse,
-          reason: 'completed progress is not resumable-worthy');
+      expect(
+        saved.isComplete,
+        isTrue,
+        reason: 'finish persists to the resume key',
+      );
+      expect(
+        await stack.service.isResumable('u1'),
+        isFalse,
+        reason: 'completed progress is not resumable-worthy',
+      );
       stack.provider.dispose();
     });
 
-test('TT-18: exit at step 3, relaunch resumes exactly at the industry step',
-    () async {
-      final InMemoryOnboardingProgressStore store =
-          InMemoryOnboardingProgressStore();
-      final OnboardingTestStack first = buildOnboardingStack(store: store);
-      await first.hydrate('u1');
+    test(
+      'TT-18: exit at step 3, relaunch resumes exactly at the industry step',
+      () async {
+        final InMemoryOnboardingProgressStore store =
+            InMemoryOnboardingProgressStore();
+        final OnboardingTestStack first = buildOnboardingStack(store: store);
+        await first.hydrate('u1');
 
-      await runProfileStep(first); // → industry (the merged selection step)
-      await selectTechnologyProfession(first.taxonomy);
+        await runProfileStep(first); // → industry (the merged selection step)
+        await selectTechnologyProfession(first.taxonomy);
 
-      // Exit protocol persists the current position without moving.
-      await first.provider.saveAndExit();
-      expect(first.provider.currentStep, OnboardingStepCode.industry);
+        // Exit protocol persists the current position without moving.
+        await first.provider.saveAndExit();
+        expect(first.provider.currentStep, OnboardingStepCode.industry);
 
-      // Relaunch: a brand-new provider/service over the same store resumes.
-      final OnboardingTestStack second = buildOnboardingStack(store: store);
-      expect(await second.service.isResumable('u1'), isTrue);
-      await second.hydrate('u1');
-      expect(second.provider.currentStep, OnboardingStepCode.industry,
-          reason: 'resumes exactly at the exit point');
-      expect(second.provider.progress!.completedSteps,
-          <OnboardingStepCode>[
-        OnboardingStepCode.profile,
-        OnboardingStepCode.capability,
-      ], reason: 'steps 1–2 restored as complete');
+        // Relaunch: a brand-new provider/service over the same store resumes.
+        final OnboardingTestStack second = buildOnboardingStack(store: store);
+        expect(await second.service.isResumable('u1'), isTrue);
+        await second.hydrate('u1');
+        expect(
+          second.provider.currentStep,
+          OnboardingStepCode.industry,
+          reason: 'resumes exactly at the exit point',
+        );
+        expect(second.provider.progress!.completedSteps, <OnboardingStepCode>[
+          OnboardingStepCode.profile,
+          OnboardingStepCode.capability,
+        ], reason: 'steps 1–2 restored as complete');
 
-      first.provider.dispose();
-      second.provider.dispose();
-    });
+        first.provider.dispose();
+        second.provider.dispose();
+      },
+    );
 
-    test('TT-19: gate maps approved → open and pending/unverified → locked',
-        () async {
-      final OnboardingTestStack approved = buildOnboardingStack(
-        tradeRepo: FakeTradeVerificationRepository(
-          status: tradeStatusEntity(
-            statuses: const <String, String>{'prof-sw': 'approved'},
-          ),
-        ),
-      );
-      await approved.hydrate('u1');
-      await selectTechnologyProfession(approved.taxonomy);
-      await approved.provider.refreshGateStatus();
-      expect(approved.provider.isTradeGateOpen, isTrue,
-          reason: 'approved unlocks bidding');
-      approved.provider.dispose();
-
-      for (final String status in const <String>[
-        'pending',
-        'unverified',
-      ]) {
-        final OnboardingTestStack locked = buildOnboardingStack(
+    test(
+      'TT-19: gate maps approved → open and pending/unverified → locked',
+      () async {
+        final OnboardingTestStack approved = buildOnboardingStack(
           tradeRepo: FakeTradeVerificationRepository(
             status: tradeStatusEntity(
-              statuses: <String, String>{'prof-sw': status},
+              statuses: const <String, String>{'prof-sw': 'approved'},
             ),
           ),
         );
-        await locked.hydrate('u1');
-        await selectTechnologyProfession(locked.taxonomy);
-        await locked.provider.refreshGateStatus();
-        expect(locked.provider.isTradeGateOpen, isFalse,
-            reason: '$status must not fake an unlocked gate');
-        locked.provider.dispose();
-      }
-    });
+        await approved.hydrate('u1');
+        await selectTechnologyProfession(approved.taxonomy);
+        await approved.provider.refreshGateStatus();
+        expect(
+          approved.provider.isTradeGateOpen,
+          isTrue,
+          reason: 'approved unlocks bidding',
+        );
+        approved.provider.dispose();
 
-test('TT-20: duplicate binding surfaces PLT005 and never fire-hammers',
-    () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.hydrate('u1');
-      await runProfileStep(stack);
-      await selectTechnologyProfession(stack.taxonomy);
-
-      stack.remote.throwConflictOnBind = true;
-      await stack.provider.bindProfession(
-        industryId: 'ind-tech',
-        professionId: 'prof-sw',
-      );
-      expect(stack.provider.submitState, SubmitState.error);
-      expect(stack.provider.lastError?.code, 'PLT005');
-      expect(stack.remote.bindProfessionCallCount, 1,
-          reason: 'the failure path must not auto-retry');
-
-      // Guidance only — retry happens on an explicit user action.
-      stack.remote.throwConflictOnBind = false;
-      await stack.provider.bindProfession(
-        industryId: 'ind-tech',
-        professionId: 'prof-sw',
-      );
-      expect(stack.provider.submitState, SubmitState.success);
-      expect(stack.remote.bindProfessionCallCount, 2);
-      stack.provider.dispose();
-    });
-
-    test('TT-21: hire-only entity completes after capability, skips professional',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.hydrate('u1');
-      await stack.provider.completeProfile(
-        legalName: 'Ada Lovelace',
-        displayName: 'Ada',
-      );
-      expect(stack.provider.submitState, SubmitState.success);
-      await stack.provider.advance(); // profile → capability (step 2)
-      expect(stack.provider.currentStep, OnboardingStepCode.capability);
-
-      await stack.provider.selectCapability(EntityCapability.hire);
-      expect(stack.provider.progress!.capability, EntityCapability.hire);
-      expect(stack.provider.isComplete, isTrue,
-          reason: 'a hire-only entity never enters the professional steps');
-      expect(stack.remote.bindProfessionCallCount, 0);
-      expect(stack.remote.activateRoleCallCount, 0,
-          reason: 'consumer-only capability activates no professional role');
-
-      final OnboardingProgress saved = (await stack.store.read('u1'))!;
-      expect(saved.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
-        OnboardingStepCode.capability,
-      ]);
-      stack.provider.dispose();
-    });
+        for (final String status in const <String>['pending', 'unverified']) {
+          final OnboardingTestStack locked = buildOnboardingStack(
+            tradeRepo: FakeTradeVerificationRepository(
+              status: tradeStatusEntity(
+                statuses: <String, String>{'prof-sw': status},
+              ),
+            ),
+          );
+          await locked.hydrate('u1');
+          await selectTechnologyProfession(locked.taxonomy);
+          await locked.provider.refreshGateStatus();
+          expect(
+            locked.provider.isTradeGateOpen,
+            isFalse,
+            reason: '$status must not fake an unlocked gate',
+          );
+          locked.provider.dispose();
+        }
+      },
+    );
 
     test(
-        'TT-22: completion survives a relaunch through the server authority',
-        () async {
-      // "Server memory": one fake remote carries the completion across the
-      // relaunch, while the relaunch uses a brand-new empty local store.
-      final FakeOnboardingRemoteDataSource server =
-          FakeOnboardingRemoteDataSource();
-      final OnboardingTestStack first =
-          buildOnboardingStack(onboardingRemote: server);
-      await first.hydrate('u1');
-      await runProfileStep(first);
-      await runTaxonomySteps(first);
-      await runVerificationSteps(first);
-      expect(first.onboardingRemote.updateStatusCallCount, 1,
-          reason: 'completion is stamped exactly once, server-side');
-      expect(first.onboardingRemote.lastCompleted, isTrue);
-      expect(first.provider.isComplete, isTrue);
+      'TT-20: duplicate binding surfaces PLT005 and never fire-hammers',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.hydrate('u1');
+        await runProfileStep(stack);
+        await selectTechnologyProfession(stack.taxonomy);
 
-      // Relaunch: fresh store + completed server (the pre-fix regression where
-      // the volatile local cache was the only completion record).
-      final OnboardingTestStack second =
-          buildOnboardingStack(onboardingRemote: server);
-      await second.hydrate('u1');
-      expect(second.service.serverHydrated, isTrue);
-      expect(second.provider.isCompleteAuthoritative, isTrue);
-      expect(second.provider.isComplete, isTrue,
-          reason: 'a completed server hydrates completion into an empty store');
-      final OnboardingProgress reseeded =
-          (await second.store.read('u1'))!;
-      expect(reseeded.isComplete, isTrue,
-          reason: 'the relaunch write-throughs the server truth');
+        stack.remote.throwConflictOnBind = true;
+        await stack.provider.bindProfession(
+          industryId: 'ind-tech',
+          professionId: 'prof-sw',
+        );
+        expect(stack.provider.submitState, SubmitState.error);
+        expect(stack.provider.lastError?.code, 'PLT005');
+        expect(
+          stack.remote.bindProfessionCallCount,
+          1,
+          reason: 'the failure path must not auto-retry',
+        );
 
-      first.provider.dispose();
-      second.provider.dispose();
-    });
+        // Guidance only — retry happens on an explicit user action.
+        stack.remote.throwConflictOnBind = false;
+        await stack.provider.bindProfession(
+          industryId: 'ind-tech',
+          professionId: 'prof-sw',
+        );
+        expect(stack.provider.submitState, SubmitState.success);
+        expect(stack.remote.bindProfessionCallCount, 2);
+        stack.provider.dispose();
+      },
+    );
 
     test(
-        'TT-23: offline relaunch degrades to cached completion without claiming '
-        'authority', () async {
-      // Shared store so the completed position survives the relaunch's cache.
-      final InMemoryOnboardingProgressStore store =
-          InMemoryOnboardingProgressStore();
-      final OnboardingTestStack first =
-          buildOnboardingStack(store: store);
-      await first.hydrate('u1');
-      await runProfileStep(first);
-      await runTaxonomySteps(first);
-      await runVerificationSteps(first);
-      expect(first.provider.isComplete, isTrue);
+      'TT-21: hire-only entity completes after capability, skips professional',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.hydrate('u1');
+        await stack.provider.completeProfile(
+          legalName: 'Ada Lovelace',
+          displayName: 'Ada',
+        );
+        expect(stack.provider.submitState, SubmitState.success);
+        await stack.provider.advance(); // profile → capability (step 2)
+        expect(stack.provider.currentStep, OnboardingStepCode.capability);
 
-      // Relaunch with an unreachable server: the cache keeps home usable, but
-      // the authority stays unknown (fail-closed on the unknown flag).
-      final FakeOnboardingRemoteDataSource offlineServer =
-          FakeOnboardingRemoteDataSource()
-            ..nextGetError = const ApiException(
-              kind: ApiExceptionKind.network,
-              message: 'No connection',
-              code: 'PLT-01-33',
-            );
-      final OnboardingTestStack second =
-          buildOnboardingStack(store: store, onboardingRemote: offlineServer);
-      await second.hydrate('u1');
-      expect(second.service.serverHydrated, isFalse);
-      expect(second.provider.isCompleteAuthoritative, isNull);
-      expect(second.provider.isComplete, isTrue,
-          reason: 'the cached completion keeps the wizard usable offline');
+        await stack.provider.selectCapability(EntityCapability.hire);
+        expect(stack.provider.progress!.capability, EntityCapability.hire);
+        expect(
+          stack.provider.isComplete,
+          isTrue,
+          reason: 'a hire-only entity never enters the professional steps',
+        );
+        expect(stack.remote.bindProfessionCallCount, 0);
+        expect(
+          stack.remote.activateRoleCallCount,
+          0,
+          reason: 'consumer-only capability activates no professional role',
+        );
 
-      first.provider.dispose();
-      second.provider.dispose();
-    });
+        final OnboardingProgress saved = (await stack.store.read('u1'))!;
+        expect(saved.completedSteps, <OnboardingStepCode>[
+          OnboardingStepCode.profile,
+          OnboardingStepCode.capability,
+        ]);
+        stack.provider.dispose();
+      },
+    );
+
+    test(
+      'TT-22: completion survives a relaunch through the server authority',
+      () async {
+        // "Server memory": one fake remote carries the completion across the
+        // relaunch, while the relaunch uses a brand-new empty local store.
+        final FakeOnboardingRemoteDataSource server =
+            FakeOnboardingRemoteDataSource();
+        final OnboardingTestStack first = buildOnboardingStack(
+          onboardingRemote: server,
+        );
+        await first.hydrate('u1');
+        await runProfileStep(first);
+        await runTaxonomySteps(first);
+        await runVerificationSteps(first);
+        expect(
+          first.onboardingRemote.updateStatusCallCount,
+          1,
+          reason: 'completion is stamped exactly once, server-side',
+        );
+        expect(first.onboardingRemote.lastCompleted, isTrue);
+        expect(first.provider.isComplete, isTrue);
+
+        // Relaunch: fresh store + completed server (the pre-fix regression where
+        // the volatile local cache was the only completion record).
+        final OnboardingTestStack second = buildOnboardingStack(
+          onboardingRemote: server,
+        );
+        await second.hydrate('u1');
+        expect(second.service.serverHydrated, isTrue);
+        expect(second.provider.isCompleteAuthoritative, isTrue);
+        expect(
+          second.provider.isComplete,
+          isTrue,
+          reason: 'a completed server hydrates completion into an empty store',
+        );
+        final OnboardingProgress reseeded = (await second.store.read('u1'))!;
+        expect(
+          reseeded.isComplete,
+          isTrue,
+          reason: 'the relaunch write-throughs the server truth',
+        );
+
+        first.provider.dispose();
+        second.provider.dispose();
+      },
+    );
+
+    test(
+      'TT-23: offline relaunch degrades to cached completion without claiming '
+      'authority',
+      () async {
+        // Shared store so the completed position survives the relaunch's cache.
+        final InMemoryOnboardingProgressStore store =
+            InMemoryOnboardingProgressStore();
+        final OnboardingTestStack first = buildOnboardingStack(store: store);
+        await first.hydrate('u1');
+        await runProfileStep(first);
+        await runTaxonomySteps(first);
+        await runVerificationSteps(first);
+        expect(first.provider.isComplete, isTrue);
+
+        // Relaunch with an unreachable server: the cache keeps home usable, but
+        // the authority stays unknown (fail-closed on the unknown flag).
+        final FakeOnboardingRemoteDataSource offlineServer =
+            FakeOnboardingRemoteDataSource()
+              ..nextGetError = const ApiException(
+                kind: ApiExceptionKind.network,
+                message: 'No connection',
+                code: 'PLT-01-33',
+              );
+        final OnboardingTestStack second = buildOnboardingStack(
+          store: store,
+          onboardingRemote: offlineServer,
+        );
+        await second.hydrate('u1');
+        expect(second.service.serverHydrated, isFalse);
+        expect(second.provider.isCompleteAuthoritative, isNull);
+        expect(
+          second.provider.isComplete,
+          isTrue,
+          reason: 'the cached completion keeps the wizard usable offline',
+        );
+
+        first.provider.dispose();
+        second.provider.dispose();
+      },
+    );
   });
 }

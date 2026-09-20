@@ -134,17 +134,26 @@ void main() {
 
     test('falls back to paystack when the flutterwave secret is absent', () {
       final factory = factoryWith(paystackSecret: 'sk', flutterwaveSecret: '');
-      expect(factory.resolveForCurrency('USD').provider, PaymentProvider.paystack);
+      expect(
+        factory.resolveForCurrency('USD').provider,
+        PaymentProvider.paystack,
+      );
     });
 
     test('falls back to flutterwave when the paystack secret is absent', () {
       final factory = factoryWith(paystackSecret: '', flutterwaveSecret: 'fw');
-      expect(factory.resolveForCurrency('NGN').provider, PaymentProvider.flutterwave);
+      expect(
+        factory.resolveForCurrency('NGN').provider,
+        PaymentProvider.flutterwave,
+      );
     });
 
     test('creates the default provider when no secret is configured', () {
       final factory = factoryWith(paystackSecret: '', flutterwaveSecret: '');
-      expect(factory.resolveForCurrency('NGN').provider, PaymentProvider.paystack);
+      expect(
+        factory.resolveForCurrency('NGN').provider,
+        PaymentProvider.paystack,
+      );
     });
 
     test('creates the flutterwave default when no secret is configured', () {
@@ -153,7 +162,10 @@ void main() {
         flutterwaveSecret: '',
         defaultProvider: PaymentProvider.flutterwave,
       );
-      expect(factory.resolveForCurrency('NGN').provider, PaymentProvider.flutterwave);
+      expect(
+        factory.resolveForCurrency('NGN').provider,
+        PaymentProvider.flutterwave,
+      );
     });
   });
 }

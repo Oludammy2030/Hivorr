@@ -15,17 +15,16 @@ void main() {
     num weekly = 2000000,
     num monthly = 8000000,
     num cashout = 1000000,
-  }) =>
-      KycLevelDto(
-        tierCode: tier,
-        status: status,
-        limits: KycLimitsDto(
-          daily: daily,
-          weekly: weekly,
-          monthly: monthly,
-          cashout: cashout,
-        ),
-      );
+  }) => KycLevelDto(
+    tierCode: tier,
+    status: status,
+    limits: KycLimitsDto(
+      daily: daily,
+      weekly: weekly,
+      monthly: monthly,
+      cashout: cashout,
+    ),
+  );
 
   group('VerificationMapper.kycToEntity', () {
     test('maps a complete level preserving tier, status and limits', () {
@@ -51,8 +50,9 @@ void main() {
     });
 
     test('status pending maps to an unverified level', () {
-      final KycLevel entity =
-          VerificationMapper.kycToEntity(level(status: 'pending'));
+      final KycLevel entity = VerificationMapper.kycToEntity(
+        level(status: 'pending'),
+      );
       expect(entity.isVerified, isFalse);
     });
   });
@@ -77,17 +77,13 @@ void main() {
         kyc: level(),
         identityVerified: true,
         tradeVerifications: const <TradeVerificationDto>[
-          TradeVerificationDto(
-            professionId: 'p1',
-            status: 'approved',
-          ),
+          TradeVerificationDto(professionId: 'p1', status: 'approved'),
         ],
         pendingSubmissions: 1,
         totalSubmissions: 2,
       );
 
-      final VerificationStatus status =
-          VerificationMapper.statusToEntity(dto);
+      final VerificationStatus status = VerificationMapper.statusToEntity(dto);
 
       expect(status.entityId, 'u1');
       expect(status.identityVerified, isTrue);

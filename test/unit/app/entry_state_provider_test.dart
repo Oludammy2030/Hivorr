@@ -15,19 +15,21 @@ void main() {
       expect(provider.hasPendingRedirect, isFalse);
     });
 
-    test('hydrate loads the persisted intro flag and pending redirect',
-        () async {
-      final store = InMemoryEntryStateStore(
-        introSeen: true,
-        pendingRedirect: '/p/acme/1',
-      );
-      final provider = EntryStateProvider(store: store);
-      await provider.hydrate();
+    test(
+      'hydrate loads the persisted intro flag and pending redirect',
+      () async {
+        final store = InMemoryEntryStateStore(
+          introSeen: true,
+          pendingRedirect: '/p/acme/1',
+        );
+        final provider = EntryStateProvider(store: store);
+        await provider.hydrate();
 
-      expect(provider.introSeen, isTrue);
-      expect(provider.pendingRedirect, '/p/acme/1');
-      expect(provider.hasPendingRedirect, isTrue);
-    });
+        expect(provider.introSeen, isTrue);
+        expect(provider.pendingRedirect, '/p/acme/1');
+        expect(provider.hasPendingRedirect, isTrue);
+      },
+    );
 
     test('markIntroSeen persists the one-time flag', () async {
       final store = InMemoryEntryStateStore();

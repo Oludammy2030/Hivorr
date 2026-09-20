@@ -48,12 +48,12 @@ class SupabaseStorageService implements StorageService {
     HivorrLogger? logger,
     MonitoringService? monitoring,
     PerformanceTracer? tracer,
-  })  : _storageClient = storageClient,
-        _dio = dio,
-        _tokenProvider = tokenProvider ?? const SupabaseAccessTokenProvider(),
-        _logger = logger,
-        _monitoring = monitoring,
-        _tracer = tracer;
+  }) : _storageClient = storageClient,
+       _dio = dio,
+       _tokenProvider = tokenProvider ?? const SupabaseAccessTokenProvider(),
+       _logger = logger,
+       _monitoring = monitoring,
+       _tracer = tracer;
 
   final supabase.SupabaseStorageClient _storageClient;
   final Dio? _dio;
@@ -66,9 +66,7 @@ class SupabaseStorageService implements StorageService {
 
   /// The local file for a given [bucket], or `null` when not allowlisted.
   supabase.StorageFileApi? _api(String bucket) =>
-      StorageBuckets.all.contains(bucket)
-          ? _storageClient.from(bucket)
-          : null;
+      StorageBuckets.all.contains(bucket) ? _storageClient.from(bucket) : null;
 
   @override
   Future<String> upload({
@@ -91,7 +89,11 @@ class SupabaseStorageService implements StorageService {
     }
 
     // Fail fast on MIME/size BEFORE touching the network (PLT003).
-    validateForBucket(bucket: bucket, mimeType: mimeType, byteLength: bytes.lengthInBytes);
+    validateForBucket(
+      bucket: bucket,
+      mimeType: mimeType,
+      byteLength: bytes.lengthInBytes,
+    );
 
     // Extension↔MIME normalization is UX-only; the declared MIME stays
     // authoritative (the server is the real gate).
@@ -128,17 +130,14 @@ class SupabaseStorageService implements StorageService {
         );
       }
 
-      _logger?.info(
-        'Storage upload complete',
-        <String, Object?>{'bucket': bucket, 'byteLength': bytes.lengthInBytes},
-      );
+      _logger?.info('Storage upload complete', <String, Object?>{
+        'bucket': bucket,
+        'byteLength': bytes.lengthInBytes,
+      });
       await _tracer?.finishSpan(span);
       return storageKey;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(
-        span,
-        status: SpanStatus.internalError(),
-      );
+      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
       unawaited(_monitoring?.setTag('storage.error.kind', _kindName(error)));
       throw _mapError(error, stackTrace: stackTrace, bucket: bucket);
     }
@@ -184,7 +183,9 @@ class SupabaseStorageService implements StorageService {
       'file': MultipartFile.fromBytes(
         bytes,
         filename: fileName?.isNotEmpty == true ? fileName : null,
-        contentType: DioMediaType.parse(StorageValidators.normalizeMime(mimeType)),
+        contentType: DioMediaType.parse(
+          StorageValidators.normalizeMime(mimeType),
+        ),
       ),
     });
 
@@ -234,10 +235,10 @@ class SupabaseStorageService implements StorageService {
     _ensureKnownBucket(bucket);
     try {
       final bytes = await _api(bucket)!.download(path);
-      _logger?.info(
-        'Storage download complete',
-        <String, Object?>{'bucket': bucket, 'byteLength': bytes.lengthInBytes},
-      );
+      _logger?.info('Storage download complete', <String, Object?>{
+        'bucket': bucket,
+        'byteLength': bytes.lengthInBytes,
+      });
       await _tracer?.finishSpan(span);
       return bytes;
     } catch (error, stackTrace) {
@@ -248,7 +249,10 @@ class SupabaseStorageService implements StorageService {
   }
 
   @override
-  Future<void> remove({required String bucket, required List<String> paths}) async {
+  Future<void> remove({
+    required String bucket,
+    required List<String> paths,
+  }) async {
     _ensureKnownBucket(bucket);
     try {
       await _api(bucket)!.remove(paths);
@@ -343,10 +347,7 @@ class SupabaseStorageService implements StorageService {
     }
     if (error is supabase.StorageException) {
       final status = int.tryParse(error.statusCode ?? '');
-      final exception = _fromStatus(
-        status,
-        message: error.message,
-      );
+      final exception = _fromStatus(status, message: error.message);
       _logger?.error(
         'Storage SDK error',
         error: error,
@@ -361,10 +362,7 @@ class SupabaseStorageService implements StorageService {
         'Storage transport error',
         error: error,
         stackTrace: stackTrace,
-        context: <String, Object?>{
-          'bucket': bucket,
-          'code': apiException.code,
-        },
+        context: <String, Object?>{'bucket': bucket, 'code': apiException.code},
       );
       return StorageException.fromApi(apiException);
     }
@@ -392,13 +390,15 @@ class SupabaseStorageService implements StorageService {
       403 => StorageForbiddenException(safeMessage, statusCode: status),
       404 => StorageNotFoundException(safeMessage, statusCode: status),
       409 => StorageException(
-          kind: ApiExceptionKind.conflict,
-          message: safeMessage,
-          code: 'PLT005',
-          statusCode: status,
-        ),
-      400 || 413 || 415 || 422 =>
-        StorageValidationException(safeMessage, statusCode: status),
+        kind: ApiExceptionKind.conflict,
+        message: safeMessage,
+        code: 'PLT005',
+        statusCode: status,
+      ),
+      400 ||
+      413 ||
+      415 ||
+      422 => StorageValidationException(safeMessage, statusCode: status),
       _ when status != null && status >= 500 && status <= 599 =>
         StorageException(
           kind: ApiExceptionKind.server,
@@ -407,11 +407,11 @@ class SupabaseStorageService implements StorageService {
           statusCode: status,
         ),
       _ => StorageException(
-          kind: ApiExceptionKind.unknown,
-          message: safeMessage,
-          code: 'PLT999',
-          statusCode: status,
-        ),
+        kind: ApiExceptionKind.unknown,
+        message: safeMessage,
+        code: 'PLT999',
+        statusCode: status,
+      ),
     };
   }
 

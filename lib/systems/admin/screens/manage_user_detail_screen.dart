@@ -18,10 +18,7 @@ import 'package:provider/provider.dart';
 /// and admin-initiated onboarding reset. Actions are confirm-gated and
 /// fail-closed on server errors (PLT005 lockout guards are server-enforced).
 class ManageUserDetailScreen extends StatefulWidget {
-  const ManageUserDetailScreen({
-    super.key,
-    required this.userId,
-  });
+  const ManageUserDetailScreen({super.key, required this.userId});
 
   final String userId;
 
@@ -50,9 +47,7 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
       appBar: AppBar(
         title: Text('User detail', style: context.textTheme.titleLarge),
       ),
-      body: SafeArea(
-        child: _body(provider, detail),
-      ),
+      body: SafeArea(child: _body(provider, detail)),
     );
   }
 
@@ -62,10 +57,7 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
     }
     if (provider.lastError != null && detail == null) {
       return HivorrEmptyState(
-        icon: Icon(
-          Icons.search_off,
-          color: context.colorScheme.primary,
-        ),
+        icon: Icon(Icons.search_off, color: context.colorScheme.primary),
         title: 'User not found',
         subtitle: provider.lastError!.message,
       );
@@ -262,13 +254,15 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
                     label: 'Deactivate',
                     variant: HivorrButtonVariant.outline,
                     isLoading: provider.isActing,
-                    onPressed: () => _setStatus(provider, detail, 'deactivated'),
+                    onPressed: () =>
+                        _setStatus(provider, detail, 'deactivated'),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: HivorrSpacing.sm),
-          ] else if (status == 'suspended' || status == 'deactivated') ...<Widget>[
+          ] else if (status == 'suspended' ||
+              status == 'deactivated') ...<Widget>[
             HivorrButton(
               label: 'Reactivate',
               isExpanded: true,
@@ -398,9 +392,7 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
               ),
             ),
           ),
-          Expanded(
-            child: Text(value, style: context.textTheme.bodyMedium),
-          ),
+          Expanded(child: Text(value, style: context.textTheme.bodyMedium)),
         ],
       ),
     );
@@ -415,18 +407,18 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
   }
 
   String _statusActionLabel(String status) => switch (status) {
-        'active' => 'Reactivate',
-        'suspended' => 'Suspend',
-        'deactivated' => 'Deactivate',
-        _ => 'Update status',
-      };
+    'active' => 'Reactivate',
+    'suspended' => 'Suspend',
+    'deactivated' => 'Deactivate',
+    _ => 'Update status',
+  };
 
   String _statusActionMessage(String status, String name) => switch (status) {
-        'active' => 'Reactivate $name? This restores full account access.',
-        'suspended' => 'Suspend $name? The account is temporarily disabled.',
-        'deactivated' => 'Deactivate $name? The account is permanently disabled.',
-        _ => 'Update the status for $name?',
-      };
+    'active' => 'Reactivate $name? This restores full account access.',
+    'suspended' => 'Suspend $name? The account is temporarily disabled.',
+    'deactivated' => 'Deactivate $name? The account is permanently disabled.',
+    _ => 'Update the status for $name?',
+  };
 
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-'

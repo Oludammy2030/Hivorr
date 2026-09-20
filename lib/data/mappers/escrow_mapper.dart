@@ -16,29 +16,30 @@ import 'package:hivorr/data/models/escrow_transaction_dto.dart';
 abstract final class EscrowMapper {
   /// Maps the aggregate detail DTO into a domain [EscrowDetail].
   static EscrowDetail detailToEntity(EscrowDetailDto dto) => EscrowDetail(
-        escrow: escrowToEntity(dto.escrow),
-        milestones: dto.milestones.map(milestoneToEntity).toList(growable: false),
-        transactions:
-            dto.transactions.map(transactionToEntity).toList(growable: false),
-      );
+    escrow: escrowToEntity(dto.escrow),
+    milestones: dto.milestones.map(milestoneToEntity).toList(growable: false),
+    transactions: dto.transactions
+        .map(transactionToEntity)
+        .toList(growable: false),
+  );
 
   /// Maps an escrow header DTO into a domain [Escrow].
   static Escrow escrowToEntity(EscrowDto dto) => Escrow(
-        id: dto.id,
-        financialProfileId: dto.financialProfileId,
-        payerEntityId: dto.payerEntityId,
-        payeeEntityId: dto.payeeEntityId,
-        currencyCode: dto.currencyCode,
-        totalAmount: dto.totalAmount,
-        releasedAmount: dto.releasedAmount,
-        refundedAmount: dto.refundedAmount,
-        status: dto.status,
-        createdAt: dto.createdAt,
-        externalReference: dto.externalReference,
-        fundedAt: dto.fundedAt,
-        releasedAt: dto.releasedAt,
-        refundedAt: dto.refundedAt,
-      );
+    id: dto.id,
+    financialProfileId: dto.financialProfileId,
+    payerEntityId: dto.payerEntityId,
+    payeeEntityId: dto.payeeEntityId,
+    currencyCode: dto.currencyCode,
+    totalAmount: dto.totalAmount,
+    releasedAmount: dto.releasedAmount,
+    refundedAmount: dto.refundedAmount,
+    status: dto.status,
+    createdAt: dto.createdAt,
+    externalReference: dto.externalReference,
+    fundedAt: dto.fundedAt,
+    releasedAt: dto.releasedAt,
+    refundedAt: dto.refundedAt,
+  );
 
   /// Maps a milestone DTO into a domain [EscrowMilestone].
   static EscrowMilestone milestoneToEntity(EscrowMilestoneDto dto) =>

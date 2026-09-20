@@ -18,11 +18,9 @@ import 'package:hivorr/data/repositories/manage_user_repository.dart';
 /// and screens use [AdminGate.isAdmin] over the [AdminReviewProvider] —
 /// this provider never makes an admin check of its own.
 class ManageUserProvider extends ChangeNotifier {
-  ManageUserProvider({
-    required ManageUserRepository repo,
-    HivorrLogger? logger,
-  })  : _repo = repo,
-        _logger = logger;
+  ManageUserProvider({required ManageUserRepository repo, HivorrLogger? logger})
+    : _repo = repo,
+      _logger = logger;
 
   final ManageUserRepository _repo;
   final HivorrLogger? _logger;
@@ -99,10 +97,10 @@ class ManageUserProvider extends ChangeNotifier {
       _currentOffset = page.users.length;
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning(
-        'Manage user directory load failed',
-        <String, Object?>{'kind': e.kind.name, 'code': e.code},
-      );
+      _logger?.warning('Manage user directory load failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _loading = false;
       notifyListeners();
@@ -127,10 +125,10 @@ class ManageUserProvider extends ChangeNotifier {
       _currentOffset += page.users.length;
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning(
-        'Manage user load-more failed',
-        <String, Object?>{'kind': e.kind.name, 'code': e.code},
-      );
+      _logger?.warning('Manage user load-more failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _loading = false;
       notifyListeners();
@@ -161,20 +159,22 @@ class ManageUserProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await _repo.setUserStatus(userId, status);
-      _users = _users.map((ManageUserListItem e) {
-        if (e.id == userId) return _copyUserWithStatus(e, status);
-        return e;
-      }).toList(growable: false);
+      _users = _users
+          .map((ManageUserListItem e) {
+            if (e.id == userId) return _copyUserWithStatus(e, status);
+            return e;
+          })
+          .toList(growable: false);
       final ManageUserDetail? selected = _selectedUser;
       if (selected != null && selected.entity.id == userId) {
         _selectedUser = _copyDetailWithStatus(selected, status);
       }
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning(
-        'Manage user set-status failed',
-        <String, Object?>{'kind': e.kind.name, 'code': e.code},
-      );
+      _logger?.warning('Manage user set-status failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _acting = false;
       notifyListeners();
@@ -208,10 +208,10 @@ class ManageUserProvider extends ChangeNotifier {
       }
     } on ApiException catch (e) {
       _error = e;
-      _logger?.warning(
-        'Manage user reset-onboarding failed',
-        <String, Object?>{'kind': e.kind.name, 'code': e.code},
-      );
+      _logger?.warning('Manage user reset-onboarding failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
     } finally {
       _acting = false;
       notifyListeners();

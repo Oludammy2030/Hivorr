@@ -351,12 +351,10 @@ class AppConstants {
   static const String envPaystackSecretKey = 'HIVORR_PAYSTACK_SECRET_KEY';
 
   /// Flutterwave public (publishable) key.
-  static const String envFlutterwavePublicKey =
-      'HIVORR_FLUTTERWAVE_PUBLIC_KEY';
+  static const String envFlutterwavePublicKey = 'HIVORR_FLUTTERWAVE_PUBLIC_KEY';
 
   /// Flutterwave secret key — live money-movement secret, never logged.
-  static const String envFlutterwaveSecretKey =
-      'HIVORR_FLUTTERWAVE_SECRET_KEY';
+  static const String envFlutterwaveSecretKey = 'HIVORR_FLUTTERWAVE_SECRET_KEY';
 
   /// NIBSS name-enquiry base URL (HTTPS), when a direct credential exists.
   static const String envNibssBaseUrl = 'HIVORR_NIBSS_BASE_URL';

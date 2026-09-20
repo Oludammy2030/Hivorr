@@ -74,8 +74,9 @@ class EvidenceAttachmentCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   evidence.title,
-                  style: context.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

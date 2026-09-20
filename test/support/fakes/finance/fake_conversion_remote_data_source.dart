@@ -16,8 +16,8 @@ class FakeConversionRemoteDataSource implements ConversionRemoteDataSource {
     CurrencyConversionDto? conversion,
     List<CurrencyConversionDto> history = const <CurrencyConversionDto>[],
     this.historyReadEnabled = true,
-  })  : _conversion = conversion,
-        _history = List<CurrencyConversionDto>.of(history);
+  }) : _conversion = conversion,
+       _history = List<CurrencyConversionDto>.of(history);
 
   CurrencyConversionDto? _conversion;
   final List<CurrencyConversionDto> _history;
@@ -83,17 +83,16 @@ CurrencyConversionDto seedConversionDto({
   double fee = 0,
   String status = 'completed',
   DateTime? createdAt,
-}) =>
-    CurrencyConversionDto(
-      id: id,
-      entityId: entityId,
-      fromCurrency: fromCurrency,
-      toCurrency: toCurrency,
-      fromAmount: fromAmount,
-      toAmount: toAmount,
-      exchangeRate: exchangeRate,
-      fee: fee,
-      status: status,
-      completedAt: createdAt,
-      createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => CurrencyConversionDto(
+  id: id,
+  entityId: entityId,
+  fromCurrency: fromCurrency,
+  toCurrency: toCurrency,
+  fromAmount: fromAmount,
+  toAmount: toAmount,
+  exchangeRate: exchangeRate,
+  fee: fee,
+  status: status,
+  completedAt: createdAt,
+  createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);

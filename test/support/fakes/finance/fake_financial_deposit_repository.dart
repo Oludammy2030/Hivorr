@@ -26,33 +26,31 @@ class FakeFinancialDepositRepository implements FinancialDepositRepository {
     String id = 'dep-matched',
     String currencyCode = 'NGN',
     double amount = 150000,
-  }) =>
-      Deposit(
-        id: id,
-        currencyCode: currencyCode,
-        amount: amount,
-        nameMatchStatus: DepositNameMatchStatus.matched,
-        payerName: 'John Doe',
-        nameMatchScore: 1.0,
-        status: 'credited',
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        creditedAt: DateTime.now().subtract(const Duration(hours: 2)),
-      );
+  }) => Deposit(
+    id: id,
+    currencyCode: currencyCode,
+    amount: amount,
+    nameMatchStatus: DepositNameMatchStatus.matched,
+    payerName: 'John Doe',
+    nameMatchScore: 1.0,
+    status: 'credited',
+    createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+    creditedAt: DateTime.now().subtract(const Duration(hours: 2)),
+  );
 
   /// A deposit awaiting server-side name verification.
   static Deposit pending({
     String id = 'dep-pending',
     String currencyCode = 'USD',
     double amount = 100,
-  }) =>
-      Deposit(
-        id: id,
-        currencyCode: currencyCode,
-        amount: amount,
-        nameMatchStatus: DepositNameMatchStatus.pending,
-        status: 'pending',
-        createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
-      );
+  }) => Deposit(
+    id: id,
+    currencyCode: currencyCode,
+    amount: amount,
+    nameMatchStatus: DepositNameMatchStatus.pending,
+    status: 'pending',
+    createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+  );
 
   @override
   Future<List<Deposit>> listDeposits() async {

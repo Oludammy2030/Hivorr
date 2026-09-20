@@ -25,10 +25,10 @@ class EscrowService {
     HivorrLogger? logger,
     PerformanceTracer? tracer,
     PiiRedactor? redactor,
-  })  : _repository = repository,
-        _logger = logger,
-        _tracer = tracer,
-        _redactor = redactor ?? PiiRedactor();
+  }) : _repository = repository,
+       _logger = logger,
+       _tracer = tracer,
+       _redactor = redactor ?? PiiRedactor();
 
   final EscrowRepository _repository;
   final HivorrLogger? _logger;
@@ -66,16 +66,14 @@ class EscrowService {
   }
 
   /// Sum of amounts of `released` milestones (funds actually delivered).
-  double releasedMilestoneTotal(List<EscrowMilestone> milestones) =>
-      milestones
-          .where((EscrowMilestone m) => m.isReleased)
-          .fold(0.0, (double sum, EscrowMilestone m) => sum + m.amount);
+  double releasedMilestoneTotal(List<EscrowMilestone> milestones) => milestones
+      .where((EscrowMilestone m) => m.isReleased)
+      .fold(0.0, (double sum, EscrowMilestone m) => sum + m.amount);
 
   /// Sum of amounts of `completed` + `released` milestones (delivered work).
-  double completedMilestoneTotal(List<EscrowMilestone> milestones) =>
-      milestones
-          .where((EscrowMilestone m) => m.isCompleted || m.isReleased)
-          .fold(0.0, (double sum, EscrowMilestone m) => sum + m.amount);
+  double completedMilestoneTotal(List<EscrowMilestone> milestones) => milestones
+      .where((EscrowMilestone m) => m.isCompleted || m.isReleased)
+      .fold(0.0, (double sum, EscrowMilestone m) => sum + m.amount);
 
   /// Resolves the progress ratio for a milestone list (0.0–1.0), clamped so
   /// a released total never exceeds 1.0 during server-authoritative reads.
@@ -90,38 +88,32 @@ class EscrowService {
 
   // ─── Data operations (read live; write behind the proxy seam) ──────────
 
-  Future<EscrowDetail> getById(String id) => _tracedAndLogged(
-        'finance.escrow.get',
-        () async {
-          final detail = await _repository.getById(id);
-          _logger?.info('Escrow detail fetched', <String, Object?>{
-            'escrowId': _redactor.redact(detail.escrow.id),
-            'status': detail.escrow.status,
-            'milestoneCount': detail.milestones.length,
-            'transactionCount': detail.transactions.length,
-          });
-          return detail;
-        },
-      );
+  Future<EscrowDetail> getById(String id) =>
+      _tracedAndLogged('finance.escrow.get', () async {
+        final detail = await _repository.getById(id);
+        _logger?.info('Escrow detail fetched', <String, Object?>{
+          'escrowId': _redactor.redact(detail.escrow.id),
+          'status': detail.escrow.status,
+          'milestoneCount': detail.milestones.length,
+          'transactionCount': detail.transactions.length,
+        });
+        return detail;
+      });
 
   Future<List<Escrow>> getByProject({
     required String projectId,
     required List<String> escrowIds,
-  }) =>
-      _tracedAndLogged(
-        'finance.escrow.list',
-        () async {
-          final escrows = await _repository.getByProject(
-            projectId: projectId,
-            escrowIds: escrowIds,
-          );
-          _logger?.info('Escrow list fetched', <String, Object?>{
-            'projectId': _redactor.redact(projectId),
-            'escrowCount': escrows.length,
-          });
-          return escrows;
-        },
-      );
+  }) => _tracedAndLogged('finance.escrow.list', () async {
+    final escrows = await _repository.getByProject(
+      projectId: projectId,
+      escrowIds: escrowIds,
+    );
+    _logger?.info('Escrow list fetched', <String, Object?>{
+      'projectId': _redactor.redact(projectId),
+      'escrowCount': escrows.length,
+    });
+    return escrows;
+  });
 
   Future<EscrowDetail> createEscrow({
     required String payerEntityId,
@@ -129,102 +121,83 @@ class EscrowService {
     required String currencyCode,
     required double totalAmount,
     required List<EscrowMilestoneInput> milestones,
-  }) =>
-      _tracedAndLogged(
-        'finance.escrow.create',
-        () async {
-          _logger?.info('Creating escrow', <String, Object?>{
-            'payerEntityId': _redactor.redact(payerEntityId),
-            'payeeEntityId': _redactor.redact(payeeEntityId),
-            'currencyCode': currencyCode,
-            'totalAmount': totalAmount,
-            'milestoneCount': milestones.length,
-          });
-          final detail = await _repository.createEscrow(
-            payerEntityId: payerEntityId,
-            payeeEntityId: payeeEntityId,
-            currencyCode: currencyCode,
-            totalAmount: totalAmount,
-            milestones: milestones,
-          );
-          _logger?.info('Escrow created', <String, Object?>{
-            'escrowId': _redactor.redact(detail.escrow.id),
-            'status': detail.escrow.status,
-          });
-          return detail;
-        },
-      );
+  }) => _tracedAndLogged('finance.escrow.create', () async {
+    _logger?.info('Creating escrow', <String, Object?>{
+      'payerEntityId': _redactor.redact(payerEntityId),
+      'payeeEntityId': _redactor.redact(payeeEntityId),
+      'currencyCode': currencyCode,
+      'totalAmount': totalAmount,
+      'milestoneCount': milestones.length,
+    });
+    final detail = await _repository.createEscrow(
+      payerEntityId: payerEntityId,
+      payeeEntityId: payeeEntityId,
+      currencyCode: currencyCode,
+      totalAmount: totalAmount,
+      milestones: milestones,
+    );
+    _logger?.info('Escrow created', <String, Object?>{
+      'escrowId': _redactor.redact(detail.escrow.id),
+      'status': detail.escrow.status,
+    });
+    return detail;
+  });
 
   Future<EscrowDetail> completeMilestone({
     required String escrowId,
     required String milestoneId,
-  }) =>
-      _tracedAndLogged(
-        'finance.escrow.milestone.complete',
-        () async {
-          final detail = await _repository.completeMilestone(
-            escrowId: escrowId,
-            milestoneId: milestoneId,
-          );
-          _logger?.info('Milestone completed', <String, Object?>{
-            'escrowId': _redactor.redact(escrowId),
-            'milestoneId': _redactor.redact(milestoneId),
-            'status': detail.escrow.status,
-          });
-          return detail;
-        },
-      );
+  }) => _tracedAndLogged('finance.escrow.milestone.complete', () async {
+    final detail = await _repository.completeMilestone(
+      escrowId: escrowId,
+      milestoneId: milestoneId,
+    );
+    _logger?.info('Milestone completed', <String, Object?>{
+      'escrowId': _redactor.redact(escrowId),
+      'milestoneId': _redactor.redact(milestoneId),
+      'status': detail.escrow.status,
+    });
+    return detail;
+  });
 
   Future<EscrowDetail> releaseMilestone({
     required String escrowId,
     required String milestoneId,
-  }) =>
-      _tracedAndLogged(
-        'finance.escrow.milestone.release',
-        () async {
-          final detail = await _repository.releaseMilestone(
-            escrowId: escrowId,
-            milestoneId: milestoneId,
-          );
-          _logger?.info('Milestone released', <String, Object?>{
-            'escrowId': _redactor.redact(escrowId),
-            'status': detail.escrow.status,
-          });
-          return detail;
-        },
-      );
+  }) => _tracedAndLogged('finance.escrow.milestone.release', () async {
+    final detail = await _repository.releaseMilestone(
+      escrowId: escrowId,
+      milestoneId: milestoneId,
+    );
+    _logger?.info('Milestone released', <String, Object?>{
+      'escrowId': _redactor.redact(escrowId),
+      'status': detail.escrow.status,
+    });
+    return detail;
+  });
 
   Future<EscrowDetail> releaseFinal({required String escrowId}) =>
-      _tracedAndLogged(
-        'finance.escrow.releaseFinal',
-        () async {
-          final detail = await _repository.releaseFinal(escrowId: escrowId);
-          _logger?.info('Escrow fully released', <String, Object?>{
-            'escrowId': _redactor.redact(escrowId),
-            'status': detail.escrow.status,
-          });
-          return detail;
-        },
-      );
+      _tracedAndLogged('finance.escrow.releaseFinal', () async {
+        final detail = await _repository.releaseFinal(escrowId: escrowId);
+        _logger?.info('Escrow fully released', <String, Object?>{
+          'escrowId': _redactor.redact(escrowId),
+          'status': detail.escrow.status,
+        });
+        return detail;
+      });
 
   Future<EscrowDetail> refundEscrow({
     required String escrowId,
     required String reason,
-  }) =>
-      _tracedAndLogged(
-        'finance.escrow.refund',
-        () async {
-          final detail = await _repository.refundEscrow(
-            escrowId: escrowId,
-            reason: reason,
-          );
-          _logger?.info('Escrow refunded', <String, Object?>{
-            'escrowId': _redactor.redact(escrowId),
-            'status': detail.escrow.status,
-          });
-          return detail;
-        },
-      );
+  }) => _tracedAndLogged('finance.escrow.refund', () async {
+    final detail = await _repository.refundEscrow(
+      escrowId: escrowId,
+      reason: reason,
+    );
+    _logger?.info('Escrow refunded', <String, Object?>{
+      'escrowId': _redactor.redact(escrowId),
+      'status': detail.escrow.status,
+    });
+    return detail;
+  });
 
   /// Wraps [action] in a `finance.escrow.*` [PerformanceTracer] span and
   /// surfaces failures via the logger with redacted context.

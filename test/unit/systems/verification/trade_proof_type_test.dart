@@ -6,16 +6,13 @@ import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
 void main() {
   group('enum surface', () {
     test('defines exactly the 5 allowed proof kinds', () {
-      expect(
-        TradeProofType.values,
-        <TradeProofType>[
-          TradeProofType.certificate,
-          TradeProofType.license,
-          TradeProofType.workSample,
-          TradeProofType.portfolio,
-          TradeProofType.other,
-        ],
-      );
+      expect(TradeProofType.values, <TradeProofType>[
+        TradeProofType.certificate,
+        TradeProofType.license,
+        TradeProofType.workSample,
+        TradeProofType.portfolio,
+        TradeProofType.other,
+      ]);
     });
 
     test('exposes the stable trade-kind and submission-type constants', () {
@@ -51,7 +48,10 @@ void main() {
   group('fromTitle', () {
     test('resolves titles ignoring case and surrounding whitespace', () {
       expect(TradeProofType.fromTitle('  LICeNsE '), TradeProofType.license);
-      expect(TradeProofType.fromTitle('work sample'), TradeProofType.workSample);
+      expect(
+        TradeProofType.fromTitle('work sample'),
+        TradeProofType.workSample,
+      );
       expect(TradeProofType.fromTitle('Portfolio'), TradeProofType.portfolio);
     });
 

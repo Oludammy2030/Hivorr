@@ -20,9 +20,7 @@ void main() {
 
     test('defaults default provider to paystack when absent', () {
       final source = paymentEnvSource(
-        overrides: <String, String>{
-          AppConstants.envPaymentDefaultProvider: '',
-        },
+        overrides: <String, String>{AppConstants.envPaymentDefaultProvider: ''},
       );
       final config = PaymentGatewayConfig.fromEnvironment(source);
       expect(config.defaultProvider, PaymentProvider.paystack);
@@ -70,9 +68,7 @@ void main() {
       expect(
         () => PaymentGatewayConfig.fromEnvironment(
           paymentEnvSource(
-            overrides: <String, String>{
-              AppConstants.envPaystackSecretKey: '',
-            },
+            overrides: <String, String>{AppConstants.envPaystackSecretKey: ''},
           ),
         ),
         throwsA(isA<EnvironmentConfigException>()),

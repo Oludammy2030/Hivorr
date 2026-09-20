@@ -31,8 +31,7 @@ class HelpScreen extends StatelessWidget {
           TextButton(
             onPressed: () => context.go(RoutePaths.howItWorks),
             style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text('How it works',
-                style: context.textTheme.labelLarge),
+            child: Text('How it works', style: context.textTheme.labelLarge),
           ),
           const SizedBox(height: HivorrSpacing.xl),
           const PublicInfoRow(
@@ -50,15 +49,15 @@ class HelpScreen extends StatelessWidget {
               TextButton(
                 onPressed: () => context.go(RoutePaths.login),
                 style: TextButton.styleFrom(foregroundColor: colors.primary),
-                child:
-                    Text('Sign in', style: context.textTheme.labelLarge),
+                child: Text('Sign in', style: context.textTheme.labelLarge),
               ),
               TextButton(
                 onPressed: () => context.go(RoutePaths.forgotPassword),
-                style:
-                    TextButton.styleFrom(foregroundColor: colors.primary),
-                child: Text('Forgot password',
-                    style: context.textTheme.labelLarge),
+                style: TextButton.styleFrom(foregroundColor: colors.primary),
+                child: Text(
+                  'Forgot password',
+                  style: context.textTheme.labelLarge,
+                ),
               ),
             ],
           ),
@@ -74,8 +73,10 @@ class HelpScreen extends StatelessWidget {
           TextButton(
             onPressed: () => context.go(RoutePaths.security),
             style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text('Security & trust',
-                style: context.textTheme.labelLarge),
+            child: Text(
+              'Security & trust',
+              style: context.textTheme.labelLarge,
+            ),
           ),
           const SizedBox(height: HivorrSpacing.xl),
           const PublicInfoRow(

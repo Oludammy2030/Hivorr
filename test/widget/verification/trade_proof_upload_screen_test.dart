@@ -27,8 +27,9 @@ void main() {
     TradeVerificationRepository? repo,
     TradePickDocumentCallback? pickFile,
   }) async {
-    final TradeVerificationProvider provider =
-        TradeVerificationProvider(repo: repo ?? FakeTradeVerificationRepository());
+    final TradeVerificationProvider provider = TradeVerificationProvider(
+      repo: repo ?? FakeTradeVerificationRepository(),
+    );
     // Pre-refresh so the aggregate (bound professions) is non-null before the
     // first frame; otherwise the screen falls back to the empty state.
     await provider.refreshStatus();
@@ -39,7 +40,9 @@ void main() {
         professionLabel: (String id) => 'Profession $id',
       ),
       providers: <SingleChildWidget>[
-        ChangeNotifierProvider<TradeVerificationProvider>.value(value: provider),
+        ChangeNotifierProvider<TradeVerificationProvider>.value(
+          value: provider,
+        ),
       ],
     );
     return provider;
@@ -52,8 +55,9 @@ void main() {
   final Uint8List pdfBytes = Uint8List.fromList(<int>[1, 2, 3, 4]);
 
   group('TradeProofUploadScreen layout', () {
-    testWidgets('renders the app bar title and proof-type labels',
-        (WidgetTester tester) async {
+    testWidgets('renders the app bar title and proof-type labels', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
       await tester.pump();
 
@@ -63,8 +67,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('renders the no-professions empty state when none are bound',
-        (WidgetTester tester) async {
+    testWidgets('renders the no-professions empty state when none are bound', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         repo: FakeTradeVerificationRepository(
@@ -77,8 +82,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('submit button is disabled until a file + type selected',
-        (WidgetTester tester) async {
+    testWidgets('submit button is disabled until a file + type selected', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -89,17 +95,20 @@ void main() {
       );
       await tester.pump();
 
-      final Finder submit = find.widgetWithText(HivorrButton, 'Upload & submit');
-      final HivorrButton button =
-          tester.widget<HivorrButton>(submit);
+      final Finder submit = find.widgetWithText(
+        HivorrButton,
+        'Upload & submit',
+      );
+      final HivorrButton button = tester.widget<HivorrButton>(submit);
       expect(button.onPressed, isNull);
       await unmount(tester);
     });
   });
 
   group('selection + upload', () {
-    testWidgets('selecting a proof type enables the upload path',
-        (WidgetTester tester) async {
+    testWidgets('selecting a proof type enables the upload path', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -116,15 +125,19 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('uploading a proof triggers a submit through the provider',
-        (WidgetTester tester) async {
+    testWidgets('uploading a proof triggers a submit through the provider', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeTradeVerificationRepository();
-      await pumpScreenWith(tester, repo: repo, pickFile: () async =>
-          PickedDocument(
-            bytes: pdfBytes,
-            fileName: 'proof.pdf',
-            mimeType: 'application/pdf',
-          ));
+      await pumpScreenWith(
+        tester,
+        repo: repo,
+        pickFile: () async => PickedDocument(
+          bytes: pdfBytes,
+          fileName: 'proof.pdf',
+          mimeType: 'application/pdf',
+        ),
+      );
       await tester.pump();
 
       await tester.tap(find.text('Choose file'));
@@ -144,8 +157,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('rejects an unsupported file type with a friendly error',
-        (WidgetTester tester) async {
+    testWidgets('rejects an unsupported file type with a friendly error', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -160,14 +174,17 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text('This file type is not supported. Please use JPG, PNG, WebP, or PDF.'),
+        find.text(
+          'This file type is not supported. Please use JPG, PNG, WebP, or PDF.',
+        ),
         findsOneWidget,
       );
       await unmount(tester);
     });
 
-    testWidgets('cancelling the file picker leaves nothing selected',
-        (WidgetTester tester) async {
+    testWidgets('cancelling the file picker leaves nothing selected', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester, pickFile: () async => null);
       await tester.pump();
 
@@ -179,8 +196,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('a picked PDF shows the PDF icon, name, and change action',
-        (WidgetTester tester) async {
+    testWidgets('a picked PDF shows the PDF icon, name, and change action', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -200,8 +218,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('a picked image shows the generic image icon',
-        (WidgetTester tester) async {
+    testWidgets('a picked image shows the generic image icon', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -220,7 +239,9 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('selecting Other shows its helper line', (WidgetTester tester) async {
+    testWidgets('selecting Other shows its helper line', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
       await tester.pump();
 
@@ -233,8 +254,9 @@ void main() {
   });
 
   group('file validation', () {
-    testWidgets('an over-limit file shows the friendly too-large error',
-        (WidgetTester tester) async {
+    testWidgets('an over-limit file shows the friendly too-large error', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -258,15 +280,19 @@ void main() {
   });
 
   group('submit feedback', () {
-    testWidgets('shows the success state after a successful submit',
-        (WidgetTester tester) async {
+    testWidgets('shows the success state after a successful submit', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeTradeVerificationRepository();
-      await pumpScreenWith(tester, repo: repo, pickFile: () async =>
-          PickedDocument(
-            bytes: pdfBytes,
-            fileName: 'proof.pdf',
-            mimeType: 'application/pdf',
-          ));
+      await pumpScreenWith(
+        tester,
+        repo: repo,
+        pickFile: () async => PickedDocument(
+          bytes: pdfBytes,
+          fileName: 'proof.pdf',
+          mimeType: 'application/pdf',
+        ),
+      );
       await tester.pump();
 
       await tester.tap(find.text('Choose file'));
@@ -283,81 +309,87 @@ void main() {
     });
 
     testWidgets(
-        'a duplicate-submission conflict shows the dedup message + View status, not a retry loop',
-        (WidgetTester tester) async {
-      final repo = FakeTradeVerificationRepository();
-      final TradeVerificationProvider provider =
-          TradeVerificationProvider(repo: repo);
-      await provider.refreshStatus();
-      repo.nextError = const ApiException(
-        kind: ApiExceptionKind.conflict,
-        message: VerificationEnvelopeParser.activeConflictMessage,
-        code: 'PLT005',
-      );
+      'a duplicate-submission conflict shows the dedup message + View status, not a retry loop',
+      (WidgetTester tester) async {
+        final repo = FakeTradeVerificationRepository();
+        final TradeVerificationProvider provider = TradeVerificationProvider(
+          repo: repo,
+        );
+        await provider.refreshStatus();
+        repo.nextError = const ApiException(
+          kind: ApiExceptionKind.conflict,
+          message: VerificationEnvelopeParser.activeConflictMessage,
+          code: 'PLT005',
+        );
 
-      final GoRouter router = GoRouter(
-        initialLocation: RoutePaths.tradeProofUpload,
-        routes: <RouteBase>[
-          GoRoute(
-            path: RoutePaths.tradeProofUpload,
-            builder: (_, _) => TradeProofUploadScreen(
-              pickFile: () async => PickedDocument(
-                bytes: pdfBytes,
-                fileName: 'proof.pdf',
-                mimeType: 'application/pdf',
+        final GoRouter router = GoRouter(
+          initialLocation: RoutePaths.tradeProofUpload,
+          routes: <RouteBase>[
+            GoRoute(
+              path: RoutePaths.tradeProofUpload,
+              builder: (_, _) => TradeProofUploadScreen(
+                pickFile: () async => PickedDocument(
+                  bytes: pdfBytes,
+                  fileName: 'proof.pdf',
+                  mimeType: 'application/pdf',
+                ),
+                professionLabel: (String id) => 'Profession $id',
               ),
-              professionLabel: (String id) => 'Profession $id',
+            ),
+            GoRoute(
+              path: RoutePaths.tradeVerificationStatus,
+              builder: (_, _) =>
+                  const Scaffold(body: Center(child: Text('status-screen'))),
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          MultiProvider(
+            providers: <SingleChildWidget>[
+              ChangeNotifierProvider<TradeVerificationProvider>.value(
+                value: provider,
+              ),
+            ],
+            child: MaterialApp.router(
+              routerConfig: router,
+              theme: AppTheme.lightTheme,
             ),
           ),
-          GoRoute(
-            path: RoutePaths.tradeVerificationStatus,
-            builder: (_, _) =>
-                const Scaffold(body: Center(child: Text('status-screen'))),
-          ),
-        ],
-      );
+        );
+        await tester.pump();
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: <SingleChildWidget>[
-            ChangeNotifierProvider<TradeVerificationProvider>.value(
-                value: provider),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-            theme: AppTheme.lightTheme,
-          ),
-        ),
-      );
-      await tester.pump();
+        await tester.tap(find.text('Choose file'));
+        await tester.pump();
+        await tester.tap(find.text('Work Sample'));
+        await tester.pump();
+        await tester.tap(find.text('Upload & submit'));
+        await tester.pump();
+        await tester.pump();
 
-      await tester.tap(find.text('Choose file'));
-      await tester.pump();
-      await tester.tap(find.text('Work Sample'));
-      await tester.pump();
-      await tester.tap(find.text('Upload & submit'));
-      await tester.pump();
-      await tester.pump();
+        expect(find.text('Submission failed'), findsOneWidget);
+        expect(
+          find.text(VerificationEnvelopeParser.activeConflictMessage),
+          findsOneWidget,
+        );
+        final Finder viewStatus = find.widgetWithText(
+          HivorrButton,
+          'View status',
+        );
+        expect(viewStatus, findsOneWidget);
+        expect(
+          find.widgetWithText(HivorrButton, 'Try again'),
+          findsNothing,
+          reason: 'a duplicate submission must not retry in a loop',
+        );
 
-      expect(find.text('Submission failed'), findsOneWidget);
-      expect(
-        find.text(VerificationEnvelopeParser.activeConflictMessage),
-        findsOneWidget,
-      );
-      final Finder viewStatus = find.widgetWithText(HivorrButton, 'View status');
-      expect(viewStatus, findsOneWidget);
-      expect(
-        find.widgetWithText(HivorrButton, 'Try again'),
-        findsNothing,
-        reason: 'a duplicate submission must not retry in a loop',
-      );
-
-      await tester.ensureVisible(viewStatus);
-      await tester.pumpAndSettle();
-      await tester.tap(viewStatus);
-      await tester.pumpAndSettle();
-      expect(find.text('status-screen'), findsOneWidget);
-      await unmount(tester);
-    });
+        await tester.ensureVisible(viewStatus);
+        await tester.pumpAndSettle();
+        await tester.tap(viewStatus);
+        await tester.pumpAndSettle();
+        expect(find.text('status-screen'), findsOneWidget);
+        await unmount(tester);
+      },
+    );
   });
 }

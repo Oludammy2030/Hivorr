@@ -29,8 +29,9 @@ Widget _placeholder(BuildContext context, GoRouterState state) =>
 
 void main() {
   group('IntroScreen (native first launch)', () {
-    testWidgets('renders the first value-prop page and a skip action',
-        (tester) async {
+    testWidgets('renders the first value-prop page and a skip action', (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
         MultiProvider(
@@ -51,8 +52,9 @@ void main() {
       expect(find.text("Let's begin"), findsOneWidget);
     });
 
-    testWidgets('walks through the pages and reaches "Get started"',
-        (tester) async {
+    testWidgets('walks through the pages and reaches "Get started"', (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
         MultiProvider(
@@ -79,19 +81,16 @@ void main() {
       expect(find.text('Get started'), findsOneWidget);
     });
 
-    testWidgets('finishing marks the intro seen and navigates to /login',
-        (tester) async {
-      final entryState =
-          EntryStateProvider(store: InMemoryEntryStateStore());
-      final GoRouter router = _doorRouter(
-        initialLocation: '/intro',
-      );
+    testWidgets('finishing marks the intro seen and navigates to /login', (
+      tester,
+    ) async {
+      final entryState = EntryStateProvider(store: InMemoryEntryStateStore());
+      final GoRouter router = _doorRouter(initialLocation: '/intro');
       await pumpScreen(
         tester,
         MultiProvider(
           providers: <SingleChildWidget>[
-            ChangeNotifierProvider<EntryStateProvider>.value(
-                value: entryState),
+            ChangeNotifierProvider<EntryStateProvider>.value(value: entryState),
           ],
           child: MaterialApp.router(
             theme: AppTheme.lightTheme,
@@ -108,16 +107,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(entryState.introSeen, isTrue);
-      expect(
-        router.routerDelegate.state.matchedLocation,
-        '/login',
-      );
+      expect(router.routerDelegate.state.matchedLocation, '/login');
     });
 
-    testWidgets('finishing preserves a carried ?next destination',
-        (tester) async {
-      final entryState =
-          EntryStateProvider(store: InMemoryEntryStateStore());
+    testWidgets('finishing preserves a carried ?next destination', (
+      tester,
+    ) async {
+      final entryState = EntryStateProvider(store: InMemoryEntryStateStore());
       final GoRouter router = _doorRouter(
         initialLocation: '/intro?next=/p/acme/1',
       );
@@ -125,8 +121,7 @@ void main() {
         tester,
         MultiProvider(
           providers: <SingleChildWidget>[
-            ChangeNotifierProvider<EntryStateProvider>.value(
-                value: entryState),
+            ChangeNotifierProvider<EntryStateProvider>.value(value: entryState),
           ],
           child: MaterialApp.router(
             theme: AppTheme.lightTheme,
@@ -148,17 +143,13 @@ void main() {
     });
 
     testWidgets('skipping also marks the intro seen', (tester) async {
-      final entryState =
-          EntryStateProvider(store: InMemoryEntryStateStore());
-      final GoRouter router = _doorRouter(
-        initialLocation: '/intro',
-      );
+      final entryState = EntryStateProvider(store: InMemoryEntryStateStore());
+      final GoRouter router = _doorRouter(initialLocation: '/intro');
       await pumpScreen(
         tester,
         MultiProvider(
           providers: <SingleChildWidget>[
-            ChangeNotifierProvider<EntryStateProvider>.value(
-                value: entryState),
+            ChangeNotifierProvider<EntryStateProvider>.value(value: entryState),
           ],
           child: MaterialApp.router(
             theme: AppTheme.lightTheme,
@@ -171,10 +162,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(entryState.introSeen, isTrue);
-      expect(
-        router.routerDelegate.state.matchedLocation,
-        '/login',
-      );
+      expect(router.routerDelegate.state.matchedLocation, '/login');
     });
   });
 }

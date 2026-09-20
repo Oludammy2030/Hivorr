@@ -22,20 +22,20 @@ void main() {
   }
 
   group('DepositNameMatchIndicator (4-state tone map)', () {
-    testWidgets('matched → "Match: Verified" on successContainer',
-        (WidgetTester tester) async {
+    testWidgets('matched → "Match: Verified" on successContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
-        const DepositNameMatchIndicator(
-          status: DepositNameMatchStatus.matched,
-        ),
+        const DepositNameMatchIndicator(status: DepositNameMatchStatus.matched),
       );
       expect(find.text('Match: Verified'), findsOneWidget);
       expect(chipColor(tester), extension().successContainer);
     });
 
-    testWidgets('mismatched → "Match: Failed" on errorContainer',
-        (WidgetTester tester) async {
+    testWidgets('mismatched → "Match: Failed" on errorContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const DepositNameMatchIndicator(
@@ -43,26 +43,23 @@ void main() {
         ),
       );
       expect(find.text('Match: Failed'), findsOneWidget);
-      expect(
-        chipColor(tester),
-        AppTheme.lightTheme.colorScheme.errorContainer,
-      );
+      expect(chipColor(tester), AppTheme.lightTheme.colorScheme.errorContainer);
     });
 
-    testWidgets('pending → "Match: Pending" on warningContainer',
-        (WidgetTester tester) async {
+    testWidgets('pending → "Match: Pending" on warningContainer', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
-        const DepositNameMatchIndicator(
-          status: DepositNameMatchStatus.pending,
-        ),
+        const DepositNameMatchIndicator(status: DepositNameMatchStatus.pending),
       );
       expect(find.text('Match: Pending'), findsOneWidget);
       expect(chipColor(tester), extension().warningContainer);
     });
 
-    testWidgets('unverified → "Match: Unverified" on surfaceContainerHighest',
-        (WidgetTester tester) async {
+    testWidgets('unverified → "Match: Unverified" on surfaceContainerHighest', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const DepositNameMatchIndicator(
@@ -76,13 +73,12 @@ void main() {
       );
     });
 
-    testWidgets('renders a status icon alongside the label',
-        (WidgetTester tester) async {
+    testWidgets('renders a status icon alongside the label', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
-        const DepositNameMatchIndicator(
-          status: DepositNameMatchStatus.matched,
-        ),
+        const DepositNameMatchIndicator(status: DepositNameMatchStatus.matched),
       );
       expect(
         find.descendant(
@@ -93,13 +89,12 @@ void main() {
       );
     });
 
-    testWidgets('draws on the dark theme without custom colors',
-        (WidgetTester tester) async {
+    testWidgets('draws on the dark theme without custom colors', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
-        const DepositNameMatchIndicator(
-          status: DepositNameMatchStatus.matched,
-        ),
+        const DepositNameMatchIndicator(status: DepositNameMatchStatus.matched),
         dark: true,
       );
       expect(find.text('Match: Verified'), findsOneWidget);

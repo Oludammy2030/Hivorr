@@ -45,15 +45,14 @@ class SupabaseEscrowRemoteDataSource extends BaseApiService
 
   @override
   Future<EscrowDetailDto> getById(String id) => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'financial_escrow_get',
           params: <String, dynamic>{'p_escrow_id': id},
         );
-        final Map<String, dynamic> data =
-            FinancialEnvelopeParser.unwrap(response);
-        return EscrowDetailDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = FinancialEnvelopeParser.unwrap(response);
+    return EscrowDetailDto.fromJson(data);
+  });
 
   @override
   Future<List<EscrowDto>> getByProject(List<String> escrowIds) =>

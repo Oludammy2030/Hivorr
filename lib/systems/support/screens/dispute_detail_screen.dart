@@ -149,10 +149,7 @@ class _DisputeDetailScreenState extends State<DisputeDetailScreen>
             child: ListView(
               padding: const EdgeInsets.all(HivorrSpacing.lg),
               children: <Widget>[
-                _HeaderCard(
-                  case_: case_,
-                  onViewEscrow: widget.onViewEscrow,
-                ),
+                _HeaderCard(case_: case_, onViewEscrow: widget.onViewEscrow),
                 const SizedBox(height: HivorrSpacing.lg),
                 _ReasonCard(reason: case_.reason),
                 const SizedBox(height: HivorrSpacing.lg),
@@ -371,7 +368,10 @@ class _EvidenceSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text('Evidence (${evidence.length})', style: context.textTheme.titleSmall),
+            Text(
+              'Evidence (${evidence.length})',
+              style: context.textTheme.titleSmall,
+            ),
             if (canSubmit)
               HivorrButton(
                 label: 'Add evidence',
@@ -386,7 +386,7 @@ class _EvidenceSection extends StatelessWidget {
           Text(
             canSubmit
                 ? 'No evidence yet — add documents, photos, or a written '
-                    'description to support your case.'
+                      'description to support your case.'
                 : 'No evidence was submitted for this case.',
             style: context.textTheme.bodyMedium?.copyWith(
               color: colors.onSurfaceVariant,
@@ -427,8 +427,9 @@ class _ResolutionCard extends StatelessWidget {
           const SizedBox(height: HivorrSpacing.sm),
           Text(
             resolutionLabel(resolution.resolutionType),
-            style: context.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: context.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: HivorrSpacing.xs),
           Text(
@@ -437,20 +438,20 @@ class _ResolutionCard extends StatelessWidget {
               color: colors.onSurfaceVariant,
             ),
           ),
-          if (resolution.payerRefundAmount > 0 || resolution.payeeReleaseAmount > 0)
-            ...[
-              const SizedBox(height: HivorrSpacing.md),
-              Text(
-                'Refund to payer: ${HivorrFormatters.number(resolution.payerRefundAmount)}',
-                style: context.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: HivorrSpacing.xs),
-              Text(
-                'Release to provider: '
-                '${HivorrFormatters.number(resolution.payeeReleaseAmount)}',
-                style: context.textTheme.bodyMedium,
-              ),
-            ],
+          if (resolution.payerRefundAmount > 0 ||
+              resolution.payeeReleaseAmount > 0) ...[
+            const SizedBox(height: HivorrSpacing.md),
+            Text(
+              'Refund to payer: ${HivorrFormatters.number(resolution.payerRefundAmount)}',
+              style: context.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: HivorrSpacing.xs),
+            Text(
+              'Release to provider: '
+              '${HivorrFormatters.number(resolution.payeeReleaseAmount)}',
+              style: context.textTheme.bodyMedium,
+            ),
+          ],
           const SizedBox(height: HivorrSpacing.md),
           Text(
             resolution.reasoning,
@@ -498,11 +499,7 @@ class _ImmutabilityNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            Icons.lock_outline,
-            size: 16,
-            color: colors.onSurfaceVariant,
-          ),
+          Icon(Icons.lock_outline, size: 16, color: colors.onSurfaceVariant),
           const SizedBox(width: HivorrSpacing.sm),
           Expanded(
             child: Text(

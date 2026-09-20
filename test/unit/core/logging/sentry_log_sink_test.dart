@@ -7,12 +7,12 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import '../test_sentry_helper.dart';
 
 LogEntry _entry(LogLevel level, {Object? error}) => LogEntry(
-      level: level,
-      message: 'msg-${level.name}',
-      loggerName: 'hivorr.test',
-      timestamp: DateTime(2024),
-      error: error,
-    );
+  level: level,
+  message: 'msg-${level.name}',
+  loggerName: 'hivorr.test',
+  timestamp: DateTime(2024),
+  error: error,
+);
 
 Future<List<Breadcrumb>> _flushBreadcrumbs() async {
   await Sentry.captureMessage('__flush__');
@@ -38,7 +38,9 @@ void main() {
   });
 
   test('error with an error object is captured as an exception', () async {
-    const SentryLogSink().write(_entry(LogLevel.error, error: Exception('boom')));
+    const SentryLogSink().write(
+      _entry(LogLevel.error, error: Exception('boom')),
+    );
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(recordedSentryEvents, isNotEmpty);
   });
@@ -47,8 +49,9 @@ void main() {
     const SentryLogSink().write(_entry(LogLevel.error));
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(
-      recordedSentryEvents
-          .any((SentryEvent e) => e.message?.formatted == 'msg-error'),
+      recordedSentryEvents.any(
+        (SentryEvent e) => e.message?.formatted == 'msg-error',
+      ),
       isTrue,
     );
   });
@@ -57,8 +60,9 @@ void main() {
     const SentryLogSink().write(_entry(LogLevel.fatal));
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(
-      recordedSentryEvents
-          .any((SentryEvent e) => e.message?.formatted == 'msg-fatal'),
+      recordedSentryEvents.any(
+        (SentryEvent e) => e.message?.formatted == 'msg-fatal',
+      ),
       isTrue,
     );
   });

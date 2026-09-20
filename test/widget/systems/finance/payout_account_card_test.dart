@@ -17,27 +17,33 @@ void main() {
   );
 
   group('PayoutAccountCard', () {
-    testWidgets('shows currency, bank, and masked account number',
-        (WidgetTester tester) async {
+    testWidgets('shows currency, bank, and masked account number', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, const PayoutAccountCard(account: ngn));
       expect(find.textContaining('NGN'), findsOneWidget);
       expect(find.text('Guaranty Trust'), findsOneWidget);
       expect(find.text('Account ending ***6789'), findsOneWidget);
     });
 
-    testWidgets('never shows the raw account number', (WidgetTester tester) async {
+    testWidgets('never shows the raw account number', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, const PayoutAccountCard(account: ngn));
       expect(find.textContaining('0123456789'), findsNothing);
     });
 
-    testWidgets('unverified → "Verification pending" badge on warningContainer',
-        (WidgetTester tester) async {
-      await pumpTheme(tester, const PayoutAccountCard(account: ngn));
-      expect(find.text('Verification pending'), findsOneWidget);
-    });
+    testWidgets(
+      'unverified → "Verification pending" badge on warningContainer',
+      (WidgetTester tester) async {
+        await pumpTheme(tester, const PayoutAccountCard(account: ngn));
+        expect(find.text('Verification pending'), findsOneWidget);
+      },
+    );
 
-    testWidgets('verified active → "Verified" badge and usable icon',
-        (WidgetTester tester) async {
+    testWidgets('verified active → "Verified" badge and usable icon', (
+      WidgetTester tester,
+    ) async {
       const PayoutAccount verified = PayoutAccount(
         id: 'acc-2',
         currencyCode: 'NGN',
@@ -54,8 +60,9 @@ void main() {
       expect(find.text('Account ending ***3210'), findsOneWidget);
     });
 
-    testWidgets('deactivated → "Deactivated" badge',
-        (WidgetTester tester) async {
+    testWidgets('deactivated → "Deactivated" badge', (
+      WidgetTester tester,
+    ) async {
       const PayoutAccount deactivated = PayoutAccount(
         id: 'acc-3',
         currencyCode: 'USD',
@@ -69,8 +76,9 @@ void main() {
       expect(find.text('Deactivated'), findsOneWidget);
     });
 
-    testWidgets('unknown currency codes render verbatim',
-        (WidgetTester tester) async {
+    testWidgets('unknown currency codes render verbatim', (
+      WidgetTester tester,
+    ) async {
       const PayoutAccount exotic = PayoutAccount(
         id: 'acc-4',
         currencyCode: 'KES',
@@ -83,8 +91,9 @@ void main() {
       expect(find.text('KES'), findsOneWidget);
     });
 
-    testWidgets('draws on the dark theme without hardcoded colors',
-        (WidgetTester tester) async {
+    testWidgets('draws on the dark theme without hardcoded colors', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const PayoutAccountCard(account: ngn),

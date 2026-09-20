@@ -6,20 +6,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Builds a [User] with the minimal fields the auth framework reads.
 User fakeUser(String id, {bool emailConfirmed = false}) => User(
-      id: id,
-      appMetadata: <String, dynamic>{},
-      userMetadata: null,
-      aud: 'authenticated',
-      emailConfirmedAt: emailConfirmed ? DateTime.now().toIso8601String() : null,
-      createdAt: DateTime.now().toIso8601String(),
-    );
+  id: id,
+  appMetadata: <String, dynamic>{},
+  userMetadata: null,
+  aud: 'authenticated',
+  emailConfirmedAt: emailConfirmed ? DateTime.now().toIso8601String() : null,
+  createdAt: DateTime.now().toIso8601String(),
+);
 
 /// Builds a [Session] with a non-JWT access token (expiry stays null).
 Session fakeSession(String id, {bool emailConfirmed = false}) => Session(
-      accessToken: 'fake-access-token',
-      tokenType: 'bearer',
-      user: fakeUser(id, emailConfirmed: emailConfirmed),
-    );
+  accessToken: 'fake-access-token',
+  tokenType: 'bearer',
+  user: fakeUser(id, emailConfirmed: emailConfirmed),
+);
 
 /// Controllable [GoTrueClient] for unit tests.
 ///
@@ -283,7 +283,7 @@ class FakeGoTrueClient extends GoTrueClient {
 /// methods are never exercised.
 class FakeSupabaseClient extends SupabaseClient {
   FakeSupabaseClient()
-      : super('https://example.supabase.co', 'public-anon-key');
+    : super('https://example.supabase.co', 'public-anon-key');
 
   @override
   SupabaseQueryBuilder from(String table) =>
@@ -294,8 +294,7 @@ class FakeSupabaseClient extends SupabaseClient {
     String functionName, {
     dynamic get,
     Map<String, dynamic>? params,
-  }) =>
-      throw UnimplementedError('rpc() is not exercised in unit tests');
+  }) => throw UnimplementedError('rpc() is not exercised in unit tests');
 }
 
 /// [SupabaseAuthService] whose [ensureEntityExists] is recorded (no network),

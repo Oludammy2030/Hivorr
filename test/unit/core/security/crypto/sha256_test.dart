@@ -24,7 +24,10 @@ void main() {
     });
 
     test('sha256Base64 of empty input', () {
-      expect(sha256Base64(<int>[]), '47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=');
+      expect(
+        sha256Base64(<int>[]),
+        '47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=',
+      );
     });
   });
 }

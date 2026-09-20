@@ -35,30 +35,30 @@ class EntityProfileDtoBuilder {
       this.._createdBy = value;
 
   EntityProfileDto build() => EntityProfileDto(
-        entityId: _entityId,
-        legalName: _legalName,
-        displayName: _displayName,
-        bio: _bio,
-        avatarPath: _avatarPath,
-        countryCode: _countryCode,
-        createdAt: _createdAt,
-        updatedAt: _updatedAt,
-        createdBy: _createdBy,
-      );
+    entityId: _entityId,
+    legalName: _legalName,
+    displayName: _displayName,
+    bio: _bio,
+    avatarPath: _avatarPath,
+    countryCode: _countryCode,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    createdBy: _createdBy,
+  );
 
   /// Serializes to the snake_case `entity_profiles` column contract with all
   /// keys present (nulls included).
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'entity_id': _entityId,
-        'legal_name': _legalName,
-        'display_name': _displayName,
-        'bio': _bio,
-        'avatar_path': _avatarPath,
-        'country_code': _countryCode,
-        'created_at': _createdAt?.toIso8601String(),
-        'updated_at': _updatedAt?.toIso8601String(),
-        'created_by': _createdBy,
-      };
+    'entity_id': _entityId,
+    'legal_name': _legalName,
+    'display_name': _displayName,
+    'bio': _bio,
+    'avatar_path': _avatarPath,
+    'country_code': _countryCode,
+    'created_at': _createdAt?.toIso8601String(),
+    'updated_at': _updatedAt?.toIso8601String(),
+    'created_by': _createdBy,
+  };
 }
 
 /// Builds valid [EntityRoleDto] instances with sensible defaults.
@@ -75,17 +75,17 @@ class EntityRoleDtoBuilder {
       this.._activatedAt = value;
 
   EntityRoleDto build() => EntityRoleDto(
-        entityId: _entityId,
-        role: _role,
-        isActive: _isActive,
-        activatedAt: _activatedAt,
-      );
+    entityId: _entityId,
+    role: _role,
+    isActive: _isActive,
+    activatedAt: _activatedAt,
+  );
 
   /// Serializes to the snake_case `entity_roles` column contract.
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'entity_id': _entityId,
-        'role': _role,
-        'is_active': _isActive,
-        'activated_at': _activatedAt?.toIso8601String(),
-      };
+    'entity_id': _entityId,
+    'role': _role,
+    'is_active': _isActive,
+    'activated_at': _activatedAt?.toIso8601String(),
+  };
 }

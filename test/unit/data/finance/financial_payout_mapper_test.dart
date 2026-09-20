@@ -8,31 +8,33 @@ import 'package:hivorr/systems/finance/models/payout_account_status.dart';
 
 void main() {
   group('FinancialPayoutMapper.boundAccountFromBind', () {
-    test('builds a pending account from the bind RPC result plus form values',
-        () {
-      const PayoutBindDto bind = PayoutBindDto(
-        payoutAccountId: 'acc-1',
-        currencyCode: 'ngn',
-        status: 'pending',
-      );
+    test(
+      'builds a pending account from the bind RPC result plus form values',
+      () {
+        const PayoutBindDto bind = PayoutBindDto(
+          payoutAccountId: 'acc-1',
+          currencyCode: 'ngn',
+          status: 'pending',
+        );
 
-      final account = FinancialPayoutMapper.boundAccountFromBind(
-        bind: bind,
-        bankName: '  Guaranty Trust  ',
-        accountNumber: ' 0123456789 ',
-        accountName: '  John Doe ',
-        createdAt: DateTime.utc(2026, 1, 1),
-      );
+        final account = FinancialPayoutMapper.boundAccountFromBind(
+          bind: bind,
+          bankName: '  Guaranty Trust  ',
+          accountNumber: ' 0123456789 ',
+          accountName: '  John Doe ',
+          createdAt: DateTime.utc(2026, 1, 1),
+        );
 
-      expect(account.id, 'acc-1');
-      expect(account.currencyCode, 'ngn');
-      expect(account.bankName, 'Guaranty Trust');
-      expect(account.accountNumber, '0123456789');
-      expect(account.accountName, 'John Doe');
-      expect(account.status, PayoutAccountStatus.pending);
-      expect(account.isVerified, isFalse);
-      expect(account.createdAt, DateTime.utc(2026, 1, 1));
-    });
+        expect(account.id, 'acc-1');
+        expect(account.currencyCode, 'ngn');
+        expect(account.bankName, 'Guaranty Trust');
+        expect(account.accountNumber, '0123456789');
+        expect(account.accountName, 'John Doe');
+        expect(account.status, PayoutAccountStatus.pending);
+        expect(account.isVerified, isFalse);
+        expect(account.createdAt, DateTime.utc(2026, 1, 1));
+      },
+    );
 
     test('maps active status from persisted string', () {
       const PayoutBindDto bind = PayoutBindDto(
@@ -79,8 +81,9 @@ void main() {
         cashoutRemaining: 450000,
       );
 
-      final WithdrawalResult result =
-          FinancialPayoutMapper.withdrawalToEntity(dto);
+      final WithdrawalResult result = FinancialPayoutMapper.withdrawalToEntity(
+        dto,
+      );
 
       expect(result.payoutId, 'pay-1');
       expect(result.amount, 50000);

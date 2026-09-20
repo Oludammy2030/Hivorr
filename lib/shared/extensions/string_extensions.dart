@@ -24,8 +24,9 @@ extension StringExtensions on String {
     if (isEmpty) {
       return '';
     }
-    final List<String> words =
-        split(RegExp(r'\s+')).where((String w) => w.isNotEmpty).toList();
+    final List<String> words = split(
+      RegExp(r'\s+'),
+    ).where((String w) => w.isNotEmpty).toList();
     if (words.isEmpty) {
       return '';
     }

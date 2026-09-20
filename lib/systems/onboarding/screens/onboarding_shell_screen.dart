@@ -191,9 +191,12 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     if (step == null) {
       return;
     }
-    final bool atFirstInteractiveStep = step == OnboardingStepCode.profile ||
+    final bool atFirstInteractiveStep =
+        step == OnboardingStepCode.profile ||
         (step == OnboardingStepCode.capability &&
-            (provider.progress?.completedSteps.contains(OnboardingStepCode.profile) ??
+            (provider.progress?.completedSteps.contains(
+                  OnboardingStepCode.profile,
+                ) ??
                 false));
     if (atFirstInteractiveStep) {
       unawaited(_maybeExit(context, provider));
@@ -231,10 +234,7 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
   /// step — the canonical step route replaces it; once aligned, this is a no-op.
   /// Unknown/stray segments never map to a valid step: they fall through to
   /// `go_router`'s unmatched-route handling (404) or are realigned here.
-  void _reconcileUrl(
-    BuildContext context,
-    OnboardingProvider provider,
-  ) {
+  void _reconcileUrl(BuildContext context, OnboardingProvider provider) {
     if (provider.progress == null || _reconcileScheduled) {
       return;
     }

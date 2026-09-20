@@ -16,37 +16,35 @@ import '../../../support/factories/mock_supabase_client_factory.dart';
 void main() {
   SupabaseDisputeRemoteDataSource build(
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
-  ) =>
-      SupabaseDisputeRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
-        exceptionMapper: const ApiExceptionMapper(),
-      );
+  ) => SupabaseDisputeRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(rpcHandlers: rpcHandlers),
+    exceptionMapper: const ApiExceptionMapper(),
+  );
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   Map<String, dynamic> envelopeData({
     String status = 'open',
     String disputeType = 'non_delivery',
-  }) =>
-      <String, dynamic>{
-        'id': 'dispute-1',
-        'escrow_id': 'escrow-1',
-        'filer_entity_id': 'entity-filer',
-        'counterparty_entity_id': 'entity-counterparty',
-        'dispute_type': disputeType,
-        'status': status,
-        'reason': 'Work did not match the agreed milestone description.',
-        'desired_outcome': 'release_to_payee',
-        'priority': 'medium',
-        'filed_at': '2026-01-01T00:00:00.000Z',
-        'metadata': <String, dynamic>{},
-      };
+  }) => <String, dynamic>{
+    'id': 'dispute-1',
+    'escrow_id': 'escrow-1',
+    'filer_entity_id': 'entity-filer',
+    'counterparty_entity_id': 'entity-counterparty',
+    'dispute_type': disputeType,
+    'status': status,
+    'reason': 'Work did not match the agreed milestone description.',
+    'desired_outcome': 'release_to_payee',
+    'priority': 'medium',
+    'filed_at': '2026-01-01T00:00:00.000Z',
+    'metadata': <String, dynamic>{},
+  };
 
   group('SupabaseDisputeRemoteDataSource.listDisputes', () {
     test('calls dispute_list and maps the {disputes:[...]} envelope', () async {
@@ -83,8 +81,9 @@ void main() {
         },
       });
 
-      final DisputeListEnvelopeDto dto =
-          await source.listDisputes(status: 'under_review');
+      final DisputeListEnvelopeDto dto = await source.listDisputes(
+        status: 'under_review',
+      );
 
       expect(seenParams, containsPair('p_status', 'under_review'));
       expect(dto.disputes.single.status, 'under_review');
@@ -144,7 +143,9 @@ void main() {
         },
       });
 
-      final DisputeCaseDetailEnvelopeDto dto = await source.getCase('dispute-1');
+      final DisputeCaseDetailEnvelopeDto dto = await source.getCase(
+        'dispute-1',
+      );
 
       expect(seenFn, 'dispute_get');
       expect(seenParams, containsPair('p_case_id', 'dispute-1'));
@@ -158,22 +159,26 @@ void main() {
       expect(dto.resolution!.payeeReleaseAmount, 50000);
     });
 
-    test('maps resolution:null to a null resolution instead of throwing',
-        () async {
-      final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'dispute_get': (_) => ok(<String, dynamic>{
-              'case': envelopeData(),
-              'evidence': <dynamic>[],
-              'resolution': null,
-            }),
-      });
+    test(
+      'maps resolution:null to a null resolution instead of throwing',
+      () async {
+        final source = build(<String, Object? Function(Map<String, dynamic>)>{
+          'dispute_get': (_) => ok(<String, dynamic>{
+            'case': envelopeData(),
+            'evidence': <dynamic>[],
+            'resolution': null,
+          }),
+        });
 
-      final DisputeCaseDetailEnvelopeDto dto = await source.getCase('dispute-1');
+        final DisputeCaseDetailEnvelopeDto dto = await source.getCase(
+          'dispute-1',
+        );
 
-      expect(dto.caseDto.status, 'open');
-      expect(dto.evidence, isEmpty);
-      expect(dto.resolution, isNull);
-    });
+        expect(dto.caseDto.status, 'open');
+        expect(dto.evidence, isEmpty);
+        expect(dto.resolution, isNull);
+      },
+    );
   });
 
   group('SupabaseDisputeRemoteDataSource.fileDispute', () {
@@ -201,115 +206,122 @@ void main() {
       expect(seenParams, containsPair('p_dispute_type', 'non_delivery'));
       expect(
         seenParams,
-        containsPair('p_reason', 'Work did not match the agreed milestone description.'),
+        containsPair(
+          'p_reason',
+          'Work did not match the agreed milestone description.',
+        ),
       );
       expect(seenParams, containsPair('p_desired_outcome', 'release_to_payee'));
       expect(seenParams, containsPair('p_priority', 'high'));
       expect(dto.status, 'open');
     });
 
-    test('omits p_desired_outcome when null and defaults priority to medium',
-        () async {
-      Map<String, dynamic>? seenParams;
-      final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'dispute_file': (Map<String, dynamic> body) {
-          seenParams = body;
-          return ok(envelopeData());
-        },
-      });
+    test(
+      'omits p_desired_outcome when null and defaults priority to medium',
+      () async {
+        Map<String, dynamic>? seenParams;
+        final source = build(<String, Object? Function(Map<String, dynamic>)>{
+          'dispute_file': (Map<String, dynamic> body) {
+            seenParams = body;
+            return ok(envelopeData());
+          },
+        });
 
-      await source.fileDispute(
-        escrowId: 'escrow-1',
-        disputeType: 'fraud',
-        reason: 'Work did not match the agreed milestone description.',
-      );
+        await source.fileDispute(
+          escrowId: 'escrow-1',
+          disputeType: 'fraud',
+          reason: 'Work did not match the agreed milestone description.',
+        );
 
-      expect(seenParams!.containsKey('p_desired_outcome'), isFalse);
-      expect(seenParams, containsPair('p_priority', 'medium'));
-    });
+        expect(seenParams!.containsKey('p_desired_outcome'), isFalse);
+        expect(seenParams, containsPair('p_priority', 'medium'));
+      },
+    );
   });
 
   group('SupabaseDisputeRemoteDataSource.submitEvidence', () {
-    test('calls dispute_submit_evidence with metadata and maps the row',
-        () async {
-      String? seenFn;
-      Map<String, dynamic>? seenParams;
-      final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'dispute_submit_evidence': (Map<String, dynamic> body) {
-          seenFn = 'dispute_submit_evidence';
-          seenParams = body;
-          return ok(<String, dynamic>{
-            'id': 'ev-1',
-            'case_id': 'dispute-1',
-            'submitted_by': 'entity-filer',
-            'evidence_type': 'screenshot',
-            'title': 'Approval screenshot',
-            'description': 'See attachment',
-            'file_url': 'entity-filer/dispute-1/abc.png',
-            'file_metadata': <String, dynamic>{
-              'mimeType': 'image/png',
-            },
-            'created_at': '2026-01-02T00:00:00.000Z',
-          });
-        },
-      });
+    test(
+      'calls dispute_submit_evidence with metadata and maps the row',
+      () async {
+        String? seenFn;
+        Map<String, dynamic>? seenParams;
+        final source = build(<String, Object? Function(Map<String, dynamic>)>{
+          'dispute_submit_evidence': (Map<String, dynamic> body) {
+            seenFn = 'dispute_submit_evidence';
+            seenParams = body;
+            return ok(<String, dynamic>{
+              'id': 'ev-1',
+              'case_id': 'dispute-1',
+              'submitted_by': 'entity-filer',
+              'evidence_type': 'screenshot',
+              'title': 'Approval screenshot',
+              'description': 'See attachment',
+              'file_url': 'entity-filer/dispute-1/abc.png',
+              'file_metadata': <String, dynamic>{'mimeType': 'image/png'},
+              'created_at': '2026-01-02T00:00:00.000Z',
+            });
+          },
+        });
 
-      final DisputeEvidenceDto dto = await source.submitEvidence(
-        caseId: 'dispute-1',
-        evidenceType: 'screenshot',
-        title: 'Approval screenshot',
-        description: 'See attachment',
-        fileUrl: 'entity-filer/dispute-1/abc.png',
-        fileMetadata: <String, dynamic>{'mimeType': 'image/png'},
-      );
+        final DisputeEvidenceDto dto = await source.submitEvidence(
+          caseId: 'dispute-1',
+          evidenceType: 'screenshot',
+          title: 'Approval screenshot',
+          description: 'See attachment',
+          fileUrl: 'entity-filer/dispute-1/abc.png',
+          fileMetadata: <String, dynamic>{'mimeType': 'image/png'},
+        );
 
-      expect(seenFn, 'dispute_submit_evidence');
-      expect(seenParams, containsPair('p_case_id', 'dispute-1'));
-      expect(seenParams, containsPair('p_evidence_type', 'screenshot'));
-      expect(seenParams, containsPair('p_title', 'Approval screenshot'));
-      expect(seenParams, containsPair('p_description', 'See attachment'));
-      expect(
-        seenParams,
-        containsPair('p_file_url', 'entity-filer/dispute-1/abc.png'),
-      );
-      expect(seenParams!['p_file_metadata'], <String, dynamic>{
-        'mimeType': 'image/png',
-      });
-      expect(dto.id, 'ev-1');
-      expect(dto.evidenceType, 'screenshot');
-    });
+        expect(seenFn, 'dispute_submit_evidence');
+        expect(seenParams, containsPair('p_case_id', 'dispute-1'));
+        expect(seenParams, containsPair('p_evidence_type', 'screenshot'));
+        expect(seenParams, containsPair('p_title', 'Approval screenshot'));
+        expect(seenParams, containsPair('p_description', 'See attachment'));
+        expect(
+          seenParams,
+          containsPair('p_file_url', 'entity-filer/dispute-1/abc.png'),
+        );
+        expect(seenParams!['p_file_metadata'], <String, dynamic>{
+          'mimeType': 'image/png',
+        });
+        expect(dto.id, 'ev-1');
+        expect(dto.evidenceType, 'screenshot');
+      },
+    );
 
-    test('omits nullable description/file_url for description-type evidence',
-        () async {
-      Map<String, dynamic>? seenParams;
-      final source = build(<String, Object? Function(Map<String, dynamic>)>{
-        'dispute_submit_evidence': (Map<String, dynamic> body) {
-          seenParams = body;
-          return ok(<String, dynamic>{
-            'id': 'ev-2',
-            'case_id': 'dispute-1',
-            'submitted_by': 'entity-filer',
-            'evidence_type': 'description',
-            'title': 'Written account',
-            'description': null,
-            'file_url': null,
-            'file_metadata': <String, dynamic>{},
-            'created_at': '2026-01-02T00:00:00.000Z',
-          });
-        },
-      });
+    test(
+      'omits nullable description/file_url for description-type evidence',
+      () async {
+        Map<String, dynamic>? seenParams;
+        final source = build(<String, Object? Function(Map<String, dynamic>)>{
+          'dispute_submit_evidence': (Map<String, dynamic> body) {
+            seenParams = body;
+            return ok(<String, dynamic>{
+              'id': 'ev-2',
+              'case_id': 'dispute-1',
+              'submitted_by': 'entity-filer',
+              'evidence_type': 'description',
+              'title': 'Written account',
+              'description': null,
+              'file_url': null,
+              'file_metadata': <String, dynamic>{},
+              'created_at': '2026-01-02T00:00:00.000Z',
+            });
+          },
+        });
 
-      final DisputeEvidenceDto dto = await source.submitEvidence(
-        caseId: 'dispute-1',
-        evidenceType: 'description',
-        title: 'Written account',
-      );
+        final DisputeEvidenceDto dto = await source.submitEvidence(
+          caseId: 'dispute-1',
+          evidenceType: 'description',
+          title: 'Written account',
+        );
 
-      expect(seenParams!.containsKey('p_description'), isFalse);
-      expect(seenParams!.containsKey('p_file_url'), isFalse);
-      expect(dto.fileUrl, isNull);
-      expect(dto.description, isNull);
-    });
+        expect(seenParams!.containsKey('p_description'), isFalse);
+        expect(seenParams!.containsKey('p_file_url'), isFalse);
+        expect(dto.fileUrl, isNull);
+        expect(dto.description, isNull);
+      },
+    );
   });
 
   group('SupabaseDisputeRemoteDataSource.withdrawDispute', () {
@@ -336,21 +348,17 @@ void main() {
     test('PLT001 auth', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'dispute_list': (_) => <String, dynamic>{
-            'success': false,
-            'code': 'PLT001',
-            'message': 'auth required',
-          },
+          'success': false,
+          'code': 'PLT001',
+          'message': 'auth required',
+        },
       });
 
       await expectLater(
         source.listDisputes(),
         throwsA(
           isA<ApiException>()
-              .having(
-                (ApiException e) => e.kind,
-                'kind',
-                ApiExceptionKind.auth,
-              )
+              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
               .having((ApiException e) => e.code, 'code', 'PLT001'),
         ),
       );
@@ -359,10 +367,10 @@ void main() {
     test('PLT002 forbidden', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'dispute_list': (_) => <String, dynamic>{
-            'success': false,
-            'code': 'PLT002',
-            'message': 'forbidden',
-          },
+          'success': false,
+          'code': 'PLT002',
+          'message': 'forbidden',
+        },
       });
 
       await expectLater(
@@ -380,10 +388,10 @@ void main() {
     test('PLT003 validation', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'dispute_get': (_) => <String, dynamic>{
-            'success': false,
-            'code': 'PLT003',
-            'message': 'reason too short',
-          },
+          'success': false,
+          'code': 'PLT003',
+          'message': 'reason too short',
+        },
       });
 
       await expectLater(
@@ -403,10 +411,10 @@ void main() {
     test('PLT004 notFound', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'dispute_get': (_) => <String, dynamic>{
-            'success': false,
-            'code': 'PLT004',
-            'message': 'not found',
-          },
+          'success': false,
+          'code': 'PLT004',
+          'message': 'not found',
+        },
       });
 
       await expectLater(
@@ -426,10 +434,10 @@ void main() {
     test('PLT005 conflict', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'dispute_file': (_) => <String, dynamic>{
-            'success': false,
-            'code': 'PLT005',
-            'message': 'active dispute already exists for this escrow',
-          },
+          'success': false,
+          'code': 'PLT005',
+          'message': 'active dispute already exists for this escrow',
+        },
       });
 
       await expectLater(
@@ -453,10 +461,10 @@ void main() {
     test('PLT999 server', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'dispute_list': (_) => <String, dynamic>{
-            'success': false,
-            'code': 'PLT999',
-            'message': 'internal error',
-          },
+          'success': false,
+          'code': 'PLT999',
+          'message': 'internal error',
+        },
       });
 
       await expectLater(
@@ -481,14 +489,13 @@ void main() {
   });
 
   group('DisputeRemoteDataSource contract surface', () {
-    test('the 5-RPC client surface is exact and dispute_resolve is absent',
-        () {
-      final String contract =
-          File('lib/data/datasources/remote/dispute_remote_data_source.dart')
-              .readAsStringSync();
-      final String impl =
-          File('lib/data/datasources/remote/supabase_dispute_remote_data_source.dart')
-              .readAsStringSync();
+    test('the 5-RPC client surface is exact and dispute_resolve is absent', () {
+      final String contract = File(
+        'lib/data/datasources/remote/dispute_remote_data_source.dart',
+      ).readAsStringSync();
+      final String impl = File(
+        'lib/data/datasources/remote/supabase_dispute_remote_data_source.dart',
+      ).readAsStringSync();
 
       expect(contract, contains('dispute_list'));
       expect(contract, contains('dispute_get'));

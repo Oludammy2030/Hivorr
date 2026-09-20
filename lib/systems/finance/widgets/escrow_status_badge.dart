@@ -63,10 +63,7 @@ class _StatusChip extends StatelessWidget {
     final (Color background, Color foreground) = _resolve(context);
     final AppThemeExtension ext = context.appExtension;
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(ext.radiusSm),

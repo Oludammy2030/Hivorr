@@ -20,15 +20,18 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   // Real asset load — kept as the FIRST test so rootBundle is still alive.
-  testWidgets('HivorrLocalizations.delegate.load builds an en instance',
-      (WidgetTester tester) async {
-    final HivorrLocalizations l =
-        await HivorrLocalizations.delegate.load(Locale('en'));
+  testWidgets('HivorrLocalizations.delegate.load builds an en instance', (
+    WidgetTester tester,
+  ) async {
+    final HivorrLocalizations l = await HivorrLocalizations.delegate.load(
+      Locale('en'),
+    );
     expect(l.translate(TranslationKeys.commonOk), 'OK');
   });
 
-  testWidgets('HivorrLocalizations(...) builds a usable instance',
-      (WidgetTester tester) async {
+  testWidgets('HivorrLocalizations(...) builds a usable instance', (
+    WidgetTester tester,
+  ) async {
     final HivorrLocalizations l = HivorrLocalizations(
       <String, String>{'common.cancel': 'Cancel'},
       <String, String>{'common.ok': 'OK'},
@@ -53,8 +56,9 @@ void main() {
     );
   });
 
-  testWidgets('resolve returns the key when the lookup misses',
-      (WidgetTester tester) async {
+  testWidgets('resolve returns the key when the lookup misses', (
+    WidgetTester tester,
+  ) async {
     final HivorrLocalizations l = HivorrLocalizations(
       <String, String>{},
       <String, String>{},
@@ -64,22 +68,20 @@ void main() {
   });
 
   testWidgets('plural selects the correct form', (WidgetTester tester) async {
-    final HivorrLocalizations l = HivorrLocalizations(
-      <String, String>{},
-      <String, String>{
-        'common.itemCount.zero': 'No items',
-        'common.itemCount.one': '1 item',
-        'common.itemCount.other': '{count} items',
-      },
-      Locale('en'),
-    );
+    final HivorrLocalizations l =
+        HivorrLocalizations(<String, String>{}, <String, String>{
+          'common.itemCount.zero': 'No items',
+          'common.itemCount.one': '1 item',
+          'common.itemCount.other': '{count} items',
+        }, Locale('en'));
     expect(l.plural(TranslationKeys.commonItemCount, 0), 'No items');
     expect(l.plural(TranslationKeys.commonItemCount, 1), '1 item');
     expect(l.plural(TranslationKeys.commonItemCount, 3), '3 items');
   });
 
-  testWidgets('rebuilds widget tree when the locale provider changes',
-      (WidgetTester tester) async {
+  testWidgets('rebuilds widget tree when the locale provider changes', (
+    WidgetTester tester,
+  ) async {
     final LocaleProvider provider = LocaleProvider(
       config: testConfig,
       storage: FakeStorageEngine(),

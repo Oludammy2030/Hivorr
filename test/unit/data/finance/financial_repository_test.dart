@@ -33,31 +33,29 @@ void main() {
     BalanceDto? balance,
     FinancialStatusDto? status,
     PaymentGatewayFactory? paymentGatewayFactory,
-  }) =>
-      FinancialRepositoryImpl(
-        remote: FakeFinancialRemoteDataSource(
-          profile: profile ?? seedProfileDto(),
-          balance: balance,
-          status: status ?? seedStatusDto(),
-        ),
-        paymentGatewayFactory: paymentGatewayFactory,
-      );
+  }) => FinancialRepositoryImpl(
+    remote: FakeFinancialRemoteDataSource(
+      profile: profile ?? seedProfileDto(),
+      balance: balance,
+      status: status ?? seedStatusDto(),
+    ),
+    paymentGatewayFactory: paymentGatewayFactory,
+  );
 
   PaymentGatewayFactory factoryWith({
     String paystackSecret = 'sk',
     String flutterwaveSecret = 'fw',
-  }) =>
-      PaymentGatewayFactory(
-        config: PaymentGatewayConfig(
-          paystackPublicKey: 'pk',
-          paystackSecretKey: paystackSecret,
-          flutterwavePublicKey: 'fk',
-          flutterwaveSecretKey: flutterwaveSecret,
-          defaultProvider: PaymentProvider.paystack,
-        ),
-        mapper: mapper,
-        apiConfig: _apiConfig,
-      );
+  }) => PaymentGatewayFactory(
+    config: PaymentGatewayConfig(
+      paystackPublicKey: 'pk',
+      paystackSecretKey: paystackSecret,
+      flutterwavePublicKey: 'fk',
+      flutterwaveSecretKey: flutterwaveSecret,
+      defaultProvider: PaymentProvider.paystack,
+    ),
+    mapper: mapper,
+    apiConfig: _apiConfig,
+  );
 
   group('FinancialRepositoryImpl.getProfile', () {
     test('returns null when entity has no profile', () async {
@@ -114,11 +112,14 @@ void main() {
       expect(balance!.currencyCode, 'USD');
     });
 
-    test('returns null for unsupported currency without calling remote', () async {
-      final repo = build();
-      final Balance? balance = await repo.getBalance('XYZ');
-      expect(balance, isNull);
-    });
+    test(
+      'returns null for unsupported currency without calling remote',
+      () async {
+        final repo = build();
+        final Balance? balance = await repo.getBalance('XYZ');
+        expect(balance, isNull);
+      },
+    );
   });
 
   group('FinancialRepositoryImpl.getStatus', () {
@@ -126,9 +127,7 @@ void main() {
       final repo = build(
         status: seedStatusDto(
           defaultCurrency: 'NGN',
-          balances: <BalanceDto>[
-            seedBalanceDto(currencyCode: 'NGN'),
-          ],
+          balances: <BalanceDto>[seedBalanceDto(currencyCode: 'NGN')],
           activeEscrowCount: 1,
           cashoutLimit: 50000,
         ),
@@ -144,8 +143,9 @@ void main() {
   group('FinancialRepositoryImpl.createProfile', () {
     test('creates valid currency and returns entity', () async {
       final repo = build();
-      final FinancialProfile profile =
-          await repo.createProfile(defaultCurrency: 'GHS');
+      final FinancialProfile profile = await repo.createProfile(
+        defaultCurrency: 'GHS',
+      );
       expect(profile.defaultCurrency, 'GHS');
       expect(profile.status, 'active');
       expect(profile.isActive, isTrue);
@@ -155,16 +155,19 @@ void main() {
       final repo = build();
       expect(
         () => repo.createProfile(defaultCurrency: 'XYZ'),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
+        ),
       );
     });
 
     test('throws conflict when profile already exists', () async {
-      final remote = FakeFinancialRemoteDataSource(
-        profile: seedProfileDto(),
-      )..nextError = const ApiException(
+      final remote = FakeFinancialRemoteDataSource(profile: seedProfileDto())
+        ..nextError = const ApiException(
           kind: ApiExceptionKind.conflict,
           message: 'Profile already exists.',
           code: 'PLT005',
@@ -172,32 +175,49 @@ void main() {
       final repo = FinancialRepositoryImpl(remote: remote);
       expect(
         () => repo.createProfile(defaultCurrency: 'NGN'),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.conflict)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
   });
 
   group('FinancialRepositoryImpl.requestAccountActivation', () {
-    test('throws validation for unsupported currency before any gateway', () async {
-      final repo = build();
-      expect(
-        () => repo.requestAccountActivation(currencyCode: 'XYZ'),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind',
-                ApiExceptionKind.validation)
-            .having((ApiException e) => e.code, 'code', 'PLT003')),
-      );
-    });
+    test(
+      'throws validation for unsupported currency before any gateway',
+      () async {
+        final repo = build();
+        expect(
+          () => repo.requestAccountActivation(currencyCode: 'XYZ'),
+          throwsA(
+            isA<ApiException>()
+                .having(
+                  (ApiException e) => e.kind,
+                  'kind',
+                  ApiExceptionKind.validation,
+                )
+                .having((ApiException e) => e.code, 'code', 'PLT003'),
+          ),
+        );
+      },
+    );
 
-    test('returns generic guidance when no gateway factory is configured', () async {
-      final repo = build();
-      final guidance = await repo.requestAccountActivation(currencyCode: 'NGN');
-      expect(guidance.currencyCode, 'NGN');
-      expect(guidance.providerName, isNull);
-      expect(guidance.message, 'Connect your NGN bank account');
-    });
+    test(
+      'returns generic guidance when no gateway factory is configured',
+      () async {
+        final repo = build();
+        final guidance = await repo.requestAccountActivation(
+          currencyCode: 'NGN',
+        );
+        expect(guidance.currencyCode, 'NGN');
+        expect(guidance.providerName, isNull);
+        expect(guidance.message, 'Connect your NGN bank account');
+      },
+    );
 
     test('resolves NGN to Paystack via the gateway factory', () async {
       final repo = build(paymentGatewayFactory: factoryWith());
@@ -206,14 +226,21 @@ void main() {
       expect(guidance.message, 'Connect NGN via Paystack');
     });
 
-    test('resolves to Flutterwave when only its secret is configured', () async {
-      final repo = build(
-        paymentGatewayFactory:
-            factoryWith(paystackSecret: '', flutterwaveSecret: 'fw'),
-      );
-      final guidance = await repo.requestAccountActivation(currencyCode: 'GHS');
-      expect(guidance.providerName, 'Flutterwave');
-      expect(guidance.message, 'Connect GHS via Flutterwave');
-    });
+    test(
+      'resolves to Flutterwave when only its secret is configured',
+      () async {
+        final repo = build(
+          paymentGatewayFactory: factoryWith(
+            paystackSecret: '',
+            flutterwaveSecret: 'fw',
+          ),
+        );
+        final guidance = await repo.requestAccountActivation(
+          currencyCode: 'GHS',
+        );
+        expect(guidance.providerName, 'Flutterwave');
+        expect(guidance.message, 'Connect GHS via Flutterwave');
+      },
+    );
   });
 }

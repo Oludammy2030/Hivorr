@@ -33,8 +33,7 @@ class _HangingEscrowRepository implements EscrowRepository {
   Future<List<Escrow>> getByProject({
     required String projectId,
     required List<String> escrowIds,
-  }) =>
-      Completer<List<Escrow>>().future;
+  }) => Completer<List<Escrow>>().future;
 
   @override
   Future<EscrowDetail> getById(String id) => Completer<EscrowDetail>().future;
@@ -46,22 +45,19 @@ class _HangingEscrowRepository implements EscrowRepository {
     required String currencyCode,
     required double totalAmount,
     required List<EscrowMilestoneInput> milestones,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<EscrowDetail> completeMilestone({
     required String escrowId,
     required String milestoneId,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<EscrowDetail> releaseMilestone({
     required String escrowId,
     required String milestoneId,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<EscrowDetail> releaseFinal({required String escrowId}) =>
@@ -71,8 +67,7 @@ class _HangingEscrowRepository implements EscrowRepository {
   Future<EscrowDetail> refundEscrow({
     required String escrowId,
     required String reason,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }
 
 void main() {
@@ -86,10 +81,7 @@ void main() {
   }) async {
     await pumpApp(
       tester,
-      EscrowDetailScreen(
-        escrowId: 'escrow-1',
-        onViewDispute: onViewDispute,
-      ),
+      EscrowDetailScreen(escrowId: 'escrow-1', onViewDispute: onViewDispute),
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<EscrowProvider>.value(value: provider),
       ],
@@ -113,32 +105,31 @@ void main() {
   }
 
   EscrowDetail seedDetail() => seedEscrowDetailEntity(
-        id: 'escrow-1',
-        status: 'funded',
-        milestones: <EscrowMilestone>[
-          seedMilestoneEntity(
-            id: 'ms-1',
-            milestoneNumber: 1,
-            title: 'Design sign-off',
-            amount: 30000,
-            status: 'completed',
-          ),
-          seedMilestoneEntity(
-            id: 'ms-2',
-            milestoneNumber: 2,
-            title: 'Delivery',
-            amount: 20000,
-            status: 'pending',
-          ),
-        ],
-        transactions: <EscrowTransaction>[
-          seedTransactionEntity(amount: 20000),
-        ],
-      );
+    id: 'escrow-1',
+    status: 'funded',
+    milestones: <EscrowMilestone>[
+      seedMilestoneEntity(
+        id: 'ms-1',
+        milestoneNumber: 1,
+        title: 'Design sign-off',
+        amount: 30000,
+        status: 'completed',
+      ),
+      seedMilestoneEntity(
+        id: 'ms-2',
+        milestoneNumber: 2,
+        title: 'Delivery',
+        amount: 20000,
+        status: 'pending',
+      ),
+    ],
+    transactions: <EscrowTransaction>[seedTransactionEntity(amount: 20000)],
+  );
 
   group('EscrowDetailScreen', () {
-    testWidgets('header shows formatted amount, badge and masked reference',
-        (WidgetTester tester) async {
+    testWidgets('header shows formatted amount, badge and masked reference', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: false,
         detail: seedDetail(),
@@ -155,8 +146,9 @@ void main() {
       expect(find.text('ORD-2026-000123'), findsNothing);
     });
 
-    testWidgets('header shows held and released amounts',
-        (WidgetTester tester) async {
+    testWidgets('header shows held and released amounts', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: false,
         detail: seedDetail(),
@@ -171,8 +163,9 @@ void main() {
       expect(find.text('Released: \u20A60.00'), findsOneWidget);
     });
 
-    testWidgets('renders milestone rows with status chips',
-        (WidgetTester tester) async {
+    testWidgets('renders milestone rows with status chips', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: false,
         detail: seedDetail(),
@@ -190,8 +183,9 @@ void main() {
       expect(find.text('Pending'), findsOneWidget);
     });
 
-    testWidgets('renders the read-only ledger when transactions exist',
-        (WidgetTester tester) async {
+    testWidgets('renders the read-only ledger when transactions exist', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: false,
         detail: seedDetail(),
@@ -207,8 +201,9 @@ void main() {
       expect(find.text('\u20A620,000.00'), findsNWidgets(2));
     });
 
-    testWidgets('shows an empty ledger hint when the migration returns none',
-        (WidgetTester tester) async {
+    testWidgets('shows an empty ledger hint when the migration returns none', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: false,
         detail: seedEscrowDetailEntity(id: 'escrow-1'),
@@ -225,8 +220,9 @@ void main() {
       );
     });
 
-    testWidgets('shows HivorrLoadingState while the detail is pending',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrLoadingState while the detail is pending', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(_HangingEscrowRepository());
       addTearDown(provider.dispose);
 
@@ -236,8 +232,9 @@ void main() {
       expect(find.byType(HivorrLoadingState), findsOneWidget);
     });
 
-    testWidgets('shows HivorrErrorState on load failure',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrErrorState on load failure', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository();
       repository.nextError = const ApiException(
         kind: ApiExceptionKind.notFound,
@@ -255,15 +252,13 @@ void main() {
       expect(find.text('Failed to load escrow'), findsOneWidget);
     });
 
-    testWidgets('renders the dispute banner and routes "View dispute"',
-        (WidgetTester tester) async {
+    testWidgets('renders the dispute banner and routes "View dispute"', (
+      WidgetTester tester,
+    ) async {
       var viewed = false;
       final repository = FakeEscrowRepository(
         writeAvailable: true,
-        detail: seedEscrowDetailEntity(
-          id: 'escrow-1',
-          status: 'disputed',
-        ),
+        detail: seedEscrowDetailEntity(id: 'escrow-1', status: 'disputed'),
       );
       final provider = providerWith(repository);
       addTearDown(provider.dispose);
@@ -280,8 +275,9 @@ void main() {
       expect(viewed, isTrue);
     });
 
-    testWidgets('disputed escrow disables every action even when writable',
-        (WidgetTester tester) async {
+    testWidgets('disputed escrow disables every action even when writable', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: true,
         detail: seedEscrowDetailEntity(
@@ -289,11 +285,7 @@ void main() {
           status: 'disputed',
           milestones: <EscrowMilestone>[
             seedMilestoneEntity(status: 'completed'),
-            seedMilestoneEntity(
-              id: 'ms-2',
-              status: 'pending',
-              amount: 20000,
-            ),
+            seedMilestoneEntity(id: 'ms-2', status: 'pending', amount: 20000),
           ],
         ),
       );
@@ -303,8 +295,9 @@ void main() {
       await pumpTallDetail(tester, provider);
       await tester.pumpAndSettle();
 
-      final List<HivorrButton> buttons =
-          tester.widgetList<HivorrButton>(find.byType(HivorrButton)).toList();
+      final List<HivorrButton> buttons = tester
+          .widgetList<HivorrButton>(find.byType(HivorrButton))
+          .toList();
       expect(buttons, hasLength(4));
       expect(
         buttons.map((HivorrButton b) => b.onPressed),
@@ -312,29 +305,32 @@ void main() {
       );
     });
 
-    testWidgets('write seam off shows support guidance, never a dead-end button',
-        (WidgetTester tester) async {
-      final repository = FakeEscrowRepository(
-        writeAvailable: false,
-        detail: seedDetail(),
-      );
-      final provider = providerWith(repository);
-      addTearDown(provider.dispose);
+    testWidgets(
+      'write seam off shows support guidance, never a dead-end button',
+      (WidgetTester tester) async {
+        final repository = FakeEscrowRepository(
+          writeAvailable: false,
+          detail: seedDetail(),
+        );
+        final provider = providerWith(repository);
+        addTearDown(provider.dispose);
 
-      await pumpDetail(tester, provider);
-      await tester.pumpAndSettle();
+        await pumpDetail(tester, provider);
+        await tester.pumpAndSettle();
 
-      expect(find.byType(EscrowWriteCtaPanel), findsOneWidget);
-      expect(
-        find.text('Escrow actions are handled by our support team'),
-        findsOneWidget,
-      );
-      expect(find.byType(HivorrButton), findsNothing);
-      expect(find.text('Complete milestone'), findsNothing);
-    });
+        expect(find.byType(EscrowWriteCtaPanel), findsOneWidget);
+        expect(
+          find.text('Escrow actions are handled by our support team'),
+          findsOneWidget,
+        );
+        expect(find.byType(HivorrButton), findsNothing);
+        expect(find.text('Complete milestone'), findsNothing);
+      },
+    );
 
-    testWidgets('release milestone action drives the provider write path',
-        (WidgetTester tester) async {
+    testWidgets('release milestone action drives the provider write path', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: true,
         detail: seedDetail(),
@@ -352,8 +348,9 @@ void main() {
       expect(repository.lastMilestoneId, 'ms-1');
     });
 
-    testWidgets('release final action drives the provider write path',
-        (WidgetTester tester) async {
+    testWidgets('release final action drives the provider write path', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         writeAvailable: true,
         detail: seedDetail(),
@@ -370,8 +367,9 @@ void main() {
       expect(repository.releaseFinalCallCount, 1);
     });
 
-    testWidgets('falls back to "Escrow not found" before any selection loads',
-        (WidgetTester tester) async {
+    testWidgets('falls back to "Escrow not found" before any selection loads', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeEscrowRepository(
         detail: seedEscrowDetailEntity(id: 'escrow-1'),
       );

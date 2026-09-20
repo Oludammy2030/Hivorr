@@ -17,11 +17,10 @@ class TradeVerificationStatusDto {
   /// Derives the trade aggregate from the full verification status DTO.
   factory TradeVerificationStatusDto.fromStatusDto(
     VerificationStatusDto status,
-  ) =>
-      TradeVerificationStatusDto(
-        tradeVerifications: status.tradeVerifications,
-        identityVerified: status.identityVerified,
-      );
+  ) => TradeVerificationStatusDto(
+    tradeVerifications: status.tradeVerifications,
+    identityVerified: status.identityVerified,
+  );
 
   /// The per-profession trade verification entries.
   final List<TradeVerificationDto> tradeVerifications;

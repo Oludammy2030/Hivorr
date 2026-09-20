@@ -18,17 +18,17 @@ class DepositDto {
 
   /// Parses a `financial_deposits` REST row.
   static DepositDto fromJson(Map<String, dynamic> json) => DepositDto(
-        id: (json['id'] as String?) ?? '',
-        currencyCode: (json['currency_code'] as String?) ?? '',
-        amount: _toDouble(json['amount']),
-        nameMatchStatus: (json['name_match_status'] as String?) ?? 'unverified',
-        payerName: json['payer_name'] as String?,
-        nameMatchScore: _toNullableDouble(json['name_match_score']),
-        externalReference: json['external_reference'] as String?,
-        status: (json['status'] as String?) ?? 'pending',
-        creditedAt: _toNullableDateTime(json['credited_at']),
-        createdAt: _toNullableDateTime(json['created_at']),
-      );
+    id: (json['id'] as String?) ?? '',
+    currencyCode: (json['currency_code'] as String?) ?? '',
+    amount: _toDouble(json['amount']),
+    nameMatchStatus: (json['name_match_status'] as String?) ?? 'unverified',
+    payerName: json['payer_name'] as String?,
+    nameMatchScore: _toNullableDouble(json['name_match_score']),
+    externalReference: json['external_reference'] as String?,
+    status: (json['status'] as String?) ?? 'pending',
+    creditedAt: _toNullableDateTime(json['credited_at']),
+    createdAt: _toNullableDateTime(json['created_at']),
+  );
 
   final String id;
   final String currencyCode;

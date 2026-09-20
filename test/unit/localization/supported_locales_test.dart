@@ -11,8 +11,7 @@ void main() {
     test('supported contains at least en', () {
       expect(HivorrSupportedLocales.supported, isNotEmpty);
       expect(
-        HivorrSupportedLocales.supported
-            .any((l) => l.languageCode == 'en'),
+        HivorrSupportedLocales.supported.any((l) => l.languageCode == 'en'),
         isTrue,
       );
     });

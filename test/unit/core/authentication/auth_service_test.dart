@@ -18,7 +18,9 @@ AuthService buildService({
   AuthConfig? config,
   Uri? callbackUri,
 }) {
-  final Uri Function()? resolver = callbackUri == null ? null : () => callbackUri;
+  final Uri Function()? resolver = callbackUri == null
+      ? null
+      : () => callbackUri;
   if (recordProvisioning) {
     return FakeSupabaseAuthService(
       authClient: authClient,
@@ -72,29 +74,36 @@ void main() {
       await service.dispose();
     });
 
-    test('sendEmailVerificationOtp requests the code and awaits confirmation',
-        () async {
-      final AuthService service = buildService(authClient: authClient);
+    test(
+      'sendEmailVerificationOtp requests the code and awaits confirmation',
+      () async {
+        final AuthService service = buildService(authClient: authClient);
 
-      await service.sendEmailVerificationOtp('a@b.com');
+        await service.sendEmailVerificationOtp('a@b.com');
 
-      expect(authClient.otpCallCount, 1);
-      expect(authClient.otpEmail, 'a@b.com');
-      expect(authClient.otpShouldCreateUser, isFalse);
-      expect(service.status, AuthStatus.awaitingEmailConfirmation);
-      expect(service.isSignedIn, isFalse);
-      await service.dispose();
-    });
+        expect(authClient.otpCallCount, 1);
+        expect(authClient.otpEmail, 'a@b.com');
+        expect(authClient.otpShouldCreateUser, isFalse);
+        expect(service.status, AuthStatus.awaitingEmailConfirmation);
+        expect(service.isSignedIn, isFalse);
+        await service.dispose();
+      },
+    );
 
-    test('sendEmailVerificationOtp only creates when explicitly requested',
-        () async {
-      final AuthService service = buildService(authClient: authClient);
+    test(
+      'sendEmailVerificationOtp only creates when explicitly requested',
+      () async {
+        final AuthService service = buildService(authClient: authClient);
 
-      await service.sendEmailVerificationOtp('a@b.com', createIfMissing: true);
+        await service.sendEmailVerificationOtp(
+          'a@b.com',
+          createIfMissing: true,
+        );
 
-      expect(authClient.otpShouldCreateUser, isTrue);
-      await service.dispose();
-    });
+        expect(authClient.otpShouldCreateUser, isTrue);
+        await service.dispose();
+      },
+    );
 
     test('verifyEmailOtp activates the session on a valid code', () async {
       final AuthService service = buildService(authClient: authClient);
@@ -109,43 +118,49 @@ void main() {
       await service.dispose();
     });
 
-    test('verifyEmailOtp optionally assigns a password after the code',
-        () async {
-      final AuthService service = buildService(authClient: authClient);
+    test(
+      'verifyEmailOtp optionally assigns a password after the code',
+      () async {
+        final AuthService service = buildService(authClient: authClient);
 
-      await service.verifyEmailOtp(
-        email: 'a@b.com',
-        code: '123456',
-        newPassword: 'separate-password',
-      );
+        await service.verifyEmailOtp(
+          email: 'a@b.com',
+          code: '123456',
+          newPassword: 'separate-password',
+        );
 
-      expect(authClient.updatedPassword, 'separate-password');
-      expect(service.status, AuthStatus.authenticated);
-      await service.dispose();
-    });
+        expect(authClient.updatedPassword, 'separate-password');
+        expect(service.status, AuthStatus.authenticated);
+        await service.dispose();
+      },
+    );
 
-    test('verifyEmailOtp without a password keeps the account credentials',
-        () async {
-      final AuthService service = buildService(authClient: authClient);
+    test(
+      'verifyEmailOtp without a password keeps the account credentials',
+      () async {
+        final AuthService service = buildService(authClient: authClient);
 
-      await service.verifyEmailOtp(email: 'a@b.com', code: '123456');
+        await service.verifyEmailOtp(email: 'a@b.com', code: '123456');
 
-      expect(authClient.updatedPassword, isNull);
-      expect(service.status, AuthStatus.authenticated);
-      await service.dispose();
-    });
+        expect(authClient.updatedPassword, isNull);
+        expect(service.status, AuthStatus.authenticated);
+        await service.dispose();
+      },
+    );
 
-    test('verifyEmailOtp without a session stays awaiting confirmation',
-        () async {
-      final AuthService service = buildService(authClient: authClient);
-      authClient.returnSessionOnVerify = false;
+    test(
+      'verifyEmailOtp without a session stays awaiting confirmation',
+      () async {
+        final AuthService service = buildService(authClient: authClient);
+        authClient.returnSessionOnVerify = false;
 
-      await service.verifyEmailOtp(email: 'a@b.com', code: '000000');
+        await service.verifyEmailOtp(email: 'a@b.com', code: '000000');
 
-      expect(service.status, AuthStatus.awaitingEmailConfirmation);
-      expect(service.isSignedIn, isFalse);
-      await service.dispose();
-    });
+        expect(service.status, AuthStatus.awaitingEmailConfirmation);
+        expect(service.isSignedIn, isFalse);
+        await service.dispose();
+      },
+    );
 
     test('an invalid code surfaces a typed ApiException', () async {
       final AuthService service = buildService(authClient: authClient);
@@ -232,8 +247,7 @@ void main() {
       await service.dispose();
     });
 
-    test('a bare 400 without a code stays generic (no enumeration)',
-        () async {
+    test('a bare 400 without a code stays generic (no enumeration)', () async {
       final AuthService service = buildService(authClient: authClient);
       authClient.nextError = const AuthException(
         'Invalid login credentials',
@@ -267,10 +281,7 @@ void main() {
 
       late final ApiException error;
       try {
-        await service.verifyEmailOtp(
-          email: 'a@b.com',
-          code: 'wrong',
-        );
+        await service.verifyEmailOtp(email: 'a@b.com', code: 'wrong');
         fail('Expected ApiException');
       } on Object catch (e) {
         error = e as ApiException;
@@ -299,10 +310,7 @@ void main() {
 
       late final ApiException error;
       try {
-        await service.verifyEmailOtp(
-          email: 'a@b.com',
-          code: 'wrong',
-        );
+        await service.verifyEmailOtp(email: 'a@b.com', code: 'wrong');
         fail('Expected ApiException');
       } on Object catch (e) {
         error = e as ApiException;
@@ -323,33 +331,32 @@ void main() {
       await service.dispose();
     });
 
-    test('otp_expired for a truly expired link also yields the combined message',
-        () async {
-      final AuthService service = buildService(authClient: authClient);
-      authClient.nextError = const AuthException(
-        'Email link is invalid or has expired',
-        statusCode: '403',
-        code: 'otp_expired',
-      );
-
-      late final ApiException error;
-      try {
-        await service.verifyEmailOtp(
-          email: 'a@b.com',
-          code: '000000',
+    test(
+      'otp_expired for a truly expired link also yields the combined message',
+      () async {
+        final AuthService service = buildService(authClient: authClient);
+        authClient.nextError = const AuthException(
+          'Email link is invalid or has expired',
+          statusCode: '403',
+          code: 'otp_expired',
         );
-        fail('Expected ApiException');
-      } on Object catch (e) {
-        error = e as ApiException;
-      }
 
-      expect(error.code, 'otp_expired');
-      expect(
-        error.message,
-        'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
-      );
-      await service.dispose();
-    });
+        late final ApiException error;
+        try {
+          await service.verifyEmailOtp(email: 'a@b.com', code: '000000');
+          fail('Expected ApiException');
+        } on Object catch (e) {
+          error = e as ApiException;
+        }
+
+        expect(error.code, 'otp_expired');
+        expect(
+          error.message,
+          'The code you entered is incorrect or has expired. Please check the code and try again. If it has expired, request a new code.',
+        );
+        await service.dispose();
+      },
+    );
 
     test('isEmailConfirmed is true when emailConfirmedAt is set', () async {
       final AuthService service = buildService(authClient: authClient);
@@ -466,10 +473,9 @@ void main() {
     });
 
     test('ensureEntityExists is idempotent per signed-in user', () async {
-      final FakeSupabaseAuthService service = buildService(
-        authClient: authClient,
-        recordProvisioning: true,
-      ) as FakeSupabaseAuthService;
+      final FakeSupabaseAuthService service =
+          buildService(authClient: authClient, recordProvisioning: true)
+              as FakeSupabaseAuthService;
 
       await service.signIn(
         AuthCredentials(email: 'a@b.com', password: 'password'),
@@ -485,25 +491,27 @@ void main() {
     });
 
     group('password recovery', () {
-      test('requestPasswordReset forwards the configured redirect URL',
-          () async {
-        final AuthService service = buildService(
-          authClient: authClient,
-          config: const AuthConfig(
-            recoveryRedirectBase: 'https://staging.hivorr.com',
-          ),
-        );
+      test(
+        'requestPasswordReset forwards the configured redirect URL',
+        () async {
+          final AuthService service = buildService(
+            authClient: authClient,
+            config: const AuthConfig(
+              recoveryRedirectBase: 'https://staging.hivorr.com',
+            ),
+          );
 
-        await service.requestPasswordReset('a@b.com');
+          await service.requestPasswordReset('a@b.com');
 
-        expect(authClient.resetCallCount, 1);
-        expect(authClient.resetEmail, 'a@b.com');
-        expect(
-          authClient.resetRedirectTo,
-          'https://staging.hivorr.com/reset-password',
-        );
-        await service.dispose();
-      });
+          expect(authClient.resetCallCount, 1);
+          expect(authClient.resetEmail, 'a@b.com');
+          expect(
+            authClient.resetRedirectTo,
+            'https://staging.hivorr.com/reset-password',
+          );
+          await service.dispose();
+        },
+      );
 
       test('a recovery callback exchange drives AuthStatus.recovery', () async {
         final AuthService service = buildService(
@@ -525,20 +533,24 @@ void main() {
         await service.dispose();
       });
 
-      test('an unverified email keeps the recovery session (orthogonal gate)',
-          () async {
-        final AuthService service = buildService(
-          authClient: authClient,
-          callbackUri: Uri.parse('http://localhost:8080/reset-password?code=c'),
-        );
-        authClient.emailConfirmedInSession = false;
+      test(
+        'an unverified email keeps the recovery session (orthogonal gate)',
+        () async {
+          final AuthService service = buildService(
+            authClient: authClient,
+            callbackUri: Uri.parse(
+              'http://localhost:8080/reset-password?code=c',
+            ),
+          );
+          authClient.emailConfirmedInSession = false;
 
-        await service.initialize();
+          await service.initialize();
 
-        expect(service.status, AuthStatus.recovery);
-        expect(service.currentSession?.isEmailConfirmed, isFalse);
-        await service.dispose();
-      });
+          expect(service.status, AuthStatus.recovery);
+          expect(service.currentSession?.isEmailConfirmed, isFalse);
+          await service.dispose();
+        },
+      );
 
       test('a failed exchange surfaces recoveryCallbackError and stays '
           'unauthenticated', () async {
@@ -588,23 +600,26 @@ void main() {
         await service.dispose();
       });
 
-      test('updatePassword is fail-closed without a recovery session', () async {
-        final AuthService service = buildService(authClient: authClient);
-        await service.initialize();
-        expect(service.status, AuthStatus.unauthenticated);
+      test(
+        'updatePassword is fail-closed without a recovery session',
+        () async {
+          final AuthService service = buildService(authClient: authClient);
+          await service.initialize();
+          expect(service.status, AuthStatus.unauthenticated);
 
-        late final ApiException error;
-        try {
-          await service.updatePassword('Newpass1!');
-          fail('Expected ApiException');
-        } on Object catch (e) {
-          error = e as ApiException;
-        }
+          late final ApiException error;
+          try {
+            await service.updatePassword('Newpass1!');
+            fail('Expected ApiException');
+          } on Object catch (e) {
+            error = e as ApiException;
+          }
 
-        expect(error.code, 'invalid_grant');
-        expect(error.kind, ApiExceptionKind.validation);
-        await service.dispose();
-      });
+          expect(error.code, 'invalid_grant');
+          expect(error.kind, ApiExceptionKind.validation);
+          await service.dispose();
+        },
+      );
     });
   });
 }

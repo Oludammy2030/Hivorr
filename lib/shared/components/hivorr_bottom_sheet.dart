@@ -8,11 +8,7 @@ import 'package:hivorr/shared/widgets/hivorr_divider.dart';
 /// title. Present it with [HivorrBottomSheet.show] or as the builder result of
 /// [showModalBottomSheet].
 class HivorrBottomSheet extends StatelessWidget {
-  const HivorrBottomSheet({
-    super.key,
-    this.title,
-    required this.child,
-  });
+  const HivorrBottomSheet({super.key, this.title, required this.child});
 
   /// Optional header title.
   final String? title;
@@ -27,9 +23,7 @@ class HivorrBottomSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(ext.radiusLg),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(ext.radiusLg)),
       ),
       padding: EdgeInsets.only(
         top: HivorrSpacing.md,

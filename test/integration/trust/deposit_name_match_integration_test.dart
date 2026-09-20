@@ -32,32 +32,26 @@ void main() {
     required String payerName,
     required String nameMatchStatus,
     required String status,
-  }) =>
-      <String, dynamic>{
-        'id': id,
-        'entity_id': 'u1',
-        'financial_profile_id': 'p1',
-        'currency_code': 'NGN',
-        'amount': 50000.0,
-        'payer_name': payerName,
-        'name_match_status': nameMatchStatus,
-        'status': status,
-        'reference': 'dep-ref-$id',
-        'created_at': '2026-01-01T00:00:00.000Z',
-        'credited_at': status == 'credited'
-            ? '2026-01-02T00:00:00.000Z'
-            : null,
-      };
+  }) => <String, dynamic>{
+    'id': id,
+    'entity_id': 'u1',
+    'financial_profile_id': 'p1',
+    'currency_code': 'NGN',
+    'amount': 50000.0,
+    'payer_name': payerName,
+    'name_match_status': nameMatchStatus,
+    'status': status,
+    'reference': 'dep-ref-$id',
+    'created_at': '2026-01-01T00:00:00.000Z',
+    'credited_at': status == 'credited' ? '2026-01-02T00:00:00.000Z' : null,
+  };
 
-  ({
-    FinancialDepositService service,
-    FinancialDepositProvider provider,
-  }) buildFlow({
-    Map<String, List<Map<String, dynamic>>>? queryResults,
-  }) {
+  ({FinancialDepositService service, FinancialDepositProvider provider})
+  buildFlow({Map<String, List<Map<String, dynamic>>>? queryResults}) {
     final client = MockSupabaseClientFactory.create(
       currentUser: fakeUser('u1'),
-      queryResults: queryResults ??
+      queryResults:
+          queryResults ??
           <String, List<Map<String, dynamic>>>{
             'financial_deposits': depositRows,
           },
@@ -79,12 +73,14 @@ void main() {
 
   group('VP10: Deposit name-matching (Rule 3)', () {
     test('matching payer_name accepted → credited status', () async {
-      depositRows.add(depositRow(
-        id: 'dep-1',
-        payerName: 'Ada Lovelace',
-        nameMatchStatus: 'matched',
-        status: 'credited',
-      ));
+      depositRows.add(
+        depositRow(
+          id: 'dep-1',
+          payerName: 'Ada Lovelace',
+          nameMatchStatus: 'matched',
+          status: 'credited',
+        ),
+      );
       final flow = buildFlow();
       addTearDown(flow.provider.dispose);
 
@@ -95,21 +91,20 @@ void main() {
     });
 
     test('mismatched payer_name flagged → mismatched status', () async {
-      depositRows.add(depositRow(
-        id: 'dep-2',
-        payerName: 'John Mismatch',
-        nameMatchStatus: 'mismatched',
-        status: 'held',
-      ));
+      depositRows.add(
+        depositRow(
+          id: 'dep-2',
+          payerName: 'John Mismatch',
+          nameMatchStatus: 'mismatched',
+          status: 'held',
+        ),
+      );
       final flow = buildFlow();
       addTearDown(flow.provider.dispose);
 
       final List<Deposit> deposits = await flow.service.listDeposits();
       expect(deposits, hasLength(1));
-      expect(
-        deposits.first.nameMatchStatus,
-        DepositNameMatchStatus.mismatched,
-      );
+      expect(deposits.first.nameMatchStatus, DepositNameMatchStatus.mismatched);
       expect(deposits.first.status, 'held');
     });
 
@@ -130,18 +125,22 @@ void main() {
 
     test('provider lists deposits with name-match status', () async {
       depositRows
-        ..add(depositRow(
-          id: 'dep-1',
-          payerName: 'Ada Lovelace',
-          nameMatchStatus: 'matched',
-          status: 'credited',
-        ))
-        ..add(depositRow(
-          id: 'dep-2',
-          payerName: 'Wrong Name',
-          nameMatchStatus: 'mismatched',
-          status: 'held',
-        ));
+        ..add(
+          depositRow(
+            id: 'dep-1',
+            payerName: 'Ada Lovelace',
+            nameMatchStatus: 'matched',
+            status: 'credited',
+          ),
+        )
+        ..add(
+          depositRow(
+            id: 'dep-2',
+            payerName: 'Wrong Name',
+            nameMatchStatus: 'mismatched',
+            status: 'held',
+          ),
+        );
       final flow = buildFlow();
       addTearDown(flow.provider.dispose);
 
@@ -149,26 +148,33 @@ void main() {
       expect(flow.provider.deposits, hasLength(2));
       expect(
         flow.provider.deposits
-            .where((Deposit d) => d.nameMatchStatus == DepositNameMatchStatus.matched)
+            .where(
+              (Deposit d) =>
+                  d.nameMatchStatus == DepositNameMatchStatus.matched,
+            )
             .length,
         1,
       );
       expect(
         flow.provider.deposits
-            .where((Deposit d) =>
-                d.nameMatchStatus == DepositNameMatchStatus.mismatched)
+            .where(
+              (Deposit d) =>
+                  d.nameMatchStatus == DepositNameMatchStatus.mismatched,
+            )
             .length,
         1,
       );
     });
 
     test('legal_name never leaves client-side logs (redacted)', () async {
-      depositRows.add(depositRow(
-        id: 'dep-1',
-        payerName: 'Ada Lovelace',
-        nameMatchStatus: 'matched',
-        status: 'credited',
-      ));
+      depositRows.add(
+        depositRow(
+          id: 'dep-1',
+          payerName: 'Ada Lovelace',
+          nameMatchStatus: 'matched',
+          status: 'credited',
+        ),
+      );
       final flow = buildFlow();
       addTearDown(flow.provider.dispose);
 

@@ -15,9 +15,9 @@ class FakeFinancialRemoteDataSource implements FinancialRemoteDataSource {
     FinancialProfileDto? profile,
     BalanceDto? balance,
     FinancialStatusDto? status,
-  })  : _profile = profile,
-        _balance = balance,
-        _status = status;
+  }) : _profile = profile,
+       _balance = balance,
+       _status = status;
 
   FinancialProfileDto? _profile;
   final BalanceDto? _balance;
@@ -71,15 +71,14 @@ FinancialProfileDto seedProfileDto({
   String status = 'active',
   String defaultCurrency = 'NGN',
   List<CurrencyAccountDto> currencyAccounts = const <CurrencyAccountDto>[],
-}) =>
-    FinancialProfileDto(
-      id: id,
-      entityId: entityId,
-      status: status,
-      defaultCurrency: defaultCurrency,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
-      currencyAccounts: currencyAccounts,
-    );
+}) => FinancialProfileDto(
+  id: id,
+  entityId: entityId,
+  status: status,
+  defaultCurrency: defaultCurrency,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1000),
+  currencyAccounts: currencyAccounts,
+);
 
 CurrencyAccountDto seedAccountDto({
   String id = 'acc-1',
@@ -89,16 +88,15 @@ CurrencyAccountDto seedAccountDto({
   String accountStatus = 'active',
   String? receivingBankName,
   String? receivingAccountNumber,
-}) =>
-    CurrencyAccountDto(
-      id: id,
-      financialProfileId: financialProfileId,
-      entityId: entityId,
-      currencyCode: currencyCode,
-      accountStatus: accountStatus,
-      receivingBankName: receivingBankName,
-      receivingAccountNumber: receivingAccountNumber,
-    );
+}) => CurrencyAccountDto(
+  id: id,
+  financialProfileId: financialProfileId,
+  entityId: entityId,
+  currencyCode: currencyCode,
+  accountStatus: accountStatus,
+  receivingBankName: receivingBankName,
+  receivingAccountNumber: receivingAccountNumber,
+);
 
 BalanceDto seedBalanceDto({
   String currencyCode = 'NGN',
@@ -107,15 +105,14 @@ BalanceDto seedBalanceDto({
   double pending = 0,
   double totalDeposited = 50000,
   double totalWithdrawn = 0,
-}) =>
-    BalanceDto(
-      currencyCode: currencyCode,
-      availableBalance: available,
-      heldBalance: held,
-      pendingBalance: pending,
-      totalDeposited: totalDeposited,
-      totalWithdrawn: totalWithdrawn,
-    );
+}) => BalanceDto(
+  currencyCode: currencyCode,
+  availableBalance: available,
+  heldBalance: held,
+  pendingBalance: pending,
+  totalDeposited: totalDeposited,
+  totalWithdrawn: totalWithdrawn,
+);
 
 FinancialStatusDto seedStatusDto({
   String defaultCurrency = 'NGN',
@@ -123,11 +120,10 @@ FinancialStatusDto seedStatusDto({
   List<BalanceDto> balances = const <BalanceDto>[],
   int activeEscrowCount = 0,
   double cashoutLimit = 100000,
-}) =>
-    FinancialStatusDto(
-      defaultCurrency: defaultCurrency,
-      profileStatus: profileStatus,
-      balances: balances,
-      activeEscrowCount: activeEscrowCount,
-      cashoutLimit: cashoutLimit,
-    );
+}) => FinancialStatusDto(
+  defaultCurrency: defaultCurrency,
+  profileStatus: profileStatus,
+  balances: balances,
+  activeEscrowCount: activeEscrowCount,
+  cashoutLimit: cashoutLimit,
+);

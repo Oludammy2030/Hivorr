@@ -28,9 +28,8 @@ class _HangingDisputeRepository extends FakeDisputeRepository {
 }
 
 void main() {
-  DisputeProvider providerWith(DisputeRepository repository) => DisputeProvider(
-        service: DisputeService(repository: repository),
-      );
+  DisputeProvider providerWith(DisputeRepository repository) =>
+      DisputeProvider(service: DisputeService(repository: repository));
 
   Future<void> pumpList(
     WidgetTester tester,
@@ -54,8 +53,9 @@ void main() {
       ];
 
   group('DisputeListScreen', () {
-    testWidgets('renders the Disputes app bar title',
-        (WidgetTester tester) async {
+    testWidgets('renders the Disputes app bar title', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -69,8 +69,9 @@ void main() {
       expect(find.widgetWithText(AppBar, 'Disputes'), findsOneWidget);
     });
 
-    testWidgets('shows HivorrLoadingState while the list is pending',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrLoadingState while the list is pending', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(_HangingDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -85,8 +86,9 @@ void main() {
       expect(find.text('Loading disputes...'), findsOneWidget);
     });
 
-    testWidgets('renders one card per dispute with status badge + date',
-        (WidgetTester tester) async {
+    testWidgets('renders one card per dispute with status badge + date', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository(
         cases: <DisputeCase>[
           seedDisputeCaseEntity(
@@ -119,8 +121,9 @@ void main() {
       expect(find.text('Under review'), findsNWidgets(2));
     });
 
-    testWidgets('shows HivorrEmptyState when no disputes exist',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrEmptyState when no disputes exist', (
+      WidgetTester tester,
+    ) async {
       final provider = providerWith(FakeDisputeRepository());
       addTearDown(provider.dispose);
 
@@ -139,8 +142,9 @@ void main() {
       );
     });
 
-    testWidgets('shows HivorrErrorState on read failure',
-        (WidgetTester tester) async {
+    testWidgets('shows HivorrErrorState on read failure', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.forbidden,
@@ -162,8 +166,9 @@ void main() {
       expect(find.text('Not allowed'), findsOneWidget);
     });
 
-    testWidgets('filtering by a status re-queries with the filter',
-        (WidgetTester tester) async {
+    testWidgets('filtering by a status re-queries with the filter', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository(
         cases: <DisputeCase>[
           seedDisputeCaseEntity(id: 'dispute-1', status: 'open'),
@@ -198,8 +203,9 @@ void main() {
       expect(find.text('Service quality'), findsNothing);
     });
 
-    testWidgets('pull-to-refresh reloads the list',
-        (WidgetTester tester) async {
+    testWidgets('pull-to-refresh reloads the list', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository(
         cases: <DisputeCase>[seedDisputeCaseEntity()],
       );
@@ -220,8 +226,9 @@ void main() {
       expect(repository.listCallCount, greaterThan(initial));
     });
 
-    testWidgets('tapping a card pushes the dispute detail route',
-        (WidgetTester tester) async {
+    testWidgets('tapping a card pushes the dispute detail route', (
+      WidgetTester tester,
+    ) async {
       final repository = FakeDisputeRepository(
         cases: <DisputeCase>[seedDisputeCaseEntity(id: 'dispute-9')],
       );

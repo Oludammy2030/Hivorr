@@ -22,7 +22,8 @@ class VerificationSubmissionDto {
       id: json['id'] as String,
       entityId: json['entity_id'] as String,
       credentialId: json['credential_id'] as String,
-      submissionType: (json['submission_type'] as String?) ??
+      submissionType:
+          (json['submission_type'] as String?) ??
           DocumentTypeDto.identityDocument,
       status: (json['status'] as String?) ?? 'pending',
       submittedAt: _parseDate(json['submitted_at']) ?? DateTime.now(),

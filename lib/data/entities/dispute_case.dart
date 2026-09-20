@@ -75,8 +75,7 @@ class DisputeCase {
   bool get isOpen => status == 'open';
 
   /// Whether evidence may still be submitted (`open`/`under_review`).
-  bool get acceptsEvidence =>
-      status == 'open' || status == 'under_review';
+  bool get acceptsEvidence => status == 'open' || status == 'under_review';
 
   /// Whether the case was withdrawn (hold released server-side).
   bool get isWithdrawn => status == 'withdrawn';

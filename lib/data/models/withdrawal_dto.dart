@@ -13,12 +13,12 @@ class WithdrawalDto {
 
   /// Parses the withdraw RPC `data` object.
   static WithdrawalDto fromJson(Map<String, dynamic> json) => WithdrawalDto(
-        payoutId: (json['payout_id'] as String?) ?? '',
-        amount: _toDouble(json['amount']),
-        fee: _toDouble(json['fee']),
-        netAmount: _toDouble(json['net_amount']),
-        cashoutRemaining: _toDouble(json['cashout_remaining']),
-      );
+    payoutId: (json['payout_id'] as String?) ?? '',
+    amount: _toDouble(json['amount']),
+    fee: _toDouble(json['fee']),
+    netAmount: _toDouble(json['net_amount']),
+    cashoutRemaining: _toDouble(json['cashout_remaining']),
+  );
 
   final String payoutId;
   final double amount;

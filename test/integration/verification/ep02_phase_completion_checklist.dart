@@ -86,13 +86,17 @@ List<_ChecklistItem> _buildChecklist(String root) {
     <Object>[
       'EP-02:218',
       'Identity verification (DocumentType × 5, admin review)',
-      <String>['lib/systems/verification/services/identity_verification_service.dart'],
+      <String>[
+        'lib/systems/verification/services/identity_verification_service.dart',
+      ],
     ],
     // EP-02:219 Trade verification + bid-lock gate
     <Object>[
       'EP-02:219',
       'Trade verification (TradeProofType × 5, gate, badge)',
-      <String>['lib/systems/verification/services/trade_verification_service.dart'],
+      <String>[
+        'lib/systems/verification/services/trade_verification_service.dart',
+      ],
     ],
     // EP-02:220 KYC tier + limit guard
     <Object>[
@@ -104,7 +108,9 @@ List<_ChecklistItem> _buildChecklist(String root) {
     <Object>[
       'EP-02:221',
       'Admin review queue + approval workflow',
-      <String>['lib/systems/verification/screens/admin_review_queue_screen.dart'],
+      <String>[
+        'lib/systems/verification/screens/admin_review_queue_screen.dart',
+      ],
     ],
     // EP-02:222 Financial profile + multi-currency
     <Object>[
@@ -140,7 +146,9 @@ List<_ChecklistItem> _buildChecklist(String root) {
     <Object>[
       'EP-02:227',
       'Payment gateway abstraction (Paystack/Flutterwave/NIBSS)',
-      <String>['lib/integrations/payment_gateways/payment_gateway_factory.dart'],
+      <String>[
+        'lib/integrations/payment_gateways/payment_gateway_factory.dart',
+      ],
     ],
     // EP-02:228 Dispute filing + evidence + resolution
     <Object>[
@@ -152,7 +160,9 @@ List<_ChecklistItem> _buildChecklist(String root) {
     <Object>[
       'EP-02:229',
       'Public profile (SECURITY DEFINER, SEO, guard bypass)',
-      <String>['lib/systems/portfolio/services/professional_profile_service.dart'],
+      <String>[
+        'lib/systems/portfolio/services/professional_profile_service.dart',
+      ],
     ],
     // EP-02:230 Storage buckets + private/public isolation
     <Object>[
@@ -176,13 +186,17 @@ List<_ChecklistItem> _buildChecklist(String root) {
     <Object>[
       'EP-02:233',
       'Zero client-side financial logic in lib/systems/ + lib/data/',
-      <String>['test/integration/verification/trust_financial_logic_scan_verification.dart'],
+      <String>[
+        'test/integration/verification/trust_financial_logic_scan_verification.dart',
+      ],
     ],
     // EP-02:234 No legal_name / document_path leakage
     <Object>[
       'EP-02:234',
       'No legal_name/document_path/service_role in client code',
-      <String>['test/integration/verification/trust_legal_name_document_scan_verification.dart'],
+      <String>[
+        'test/integration/verification/trust_legal_name_document_scan_verification.dart',
+      ],
     ],
     // EP-02:235 RLS default-deny verified (001-022 pgTAP)
     <Object>[
@@ -218,10 +232,9 @@ void main() {
         final buf = StringBuffer();
         buf.writeln('${item.id}: ${item.title}');
         for (final path in item.paths) {
-          final exists = File('$root${Platform.pathSeparator}$path')
-                  .existsSync() ||
-              Directory('$root${Platform.pathSeparator}$path')
-                  .existsSync();
+          final exists =
+              File('$root${Platform.pathSeparator}$path').existsSync() ||
+              Directory('$root${Platform.pathSeparator}$path').existsSync();
           buf.writeln('  ${exists ? 'PASS' : 'FAIL'} → $path');
         }
         expect(item.pass, isTrue, reason: buf.toString());
@@ -238,8 +251,11 @@ void main() {
         }
         fail(buf.toString());
       }
-      expect(items.every((i) => i.pass), isTrue,
-          reason: 'all EP-02 phase completion criteria must PASS');
+      expect(
+        items.every((i) => i.pass),
+        isTrue,
+        reason: 'all EP-02 phase completion criteria must PASS',
+      );
     });
   });
 }

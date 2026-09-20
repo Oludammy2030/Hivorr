@@ -40,7 +40,10 @@ class HivorrLocalizationService {
   /// Exposed for testing the malformed-JSON path without bundling a fixture
   /// asset. Throws [LocalizationException] when the content is not a JSON
   /// object or cannot be decoded.
-  static Map<String, String> parseTranslationJson(String source, Locale locale) {
+  static Map<String, String> parseTranslationJson(
+    String source,
+    Locale locale,
+  ) {
     try {
       final dynamic decoded = json.decode(source);
       if (decoded is! Map) {
@@ -48,10 +51,8 @@ class HivorrLocalizationService {
       }
       final Map<String, dynamic> map = decoded as Map<String, dynamic>;
       return map.map(
-        (dynamic k, dynamic v) => MapEntry<String, String>(
-          k.toString(),
-          v?.toString() ?? '',
-        ),
+        (dynamic k, dynamic v) =>
+            MapEntry<String, String>(k.toString(), v?.toString() ?? ''),
       );
     } on LocalizationException {
       rethrow;
@@ -68,8 +69,7 @@ class HivorrLocalizationService {
     String key,
     Map<String, String> translations,
     Map<String, String>? fallback,
-  ) =>
-      lookup(key, translations, fallback) ?? key;
+  ) => lookup(key, translations, fallback) ?? key;
 
   /// Returns the resolved value or `null` when absent in both maps.
   ///

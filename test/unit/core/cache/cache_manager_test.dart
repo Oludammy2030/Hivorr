@@ -141,13 +141,17 @@ void main() {
       // Concurrent writes to distinct keys, interleaved with reads that must
       // never observe a corrupted value (only null or the exact int).
       for (int i = 0; i < 200; i++) {
-        tasks.add(Future<void>(() async {
-          mgr.put('k$i', i);
-        }));
-        tasks.add(Future<void>(() async {
-          final int? observed = mgr.get<int>('k$i');
-          expect(observed == null || observed == i, isTrue);
-        }));
+        tasks.add(
+          Future<void>(() async {
+            mgr.put('k$i', i);
+          }),
+        );
+        tasks.add(
+          Future<void>(() async {
+            final int? observed = mgr.get<int>('k$i');
+            expect(observed == null || observed == i, isTrue);
+          }),
+        );
       }
       await Future.wait(tasks);
       // After all writes settle, every key reads back its exact value.

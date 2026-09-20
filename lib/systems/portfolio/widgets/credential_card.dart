@@ -13,10 +13,7 @@ import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 /// The RPC already filtered to `verification_status = 'approved'`, so this
 /// widget only mirrors server state — it never classifies by itself.
 class CredentialCard extends StatelessWidget {
-  const CredentialCard({
-    super.key,
-    required this.credential,
-  });
+  const CredentialCard({super.key, required this.credential});
 
   /// The approved credential (whitelisted: `kind`, `title`,
   /// `verificationStatus` — never `document_path`).
@@ -82,16 +79,16 @@ class CredentialCard extends StatelessWidget {
   /// Kind vocabulary from `entity_credentials.kind` (server-authoritative);
   /// unknown kinds fall back to a neutral identifier icon + label.
   static IconData _iconForKind(String kind) => switch (kind) {
-        'identity_document' => Icons.verified_user_outlined,
-        'trade_proof' => Icons.construction_outlined,
-        'certification' => Icons.workspace_premium_outlined,
-        _ => Icons.military_tech_outlined,
-      };
+    'identity_document' => Icons.verified_user_outlined,
+    'trade_proof' => Icons.construction_outlined,
+    'certification' => Icons.workspace_premium_outlined,
+    _ => Icons.military_tech_outlined,
+  };
 
   static String _displayKind(String kind) => switch (kind) {
-        'identity_document' => 'Identity',
-        'trade_proof' => 'Trade proof',
-        'certification' => 'Certification',
-        _ => kind,
-      };
+    'identity_document' => 'Identity',
+    'trade_proof' => 'Trade proof',
+    'certification' => 'Certification',
+    _ => kind,
+  };
 }

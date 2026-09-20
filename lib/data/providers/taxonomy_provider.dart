@@ -90,12 +90,11 @@ class TaxonomyProvider extends ChangeNotifier {
   }
 
   /// Loads industries into the provider.
-  Future<void> loadIndustries({bool includeInactive = false}) =>
-      _run(() async {
-        _industries = await repository.getIndustries(
-          includeInactive: includeInactive,
-        );
-      });
+  Future<void> loadIndustries({bool includeInactive = false}) => _run(() async {
+    _industries = await repository.getIndustries(
+      includeInactive: includeInactive,
+    );
+  });
 
   /// Loads professions for [industryId] into the provider.
   Future<void> loadProfessions(
@@ -158,8 +157,8 @@ class TaxonomyProvider extends ChangeNotifier {
     final String needle = query.toLowerCase();
     return scope
         .where((Profession p) {
-          final String haystack =
-              '${p.name} ${p.slug} ${p.description ?? ''}'.toLowerCase();
+          final String haystack = '${p.name} ${p.slug} ${p.description ?? ''}'
+              .toLowerCase();
           return haystack.contains(needle);
         })
         .toList(growable: false);

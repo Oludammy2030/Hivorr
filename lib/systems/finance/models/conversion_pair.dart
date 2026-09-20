@@ -17,8 +17,10 @@ class ConversionPair {
 
   /// Builds a pair, throwing [ArgumentError] if either leg is unsupported or
   /// the legs are identical.
-  factory ConversionPair({required SupportedCurrency from,
-      required SupportedCurrency to}) {
+  factory ConversionPair({
+    required SupportedCurrency from,
+    required SupportedCurrency to,
+  }) {
     if (!SupportedCurrency.isSupported(from.code)) {
       throw ArgumentError.value(
         from.code,
@@ -45,8 +47,10 @@ class ConversionPair {
 
   /// Tries to build a pair, returning `null` (instead of throwing) when the
   /// pair is invalid. Used by flag-gated pair discovery.
-  static ConversionPair? tryCreate(
-      {required SupportedCurrency from, required SupportedCurrency to}) {
+  static ConversionPair? tryCreate({
+    required SupportedCurrency from,
+    required SupportedCurrency to,
+  }) {
     try {
       return ConversionPair(from: from, to: to);
     } on ArgumentError {

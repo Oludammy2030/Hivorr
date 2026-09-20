@@ -38,9 +38,7 @@ void main() {
             pairsConfig ??
             const WalletConversionPairsConfig(
               enabled: true,
-              baseCrossRates: <String, double>{
-                'NGN|USD': 0.0007,
-              },
+              baseCrossRates: <String, double>{'NGN|USD': 0.0007},
             ),
       ),
       financialService: financial == null
@@ -62,8 +60,8 @@ void main() {
       );
 
   FakeConversionRepository seededRepo() => (FakeConversionRepository()
-        ..setRate('NGN', 'USD', 0.0007)
-        ..setRate('USD', 'NGN', 1428.5714285714287));
+    ..setRate('NGN', 'USD', 0.0007)
+    ..setRate('USD', 'NGN', 1428.5714285714287));
 
   const ApiException insufficientBalance = ApiException(
     kind: ApiExceptionKind.conflict,
@@ -159,24 +157,25 @@ void main() {
       provider.dispose();
     });
 
-    test('surfaces the rate-unavailable state when no configured rate exists',
-        () async {
-      final repo = FakeConversionRepository();
-      final provider = build(repo: repo);
-      provider.setSource('NGN');
-      provider.setDestination('USD');
+    test(
+      'surfaces the rate-unavailable state when no configured rate exists',
+      () async {
+        final repo = FakeConversionRepository();
+        final provider = build(repo: repo);
+        provider.setSource('NGN');
+        provider.setDestination('USD');
 
-      await provider.loadRate();
+        await provider.loadRate();
 
-      expect(provider.isRateUnavailable, isTrue);
-      expect(provider.rate, isNull);
-      expect(provider.lastError, isNull);
-      provider.dispose();
-    });
+        expect(provider.isRateUnavailable, isTrue);
+        expect(provider.rate, isNull);
+        expect(provider.lastError, isNull);
+        provider.dispose();
+      },
+    );
 
     test('stores a generic ApiException failure on the error slot', () async {
-      final repo = seededRepo()
-        ..nextError = insufficientBalance;
+      final repo = seededRepo()..nextError = insufficientBalance;
       final provider = build(repo: repo);
       provider.setSource('NGN');
       provider.setDestination('USD');
@@ -211,21 +210,23 @@ void main() {
       provider.dispose();
     });
 
-    test('amount edits preserve the trusted rate while clearing the preview',
-        () async {
-      final repo = seededRepo();
-      final provider = build(repo: repo);
-      provider.setSource('NGN');
-      provider.setDestination('USD');
-      provider.setAmount(50000);
-      await provider.refreshPreview();
+    test(
+      'amount edits preserve the trusted rate while clearing the preview',
+      () async {
+        final repo = seededRepo();
+        final provider = build(repo: repo);
+        provider.setSource('NGN');
+        provider.setDestination('USD');
+        provider.setAmount(50000);
+        await provider.refreshPreview();
 
-      provider.setAmount(75000);
+        provider.setAmount(75000);
 
-      expect(provider.preview, isNull);
-      expect(provider.rate, 0.0007);
-      provider.dispose();
-    });
+        expect(provider.preview, isNull);
+        expect(provider.rate, 0.0007);
+        provider.dispose();
+      },
+    );
 
     test('clears the preview and stores the error on failure', () async {
       final repo = seededRepo()
@@ -248,80 +249,84 @@ void main() {
   });
 
   group('execute', () {
-    test('records the conversion and refreshes balances via FinancialService',
-        () async {
-      final repo = seededRepo()
-        ..setConversion(seedConversionEntity(id: 'conversion-foo', toAmount: 35));
-      final financial = FakeFinancialRepository();
-      final provider = build(repo: repo, financial: financial);
-      provider.setSource('NGN');
-      provider.setDestination('USD');
-      provider.setAmount(50000);
-      await provider.refreshPreview();
+    test(
+      'records the conversion and refreshes balances via FinancialService',
+      () async {
+        final repo = seededRepo()
+          ..setConversion(
+            seedConversionEntity(id: 'conversion-foo', toAmount: 35),
+          );
+        final financial = FakeFinancialRepository();
+        final provider = build(repo: repo, financial: financial);
+        provider.setSource('NGN');
+        provider.setDestination('USD');
+        provider.setAmount(50000);
+        await provider.refreshPreview();
 
-      await provider.execute();
+        await provider.execute();
 
-      expect(provider.lastConversion, isNotNull);
-      expect(provider.lastConversion!.id, 'conversion-foo');
-      expect(provider.lastConversion!.status, 'completed');
-      expect(repo.executeCallCount, 1);
-      expect(financial.statusCallCount, 1);
-      expect(provider.lastError, isNull);
-      provider.dispose();
-    });
+        expect(provider.lastConversion, isNotNull);
+        expect(provider.lastConversion!.id, 'conversion-foo');
+        expect(provider.lastConversion!.status, 'completed');
+        expect(repo.executeCallCount, 1);
+        expect(financial.statusCallCount, 1);
+        expect(provider.lastError, isNull);
+        provider.dispose();
+      },
+    );
 
-    test('surfaces PLT006 as a conflict error without a notification',
-        () async {
-      final repo = seededRepo()
-        ..nextError = insufficientBalance;
-      final FakeNotificationService service = FakeNotificationService();
-      final NotificationProvider notifications = buildNotifications(service);
-      final provider = build(
-        repo: repo,
-        notificationProvider: notifications,
-      );
-      provider.setSource('NGN');
-      provider.setDestination('USD');
-      provider.setAmount(50000);
+    test(
+      'surfaces PLT006 as a conflict error without a notification',
+      () async {
+        final repo = seededRepo()..nextError = insufficientBalance;
+        final FakeNotificationService service = FakeNotificationService();
+        final NotificationProvider notifications = buildNotifications(service);
+        final provider = build(repo: repo, notificationProvider: notifications);
+        provider.setSource('NGN');
+        provider.setDestination('USD');
+        provider.setAmount(50000);
 
-      await provider.execute();
+        await provider.execute();
 
-      expect(provider.lastError, same(insufficientBalance));
-      expect(provider.lastConversion, isNull);
-      expect(service.shown, isEmpty);
-      provider.dispose();
-    });
+        expect(provider.lastError, same(insufficientBalance));
+        expect(provider.lastConversion, isNull);
+        expect(service.shown, isEmpty);
+        provider.dispose();
+      },
+    );
 
-    test('emits a one-shot Currency converted notification on success',
-        () async {
-      final repo = seededRepo()
-        ..setConversion(seedConversionEntity(id: 'conversion-notify'));
-      final FakeNotificationService service = FakeNotificationService();
-      final NotificationProvider notifications = buildNotifications(service);
-      final DateTime fixed = DateTime.utc(2026, 1, 1);
-      final provider = build(
-        repo: repo,
-        notificationProvider: notifications,
-        clock: () => fixed,
-      );
-      provider.setSource('NGN');
-      provider.setDestination('USD');
-      provider.setAmount(50000);
+    test(
+      'emits a one-shot Currency converted notification on success',
+      () async {
+        final repo = seededRepo()
+          ..setConversion(seedConversionEntity(id: 'conversion-notify'));
+        final FakeNotificationService service = FakeNotificationService();
+        final NotificationProvider notifications = buildNotifications(service);
+        final DateTime fixed = DateTime.utc(2026, 1, 1);
+        final provider = build(
+          repo: repo,
+          notificationProvider: notifications,
+          clock: () => fixed,
+        );
+        provider.setSource('NGN');
+        provider.setDestination('USD');
+        provider.setAmount(50000);
 
-      await provider.execute();
-      // The notification hook is fire-and-forget; flush the microtask queue.
-      await Future<void>.delayed(Duration.zero);
+        await provider.execute();
+        // The notification hook is fire-and-forget; flush the microtask queue.
+        await Future<void>.delayed(Duration.zero);
 
-      expect(service.shown, hasLength(1));
-      final HivorrNotification n = service.shown.single;
-      expect(n.title, 'Currency converted');
-      expect(n.body, contains('₦50,000.00'));
-      expect(n.body, contains('\u2192'));
-      expect(n.body, contains('\$35.00'));
-      expect(n.actionRoute, '/finance/convert');
-      expect(n.timestamp, fixed);
-      provider.dispose();
-    });
+        expect(service.shown, hasLength(1));
+        final HivorrNotification n = service.shown.single;
+        expect(n.title, 'Currency converted');
+        expect(n.body, contains('₦50,000.00'));
+        expect(n.body, contains('\u2192'));
+        expect(n.body, contains('\$35.00'));
+        expect(n.actionRoute, '/finance/convert');
+        expect(n.timestamp, fixed);
+        provider.dispose();
+      },
+    );
   });
 
   group('loadHistory', () {

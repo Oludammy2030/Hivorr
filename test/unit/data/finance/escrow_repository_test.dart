@@ -19,9 +19,8 @@ void main() {
     List<EscrowMilestoneDto>? milestones,
   }) {
     final List<EscrowMilestoneDto> milestoneList =
-        milestones ?? <EscrowMilestoneDto>[
-          seedMilestoneDto(id: 'ms-1', status: 'pending'),
-        ];
+        milestones ??
+        <EscrowMilestoneDto>[seedMilestoneDto(id: 'ms-1', status: 'pending')];
     final FakeEscrowRemoteDataSource remote = FakeEscrowRemoteDataSource(
       writeViaProxy: writeViaProxy,
       details: <String, EscrowDetailDto>{
@@ -59,9 +58,7 @@ void main() {
     test('getByProject returns headers for the enumerated ids', () async {
       final remote = FakeEscrowRemoteDataSource(
         details: <String, EscrowDetailDto>{
-          'escrow-1': seedDetailDto(
-            escrow: seedEscrowDto(id: 'escrow-1'),
-          ),
+          'escrow-1': seedDetailDto(escrow: seedEscrowDto(id: 'escrow-1')),
           'escrow-2': seedDetailDto(
             escrow: seedEscrowDto(id: 'escrow-2', status: 'released'),
           ),
@@ -69,11 +66,10 @@ void main() {
       );
       final repo = EscrowRepositoryImpl(remote: remote);
 
-      final List<Escrow> escrows =
-          await repo.getByProject(projectId: 'project-x', escrowIds: const <String>[
-        'escrow-1',
-        'escrow-2',
-      ]);
+      final List<Escrow> escrows = await repo.getByProject(
+        projectId: 'project-x',
+        escrowIds: const <String>['escrow-1', 'escrow-2'],
+      );
 
       expect(escrows, hasLength(2));
       expect(escrows[0].id, 'escrow-1');
@@ -84,10 +80,7 @@ void main() {
       final remote = FakeEscrowRemoteDataSource();
       final repo = EscrowRepositoryImpl(remote: remote);
 
-      await expectLater(
-        repo.getById('missing'),
-        throwsA(isA<ApiException>()),
-      );
+      await expectLater(repo.getById('missing'), throwsA(isA<ApiException>()));
     });
   });
 
@@ -97,21 +90,23 @@ void main() {
       expect(build(writeViaProxy: true).writeAvailable, isTrue);
     });
 
-    test('createEscrow throws with support-team guidance before any write',
-        () async {
-      final repo = seamBuild(writeViaProxy: false);
+    test(
+      'createEscrow throws with support-team guidance before any write',
+      () async {
+        final repo = seamBuild(writeViaProxy: false);
 
-      await expectLater(
-        repo.createEscrow(
-          payerEntityId: 'p',
-          payeeEntityId: 'ee',
-          currencyCode: 'NGN',
-          totalAmount: 50000,
-          milestones: const <EscrowMilestoneInput>[],
-        ),
-        throwsA(isA<EscrowWriteUnavailableException>()),
-      );
-    });
+        await expectLater(
+          repo.createEscrow(
+            payerEntityId: 'p',
+            payeeEntityId: 'ee',
+            currencyCode: 'NGN',
+            totalAmount: 50000,
+            milestones: const <EscrowMilestoneInput>[],
+          ),
+          throwsA(isA<EscrowWriteUnavailableException>()),
+        );
+      },
+    );
 
     test('completeMilestone / releaseMilestone / releaseFinal / refundEscrow '
         'throw the seam exception when write unavailable', () async {
@@ -160,38 +155,40 @@ void main() {
       );
     });
 
-    test('createEscrow rejects milestone sums that do not equal the total',
-        () async {
-      final repo = seamBuild(writeViaProxy: true);
+    test(
+      'createEscrow rejects milestone sums that do not equal the total',
+      () async {
+        final repo = seamBuild(writeViaProxy: true);
 
-      await expectLater(
-        repo.createEscrow(
-          payerEntityId: 'p',
-          payeeEntityId: 'ee',
-          currencyCode: 'NGN',
-          totalAmount: 50000,
-          milestones: const <EscrowMilestoneInput>[
-            EscrowMilestoneInput(
-              milestoneNumber: 1,
-              title: 'Design',
-              amount: 30000,
-            ),
-            EscrowMilestoneInput(
-              milestoneNumber: 2,
-              title: 'Build',
-              amount: 10000,
-            ),
-          ],
-        ),
-        throwsA(
-          isA<ApiException>().having(
-            (ApiException e) => e.code,
-            'code',
-            'PLT003',
+        await expectLater(
+          repo.createEscrow(
+            payerEntityId: 'p',
+            payeeEntityId: 'ee',
+            currencyCode: 'NGN',
+            totalAmount: 50000,
+            milestones: const <EscrowMilestoneInput>[
+              EscrowMilestoneInput(
+                milestoneNumber: 1,
+                title: 'Design',
+                amount: 30000,
+              ),
+              EscrowMilestoneInput(
+                milestoneNumber: 2,
+                title: 'Build',
+                amount: 10000,
+              ),
+            ],
           ),
-        ),
-      );
-    });
+          throwsA(
+            isA<ApiException>().having(
+              (ApiException e) => e.code,
+              'code',
+              'PLT003',
+            ),
+          ),
+        );
+      },
+    );
 
     test('createEscrow accepts sums within the 0.01 tolerance', () async {
       final remote = FakeEscrowRemoteDataSource(
@@ -199,10 +196,7 @@ void main() {
         createEscrowId: 'escrow-created-9',
         details: <String, EscrowDetailDto>{
           'escrow-created-9': seedDetailDto(
-            escrow: seedEscrowDto(
-              id: 'escrow-created-9',
-              status: 'created',
-            ),
+            escrow: seedEscrowDto(id: 'escrow-created-9', status: 'created'),
           ),
         },
       );
@@ -240,10 +234,7 @@ void main() {
         createEscrowId: 'escrow-created-9',
         details: <String, EscrowDetailDto>{
           'escrow-created-9': seedDetailDto(
-            escrow: seedEscrowDto(
-              id: 'escrow-created-9',
-              status: 'created',
-            ),
+            escrow: seedEscrowDto(id: 'escrow-created-9', status: 'created'),
             milestones: const <EscrowMilestoneDto>[],
           ),
         },
@@ -280,8 +271,10 @@ void main() {
       );
       final repo = EscrowRepositoryImpl(remote: remote);
 
-      final EscrowDetail detail =
-          await repo.completeMilestone(escrowId: 'escrow-1', milestoneId: 'ms-1');
+      final EscrowDetail detail = await repo.completeMilestone(
+        escrowId: 'escrow-1',
+        milestoneId: 'ms-1',
+      );
 
       expect(detail.escrow.status, 'partially_released');
       expect(detail.milestones.single.status, 'released');
@@ -332,8 +325,10 @@ void main() {
       );
       final repo = EscrowRepositoryImpl(remote: remote);
 
-      final EscrowDetail detail =
-          await repo.releaseMilestone(escrowId: 'escrow-1', milestoneId: 'ms-1');
+      final EscrowDetail detail = await repo.releaseMilestone(
+        escrowId: 'escrow-1',
+        milestoneId: 'ms-1',
+      );
 
       expect(detail.escrow.status, 'partially_released');
       expect(detail.escrow.releasedAmount, 25000);
@@ -342,31 +337,33 @@ void main() {
       expect(remote.lastMilestoneId, 'ms-1');
     });
 
-    test('refundEscrow re-reads the refunded escrow and forwards the reason',
-        () async {
-      final remote = FakeEscrowRemoteDataSource(
-        writeViaProxy: true,
-        details: <String, EscrowDetailDto>{
-          'escrow-1': seedDetailDto(
-            escrow: seedEscrowDto(
-              id: 'escrow-1',
-              status: 'refunded',
-              refundedAmount: 50000,
+    test(
+      'refundEscrow re-reads the refunded escrow and forwards the reason',
+      () async {
+        final remote = FakeEscrowRemoteDataSource(
+          writeViaProxy: true,
+          details: <String, EscrowDetailDto>{
+            'escrow-1': seedDetailDto(
+              escrow: seedEscrowDto(
+                id: 'escrow-1',
+                status: 'refunded',
+                refundedAmount: 50000,
+              ),
             ),
-          ),
-        },
-      );
-      final repo = EscrowRepositoryImpl(remote: remote);
+          },
+        );
+        final repo = EscrowRepositoryImpl(remote: remote);
 
-      final EscrowDetail detail = await repo.refundEscrow(
-        escrowId: 'escrow-1',
-        reason: 'goods not delivered',
-      );
+        final EscrowDetail detail = await repo.refundEscrow(
+          escrowId: 'escrow-1',
+          reason: 'goods not delivered',
+        );
 
-      expect(detail.escrow.status, 'refunded');
-      expect(detail.escrow.refundedAmount, 50000);
-      expect(remote.refundCallCount, 1);
-      expect(remote.lastRefundReason, 'goods not delivered');
-    });
+        expect(detail.escrow.status, 'refunded');
+        expect(detail.escrow.refundedAmount, 50000);
+        expect(remote.refundCallCount, 1);
+        expect(remote.lastRefundReason, 'goods not delivered');
+      },
+    );
   });
 }

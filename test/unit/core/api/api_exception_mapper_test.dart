@@ -6,10 +6,7 @@ import 'package:hivorr/core/api/exceptions/api_exception_mapper.dart';
 
 /// Builds a [DioException] carrying a response with [status] and optional
 /// [data], then maps it via [ApiExceptionMapper].
-ApiException _mapStatus(
-  int status, {
-  Map<String, dynamic>? data,
-}) {
+ApiException _mapStatus(int status, {Map<String, dynamic>? data}) {
   final requestOptions = RequestOptions(path: '/x');
   final response = Response<dynamic>(
     requestOptions: requestOptions,
@@ -52,10 +49,10 @@ void main() {
     });
 
     test('422 with PLT003 -> validation and honors message', () {
-      final e = _mapStatus(422, data: <String, dynamic>{
-        'code': 'PLT003',
-        'message': 'Invalid payload',
-      });
+      final e = _mapStatus(
+        422,
+        data: <String, dynamic>{'code': 'PLT003', 'message': 'Invalid payload'},
+      );
       expect(e.kind, ApiExceptionKind.validation);
       expect(e.code, 'PLT003');
       expect(e.message, 'Invalid payload');
@@ -73,18 +70,16 @@ void main() {
     });
 
     test('platform code is honored over status default', () {
-      final e = _mapStatus(403, data: <String, dynamic>{
-        'code': 'PLTXYZ',
-        'message': 'custom message',
-      });
+      final e = _mapStatus(
+        403,
+        data: <String, dynamic>{'code': 'PLTXYZ', 'message': 'custom message'},
+      );
       expect(e.code, 'PLTXYZ');
       expect(e.message, 'custom message');
     });
 
     test('unknown status -> unknown with no leaked raw data', () {
-      final e = _mapStatus(418, data: <String, dynamic>{
-        'message': 'teapot',
-      });
+      final e = _mapStatus(418, data: <String, dynamic>{'message': 'teapot'});
       expect(e.kind, ApiExceptionKind.unknown);
       expect(e.message, 'teapot');
     });

@@ -25,8 +25,9 @@ void main() {
       '/p/$slug/$id';
 
   group('ProfessionalProfileScreen', () {
-    testWidgets('renders the branded loading state while fetching',
-        (WidgetTester tester) async {
+    testWidgets('renders the branded loading state while fetching', (
+      WidgetTester tester,
+    ) async {
       final Completer<void> gate = Completer<void>();
       final stack = buildPortfolioStack(gate: gate);
       addTearDown(stack.provider.dispose);
@@ -42,8 +43,9 @@ void main() {
       await tester.pump();
     });
 
-    testWidgets('renders header, badges, credentials and portfolio when loaded',
-        (WidgetTester tester) async {
+    testWidgets('renders header, badges, credentials and portfolio when loaded', (
+      WidgetTester tester,
+    ) async {
       final stack = buildPortfolioStack();
       addTearDown(stack.provider.dispose);
 
@@ -56,8 +58,11 @@ void main() {
       expect(find.text('Ada Lovelace'), findsOneWidget);
       expect(find.text('Analytical engine pioneer.'), findsOneWidget);
       expect(find.text('Software Engineer · Technology'), findsOneWidget);
-      expect(find.textContaining('NG'), findsWidgets,
-          reason: 'country chip renders');
+      expect(
+        find.textContaining('NG'),
+        findsWidgets,
+        reason: 'country chip renders',
+      );
 
       // Badges row
       expect(find.text('Identity Verified · TIER_1 · active'), findsOneWidget);
@@ -80,31 +85,34 @@ void main() {
       expect(find.text('Lakehouse Migration'), findsOneWidget);
     });
 
-    testWidgets('renders the not-found empty state when server returns PLT004',
-        (WidgetTester tester) async {
-      final stack = buildPortfolioStack(
-        error: const ApiException(
-          kind: ApiExceptionKind.notFound,
-          message: 'not found',
-          code: 'PLT004',
-        ),
-      );
-      addTearDown(stack.provider.dispose);
+    testWidgets(
+      'renders the not-found empty state when server returns PLT004',
+      (WidgetTester tester) async {
+        final stack = buildPortfolioStack(
+          error: const ApiException(
+            kind: ApiExceptionKind.notFound,
+            message: 'not found',
+            code: 'PLT004',
+          ),
+        );
+        addTearDown(stack.provider.dispose);
 
-      await pumpPortfolioScreen(tester, stack.buildProviders(), path());
-      await tester.pump();
-      await tester.pump();
+        await pumpPortfolioScreen(tester, stack.buildProviders(), path());
+        await tester.pump();
+        await tester.pump();
 
-      expect(find.byType(HivorrEmptyState), findsOneWidget);
-      expect(find.text('Profile not found'), findsOneWidget);
-      expect(
-        find.textContaining('could not be found or is not currently public'),
-        findsOneWidget,
-      );
-    });
+        expect(find.byType(HivorrEmptyState), findsOneWidget);
+        expect(find.text('Profile not found'), findsOneWidget);
+        expect(
+          find.textContaining('could not be found or is not currently public'),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('shows a retry state on network failure and recover on retry',
-        (WidgetTester tester) async {
+    testWidgets('shows a retry state on network failure and recover on retry', (
+      WidgetTester tester,
+    ) async {
       final stack = buildPortfolioStack(
         error: const ApiException(
           kind: ApiExceptionKind.network,
@@ -135,8 +143,9 @@ void main() {
       expect(stack.remote.callCount, 2);
     });
 
-    testWidgets('guards the empty id and shows not-found without an RPC call',
-        (WidgetTester tester) async {
+    testWidgets('guards the empty id and shows not-found without an RPC call', (
+      WidgetTester tester,
+    ) async {
       final stack = buildPortfolioStack();
       addTearDown(stack.provider.dispose);
 
@@ -158,45 +167,53 @@ void main() {
 
       expect(find.byType(HivorrEmptyState), findsOneWidget);
       expect(find.text('Profile not found'), findsOneWidget);
-      expect(stack.remote.callCount, 0,
-          reason: 'FV-32: an empty id never issues an RPC');
-    });
-
-    testWidgets('renders cleanly with no credentials, no portfolio and no bio',
-        (WidgetTester tester) async {
-      final stack = buildPortfolioStack(
-        result: seedPublicProfileDto(
-          bio: null,
-          countryCode: null,
-          professions: <PublicProfessionDto>[
-            seedPublicProfessionDto(),
-          ],
-          credentials: <PublicCredentialDto>[],
-          portfolioItems: <PortfolioItemDto>[],
-          kycTierCode: null,
-          kycStatus: null,
-        ),
+      expect(
+        stack.remote.callCount,
+        0,
+        reason: 'FV-32: an empty id never issues an RPC',
       );
-      addTearDown(stack.provider.dispose);
-
-      await pumpPortfolioScreen(tester, stack.buildProviders(), path());
-      await tester.pump();
-      await tester.pump();
-
-      expect(find.byType(ProfileHeaderCard), findsOneWidget);
-      expect(find.text('Ada Lovelace'), findsOneWidget);
-      expect(find.text('Credentials'), findsNothing);
-      expect(find.text('Portfolio'), findsNothing);
-      expect(find.byType(CredentialCard), findsNothing);
-      expect(find.byType(PortfolioItemCard), findsNothing);
-      expect(find.text('0 Approved Credentials'), findsOneWidget);
-      expect(find.text('Trade Verified'), findsOneWidget);
-      expect(find.textContaining('Identity Verified'), findsNothing,
-          reason: 'no identity credential and no KYC tier → identity badge hidden');
     });
 
-    testWidgets('renders the generic app bar title (no display-name leak)',
-        (WidgetTester tester) async {
+    testWidgets(
+      'renders cleanly with no credentials, no portfolio and no bio',
+      (WidgetTester tester) async {
+        final stack = buildPortfolioStack(
+          result: seedPublicProfileDto(
+            bio: null,
+            countryCode: null,
+            professions: <PublicProfessionDto>[seedPublicProfessionDto()],
+            credentials: <PublicCredentialDto>[],
+            portfolioItems: <PortfolioItemDto>[],
+            kycTierCode: null,
+            kycStatus: null,
+          ),
+        );
+        addTearDown(stack.provider.dispose);
+
+        await pumpPortfolioScreen(tester, stack.buildProviders(), path());
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.byType(ProfileHeaderCard), findsOneWidget);
+        expect(find.text('Ada Lovelace'), findsOneWidget);
+        expect(find.text('Credentials'), findsNothing);
+        expect(find.text('Portfolio'), findsNothing);
+        expect(find.byType(CredentialCard), findsNothing);
+        expect(find.byType(PortfolioItemCard), findsNothing);
+        expect(find.text('0 Approved Credentials'), findsOneWidget);
+        expect(find.text('Trade Verified'), findsOneWidget);
+        expect(
+          find.textContaining('Identity Verified'),
+          findsNothing,
+          reason:
+              'no identity credential and no KYC tier → identity badge hidden',
+        );
+      },
+    );
+
+    testWidgets('renders the generic app bar title (no display-name leak)', (
+      WidgetTester tester,
+    ) async {
       final stack = buildPortfolioStack();
       addTearDown(stack.provider.dispose);
 
@@ -210,7 +227,8 @@ void main() {
           matching: find.text('Profile'),
         ),
         findsOneWidget,
-        reason: 'route title stays generic; the display name renders in the '
+        reason:
+            'route title stays generic; the display name renders in the '
             'header card only',
       );
       expect(

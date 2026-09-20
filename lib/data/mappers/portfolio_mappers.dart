@@ -21,13 +21,17 @@ class PortfolioMappers {
     avatarPath: dto.avatarPath,
     bio: dto.bio,
     countryCode: dto.countryCode,
-    professions: dto.professions.map(toPublicProfession).toList(growable: false),
-    credentials:
-        dto.credentials.map(toPublicCredential).toList(growable: false),
+    professions: dto.professions
+        .map(toPublicProfession)
+        .toList(growable: false),
+    credentials: dto.credentials
+        .map(toPublicCredential)
+        .toList(growable: false),
     kycTierCode: dto.kycTierCode,
     kycStatus: dto.kycStatus,
-    portfolioItems:
-        dto.portfolioItems.map(toPortfolioItem).toList(growable: false),
+    portfolioItems: dto.portfolioItems
+        .map(toPortfolioItem)
+        .toList(growable: false),
     professionSlug: dto.professionSlug,
     professionName: dto.professionName,
     industrySlug: dto.industrySlug,

@@ -7,13 +7,12 @@ import '../../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('CurrencyAccountCard', () {
-    testWidgets('renders currency code and name for the account',
-        (WidgetTester tester) async {
+    testWidgets('renders currency code and name for the account', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
-        CurrencyAccountCard(
-          account: seedAccountEntity(currencyCode: 'NGN'),
-        ),
+        CurrencyAccountCard(account: seedAccountEntity(currencyCode: 'NGN')),
       );
       expect(find.textContaining('NGN'), findsOneWidget);
       expect(find.textContaining('Nigerian Naira'), findsOneWidget);
@@ -29,7 +28,9 @@ void main() {
       expect(find.text('Active'), findsOneWidget);
     });
 
-    testWidgets('renders bank name when activated', (WidgetTester tester) async {
+    testWidgets('renders bank name when activated', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         CurrencyAccountCard(
@@ -40,14 +41,12 @@ void main() {
         ),
       );
       expect(find.text('Zenith Bank'), findsOneWidget);
-      expect(
-        find.text('Account ending 0012345678'),
-        findsOneWidget,
-      );
+      expect(find.text('Account ending 0012345678'), findsOneWidget);
     });
 
-    testWidgets('renders pending badge and generic guidance',
-        (WidgetTester tester) async {
+    testWidgets('renders pending badge and generic guidance', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         CurrencyAccountCard(
@@ -64,8 +63,9 @@ void main() {
       );
     });
 
-    testWidgets('renders pending badge with explicit guidance message',
-        (WidgetTester tester) async {
+    testWidgets('renders pending badge with explicit guidance message', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         CurrencyAccountCard(
@@ -90,8 +90,9 @@ void main() {
       expect(find.text('Suspended'), findsOneWidget);
     });
 
-    testWidgets('renders closed badge for unknown status',
-        (WidgetTester tester) async {
+    testWidgets('renders closed badge for unknown status', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         CurrencyAccountCard(
@@ -101,8 +102,9 @@ void main() {
       expect(find.text('Closed'), findsOneWidget);
     });
 
-    testWidgets('does not render bank name or account number when absent',
-        (WidgetTester tester) async {
+    testWidgets('does not render bank name or account number when absent', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         CurrencyAccountCard(

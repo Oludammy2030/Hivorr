@@ -53,11 +53,7 @@ String _computeProjectRoot(String scriptPath) {
   return Directory.current.path;
 }
 
-void _collectDartFiles(
-  Directory dir,
-  String scriptPath,
-  List<String> files,
-) {
+void _collectDartFiles(Directory dir, String scriptPath, List<String> files) {
   for (final entity in dir.listSync()) {
     if (entity is Directory) {
       final base = _basename(entity.path);
@@ -81,8 +77,9 @@ int _lineOf(String content, int index) {
 
 String _snippetAt(String content, int index, int length) {
   final start = index < 0 ? 0 : index;
-  final end =
-      (start + length) > content.length ? content.length : start + length;
+  final end = (start + length) > content.length
+      ? content.length
+      : start + length;
   return content.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
@@ -110,21 +107,23 @@ void main() {
     if (!file.existsSync()) continue;
     final content = file.readAsStringSync();
     for (final m in gatewayImportPattern.allMatches(content)) {
-      findings.add(_ImportFinding(
-        filePath,
-        _lineOf(content, m.start),
-        _snippetAt(content, m.start, 80),
-      ));
+      findings.add(
+        _ImportFinding(
+          filePath,
+          _lineOf(content, m.start),
+          _snippetAt(content, m.start, 80),
+        ),
+      );
     }
   }
 
   group('DoD-C5: Trust gateway abstraction boundary', () {
-    test(
-        'no direct PaystackGateway/FlutterwaveGateway imports in '
+    test('no direct PaystackGateway/FlutterwaveGateway imports in '
         'lib/systems/ + lib/data/', () {
       final buffer = StringBuffer();
       buffer.writeln(
-          'Gateway abstraction scan found ${findings.length} finding(s):');
+        'Gateway abstraction scan found ${findings.length} finding(s):',
+      );
       for (final f in findings) {
         buffer.writeln('  - $f');
       }

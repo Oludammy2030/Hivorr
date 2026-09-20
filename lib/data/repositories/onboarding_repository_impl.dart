@@ -24,11 +24,10 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   Future<OnboardingStatus> update({
     EntityCapability? capability,
     bool? completed,
-  }) async =>
-      OnboardingStatusMapper.toEntity(
-        await remote.updateStatus(
-          capability: capability?.name,
-          completed: completed,
-        ),
-      );
+  }) async => OnboardingStatusMapper.toEntity(
+    await remote.updateStatus(
+      capability: capability?.name,
+      completed: completed,
+    ),
+  );
 }

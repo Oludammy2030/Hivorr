@@ -23,35 +23,29 @@ void main() {
     required FakeConversionRemoteDataSource remote,
     required FakeConversionRateSource rateSource,
     required FakeFinancialRepository financial,
-  }) =>
-      ConversionRepositoryImpl(
-        remote: remote,
-        rateSource: rateSource,
-        financialRepository: financial,
-      );
+  }) => ConversionRepositoryImpl(
+    remote: remote,
+    rateSource: rateSource,
+    financialRepository: financial,
+  );
 
   ConversionProvider buildProvider(
     ConversionRepositoryImpl repo,
     FakeFinancialRepository financial,
-  ) =>
-      ConversionProvider(
-        service: ConversionService(
-          repository: repo,
-          pairsConfig: const WalletConversionPairsConfig(
-            enabled: true,
-            baseCrossRates: <String, double>{
-              'NGN|USD': 0.0007,
-            },
-          ),
-        ),
-        financialService: FinancialService(repository: financial),
-      );
+  ) => ConversionProvider(
+    service: ConversionService(
+      repository: repo,
+      pairsConfig: const WalletConversionPairsConfig(
+        enabled: true,
+        baseCrossRates: <String, double>{'NGN|USD': 0.0007},
+      ),
+    ),
+    financialService: FinancialService(repository: financial),
+  );
 
   FakeConversionRemoteDataSource seededRemote() =>
       FakeConversionRemoteDataSource()
-        ..setConversion(
-          seedConversionDto(id: 'conversion-bal', toAmount: 35),
-        );
+        ..setConversion(seedConversionDto(id: 'conversion-bal', toAmount: 35));
 
   FakeFinancialRepository seededFinancial({bool postRefreshError = false}) {
     final financial = FakeFinancialRepository(
@@ -71,27 +65,29 @@ void main() {
     return financial;
   }
 
-  test('execute re-reads financial_status_get after the committed conversion',
-      () async {
-    final remote = seededRemote();
-    final rateSource = FakeConversionRateSource()
-      ..setRate('NGN', 'USD', 0.0007);
-    final financial = seededFinancial();
-    final repo = buildRepo(
-      remote: remote,
-      rateSource: rateSource,
-      financial: financial,
-    );
+  test(
+    'execute re-reads financial_status_get after the committed conversion',
+    () async {
+      final remote = seededRemote();
+      final rateSource = FakeConversionRateSource()
+        ..setRate('NGN', 'USD', 0.0007);
+      final financial = seededFinancial();
+      final repo = buildRepo(
+        remote: remote,
+        rateSource: rateSource,
+        financial: financial,
+      );
 
-    await repo.executeConversion(
-      fromCurrency: 'NGN',
-      toCurrency: 'USD',
-      amount: 50000,
-    );
+      await repo.executeConversion(
+        fromCurrency: 'NGN',
+        toCurrency: 'USD',
+        amount: 50000,
+      );
 
-    expect(financial.statusCallCount, 1);
-    expect(remote.lastRate, 0.0007);
-  });
+      expect(financial.statusCallCount, 1);
+      expect(remote.lastRate, 0.0007);
+    },
+  );
 
   test('the refresh reflects server-authoritative balances (no optimistic '
       'decrement)', () async {
@@ -115,40 +111,41 @@ void main() {
     expect(provider.lastConversion?.status, 'completed');
     expect(financial.statusCallCount, greaterThanOrEqualTo(1));
     expect(
-      (await financial.getStatus())
-          .balances
+      (await financial.getStatus()).balances
           .firstWhere((Balance b) => b.currencyCode == 'NGN')
           .availableBalance,
       0,
     );
     expect(
-      (await financial.getStatus())
-          .balances
+      (await financial.getStatus()).balances
           .firstWhere((Balance b) => b.currencyCode == 'USD')
           .availableBalance,
       35,
     );
   });
 
-  test('a refresh failure never fails an already-committed conversion', () async {
-    final financial = seededFinancial(postRefreshError: true);
-    final remote = seededRemote();
-    final repo = buildRepo(
-      remote: remote,
-      rateSource: FakeConversionRateSource()..setRate('NGN', 'USD', 0.0007),
-      financial: financial,
-    );
+  test(
+    'a refresh failure never fails an already-committed conversion',
+    () async {
+      final financial = seededFinancial(postRefreshError: true);
+      final remote = seededRemote();
+      final repo = buildRepo(
+        remote: remote,
+        rateSource: FakeConversionRateSource()..setRate('NGN', 'USD', 0.0007),
+        financial: financial,
+      );
 
-    final conversion = await repo.executeConversion(
-      fromCurrency: 'NGN',
-      toCurrency: 'USD',
-      amount: 50000,
-    );
+      final conversion = await repo.executeConversion(
+        fromCurrency: 'NGN',
+        toCurrency: 'USD',
+        amount: 50000,
+      );
 
-    expect(conversion.id, 'conversion-bal');
-    expect(conversion.status, 'completed');
-    expect(remote.convertCallCount, 1);
-  });
+      expect(conversion.id, 'conversion-bal');
+      expect(conversion.status, 'completed');
+      expect(remote.convertCallCount, 1);
+    },
+  );
 
   test('a failed conversion triggers no balance refresh', () async {
     final remote = seededRemote()
@@ -165,10 +162,17 @@ void main() {
     );
 
     await expectLater(
-      repo.executeConversion(fromCurrency: 'NGN', toCurrency: 'USD', amount: 50000),
+      repo.executeConversion(
+        fromCurrency: 'NGN',
+        toCurrency: 'USD',
+        amount: 50000,
+      ),
       throwsA(
-        isA<ApiException>()
-            .having((ApiException e) => e.code, 'code', 'PLT006'),
+        isA<ApiException>().having(
+          (ApiException e) => e.code,
+          'code',
+          'PLT006',
+        ),
       ),
     );
     expect(financial.statusCallCount, 0);

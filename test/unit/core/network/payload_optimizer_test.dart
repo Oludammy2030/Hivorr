@@ -19,38 +19,52 @@ void main() {
 
   group('recommendedImageQuality', () {
     test('mobile → low', () {
-      expect(optimizer.recommendedImageQuality(NetworkType.mobile),
-          ImageQuality.low);
+      expect(
+        optimizer.recommendedImageQuality(NetworkType.mobile),
+        ImageQuality.low,
+      );
     });
 
     test('bluetooth → low', () {
-      expect(optimizer.recommendedImageQuality(NetworkType.bluetooth),
-          ImageQuality.low);
+      expect(
+        optimizer.recommendedImageQuality(NetworkType.bluetooth),
+        ImageQuality.low,
+      );
     });
 
     test('wifi → medium', () {
-      expect(optimizer.recommendedImageQuality(NetworkType.wifi),
-          ImageQuality.medium);
+      expect(
+        optimizer.recommendedImageQuality(NetworkType.wifi),
+        ImageQuality.medium,
+      );
     });
 
     test('ethernet → high', () {
-      expect(optimizer.recommendedImageQuality(NetworkType.ethernet),
-          ImageQuality.high);
+      expect(
+        optimizer.recommendedImageQuality(NetworkType.ethernet),
+        ImageQuality.high,
+      );
     });
 
     test('vpn → high', () {
-      expect(optimizer.recommendedImageQuality(NetworkType.vpn),
-          ImageQuality.high);
+      expect(
+        optimizer.recommendedImageQuality(NetworkType.vpn),
+        ImageQuality.high,
+      );
     });
 
     test('none → low (conservative)', () {
-      expect(optimizer.recommendedImageQuality(NetworkType.none),
-          ImageQuality.low);
+      expect(
+        optimizer.recommendedImageQuality(NetworkType.none),
+        ImageQuality.low,
+      );
     });
 
     test('other → mobileImageQuality default', () {
-      expect(optimizer.recommendedImageQuality(NetworkType.other),
-          ImageQuality.low);
+      expect(
+        optimizer.recommendedImageQuality(NetworkType.other),
+        ImageQuality.low,
+      );
     });
   });
 
@@ -189,8 +203,10 @@ void main() {
 
       final customOptimizer = PayloadOptimizer(customConfig);
 
-      expect(customOptimizer.recommendedImageQuality(NetworkType.wifi),
-          ImageQuality.high);
+      expect(
+        customOptimizer.recommendedImageQuality(NetworkType.wifi),
+        ImageQuality.high,
+      );
     });
 
     test('custom page sizes are respected', () {
@@ -225,10 +241,14 @@ void main() {
 
       final customOptimizer = PayloadOptimizer(customConfig);
 
-      expect(customOptimizer.recommendedMaxUploadSizeMb(NetworkType.mobile),
-          10.0);
-      expect(customOptimizer.recommendedMaxUploadSizeMb(NetworkType.wifi),
-          100.0);
+      expect(
+        customOptimizer.recommendedMaxUploadSizeMb(NetworkType.mobile),
+        10.0,
+      );
+      expect(
+        customOptimizer.recommendedMaxUploadSizeMb(NetworkType.wifi),
+        100.0,
+      );
     });
   });
 }

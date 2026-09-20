@@ -16,10 +16,8 @@ class FakeFinancialPayoutRepository implements FinancialPayoutRepository {
     this.nextError,
     this.nextWithdrawError,
     this.nextWithdrawalResult,
-  })  : _accounts = List<PayoutAccount>.of(seed),
-        _accountIds = <String>{
-          for (final PayoutAccount a in seed) a.id,
-        };
+  }) : _accounts = List<PayoutAccount>.of(seed),
+       _accountIds = <String>{for (final PayoutAccount a in seed) a.id};
 
   final List<PayoutAccount> _accounts;
   final Set<String> _accountIds;
@@ -46,37 +44,36 @@ class FakeFinancialPayoutRepository implements FinancialPayoutRepository {
   static PayoutAccount verified({
     String id = 'acc-verified',
     String currencyCode = 'NGN',
-  }) =>
-      PayoutAccount(
-        id: id,
-        currencyCode: currencyCode,
-        bankName: 'Guaranty Trust',
-        accountNumber: '0123456789',
-        accountName: 'John Doe',
-        status: PayoutAccountStatus.active,
-        isVerified: true,
-        isDefault: true,
-        verifiedAt: DateTime.now().subtract(const Duration(days: 10)),
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-      );
+  }) => PayoutAccount(
+    id: id,
+    currencyCode: currencyCode,
+    bankName: 'Guaranty Trust',
+    accountNumber: '0123456789',
+    accountName: 'John Doe',
+    status: PayoutAccountStatus.active,
+    isVerified: true,
+    isDefault: true,
+    verifiedAt: DateTime.now().subtract(const Duration(days: 10)),
+    createdAt: DateTime.now().subtract(const Duration(days: 10)),
+  );
 
   /// A bound seed account that has NOT passed verification.
   static PayoutAccount unverified({
     String id = 'acc-unverified',
     String currencyCode = 'NGN',
-  }) =>
-      PayoutAccount(
-        id: id,
-        currencyCode: currencyCode,
-        bankName: 'Zenith Bank',
-        accountNumber: '9876543210',
-        accountName: 'John Doe',
-        status: PayoutAccountStatus.pending,
-        isVerified: false,
-        createdAt: DateTime.now(),
-      );
+  }) => PayoutAccount(
+    id: id,
+    currencyCode: currencyCode,
+    bankName: 'Zenith Bank',
+    accountNumber: '9876543210',
+    accountName: 'John Doe',
+    status: PayoutAccountStatus.pending,
+    isVerified: false,
+    createdAt: DateTime.now(),
+  );
 
-  List<PayoutAccount> get accounts => List<PayoutAccount>.unmodifiable(_accounts);
+  List<PayoutAccount> get accounts =>
+      List<PayoutAccount>.unmodifiable(_accounts);
 
   @override
   Future<PayoutAccount> bindAccount({
@@ -122,7 +119,8 @@ class FakeFinancialPayoutRepository implements FinancialPayoutRepository {
     lastWithdrawalAmount = amount;
     if (nextError != null) throw nextError!;
     if (nextWithdrawError != null) throw nextWithdrawError!;
-    final WithdrawalResult result = nextWithdrawalResult ??
+    final WithdrawalResult result =
+        nextWithdrawalResult ??
         WithdrawalResult(
           payoutId: 'pay-1',
           amount: amount,

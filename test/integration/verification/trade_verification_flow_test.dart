@@ -65,27 +65,30 @@ void main() {
       };
 
   Map<String, dynamic> envelope(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   ({TradeVerificationRepositoryImpl repository, FakeStorageService storage})
-      buildFlow({
+  buildFlow({
     Map<String, Object? Function(Map<String, dynamic>)>? rpcHandlers,
     bool signedIn = true,
     String Function()? tradeStatusGetter,
   }) {
     final FakeStorageService storage = FakeStorageService();
-    final String Function() tradeStatus = tradeStatusGetter ?? (() => 'pending');
+    final String Function() tradeStatus =
+        tradeStatusGetter ?? (() => 'pending');
     final Map<String, Object? Function(Map<String, dynamic>)> defaults = {
       'verification_submit': (params) =>
           envelope(submissionData(status: 'pending')),
       'verification_status_get': (params) =>
           envelope(statusData(tradeStatus: tradeStatus())),
     };
-    defaults.addAll(rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{});
+    defaults.addAll(
+      rpcHandlers ?? const <String, Object? Function(Map<String, dynamic>)>{},
+    );
     final client = MockSupabaseClientFactory.create(
       currentUser: signedIn ? fakeUser('u1') : null,
       rpcHandlers: defaults,
@@ -104,104 +107,125 @@ void main() {
     );
     final SupabaseTradeVerificationRemoteDataSource remote =
         SupabaseTradeVerificationRemoteDataSource(
-      dio: Dio(),
-      supabase: client,
-      exceptionMapper: const ApiExceptionMapper(),
-    );
+          dio: Dio(),
+          supabase: client,
+          exceptionMapper: const ApiExceptionMapper(),
+        );
     final TradeVerificationRepositoryImpl repository =
         TradeVerificationRepositoryImpl(
-      remote: remote,
-      storage: storage,
-      supabase: client,
-    );
+          remote: remote,
+          storage: storage,
+          supabase: client,
+        );
     return (repository: repository, storage: storage);
   }
 
   group('Trade verification flow (EP-02-11 §15)', () {
-    test('submits: validate → private-bucket upload → credential → RPC → entity',
-        () async {
-      final flow = buildFlow();
-      final VerificationSubmission submission = await flow.repository
-          .submitTradeProof(
-        type: TradeProofType.certificate,
-        professionId: professionId,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-      );
+    test(
+      'submits: validate → private-bucket upload → credential → RPC → entity',
+      () async {
+        final flow = buildFlow();
+        final VerificationSubmission submission = await flow.repository
+            .submitTradeProof(
+              type: TradeProofType.certificate,
+              professionId: professionId,
+              bytes: bytes,
+              mimeType: mimeType,
+              fileName: fileName,
+            );
 
-      expect(flow.storage.lastBucket, StorageBuckets.credentialDocuments);
-      expect(flow.storage.lastMimeType, mimeType);
-      expect(submission.id, 'trade-sub-9001');
-      expect(submission.credentialId, 'cred-1');
-      expect(submission.status, VerificationStatusKind.pending);
-    });
+        expect(flow.storage.lastBucket, StorageBuckets.credentialDocuments);
+        expect(flow.storage.lastMimeType, mimeType);
+        expect(submission.id, 'trade-sub-9001');
+        expect(submission.credentialId, 'cred-1');
+        expect(submission.status, VerificationStatusKind.pending);
+      },
+    );
 
-    test('submit requires a signed-in entity (server-authoritative id)',
-        () async {
-      final flow = buildFlow(signedIn: false);
+    test(
+      'submit requires a signed-in entity (server-authoritative id)',
+      () async {
+        final flow = buildFlow(signedIn: false);
 
-      expect(
-        () => flow.repository.submitTradeProof(
-          type: TradeProofType.license,
-          professionId: professionId,
-          bytes: bytes,
-          mimeType: mimeType,
-          fileName: fileName,
-        ),
-        throwsA(isA<ApiException>()
-            .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.auth)
-            .having((ApiException e) => e.code, 'code', 'PLT001')),
-      );
-    });
+        expect(
+          () => flow.repository.submitTradeProof(
+            type: TradeProofType.license,
+            professionId: professionId,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+          ),
+          throwsA(
+            isA<ApiException>()
+                .having(
+                  (ApiException e) => e.kind,
+                  'kind',
+                  ApiExceptionKind.auth,
+                )
+                .having((ApiException e) => e.code, 'code', 'PLT001'),
+          ),
+        );
+      },
+    );
 
     test('status surfaces the per-profession trade aggregate', () async {
       final flow = buildFlow(tradeStatusGetter: () => 'approved');
 
       final TradeVerificationStatus status = await flow.repository.getStatus();
 
-      expect(status.kindFor(professionId), TradeVerificationStatusKind.approved);
+      expect(
+        status.kindFor(professionId),
+        TradeVerificationStatusKind.approved,
+      );
     });
 
-    test('a rejected envelope maps to a typed conflict ApiException',
-        () async {
+    test('a rejected envelope maps to a typed conflict ApiException', () async {
       final flow = buildFlow(
         rpcHandlers: {
           'verification_status_get': (params) => <String, dynamic>{
-                'code': 'PLT005',
-                'data': <String, dynamic>{},
-              },
+            'code': 'PLT005',
+            'data': <String, dynamic>{},
+          },
         },
       );
 
       expect(
         () => flow.repository.getStatus(),
-        throwsA(isA<ApiException>().having((ApiException e) => e.kind,
-            'kind', ApiExceptionKind.conflict)),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException e) => e.kind,
+            'kind',
+            ApiExceptionKind.conflict,
+          ),
+        ),
       );
     });
 
-    test('provider drives submit → refresh → success on the real stack',
-        () async {
-      final flow = buildFlow();
-      final TradeVerificationProvider provider = TradeVerificationProvider(
-        repo: flow.repository,
-      );
+    test(
+      'provider drives submit → refresh → success on the real stack',
+      () async {
+        final flow = buildFlow();
+        final TradeVerificationProvider provider = TradeVerificationProvider(
+          repo: flow.repository,
+        );
 
-      await provider.submitTradeProof(
-        type: TradeProofType.certificate,
-        professionId: professionId,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-      );
+        await provider.submitTradeProof(
+          type: TradeProofType.certificate,
+          professionId: professionId,
+          bytes: bytes,
+          mimeType: mimeType,
+          fileName: fileName,
+        );
 
-      expect(provider.submitState, SubmitState.success);
-      expect(provider.status, isNotNull);
-      expect(provider.status!.kindFor(professionId),
-          TradeVerificationStatusKind.pending);
-      provider.dispose();
-    });
+        expect(provider.submitState, SubmitState.success);
+        expect(provider.status, isNotNull);
+        expect(
+          provider.status!.kindFor(professionId),
+          TradeVerificationStatusKind.pending,
+        );
+        provider.dispose();
+      },
+    );
 
     test('pending → (mock review_approve) → approved via refreshStatus on the '
         'real stack', () async {
@@ -212,15 +236,19 @@ void main() {
         repo: flow.repository,
       );
       await provider.refreshStatus();
-      expect(provider.status!.kindFor(professionId),
-          TradeVerificationStatusKind.pending);
+      expect(
+        provider.status!.kindFor(professionId),
+        TradeVerificationStatusKind.pending,
+      );
 
       // Server-side review_approve side effect: status becomes approved.
       tradeStatus = 'approved';
       await provider.refreshStatus();
 
-      expect(provider.status!.kindFor(professionId),
-          TradeVerificationStatusKind.approved);
+      expect(
+        provider.status!.kindFor(professionId),
+        TradeVerificationStatusKind.approved,
+      );
       provider.dispose();
     });
 

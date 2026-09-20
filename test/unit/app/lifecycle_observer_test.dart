@@ -13,13 +13,10 @@ void main() {
       observer.didChangeAppLifecycleState(AppLifecycleState.resumed);
       observer.didChangeAppLifecycleState(AppLifecycleState.paused);
 
-      expect(
-        received,
-        <AppLifecycleState>[
-          AppLifecycleState.resumed,
-          AppLifecycleState.paused,
-        ],
-      );
+      expect(received, <AppLifecycleState>[
+        AppLifecycleState.resumed,
+        AppLifecycleState.paused,
+      ]);
 
       unregister();
       observer.didChangeAppLifecycleState(AppLifecycleState.detached);

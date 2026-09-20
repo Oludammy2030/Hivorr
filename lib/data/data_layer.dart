@@ -563,8 +563,9 @@ registerConversionLayer(
 /// authenticated RPCs are live, reads are RLS-scoped, and filing/withdrawing
 /// freeze/release the escrow server-side — the client never writes tables and
 /// never references the service-role-only `dispute_resolve`.
-({DisputeRepository repository, DisputeProvider provider})
-registerDisputeLayer(ApiLayer apiLayer) {
+({DisputeRepository repository, DisputeProvider provider}) registerDisputeLayer(
+  ApiLayer apiLayer,
+) {
   final remote = SupabaseDisputeRemoteDataSource(
     dio: apiLayer.dio,
     supabase: apiLayer.supabaseClient,
@@ -590,7 +591,11 @@ registerDisputeLayer(ApiLayer apiLayer) {
 /// The store is cache-only (server-authoritative completion): when
 /// [storageEngine] is supplied the [HiveOnboardingProgressStore] backs it so
 /// the resume position survives relaunch, degrading to in-memory otherwise.
-({OnboardingService service, OnboardingProvider provider, OnboardingProgressStore store})
+({
+  OnboardingService service,
+  OnboardingProvider provider,
+  OnboardingProgressStore store,
+})
 registerOnboardingLayer({
   required ApiLayer apiLayer,
   required EntityProvider entityProvider,
@@ -615,12 +620,13 @@ registerOnboardingLayer({
           ? HiveOnboardingProgressStore(store: LocalStore(storageEngine))
           : InMemoryOnboardingProgressStore());
   final onboardingRemote = SupabaseOnboardingRemoteDataSource(
-        dio: apiLayer.dio,
-        supabase: apiLayer.supabaseClient,
-        exceptionMapper: apiLayer.exceptionMapper,
-      );
-  final OnboardingRepository onboardingRepository =
-      OnboardingRepositoryImpl(remote: onboardingRemote);
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final OnboardingRepository onboardingRepository = OnboardingRepositoryImpl(
+    remote: onboardingRemote,
+  );
   final OnboardingService service = OnboardingService(
     store: resolvedStore,
     entityRepository: entityProvider.repository,

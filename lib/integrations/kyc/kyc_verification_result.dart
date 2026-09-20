@@ -3,10 +3,7 @@
 /// Display-only — the server re-reads `getKycLevel()` after the provider signals
 /// approval; this result never grants local state (prevents spoofed state).
 class KycVerificationResult {
-  const KycVerificationResult({
-    required this.status,
-    this.providerReference,
-  });
+  const KycVerificationResult({required this.status, this.providerReference});
 
   /// The provider-reported status (`pending`, `approved`, `rejected`).
   final String status;

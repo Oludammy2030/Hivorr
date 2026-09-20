@@ -48,10 +48,7 @@ class HivorrResponsiveScaffold extends StatelessWidget {
           body: SafeArea(
             child: Row(
               children: <Widget>[
-                SizedBox(
-                  width: 280,
-                  child: sidebar!,
-                ),
+                SizedBox(width: 280, child: sidebar!),
                 Expanded(child: mobileBody),
               ],
             ),

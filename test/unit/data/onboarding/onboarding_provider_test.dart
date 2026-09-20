@@ -28,10 +28,10 @@ void main() {
   OnboardingProvider? activeProvider;
 
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.onboarding',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-        PiiRedactor(),
-      );
+    'hivorr.onboarding',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+    PiiRedactor(),
+  );
 
   tearDown(() {
     activeProvider?.dispose();
@@ -39,8 +39,7 @@ void main() {
   });
 
   group('loadProgress / resume (FV-13, FV-14)', () {
-    test('fresh entity starts at profile with an empty progress row',
-        () async {
+    test('fresh entity starts at profile with an empty progress row', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
@@ -72,8 +71,7 @@ void main() {
       await stack.provider.advance(); // -> tradeProof
       await stack.provider.advance(); // -> completed
       expect(stack.provider.isComplete, isTrue);
-      final OnboardingProgress? persisted =
-          await stack.store.read('u1');
+      final OnboardingProgress? persisted = await stack.store.read('u1');
       expect(persisted, isNotNull);
       expect(persisted!.completedSteps, OnboardingStepCode.values);
     });
@@ -88,17 +86,21 @@ void main() {
       expect(stack.provider.currentStep, OnboardingStepCode.profile);
     });
 
-    test('saveAndExit persists the current position without moving (FV-15)',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.advance();
-      await stack.provider.saveAndExit();
-      expect(stack.provider.currentStep, OnboardingStepCode.capability);
-      expect((await stack.store.read('u1'))!.step,
-          OnboardingStepCode.capability);
-    });
+    test(
+      'saveAndExit persists the current position without moving (FV-15)',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.advance();
+        await stack.provider.saveAndExit();
+        expect(stack.provider.currentStep, OnboardingStepCode.capability);
+        expect(
+          (await stack.store.read('u1'))!.step,
+          OnboardingStepCode.capability,
+        );
+      },
+    );
 
     test('account switch rebinds the progress key (SV-08)', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
@@ -107,8 +109,11 @@ void main() {
       await stack.provider.advance();
       await stack.provider.loadProgress('u2');
       expect(stack.provider.entityId, 'u2');
-      expect(stack.provider.currentStep, OnboardingStepCode.profile,
-          reason: 'u2 has no progress row — a fresh wizard must start');
+      expect(
+        stack.provider.currentStep,
+        OnboardingStepCode.profile,
+        reason: 'u2 has no progress row — a fresh wizard must start',
+      );
     });
 
     test('loadProgress without an entity is a no-op', () async {
@@ -117,8 +122,11 @@ void main() {
       await stack.provider.loadProgress();
       expect(stack.provider.progress, isNull);
       expect(stack.provider.currentStep, isNull);
-      expect(stack.service.progress, isNull,
-          reason: 'no hydration may run for an empty key');
+      expect(
+        stack.service.progress,
+        isNull,
+        reason: 'no hydration may run for an empty key',
+      );
     });
 
     test('resume alias hydrates the furthest step', () async {
@@ -142,19 +150,24 @@ void main() {
       expect((await stack.store.read('u1'))!.exited, isTrue);
     });
 
-    test('continueRegistration clears the exit flag for the resume gate',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.advance();
-      await stack.provider.exitWizard();
-      await stack.provider.continueRegistration();
-      expect(stack.provider.exited, isFalse);
-      expect(stack.provider.currentStep, OnboardingStepCode.capability,
-          reason: 'continue resumes at the saved step');
-      expect((await stack.store.read('u1'))!.exited, isFalse);
-    });
+    test(
+      'continueRegistration clears the exit flag for the resume gate',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.advance();
+        await stack.provider.exitWizard();
+        await stack.provider.continueRegistration();
+        expect(stack.provider.exited, isFalse);
+        expect(
+          stack.provider.currentStep,
+          OnboardingStepCode.capability,
+          reason: 'continue resumes at the saved step',
+        );
+        expect((await stack.store.read('u1'))!.exited, isFalse);
+      },
+    );
 
     test('lifecycle saveAndExit never sets the exit flag', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
@@ -162,30 +175,34 @@ void main() {
       await stack.hydrate('u1');
       await stack.provider.advance();
       await stack.provider.saveAndExit();
-      expect(stack.provider.exited, isFalse,
-          reason: 'an interrupted session resumes automatically');
+      expect(
+        stack.provider.exited,
+        isFalse,
+        reason: 'an interrupted session resumes automatically',
+      );
       expect((await stack.store.read('u1'))!.exited, isFalse);
     });
   });
 
   group('submit operations (FV-25, FV-61)', () {
-    test('completeProfile success flows through and sets files/state',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.completeProfile(
-        legalName: 'Jane Doe',
-        displayName: 'Jane',
-        bio: 'Builder',
-      );
-      expect(stack.provider.submitState, SubmitState.success);
-      expect(stack.remote.updateProfileCallCount, 1);
-      expect(stack.remote.profile!.legalName, 'Jane Doe');
-    });
+    test(
+      'completeProfile success flows through and sets files/state',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.completeProfile(
+          legalName: 'Jane Doe',
+          displayName: 'Jane',
+          bio: 'Builder',
+        );
+        expect(stack.provider.submitState, SubmitState.success);
+        expect(stack.remote.updateProfileCallCount, 1);
+        expect(stack.remote.profile!.legalName, 'Jane Doe');
+      },
+    );
 
-    test('avatar upload precedes the profile RPC (FV-49 call order)',
-        () async {
+    test('avatar upload precedes the profile RPC (FV-49 call order)', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
@@ -203,32 +220,37 @@ void main() {
       expect(stack.remote.lastAvatarPath, stack.storage.returnedKey);
     });
 
-    test('PLT003 storage validation surfaces as an error before network',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      stack.storage.nextError = const ApiException(
-        kind: ApiExceptionKind.validation,
-        message: 'This image is too large â€” please use a JPEG, PNG, or WebP '
-            'under 5 MB.',
-        code: 'PLT003',
-      );
-      await stack.hydrate('u1');
-      await stack.provider.completeProfile(
-        legalName: 'Jane Doe',
-        displayName: 'Jane',
-        avatarBytes: Uint8List.fromList(<int>[1, 2, 3]),
-        avatarFileName: 'me.png',
-        avatarMimeType: 'image/png',
-      );
-      expect(stack.provider.submitState, SubmitState.error);
-      expect(stack.provider.lastError?.code, 'PLT003');
-      expect(stack.storage.uploadCallCount, 0,
-          reason: 'reject-before-upload: validation failures never hit network');
-    });
+    test(
+      'PLT003 storage validation surfaces as an error before network',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        stack.storage.nextError = const ApiException(
+          kind: ApiExceptionKind.validation,
+          message:
+              'This image is too large â€” please use a JPEG, PNG, or WebP '
+              'under 5 MB.',
+          code: 'PLT003',
+        );
+        await stack.hydrate('u1');
+        await stack.provider.completeProfile(
+          legalName: 'Jane Doe',
+          displayName: 'Jane',
+          avatarBytes: Uint8List.fromList(<int>[1, 2, 3]),
+          avatarFileName: 'me.png',
+          avatarMimeType: 'image/png',
+        );
+        expect(stack.provider.submitState, SubmitState.error);
+        expect(stack.provider.lastError?.code, 'PLT003');
+        expect(
+          stack.storage.uploadCallCount,
+          0,
+          reason: 'reject-before-upload: validation failures never hit network',
+        );
+      },
+    );
 
-    test('bindProfession maps PLT005 conflict onto provider state',
-        () async {
+    test('bindProfession maps PLT005 conflict onto provider state', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       stack.remote.throwConflictOnBind = true;
@@ -282,7 +304,8 @@ void main() {
       activeProvider = stack.provider;
       stack.storage.nextError = const ApiException(
         kind: ApiExceptionKind.validation,
-        message: 'This image is too large â€” please use a JPEG, PNG, or WebP '
+        message:
+            'This image is too large â€” please use a JPEG, PNG, or WebP '
             'under 5 MB.',
         code: 'PLT003',
       );
@@ -303,41 +326,43 @@ void main() {
       expect(warning.context['code'], 'PLT003');
     });
 
-    test('unexpected failure maps to an unknown ApiException + error log',
-        () async {
-      final RecordingSink sink = RecordingSink();
-      final OnboardingTestStack stack = buildOnboardingStack(
-        logger: makeLogger(sink),
-        store: _ThrowingSaveStore(),
-      );
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.advance();
-      expect(stack.provider.submitState, SubmitState.error);
-      expect(stack.provider.lastError, isNotNull);
-      expect(stack.provider.lastError!.kind, ApiExceptionKind.unknown);
-      expect(
-        stack.provider.lastError!.message,
-        'Something went wrong. Please try again.',
-      );
-      expect(
-        sink.entries.any(
-          (LogEntry e) =>
-              e.level == LogLevel.error &&
-              e.message == 'Onboarding operation failed unexpectedly',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'unexpected failure maps to an unknown ApiException + error log',
+      () async {
+        final RecordingSink sink = RecordingSink();
+        final OnboardingTestStack stack = buildOnboardingStack(
+          logger: makeLogger(sink),
+          store: _ThrowingSaveStore(),
+        );
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.advance();
+        expect(stack.provider.submitState, SubmitState.error);
+        expect(stack.provider.lastError, isNotNull);
+        expect(stack.provider.lastError!.kind, ApiExceptionKind.unknown);
+        expect(
+          stack.provider.lastError!.message,
+          'Something went wrong. Please try again.',
+        );
+        expect(
+          sink.entries.any(
+            (LogEntry e) =>
+                e.level == LogLevel.error &&
+                e.message == 'Onboarding operation failed unexpectedly',
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('gate + lifecycle (FV-26, FV-15)', () {
     test('refreshGateStatus maps approved to isTradeGateOpen', () async {
       final OnboardingTestStack stack = buildOnboardingStack(
         tradeRepo: FakeTradeVerificationRepository(
-          status: tradeStatusEntity(statuses: <String, String>{
-            'prof-sw': 'approved',
-          }),
+          status: tradeStatusEntity(
+            statuses: <String, String>{'prof-sw': 'approved'},
+          ),
         ),
       );
       activeProvider = stack.provider;
@@ -348,8 +373,7 @@ void main() {
       expect(stack.provider.isTradeGateOpen, isTrue);
     });
 
-    test('refreshGateStatus maps pending to false + gate stays shut',
-        () async {
+    test('refreshGateStatus maps pending to false + gate stays shut', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await selectTechnologyProfession(stack.taxonomy);
@@ -375,11 +399,12 @@ void main() {
       activeProvider = stack.provider;
       await stack.hydrate('u1');
       await stack.provider.advance();
-      stack.provider
-          .didChangeAppLifecycleState(AppLifecycleState.paused);
+      stack.provider.didChangeAppLifecycleState(AppLifecycleState.paused);
       await pumpEventQueue();
-      expect((await stack.store.read('u1'))!.step,
-          OnboardingStepCode.capability);
+      expect(
+        (await stack.store.read('u1'))!.step,
+        OnboardingStepCode.capability,
+      );
     });
 
     test('lifecycle inactive also triggers saveAndExit (FV-15)', () async {
@@ -387,107 +412,136 @@ void main() {
       activeProvider = stack.provider;
       await stack.hydrate('u1');
       await stack.provider.advance();
-      stack.provider
-          .didChangeAppLifecycleState(AppLifecycleState.inactive);
+      stack.provider.didChangeAppLifecycleState(AppLifecycleState.inactive);
       await pumpEventQueue();
-      expect((await stack.store.read('u1'))!.step,
-          OnboardingStepCode.capability);
+      expect(
+        (await stack.store.read('u1'))!.step,
+        OnboardingStepCode.capability,
+      );
     });
   });
 
   group('server-authoritative completion (refresh/relaunch fix)', () {
-    test('resume hydrates a completed server state into an empty store',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      stack.onboardingRemote.status = OnboardingStatusDto(
-        capability: 'both',
-        completed: true,
-        onboardingCompletedAt: DateTime.utc(2026, 9, 17),
-        profileExists: true,
-        professionalRoleActive: true,
-        professionExists: true,
-      );
-      await stack.hydrate('u1');
-      expect(stack.service.serverHydrated, isTrue);
-      expect(stack.provider.isCompleteAuthoritative, isTrue);
-      expect(stack.provider.isComplete, isTrue,
-          reason: 'server truth synthesizes the local position');
-      final OnboardingProgress? cached = await stack.store.read('u1');
-      expect(cached, isNotNull);
-      expect(cached!.isComplete, isTrue,
-          reason: 'server truth is write-through cached for offline resumes');
-    });
+    test(
+      'resume hydrates a completed server state into an empty store',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        stack.onboardingRemote.status = OnboardingStatusDto(
+          capability: 'both',
+          completed: true,
+          onboardingCompletedAt: DateTime.utc(2026, 9, 17),
+          profileExists: true,
+          professionalRoleActive: true,
+          professionExists: true,
+        );
+        await stack.hydrate('u1');
+        expect(stack.service.serverHydrated, isTrue);
+        expect(stack.provider.isCompleteAuthoritative, isTrue);
+        expect(
+          stack.provider.isComplete,
+          isTrue,
+          reason: 'server truth synthesizes the local position',
+        );
+        final OnboardingProgress? cached = await stack.store.read('u1');
+        expect(cached, isNotNull);
+        expect(
+          cached!.isComplete,
+          isTrue,
+          reason: 'server truth is write-through cached for offline resumes',
+        );
+      },
+    );
 
-    test('a fresh server never overwrites a partial local resume position',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.advance(); // → capability
-      await stack.provider.advance(); // → industry
-      await stack.hydrate('u1'); // re-resume: server still says not completed
-      expect(stack.service.serverHydrated, isTrue);
-      expect(stack.provider.isCompleteAuthoritative, isFalse);
-      expect(stack.provider.currentStep, OnboardingStepCode.industry,
-          reason: 'an incomplete server result falls back to the store');
-    });
+    test(
+      'a fresh server never overwrites a partial local resume position',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.advance(); // → capability
+        await stack.provider.advance(); // → industry
+        await stack.hydrate('u1'); // re-resume: server still says not completed
+        expect(stack.service.serverHydrated, isTrue);
+        expect(stack.provider.isCompleteAuthoritative, isFalse);
+        expect(
+          stack.provider.currentStep,
+          OnboardingStepCode.industry,
+          reason: 'an incomplete server result falls back to the store',
+        );
+      },
+    );
 
-    test('offline resume degrades to the cache without claiming authority',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.advance(); // → capability
-      stack.onboardingRemote.nextGetError = const ApiException(
-        kind: ApiExceptionKind.network,
-        message: 'No connection',
-        code: 'PLT-01-33',
-      );
-      await stack.hydrate('u1');
-      expect(stack.service.serverHydrated, isFalse);
-      expect(stack.provider.isCompleteAuthoritative, isNull,
-          reason: 'unknown server state must not assert completion');
-      expect(stack.provider.currentStep, OnboardingStepCode.capability,
-          reason: 'the cached resume point is preserved');
-    });
+    test(
+      'offline resume degrades to the cache without claiming authority',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.advance(); // → capability
+        stack.onboardingRemote.nextGetError = const ApiException(
+          kind: ApiExceptionKind.network,
+          message: 'No connection',
+          code: 'PLT-01-33',
+        );
+        await stack.hydrate('u1');
+        expect(stack.service.serverHydrated, isFalse);
+        expect(
+          stack.provider.isCompleteAuthoritative,
+          isNull,
+          reason: 'unknown server state must not assert completion',
+        );
+        expect(
+          stack.provider.currentStep,
+          OnboardingStepCode.capability,
+          reason: 'the cached resume point is preserved',
+        );
+      },
+    );
 
-    test('selectCapability hire completes on the server in the same RPC',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.completeProfile(
-        legalName: 'Jane Doe',
-        displayName: 'Jane',
-      );
-      await stack.provider.advance(); // profile → capability
-      await stack.provider.selectCapability(EntityCapability.hire);
-      expect(stack.onboardingRemote.updateStatusCallCount, 1);
-      expect(stack.onboardingRemote.lastCapability, 'hire');
-      expect(stack.onboardingRemote.lastCompleted, isTrue);
-      expect(stack.provider.isCompleteAuthoritative, isTrue);
-      expect(stack.provider.isComplete, isTrue);
-    });
+    test(
+      'selectCapability hire completes on the server in the same RPC',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.completeProfile(
+          legalName: 'Jane Doe',
+          displayName: 'Jane',
+        );
+        await stack.provider.advance(); // profile → capability
+        await stack.provider.selectCapability(EntityCapability.hire);
+        expect(stack.onboardingRemote.updateStatusCallCount, 1);
+        expect(stack.onboardingRemote.lastCapability, 'hire');
+        expect(stack.onboardingRemote.lastCompleted, isTrue);
+        expect(stack.provider.isCompleteAuthoritative, isTrue);
+        expect(stack.provider.isComplete, isTrue);
+      },
+    );
 
-    test('selectCapability offer persists the capability without completing',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      await stack.provider.completeProfile(
-        legalName: 'Jane Doe',
-        displayName: 'Jane',
-      );
-      await stack.provider.advance(); // profile → capability
-      await stack.provider.selectCapability(EntityCapability.offer);
-      expect(stack.onboardingRemote.updateStatusCallCount, 1);
-      expect(stack.onboardingRemote.lastCapability, 'offer');
-      expect(stack.onboardingRemote.lastCompleted, isFalse,
-          reason: 'an offer entity still has the professional steps left');
-      expect(stack.provider.isCompleteAuthoritative, isFalse);
-      expect(stack.provider.currentStep, OnboardingStepCode.industry);
-    });
+    test(
+      'selectCapability offer persists the capability without completing',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.completeProfile(
+          legalName: 'Jane Doe',
+          displayName: 'Jane',
+        );
+        await stack.provider.advance(); // profile → capability
+        await stack.provider.selectCapability(EntityCapability.offer);
+        expect(stack.onboardingRemote.updateStatusCallCount, 1);
+        expect(stack.onboardingRemote.lastCapability, 'offer');
+        expect(
+          stack.onboardingRemote.lastCompleted,
+          isFalse,
+          reason: 'an offer entity still has the professional steps left',
+        );
+        expect(stack.provider.isCompleteAuthoritative, isFalse);
+        expect(stack.provider.currentStep, OnboardingStepCode.industry);
+      },
+    );
 
     test('advance off the final step stamps completion server-side', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
@@ -518,10 +572,16 @@ void main() {
       await stack.provider.advance();
       expect(stack.provider.submitState, SubmitState.error);
       expect(stack.provider.lastError?.code, 'PLT003');
-      expect(stack.provider.isComplete, isFalse,
-          reason: 'a rejected server completion never finishes locally');
-      expect(stack.provider.currentStep, OnboardingStepCode.tradeProof,
-          reason: 'the wizard stays resumable at the final step');
+      expect(
+        stack.provider.isComplete,
+        isFalse,
+        reason: 'a rejected server completion never finishes locally',
+      );
+      expect(
+        stack.provider.currentStep,
+        OnboardingStepCode.tradeProof,
+        reason: 'the wizard stays resumable at the final step',
+      );
     });
   });
 }

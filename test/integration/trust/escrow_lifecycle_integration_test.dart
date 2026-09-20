@@ -31,11 +31,11 @@ import '../../support/factories/mock_supabase_client_factory.dart';
 import '../../support/fakes/fake_supabase.dart' show fakeUser;
 
 Map<String, dynamic> ok(Object data) => <String, dynamic>{
-      'success': true,
-      'code': 'PLT000',
-      'message': 'ok',
-      'data': data,
-    };
+  'success': true,
+  'code': 'PLT000',
+  'message': 'ok',
+  'data': data,
+};
 
 // ---- Scripted "server" closure state (served to the real read datasource)
 // --------------------------------------------------------------------------
@@ -163,7 +163,7 @@ class _StateProxyDataSource implements EscrowRemoteDataSource {
         final Map<String, dynamic> escrow = rowFor(escrowId);
         escrow['released_amount'] =
             (escrow['released_amount'] as num).toDouble() +
-                (m['amount'] as num).toDouble();
+            (m['amount'] as num).toDouble();
       }
     }
   }
@@ -221,9 +221,11 @@ void main() {
     EscrowProvider provider,
     EscrowRepositoryImpl repo,
     _StateProxyDataSource proxy,
-  }) buildStack() {
-    final _StateProxyDataSource proxy =
-        _StateProxyDataSource(reads: readDataSource());
+  })
+  buildStack() {
+    final _StateProxyDataSource proxy = _StateProxyDataSource(
+      reads: readDataSource(),
+    );
     final EscrowRepositoryImpl repo = EscrowRepositoryImpl(remote: proxy);
     final EscrowService service = EscrowService(repository: repo);
     final EscrowProvider provider = EscrowProvider(service: service);
@@ -231,17 +233,17 @@ void main() {
   }
 
   List<EscrowMilestoneInput> twoMilestones() => <EscrowMilestoneInput>[
-        const EscrowMilestoneInput(
-          milestoneNumber: 1,
-          title: 'Design approval',
-          amount: 50000.0,
-        ),
-        const EscrowMilestoneInput(
-          milestoneNumber: 2,
-          title: 'Final delivery',
-          amount: 100000.0,
-        ),
-      ];
+    const EscrowMilestoneInput(
+      milestoneNumber: 1,
+      title: 'Design approval',
+      amount: 50000.0,
+    ),
+    const EscrowMilestoneInput(
+      milestoneNumber: 2,
+      title: 'Final delivery',
+      amount: 100000.0,
+    ),
+  ];
 
   setUp(() {
     escrows.clear();
@@ -251,95 +253,97 @@ void main() {
 
   group('VP7: Escrow lifecycle', () {
     test(
-        'DoD-VP7a: create (2 ms) → fund → milestone complete → release → final release '
-        'with released-progress audit', () async {
-      final stack = buildStack();
-      addTearDown(stack.provider.dispose);
-      expect(stack.repo.writeAvailable, isTrue,
-          reason: 'proxy write seam must be on for lifecycle writes');
+      'DoD-VP7a: create (2 ms) → fund → milestone complete → release → final release '
+      'with released-progress audit',
+      () async {
+        final stack = buildStack();
+        addTearDown(stack.provider.dispose);
+        expect(
+          stack.repo.writeAvailable,
+          isTrue,
+          reason: 'proxy write seam must be on for lifecycle writes',
+        );
 
-      // Milestone sums pre-validated client-side.
-      expect(
-        stack.service.validateMilestoneSums(
+        // Milestone sums pre-validated client-side.
+        expect(
+          stack.service.validateMilestoneSums(
+            totalAmount: 150000.0,
+            milestoneAmounts: <double>[50000.0, 100000.0],
+          ),
+          isTrue,
+        );
+
+        // 1. Create with 2 milestones.
+        final EscrowDetail created = await stack.service.createEscrow(
+          payerEntityId: 'u1',
+          payeeEntityId: 'u2',
+          currencyCode: 'NGN',
           totalAmount: 150000.0,
-          milestoneAmounts: <double>[50000.0, 100000.0],
-        ),
-        isTrue,
-      );
+          milestones: twoMilestones(),
+        );
+        expect(created.escrow.status, 'draft');
+        expect(created.milestones, hasLength(2));
+        expect(created.milestones.map((m) => m.title), <String>[
+          'Design approval',
+          'Final delivery',
+        ]);
+        expect(created.milestones.map((m) => m.milestoneNumber), <int>[1, 2]);
+        expect(created.milestonesTotal, 150000.0);
+        final String escrowId = created.escrow.id;
 
-      // 1. Create with 2 milestones.
-      final EscrowDetail created = await stack.service.createEscrow(
-        payerEntityId: 'u1',
-        payeeEntityId: 'u2',
-        currencyCode: 'NGN',
-        totalAmount: 150000.0,
-        milestones: twoMilestones(),
-      );
-      expect(created.escrow.status, 'draft');
-      expect(created.milestones, hasLength(2));
-      expect(
-        created.milestones.map((m) => m.title),
-        <String>['Design approval', 'Final delivery'],
-      );
-      expect(
-        created.milestones.map((m) => m.milestoneNumber),
-        <int>[1, 2],
-      );
-      expect(created.milestonesTotal, 150000.0);
-      final String escrowId = created.escrow.id;
+        // Select the created escrow so the provider exposes detail state.
+        await stack.provider.select(escrowId);
 
-      // Select the created escrow so the provider exposes detail state.
-      await stack.provider.select(escrowId);
+        // 2. Fund (gateway-confirmed server side effect through the proxy).
+        await stack.proxy.fundEscrow(escrowId: escrowId);
+        await stack.provider.refresh();
+        expect(stack.provider.selected?.status, 'funded');
+        expect(stack.provider.selected?.isActive, isTrue);
 
-      // 2. Fund (gateway-confirmed server side effect through the proxy).
-      await stack.proxy.fundEscrow(escrowId: escrowId);
-      await stack.provider.refresh();
-      expect(stack.provider.selected?.status, 'funded');
-      expect(stack.provider.selected?.isActive, isTrue);
+        // 3. Complete milestone 1 through the provider (write seam).
+        final String ms1Id = created.milestones.first.id;
+        await stack.provider.completeMilestone(milestoneId: ms1Id);
+        expect(stack.provider.milestones.first.status, 'completed');
+        expect(stack.provider.selected?.status, 'funded');
 
-      // 3. Complete milestone 1 through the provider (write seam).
-      final String ms1Id = created.milestones.first.id;
-      await stack.provider.completeMilestone(milestoneId: ms1Id);
-      expect(stack.provider.milestones.first.status, 'completed');
-      expect(stack.provider.selected?.status, 'funded');
+        // 4. Release milestone 1 → released_amount moves, progress audit.
+        await stack.provider.releaseMilestone(milestoneId: ms1Id);
+        expect(stack.provider.milestones.first.status, 'released');
+        expect(stack.provider.selected?.releasedAmount, 50000.0);
+        expect(
+          stack.service.releasedMilestoneTotal(stack.provider.milestones),
+          50000.0,
+        );
+        expect(
+          stack.service.milestoneProgress(
+            milestones: stack.provider.milestones,
+            totalAmount: 150000.0,
+          ),
+          closeTo(1 / 3, 0.001),
+        );
 
-      // 4. Release milestone 1 → released_amount moves, progress audit.
-      await stack.provider.releaseMilestone(milestoneId: ms1Id);
-      expect(stack.provider.milestones.first.status, 'released');
-      expect(stack.provider.selected?.releasedAmount, 50000.0);
-      expect(
-        stack.service.releasedMilestoneTotal(stack.provider.milestones),
-        50000.0,
-      );
-      expect(
-        stack.service.milestoneProgress(
-          milestones: stack.provider.milestones,
-          totalAmount: 150000.0,
-        ),
-        closeTo(1 / 3, 0.001),
-      );
+        // 5. Final release — escrow-level funds move in full.
+        await stack.provider.releaseFinal();
+        expect(stack.provider.selected?.status, 'released');
+        expect(stack.provider.selected?.isActive, isFalse);
+        expect(stack.provider.selected?.releasedAmount, 150000.0);
+        // The server releases remaining funds at escrow level without re-marking
+        // pending milestones released, so milestone-level totals stay as-is.
+        expect(
+          stack.service.releasedMilestoneTotal(stack.provider.milestones),
+          50000.0,
+        );
 
-      // 5. Final release — escrow-level funds move in full.
-      await stack.provider.releaseFinal();
-      expect(stack.provider.selected?.status, 'released');
-      expect(stack.provider.selected?.isActive, isFalse);
-      expect(stack.provider.selected?.releasedAmount, 150000.0);
-      // The server releases remaining funds at escrow level without re-marking
-      // pending milestones released, so milestone-level totals stay as-is.
-      expect(
-        stack.service.releasedMilestoneTotal(stack.provider.milestones),
-        50000.0,
-      );
-
-      // Server-authoritative re-read (fresh datasource path) agrees.
-      final EscrowDetail reRead = await stack.service.getById(escrowId);
-      expect(reRead.escrow.status, 'released');
-      expect(reRead.escrow.releasedAmount, 150000.0);
-      expect(reRead.milestones.map((m) => m.status), <String>[
-        'released',
-        'pending',
-      ]);
-    });
+        // Server-authoritative re-read (fresh datasource path) agrees.
+        final EscrowDetail reRead = await stack.service.getById(escrowId);
+        expect(reRead.escrow.status, 'released');
+        expect(reRead.escrow.releasedAmount, 150000.0);
+        expect(reRead.milestones.map((m) => m.status), <String>[
+          'released',
+          'pending',
+        ]);
+      },
+    );
 
     test('DoD-VP7b: refund path — escrow → funded → refund', () async {
       final stack = buildStack();
@@ -396,49 +400,53 @@ void main() {
           ),
         ),
       );
-      expect(nextEscrowId, before,
-          reason: 'invalid milestone sums must never reach the server');
-    });
-
-    test('seam-off guard: the client can never write escrow tables directly',
-        () async {
-      final SupabaseEscrowRemoteDataSource direct =
-          SupabaseEscrowRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(
-          currentUser: fakeUser('u1'),
-          rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
-            'financial_escrow_get': (_) => ok(<String, dynamic>{
-                  'escrow': null,
-                  'milestones': <dynamic>[],
-                  'transactions': <dynamic>[],
-                }),
-          },
-        ),
-        exceptionMapper: const ApiExceptionMapper(),
-        writeViaProxy: false,
-      );
-      final EscrowRepositoryImpl repo =
-          EscrowRepositoryImpl(remote: direct);
-      expect(repo.writeAvailable, isFalse);
-
-      final EscrowService service = EscrowService(repository: repo);
-      await expectLater(
-        service.createEscrow(
-          payerEntityId: 'u1',
-          payeeEntityId: 'u2',
-          currencyCode: 'NGN',
-          totalAmount: 50000.0,
-          milestones: <EscrowMilestoneInput>[
-            const EscrowMilestoneInput(
-              milestoneNumber: 1,
-              title: 'Work',
-              amount: 50000.0,
-            ),
-          ],
-        ),
-        throwsA(isA<EscrowWriteUnavailableException>()),
+      expect(
+        nextEscrowId,
+        before,
+        reason: 'invalid milestone sums must never reach the server',
       );
     });
+
+    test(
+      'seam-off guard: the client can never write escrow tables directly',
+      () async {
+        final SupabaseEscrowRemoteDataSource direct =
+            SupabaseEscrowRemoteDataSource(
+              dio: Dio(),
+              supabase: MockSupabaseClientFactory.create(
+                currentUser: fakeUser('u1'),
+                rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
+                  'financial_escrow_get': (_) => ok(<String, dynamic>{
+                    'escrow': null,
+                    'milestones': <dynamic>[],
+                    'transactions': <dynamic>[],
+                  }),
+                },
+              ),
+              exceptionMapper: const ApiExceptionMapper(),
+              writeViaProxy: false,
+            );
+        final EscrowRepositoryImpl repo = EscrowRepositoryImpl(remote: direct);
+        expect(repo.writeAvailable, isFalse);
+
+        final EscrowService service = EscrowService(repository: repo);
+        await expectLater(
+          service.createEscrow(
+            payerEntityId: 'u1',
+            payeeEntityId: 'u2',
+            currencyCode: 'NGN',
+            totalAmount: 50000.0,
+            milestones: <EscrowMilestoneInput>[
+              const EscrowMilestoneInput(
+                milestoneNumber: 1,
+                title: 'Work',
+                amount: 50000.0,
+              ),
+            ],
+          ),
+          throwsA(isA<EscrowWriteUnavailableException>()),
+        );
+      },
+    );
   });
 }

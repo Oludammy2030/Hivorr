@@ -10,7 +10,9 @@ import '../../../support/fakes/finance/fake_financial_payout_repository.dart';
 
 void main() {
   FinancialPayoutProvider build(FakeFinancialPayoutRepository repo) =>
-      FinancialPayoutProvider(service: FinancialPayoutService(repository: repo));
+      FinancialPayoutProvider(
+        service: FinancialPayoutService(repository: repo),
+      );
 
   group('FinancialPayoutProvider load lifecycle', () {
     test('starts idle empty with no error', () {
@@ -27,9 +29,7 @@ void main() {
 
     test('load() surfaces the mirror and enters loaded state', () async {
       final repo = FakeFinancialPayoutRepository(
-        seed: <PayoutAccount>[
-          FakeFinancialPayoutRepository.verified(),
-        ],
+        seed: <PayoutAccount>[FakeFinancialPayoutRepository.verified()],
       );
       final provider = build(repo);
 
@@ -141,8 +141,10 @@ void main() {
         );
       final provider = build(repo);
 
-      final WithdrawalResult? result =
-          await provider.withdraw(payoutAccountId: 'acc-1', amount: 50000);
+      final WithdrawalResult? result = await provider.withdraw(
+        payoutAccountId: 'acc-1',
+        amount: 50000,
+      );
 
       expect(result, isNotNull);
       expect(result!.payoutId, 'pay-9');
@@ -160,8 +162,10 @@ void main() {
       final repo = FakeFinancialPayoutRepository()..nextError = insufficient;
       final provider = build(repo);
 
-      final WithdrawalResult? result =
-          await provider.withdraw(payoutAccountId: 'acc-1', amount: 50000);
+      final WithdrawalResult? result = await provider.withdraw(
+        payoutAccountId: 'acc-1',
+        amount: 50000,
+      );
 
       expect(result, isNull);
       expect(provider.lastError, same(insufficient));

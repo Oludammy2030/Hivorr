@@ -21,19 +21,18 @@ PublicProfile seedProfile({
   List<PublicCredential>? credentials,
   String? kycTierCode = 'tier_1',
   String? kycStatus = 'active',
-}) =>
-    PublicProfile(
-      entityId: 'entity-1',
-      displayName: displayName,
-      avatarPath: null,
-      bio: bio,
-      countryCode: countryCode,
-      professions: professions ?? <PublicProfession>[seedProfession()],
-      credentials: credentials ?? const <PublicCredential>[],
-      kycTierCode: kycTierCode,
-      kycStatus: kycStatus,
-      portfolioItems: const <PortfolioItem>[],
-    );
+}) => PublicProfile(
+  entityId: 'entity-1',
+  displayName: displayName,
+  avatarPath: null,
+  bio: bio,
+  countryCode: countryCode,
+  professions: professions ?? <PublicProfession>[seedProfession()],
+  credentials: credentials ?? const <PublicCredential>[],
+  kycTierCode: kycTierCode,
+  kycStatus: kycStatus,
+  portfolioItems: const <PortfolioItem>[],
+);
 
 PublicProfession seedProfession({
   String id = 'ep-1',
@@ -43,16 +42,15 @@ PublicProfession seedProfession({
   String professionName = 'Software Engineer',
   String industrySlug = 'technology',
   String industryName = 'Technology',
-}) =>
-    PublicProfession(
-      id: id,
-      professionId: professionId,
-      isPrimary: isPrimary,
-      professionSlug: professionSlug,
-      professionName: professionName,
-      industrySlug: industrySlug,
-      industryName: industryName,
-    );
+}) => PublicProfession(
+  id: id,
+  professionId: professionId,
+  isPrimary: isPrimary,
+  professionSlug: professionSlug,
+  professionName: professionName,
+  industrySlug: industrySlug,
+  industryName: industryName,
+);
 
 PortfolioItem seedItem({
   String id = 'item-1',
@@ -61,20 +59,20 @@ PortfolioItem seedItem({
   String? description = 'Milestone payment engine.',
   String? mediaPath = 'portfolio-items/entity-1/escrow.jpg',
   int? sortOrder = 1,
-}) =>
-    PortfolioItem(
-      id: id,
-      itemType: itemType,
-      title: title,
-      description: description,
-      mediaPath: mediaPath,
-      sortOrder: sortOrder,
-    );
+}) => PortfolioItem(
+  id: id,
+  itemType: itemType,
+  title: title,
+  description: description,
+  mediaPath: mediaPath,
+  sortOrder: sortOrder,
+);
 
 void main() {
   group('ProfileHeaderCard', () {
-    testWidgets('renders display name, bio, country and profession badges',
-        (WidgetTester tester) async {
+    testWidgets('renders display name, bio, country and profession badges', (
+      WidgetTester tester,
+    ) async {
       final PublicProfile profile = seedProfile(
         professions: <PublicProfession>[
           seedProfession(),
@@ -89,10 +87,7 @@ void main() {
           ),
         ],
       );
-      await pumpTheme(
-        tester,
-        ProfileHeaderCard(profile: profile),
-      );
+      await pumpTheme(tester, ProfileHeaderCard(profile: profile));
 
       expect(find.text('Ada Lovelace'), findsOneWidget);
       expect(find.text('Analytical engine pioneer.'), findsOneWidget);
@@ -101,39 +96,38 @@ void main() {
       expect(find.text('Electrician · Construction'), findsOneWidget);
     });
 
-    testWidgets('renders initials avatar when no avatar URL is provided',
-        (WidgetTester tester) async {
-      await pumpTheme(
-        tester,
-        ProfileHeaderCard(profile: seedProfile()),
-      );
+    testWidgets('renders initials avatar when no avatar URL is provided', (
+      WidgetTester tester,
+    ) async {
+      await pumpTheme(tester, ProfileHeaderCard(profile: seedProfile()));
 
-      expect(find.text('AL'), findsOneWidget,
-          reason: 'HivorrAvatar derives maximized 2-letter initials');
+      expect(
+        find.text('AL'),
+        findsOneWidget,
+        reason: 'HivorrAvatar derives maximized 2-letter initials',
+      );
     });
 
-    testWidgets('omits country row and bio when absent',
-        (WidgetTester tester) async {
+    testWidgets('omits country row and bio when absent', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
-        ProfileHeaderCard(
-          profile: seedProfile(bio: null, countryCode: null),
-        ),
+        ProfileHeaderCard(profile: seedProfile(bio: null, countryCode: null)),
       );
 
       expect(find.text('Ada Lovelace'), findsOneWidget);
       expect(find.byIcon(Icons.public), findsNothing);
     });
 
-    testWidgets('renders profession name only when industry name is empty',
-        (WidgetTester tester) async {
+    testWidgets('renders profession name only when industry name is empty', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         ProfileHeaderCard(
           profile: seedProfile(
-            professions: <PublicProfession>[
-              seedProfession(industryName: ''),
-            ],
+            professions: <PublicProfession>[seedProfession(industryName: '')],
           ),
         ),
       );
@@ -144,8 +138,9 @@ void main() {
   });
 
   group('VerificationBadgesRow', () {
-    testWidgets('renders identity, trade and credential-count badges',
-        (WidgetTester tester) async {
+    testWidgets('renders identity, trade and credential-count badges', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         VerificationBadgesRow(
@@ -162,8 +157,9 @@ void main() {
       expect(find.text('2 Approved Credentials'), findsOneWidget);
     });
 
-    testWidgets('singularizes the credential count at one',
-        (WidgetTester tester) async {
+    testWidgets('singularizes the credential count at one', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         VerificationBadgesRow(
@@ -176,8 +172,9 @@ void main() {
       expect(find.text('1 Approved Credential'), findsOneWidget);
     });
 
-    testWidgets('hides the identity badge when unverified and no KYC',
-        (WidgetTester tester) async {
+    testWidgets('hides the identity badge when unverified and no KYC', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         VerificationBadgesRow(
@@ -195,8 +192,9 @@ void main() {
   });
 
   group('CredentialCard', () {
-    testWidgets('renders title, kind chip and approved badge',
-        (WidgetTester tester) async {
+    testWidgets('renders title, kind chip and approved badge', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const CredentialCard(
@@ -213,8 +211,9 @@ void main() {
       expect(find.text('Approved'), findsOneWidget);
     });
 
-    testWidgets('maps certification kind to a friendly label',
-        (WidgetTester tester) async {
+    testWidgets('maps certification kind to a friendly label', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const CredentialCard(
@@ -232,8 +231,9 @@ void main() {
   });
 
   group('PortfolioItemCard', () {
-    testWidgets('renders title, description, type chip and image placeholder',
-        (WidgetTester tester) async {
+    testWidgets('renders title, description, type chip and image placeholder', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         PortfolioItemCard(
@@ -249,12 +249,16 @@ void main() {
       expect(find.text('Kitchen Renovation'), findsOneWidget);
       expect(find.text('Full remodel of a 3-bedroom home.'), findsOneWidget);
       expect(find.text('image'), findsOneWidget);
-      expect(find.byIcon(Icons.image_outlined), findsOneWidget,
-          reason: 'missing media renders the neutral type placeholder');
+      expect(
+        find.byIcon(Icons.image_outlined),
+        findsOneWidget,
+        reason: 'missing media renders the neutral type placeholder',
+      );
     });
 
-    testWidgets('returns a permalink icon for link items',
-        (WidgetTester tester) async {
+    testWidgets('returns a permalink icon for link items', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         PortfolioItemCard(item: seedItem(itemType: 'link')),
@@ -263,8 +267,9 @@ void main() {
       expect(find.byIcon(Icons.link), findsOneWidget);
     });
 
-    testWidgets('omits empty title/description/chips',
-        (WidgetTester tester) async {
+    testWidgets('omits empty title/description/chips', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         PortfolioItemCard(
@@ -277,15 +282,17 @@ void main() {
   });
 
   group('PortfolioGrid', () {
-    testWidgets('renders nothing when the list is empty',
-        (WidgetTester tester) async {
+    testWidgets('renders nothing when the list is empty', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(tester, const PortfolioGrid(items: <PortfolioItem>[]));
 
       expect(find.byType(PortfolioItemCard), findsNothing);
     });
 
-    testWidgets('sorts items by sort_order with nulls last',
-        (WidgetTester tester) async {
+    testWidgets('sorts items by sort_order with nulls last', (
+      WidgetTester tester,
+    ) async {
       final List<PortfolioItem> items = <PortfolioItem>[
         seedItem(id: 'c', title: 'C', sortOrder: 3),
         seedItem(id: 'b', title: 'B', sortOrder: null),
@@ -294,9 +301,7 @@ void main() {
       await pumpScreen(
         tester,
         Center(
-          child: SingleChildScrollView(
-            child: PortfolioGrid(items: items),
-          ),
+          child: SingleChildScrollView(child: PortfolioGrid(items: items)),
         ),
         width: 390,
       );
@@ -310,8 +315,9 @@ void main() {
       expect(cY, lessThan(bY), reason: 'null sort_order renders last');
     });
 
-    testWidgets('lays out a single column on mobile width',
-        (WidgetTester tester) async {
+    testWidgets('lays out a single column on mobile width', (
+      WidgetTester tester,
+    ) async {
       await pumpScreen(
         tester,
         SingleChildScrollView(
@@ -327,13 +333,15 @@ void main() {
       );
       await tester.pump();
 
-      final double firstWidth =
-          tester.getSize(find.byType(PortfolioItemCard).first).width;
+      final double firstWidth = tester
+          .getSize(find.byType(PortfolioItemCard).first)
+          .width;
       expect(firstWidth, closeTo(390, 1));
     });
 
-    testWidgets('lays out two columns on tablet width',
-        (WidgetTester tester) async {
+    testWidgets('lays out two columns on tablet width', (
+      WidgetTester tester,
+    ) async {
       await pumpScreen(
         tester,
         SingleChildScrollView(
@@ -349,16 +357,19 @@ void main() {
       );
       await tester.pump();
 
-      final double aWidth =
-          tester.getSize(find.byType(PortfolioItemCard).at(0)).width;
-      final double bWidth =
-          tester.getSize(find.byType(PortfolioItemCard).at(1)).width;
+      final double aWidth = tester
+          .getSize(find.byType(PortfolioItemCard).at(0))
+          .width;
+      final double bWidth = tester
+          .getSize(find.byType(PortfolioItemCard).at(1))
+          .width;
       expect(aWidth, closeTo((800 - 16) / 2, 1));
       expect(bWidth, closeTo((800 - 16) / 2, 1));
     });
 
-    testWidgets('lays out three columns on desktop width',
-        (WidgetTester tester) async {
+    testWidgets('lays out three columns on desktop width', (
+      WidgetTester tester,
+    ) async {
       await pumpScreen(
         tester,
         SingleChildScrollView(
@@ -374,8 +385,9 @@ void main() {
       );
       await tester.pump();
 
-      final double aWidth =
-          tester.getSize(find.byType(PortfolioItemCard).at(0)).width;
+      final double aWidth = tester
+          .getSize(find.byType(PortfolioItemCard).at(0))
+          .width;
       expect(aWidth, closeTo((1200 - 32) / 3, 1));
     });
   });

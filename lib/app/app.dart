@@ -197,7 +197,8 @@ class _HivorrAppState extends State<HivorrApp> {
   @override
   void initState() {
     super.initState();
-    _entryState = widget.entryStateProvider ??
+    _entryState =
+        widget.entryStateProvider ??
         EntryStateProvider(
           store: widget.entryStore ?? InMemoryEntryStateStore(),
         );
@@ -255,8 +256,7 @@ class _HivorrAppState extends State<HivorrApp> {
     final ConversionRepository? conversionRepository =
         widget.conversionRepository;
     final ConversionProvider? conversionProvider = widget.conversionProvider;
-    final FinancialRepository? financialRepository =
-        widget.financialRepository;
+    final FinancialRepository? financialRepository = widget.financialRepository;
     final FinancialProvider? financialProvider = widget.financialProvider;
     final FinancialPayoutRepository? payoutRepository = widget.payoutRepository;
     final FinancialPayoutProvider? payoutProvider = widget.payoutProvider;
@@ -274,9 +274,7 @@ class _HivorrAppState extends State<HivorrApp> {
         widget.portfolioService;
     return MultiProvider(
       providers: <SingleChildWidget>[
-        ChangeNotifierProvider<AuthProvider>.value(
-          value: widget.authProvider,
-        ),
+        ChangeNotifierProvider<AuthProvider>.value(value: widget.authProvider),
         ChangeNotifierProvider<LocaleProvider>.value(
           value: widget.localeProvider,
         ),
@@ -293,9 +291,7 @@ class _HivorrAppState extends State<HivorrApp> {
         if (escrowRepository != null)
           Provider<EscrowRepository>.value(value: escrowRepository),
         if (escrowProvider != null)
-          ChangeNotifierProvider<EscrowProvider>.value(
-            value: escrowProvider,
-          ),
+          ChangeNotifierProvider<EscrowProvider>.value(value: escrowProvider),
         if (conversionRepository != null)
           Provider<ConversionRepository>.value(value: conversionRepository),
         if (conversionProvider != null)
@@ -323,9 +319,7 @@ class _HivorrAppState extends State<HivorrApp> {
         if (disputeRepository != null)
           Provider<DisputeRepository>.value(value: disputeRepository),
         if (disputeProvider != null)
-          ChangeNotifierProvider<DisputeProvider>.value(
-            value: disputeProvider,
-          ),
+          ChangeNotifierProvider<DisputeProvider>.value(value: disputeProvider),
         if (onboardingStore != null)
           Provider<OnboardingProgressStore>.value(value: onboardingStore),
         Provider<PlatformFilePicker>.value(
@@ -347,14 +341,16 @@ class _HivorrAppState extends State<HivorrApp> {
           Provider<ProfessionalProfileService>.value(value: portfolioService),
         if (widget.adminReviewRepository != null)
           Provider<AdminReviewRepository>.value(
-              value: widget.adminReviewRepository!),
+            value: widget.adminReviewRepository!,
+          ),
         if (widget.adminReviewProvider != null)
           ChangeNotifierProvider<AdminReviewProvider>.value(
             value: widget.adminReviewProvider!,
           ),
         if (widget.manageUserRepository != null)
           Provider<ManageUserRepository>.value(
-              value: widget.manageUserRepository!),
+            value: widget.manageUserRepository!,
+          ),
         if (widget.manageUserProvider != null)
           ChangeNotifierProvider<ManageUserProvider>.value(
             value: widget.manageUserProvider!,
@@ -363,8 +359,7 @@ class _HivorrAppState extends State<HivorrApp> {
       ],
       child: Builder(
         builder: (BuildContext context) {
-          final LocaleProvider localeProvider =
-              context.watch<LocaleProvider>();
+          final LocaleProvider localeProvider = context.watch<LocaleProvider>();
           return MaterialApp.router(
             title: 'Hivorr',
             theme: AppTheme.lightTheme,

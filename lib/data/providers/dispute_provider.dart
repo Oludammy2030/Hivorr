@@ -56,10 +56,10 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     HivorrLogger? logger,
     NotificationProvider? notificationProvider,
     DateTime Function()? clock,
-  })  : _service = service,
-        _logger = logger,
-        _notificationProvider = notificationProvider,
-        _clock = clock ?? DateTime.now {
+  }) : _service = service,
+       _logger = logger,
+       _notificationProvider = notificationProvider,
+       _clock = clock ?? DateTime.now {
     try {
       WidgetsBinding.instance.addObserver(this);
     } on Object {
@@ -139,7 +139,7 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     _error = null;
     notifyListeners();
     try {
-final detail = await _service.getCase(caseId);
+      final detail = await _service.getCase(caseId);
       _selected = detail.disputeCase;
       _evidence = detail.evidence;
       _resolution = detail.resolution;
@@ -165,7 +165,7 @@ final detail = await _service.getCase(caseId);
     _error = null;
     notifyListeners();
     try {
-final detail = await _service.getCase(current.id);
+      final detail = await _service.getCase(current.id);
       _selected = detail.disputeCase;
       _evidence = detail.evidence;
       _resolution = detail.resolution;

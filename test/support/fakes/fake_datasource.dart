@@ -67,11 +67,12 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
   }) async {
     updateProfileCallCount++;
     // Derive legalName when split provided but legalName omitted (new registration path).
-    String resolvedLegal = legalName ??
+    String resolvedLegal =
+        legalName ??
         (firstName != null && lastName != null
             ? (middleName != null && middleName.trim().isNotEmpty
-                ? '${firstName.trim()} ${middleName.trim()} ${lastName.trim()}'
-                : '${firstName.trim()} ${lastName.trim()}')
+                  ? '${firstName.trim()} ${middleName.trim()} ${lastName.trim()}'
+                  : '${firstName.trim()} ${lastName.trim()}')
             : legalName ?? '');
     String resolvedDisplay = displayName ?? profile?.displayName ?? '';
     profile = EntityProfileDto(
@@ -133,12 +134,9 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
     required String avatarPath,
   }) async {
     updateAvatarPathCallCount++;
-    final EntityProfileDto current = profile ??
-        EntityProfileDto(
-          entityId: entityId,
-          legalName: '',
-          displayName: '',
-        );
+    final EntityProfileDto current =
+        profile ??
+        EntityProfileDto(entityId: entityId, legalName: '', displayName: '');
     profile = EntityProfileDto(
       entityId: current.entityId,
       legalName: current.legalName,

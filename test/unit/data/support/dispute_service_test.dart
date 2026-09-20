@@ -17,24 +17,20 @@ import '../../../support/fakes/support/fake_dispute_repository.dart';
 
 void main() {
   HivorrLogger makeLogger(RecordingSink sink) => HivorrLogger(
-        'hivorr.test',
-        LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
-        PiiRedactor(),
-      );
+    'hivorr.test',
+    LogRouter(sinks: <LogSink>[sink], minimumLevel: LogLevel.debug),
+    PiiRedactor(),
+  );
 
   DisputeService build(FakeDisputeRepository repo, [HivorrLogger? logger]) =>
       DisputeService(repository: repo, logger: logger);
 
-  DisputeService hivorrService() =>
-      build(FakeDisputeRepository());
+  DisputeService hivorrService() => build(FakeDisputeRepository());
 
   group('fail-fast validators (mirror CHECK constraints)', () {
     test('validateReason accepts 10–2000 chars after trim', () {
       expect(DisputeService.validateReason('1234567890'), isTrue);
-      expect(
-        DisputeService.validateReason('a' * 2000),
-        isTrue,
-      );
+      expect(DisputeService.validateReason('a' * 2000), isTrue);
     });
 
     test('validateReason rejects too-short and overlong reasons', () {
@@ -105,8 +101,10 @@ void main() {
     test('statusFor / typeFor / resolutionTypeFor resolve codes', () {
       expect(hivorrService().statusFor('open')?.label, 'Open');
       expect(hivorrService().typeFor('fraud')?.label, 'Fraud');
-      expect(hivorrService().resolutionTypeFor('split')?.label,
-          'Split between parties');
+      expect(
+        hivorrService().resolutionTypeFor('split')?.label,
+        'Split between parties',
+      );
     });
 
     test('lookups return null for unknown codes', () {
@@ -117,22 +115,30 @@ void main() {
   });
 
   group('data operations delegate to the repository', () {
-    test('listDisputes passes the filter and returns the mapped cases', () async {
-      final repo = FakeDisputeRepository(
-        cases: <DisputeCase>[
-          seedDisputeCaseEntity(id: 'dispute-1', status: 'open'),
-        ],
-      );
-      final service = build(repo);
-      final List<DisputeCase> cases = await service.listDisputes(status: 'open');
+    test(
+      'listDisputes passes the filter and returns the mapped cases',
+      () async {
+        final repo = FakeDisputeRepository(
+          cases: <DisputeCase>[
+            seedDisputeCaseEntity(id: 'dispute-1', status: 'open'),
+          ],
+        );
+        final service = build(repo);
+        final List<DisputeCase> cases = await service.listDisputes(
+          status: 'open',
+        );
 
-      expect(repo.lastStatusFilter, 'open');
-      expect(cases.single.id, 'dispute-1');
-    });
+        expect(repo.lastStatusFilter, 'open');
+        expect(cases.single.id, 'dispute-1');
+      },
+    );
 
     test('getCase returns the detail envelope', () async {
       final repo = FakeDisputeRepository(
-        detail: seedDisputeDetailEntity(id: 'dispute-1', status: 'under_review'),
+        detail: seedDisputeDetailEntity(
+          id: 'dispute-1',
+          status: 'under_review',
+        ),
       );
       final service = build(repo);
       final DisputeCaseDetail detail = await service.getCase('dispute-1');
@@ -158,21 +164,23 @@ void main() {
       expect(repo.lastPriority, 'critical');
     });
 
-    test('submitEvidence forwards title/type/fileUrl and maps the row',
-        () async {
-      final repo = FakeDisputeRepository();
-      final service = build(repo);
-      final DisputeEvidence evidence = await service.submitEvidence(
-        caseId: 'dispute-1',
-        evidenceType: 'screenshot',
-        title: 'Mismatch screenshot',
-        fileUrl: 'entity-filer/dispute-1/abc.jpg',
-      );
+    test(
+      'submitEvidence forwards title/type/fileUrl and maps the row',
+      () async {
+        final repo = FakeDisputeRepository();
+        final service = build(repo);
+        final DisputeEvidence evidence = await service.submitEvidence(
+          caseId: 'dispute-1',
+          evidenceType: 'screenshot',
+          title: 'Mismatch screenshot',
+          fileUrl: 'entity-filer/dispute-1/abc.jpg',
+        );
 
-      expect(evidence.hasAttachment, isTrue);
-      expect(repo.lastTitle, 'Mismatch screenshot');
-      expect(repo.lastFileUrl, 'entity-filer/dispute-1/abc.jpg');
-    });
+        expect(evidence.hasAttachment, isTrue);
+        expect(repo.lastTitle, 'Mismatch screenshot');
+        expect(repo.lastFileUrl, 'entity-filer/dispute-1/abc.jpg');
+      },
+    );
 
     test('withdrawDispute returns the withdrawn case', () async {
       final repo = FakeDisputeRepository();
@@ -209,9 +217,7 @@ void main() {
     test('successful list logs a fetched entry with scopes', () async {
       final sink = RecordingSink();
       final repo = FakeDisputeRepository(
-        cases: <DisputeCase>[
-          seedDisputeCaseEntity(id: 'dispute-1'),
-        ],
+        cases: <DisputeCase>[seedDisputeCaseEntity(id: 'dispute-1')],
       );
       final service = build(repo, makeLogger(sink));
 
@@ -234,8 +240,10 @@ void main() {
         reason: 'Work did not match the agreed milestone description.',
       );
 
-      expect(sink.entries.map((e) => e.message),
-          containsAll(<String>['Filing dispute', 'Dispute filed — escrow held']));
+      expect(
+        sink.entries.map((e) => e.message),
+        containsAll(<String>['Filing dispute', 'Dispute filed — escrow held']),
+      );
     });
 
     test('withdrawal logs the release', () async {

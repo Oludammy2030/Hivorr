@@ -27,8 +27,8 @@ class FakeTradeVerificationRemoteDataSource
   FakeTradeVerificationRemoteDataSource({
     VerificationSubmissionDto? submitResult,
     VerificationStatusDto? statusResult,
-  })  : _submitResult = submitResult ?? tradeSubmissionDto(),
-        _statusResult = statusResult ?? tradeStatusDto();
+  }) : _submitResult = submitResult ?? tradeSubmissionDto(),
+       _statusResult = statusResult ?? tradeStatusDto();
 
   final VerificationSubmissionDto _submitResult;
   VerificationStatusDto _statusResult;
@@ -37,10 +37,7 @@ class FakeTradeVerificationRemoteDataSource
   void setStatusResult(VerificationStatusDto dto) => _statusResult = dto;
 
   /// Appends a per-profession entry to the served aggregate.
-  void addTradeStatus({
-    required String professionId,
-    required String status,
-  }) {
+  void addTradeStatus({required String professionId, required String status}) {
     final updated = VerificationStatusDto(
       entityId: _statusResult.entityId,
       kyc: _statusResult.kyc,
@@ -96,12 +93,13 @@ class FakeTradeVerificationRepository implements TradeVerificationRepository {
   FakeTradeVerificationRepository({
     TradeVerificationStatus? status,
     String defaultStatus = 'pending',
-  })  : _status = status ??
-            TradeVerificationStatus(
-              tradeVerifications: <TradeVerification>[
-                TradeVerification(professionId: 'p1', status: defaultStatus),
-              ],
-            );
+  }) : _status =
+           status ??
+           TradeVerificationStatus(
+             tradeVerifications: <TradeVerification>[
+               TradeVerification(professionId: 'p1', status: defaultStatus),
+             ],
+           );
 
   TradeVerificationStatus _status;
   ApiException? nextError;
@@ -163,15 +161,14 @@ VerificationSubmissionDto tradeSubmissionDto({
   String credentialId = 'cred-1',
   String status = 'pending',
   DateTime? submittedAt,
-}) =>
-    VerificationSubmissionDto(
-      id: id,
-      entityId: entityId,
-      credentialId: credentialId,
-      submissionType: 'trade_proof',
-      status: status,
-      submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
-    );
+}) => VerificationSubmissionDto(
+  id: id,
+  entityId: entityId,
+  credentialId: credentialId,
+  submissionType: 'trade_proof',
+  status: status,
+  submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);
 
 /// A status aggregate DTO with the given per-profession [statuses].
 VerificationStatusDto tradeStatusDto({
@@ -180,28 +177,30 @@ VerificationStatusDto tradeStatusDto({
   Map<String, String> statuses = const <String, String>{'p1': 'unverified'},
   int pendingSubmissions = 0,
   int totalSubmissions = 0,
-}) =>
-    VerificationStatusDto(
-      entityId: entityId,
-      kyc: seedKycDto(),
-      identityVerified: identityVerified,
-      tradeVerifications: statuses.entries
-          .map((MapEntry<String, String> e) =>
-              TradeVerificationDto(professionId: e.key, status: e.value))
-          .toList(growable: false),
-      pendingSubmissions: pendingSubmissions,
-      totalSubmissions: totalSubmissions,
-    );
+}) => VerificationStatusDto(
+  entityId: entityId,
+  kyc: seedKycDto(),
+  identityVerified: identityVerified,
+  tradeVerifications: statuses.entries
+      .map(
+        (MapEntry<String, String> e) =>
+            TradeVerificationDto(professionId: e.key, status: e.value),
+      )
+      .toList(growable: false),
+  pendingSubmissions: pendingSubmissions,
+  totalSubmissions: totalSubmissions,
+);
 
 /// A trade aggregate entity with the given per-profession [statuses].
 TradeVerificationStatus tradeStatusEntity({
   bool identityVerified = false,
   Map<String, String> statuses = const <String, String>{'p1': 'unverified'},
-}) =>
-    TradeVerificationStatus(
-      identityVerified: identityVerified,
-      tradeVerifications: statuses.entries
-          .map((MapEntry<String, String> e) =>
-              TradeVerification(professionId: e.key, status: e.value))
-          .toList(growable: false),
-    );
+}) => TradeVerificationStatus(
+  identityVerified: identityVerified,
+  tradeVerifications: statuses.entries
+      .map(
+        (MapEntry<String, String> e) =>
+            TradeVerification(professionId: e.key, status: e.value),
+      )
+      .toList(growable: false),
+);

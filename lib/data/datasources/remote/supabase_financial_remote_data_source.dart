@@ -32,55 +32,46 @@ class SupabaseFinancialRemoteDataSource extends BaseApiService
 
   @override
   Future<FinancialProfileDto?> getProfile() => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'financial_profile_get',
-        );
-        final Map<String, dynamic> envelope =
-            FinancialEnvelopeParser.unwrap(response);
-        // Profile may not exist — the RPC returns an empty data object
-        // with a null profile key.
-        final Map<String, dynamic>? profile =
-            envelope['profile'] as Map<String, dynamic>?;
-        if (profile == null || profile.isEmpty) return null;
-        return FinancialProfileDto.fromJson(profile);
-      });
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('financial_profile_get');
+    final Map<String, dynamic> envelope = FinancialEnvelopeParser.unwrap(
+      response,
+    );
+    // Profile may not exist — the RPC returns an empty data object
+    // with a null profile key.
+    final Map<String, dynamic>? profile =
+        envelope['profile'] as Map<String, dynamic>?;
+    if (profile == null || profile.isEmpty) return null;
+    return FinancialProfileDto.fromJson(profile);
+  });
 
   @override
   Future<BalanceDto> getBalance(String currencyCode) => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'financial_balance_get',
           params: <String, dynamic>{'p_currency_code': currencyCode},
         );
-        final Map<String, dynamic> data =
-            FinancialEnvelopeParser.unwrap(response);
-        return BalanceDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = FinancialEnvelopeParser.unwrap(response);
+    return BalanceDto.fromJson(data);
+  });
 
   @override
   Future<FinancialStatusDto> getStatus() => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'financial_status_get',
-        );
-        final Map<String, dynamic> data =
-            FinancialEnvelopeParser.unwrap(response);
-        return FinancialStatusDto.fromJson(data);
-      });
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>('financial_status_get');
+    final Map<String, dynamic> data = FinancialEnvelopeParser.unwrap(response);
+    return FinancialStatusDto.fromJson(data);
+  });
 
   @override
-  Future<FinancialProfileDto> createProfile({
-    String defaultCurrency = 'NGN',
-  }) =>
+  Future<FinancialProfileDto> createProfile({String defaultCurrency = 'NGN'}) =>
       _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'financial_profile_create',
-          params: <String, dynamic>{
-            'p_default_currency': defaultCurrency,
-          },
-        );
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+              'financial_profile_create',
+              params: <String, dynamic>{'p_default_currency': defaultCurrency},
+            );
         FinancialEnvelopeParser.unwrap(response);
         // Re-read the profile to confirm creation (server-authoritative).
         final FinancialProfileDto? profile = await getProfile();

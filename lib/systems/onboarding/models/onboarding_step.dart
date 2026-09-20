@@ -10,7 +10,8 @@
 enum OnboardingStep {
   capability(
     label: 'What will you do?',
-    description: 'Choose how you\u2019ll use Hivorr \u2014 hire, offer, or both.',
+    description:
+        'Choose how you\u2019ll use Hivorr \u2014 hire, offer, or both.',
     stepNumber: 1,
     isVerificationStep: false,
   ),

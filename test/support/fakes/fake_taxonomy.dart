@@ -14,26 +14,74 @@ import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 /// Number of industries / professions mirrored from the EP-02-01 seed for
 /// representative test fixtures.
 const List<Map<String, dynamic>> seedIndustryRows = <Map<String, dynamic>>[
-  <String, dynamic>{'id': 'ind-legal', 'slug': 'legal', 'name': 'Legal', 'description': 'Legal services', 'is_active': true, 'sort_order': 10},
-  <String, dynamic>{'id': 'ind-tech', 'slug': 'technology', 'name': 'Technology', 'description': 'Software and IT', 'is_active': true, 'sort_order': 20},
-  <String, dynamic>{'id': 'ind-health', 'slug': 'healthcare', 'name': 'Healthcare', 'description': 'Medical', 'is_active': true, 'sort_order': 30},
+  <String, dynamic>{
+    'id': 'ind-legal',
+    'slug': 'legal',
+    'name': 'Legal',
+    'description': 'Legal services',
+    'is_active': true,
+    'sort_order': 10,
+  },
+  <String, dynamic>{
+    'id': 'ind-tech',
+    'slug': 'technology',
+    'name': 'Technology',
+    'description': 'Software and IT',
+    'is_active': true,
+    'sort_order': 20,
+  },
+  <String, dynamic>{
+    'id': 'ind-health',
+    'slug': 'healthcare',
+    'name': 'Healthcare',
+    'description': 'Medical',
+    'is_active': true,
+    'sort_order': 30,
+  },
 ];
 
-const List<Map<String, dynamic>> seedTechProfessionRows = <Map<String, dynamic>>[
-  <String, dynamic>{'id': 'prof-sw', 'industry_id': 'ind-tech', 'slug': 'software-engineer', 'name': 'Software Engineer', 'description': 'Build software', 'is_active': true, 'sort_order': 10},
-  <String, dynamic>{'id': 'prof-web', 'industry_id': 'ind-tech', 'slug': 'web-developer', 'name': 'Web Developer', 'description': 'Build web apps', 'is_active': true, 'sort_order': 20},
-  <String, dynamic>{'id': 'prof-mobile', 'industry_id': 'ind-tech', 'slug': 'mobile-developer', 'name': 'Mobile Developer', 'description': 'Build mobile apps', 'is_active': true, 'sort_order': 30},
-];
+const List<Map<String, dynamic>> seedTechProfessionRows =
+    <Map<String, dynamic>>[
+      <String, dynamic>{
+        'id': 'prof-sw',
+        'industry_id': 'ind-tech',
+        'slug': 'software-engineer',
+        'name': 'Software Engineer',
+        'description': 'Build software',
+        'is_active': true,
+        'sort_order': 10,
+      },
+      <String, dynamic>{
+        'id': 'prof-web',
+        'industry_id': 'ind-tech',
+        'slug': 'web-developer',
+        'name': 'Web Developer',
+        'description': 'Build web apps',
+        'is_active': true,
+        'sort_order': 20,
+      },
+      <String, dynamic>{
+        'id': 'prof-mobile',
+        'industry_id': 'ind-tech',
+        'slug': 'mobile-developer',
+        'name': 'Mobile Developer',
+        'description': 'Build mobile apps',
+        'is_active': true,
+        'sort_order': 30,
+      },
+    ];
 
 /// Controllable [TaxonomyRemoteDataSource] for unit tests.
 class FakeTaxonomyRemoteDataSource implements TaxonomyRemoteDataSource {
   /// Industries returned by [getIndustries].
-  List<IndustryDto> industries =
-      seedIndustryRows.map(IndustryDto.fromJson).toList();
+  List<IndustryDto> industries = seedIndustryRows
+      .map(IndustryDto.fromJson)
+      .toList();
 
   /// Professions returned by [getProfessions].
-  List<ProfessionDto> professions =
-      seedTechProfessionRows.map(ProfessionDto.fromJson).toList();
+  List<ProfessionDto> professions = seedTechProfessionRows
+      .map(ProfessionDto.fromJson)
+      .toList();
 
   /// When non-null, [getIndustries] throws this.
   ApiException? nextError;
@@ -79,8 +127,9 @@ class FakeTaxonomyRepository implements TaxonomyRepository {
   FakeTaxonomyRepository({
     List<Industry>? industries,
     Map<String, List<Profession>>? professionsByIndustry,
-  })  : _industries = industries ?? <Industry>[],
-        _professionsByIndustry = professionsByIndustry ?? <String, List<Profession>>{};
+  }) : _industries = industries ?? <Industry>[],
+       _professionsByIndustry =
+           professionsByIndustry ?? <String, List<Profession>>{};
 
   final List<Industry> _industries;
   final Map<String, List<Profession>> _professionsByIndustry;

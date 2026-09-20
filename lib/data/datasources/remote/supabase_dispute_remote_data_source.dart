@@ -34,32 +34,30 @@ class SupabaseDisputeRemoteDataSource extends BaseApiService
   }
 
   @override
-  Future<DisputeListEnvelopeDto> listDisputes({String? status}) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'dispute_list',
-          params: <String, dynamic>{
-            'p_status': ?status,
-          },
-        );
-        final Map<String, dynamic> data =
-            DisputeEnvelopeParser.unwrap(response);
-        return DisputeListEnvelopeDto.fromJson(data);
-      });
+  Future<DisputeListEnvelopeDto> listDisputes({String? status}) => _guard(
+    () async {
+      final Map<String, dynamic> response = await supabase
+          .rpc<Map<String, dynamic>>(
+            'dispute_list',
+            params: <String, dynamic>{'p_status': ?status},
+          );
+      final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
+      return DisputeListEnvelopeDto.fromJson(data);
+    },
+  );
 
   @override
-  Future<DisputeCaseDetailEnvelopeDto> getCase(String caseId) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'dispute_get',
-          params: <String, dynamic>{'p_case_id': caseId},
-        );
-        final Map<String, dynamic> data =
-            DisputeEnvelopeParser.unwrap(response);
-        return DisputeCaseDetailEnvelopeDto.fromJson(data);
-      });
+  Future<DisputeCaseDetailEnvelopeDto> getCase(String caseId) => _guard(
+    () async {
+      final Map<String, dynamic> response = await supabase
+          .rpc<Map<String, dynamic>>(
+            'dispute_get',
+            params: <String, dynamic>{'p_case_id': caseId},
+          );
+      final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
+      return DisputeCaseDetailEnvelopeDto.fromJson(data);
+    },
+  );
 
   @override
   Future<DisputeCaseDto> fileDispute({
@@ -68,10 +66,9 @@ class SupabaseDisputeRemoteDataSource extends BaseApiService
     required String reason,
     String? desiredOutcome,
     String priority = 'medium',
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'dispute_file',
           params: <String, dynamic>{
             'p_escrow_id': escrowId,
@@ -81,10 +78,9 @@ class SupabaseDisputeRemoteDataSource extends BaseApiService
             'p_priority': priority,
           },
         );
-        final Map<String, dynamic> data =
-            DisputeEnvelopeParser.unwrap(response);
-        return DisputeCaseDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
+    return DisputeCaseDto.fromJson(data);
+  });
 
   @override
   Future<DisputeEvidenceDto> submitEvidence({
@@ -94,10 +90,9 @@ class SupabaseDisputeRemoteDataSource extends BaseApiService
     String? description,
     String? fileUrl,
     Map<String, dynamic> fileMetadata = const <String, dynamic>{},
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'dispute_submit_evidence',
           params: <String, dynamic>{
             'p_case_id': caseId,
@@ -108,20 +103,18 @@ class SupabaseDisputeRemoteDataSource extends BaseApiService
             'p_file_metadata': fileMetadata,
           },
         );
-        final Map<String, dynamic> data =
-            DisputeEnvelopeParser.unwrap(response);
-        return DisputeEvidenceDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
+    return DisputeEvidenceDto.fromJson(data);
+  });
 
   @override
   Future<DisputeCaseDto> withdrawDispute(String caseId) => _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'dispute_withdraw',
           params: <String, dynamic>{'p_case_id': caseId},
         );
-        final Map<String, dynamic> data =
-            DisputeEnvelopeParser.unwrap(response);
-        return DisputeCaseDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
+    return DisputeCaseDto.fromJson(data);
+  });
 }

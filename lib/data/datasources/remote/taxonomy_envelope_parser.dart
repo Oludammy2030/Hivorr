@@ -33,12 +33,14 @@ class TaxonomyEnvelopeParser {
         message: 'Malformed taxonomy envelope: data is not an array.',
       );
     }
-    return data.map((Object? e) {
-      if (e is Map<String, dynamic>) {
-        return e;
-      }
-      return Map<String, dynamic>.from(e as Map);
-    }).toList(growable: false);
+    return data
+        .map((Object? e) {
+          if (e is Map<String, dynamic>) {
+            return e;
+          }
+          return Map<String, dynamic>.from(e as Map);
+        })
+        .toList(growable: false);
   }
 
   static ApiException _errorForCode(String? code) {

@@ -59,11 +59,11 @@ class EscrowProvider extends ChangeNotifier with WidgetsBindingObserver {
     HivorrLogger? logger,
     NotificationProvider? notificationProvider,
     DateTime Function()? clock,
-  })  : _service = service,
-        _logger = logger,
-        _notificationProvider = notificationProvider,
-        _clock = clock ?? DateTime.now,
-        _writeAvailable = service.escrowWriteAvailable {
+  }) : _service = service,
+       _logger = logger,
+       _notificationProvider = notificationProvider,
+       _clock = clock ?? DateTime.now,
+       _writeAvailable = service.escrowWriteAvailable {
     // `AppBootstrap.initialize` constructs this provider in a pure data-layer
     // context where no binding exists yet; the observer only attaches when the
     // widget binding is live (guard is idempotent in the app).
@@ -217,9 +217,7 @@ class EscrowProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Marks a milestone complete via the write seam.
-  Future<EscrowDetail> completeMilestone({
-    required String milestoneId,
-  }) async {
+  Future<EscrowDetail> completeMilestone({required String milestoneId}) async {
     final String? escrowId = _selected?.id;
     if (escrowId == null) throw _noSelectionError;
     final EscrowDetail detail = await _service.completeMilestone(
@@ -232,9 +230,7 @@ class EscrowProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Releases a single milestone via the write seam.
-  Future<EscrowDetail> releaseMilestone({
-    required String milestoneId,
-  }) async {
+  Future<EscrowDetail> releaseMilestone({required String milestoneId}) async {
     final String? escrowId = _selected?.id;
     if (escrowId == null) throw _noSelectionError;
     final EscrowDetail detail = await _service.releaseMilestone(
@@ -250,8 +246,7 @@ class EscrowProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<EscrowDetail> releaseFinal() async {
     final String? escrowId = _selected?.id;
     if (escrowId == null) throw _noSelectionError;
-    final EscrowDetail detail =
-        await _service.releaseFinal(escrowId: escrowId);
+    final EscrowDetail detail = await _service.releaseFinal(escrowId: escrowId);
     _applyDetail(detail);
     _maybeNotifyRelease(detail, null);
     return detail;
@@ -270,10 +265,10 @@ class EscrowProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   static ApiException get _noSelectionError => const ApiException(
-        kind: ApiExceptionKind.validation,
-        message: 'No escrow is currently selected.',
-        code: 'PLT003',
-      );
+    kind: ApiExceptionKind.validation,
+    message: 'No escrow is currently selected.',
+    code: 'PLT003',
+  );
 
   void _applyDetail(EscrowDetail detail) {
     _selected = detail.escrow;

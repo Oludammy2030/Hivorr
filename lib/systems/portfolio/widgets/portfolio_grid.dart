@@ -13,11 +13,7 @@ import 'package:hivorr/systems/portfolio/widgets/portfolio_item_card.dart';
 /// phone → side-rail hierarchy. Renders an empty placeholder when the list is
 /// empty so the section header can stay consistent.
 class PortfolioGrid extends StatelessWidget {
-  const PortfolioGrid({
-    super.key,
-    required this.items,
-    this.mediaUrlBuilder,
-  });
+  const PortfolioGrid({super.key, required this.items, this.mediaUrlBuilder});
 
   /// Work samples in server order (already `sort_order`-sorted); re-sorted
   /// defensively to guarantee stable nulls-last ordering.

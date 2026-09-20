@@ -117,10 +117,10 @@ class _TypeChip extends StatelessWidget {
   }
 
   static IconData _iconFor(TradeProofType type) => switch (type) {
-        TradeProofType.certificate => Icons.verified_outlined,
-        TradeProofType.license => Icons.gavel_outlined,
-        TradeProofType.workSample => Icons.badge_outlined,
-        TradeProofType.portfolio => Icons.folder_open_outlined,
-        TradeProofType.other => Icons.more_horiz,
-      };
+    TradeProofType.certificate => Icons.verified_outlined,
+    TradeProofType.license => Icons.gavel_outlined,
+    TradeProofType.workSample => Icons.badge_outlined,
+    TradeProofType.portfolio => Icons.folder_open_outlined,
+    TradeProofType.other => Icons.more_horiz,
+  };
 }

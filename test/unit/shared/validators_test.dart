@@ -120,36 +120,51 @@ void main() {
 
       // all classes + meets min length → strong
       expect(policy.evaluate('Hello123!').strength, PasswordStrength.strong);
-      expect(
-        policy.evaluate('Str0ng!Pw').strength,
-        PasswordStrength.strong,
-      );
+      expect(policy.evaluate('Str0ng!Pw').strength, PasswordStrength.strong);
     });
 
     test('symbol set matches Supabase allowed symbols', () {
       const PasswordPolicy policy = PasswordPolicy.supabase;
 
       // symbols from the documented Supabase allowed set
-      expect(policy.evaluate('Aa1!').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
-      expect(policy.evaluate('Aa1@').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
-      expect(policy.evaluate('Aa1#').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
-      expect(policy.evaluate('Aa1_').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
-      expect(policy.evaluate('Aa1-').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
-      expect(policy.evaluate('Aa1`').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
-      expect(policy.evaluate('Aa1~').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
-      expect(policy.evaluate('Aa1[').satisfied[PasswordCharacterClass.symbol],
-          isTrue);
+      expect(
+        policy.evaluate('Aa1!').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
+      expect(
+        policy.evaluate('Aa1@').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
+      expect(
+        policy.evaluate('Aa1#').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
+      expect(
+        policy.evaluate('Aa1_').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
+      expect(
+        policy.evaluate('Aa1-').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
+      expect(
+        policy.evaluate('Aa1`').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
+      expect(
+        policy.evaluate('Aa1~').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
+      expect(
+        policy.evaluate('Aa1[').satisfied[PasswordCharacterClass.symbol],
+        isTrue,
+      );
 
       // non-symbol
-      expect(policy.evaluate('Abcdefg1').satisfied[PasswordCharacterClass.symbol],
-          isFalse);
+      expect(
+        policy.evaluate('Abcdefg1').satisfied[PasswordCharacterClass.symbol],
+        isFalse,
+      );
     });
 
     test('invalidMessage reflects the policy', () {
@@ -180,26 +195,29 @@ void main() {
 
   group('HivorrValidators.compose', () {
     test('returns first failure', () {
-      final String? result = HivorrValidators.compose('', <String? Function(String?)>[
-        (String? v) => HivorrValidators.required(v),
-        (String? v) => HivorrValidators.email(v),
-      ]);
+      final String? result =
+          HivorrValidators.compose('', <String? Function(String?)>[
+            (String? v) => HivorrValidators.required(v),
+            (String? v) => HivorrValidators.email(v),
+          ]);
       expect(result, 'This field is required');
     });
 
     test('returns later failure when first passes', () {
-      final String? result = HivorrValidators.compose('bob', <String? Function(String?)>[
-        (String? v) => HivorrValidators.required(v),
-        (String? v) => HivorrValidators.email(v),
-      ]);
+      final String? result =
+          HivorrValidators.compose('bob', <String? Function(String?)>[
+            (String? v) => HivorrValidators.required(v),
+            (String? v) => HivorrValidators.email(v),
+          ]);
       expect(result, isNotNull);
     });
 
     test('returns null when all pass', () {
-      final String? result = HivorrValidators.compose('a@b.co', <String? Function(String?)>[
-        (String? v) => HivorrValidators.required(v),
-        (String? v) => HivorrValidators.email(v),
-      ]);
+      final String? result =
+          HivorrValidators.compose('a@b.co', <String? Function(String?)>[
+            (String? v) => HivorrValidators.required(v),
+            (String? v) => HivorrValidators.email(v),
+          ]);
       expect(result, isNull);
     });
   });

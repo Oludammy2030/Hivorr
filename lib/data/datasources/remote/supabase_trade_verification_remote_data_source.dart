@@ -36,35 +36,34 @@ class SupabaseTradeVerificationRemoteDataSource extends BaseApiService
   Future<VerificationSubmissionDto> submit({
     required String credentialId,
     String submissionType = 'trade_proof',
-  }) =>
-      _guard(() async {
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
           'verification_submit',
           params: <String, dynamic>{
             'p_credential_id': credentialId,
             'p_submission_type': submissionType,
           },
         );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return VerificationSubmissionDto.fromJson(data);
-      });
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
+    );
+    return VerificationSubmissionDto.fromJson(data);
+  });
 
   @override
-  Future<VerificationStatusDto> getStatus({String? entityId}) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{};
-        if (entityId != null && entityId.isNotEmpty) {
-          params['p_entity_id'] = entityId;
-        }
-        final Map<String, dynamic> response =
-            await supabase.rpc<Map<String, dynamic>>(
-          'verification_status_get',
-          params: params,
-        );
-        final Map<String, dynamic> data =
-            VerificationEnvelopeParser.unwrap(response);
-        return VerificationStatusDto.fromJson(data);
-      });
+  Future<VerificationStatusDto> getStatus({String? entityId}) => _guard(
+    () async {
+      final Map<String, dynamic> params = <String, dynamic>{};
+      if (entityId != null && entityId.isNotEmpty) {
+        params['p_entity_id'] = entityId;
+      }
+      final Map<String, dynamic> response = await supabase
+          .rpc<Map<String, dynamic>>('verification_status_get', params: params);
+      final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+        response,
+      );
+      return VerificationStatusDto.fromJson(data);
+    },
+  );
 }

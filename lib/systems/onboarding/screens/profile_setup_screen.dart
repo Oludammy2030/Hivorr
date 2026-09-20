@@ -187,7 +187,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             controller: _email,
             label: 'Email',
             enabled: false,
-            helperText: 'Verified by your sign-in — not stored with your profile.',
+            helperText:
+                'Verified by your sign-in — not stored with your profile.',
           ),
           const SizedBox(height: HivorrSpacing.md),
           HivorrTextField(
@@ -312,8 +313,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     });
     await provider.completeProfile(
       firstName: _firstName.text.trim(),
-      middleName:
-          _middleName.text.trim().isEmpty ? null : _middleName.text.trim(),
+      middleName: _middleName.text.trim().isEmpty
+          ? null
+          : _middleName.text.trim(),
       lastName: _lastName.text.trim(),
       displayName: _displayName.text.trim(),
       phoneNumber: _phone.text.trim(),

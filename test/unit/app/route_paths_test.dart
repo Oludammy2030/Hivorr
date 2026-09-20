@@ -30,14 +30,8 @@ void main() {
   });
 
   test('typed publicStore builder produces a URL-encoded path', () {
-    expect(
-      RoutePaths.publicStore(storeId: 'xyz-456'),
-      '/store/xyz-456',
-    );
-    expect(
-      RoutePaths.publicStore(storeId: 'a b'),
-      '/store/a%20b',
-    );
+    expect(RoutePaths.publicStore(storeId: 'xyz-456'), '/store/xyz-456');
+    expect(RoutePaths.publicStore(storeId: 'a b'), '/store/a%20b');
   });
 
   test('named route constants match the GoRouter route names', () {
@@ -54,4 +48,3 @@ void main() {
     expect(RouteNames.publicStore, 'public-store');
   });
 }
-

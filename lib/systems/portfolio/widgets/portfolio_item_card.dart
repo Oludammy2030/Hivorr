@@ -14,11 +14,7 @@ import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 /// public URL is available the card shows a neutral type placeholder instead
 /// of a broken image. Ordering is handled by [PortfolioGrid] (`sort_order`).
 class PortfolioItemCard extends StatelessWidget {
-  const PortfolioItemCard({
-    super.key,
-    required this.item,
-    this.mediaUrl,
-  });
+  const PortfolioItemCard({super.key, required this.item, this.mediaUrl});
 
   /// The portfolio work sample (whitelisted fields only).
   final PortfolioItem item;
@@ -45,10 +41,7 @@ class PortfolioItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 if (type != null) ...<Widget>[
-                  HivorrChip(
-                    label: type,
-                    variant: HivorrChipVariant.surface,
-                  ),
+                  HivorrChip(label: type, variant: HivorrChipVariant.surface),
                   const SizedBox(height: HivorrSpacing.sm),
                 ],
                 if (title != null) ...<Widget>[
@@ -107,20 +100,21 @@ class PortfolioItemCard extends StatelessWidget {
         child: Image.network(
           url,
           fit: BoxFit.cover,
-          errorBuilder: (BuildContext context, Object error, StackTrace? stack) {
-            return placeholder;
-          },
+          errorBuilder:
+              (BuildContext context, Object error, StackTrace? stack) {
+                return placeholder;
+              },
         ),
       ),
     );
   }
 
   static IconData _placeholderIconFor(String? type) => switch (type) {
-        'link' => Icons.link,
-        'document' => Icons.description_outlined,
-        'video' => Icons.play_circle_outline,
-        _ => Icons.image_outlined,
-      };
+    'link' => Icons.link,
+    'document' => Icons.description_outlined,
+    'video' => Icons.play_circle_outline,
+    _ => Icons.image_outlined,
+  };
 
   static String? _nonEmpty(String? value) {
     final String? trimmed = value?.trim();

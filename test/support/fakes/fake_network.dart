@@ -13,11 +13,7 @@ import 'package:http/http.dart' as http;
 /// - When [queryError] is set, any REST query throws it, simulating a backend
 ///   failure surfaced by PostgREST.
 class ScriptedHttpClient extends http.BaseClient {
-  ScriptedHttpClient({
-    this.queryResults,
-    this.queryError,
-    this.rpcHandlers,
-  });
+  ScriptedHttpClient({this.queryResults, this.queryError, this.rpcHandlers});
 
   /// Scripted rows keyed by table name.
   final Map<String, List<Map<String, dynamic>>>? queryResults;
@@ -80,9 +76,7 @@ class ScriptedHttpClient extends http.BaseClient {
       Stream<List<int>>.value(bytes),
       statusCode,
       request: request,
-      headers: <String, String>{
-        'content-type': 'application/json',
-      },
+      headers: <String, String>{'content-type': 'application/json'},
     );
   }
 }
@@ -93,8 +87,7 @@ class FakeConnectivityMonitor {
 
   bool isOnline;
 
-  final StreamController<bool> _controller =
-      StreamController<bool>.broadcast();
+  final StreamController<bool> _controller = StreamController<bool>.broadcast();
 
   /// Emits connectivity transitions.
   Stream<bool> get onStatusChanged => _controller.stream;
@@ -118,8 +111,7 @@ class FakeNetworkStatusProvider {
 
   bool isOnline;
 
-  final StreamController<bool> _controller =
-      StreamController<bool>.broadcast();
+  final StreamController<bool> _controller = StreamController<bool>.broadcast();
 
   /// Emits network status transitions.
   Stream<bool> get status => _controller.stream;

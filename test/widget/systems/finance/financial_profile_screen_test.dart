@@ -56,8 +56,7 @@ class _BlockingRepo implements FinancialRepository {
   @override
   Future<AccountActivationGuidance> requestAccountActivation({
     required String currencyCode,
-  }) =>
-      _never.future.then((_) => throw StateError('never'));
+  }) => _never.future.then((_) => throw StateError('never'));
 }
 
 void main() {
@@ -68,8 +67,9 @@ void main() {
     FakeFinancialDepositRepository? depositRepo,
   }) async {
     final r = repo ?? FakeFinancialRepository();
-    final FinancialProvider provider =
-        FinancialProvider(service: FinancialService(repository: r));
+    final FinancialProvider provider = FinancialProvider(
+      service: FinancialService(repository: r),
+    );
     final FinancialPayoutProvider payoutProvider = FinancialPayoutProvider(
       service: FinancialPayoutService(
         repository: payoutRepo ?? FakeFinancialPayoutRepository(),
@@ -109,8 +109,9 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('shows empty state when no profile exists',
-        (WidgetTester tester) async {
+    testWidgets('shows empty state when no profile exists', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository()..setProfile(null);
       await pumpScreenWith(tester, repo: repo);
       await tester.pumpAndSettle();
@@ -119,8 +120,9 @@ void main() {
       expect(find.text('Set up your financial profile'), findsOneWidget);
     });
 
-    testWidgets('shows loading state while profile fetch is in flight',
-        (WidgetTester tester) async {
+    testWidgets('shows loading state while profile fetch is in flight', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester, repo: _BlockingRepo());
       await tester.pump();
       expect(find.text('Loading financial profile...'), findsOneWidget);
@@ -128,8 +130,9 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
-    testWidgets('renders profile card when profile exists',
-        (WidgetTester tester) async {
+    testWidgets('renders profile card when profile exists', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(status: 'active'),
         status: seedStatusEntity(
@@ -145,7 +148,9 @@ void main() {
       expect(find.text('\u20A60.00'), findsNWidgets(2)); // held + pending
     });
 
-    testWidgets('shows error state on load failure', (WidgetTester tester) async {
+    testWidgets('shows error state on load failure', (
+      WidgetTester tester,
+    ) async {
       final repo2 = FakeFinancialRepository()
         ..setProfile(seedProfileEntity())
         ..nextError = const ApiException(
@@ -159,8 +164,9 @@ void main() {
       expect(find.text('Failed to load financial profile'), findsOneWidget);
     });
 
-    testWidgets('renders profile and balance cards when loaded',
-        (WidgetTester tester) async {
+    testWidgets('renders profile and balance cards when loaded', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(status: 'active'),
         status: seedStatusEntity(
@@ -174,8 +180,9 @@ void main() {
       expect(find.byType(BalanceOverviewCard), findsOneWidget);
     });
 
-    testWidgets('shows suspended terminal state with contact support',
-        (WidgetTester tester) async {
+    testWidgets('shows suspended terminal state with contact support', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(status: 'suspended'),
         status: seedStatusEntity(
@@ -186,15 +193,13 @@ void main() {
       await pumpScreenWith(tester, repo: repo);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Your financial profile is suspended'),
-        findsOneWidget,
-      );
+      expect(find.text('Your financial profile is suspended'), findsOneWidget);
       expect(find.text('Contact support to resolve this.'), findsOneWidget);
     });
 
-    testWidgets('shows closed terminal state with contact support',
-        (WidgetTester tester) async {
+    testWidgets('shows closed terminal state with contact support', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(status: 'closed'),
         status: seedStatusEntity(
@@ -209,8 +214,9 @@ void main() {
       expect(find.text('Contact support to resolve this.'), findsOneWidget);
     });
 
-    testWidgets('shows Manage action when a profile exists',
-        (WidgetTester tester) async {
+    testWidgets('shows Manage action when a profile exists', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(status: 'active'),
         status: seedStatusEntity(),
@@ -220,16 +226,18 @@ void main() {
       expect(find.byTooltip('Manage'), findsOneWidget);
     });
 
-    testWidgets('hides Manage action when no profile exists',
-        (WidgetTester tester) async {
+    testWidgets('hides Manage action when no profile exists', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository()..setProfile(null);
       await pumpScreenWith(tester, repo: repo);
       await tester.pumpAndSettle();
       expect(find.byTooltip('Manage'), findsNothing);
     });
 
-    testWidgets('hides create CTA when a profile exists',
-        (WidgetTester tester) async {
+    testWidgets('hides create CTA when a profile exists', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(status: 'active'),
         status: seedStatusEntity(),
@@ -239,8 +247,9 @@ void main() {
       expect(find.text('Set up your financial profile'), findsNothing);
     });
 
-    testWidgets('shows receiving accounts placeholder when none configured',
-        (WidgetTester tester) async {
+    testWidgets('shows receiving accounts placeholder when none configured', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeFinancialRepository(
         profile: seedProfileEntity(status: 'active'),
         status: seedStatusEntity(),

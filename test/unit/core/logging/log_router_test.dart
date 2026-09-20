@@ -14,11 +14,11 @@ class _RecordingSink implements LogSink {
 }
 
 LogEntry _entry(LogLevel level) => LogEntry(
-      level: level,
-      message: 'm',
-      loggerName: 'n',
-      timestamp: DateTime(2024),
-    );
+  level: level,
+  message: 'm',
+  loggerName: 'n',
+  timestamp: DateTime(2024),
+);
 
 void main() {
   test('entries below minimum level are discarded', () {

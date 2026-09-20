@@ -25,15 +25,14 @@ import '../../../support/harnesses/widget_harness.dart';
 
 /// The single vertical body list under the public chrome (the horizontal nav
 /// scroll and any nested lists are excluded).
-Finder bodyScroll() =>
-    find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first;
+Finder bodyScroll() => find
+    .descendant(of: find.byType(ListView), matching: find.byType(Scrollable))
+    .first;
 
 /// Scopes a [text] lookup to a screen type so nav/footer duplicates don't
 /// match.
-Finder textIn(Type screen, String text) => find.descendant(
-      of: find.byType(screen),
-      matching: find.text(text),
-    );
+Finder textIn(Type screen, String text) =>
+    find.descendant(of: find.byType(screen), matching: find.text(text));
 
 Future<void> pumpPublic(
   WidgetTester tester,
@@ -45,9 +44,7 @@ Future<void> pumpPublic(
     tester,
     app,
     providers: <SingleChildWidget>[
-      ChangeNotifierProvider<AuthProvider>.value(
-        value: FakeAuthProvider(),
-      ),
+      ChangeNotifierProvider<AuthProvider>.value(value: FakeAuthProvider()),
     ],
     width: width,
     height: height,
@@ -109,8 +106,9 @@ GoRouter navRouter() {
 
 void main() {
   group('PublicNavBar', () {
-    testWidgets('desktop shows the site navigation and auth CTAs',
-        (tester) async {
+    testWidgets('desktop shows the site navigation and auth CTAs', (
+      tester,
+    ) async {
       final GoRouter router = navRouter();
       await pumpPublic(
         tester,
@@ -151,7 +149,9 @@ void main() {
       expect(find.byIcon(Icons.menu), findsNothing);
     });
 
-    testWidgets('mobile collapses the site links behind a menu', (tester) async {
+    testWidgets('mobile collapses the site links behind a menu', (
+      tester,
+    ) async {
       await pumpPublic(
         tester,
         MaterialApp.router(
@@ -170,8 +170,9 @@ void main() {
       expect(find.byIcon(Icons.menu), findsOneWidget);
     });
 
-    testWidgets('menu navigation resolves the tapped destination',
-        (tester) async {
+    testWidgets('menu navigation resolves the tapped destination', (
+      tester,
+    ) async {
       final GoRouter router = navRouter();
       await pumpPublic(
         tester,
@@ -237,10 +238,7 @@ void main() {
       expect(find.text('Company'), findsOneWidget);
       expect(find.text('Platform'), findsOneWidget);
       expect(find.text('Get started'), findsWidgets);
-      expect(
-        find.text('© Hivorr · AfriNova Digital Limited'),
-        findsOneWidget,
-      );
+      expect(find.text('© Hivorr · AfriNova Digital Limited'), findsOneWidget);
     });
 
     testWidgets('footer link navigates to its destination', (tester) async {
@@ -283,7 +281,9 @@ void main() {
       );
     });
 
-    testWidgets('How it works explains the one-account journey', (tester) async {
+    testWidgets('How it works explains the one-account journey', (
+      tester,
+    ) async {
       await pumpPublic(
         tester,
         MaterialApp.router(
@@ -294,14 +294,8 @@ void main() {
 
       expect(find.byType(HowItWorksScreen), findsOneWidget);
       expect(textIn(HowItWorksScreen, 'How it works'), findsWidgets);
-      expect(
-        find.text('Get operating in three steps'),
-        findsOneWidget,
-      );
-      expect(
-        find.text('The trust flywheel'),
-        findsOneWidget,
-      );
+      expect(find.text('Get operating in three steps'), findsOneWidget);
+      expect(find.text('The trust flywheel'), findsOneWidget);
       expect(
         textIn(HowItWorksScreen, 'Create your free account'),
         findsOneWidget,
@@ -323,10 +317,7 @@ void main() {
         textIn(FeaturesScreen, 'Escrow-protected payments'),
         findsOneWidget,
       );
-      expect(
-        textIn(FeaturesScreen, 'AI-assisted operations'),
-        findsOneWidget,
-      );
+      expect(textIn(FeaturesScreen, 'AI-assisted operations'), findsOneWidget);
     });
 
     testWidgets('Pricing stays honest about structure', (tester) async {
@@ -375,10 +366,7 @@ void main() {
       expect(textIn(ContactScreen, 'Help center'), findsOneWidget);
       expect(textIn(ContactScreen, 'Open the Help center'), findsOneWidget);
       expect(textIn(ContactScreen, 'See our trust model'), findsOneWidget);
-      expect(
-        textIn(ContactScreen, 'Create your free account'),
-        findsOneWidget,
-      );
+      expect(textIn(ContactScreen, 'Create your free account'), findsOneWidget);
     });
 
     testWidgets('Help hub points visitors to the next step', (tester) async {

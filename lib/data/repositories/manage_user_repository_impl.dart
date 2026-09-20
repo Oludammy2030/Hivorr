@@ -9,9 +9,8 @@ import 'package:hivorr/data/repositories/manage_user_repository.dart';
 /// Maps DTOs to domain entities and delegates transport to the injected
 /// [ManageUserRemoteDataSource].
 class ManageUserRepositoryImpl implements ManageUserRepository {
-  ManageUserRepositoryImpl({
-    required ManageUserRemoteDataSource remote,
-  }) : _remote = remote;
+  ManageUserRepositoryImpl({required ManageUserRemoteDataSource remote})
+    : _remote = remote;
 
   final ManageUserRemoteDataSource _remote;
 

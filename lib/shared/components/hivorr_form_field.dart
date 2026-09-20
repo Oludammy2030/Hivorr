@@ -28,23 +28,23 @@ class HivorrFormField extends FormField<String> {
     super.onSaved,
     String? initialValue,
   }) : super(
-          initialValue: initialValue ?? controller?.text,
-          builder: (FormFieldState<String> state) => _HivorrFormFieldView(
-            state: state,
-            controller: controller,
-            label: label,
-            hint: hint,
-            helperText: helperText,
-            prefix: prefix,
-            suffix: suffix,
-            obscureText: obscureText,
-            maxLines: maxLines,
-            maxLength: maxLength,
-            keyboardType: keyboardType,
-            onChanged: onChanged,
-            enabled: enabled,
-          ),
-        );
+         initialValue: initialValue ?? controller?.text,
+         builder: (FormFieldState<String> state) => _HivorrFormFieldView(
+           state: state,
+           controller: controller,
+           label: label,
+           hint: hint,
+           helperText: helperText,
+           prefix: prefix,
+           suffix: suffix,
+           obscureText: obscureText,
+           maxLines: maxLines,
+           maxLength: maxLength,
+           keyboardType: keyboardType,
+           onChanged: onChanged,
+           enabled: enabled,
+         ),
+       );
 
   final TextEditingController? controller;
   final String? label;

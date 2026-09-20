@@ -1,3 +1,5 @@
+// ignore_for_file: use_null_aware_elements
+
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/api/services/base_api_service.dart';
 import 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';

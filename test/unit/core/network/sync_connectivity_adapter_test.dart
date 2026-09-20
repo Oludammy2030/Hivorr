@@ -7,22 +7,22 @@ import 'package:hivorr/core/sync/connectivity_provider.dart';
 
 void main() {
   NetworkStatus onlineWifi() => NetworkStatus(
-        isConnected: true,
-        networkType: NetworkType.wifi,
-        timestamp: DateTime.now(),
-      );
+    isConnected: true,
+    networkType: NetworkType.wifi,
+    timestamp: DateTime.now(),
+  );
 
   NetworkStatus onlineMobile() => NetworkStatus(
-        isConnected: true,
-        networkType: NetworkType.mobile,
-        timestamp: DateTime.now(),
-      );
+    isConnected: true,
+    networkType: NetworkType.mobile,
+    timestamp: DateTime.now(),
+  );
 
   NetworkStatus offline() => NetworkStatus(
-        isConnected: false,
-        networkType: NetworkType.none,
-        timestamp: DateTime.now(),
-      );
+    isConnected: false,
+    networkType: NetworkType.none,
+    timestamp: DateTime.now(),
+  );
 
   group('SyncConnectivityAdapter', () {
     test('is a ConnectivityProvider', () {
@@ -34,46 +34,49 @@ void main() {
       expect(adapter, isA<ConnectivityProvider>());
     });
 
-    test('onConnectivityChanged maps online status to ConnectivityStatus.online',
-        () async {
-      final monitor = FakeNetworkMonitor(initial: offline());
-      addTearDown(monitor.dispose);
+    test(
+      'onConnectivityChanged maps online status to ConnectivityStatus.online',
+      () async {
+        final monitor = FakeNetworkMonitor(initial: offline());
+        addTearDown(monitor.dispose);
 
-      final adapter = SyncConnectivityAdapter(monitor);
+        final adapter = SyncConnectivityAdapter(monitor);
 
-      final statuses = <ConnectivityStatus>[];
-      final sub = adapter.onConnectivityChanged.listen(statuses.add);
-      addTearDown(sub.cancel);
+        final statuses = <ConnectivityStatus>[];
+        final sub = adapter.onConnectivityChanged.listen(statuses.add);
+        addTearDown(sub.cancel);
 
-      await Future<void>.delayed(Duration.zero);
-      statuses.clear();
+        await Future<void>.delayed(Duration.zero);
+        statuses.clear();
 
-      monitor.setStatus(onlineWifi());
-      await Future<void>.delayed(Duration.zero);
+        monitor.setStatus(onlineWifi());
+        await Future<void>.delayed(Duration.zero);
 
-      expect(statuses, <ConnectivityStatus>[ConnectivityStatus.online]);
-    });
+        expect(statuses, <ConnectivityStatus>[ConnectivityStatus.online]);
+      },
+    );
 
     test(
-        'onConnectivityChanged maps offline status to ConnectivityStatus.offline',
-        () async {
-      final monitor = FakeNetworkMonitor(initial: onlineWifi());
-      addTearDown(monitor.dispose);
+      'onConnectivityChanged maps offline status to ConnectivityStatus.offline',
+      () async {
+        final monitor = FakeNetworkMonitor(initial: onlineWifi());
+        addTearDown(monitor.dispose);
 
-      final adapter = SyncConnectivityAdapter(monitor);
+        final adapter = SyncConnectivityAdapter(monitor);
 
-      final statuses = <ConnectivityStatus>[];
-      final sub = adapter.onConnectivityChanged.listen(statuses.add);
-      addTearDown(sub.cancel);
+        final statuses = <ConnectivityStatus>[];
+        final sub = adapter.onConnectivityChanged.listen(statuses.add);
+        addTearDown(sub.cancel);
 
-      await Future<void>.delayed(Duration.zero);
-      statuses.clear();
+        await Future<void>.delayed(Duration.zero);
+        statuses.clear();
 
-      monitor.setStatus(offline());
-      await Future<void>.delayed(Duration.zero);
+        monitor.setStatus(offline());
+        await Future<void>.delayed(Duration.zero);
 
-      expect(statuses, <ConnectivityStatus>[ConnectivityStatus.offline]);
-    });
+        expect(statuses, <ConnectivityStatus>[ConnectivityStatus.offline]);
+      },
+    );
 
     test('online with different network type still emits online', () async {
       final monitor = FakeNetworkMonitor(initial: onlineWifi());

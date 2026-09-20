@@ -33,73 +33,80 @@ void main() {
     PortfolioProvider provider,
     ProfessionalProfileService service,
   ) async {
-    await pumpPortfolioScreen(
-      tester,
-      <SingleChildWidget>[
-        ChangeNotifierProvider<PortfolioProvider>.value(value: provider),
-        Provider<ProfessionalProfileService>.value(value: service),
-      ],
-      '/p/software-engineer/entity-1',
-    );
+    await pumpPortfolioScreen(tester, <SingleChildWidget>[
+      ChangeNotifierProvider<PortfolioProvider>.value(value: provider),
+      Provider<ProfessionalProfileService>.value(value: service),
+    ], '/p/software-engineer/entity-1');
     await tester.pump();
     await tester.pump();
   }
 
   group('EP-02-19 public profile flow', () {
-    testWidgets('Flow 1: signed-out visitor loads the full profile over the route',
-        (WidgetTester tester) async {
-      final stack = buildPortfolioStack();
-      addTearDown(stack.provider.dispose);
+    testWidgets(
+      'Flow 1: signed-out visitor loads the full profile over the route',
+      (WidgetTester tester) async {
+        final stack = buildPortfolioStack();
+        addTearDown(stack.provider.dispose);
 
-      await pumpProfile(tester, stack.provider, stack.service);
+        await pumpProfile(tester, stack.provider, stack.service);
 
-      // The authoritative entity id reached the data source exactly once.
-      expect(stack.remote.lastEntityId, 'entity-1');
-      expect(stack.remote.callCount, 1);
+        // The authoritative entity id reached the data source exactly once.
+        expect(stack.remote.lastEntityId, 'entity-1');
+        expect(stack.remote.callCount, 1);
 
-      // Signed-out load resolves to the full content tree.
-      expect(find.byType(HivorrLoadingState), findsNothing);
-      expect(find.byType(HivorrEmptyState), findsNothing);
-      expect(find.byType(ProfileHeaderCard), findsOneWidget);
-      expect(find.text('Ada Lovelace'), findsOneWidget);
-      expect(find.text('Identity Verified · TIER_1 · active'), findsOneWidget);
-      expect(find.text('Trade Verified'), findsOneWidget);
-      expect(find.text('2 Approved Credentials'), findsOneWidget);
-      expect(find.byType(CredentialCard), findsNWidgets(2));
+        // Signed-out load resolves to the full content tree.
+        expect(find.byType(HivorrLoadingState), findsNothing);
+        expect(find.byType(HivorrEmptyState), findsNothing);
+        expect(find.byType(ProfileHeaderCard), findsOneWidget);
+        expect(find.text('Ada Lovelace'), findsOneWidget);
+        expect(
+          find.text('Identity Verified · TIER_1 · active'),
+          findsOneWidget,
+        );
+        expect(find.text('Trade Verified'), findsOneWidget);
+        expect(find.text('2 Approved Credentials'), findsOneWidget);
+        expect(find.byType(CredentialCard), findsNWidgets(2));
 
-      // Portfolio grid sits below the fold in the lazy ListView.
-      await tester.scrollUntilVisible(find.text('Portfolio'), 200);
-      expect(find.byType(PortfolioItemCard), findsNWidgets(2));
-      expect(find.text('Portfolio'), findsOneWidget);
-    });
+        // Portfolio grid sits below the fold in the lazy ListView.
+        await tester.scrollUntilVisible(find.text('Portfolio'), 200);
+        expect(find.byType(PortfolioItemCard), findsNWidgets(2));
+        expect(find.text('Portfolio'), findsOneWidget);
+      },
+    );
 
-    testWidgets('Flow 2: PLT004 serves the null profile and the SEO-404 empty state',
-        (WidgetTester tester) async {
-      final stack = buildPortfolioStack(
-        error: const ApiException(
-          kind: ApiExceptionKind.notFound,
-          message: 'not found',
-          code: 'PLT004',
-        ),
-      );
-      addTearDown(stack.provider.dispose);
+    testWidgets(
+      'Flow 2: PLT004 serves the null profile and the SEO-404 empty state',
+      (WidgetTester tester) async {
+        final stack = buildPortfolioStack(
+          error: const ApiException(
+            kind: ApiExceptionKind.notFound,
+            message: 'not found',
+            code: 'PLT004',
+          ),
+        );
+        addTearDown(stack.provider.dispose);
 
-      await pumpProfile(tester, stack.provider, stack.service);
+        await pumpProfile(tester, stack.provider, stack.service);
 
-      expect(stack.remote.lastEntityId, 'entity-1');
-      expect(find.byType(HivorrEmptyState), findsOneWidget);
-      expect(find.text('Profile not found'), findsOneWidget);
-      expect(
-        find.textContaining('could not be found or is not currently public'),
-        findsOneWidget,
-      );
-      expect(find.byType(HivorrErrorState), findsNothing);
-      expect(find.text('Ada Lovelace'), findsNothing,
-          reason: 'no display-name leak on the not-found state');
-    });
+        expect(stack.remote.lastEntityId, 'entity-1');
+        expect(find.byType(HivorrEmptyState), findsOneWidget);
+        expect(find.text('Profile not found'), findsOneWidget);
+        expect(
+          find.textContaining('could not be found or is not currently public'),
+          findsOneWidget,
+        );
+        expect(find.byType(HivorrErrorState), findsNothing);
+        expect(
+          find.text('Ada Lovelace'),
+          findsNothing,
+          reason: 'no display-name leak on the not-found state',
+        );
+      },
+    );
 
-    testWidgets('Flow 3: network failure renders a retry state that recovers',
-        (WidgetTester tester) async {
+    testWidgets('Flow 3: network failure renders a retry state that recovers', (
+      WidgetTester tester,
+    ) async {
       final stack = buildPortfolioStack(
         error: const ApiException(
           kind: ApiExceptionKind.network,

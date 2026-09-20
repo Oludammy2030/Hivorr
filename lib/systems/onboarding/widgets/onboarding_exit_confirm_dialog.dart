@@ -40,7 +40,10 @@ class OnboardingExitConfirmDialog extends StatelessWidget {
     final ColorScheme colors = context.colorScheme;
 
     return AlertDialog(
-      title: Text('Save my progress and exit?', style: context.textTheme.titleLarge),
+      title: Text(
+        'Save my progress and exit?',
+        style: context.textTheme.titleLarge,
+      ),
       content: Text(
         'Your progress is saved automatically. You can pick up right where '
         'you left off when you come back.',

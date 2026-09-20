@@ -12,8 +12,8 @@ class KycProviderRegistry {
   KycProviderRegistry({
     KycVerificationProvider? primary,
     List<KycVerificationProvider> fallbacks = const <KycVerificationProvider>[],
-  })  : _primary = primary,
-        _fallbacks = List<KycVerificationProvider>.of(fallbacks);
+  }) : _primary = primary,
+       _fallbacks = List<KycVerificationProvider>.of(fallbacks);
 
   final KycVerificationProvider? _primary;
   final List<KycVerificationProvider> _fallbacks;

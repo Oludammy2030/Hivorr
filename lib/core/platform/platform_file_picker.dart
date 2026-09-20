@@ -78,12 +78,11 @@ class PlatformFilePicker {
   /// non-web platforms the option is ignored.
   static Future<PlatformFile?> _pickFile({
     required List<String> allowedExtensions,
-  }) =>
-      FilePicker.pickFile(
-        type: FileType.custom,
-        allowedExtensions: allowedExtensions,
-        webOptions: platformFilePickerWebOptions,
-      );
+  }) => FilePicker.pickFile(
+    type: FileType.custom,
+    allowedExtensions: allowedExtensions,
+    webOptions: platformFilePickerWebOptions,
+  );
 
   /// Reads the file bytes, tolerating platform read failures (returns `null`
   /// so the caller treats it as a cancelled/metrics-neutral pick).
@@ -103,7 +102,8 @@ class PlatformFilePicker {
   }
 
   /// Maps a file extension to its MIME type for the storage upload payload.
-  static String _mimeFor(String? extension) => switch (extension?.toLowerCase()) {
+  static String _mimeFor(String? extension) =>
+      switch (extension?.toLowerCase()) {
         'png' => 'image/png',
         'webp' => 'image/webp',
         'pdf' => 'application/pdf',

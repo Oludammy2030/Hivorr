@@ -36,13 +36,10 @@ void main() {
 
   group('parseWebhookEvent', () {
     test('Paystack charge.success maps to success with reference', () {
-      final WebhookEvent event = paystack.parseWebhookEvent(
-        <String, dynamic>{
-          'event': 'charge.success',
-          'data': <String, dynamic>{'reference': 'uuid-1'},
-        },
-        const <String, String>{},
-      );
+      final WebhookEvent event = paystack.parseWebhookEvent(<String, dynamic>{
+        'event': 'charge.success',
+        'data': <String, dynamic>{'reference': 'uuid-1'},
+      }, const <String, String>{});
       expect(event.provider, 'paystack');
       expect(event.eventType, 'charge.success');
       expect(event.reference, 'uuid-1');
@@ -64,21 +61,17 @@ void main() {
     });
 
     test('Paystack failure event maps to failed', () {
-      final WebhookEvent event = paystack.parseWebhookEvent(
-        <String, dynamic>{
-          'event': 'charge.failed',
-          'data': <String, dynamic>{'reference': 'uuid-2'},
-        },
-        const <String, String>{},
-      );
+      final WebhookEvent event = paystack.parseWebhookEvent(<String, dynamic>{
+        'event': 'charge.failed',
+        'data': <String, dynamic>{'reference': 'uuid-2'},
+      }, const <String, String>{});
       expect(event.status, PaymentStatus.failed);
     });
 
     test('starves an unknown event to pending (notification only)', () {
-      final WebhookEvent event = paystack.parseWebhookEvent(
-        <String, dynamic>{'event': 'transfer.unknown'},
-        const <String, String>{},
-      );
+      final WebhookEvent event = paystack.parseWebhookEvent(<String, dynamic>{
+        'event': 'transfer.unknown',
+      }, const <String, String>{});
       expect(event.status, PaymentStatus.pending);
     });
   });
@@ -133,10 +126,9 @@ void main() {
   group('malformed payload', () {
     test('Paystack throws validation when the event field is missing', () {
       expect(
-        () => paystack.parseWebhookEvent(
-          const <String, dynamic>{'data': <String, dynamic>{'reference': 'x'}},
-          const <String, String>{},
-        ),
+        () => paystack.parseWebhookEvent(const <String, dynamic>{
+          'data': <String, dynamic>{'reference': 'x'},
+        }, const <String, String>{}),
         throwsA(
           isA<ApiException>()
               .having((e) => e.kind, 'kind', ApiExceptionKind.validation)
@@ -145,19 +137,21 @@ void main() {
       );
     });
 
-    test('Flutterwave throws validation when no event or status is present', () {
-      expect(
-        () => flutterwave.parseWebhookEvent(
-          const <String, dynamic>{'data': <String, dynamic>{'tx_ref': 'x'}},
-          const <String, String>{},
-        ),
-        throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation)
-              .having((e) => e.code, 'code', 'PLT003'),
-        ),
-      );
-    });
+    test(
+      'Flutterwave throws validation when no event or status is present',
+      () {
+        expect(
+          () => flutterwave.parseWebhookEvent(const <String, dynamic>{
+            'data': <String, dynamic>{'tx_ref': 'x'},
+          }, const <String, String>{}),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.kind, 'kind', ApiExceptionKind.validation)
+                .having((e) => e.code, 'code', 'PLT003'),
+          ),
+        );
+      },
+    );
   });
 }
 

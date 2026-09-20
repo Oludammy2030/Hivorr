@@ -89,11 +89,7 @@ class _TypeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(
-            _iconFor(type),
-            size: 18,
-            color: foreground,
-          ),
+          Icon(_iconFor(type), size: 18, color: foreground),
           const SizedBox(width: HivorrSpacing.xs),
           Flexible(
             child: Text(
@@ -121,10 +117,10 @@ class _TypeChip extends StatelessWidget {
   }
 
   static IconData _iconFor(DocumentType type) => switch (type) {
-        DocumentType.nationalId => Icons.badge_outlined,
-        DocumentType.passport => Icons.picture_as_pdf_outlined,
-        DocumentType.driversLicense => Icons.drive_eta_outlined,
-        DocumentType.votersCard => Icons.how_to_vote_outlined,
-        DocumentType.ninSlip => Icons.assignment_ind_outlined,
-      };
+    DocumentType.nationalId => Icons.badge_outlined,
+    DocumentType.passport => Icons.picture_as_pdf_outlined,
+    DocumentType.driversLicense => Icons.drive_eta_outlined,
+    DocumentType.votersCard => Icons.how_to_vote_outlined,
+    DocumentType.ninSlip => Icons.assignment_ind_outlined,
+  };
 }

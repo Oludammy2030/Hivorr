@@ -13,11 +13,7 @@ import 'package:hivorr/systems/finance/widgets/escrow_status_badge.dart';
 /// the external reference truncated to a `***last4` suffix (never full PII),
 /// and the created date. Tapping [onTap] selects the escrow.
 class EscrowCard extends StatelessWidget {
-  const EscrowCard({
-    super.key,
-    required this.escrow,
-    this.onTap,
-  });
+  const EscrowCard({super.key, required this.escrow, this.onTap});
 
   final Escrow escrow;
   final VoidCallback? onTap;
@@ -34,11 +30,10 @@ class EscrowCard extends StatelessWidget {
     final EscrowStatus? status = EscrowStatus.forCode(escrow.status);
     final String reference = truncateReference(escrow.externalReference);
 
-    return HivorrCard(onTap: onTap, child: _CardBody(
-      escrow: escrow,
-      status: status,
-      reference: reference,
-    ));
+    return HivorrCard(
+      onTap: onTap,
+      child: _CardBody(escrow: escrow, status: status, reference: reference),
+    );
   }
 }
 

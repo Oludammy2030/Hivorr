@@ -20,9 +20,9 @@ class FinancialPayoutService {
     required FinancialPayoutRepository repository,
     HivorrLogger? logger,
     PerformanceTracer? tracer,
-  })  : _repository = repository,
-        _logger = logger,
-        _tracer = tracer;
+  }) : _repository = repository,
+       _logger = logger,
+       _tracer = tracer;
 
   final FinancialPayoutRepository _repository;
   final HivorrLogger? _logger;
@@ -38,69 +38,58 @@ class FinancialPayoutService {
     required String bankName,
     required String accountNumber,
     required String accountName,
-  }) =>
-      _tracedAndLogged(
-        'finance.payout.bind',
-        () async {
-          _logger?.info('Binding payout account', <String, Object?>{
-            'currencyCode': currencyCode,
-            'bankName': bankName,
-            'accountNumber': _mask(accountNumber),
-          });
-          final PayoutAccount account = await _repository.bindAccount(
-            currencyCode: currencyCode,
-            bankName: bankName,
-            accountNumber: accountNumber,
-            accountName: accountName,
-          );
-          _logger?.info('Payout account bound', <String, Object?>{
-            'accountId': _redactor(account.id),
-            'currencyCode': account.currencyCode,
-            'accountNumber': account.maskedAccountNumber,
-          });
-          return account;
-        },
-      );
+  }) => _tracedAndLogged('finance.payout.bind', () async {
+    _logger?.info('Binding payout account', <String, Object?>{
+      'currencyCode': currencyCode,
+      'bankName': bankName,
+      'accountNumber': _mask(accountNumber),
+    });
+    final PayoutAccount account = await _repository.bindAccount(
+      currencyCode: currencyCode,
+      bankName: bankName,
+      accountNumber: accountNumber,
+      accountName: accountName,
+    );
+    _logger?.info('Payout account bound', <String, Object?>{
+      'accountId': _redactor(account.id),
+      'currencyCode': account.currencyCode,
+      'accountNumber': account.maskedAccountNumber,
+    });
+    return account;
+  });
 
   /// Lists the local display mirror of bound payout accounts.
-  Future<List<PayoutAccount>> listPayoutAccounts() => _tracedAndLogged(
-        'finance.payout.list',
-        () async {
-          final List<PayoutAccount> accounts =
-              await _repository.listPayoutAccounts();
-          _logger?.info(
-            'Bound payout accounts listed',
-            <String, Object?>{'count': accounts.length},
-          );
-          return accounts;
-        },
-      );
+  Future<List<PayoutAccount>> listPayoutAccounts() =>
+      _tracedAndLogged('finance.payout.list', () async {
+        final List<PayoutAccount> accounts = await _repository
+            .listPayoutAccounts();
+        _logger?.info('Bound payout accounts listed', <String, Object?>{
+          'count': accounts.length,
+        });
+        return accounts;
+      });
 
   /// Withdraws to a verified payout account.
   Future<WithdrawalResult> withdraw({
     required String payoutAccountId,
     required double amount,
-  }) =>
-      _tracedAndLogged(
-        'finance.payout.withdraw',
-        () async {
-          _logger?.info('Initiating withdrawal', <String, Object?>{
-            'accountId': _redactor(payoutAccountId),
-            'amount': amount,
-          });
-          final WithdrawalResult result = await _repository.withdraw(
-            payoutAccountId: payoutAccountId,
-            amount: amount,
-          );
-          _logger?.info('Withdrawal initiated', <String, Object?>{
-            'payoutId': _redactor(result.payoutId),
-            'amount': result.amount,
-            'netAmount': result.netAmount,
-            'cashoutRemaining': result.cashoutRemaining,
-          });
-          return result;
-        },
-      );
+  }) => _tracedAndLogged('finance.payout.withdraw', () async {
+    _logger?.info('Initiating withdrawal', <String, Object?>{
+      'accountId': _redactor(payoutAccountId),
+      'amount': amount,
+    });
+    final WithdrawalResult result = await _repository.withdraw(
+      payoutAccountId: payoutAccountId,
+      amount: amount,
+    );
+    _logger?.info('Withdrawal initiated', <String, Object?>{
+      'payoutId': _redactor(result.payoutId),
+      'amount': result.amount,
+      'netAmount': result.netAmount,
+      'cashoutRemaining': result.cashoutRemaining,
+    });
+    return result;
+  });
 
   /// Masks an account number down to its last four digits.
   static String _mask(String accountNumber) {

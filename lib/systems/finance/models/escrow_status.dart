@@ -57,13 +57,41 @@ class EscrowStatus {
 
 /// The 7-state escrow vocabulary (EP-02-14 §5.4).
 const List<EscrowStatus> escrowStatuses = <EscrowStatus>[
-  EscrowStatus(code: 'created', label: 'Awaiting funding', tone: EscrowStatusTone.warning),
-  EscrowStatus(code: 'funded', label: 'Funded & held', tone: EscrowStatusTone.primary),
-  EscrowStatus(code: 'partially_released', label: 'Milestones releasing', tone: EscrowStatusTone.primary),
-  EscrowStatus(code: 'released', label: 'Released to provider', tone: EscrowStatusTone.success),
-  EscrowStatus(code: 'refunded', label: 'Refunded to payer', tone: EscrowStatusTone.neutral),
-  EscrowStatus(code: 'cancelled', label: 'Cancelled', tone: EscrowStatusTone.neutral),
-  EscrowStatus(code: 'disputed', label: 'In dispute — frozen', tone: EscrowStatusTone.danger),
+  EscrowStatus(
+    code: 'created',
+    label: 'Awaiting funding',
+    tone: EscrowStatusTone.warning,
+  ),
+  EscrowStatus(
+    code: 'funded',
+    label: 'Funded & held',
+    tone: EscrowStatusTone.primary,
+  ),
+  EscrowStatus(
+    code: 'partially_released',
+    label: 'Milestones releasing',
+    tone: EscrowStatusTone.primary,
+  ),
+  EscrowStatus(
+    code: 'released',
+    label: 'Released to provider',
+    tone: EscrowStatusTone.success,
+  ),
+  EscrowStatus(
+    code: 'refunded',
+    label: 'Refunded to payer',
+    tone: EscrowStatusTone.neutral,
+  ),
+  EscrowStatus(
+    code: 'cancelled',
+    label: 'Cancelled',
+    tone: EscrowStatusTone.neutral,
+  ),
+  EscrowStatus(
+    code: 'disputed',
+    label: 'In dispute — frozen',
+    tone: EscrowStatusTone.danger,
+  ),
 ];
 
 /// A single milestone lifecycle status entry (EP-02-14 §5.4).
@@ -100,7 +128,19 @@ class MilestoneStatus {
 
 /// The 3-state milestone vocabulary (EP-02-14 §5.4).
 const List<MilestoneStatus> milestoneStatuses = <MilestoneStatus>[
-  MilestoneStatus(code: 'pending', label: 'Pending', tone: EscrowStatusTone.neutral),
-  MilestoneStatus(code: 'completed', label: 'Completed — awaiting release', tone: EscrowStatusTone.primary),
-  MilestoneStatus(code: 'released', label: 'Released', tone: EscrowStatusTone.success),
+  MilestoneStatus(
+    code: 'pending',
+    label: 'Pending',
+    tone: EscrowStatusTone.neutral,
+  ),
+  MilestoneStatus(
+    code: 'completed',
+    label: 'Completed — awaiting release',
+    tone: EscrowStatusTone.primary,
+  ),
+  MilestoneStatus(
+    code: 'released',
+    label: 'Released',
+    tone: EscrowStatusTone.success,
+  ),
 ];

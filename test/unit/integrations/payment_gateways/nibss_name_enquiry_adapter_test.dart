@@ -16,13 +16,13 @@ void main() {
   const ApiExceptionMapper mapper = ApiExceptionMapper();
 
   PaymentGatewayConfig nibssConfig() => PaymentGatewayConfig.fromEnvironment(
-        paymentEnvSource(
-          overrides: <String, String>{
-            AppConstants.envNibssBaseUrl: 'https://nibss.example.com',
-            AppConstants.envNibssApiKey: 'nibss-cred',
-          },
-        ),
-      );
+    paymentEnvSource(
+      overrides: <String, String>{
+        AppConstants.envNibssBaseUrl: 'https://nibss.example.com',
+        AppConstants.envNibssApiKey: 'nibss-cred',
+      },
+    ),
+  );
 
   group('verifyAccount (direct NIBSS configured)', () {
     late MockDioAdapter httpMock;
@@ -52,7 +52,10 @@ void main() {
       expect(result.accountName, 'ADEOLA OYEKANMI');
       expect(result.accountNumber, '0123456789');
       expect(result.bankCode, '058');
-      expect(httpMock.capturedUrl, 'https://nibss.example.com/nip/name-enquiry');
+      expect(
+        httpMock.capturedUrl,
+        'https://nibss.example.com/nip/name-enquiry',
+      );
 
       final Map<String, dynamic>? body = httpMock.capturedBody;
       expect(body?['account_number'], '0123456789');
@@ -98,42 +101,43 @@ void main() {
       expect(result.accountName, 'SPELLING TWO');
     });
 
-    test('reads the root-level name field when data does not nest it', () async {
-      httpMock.body = <String, dynamic>{
-        'name': 'TOP LEVEL NAME',
-      };
-      final result = await adapter.verifyAccount(
-        bankCode: '058',
-        accountNumber: '0123456789',
-      );
-      expect(result.accountName, 'TOP LEVEL NAME');
-    });
+    test(
+      'reads the root-level name field when data does not nest it',
+      () async {
+        httpMock.body = <String, dynamic>{'name': 'TOP LEVEL NAME'};
+        final result = await adapter.verifyAccount(
+          bankCode: '058',
+          accountNumber: '0123456789',
+        );
+        expect(result.accountName, 'TOP LEVEL NAME');
+      },
+    );
 
     test('throws server error when no name is returned', () async {
       httpMock.body = <String, dynamic>{
         'data': <String, dynamic>{'account_number': '0123456789'},
       };
       await expectLater(
-        adapter.verifyAccount(
-          bankCode: '058',
-          accountNumber: '0123456789',
-        ),
+        adapter.verifyAccount(bankCode: '058', accountNumber: '0123456789'),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
     });
 
     test('fails fast on an invalid account number', () async {
       await expectLater(
-        adapter.verifyAccount(
-          bankCode: '058',
-          accountNumber: '123',
-        ),
+        adapter.verifyAccount(bankCode: '058', accountNumber: '123'),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiExceptionKind.validation),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiExceptionKind.validation,
+          ),
         ),
       );
       expect(httpMock.requests, isEmpty);
@@ -141,10 +145,7 @@ void main() {
 
     test('fails fast on an invalid bank code', () async {
       await expectLater(
-        adapter.verifyAccount(
-          bankCode: '58',
-          accountNumber: '0123456789',
-        ),
+        adapter.verifyAccount(bankCode: '58', accountNumber: '0123456789'),
         throwsA(isA<ApiException>()),
       );
       expect(httpMock.requests, isEmpty);
@@ -179,23 +180,26 @@ void main() {
       expect(result.bankCode, '058');
     });
 
-    test('falls back to the resolver when the direct NIBSS call fails', () async {
-      final adapter = NibssNameEnquiryAdapter(
-        dio: dio,
-        mapper: mapper,
-        config: nibssConfig(),
-        fallback: _FakeResolver('AFTER_FAILURE'),
-      );
-      httpMock.error = 'not json';
+    test(
+      'falls back to the resolver when the direct NIBSS call fails',
+      () async {
+        final adapter = NibssNameEnquiryAdapter(
+          dio: dio,
+          mapper: mapper,
+          config: nibssConfig(),
+          fallback: _FakeResolver('AFTER_FAILURE'),
+        );
+        httpMock.error = 'not json';
 
-      final result = await adapter.verifyAccount(
-        bankCode: '058',
-        accountNumber: '0123456789',
-      );
+        final result = await adapter.verifyAccount(
+          bankCode: '058',
+          accountNumber: '0123456789',
+        );
 
-      expect(result.accountName, 'AFTER_FAILURE');
-      expect(httpMock.requests.length, 1);
-    });
+        expect(result.accountName, 'AFTER_FAILURE');
+        expect(httpMock.requests.length, 1);
+      },
+    );
 
     test('throws PLT999 when no NIBSS and no fallback exist', () async {
       final adapter = NibssNameEnquiryAdapter(
@@ -205,10 +209,7 @@ void main() {
       );
 
       await expectLater(
-        adapter.verifyAccount(
-          bankCode: '058',
-          accountNumber: '0123456789',
-        ),
+        adapter.verifyAccount(bankCode: '058', accountNumber: '0123456789'),
         throwsA(
           isA<ApiException>()
               .having((e) => e.kind, 'kind', ApiExceptionKind.server)

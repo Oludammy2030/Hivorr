@@ -29,27 +29,28 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   RouteGuard guardFor(OnboardingProvider provider) => RouteGuard(
-        authProvider:
-            FakeAuthProvider(initialStatus: AuthStatus.authenticated),
-        onboardingProvider: provider,
-      );
+    authProvider: FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+    onboardingProvider: provider,
+  );
 
   group('DoD-C6: Onboarding resume redirect contract', () {
-    test('home → resume step for an incomplete entity (force-resume)',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.hydrate('u1');
-      await stack.provider.advance();
-      expect(stack.provider.exited, isFalse);
+    test(
+      'home → resume step for an incomplete entity (force-resume)',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.hydrate('u1');
+        await stack.provider.advance();
+        expect(stack.provider.exited, isFalse);
 
-      final RouteGuard guard = guardFor(stack.provider);
-      expect(
-        guard.redirectResolver(RoutePaths.home),
-        RoutePaths.onboardingCapability,
-        reason: 'home with an incomplete wizard resumes at the saved step',
-      );
-      stack.provider.dispose();
-    });
+        final RouteGuard guard = guardFor(stack.provider);
+        expect(
+          guard.redirectResolver(RoutePaths.home),
+          RoutePaths.onboardingCapability,
+          reason: 'home with an incomplete wizard resumes at the saved step',
+        );
+        stack.provider.dispose();
+      },
+    );
 
     test('completed wizard at an onboarding route → home', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
@@ -61,49 +62,72 @@ void main() {
       expect(stack.provider.isCompleteAuthoritative, isTrue);
 
       final RouteGuard guard = guardFor(stack.provider);
-      expect(guard.redirectResolver(RoutePaths.onboarding), RoutePaths.home,
-          reason: 'a completed wizard bounces away from onboarding routes');
-      expect(guard.redirectResolver(RoutePaths.home), isNull,
-          reason: 'home stays reachable for a completed wizard');
+      expect(
+        guard.redirectResolver(RoutePaths.onboarding),
+        RoutePaths.home,
+        reason: 'a completed wizard bounces away from onboarding routes',
+      );
+      expect(
+        guard.redirectResolver(RoutePaths.home),
+        isNull,
+        reason: 'home stays reachable for a completed wizard',
+      );
       stack.provider.dispose();
     });
 
-    test('exited flag honored — home stays reachable, no force-resume',
-        () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      await stack.hydrate('u1');
-      await stack.provider.advance();
-      await stack.provider.exitWizard();
-      expect(stack.provider.exited, isTrue);
+    test(
+      'exited flag honored — home stays reachable, no force-resume',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.hydrate('u1');
+        await stack.provider.advance();
+        await stack.provider.exitWizard();
+        expect(stack.provider.exited, isTrue);
 
-      final RouteGuard guard = guardFor(stack.provider);
-      expect(guard.redirectResolver(RoutePaths.home), isNull,
-          reason: 'exited wizard keeps home reachable (Continue registration)');
-      stack.provider.dispose();
-    });
+        final RouteGuard guard = guardFor(stack.provider);
+        expect(
+          guard.redirectResolver(RoutePaths.home),
+          isNull,
+          reason: 'exited wizard keeps home reachable (Continue registration)',
+        );
+        stack.provider.dispose();
+      },
+    );
 
-    test('currentStep == null (un-hydrated provider) → no redirect',
-        () async {
+    test('currentStep == null (un-hydrated provider) → no redirect', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       expect(stack.provider.currentStep, isNull);
 
       final RouteGuard guard = guardFor(stack.provider);
-      expect(guard.redirectResolver(RoutePaths.home), isNull,
-          reason: 'no hydration → no resume target → no forced redirect');
+      expect(
+        guard.redirectResolver(RoutePaths.home),
+        isNull,
+        reason: 'no hydration → no resume target → no forced redirect',
+      );
       stack.provider.dispose();
     });
 
     test('_isPublicContentView allows /p/ + /store/ signed-out', () {
       final RouteGuard guard = RouteGuard(
-        authProvider:
-            FakeAuthProvider(initialStatus: AuthStatus.unauthenticated),
+        authProvider: FakeAuthProvider(
+          initialStatus: AuthStatus.unauthenticated,
+        ),
       );
-      expect(guard.redirectResolver('/p/software-engineer/entity-1'), isNull,
-          reason: 'signed-out visitor may open a public profile');
-      expect(guard.redirectResolver('/store/some-slug'), isNull,
-          reason: 'signed-out visitor may open a public store');
-      expect(guard.redirectResolver('/profile'), isNotNull,
-          reason: 'protected routes still redirect to the entry door');
+      expect(
+        guard.redirectResolver('/p/software-engineer/entity-1'),
+        isNull,
+        reason: 'signed-out visitor may open a public profile',
+      );
+      expect(
+        guard.redirectResolver('/store/some-slug'),
+        isNull,
+        reason: 'signed-out visitor may open a public store',
+      );
+      expect(
+        guard.redirectResolver('/profile'),
+        isNotNull,
+        reason: 'protected routes still redirect to the entry door',
+      );
       expect(
         guard.redirectResolver(RoutePaths.home),
         RoutePaths.login,

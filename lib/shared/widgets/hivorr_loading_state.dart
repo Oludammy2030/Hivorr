@@ -7,10 +7,7 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 /// Full-area loading placeholder built around the branded [HivorrLoader]
 /// (not a generic spinner) with an optional message.
 class HivorrLoadingState extends StatelessWidget {
-  const HivorrLoadingState({
-    super.key,
-    this.message,
-  });
+  const HivorrLoadingState({super.key, this.message});
 
   /// Optional caption shown beneath the loader.
   final String? message;
@@ -26,8 +23,9 @@ class HivorrLoadingState extends StatelessWidget {
             const SizedBox(height: HivorrSpacing.md),
             Text(
               message!,
-              style: context.textTheme.bodyMedium
-                  ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

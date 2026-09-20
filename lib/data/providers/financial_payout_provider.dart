@@ -38,8 +38,8 @@ class FinancialPayoutProvider extends ChangeNotifier {
   FinancialPayoutProvider({
     required FinancialPayoutService service,
     HivorrLogger? logger,
-  })  : _service = service,
-        _logger = logger;
+  }) : _service = service,
+       _logger = logger;
 
   final FinancialPayoutService _service;
   final HivorrLogger? _logger;

@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/api/exceptions/api_exception_mapper.dart';
-import 'package:hivorr/data/datasources/remote/data_exception_mapper.dart' as norm;
+import 'package:hivorr/data/datasources/remote/data_exception_mapper.dart'
+    as norm;
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 import 'package:hivorr/data/models/currency_conversion_dto.dart';
 import 'package:postgrest/postgrest.dart' show PostgrestException;
@@ -26,24 +27,23 @@ void main() {
     bool historyReadEnabled = true,
     Map<String, List<Map<String, dynamic>>>? queryResults,
     Object? queryError,
-  }) =>
-      SupabaseConversionRemoteDataSource(
-        dio: Dio(),
-        supabase: MockSupabaseClientFactory.create(
-          rpcHandlers: rpcHandlers,
-          queryResults: queryResults,
-          queryError: queryError,
-        ),
-        exceptionMapper: const ApiExceptionMapper(),
-        historyReadEnabled: historyReadEnabled,
-      );
+  }) => SupabaseConversionRemoteDataSource(
+    dio: Dio(),
+    supabase: MockSupabaseClientFactory.create(
+      rpcHandlers: rpcHandlers,
+      queryResults: queryResults,
+      queryError: queryError,
+    ),
+    exceptionMapper: const ApiExceptionMapper(),
+    historyReadEnabled: historyReadEnabled,
+  );
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   Map<String, dynamic> conversionData({double fromAmount = 50000}) =>
       <String, dynamic>{
@@ -57,24 +57,22 @@ void main() {
     String id = 'c-1',
     String fromCurrency = 'NGN',
     String toCurrency = 'USD',
-  }) =>
-      <String, dynamic>{
-        'conversion_id': id,
-        'entity_id': 'u1',
-        'from_currency': fromCurrency,
-        'to_currency': toCurrency,
-        'from_amount': 50000,
-        'to_amount': 35,
-        'exchange_rate': 0.0007,
-        'fee': 0,
-        'status': 'completed',
-        'created_at': '2026-01-01T00:00:00.000Z',
-        'completed_at': '2026-01-01T00:00:01.000Z',
-      };
+  }) => <String, dynamic>{
+    'conversion_id': id,
+    'entity_id': 'u1',
+    'from_currency': fromCurrency,
+    'to_currency': toCurrency,
+    'from_amount': 50000,
+    'to_amount': 35,
+    'exchange_rate': 0.0007,
+    'fee': 0,
+    'status': 'completed',
+    'created_at': '2026-01-01T00:00:00.000Z',
+    'completed_at': '2026-01-01T00:00:01.000Z',
+  };
 
   group('convertCurrency', () {
-    test(
-        'forwards p_from_currency/p_to_currency/p_amount plus the trusted '
+    test('forwards p_from_currency/p_to_currency/p_amount plus the trusted '
         'p_rate and maps the envelope to a completed DTO', () async {
       String? seenFn;
       Map<String, dynamic>? seenParams;
@@ -132,10 +130,10 @@ void main() {
     test('maps a non-PLT000 envelope to a typed ApiException', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_convert_currency': (_) => <String, dynamic>{
-            'success': false,
-            'code': 'PLT006',
-            'message': 'insufficient balance',
-          },
+          'success': false,
+          'code': 'PLT006',
+          'message': 'insufficient balance',
+        },
       });
 
       await expectLater(
@@ -147,8 +145,11 @@ void main() {
         ),
         throwsA(
           isA<ApiException>()
-              .having((ApiException e) => e.kind, 'kind',
-                  ApiExceptionKind.conflict)
+              .having(
+                (ApiException e) => e.kind,
+                'kind',
+                ApiExceptionKind.conflict,
+              )
               .having((ApiException e) => e.code, 'code', 'PLT006'),
         ),
       );
@@ -157,10 +158,10 @@ void main() {
     test('maps a malformed envelope (non-object data) to server', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'financial_convert_currency': (_) => <String, dynamic>{
-            'success': true,
-            'code': 'PLT000',
-            'data': <dynamic>[1, 2, 3],
-          },
+          'success': true,
+          'code': 'PLT000',
+          'data': <dynamic>[1, 2, 3],
+        },
       });
 
       await expectLater(
@@ -198,44 +199,46 @@ void main() {
   });
 
   group('getHistory', () {
-    test('reads financial_conversions REST rows and maps each to a DTO',
-        () async {
-      final source = build(
-        null,
-        queryResults: <String, List<Map<String, dynamic>>>{
-          'financial_conversions': <Map<String, dynamic>>[
-            historyRow(id: 'c-1'),
-            historyRow(id: 'c-2', fromCurrency: 'USD', toCurrency: 'GHS'),
-          ],
-        },
-      );
+    test(
+      'reads financial_conversions REST rows and maps each to a DTO',
+      () async {
+        final source = build(
+          null,
+          queryResults: <String, List<Map<String, dynamic>>>{
+            'financial_conversions': <Map<String, dynamic>>[
+              historyRow(id: 'c-1'),
+              historyRow(id: 'c-2', fromCurrency: 'USD', toCurrency: 'GHS'),
+            ],
+          },
+        );
 
-      final List<CurrencyConversionDto> rows = await source.getHistory();
+        final List<CurrencyConversionDto> rows = await source.getHistory();
 
-      expect(rows, hasLength(2));
-      expect(rows.first.id, 'c-1');
-      expect(rows.first.status, 'completed');
-      expect(rows.first.exchangeRate, 0.0007);
-      expect(rows.last.fromCurrency, 'USD');
-      expect(rows.last.toCurrency, 'GHS');
-    });
+        expect(rows, hasLength(2));
+        expect(rows.first.id, 'c-1');
+        expect(rows.first.status, 'completed');
+        expect(rows.first.exchangeRate, 0.0007);
+        expect(rows.last.fromCurrency, 'USD');
+        expect(rows.last.toCurrency, 'GHS');
+      },
+    );
 
-    test('maps an identity-scoped profile id when a user is signed in',
-        () async {
-      final source = build(
-        null,
-        queryResults: <String, List<Map<String, dynamic>>>{
-          'financial_conversions': <Map<String, dynamic>>[
-            historyRow(),
-          ],
-        },
-        // MockSupabaseClientFactory defaults to signed-out; the identity
-        // branch is covered when a user is seeded.
-      );
+    test(
+      'maps an identity-scoped profile id when a user is signed in',
+      () async {
+        final source = build(
+          null,
+          queryResults: <String, List<Map<String, dynamic>>>{
+            'financial_conversions': <Map<String, dynamic>>[historyRow()],
+          },
+          // MockSupabaseClientFactory defaults to signed-out; the identity
+          // branch is covered when a user is seeded.
+        );
 
-      final List<CurrencyConversionDto> rows = await source.getHistory();
-      expect(rows, hasLength(1));
-    });
+        final List<CurrencyConversionDto> rows = await source.getHistory();
+        expect(rows, hasLength(1));
+      },
+    );
 
     test('returns an empty list when historyReadEnabled is false', () async {
       // If the gate were bypassed the REST query would be exercised; here the

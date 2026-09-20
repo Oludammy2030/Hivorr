@@ -7,8 +7,9 @@ import '../../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('PayoutAccountLimitDisplay', () {
-    testWidgets('renders the "Cashout limit" label with a speed icon',
-        (WidgetTester tester) async {
+    testWidgets('renders the "Cashout limit" label with a speed icon', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const PayoutAccountLimitDisplay(limit: 500000, currencyCode: 'NGN'),
@@ -23,8 +24,9 @@ void main() {
       );
     });
 
-    testWidgets('formats the NGN limit with symbol and separators',
-        (WidgetTester tester) async {
+    testWidgets('formats the NGN limit with symbol and separators', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const PayoutAccountLimitDisplay(limit: 500000, currencyCode: 'NGN'),
@@ -32,8 +34,9 @@ void main() {
       expect(find.text('\u20A6500,000.00'), findsOneWidget);
     });
 
-    testWidgets('formats USD limits with the dollar symbol',
-        (WidgetTester tester) async {
+    testWidgets('formats USD limits with the dollar symbol', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const PayoutAccountLimitDisplay(limit: 1500, currencyCode: 'USD'),
@@ -41,8 +44,9 @@ void main() {
       expect(find.text('\$1,500.00'), findsOneWidget);
     });
 
-    testWidgets('formats GHS and GBP limits with their symbols',
-        (WidgetTester tester) async {
+    testWidgets('formats GHS and GBP limits with their symbols', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const PayoutAccountLimitDisplay(limit: 2000, currencyCode: 'GHS'),
@@ -56,8 +60,9 @@ void main() {
       expect(find.text('\u00A3750.00'), findsOneWidget);
     });
 
-    testWidgets('formats fractional limits with two decimals',
-        (WidgetTester tester) async {
+    testWidgets('formats fractional limits with two decimals', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const PayoutAccountLimitDisplay(limit: 1234.5, currencyCode: 'USD'),
@@ -65,8 +70,9 @@ void main() {
       expect(find.text('\$1,234.50'), findsOneWidget);
     });
 
-    testWidgets('uses theme tokens (renders on dark theme too)',
-        (WidgetTester tester) async {
+    testWidgets('uses theme tokens (renders on dark theme too)', (
+      WidgetTester tester,
+    ) async {
       await pumpTheme(
         tester,
         const PayoutAccountLimitDisplay(limit: 500000, currencyCode: 'NGN'),

@@ -33,8 +33,9 @@ void main() {
     });
 
     test('verifyDer rejects a non-matching pin', () {
-      final CertificatePinner pinner =
-          CertificatePinner(<String>['AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=']);
+      final CertificatePinner pinner = CertificatePinner(<String>[
+        'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+      ]);
       expect(pinner.verifyDer(cert), isFalse);
     });
 
@@ -46,7 +47,9 @@ void main() {
     });
 
     test('spkiSha256Base64 is consistent with sha256 of the SPKI', () {
-      final CertificatePinner pinner = CertificatePinner(<String>[sha256Base64(spki)]);
+      final CertificatePinner pinner = CertificatePinner(<String>[
+        sha256Base64(spki),
+      ]);
       expect(pinner.spkiSha256Base64(cert), sha256Base64(spki));
     });
   });

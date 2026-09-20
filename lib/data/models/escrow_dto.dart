@@ -24,21 +24,21 @@ class EscrowDto {
   });
 
   factory EscrowDto.fromJson(Map<String, dynamic> json) => EscrowDto(
-        id: (json['id'] as String?) ?? '',
-        financialProfileId: (json['financial_profile_id'] as String?) ?? '',
-        payerEntityId: (json['payer_entity_id'] as String?) ?? '',
-        payeeEntityId: (json['payee_entity_id'] as String?) ?? '',
-        currencyCode: (json['currency_code'] as String?) ?? '',
-        totalAmount: _toDouble(json['total_amount']),
-        releasedAmount: _toDouble(json['released_amount']),
-        refundedAmount: _toDouble(json['refunded_amount']),
-        status: (json['status'] as String?) ?? 'created',
-        createdAt: _parseDateTime(json['created_at']),
-        externalReference: json['external_reference'] as String?,
-        fundedAt: _parseNullableDateTime(json['funded_at']),
-        releasedAt: _parseNullableDateTime(json['released_at']),
-        refundedAt: _parseNullableDateTime(json['refunded_at']),
-      );
+    id: (json['id'] as String?) ?? '',
+    financialProfileId: (json['financial_profile_id'] as String?) ?? '',
+    payerEntityId: (json['payer_entity_id'] as String?) ?? '',
+    payeeEntityId: (json['payee_entity_id'] as String?) ?? '',
+    currencyCode: (json['currency_code'] as String?) ?? '',
+    totalAmount: _toDouble(json['total_amount']),
+    releasedAmount: _toDouble(json['released_amount']),
+    refundedAmount: _toDouble(json['refunded_amount']),
+    status: (json['status'] as String?) ?? 'created',
+    createdAt: _parseDateTime(json['created_at']),
+    externalReference: json['external_reference'] as String?,
+    fundedAt: _parseNullableDateTime(json['funded_at']),
+    releasedAt: _parseNullableDateTime(json['released_at']),
+    refundedAt: _parseNullableDateTime(json['refunded_at']),
+  );
 
   final String id;
   final String financialProfileId;

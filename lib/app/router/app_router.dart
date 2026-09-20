@@ -168,10 +168,10 @@ class AppRouter {
           name: RouteNames.authConfirmation,
           builder: (BuildContext context, GoRouterState state) =>
               AuthConfirmationGateScreen(
-            email: state.uri.queryParameters['email'],
-            next: state.uri.queryParameters['next'],
-            mode: state.uri.queryParameters['mode'],
-          ),
+                email: state.uri.queryParameters['email'],
+                next: state.uri.queryParameters['next'],
+                mode: state.uri.queryParameters['mode'],
+              ),
         ),
         GoRoute(
           path: RoutePaths.forgotPassword,
@@ -202,9 +202,9 @@ class AppRouter {
           name: RouteNames.publicProfile,
           builder: (BuildContext context, GoRouterState state) =>
               ProfessionalProfileScreen(
-            profileId: state.pathParameters['id'] ?? '',
-            routeSlug: state.pathParameters['slug'],
-          ),
+                profileId: state.pathParameters['id'] ?? '',
+                routeSlug: state.pathParameters['slug'],
+              ),
         ),
         GoRoute(
           path: RoutePaths.publicStoreRoute,
@@ -249,8 +249,8 @@ class AppRouter {
           name: RouteNames.adminReviewDetail,
           builder: (BuildContext context, GoRouterState state) =>
               AdminReviewDetailScreen(
-            submissionId: state.pathParameters['submissionId'] ?? '',
-          ),
+                submissionId: state.pathParameters['submissionId'] ?? '',
+              ),
         ),
         GoRoute(
           path: RoutePaths.adminManageUsers,
@@ -263,8 +263,8 @@ class AppRouter {
           name: RouteNames.adminManageUserDetail,
           builder: (BuildContext context, GoRouterState state) =>
               ManageUserDetailScreen(
-            userId: state.pathParameters['userId'] ?? '',
-          ),
+                userId: state.pathParameters['userId'] ?? '',
+              ),
         ),
         GoRoute(
           path: RoutePaths.kycStatus,
@@ -300,9 +300,7 @@ class AppRouter {
           path: RoutePaths.escrowDetail,
           name: RouteNames.escrowDetail,
           builder: (BuildContext context, GoRouterState state) =>
-              EscrowDetailScreen(
-                escrowId: state.pathParameters['id'] ?? '',
-              ),
+              EscrowDetailScreen(escrowId: state.pathParameters['id'] ?? ''),
         ),
         GoRoute(
           path: RoutePaths.convert,
@@ -321,24 +319,22 @@ class AppRouter {
           name: RouteNames.disputesNew,
           builder: (BuildContext context, GoRouterState state) =>
               DisputeFilingScreen(
-            escrowId: state.pathParameters['escrowId'] ?? '',
-          ),
+                escrowId: state.pathParameters['escrowId'] ?? '',
+              ),
         ),
         GoRoute(
           path: RoutePaths.disputeDetail,
           name: RouteNames.disputeDetail,
           builder: (BuildContext context, GoRouterState state) =>
-              DisputeDetailScreen(
-            caseId: state.pathParameters['id'] ?? '',
-          ),
+              DisputeDetailScreen(caseId: state.pathParameters['id'] ?? ''),
         ),
         GoRoute(
           path: RoutePaths.disputesEvidenceNew,
           name: RouteNames.disputesEvidenceNew,
           builder: (BuildContext context, GoRouterState state) =>
               DisputeEvidenceFormScreen(
-            caseId: state.pathParameters['caseId'] ?? '',
-          ),
+                caseId: state.pathParameters['caseId'] ?? '',
+              ),
         ),
         GoRoute(
           path: RoutePaths.onboarding,

@@ -39,15 +39,18 @@ void main() {
 
   group('OnboardingCompleteScreen (FV-27, FV-34)', () {
     testWidgets('inactive state renders nothing', (WidgetTester tester) async {
-      final (_, OnboardingTestStack stack) =
-          await pumpComplete(tester, active: false);
+      final (_, OnboardingTestStack stack) = await pumpComplete(
+        tester,
+        active: false,
+      );
       expect(find.text('You’re registered'), findsNothing);
       expect(find.text('Go to home'), findsNothing);
       stack.provider.dispose();
     });
 
-    testWidgets('active state shows the success state with the 6 done steps',
-        (WidgetTester tester) async {
+    testWidgets('active state shows the success state with the 6 done steps', (
+      WidgetTester tester,
+    ) async {
       final (_, OnboardingTestStack stack) = await pumpComplete(tester);
       expect(find.text('You’re registered'), findsOneWidget);
       expect(
@@ -67,11 +70,17 @@ void main() {
         'Identity',
         'Trade proof',
       ]) {
-        expect(find.text(label), findsAtLeastNWidgets(1),
-            reason: '$label renders as a done step card');
+        expect(
+          find.text(label),
+          findsAtLeastNWidgets(1),
+          reason: '$label renders as a done step card',
+        );
       }
-      expect(find.byIcon(Icons.check_circle), findsNWidgets(6),
-          reason: 'every step card is marked done');
+      expect(
+        find.byIcon(Icons.check_circle),
+        findsNWidgets(6),
+        reason: 'every step card is marked done',
+      );
       stack.provider.dispose();
     });
 
@@ -90,32 +99,36 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('uses RouteNames.home for the escape (route contract)',
-        (WidgetTester tester) async {
+    testWidgets('uses RouteNames.home for the escape (route contract)', (
+      WidgetTester tester,
+    ) async {
       expect(RouteNames.home, 'home');
       final (_, OnboardingTestStack stack) = await pumpComplete(tester);
       expect(find.text('Go to home'), findsOneWidget);
       stack.provider.dispose();
     });
 
-    testWidgets('locked gate renders the Rule 2 education copy + next actions',
-        (WidgetTester tester) async {
-      final (_, OnboardingTestStack stack) = await pumpComplete(tester);
-      expect(
-        find.text(
-          'You can start work immediately — bidding unlocks once your trade '
-          'proof is approved.',
-        ),
-        findsAtLeastNWidgets(1),
-      );
-      expect(find.text('Trust loop'), findsOneWidget);
-      expect(find.text('View verification status'), findsOneWidget);
-      expect(find.text('Financial profile'), findsOneWidget);
-      stack.provider.dispose();
-    });
+    testWidgets(
+      'locked gate renders the Rule 2 education copy + next actions',
+      (WidgetTester tester) async {
+        final (_, OnboardingTestStack stack) = await pumpComplete(tester);
+        expect(
+          find.text(
+            'You can start work immediately — bidding unlocks once your trade '
+            'proof is approved.',
+          ),
+          findsAtLeastNWidgets(1),
+        );
+        expect(find.text('Trust loop'), findsOneWidget);
+        expect(find.text('View verification status'), findsOneWidget);
+        expect(find.text('Financial profile'), findsOneWidget);
+        stack.provider.dispose();
+      },
+    );
 
-    testWidgets('approved gate renders the unlocked trust-loop copy',
-        (WidgetTester tester) async {
+    testWidgets('approved gate renders the unlocked trust-loop copy', (
+      WidgetTester tester,
+    ) async {
       final OnboardingTestStack s = buildOnboardingStack(
         tradeRepo: FakeTradeVerificationRepository(
           status: tradeStatusEntity(
@@ -123,8 +136,11 @@ void main() {
           ),
         ),
       );
-      final (_, OnboardingTestStack stack) =
-          await pumpComplete(tester, approvedGate: true, stack: s);
+      final (_, OnboardingTestStack stack) = await pumpComplete(
+        tester,
+        approvedGate: true,
+        stack: s,
+      );
       expect(stack.provider.isTradeGateOpen, isTrue);
       expect(
         find.text('Approved — you can place bids right away.'),
@@ -140,9 +156,13 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('dark theme builds without exceptions', (WidgetTester tester) async {
-      final (_, OnboardingTestStack stack) =
-          await pumpComplete(tester, dark: true);
+    testWidgets('dark theme builds without exceptions', (
+      WidgetTester tester,
+    ) async {
+      final (_, OnboardingTestStack stack) = await pumpComplete(
+        tester,
+        dark: true,
+      );
       expect(tester.takeException(), isNull);
       expect(find.text('You’re registered'), findsOneWidget);
       stack.provider.dispose();

@@ -22,89 +22,89 @@ void main() {
   String defaultCurrency = 'NGN';
 
   Map<String, dynamic> ok(Object data) => <String, dynamic>{
-        'success': true,
-        'code': 'PLT000',
-        'message': 'ok',
-        'data': data,
-      };
+    'success': true,
+    'code': 'PLT000',
+    'message': 'ok',
+    'data': data,
+  };
 
   Map<String, dynamic> profileData() => <String, dynamic>{
-        'profile': profileExists
-            ? <String, dynamic>{
-                'id': 'p1',
+    'profile': profileExists
+        ? <String, dynamic>{
+            'id': 'p1',
+            'entity_id': 'u1',
+            'status': 'active',
+            'default_currency': defaultCurrency,
+            'created_at': '2026-01-01T00:00:00.000Z',
+            'currency_accounts': <dynamic>[
+              <String, dynamic>{
+                'id': 'a1',
+                'financial_profile_id': 'p1',
                 'entity_id': 'u1',
-                'status': 'active',
-                'default_currency': defaultCurrency,
-                'created_at': '2026-01-01T00:00:00.000Z',
-                'currency_accounts': <dynamic>[
-                  <String, dynamic>{
-                    'id': 'a1',
-                    'financial_profile_id': 'p1',
-                    'entity_id': 'u1',
-                    'currency_code': defaultCurrency,
-                    'account_status': 'pending',
-                    'receiving_account_number': null,
-                    'receiving_bank_name': null,
-                    'activated_at': null,
-                  },
-                ],
-              }
-            : null,
-      };
+                'currency_code': defaultCurrency,
+                'account_status': 'pending',
+                'receiving_account_number': null,
+                'receiving_bank_name': null,
+                'activated_at': null,
+              },
+            ],
+          }
+        : null,
+  };
 
   Map<String, dynamic> statusData() => <String, dynamic>{
-        'default_currency': defaultCurrency,
-        'profile_status': profileExists ? 'active' : 'closed',
-        'balances': profileExists
-            ? <dynamic>[
-                <String, dynamic>{
-                  'currency_code': defaultCurrency,
+    'default_currency': defaultCurrency,
+    'profile_status': profileExists ? 'active' : 'closed',
+    'balances': profileExists
+        ? <dynamic>[
+            <String, dynamic>{
+              'currency_code': defaultCurrency,
+              'available_balance': 0,
+              'held_balance': 0,
+              'pending_balance': 0,
+              'total_deposited': 0,
+              'total_withdrawn': 0,
+            },
+          ]
+        : <dynamic>[],
+    'active_escrow_count': 0,
+    'cashout_limit': 100000,
+  };
+
+  final SupabaseFinancialRemoteDataSource dataSource =
+      SupabaseFinancialRemoteDataSource(
+        dio: Dio(),
+        supabase: MockSupabaseClientFactory.create(
+          currentUser: fakeUser('u1'),
+          rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
+            'financial_profile_get': (_) => ok(profileData()),
+            'financial_balance_get': (Map<String, dynamic> body) =>
+                ok(<String, dynamic>{
+                  'currency_code': body['p_currency_code'],
                   'available_balance': 0,
                   'held_balance': 0,
                   'pending_balance': 0,
                   'total_deposited': 0,
                   'total_withdrawn': 0,
-                },
-              ]
-            : <dynamic>[],
-        'active_escrow_count': 0,
-        'cashout_limit': 100000,
-      };
+                }),
+            'financial_status_get': (_) => ok(statusData()),
+            'financial_profile_create': (Map<String, dynamic> body) {
+              profileExists = true;
+              defaultCurrency = body['p_default_currency'] as String? ?? 'NGN';
+              return ok(<String, dynamic>{
+                'profile_id': 'p1',
+                'default_currency': defaultCurrency,
+                'balance_id': 'b1',
+              });
+            },
+          },
+        ),
+        exceptionMapper: const ApiExceptionMapper(),
+      );
 
-  final SupabaseFinancialRemoteDataSource dataSource =
-      SupabaseFinancialRemoteDataSource(
-    dio: Dio(),
-    supabase: MockSupabaseClientFactory.create(
-      currentUser: fakeUser('u1'),
-      rpcHandlers: <String, Object? Function(Map<String, dynamic>)>{
-        'financial_profile_get': (_) => ok(profileData()),
-        'financial_balance_get': (Map<String, dynamic> body) => ok(
-              <String, dynamic>{
-                'currency_code': body['p_currency_code'],
-                'available_balance': 0,
-                'held_balance': 0,
-                'pending_balance': 0,
-                'total_deposited': 0,
-                'total_withdrawn': 0,
-              },
-            ),
-        'financial_status_get': (_) => ok(statusData()),
-        'financial_profile_create': (Map<String, dynamic> body) {
-          profileExists = true;
-          defaultCurrency = body['p_default_currency'] as String? ?? 'NGN';
-          return ok(<String, dynamic>{
-            'profile_id': 'p1',
-            'default_currency': defaultCurrency,
-            'balance_id': 'b1',
-          });
-        },
-      },
-    ),
-    exceptionMapper: const ApiExceptionMapper(),
+  final FinancialRepositoryImpl repository = FinancialRepositoryImpl(
+    remote: dataSource,
   );
-
-  final FinancialRepositoryImpl repository =
-      FinancialRepositoryImpl(remote: dataSource);
 
   group('Financial fake-E2E profile flow', () {
     test('no-profile → create → re-read → balance → status', () async {
@@ -113,8 +113,9 @@ void main() {
       expect(initial, isNull);
 
       // 2. Create profile with default NGN.
-      final FinancialProfile created =
-          await repository.createProfile(defaultCurrency: 'NGN');
+      final FinancialProfile created = await repository.createProfile(
+        defaultCurrency: 'NGN',
+      );
       expect(created.status, 'active');
       expect(created.defaultCurrency, 'NGN');
 

@@ -61,7 +61,11 @@ const List<DisputeStatus> disputeStatuses = <DisputeStatus>[
     label: 'Resolved',
     tone: DisputeStatusTone.success,
   ),
-  DisputeStatus(code: 'closed', label: 'Closed', tone: DisputeStatusTone.neutral),
+  DisputeStatus(
+    code: 'closed',
+    label: 'Closed',
+    tone: DisputeStatusTone.neutral,
+  ),
   DisputeStatus(
     code: 'withdrawn',
     label: 'Withdrawn',
@@ -96,10 +100,7 @@ class DisputeType {
 const List<DisputeType> disputeTypes = <DisputeType>[
   DisputeType(code: 'service_quality', label: 'Service quality'),
   DisputeType(code: 'non_delivery', label: 'Non-delivery'),
-  DisputeType(
-    code: 'milestone_disagreement',
-    label: 'Milestone disagreement',
-  ),
+  DisputeType(code: 'milestone_disagreement', label: 'Milestone disagreement'),
   DisputeType(code: 'fraud', label: 'Fraud'),
   DisputeType(code: 'other', label: 'Other'),
 ];
@@ -132,10 +133,7 @@ const List<DesiredOutcome> desiredOutcomes = <DesiredOutcome>[
 /// Matches the frozen `dispute_cases.priority` check constraint
 /// `('low','medium','high','critical')` (`20260829120005:74-75`).
 class DisputePriority {
-  const DisputePriority({
-    required this.code,
-    required this.label,
-  });
+  const DisputePriority({required this.code, required this.label});
 
   /// The server priority code.
   final String code;
@@ -180,10 +178,7 @@ const List<EvidenceType> evidenceTypes = <EvidenceType>[
 /// `('release_to_payee','refund_to_payer','split','dismissed')`
 /// (`20260829120005:141-143`).
 class ResolutionType {
-  const ResolutionType({
-    required this.code,
-    required this.label,
-  });
+  const ResolutionType({required this.code, required this.label});
 
   /// The server resolution-type code.
   final String code;

@@ -16,16 +16,17 @@ import '../../support/harnesses/widget_harness.dart';
 
 void main() {
   Finder submitButton() => find.byWidgetPredicate(
-        (Widget w) => w is HivorrButton && w.label == 'Upload & submit',
-      );
+    (Widget w) => w is HivorrButton && w.label == 'Upload & submit',
+  );
 
   Future<VerificationProvider> pumpScreenWith(
     WidgetTester tester, {
     FakeVerificationRepository? repo,
     Future<PickedDocument?> Function()? pickFile,
   }) async {
-    final VerificationProvider provider =
-        VerificationProvider(repo: repo ?? FakeVerificationRepository());
+    final VerificationProvider provider = VerificationProvider(
+      repo: repo ?? FakeVerificationRepository(),
+    );
     await pumpScreen(
       tester,
       IdentityDocumentUploadScreen(pickFile: pickFile),
@@ -54,8 +55,7 @@ void main() {
 
       expect(find.text('Verify identity'), findsOneWidget);
       expect(
-        find.text(
-            'Choose a document type, then upload a clear photo or PDF.'),
+        find.text('Choose a document type, then upload a clear photo or PDF.'),
         findsOneWidget,
       );
     });
@@ -70,8 +70,9 @@ void main() {
       expect(find.text('NIN Slip'), findsOneWidget);
     });
 
-    testWidgets('submit is disabled until a type and file are chosen',
-        (WidgetTester tester) async {
+    testWidgets('submit is disabled until a type and file are chosen', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -96,8 +97,10 @@ void main() {
     testWidgets('shows the accepted-formats hint', (WidgetTester tester) async {
       await pumpScreenWith(tester);
 
-      expect(find.text('Accepted: JPG, PNG, WebP, PDF up to 10 MB.'),
-          findsOneWidget);
+      expect(
+        find.text('Accepted: JPG, PNG, WebP, PDF up to 10 MB.'),
+        findsOneWidget,
+      );
     });
   });
 
@@ -109,8 +112,9 @@ void main() {
       expect(find.text('Nigerian National Identity Card'), findsOneWidget);
     });
 
-    testWidgets('picking a valid file shows its name and hides the picker',
-        (WidgetTester tester) async {
+    testWidgets('picking a valid file shows its name and hides the picker', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -126,8 +130,9 @@ void main() {
       expect(find.text('Choose file'), findsNothing);
     });
 
-    testWidgets('rejects an oversized file with a size error',
-        (WidgetTester tester) async {
+    testWidgets('rejects an oversized file with a size error', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -139,10 +144,7 @@ void main() {
 
       await pickValidFile(tester);
 
-      expect(
-        find.textContaining('too large'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('too large'), findsOneWidget);
       expect(find.text('big.png'), findsNothing);
     });
 
@@ -158,16 +160,14 @@ void main() {
 
       await pickValidFile(tester);
 
-      expect(
-        find.textContaining('not supported'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('not supported'), findsOneWidget);
     });
   });
 
   group('submission', () {
-    testWidgets('successful submit shows the success feedback',
-        (WidgetTester tester) async {
+    testWidgets('successful submit shows the success feedback', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(
         tester,
         pickFile: () async => PickedDocument(
@@ -185,8 +185,9 @@ void main() {
       expect(find.text('Submitted for review'), findsOneWidget);
     });
 
-    testWidgets('failed submit shows the error feedback',
-        (WidgetTester tester) async {
+    testWidgets('failed submit shows the error feedback', (
+      WidgetTester tester,
+    ) async {
       final repo = FakeVerificationRepository()
         ..nextError = const ApiException(
           kind: ApiExceptionKind.server,
@@ -211,25 +212,26 @@ void main() {
       expect(find.text('Submission failed'), findsOneWidget);
     });
 
-    testWidgets('a successful submit sets the provider submit state to success',
-        (WidgetTester tester) async {
-      final provider = await pumpScreenWith(
-        tester,
-        pickFile: () async => PickedDocument(
-          bytes: Uint8List.fromList(<int>[1, 2, 3]),
-          fileName: 'id.png',
-          mimeType: 'image/png',
-        ),
-      );
+    testWidgets(
+      'a successful submit sets the provider submit state to success',
+      (WidgetTester tester) async {
+        final provider = await pumpScreenWith(
+          tester,
+          pickFile: () async => PickedDocument(
+            bytes: Uint8List.fromList(<int>[1, 2, 3]),
+            fileName: 'id.png',
+            mimeType: 'image/png',
+          ),
+        );
 
-      await tapDocumentType(tester, 'Passport');
-      await pickValidFile(tester);
-      await tester.tap(submitButton());
-      await tester.pumpAndSettle();
+        await tapDocumentType(tester, 'Passport');
+        await pickValidFile(tester);
+        await tester.tap(submitButton());
+        await tester.pumpAndSettle();
 
-      expect(provider.lastSubmission, isNotNull);
-      expect(provider.lastSubmission!.documentType.name, 'passport');
-    });
+        expect(provider.lastSubmission, isNotNull);
+        expect(provider.lastSubmission!.documentType.name, 'passport');
+      },
+    );
   });
 }
-

@@ -17,21 +17,21 @@ import 'package:hivorr/data/models/dispute_resolution_dto.dart';
 abstract final class DisputeMapper {
   /// Maps a `dispute_cases` DTO into a domain [DisputeCase].
   static DisputeCase caseToEntity(DisputeCaseDto dto) => DisputeCase(
-        id: dto.id,
-        escrowId: dto.escrowId,
-        filerEntityId: dto.filerEntityId,
-        counterpartyEntityId: dto.counterpartyEntityId,
-        disputeType: dto.disputeType,
-        status: dto.status,
-        reason: dto.reason,
-        desiredOutcome: dto.desiredOutcome,
-        priority: dto.priority,
-        filedAt: dto.filedAt,
-        resolvedAt: dto.resolvedAt,
-        closedAt: dto.closedAt,
-        withdrawnAt: dto.withdrawnAt,
-        metadata: dto.metadata,
-      );
+    id: dto.id,
+    escrowId: dto.escrowId,
+    filerEntityId: dto.filerEntityId,
+    counterpartyEntityId: dto.counterpartyEntityId,
+    disputeType: dto.disputeType,
+    status: dto.status,
+    reason: dto.reason,
+    desiredOutcome: dto.desiredOutcome,
+    priority: dto.priority,
+    filedAt: dto.filedAt,
+    resolvedAt: dto.resolvedAt,
+    closedAt: dto.closedAt,
+    withdrawnAt: dto.withdrawnAt,
+    metadata: dto.metadata,
+  );
 
   /// Maps a `dispute_evidence` DTO into a domain [DisputeEvidence].
   static DisputeEvidence evidenceToEntity(DisputeEvidenceDto dto) =>
@@ -63,20 +63,17 @@ abstract final class DisputeMapper {
       );
 
   /// Maps the `dispute_list` envelope into a list of [DisputeCase].
-  static List<DisputeCase> listEnvelopeToEntities(
-    DisputeListEnvelopeDto dto,
-  ) =>
+  static List<DisputeCase> listEnvelopeToEntities(DisputeListEnvelopeDto dto) =>
       dto.disputes.map(caseToEntity).toList(growable: false);
 
   /// Maps the `dispute_get` envelope into a [DisputeCaseDetail] value object.
   static DisputeCaseDetail caseDetailToEntity(
     DisputeCaseDetailEnvelopeDto dto,
-  ) =>
-      DisputeCaseDetail(
-        disputeCase: caseToEntity(dto.caseDto),
-        evidence: dto.evidence.map(evidenceToEntity).toList(growable: false),
-        resolution: dto.resolution == null
-            ? null
-            : resolutionToEntity(dto.resolution!),
-      );
+  ) => DisputeCaseDetail(
+    disputeCase: caseToEntity(dto.caseDto),
+    evidence: dto.evidence.map(evidenceToEntity).toList(growable: false),
+    resolution: dto.resolution == null
+        ? null
+        : resolutionToEntity(dto.resolution!),
+  );
 }

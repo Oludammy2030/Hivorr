@@ -2,23 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
 
 /// Matches an [EntityProvider] currently in the loading state.
-Matcher hasLoadingState() => _ProviderStateMatcher(
-      EntityProviderState.loading,
-      'loading',
-    );
+Matcher hasLoadingState() =>
+    _ProviderStateMatcher(EntityProviderState.loading, 'loading');
 
 /// Matches an [EntityProvider] currently in the loaded/success state,
 /// optionally asserting the error message substring.
-Matcher hasLoadedState() => _ProviderStateMatcher(
-      EntityProviderState.loaded,
-      'loaded',
-    );
+Matcher hasLoadedState() =>
+    _ProviderStateMatcher(EntityProviderState.loaded, 'loaded');
 
 /// Matches an [EntityProvider] currently in the error state, optionally
 /// asserting that its [EntityProvider.error] message contains [messageContains].
-Matcher hasErrorState({String? messageContains}) => _ProviderErrorMatcher(
-      messageContains: messageContains,
-    );
+Matcher hasErrorState({String? messageContains}) =>
+    _ProviderErrorMatcher(messageContains: messageContains);
 
 class _ProviderStateMatcher extends Matcher {
   const _ProviderStateMatcher(this.expected, this.label);
@@ -40,10 +35,9 @@ class _ProviderStateMatcher extends Matcher {
     Description description,
     Map<dynamic, dynamic> matchState,
     bool verbose,
-  ) =>
-      item is EntityProvider
-          ? description.add('had state "${item.state.name}"')
-          : description.add('was not an EntityProvider');
+  ) => item is EntityProvider
+      ? description.add('had state "${item.state.name}"')
+      : description.add('was not an EntityProvider');
 }
 
 class _ProviderErrorMatcher extends Matcher {

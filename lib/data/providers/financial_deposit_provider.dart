@@ -35,8 +35,8 @@ class FinancialDepositProvider extends ChangeNotifier {
   FinancialDepositProvider({
     required FinancialDepositService service,
     HivorrLogger? logger,
-  })  : _service = service,
-        _logger = logger;
+  }) : _service = service,
+       _logger = logger;
 
   final FinancialDepositService _service;
   final HivorrLogger? _logger;

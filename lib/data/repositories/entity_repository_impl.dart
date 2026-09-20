@@ -16,10 +16,7 @@ import 'package:hivorr/data/repositories/entity_repository.dart';
 /// [ApiException]s — no business decisions are made here (EP-01-08 §5.6).
 class EntityRepositoryImpl implements EntityRepository {
   /// Creates the repository from its two datasource dependencies.
-  EntityRepositoryImpl({
-    required this.remote,
-    required this.local,
-  });
+  EntityRepositoryImpl({required this.remote, required this.local});
 
   /// The remote (Supabase) datasource.
   final EntityRemoteDataSource remote;
@@ -33,7 +30,8 @@ class EntityRepositoryImpl implements EntityRepository {
     if (cached != null) {
       return EntityProfileMapper.toEntity(cached);
     }
-    final EntityProfileDto fetched = await remote.getProfile(entityId) ??
+    final EntityProfileDto fetched =
+        await remote.getProfile(entityId) ??
         (throw const ApiException(
           kind: ApiExceptionKind.notFound,
           message: 'Profile not found.',

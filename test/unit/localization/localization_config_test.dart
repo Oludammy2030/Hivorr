@@ -16,10 +16,14 @@ void main() {
     });
 
     test('default config has default+fallback inside supported list', () {
-      expect(defaultLocalizationConfig.supportedLocales,
-          contains(defaultLocalizationConfig.defaultLocale));
-      expect(defaultLocalizationConfig.supportedLocales,
-          contains(defaultLocalizationConfig.fallbackLocale));
+      expect(
+        defaultLocalizationConfig.supportedLocales,
+        contains(defaultLocalizationConfig.defaultLocale),
+      );
+      expect(
+        defaultLocalizationConfig.supportedLocales,
+        contains(defaultLocalizationConfig.fallbackLocale),
+      );
     });
   });
 }

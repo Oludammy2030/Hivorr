@@ -22,7 +22,12 @@ import 'package:hivorr/systems/portfolio/services/professional_profile_service.d
 ///
 /// The record shape is frozen by the DoD seam contract:
 /// `({dataSource, repository, provider, service})`.
-({PortfolioRemoteDataSource dataSource, PortfolioRepository repository, PortfolioProvider provider, ProfessionalProfileService service})
+({
+  PortfolioRemoteDataSource dataSource,
+  PortfolioRepository repository,
+  PortfolioProvider provider,
+  ProfessionalProfileService service,
+})
 registerPortfolioLayer({
   required ApiLayer apiLayer,
   PortfolioRemoteDataSource? dataSource,
@@ -45,8 +50,9 @@ registerPortfolioLayer({
         dio: apiLayer.dio,
         tokenProvider: apiLayer.tokenProvider,
       );
-  final PortfolioRepository repository =
-      PortfolioRepositoryImpl(remote: resolvedDataSource);
+  final PortfolioRepository repository = PortfolioRepositoryImpl(
+    remote: resolvedDataSource,
+  );
   final PortfolioProvider provider = PortfolioProvider(repository: repository);
   final ProfessionalProfileService service = ProfessionalProfileService(
     provider: provider,

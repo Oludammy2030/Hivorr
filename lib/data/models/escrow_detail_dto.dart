@@ -17,7 +17,8 @@ class EscrowDetailDto {
   });
 
   factory EscrowDetailDto.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic>? escrow = json['escrow'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? escrow =
+        json['escrow'] as Map<String, dynamic>?;
     return EscrowDetailDto(
       escrow: EscrowDto.fromJson(escrow ?? <String, dynamic>{}),
       milestones: _parseMilestones(json['milestones']),

@@ -98,10 +98,10 @@ GoRouter doorRouter({String initialLocation = RoutePaths.welcome}) {
         name: RouteNames.authConfirmation,
         builder: (BuildContext context, GoRouterState state) =>
             AuthConfirmationGateScreen(
-          email: state.uri.queryParameters['email'],
-          next: state.uri.queryParameters['next'],
-          mode: state.uri.queryParameters['mode'],
-        ),
+              email: state.uri.queryParameters['email'],
+              next: state.uri.queryParameters['next'],
+              mode: state.uri.queryParameters['mode'],
+            ),
       ),
       GoRoute(
         path: RoutePaths.forgotPassword,
@@ -127,6 +127,5 @@ GoRouter doorRouter({String initialLocation = RoutePaths.welcome}) {
 }
 
 Widget Function(BuildContext, GoRouterState) _placeholder(String title) =>
-    (BuildContext context, GoRouterState state) => Scaffold(
-          body: Center(child: Text(title)),
-        );
+    (BuildContext context, GoRouterState state) =>
+        Scaffold(body: Center(child: Text(title)));

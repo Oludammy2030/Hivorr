@@ -51,11 +51,11 @@ class VerificationProvider extends ChangeNotifier {
     HivorrLogger? logger,
     Duration? pollInterval,
     DateTime Function()? clock,
-  })  : _repo = repo,
-        _notificationProvider = notificationProvider,
-        _logger = logger,
-        _pollInterval = pollInterval ?? const Duration(seconds: 15),
-        _clock = clock ?? DateTime.now;
+  }) : _repo = repo,
+       _notificationProvider = notificationProvider,
+       _logger = logger,
+       _pollInterval = pollInterval ?? const Duration(seconds: 15),
+       _clock = clock ?? DateTime.now;
 
   final VerificationRepository _repo;
   final NotificationProvider? _notificationProvider;
@@ -131,13 +131,14 @@ class VerificationProvider extends ChangeNotifier {
     _submitError = null;
     notifyListeners();
     try {
-      final VerificationSubmission submission = await _repo.submitIdentityDocument(
-        documentType: documentType,
-        bytes: bytes,
-        mimeType: mimeType,
-        fileName: fileName,
-        onProgress: onProgress,
-      );
+      final VerificationSubmission submission = await _repo
+          .submitIdentityDocument(
+            documentType: documentType,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+            onProgress: onProgress,
+          );
       _lastSubmission = submission;
       _submitState = SubmitState.success;
       _logger?.info('Identity document submitted', <String, Object?>{
@@ -267,10 +268,10 @@ class VerificationProvider extends ChangeNotifier {
           ),
         ),
       );
-      _logger?.info('Verification terminal transition detected', <String, Object?>{
-        'identityVerified': true,
-        'tierCode': level.tierCode,
-      });
+      _logger?.info(
+        'Verification terminal transition detected',
+        <String, Object?>{'identityVerified': true, 'tierCode': level.tierCode},
+      );
     } else if (!next.identityVerified &&
         next.totalSubmissions > 0 &&
         next.pendingSubmissions == 0 &&
@@ -282,7 +283,8 @@ class VerificationProvider extends ChangeNotifier {
           HivorrNotification(
             id: id,
             title: 'Verification action required',
-            body: 'Your verification was not approved. Please review and '
+            body:
+                'Your verification was not approved. Please review and '
                 'resubmit your document.',
             channelId: VerificationNotificationChannel.system,
             priority: NotificationPriority.high,
@@ -305,4 +307,3 @@ class VerificationProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

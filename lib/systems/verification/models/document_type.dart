@@ -29,21 +29,21 @@ enum DocumentType {
 
   /// Human-readable display label with Nigeria-specific hint.
   String get label => switch (this) {
-        DocumentType.nationalId => 'National ID (NIN)',
-        DocumentType.passport => 'Passport',
-        DocumentType.driversLicense => "Driver's License (FRSC)",
-        DocumentType.votersCard => "Voter's Card (INEC)",
-        DocumentType.ninSlip => 'NIN Slip',
-      };
+    DocumentType.nationalId => 'National ID (NIN)',
+    DocumentType.passport => 'Passport',
+    DocumentType.driversLicense => "Driver's License (FRSC)",
+    DocumentType.votersCard => "Voter's Card (INEC)",
+    DocumentType.ninSlip => 'NIN Slip',
+  };
 
   /// A short one-line helper shown under the picker choice.
   String get helper => switch (this) {
-        DocumentType.nationalId => 'Nigerian National Identity Card',
-        DocumentType.passport => 'International passport bio page',
-        DocumentType.driversLicense => 'Nigerian driver\'s license',
-        DocumentType.votersCard => 'Permanent voter\'s card',
-        DocumentType.ninSlip => 'NIN slip or enrolment acknowledgement',
-      };
+    DocumentType.nationalId => 'Nigerian National Identity Card',
+    DocumentType.passport => 'International passport bio page',
+    DocumentType.driversLicense => 'Nigerian driver\'s license',
+    DocumentType.votersCard => 'Permanent voter\'s card',
+    DocumentType.ninSlip => 'NIN slip or enrolment acknowledgement',
+  };
 
   /// The credential kind this document maps to (always `identity_document`).
   String get kind => identityKind;

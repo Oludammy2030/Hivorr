@@ -38,10 +38,7 @@ void main() {
       for (final DocumentType type in DocumentType.values) {
         expect(type.helper, isNotEmpty);
       }
-      expect(
-        DocumentType.nationalId.helper,
-        contains('National Identity'),
-      );
+      expect(DocumentType.nationalId.helper, contains('National Identity'));
     });
 
     test('fromTitle resolves case-insensitively', () {

@@ -18,12 +18,12 @@ void main() {
     tearDown(() async => authClient.close());
 
     AuthProvider buildProvider() => AuthProvider(
-          service: SupabaseAuthService(
-            authClient: authClient,
-            supabaseClient: FakeSupabaseClient(),
-            config: const AuthConfig(),
-          ),
-        );
+      service: SupabaseAuthService(
+        authClient: authClient,
+        supabaseClient: FakeSupabaseClient(),
+        config: const AuthConfig(),
+      ),
+    );
 
     test('initialize mirrors the service status', () async {
       final AuthProvider provider = buildProvider();
