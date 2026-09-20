@@ -73,9 +73,11 @@ class HivorrChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
-            label,
-            style: context.textTheme.labelMedium?.copyWith(color: textColor),
+          Flexible(
+            child: Text(
+              label,
+              style: context.textTheme.labelMedium?.copyWith(color: textColor),
+            ),
           ),
           if (onDismissed != null) ...<Widget>[
             const SizedBox(width: HivorrSpacing.xs),
