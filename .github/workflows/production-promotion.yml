@@ -108,23 +108,35 @@ jobs:
             exit 1
           fi
 
-  # Called workflows cannot resolve environment-scoped secrets — neither via
-  # relay job outputs (GitHub suppresses outputs containing secret values) nor
-  # via `environment:` on the called job (verified 2026-09-20/21). The caller
-  # therefore forwards the repo-level SUPABASE_ACCESS_TOKEN, the mechanism that
-  # pushed to production successfully on 2026-09-20 (run 35504107176).
+  # The migrate job is a NORMAL job (not a reusable-workflow call) so it can
+  # declare `environment: production` — the only way the environment-scoped,
+  # project-scoped SUPABASE_ACCESS_TOKEN (covers fxpcgtetvzlexbptqiwp only)
+  # resolves. Shared steps live in .github/actions/supabase-migrate (composite
+  # action running in this job's context). Reusable-workflow calls cannot
+  # resolve environment secrets (verified 2026-09-21: relay outputs are
+  # suppressed by GitHub; `environment:` on called jobs does not expose them).
   migrate:
     name: Production DB Migration
     needs: verify
-    uses: ./.github/workflows/reusable-supabase-migration.yml
-    with:
-      environment-name: 'production'
-      supabase-url: ${{ vars.PRODUCTION_HIVORR_SUPABASE_URL }}
-      supabase-project-ref: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF || '' }}
-      dry-run: false
-    secrets:
-      supabase-access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      supabase-db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Supabase migration
+        uses: ./.github/actions/supabase-migrate
+        with:
+          environment-name: production
+          supabase-url: ${{ vars.PRODUCTION_HIVORR_SUPABASE_URL }}
+          supabase-project-ref: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+          dry-run: 'false'
 
   build:
     name: Production Build

@@ -45,23 +45,35 @@ jobs:
     name: Staging Guard
     uses: ./.github/workflows/reusable-master-guard.yml
 
-  # Called workflows cannot resolve environment-scoped secrets — neither via
-  # relay job outputs (GitHub suppresses outputs containing secret values) nor
-  # via `environment:` on the called job (verified 2026-09-20/21). The caller
-  # therefore forwards the repo-level SUPABASE_ACCESS_TOKEN, the mechanism that
-  # pushed to staging successfully on 2026-09-20 (8be8f43 deployment).
+  # The migrate job is a NORMAL job (not a reusable-workflow call) so it can
+  # declare `environment: staging` — the only way the environment-scoped,
+  # project-scoped SUPABASE_ACCESS_TOKEN (covers cgxkiczmwzydhoroclvf only)
+  # resolves. Shared steps live in .github/actions/supabase-migrate (composite
+  # action running in this job's context). Reusable-workflow calls cannot
+  # resolve environment secrets (verified 2026-09-21: relay outputs are
+  # suppressed by GitHub; `environment:` on called jobs does not expose them).
   migrate:
     name: Staging DB Migration
     needs: guard
-    uses: ./.github/workflows/reusable-supabase-migration.yml
-    with:
-      environment-name: 'staging'
-      supabase-url: ${{ vars.STAGING_HIVORR_SUPABASE_URL }}
-      supabase-project-ref: ${{ vars.STAGING_SUPABASE_PROJECT_REF || '' }}
-      dry-run: false
-    secrets:
-      supabase-access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      supabase-db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Supabase migration
+        uses: ./.github/actions/supabase-migrate
+        with:
+          environment-name: staging
+          supabase-url: ${{ vars.STAGING_HIVORR_SUPABASE_URL }}
+          supabase-project-ref: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          dry-run: 'false'
 
   build:
     name: Staging Build

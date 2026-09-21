@@ -44,20 +44,21 @@ Each is `create or replace function` / `alter table … add column` idempotent; 
 
 ## CI hardening (already committed)
 
-- `.github/workflows/reusable-supabase-migration.yml` — pinned `supabase/setup-cli@46f7f98…` + `supabase db push`. Its callers forward the **repo-level** `SUPABASE_ACCESS_TOKEN` through the reusable call's `secrets:` block.
-- `.github/workflows/staging-deployment.yml` now runs `migrate → build → deploy`; `production-promotion.yml` runs `verify → migrate → build → manual_approval → deploy`.
+- `.github/actions/supabase-migrate` — composite action (pinned `supabase/setup-cli@46f7f98…` + `supabase db push`) running in the caller's job context.
+- `.github/workflows/staging-deployment.yml` now runs `migrate → build → deploy`; `production-promotion.yml` runs `verify → migrate → build → manual_approval → deploy`. Each migrate job is a **normal job with `environment:`** so the environment-scoped, **project-scoped** `SUPABASE_ACCESS_TOKEN` resolves (staging token covers `cgxkiczmwzydhoroclvf` only; production token covers `fxpcgtetvzlexbptqiwp` only — verified 2026-09-21 via status-code probes).
 
-**Required repo-level secrets** (repo Settings → Secrets → Actions — called workflows cannot resolve environment-scoped secrets):
-- `SUPABASE_ACCESS_TOKEN` (repo secret — **required**; this is the token the migration pipeline uses for both projects)
-- `SUPABASE_DB_PASSWORD` (repo secret, optional — link falls back to access-token pooler)
-- `STAGING_SUPABASE_PROJECT_REF` / `PRODUCTION_SUPABASE_PROJECT_REF` (environment vars, optional; derived from `*_HIVORR_SUPABASE_URL` if empty)
+**Required environment secrets** (GitHub → Settings → Environments → staging / production):
+- `SUPABASE_ACCESS_TOKEN` (env secret — **required**; project-scoped token for that environment's Supabase project)
+- `SUPABASE_DB_PASSWORD` (env secret, optional — link falls back to access-token pooler)
+- `STAGING_SUPABASE_PROJECT_REF` / `PRODUCTION_SUPABASE_PROJECT_REF` (env vars, optional; derived from `*_HIVORR_SUPABASE_URL` if empty)
 
-Fail-closed: if the token is not passed, the migration job errors and build/deploy are skipped — drift protection can never silently deactivate.
+Fail-closed: if the token resolves empty, the migration job errors and build/deploy are skipped — drift protection can never silently deactivate.
 
-> History: two environment-scoping attempts failed and are documented so they are not retried:
+> History — three approaches failed and must not be retried:
 > 1. (#58) Forwarding the token through a relay job's `needs` outputs — GitHub suppresses job outputs containing secret values (`Skip output 'supabase-access-token' since it may contain secret`), so the reusable workflow received an empty token, warned and skipped, and run `35516728591` deployed `8be8f43` to production without its `20260920*` migrations.
-> 2. (#61) Declaring `environment:` on the called workflow's migrate job — the token still resolved empty (run `35576656727`), so called workflows do not expose environment secrets this way either.
-> The repo-level `secrets:` forwarding is the mechanism that successfully pushed to production (run `35504107176`) and staging on 2026-09-20.
+> 2. (#61) Declaring `environment:` on the called workflow's migrate job — the token still resolved empty (run `35576656727`); called workflows do not expose environment secrets.
+> 3. (#62) Forwarding the repo-level `SUPABASE_ACCESS_TOKEN` — the repo-level value is rejected (401), and the active tokens are project-scoped (each returns 403 for the other project), so no single shared token can serve both environments.
+> The composite action + per-environment normal job is the working mechanism (validated by the 2026-09-21 probe runs).
 
 ## Post-fix verification
 
