@@ -11,26 +11,29 @@
 # (EP-01-04 §12). The Supabase CLI version is pinned to 2.115.0 (local) to keep
 # remote pushes reproducible.
 #
-# Required GitHub Environment variables and secrets (per environment):
-#   Variables:
-#     SUPABASE_PROJECT_REF           — Supabase project ref (e.g. fxpcgtetvzlexbptqiwp)
-#       If not set, derived from SUPABASE_URL host `https://<ref>.supabase.co`.
-#     SUPABASE_URL                   — Supabase project HTTPS URL (for derivation fallback)
+# Required caller-provided secrets (via the reusable call `secrets:` block, from
+# the CALLER's job context — i.e. repo-level secrets; called workflows cannot
+# resolve environment-scoped secrets):
 #   Secrets:
-#     SUPABASE_ACCESS_TOKEN          — Supabase personal access token — **required**
-#     SUPABASE_DB_PASSWORD           — Remote Postgres password — **optional**; if not set,
+#     supabase-access-token           — Supabase personal access token — **required**
+#     supabase-db-password            — Remote Postgres password — **optional**; if not set,
 #       `supabase link` is tried without `--password` (pooler via access token)
 #
-# The migrate job declares `environment: ${{ inputs.environment-name }}` so the
-# environment-scoped secrets resolve directly inside this workflow. Callers must
-# NOT forward secrets through job outputs — GitHub suppresses outputs whose
-# values contain secrets (`Skip output 'supabase-access-token' since it may
-# contain secret`), which silently emptied the token and let run 35516728591
-# deploy `8be8f43` without its `20260920*` migrations (2026-09-20 incident).
+# Environment-scoped secrets are NOT usable here, verified twice:
+#   1. Forwarding via a relay job's `needs` outputs fails — GitHub suppresses
+#      outputs containing secret values (`Skip output 'supabase-access-token'
+#      since it may contain secret`), which silently emptied the token and let
+#      run 35516728591 deploy `8be8f43` without its `20260920*` migrations
+#      (2026-09-20 incident).
+#   2. Declaring `environment:` on the migrate job of the called workflow does
+#      not expose environment secrets either (run 35576656727, 2026-09-21 —
+#      token resolved empty despite the secret existing in the environment).
+# The caller therefore passes the repo-level `SUPABASE_ACCESS_TOKEN` directly;
+# this is the mechanism that successfully pushed to both projects on 2026-09-20
+# (runs 35504107176 → production, staging 8be8f43 deployment → staging).
 #
-# Fail-closed: if SUPABASE_ACCESS_TOKEN is not configured the job errors and the
-# dependent build/deploy jobs are skipped — drift protection can never silently
-# deactivate.
+# Fail-closed: if the token is not passed the job errors and the dependent
+# build/deploy jobs are skipped — drift protection can never silently deactivate.
 
 name: Reusable Supabase Migration
 
@@ -55,6 +58,13 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      supabase-access-token:
+        description: Supabase personal access token (repo-level SUPABASE_ACCESS_TOKEN, passed by the caller)
+        required: false
+      supabase-db-password:
+        description: Remote Postgres password (optional; link falls back to access-token pooler)
+        required: false
 
 permissions:
   contents: read
@@ -63,7 +73,6 @@ jobs:
   migrate:
     name: Push migrations (${{ inputs.environment-name }})
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment-name }}
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -80,11 +89,11 @@ jobs:
             echo "::error::supabase-url is required"
             exit 1
           fi
-          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
-            echo "::error::SUPABASE_ACCESS_TOKEN is not configured in the ${{ inputs.environment-name }} environment — failing closed so the schema cannot drift from the deployed artifact. Add it via GitHub → Settings → Environments → ${{ inputs.environment-name }} → Secrets."
+          if [ -z "${{ secrets.supabase-access-token }}" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN was not passed to the migration job — failing closed so the schema cannot drift from the deployed artifact. The callers must forward the repo-level SUPABASE_ACCESS_TOKEN secret via the reusable call's secrets: block (called workflows cannot resolve environment-scoped secrets)."
             exit 1
           fi
-          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+          if [ -z "${{ secrets.supabase-db-password }}" ]; then
             echo "::notice::SUPABASE_DB_PASSWORD not set — will try supabase link without --password (access-token pooler)."
           fi
           COUNT=$(ls -1 supabase/migrations/*.sql 2>/dev/null | wc -l)
@@ -123,8 +132,8 @@ jobs:
       - name: Link remote project
         shell: bash
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.supabase-db-password }}
         run: |
           set -e
           echo "Linking to project ${{ steps.project-ref.outputs.ref }}..."
@@ -137,7 +146,7 @@ jobs:
       - name: Dry-run migration diff
         shell: bash
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
         run: |
           set -e
           echo "Checking remote migration status..."
@@ -150,7 +159,7 @@ jobs:
         if: inputs.dry-run == false
         shell: bash
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
         run: |
           set -e
           echo "Pushing migrations to ${{ inputs.environment-name }} (${{ steps.project-ref.outputs.ref }})..."

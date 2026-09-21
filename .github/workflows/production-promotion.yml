@@ -108,11 +108,11 @@ jobs:
             exit 1
           fi
 
-  # The reusable migration workflow resolves `SUPABASE_ACCESS_TOKEN` /
-  # `SUPABASE_DB_PASSWORD` from the `production` environment itself (its migrate
-  # job declares `environment:`). Secrets must not be forwarded via job outputs —
-  # GitHub suppresses outputs containing secret values, which silently emptied
-  # the token and shipped `8be8f43` without its migrations (2026-09-20).
+  # Called workflows cannot resolve environment-scoped secrets — neither via
+  # relay job outputs (GitHub suppresses outputs containing secret values) nor
+  # via `environment:` on the called job (verified 2026-09-20/21). The caller
+  # therefore forwards the repo-level SUPABASE_ACCESS_TOKEN, the mechanism that
+  # pushed to production successfully on 2026-09-20 (run 35504107176).
   migrate:
     name: Production DB Migration
     needs: verify
@@ -122,6 +122,9 @@ jobs:
       supabase-url: ${{ vars.PRODUCTION_HIVORR_SUPABASE_URL }}
       supabase-project-ref: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF || '' }}
       dry-run: false
+    secrets:
+      supabase-access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      supabase-db-password: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
   build:
     name: Production Build
