@@ -19,11 +19,8 @@ void main() {
     final OnboardingTestStack s = stack ?? buildOnboardingStack();
     final OnboardingStepController controller = OnboardingStepController();
     await s.hydrate('u1');
-    try {
-      await s.provider.advance(); // profile → capability (step 2)
-    } on Object {
-      // advance persists; failure-path harnesses (throwing store) still render.
-    }
+    // Fresh hydration lands on capability — the wizard's first step (identity
+    // is captured at registration).
     await pumpOnboardingScreen(
       tester,
       CapabilitySelectionScreen(active: active, controller: controller),

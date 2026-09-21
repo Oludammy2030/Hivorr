@@ -39,11 +39,11 @@ void main() {
   });
 
   group('loadProgress / resume (FV-13, FV-14)', () {
-    test('fresh entity starts at profile with an empty progress row', () async {
+    test('fresh entity starts at capability with an empty progress row', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      expect(stack.provider.currentStep, OnboardingStepCode.profile);
+      expect(stack.provider.currentStep, OnboardingStepCode.capability);
       expect(stack.provider.progress, isNotNull);
       expect(stack.provider.isComplete, isFalse);
       expect(stack.provider.entityId, 'u1');
@@ -53,7 +53,6 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      await stack.provider.advance();
       await stack.provider.advance();
       expect(stack.provider.currentStep, OnboardingStepCode.industry);
       final OnboardingStepCode resumed = await stack.service.resume('u1');
@@ -65,7 +64,6 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      await stack.provider.advance(); // -> capability
       await stack.provider.advance(); // -> industry (incl. profession)
       await stack.provider.advance(); // -> identityDocument
       await stack.provider.advance(); // -> tradeProof
@@ -81,9 +79,9 @@ void main() {
       activeProvider = stack.provider;
       await stack.hydrate('u1');
       await stack.provider.advance();
-      expect(stack.provider.currentStep, OnboardingStepCode.capability);
+      expect(stack.provider.currentStep, OnboardingStepCode.industry);
       await stack.provider.back();
-      expect(stack.provider.currentStep, OnboardingStepCode.profile);
+      expect(stack.provider.currentStep, OnboardingStepCode.capability);
     });
 
     test(
@@ -94,10 +92,10 @@ void main() {
         await stack.hydrate('u1');
         await stack.provider.advance();
         await stack.provider.saveAndExit();
-        expect(stack.provider.currentStep, OnboardingStepCode.capability);
+        expect(stack.provider.currentStep, OnboardingStepCode.industry);
         expect(
           (await stack.store.read('u1'))!.step,
-          OnboardingStepCode.capability,
+          OnboardingStepCode.industry,
         );
       },
     );
@@ -111,7 +109,7 @@ void main() {
       expect(stack.provider.entityId, 'u2');
       expect(
         stack.provider.currentStep,
-        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
         reason: 'u2 has no progress row — a fresh wizard must start',
       );
     });
@@ -134,7 +132,7 @@ void main() {
       activeProvider = stack.provider;
       await stack.provider.resume('u1');
       expect(stack.provider.entityId, 'u1');
-      expect(stack.provider.currentStep, OnboardingStepCode.profile);
+      expect(stack.provider.currentStep, OnboardingStepCode.capability);
     });
   });
 
@@ -146,7 +144,7 @@ void main() {
       await stack.provider.advance();
       await stack.provider.exitWizard();
       expect(stack.provider.exited, isTrue);
-      expect(stack.provider.currentStep, OnboardingStepCode.capability);
+      expect(stack.provider.currentStep, OnboardingStepCode.industry);
       expect((await stack.store.read('u1'))!.exited, isTrue);
     });
 
@@ -162,7 +160,7 @@ void main() {
         expect(stack.provider.exited, isFalse);
         expect(
           stack.provider.currentStep,
-          OnboardingStepCode.capability,
+          OnboardingStepCode.industry,
           reason: 'continue resumes at the saved step',
         );
         expect((await stack.store.read('u1'))!.exited, isFalse);
@@ -403,7 +401,7 @@ void main() {
       await pumpEventQueue();
       expect(
         (await stack.store.read('u1'))!.step,
-        OnboardingStepCode.capability,
+        OnboardingStepCode.industry,
       );
     });
 
@@ -416,7 +414,7 @@ void main() {
       await pumpEventQueue();
       expect(
         (await stack.store.read('u1'))!.step,
-        OnboardingStepCode.capability,
+        OnboardingStepCode.industry,
       );
     });
   });
@@ -459,7 +457,6 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.advance(); // → capability
         await stack.provider.advance(); // → industry
         await stack.hydrate('u1'); // re-resume: server still says not completed
         expect(stack.service.serverHydrated, isTrue);
@@ -478,7 +475,7 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.advance(); // → capability
+        await stack.provider.advance(); // → industry
         stack.onboardingRemote.nextGetError = const ApiException(
           kind: ApiExceptionKind.network,
           message: 'No connection',
@@ -493,7 +490,7 @@ void main() {
         );
         expect(
           stack.provider.currentStep,
-          OnboardingStepCode.capability,
+          OnboardingStepCode.industry,
           reason: 'the cached resume point is preserved',
         );
       },
@@ -505,11 +502,6 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.completeProfile(
-          legalName: 'Jane Doe',
-          displayName: 'Jane',
-        );
-        await stack.provider.advance(); // profile → capability
         await stack.provider.selectCapability(EntityCapability.hire);
         expect(stack.onboardingRemote.updateStatusCallCount, 1);
         expect(stack.onboardingRemote.lastCapability, 'hire');
@@ -525,11 +517,6 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.completeProfile(
-          legalName: 'Jane Doe',
-          displayName: 'Jane',
-        );
-        await stack.provider.advance(); // profile → capability
         await stack.provider.selectCapability(EntityCapability.offer);
         expect(stack.onboardingRemote.updateStatusCallCount, 1);
         expect(stack.onboardingRemote.lastCapability, 'offer');
@@ -547,7 +534,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 4; i++) {
         await stack.provider.advance();
       }
       expect(stack.onboardingRemote.updateStatusCallCount, 1);
@@ -560,7 +547,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 3; i++) {
         await stack.provider.advance();
       }
       expect(stack.provider.currentStep, OnboardingStepCode.tradeProof);

@@ -109,7 +109,7 @@ void main() {
       expect(await store.read('u1'), isNull);
     });
 
-    test('read falls back to profile for an unknown step name', () async {
+    test('read falls back to capability for an unknown step name', () async {
       final FakeStorageEngine engine = FakeStorageEngine();
       await engine
           .put('onboarding', 'onboarding_progress:u1', <String, dynamic>{
@@ -125,13 +125,13 @@ void main() {
       expect(restored, isNotNull);
       expect(
         restored!.step,
-        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
         reason: 'unknown step names degrade to the entry step',
       );
       expect(restored.completedSteps, isEmpty);
     });
 
-    test('valid completed steps round-trip; unknown names fall back', () async {
+    test('valid completed steps round-trip; unknown names drop', () async {
       final FakeStorageEngine engine = FakeStorageEngine();
       await engine.put(
         'onboarding',
@@ -139,7 +139,12 @@ void main() {
         <String, dynamic>{
           'entityId': 'u1',
           'step': 'tradeProof',
-          'completedSteps': <String>['profile', 'industry', 'unknown-step'],
+          'completedSteps': <String>[
+            'profile',
+            'capability',
+            'industry',
+            'unknown-step',
+          ],
           'hasIdentitySubmission': true,
           'hasTradeProofSubmission': false,
           'updatedAt': 5000,
@@ -151,10 +156,9 @@ void main() {
       final OnboardingProgress? restored = await store.read('u1');
       expect(restored, isNotNull);
       expect(restored!.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
         OnboardingStepCode.industry,
-        OnboardingStepCode.profile,
-      ], reason: 'known names decode in order; the unknown one degrades');
+      ], reason: 'known names decode in order; unknown/obsolete ones drop');
       expect(restored.hasIdentitySubmission, isTrue);
       expect(restored.updatedAt.millisecondsSinceEpoch, 5000);
     });

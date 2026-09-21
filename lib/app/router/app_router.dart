@@ -339,7 +339,7 @@ class AppRouter {
         GoRoute(
           path: RoutePaths.onboarding,
           redirect: (BuildContext context, GoRouterState state) =>
-              RoutePaths.onboardingProfile,
+              RoutePaths.onboardingCapability,
         ),
         GoRoute(
           path: '/onboarding/:step',

@@ -38,7 +38,7 @@ void main() {
         reason: 'continue clears the exit flag so the guard resumes',
       );
       expect(
-        find.text('ONBOARDING-CAPABILITY'),
+        find.text('ONBOARDING-INDUSTRY'),
         findsOneWidget,
         reason: 'registration resumes at the saved step',
       );

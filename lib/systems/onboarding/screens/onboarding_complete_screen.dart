@@ -14,7 +14,7 @@ import 'package:hivorr/systems/onboarding/widgets/onboarding_step_card.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:provider/provider.dart';
 
-/// Step 7 — completed (EP-02-18 FV-27, FV-34, FV-36).
+/// Terminal screen — completed (EP-02-18 FV-27, FV-34, FV-36).
 ///
 /// `HivorrSuccessState` ("You're registered"), read-only step cards for the
 /// capability's own path, a trust-loop panel summarising the identity/trade
@@ -88,10 +88,12 @@ class OnboardingCompleteScreen extends StatelessWidget {
   }
 
   /// The steps actually traversed by [capability] on its way to completion.
+  ///
+  /// Identity basics were captured at registration (never in-wizard), so the
+  /// summary begins with the capability decision.
   static List<OnboardingStep> _stepsFor(EntityCapability capability) {
     final List<OnboardingStep> steps = <OnboardingStep>[
       OnboardingStep.capability,
-      OnboardingStep.profile,
       if (capability.requiresProfessionalWizard) ...<OnboardingStep>[
         OnboardingStep.industry,
         OnboardingStep.profession,
@@ -111,7 +113,6 @@ class OnboardingCompleteScreen extends StatelessWidget {
 
   static IconData _iconFor(OnboardingStep step) => switch (step) {
     OnboardingStep.capability => Icons.all_inclusive_outlined,
-    OnboardingStep.profile => Icons.person_outline,
     OnboardingStep.industry => Icons.dashboard_outlined,
     OnboardingStep.profession => Icons.work_outline,
     OnboardingStep.identityDocument => Icons.badge_outlined,

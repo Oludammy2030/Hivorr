@@ -4,13 +4,15 @@ import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 
-/// Path-aware linear wizard tracker (EP-02-18 FV-35, capability-corrected).
+/// Path-aware linear wizard tracker (EP-02-18 FV-35, registration
+/// restructured).
 ///
 /// Segment count equals the number of steps on the current capability's path
-/// ([OnboardingProgress.requiredSteps]) — two for a hire-only entity, five for
-/// professional/`both`. Filled segments equal the position of the current step
-/// on that path. Done segments use `ColorScheme.primary`; pending use
-/// `surfaceVariant`. No hardcoded hex values.
+/// ([OnboardingProgress.requiredSteps]) — one for a hire-only entity (the
+/// capability decision finishes the wizard), four for professional/`both`.
+/// Filled segments equal the position of the current step on that path. Done
+/// segments use `ColorScheme.primary`; pending use `surfaceVariant`. No
+/// hardcoded hex values.
 class OnboardingProgressIndicator extends StatelessWidget {
   const OnboardingProgressIndicator({super.key, required this.progress});
 
@@ -26,7 +28,6 @@ class OnboardingProgressIndicator extends StatelessWidget {
         p?.requiredSteps ??
         const <OnboardingStepCode>[
           OnboardingStepCode.capability,
-          OnboardingStepCode.profile,
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
           OnboardingStepCode.tradeProof,

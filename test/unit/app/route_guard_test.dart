@@ -284,7 +284,7 @@ void main() {
         '/',
         '/profile',
         '/onboarding',
-        '/onboarding/profile',
+        '/onboarding/capability',
         '/login',
         '/signup',
         '/welcome',
@@ -339,7 +339,7 @@ void main() {
           environment: AppEnvironment.development,
         );
         expect(guard.redirectResolver('/onboarding'), isNull);
-        expect(guard.redirectResolver('/onboarding/profile'), isNull);
+        expect(guard.redirectResolver('/onboarding/capability'), isNull);
         expect(guard.redirectResolver('/onboarding/industry'), isNull);
         expect(guard.redirectResolver('/onboarding/trade-proof'), isNull);
         expect(guard.redirectResolver('/onboarding/complete'), isNull);
@@ -371,8 +371,8 @@ void main() {
           '/login?next=/onboarding',
         );
         expect(
-          guard.redirectResolver('/onboarding/profile'),
-          '/login?next=/onboarding/profile',
+          guard.redirectResolver('/onboarding/capability'),
+          '/login?next=/onboarding/capability',
         );
       },
     );
@@ -391,7 +391,7 @@ void main() {
         );
         expect(guard.redirectResolver('/'), '/onboarding');
         expect(guard.redirectResolver('/onboarding'), isNull);
-        expect(guard.redirectResolver('/onboarding/profile'), isNull);
+        expect(guard.redirectResolver('/onboarding/capability'), isNull);
       },
     );
 
@@ -468,7 +468,7 @@ void main() {
       );
       expect(
         guard.redirectResolver(RoutePaths.home),
-        RoutePaths.onboardingCapability,
+        RoutePaths.onboardingIndustry,
         reason: 'resume re-engages after Continue registration',
       );
       stack.provider.dispose();
@@ -490,7 +490,7 @@ void main() {
         );
         expect(
           guard.redirectResolver(RoutePaths.home),
-          RoutePaths.onboardingCapability,
+          RoutePaths.onboardingIndustry,
         );
         stack.provider.dispose();
       },
@@ -501,7 +501,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
           await stack.provider.advance();
         }
         expect(stack.provider.isComplete, isTrue);
@@ -565,7 +565,6 @@ void main() {
         await stack.provider.advance();
         await stack.provider.advance();
         await stack.provider.advance();
-        await stack.provider.advance();
         expect(
           stack.provider.isComplete,
           isTrue,
@@ -600,7 +599,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
           await stack.provider.advance();
         }
         expect(stack.provider.isComplete, isTrue);

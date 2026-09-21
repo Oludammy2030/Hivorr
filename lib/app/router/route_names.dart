@@ -65,10 +65,9 @@ abstract final class RouteNames {
   static const String kycStatus = 'kyc-status';
   static const String kycUpgrade = 'kyc-upgrade';
 
-  /// Onboarding wizard routes (EP-02-18).
+  /// Onboarding wizard routes (EP-02-18) — capability-first, no profile step.
   static const String onboarding = 'onboarding';
   static const String onboardingCapability = 'onboarding-capability';
-  static const String onboardingProfile = 'onboarding-profile';
   static const String onboardingIndustry = 'onboarding-industry';
   static const String onboardingIdentity = 'onboarding-identity';
   static const String onboardingTradeProof = 'onboarding-trade-proof';
