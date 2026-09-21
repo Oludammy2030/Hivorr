@@ -23,7 +23,9 @@ import 'package:provider/provider.dart';
 /// industry are preloaded on selection. Selecting a profession on submit calls
 /// [OnboardingProvider.bindProfession] (`entity_profession_bind`) and then
 /// advances to identity verification. `PLT005` duplicate binding surfaces as
-/// inline guidance; the RPC is only invoked on an explicit tap.
+/// inline guidance and continues — the authoritative completion gate only
+/// requires an existing profession binding; the RPC is only invoked on an
+/// explicit tap.
 class IndustryProfessionSelectionScreen extends StatefulWidget {
   const IndustryProfessionSelectionScreen({
     super.key,
@@ -99,6 +101,11 @@ class _IndustryProfessionSelectionScreenState
             'This profession is already linked to your account. Choose '
             'another one or continue with your selection.';
       });
+      await provider.advance();
+      if (!mounted) {
+        return;
+      }
+      context.go(RoutePaths.onboardingIdentity);
     }
   }
 
