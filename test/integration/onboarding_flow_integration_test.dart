@@ -1,7 +1,5 @@
 // ignore_for_file: avoid_redundant_argument_values
 
-import 'dart:typed_data';
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
@@ -21,25 +19,18 @@ import '../support/onboarding/onboarding_test_support.dart';
 /// Wires the real [OnboardingProvider]/[OnboardingService] seam against the
 /// fake collaborators (taxonomy, identity/trade verification, entity
 /// repository, storage, in-memory progress store) — no widgets and no live
-/// backend. Exercises the full wizard, exit-and-resume, the bid gate, the
-/// `PLT005` no-fire-hammer contract, and the server-authoritative completion
-/// across a relaunch (refresh/relaunch regression fix).
+/// backend. Identity is captured at registration (never in-wizard), so the
+/// flow starts at the capability decision. Exercises the full wizard,
+/// exit-and-resume, the bid gate, the `PLT005` no-fire-hammer contract, and
+/// the server-authoritative completion across a relaunch (refresh/relaunch
+/// regression fix).
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> runProfileStep(OnboardingTestStack stack) async {
-    await stack.provider.advance(); // profile → capability
-    final Uint8List avatarBytes = seedPngBytes();
-    await stack.provider.completeProfile(
-      legalName: 'Ada Lovelace',
-      displayName: 'Ada',
-      bio: 'Analytical engine pioneer',
-      avatarBytes: avatarBytes,
-      avatarFileName: 'me.png',
-      avatarMimeType: 'image/png',
-    );
+  Future<void> runCapabilityStep(OnboardingTestStack stack) async {
+    await stack.provider.selectCapability(EntityCapability.offer);
     expect(stack.provider.submitState, SubmitState.success);
-    await stack.provider.advance(); // capability → industry
+    // offer → industry (the merged selection step).
   }
 
   Future<void> runTaxonomySteps(OnboardingTestStack stack) async {
@@ -74,7 +65,7 @@ void main() {
   }
 
   group('Onboarding fake-E2E flow', () {
-    test('TT-17: fresh entity completes the full 5-step wizard', () async {
+    test('TT-17: fresh entity completes the full 4-step wizard', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       expect(
         await stack.service.isResumable('u1'),
@@ -83,17 +74,16 @@ void main() {
       );
 
       await stack.hydrate('u1');
-      expect(stack.provider.currentStep, OnboardingStepCode.profile);
+      expect(
+        stack.provider.currentStep,
+        OnboardingStepCode.capability,
+        reason: 'onboarding begins at the usage decision — identity is '
+            'captured at registration',
+      );
 
-      await runProfileStep(stack);
+      await runCapabilityStep(stack);
       expect(stack.provider.currentStep, OnboardingStepCode.industry);
-
-      // Avatar ordering contract: upload before RPC, canonical key persisted.
-      expect(stack.storage.uploadCallCount, 1);
-      expect(stack.storage.lastBucket, 'profile-avatars');
       expect(await stack.store.read('u1'), isNotNull);
-      expect(stack.remote.updateAvatarPathCallCount, 1);
-      expect(stack.remote.lastAvatarPath, stack.storage.returnedKey);
 
       await runTaxonomySteps(stack);
       expect(stack.remote.bindProfessionCallCount, 1);
@@ -130,14 +120,14 @@ void main() {
     });
 
     test(
-      'TT-18: exit at step 3, relaunch resumes exactly at the industry step',
+      'TT-18: exit at the industry step, relaunch resumes exactly there',
       () async {
         final InMemoryOnboardingProgressStore store =
             InMemoryOnboardingProgressStore();
         final OnboardingTestStack first = buildOnboardingStack(store: store);
         await first.hydrate('u1');
 
-        await runProfileStep(first); // → industry (the merged selection step)
+        await runCapabilityStep(first); // → industry (the merged selection step)
         await selectTechnologyProfession(first.taxonomy);
 
         // Exit protocol persists the current position without moving.
@@ -154,9 +144,8 @@ void main() {
           reason: 'resumes exactly at the exit point',
         );
         expect(second.provider.progress!.completedSteps, <OnboardingStepCode>[
-          OnboardingStepCode.profile,
           OnboardingStepCode.capability,
-        ], reason: 'steps 1–2 restored as complete');
+        ], reason: 'the capability decision is restored as complete');
 
         first.provider.dispose();
         second.provider.dispose();
@@ -209,7 +198,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        await runProfileStep(stack);
+        await runCapabilityStep(stack);
         await selectTechnologyProfession(stack.taxonomy);
 
         stack.remote.throwConflictOnBind = true;
@@ -242,12 +231,6 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        await stack.provider.completeProfile(
-          legalName: 'Ada Lovelace',
-          displayName: 'Ada',
-        );
-        expect(stack.provider.submitState, SubmitState.success);
-        await stack.provider.advance(); // profile → capability (step 2)
         expect(stack.provider.currentStep, OnboardingStepCode.capability);
 
         await stack.provider.selectCapability(EntityCapability.hire);
@@ -266,7 +249,6 @@ void main() {
 
         final OnboardingProgress saved = (await stack.store.read('u1'))!;
         expect(saved.completedSteps, <OnboardingStepCode>[
-          OnboardingStepCode.profile,
           OnboardingStepCode.capability,
         ]);
         stack.provider.dispose();
@@ -284,11 +266,16 @@ void main() {
           onboardingRemote: server,
         );
         await first.hydrate('u1');
-        await runProfileStep(first);
+        await runCapabilityStep(first);
         await runTaxonomySteps(first);
         await runVerificationSteps(first);
         expect(
           first.onboardingRemote.updateStatusCallCount,
+          2,
+          reason: 'capability persist + completion stamp',
+        );
+        expect(
+          first.onboardingRemote.completedStampCallCount,
           1,
           reason: 'completion is stamped exactly once, server-side',
         );
@@ -329,7 +316,7 @@ void main() {
             InMemoryOnboardingProgressStore();
         final OnboardingTestStack first = buildOnboardingStack(store: store);
         await first.hydrate('u1');
-        await runProfileStep(first);
+        await runCapabilityStep(first);
         await runTaxonomySteps(first);
         await runVerificationSteps(first);
         expect(first.provider.isComplete, isTrue);

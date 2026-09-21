@@ -1,14 +1,14 @@
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 
-/// The wizard steps in walk order (EP-02-18, capability-corrected).
+/// The wizard steps in walk order (EP-02-18, registration-restructured).
 ///
-/// `profile` (Basic Information) is the first step; `capability` follows it —
-/// the entity declares how it will use the account (hire / offer / both) after
-/// its identity basics are captured. [OnboardingProgress.isComplete] and the
-/// advance machine follow [EntityCapability.requiresProfessionalWizard], so a
-/// consumer-only entity never traverses the professional steps.
+/// `capability` is the first step — identity (names, display name, email,
+/// phone) is captured at account registration and hydrated into
+/// `entity_profiles` before onboarding starts, so the wizard never re-asks
+/// for it. [OnboardingProgress.isComplete] and the advance machine follow
+/// [EntityCapability.requiresProfessionalWizard], so a consumer-only entity
+/// never traverses the professional steps.
 enum OnboardingStepCode {
-  profile,
   capability,
   industry,
   identityDocument,
@@ -27,7 +27,7 @@ enum OnboardingStepCode {
 class OnboardingProgress {
   OnboardingProgress({
     required this.entityId,
-    this.step = OnboardingStepCode.profile,
+    this.step = OnboardingStepCode.capability,
     this.completedSteps = const <OnboardingStepCode>[],
     this.capability = EntityCapability.both,
     this.hasIdentitySubmission = false,
@@ -74,7 +74,6 @@ class OnboardingProgress {
   /// steps (industry & profession selection → identity → tradeProof) are only
   /// required when [EntityCapability.requiresProfessionalWizard] holds.
   List<OnboardingStepCode> get requiredSteps => <OnboardingStepCode>[
-    OnboardingStepCode.profile,
     OnboardingStepCode.capability,
     if (capability.requiresProfessionalWizard) ...<OnboardingStepCode>[
       OnboardingStepCode.industry,
@@ -94,7 +93,6 @@ class OnboardingProgress {
       return null;
     }
     return switch (step) {
-      OnboardingStepCode.profile => OnboardingStepCode.capability,
       OnboardingStepCode.capability =>
         capability.requiresProfessionalWizard
             ? OnboardingStepCode.industry

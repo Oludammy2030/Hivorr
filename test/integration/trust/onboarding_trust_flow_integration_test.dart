@@ -1,17 +1,18 @@
 // EP-02-20 VP1: Full Onboarding Flow End-to-End (trust orchestrator).
 //
 // Exercises the real OnboardingService + OnboardingProvider seam (composed
-// via OnboardingTestStack) through the full 5-step wizard:
-// profile → capability → industry → identityDocument → tradeProof → complete.
+// via OnboardingTestStack) through the full 4-step wizard:
+// capability → industry → identityDocument → tradeProof → complete.
+// Identity basics are captured at account registration and hydrated into
+// `entity_profiles` before onboarding — the wizard never collects them.
 //
 // Validates:
-//  - fresh entity completes all 5 steps with progress persisted
-//  - exit at step 3 + relaunch resumes at same step
+//  - fresh entity completes all 4 steps with progress persisted
+//  - exit + relaunch resumes at the same step
 //  - guard-redirect contract: incomplete entity → resume, completed → home
 //  - ordering contract: steps advance strictly in order
 //  - PLT004 when profession bind fails (bad professionId)
 //  - notifyListeners fires per advance
-//  - upload-before-RPC avatar ordering contract
 //  - PLT005 no-fire-hammer on duplicate bind
 //
 // Run: flutter test test/integration/trust/onboarding_trust_flow_integration_test.dart
@@ -47,19 +48,6 @@ void main() {
       0x60, 0x82,
     ]);
     return b.toBytes();
-  }
-
-  Future<void> runProfileStep(OnboardingTestStack stack) async {
-    await stack.provider.completeProfile(
-      legalName: 'Ada Lovelace',
-      displayName: 'Ada',
-      bio: 'Analytical engine pioneer',
-      avatarBytes: pngBytes(),
-      avatarFileName: 'me.png',
-      avatarMimeType: 'image/png',
-    );
-    expect(stack.provider.submitState, SubmitState.success);
-    await stack.provider.advance(); // profile → capability
   }
 
   Future<void> runCapabilityStep(OnboardingTestStack stack) async {
@@ -100,19 +88,13 @@ void main() {
   }
 
   group('VP1: Full onboarding flow (trust orchestrator)', () {
-    test('DoD-VP1a: fresh entity completes 5-step wizard end-to-end', () async {
+    test('DoD-VP1a: fresh entity completes 4-step wizard end-to-end', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       addTearDown(stack.provider.dispose);
 
       expect(await stack.service.isResumable('u1'), isFalse);
       await stack.hydrate('u1');
-      expect(stack.provider.currentStep, OnboardingStepCode.profile);
-
-      await runProfileStep(stack);
       expect(stack.provider.currentStep, OnboardingStepCode.capability);
-      // Avatar ordering: upload before RPC.
-      expect(stack.storage.uploadCallCount, 1);
-      expect(stack.storage.lastBucket, 'profile-avatars');
 
       await runCapabilityStep(stack);
       expect(stack.provider.currentStep, OnboardingStepCode.industry);
@@ -135,18 +117,17 @@ void main() {
       expect(await stack.service.isResumable('u1'), isFalse);
     });
 
-    test('DoD-VP1b: exit at step 3 → relaunch resumes at same step', () async {
+    test('DoD-VP1b: exit + relaunch resumes at the same step', () async {
       final InMemoryOnboardingProgressStore store =
           InMemoryOnboardingProgressStore();
 
-      // Simulate partial progress persisted (profile → industry done, exit
-      // resumes at industry's follow-on: identityDocument).
+      // Simulate partial progress persisted (capability + industry done,
+      // exit resumes at identityDocument).
       await store.save(
         OnboardingProgress(
           entityId: 'u1',
           step: OnboardingStepCode.identityDocument,
           completedSteps: const <OnboardingStepCode>[
-            OnboardingStepCode.profile,
             OnboardingStepCode.capability,
             OnboardingStepCode.industry,
           ],
@@ -159,7 +140,6 @@ void main() {
       await stack.hydrate('u1');
       expect(stack.provider.currentStep, OnboardingStepCode.identityDocument);
       expect(stack.provider.progress!.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
         OnboardingStepCode.capability,
         OnboardingStepCode.industry,
       ]);
@@ -170,20 +150,20 @@ void main() {
       addTearDown(stack.provider.dispose);
 
       await stack.hydrate('u1');
-      expect(stack.provider.currentStep, OnboardingStepCode.profile);
+      expect(stack.provider.currentStep, OnboardingStepCode.capability);
 
       // A fresh entity advances one step at a time — never skipping.
       await stack.provider.advance();
-      expect(stack.provider.currentStep, OnboardingStepCode.capability);
+      expect(stack.provider.currentStep, OnboardingStepCode.industry);
       expect(stack.provider.progress!.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
       ]);
 
       await stack.provider.advance();
-      expect(stack.provider.currentStep, OnboardingStepCode.industry);
+      expect(stack.provider.currentStep, OnboardingStepCode.identityDocument);
       expect(stack.provider.progress!.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
         OnboardingStepCode.capability,
+        OnboardingStepCode.industry,
       ]);
     });
 
@@ -192,7 +172,6 @@ void main() {
       addTearDown(stack.provider.dispose);
 
       await stack.hydrate('u1');
-      await runProfileStep(stack);
       await runCapabilityStep(stack);
       await selectTechnologyProfession(stack.taxonomy);
 
@@ -210,7 +189,6 @@ void main() {
       addTearDown(stack.provider.dispose);
 
       await stack.hydrate('u1');
-      await runProfileStep(stack);
       await runCapabilityStep(stack);
       await selectTechnologyProfession(stack.taxonomy);
 
@@ -244,7 +222,7 @@ void main() {
       expect(notifyCount, greaterThan(0));
 
       final int before = notifyCount;
-      await runProfileStep(stack);
+      await stack.provider.advance();
       expect(notifyCount, greaterThan(before));
     });
 
@@ -260,7 +238,6 @@ void main() {
           entityId: 'u1',
           step: OnboardingStepCode.industry,
           completedSteps: const <OnboardingStepCode>[
-            OnboardingStepCode.profile,
             OnboardingStepCode.capability,
           ],
         ),
@@ -280,7 +257,6 @@ void main() {
       addTearDown(stack.provider.dispose);
 
       await stack.hydrate('u1');
-      await runProfileStep(stack);
       await runCapabilityStep(stack);
       await runTaxonomyStep(stack);
       await runIdentityStep(stack);

@@ -45,7 +45,7 @@ void main() {
         final RouteGuard guard = guardFor(stack.provider);
         expect(
           guard.redirectResolver(RoutePaths.home),
-          RoutePaths.onboardingCapability,
+          RoutePaths.onboardingIndustry,
           reason: 'home with an incomplete wizard resumes at the saved step',
         );
         stack.provider.dispose();
@@ -55,7 +55,7 @@ void main() {
     test('completed wizard at an onboarding route → home', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < 4; i++) {
         await stack.provider.advance();
       }
       expect(stack.provider.isComplete, isTrue);

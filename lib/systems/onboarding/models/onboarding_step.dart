@@ -1,11 +1,13 @@
-/// The client-side onboarding step vocabulary (EP-02-18 §5.4, capability
-/// corrected).
+/// The client-side onboarding step vocabulary (EP-02-18 §5.4, registration
+/// restructured).
 ///
-/// Seven values: the six wizard steps (`capability → profile → industry →
-/// profession → identityDocument → tradeProof`) plus the terminal `completed`.
-/// Pure Dart — no DTO or framework leakage. [isVerificationStep] is `true`
-/// only for the two verification submissions (identity + trade). Consumer-only
-/// entities finish after `profile`, so the professional steps
+/// Six values: the five wizard steps (`capability → industry → profession →
+/// identityDocument → tradeProof`) plus the terminal `completed`. Identity
+/// basics (names, email, phone) are captured at account registration and
+/// hydrated before onboarding, so the wizard begins at `capability`. Pure
+/// Dart — no DTO or framework leakage. [isVerificationStep] is `true` only
+/// for the two verification submissions (identity + trade). Consumer-only
+/// entities finish after `capability`, so the professional steps
 /// (`industry` → `tradeProof`) are not on their path.
 enum OnboardingStep {
   capability(
@@ -15,42 +17,35 @@ enum OnboardingStep {
     stepNumber: 1,
     isVerificationStep: false,
   ),
-  profile(
-    label: 'Profile',
-    description:
-        'Add your legal name, display name, bio, and a profile avatar.',
-    stepNumber: 2,
-    isVerificationStep: false,
-  ),
   industry(
     label: 'Industry',
     description: 'Pick the industry that best describes your work.',
-    stepNumber: 3,
+    stepNumber: 2,
     isVerificationStep: false,
   ),
   profession(
     label: 'Profession',
     description:
         'Choose your profession. This unlocks the trade-verification gate.',
-    stepNumber: 4,
+    stepNumber: 3,
     isVerificationStep: false,
   ),
   identityDocument(
     label: 'Identity',
     description: 'Upload a government-issued ID to verify your identity.',
-    stepNumber: 5,
+    stepNumber: 4,
     isVerificationStep: true,
   ),
   tradeProof(
     label: 'Trade proof',
     description: 'Upload proof of your trade to unlock bidding.',
-    stepNumber: 6,
+    stepNumber: 5,
     isVerificationStep: true,
   ),
   completed(
     label: 'Complete',
     description: 'You\u2019re registered. Welcome to Hivorr.',
-    stepNumber: 7,
+    stepNumber: 6,
     isVerificationStep: false,
   );
 
@@ -76,7 +71,6 @@ enum OnboardingStep {
   /// The wizard's non-terminal steps in frozen order.
   static const List<OnboardingStep> wizardSteps = <OnboardingStep>[
     OnboardingStep.capability,
-    OnboardingStep.profile,
     OnboardingStep.industry,
     OnboardingStep.profession,
     OnboardingStep.identityDocument,

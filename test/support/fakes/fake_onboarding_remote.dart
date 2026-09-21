@@ -18,6 +18,11 @@ class FakeOnboardingRemoteDataSource implements OnboardingRemoteDataSource {
   /// Number of [updateStatus] invocations.
   int updateStatusCallCount = 0;
 
+  /// Number of [updateStatus] invocations that requested a completion stamp
+  /// (`completed: true`) — the authoritative completion write, distinct from
+  /// capability-only persists.
+  int completedStampCallCount = 0;
+
   /// The capability parameter of the last [updateStatus] call.
   String? lastCapability;
 
@@ -47,6 +52,9 @@ class FakeOnboardingRemoteDataSource implements OnboardingRemoteDataSource {
     bool? completed,
   }) async {
     updateStatusCallCount++;
+    if (completed == true) {
+      completedStampCallCount++;
+    }
     final ApiException? error = nextUpdateError;
     if (error != null) {
       nextUpdateError = null;

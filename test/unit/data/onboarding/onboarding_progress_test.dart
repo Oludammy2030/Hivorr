@@ -12,10 +12,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('OnboardingProgress entity (FV-02, DV-11)', () {
-    test('starts at profile (Basic Information) with empty completedSteps', () {
+    test('starts at capability with empty completedSteps', () {
       final OnboardingProgress progress = OnboardingProgress(entityId: 'u1');
       expect(progress.entityId, 'u1');
-      expect(progress.step, OnboardingStepCode.profile);
+      expect(progress.step, OnboardingStepCode.capability);
       expect(progress.completedSteps, isEmpty);
       expect(progress.capability, EntityCapability.both);
       expect(progress.isComplete, isFalse);
@@ -30,14 +30,12 @@ void main() {
       );
       expect(industry.step, OnboardingStepCode.industry);
       expect(industry.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
         OnboardingStepCode.capability,
       ]);
       final OnboardingProgress identity = industry.advanceTo(
         OnboardingStepCode.identityDocument,
       );
       expect(identity.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
         OnboardingStepCode.capability,
         OnboardingStepCode.industry,
       ], reason: 'completedSteps advances monotonically in frozen order');
@@ -45,11 +43,7 @@ void main() {
 
     test('nextStep follows the frozen professional order for offer/both', () {
       final OnboardingProgress progress = OnboardingProgress(entityId: 'u1');
-      expect(progress.nextStep, OnboardingStepCode.capability);
-      expect(
-        progress.advanceTo(OnboardingStepCode.profile).nextStep,
-        OnboardingStepCode.capability,
-      );
+      expect(progress.nextStep, OnboardingStepCode.industry);
       expect(
         progress.advanceTo(OnboardingStepCode.capability).nextStep,
         OnboardingStepCode.industry,
@@ -68,19 +62,15 @@ void main() {
       );
     });
 
-    test('hire-only nextStep finishes after the capability step', () {
+    test('hire-only nextStep finishes right after the capability step', () {
       final OnboardingProgress freshHire = OnboardingProgress(
         entityId: 'u1',
         capability: EntityCapability.hire,
       );
-      expect(freshHire.nextStep, OnboardingStepCode.capability);
-      final OnboardingProgress hireAtCapability = freshHire.advanceTo(
-        OnboardingStepCode.capability,
-      );
       expect(
-        hireAtCapability.nextStep,
+        freshHire.nextStep,
         isNull,
-        reason: 'hire-only entities finish after the capability step',
+        reason: 'hire-only entities finish at the capability decision',
       );
     });
 
@@ -89,7 +79,6 @@ void main() {
         entityId: 'u1',
         step: OnboardingStepCode.tradeProof,
         completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
           OnboardingStepCode.capability,
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
@@ -103,7 +92,6 @@ void main() {
         entityId: 'u1',
         step: OnboardingStepCode.tradeProof,
         completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
           OnboardingStepCode.capability,
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
@@ -118,11 +106,9 @@ void main() {
         entityId: 'u1',
         step: OnboardingStepCode.capability,
         capability: EntityCapability.hire,
-        completedSteps: <OnboardingStepCode>[OnboardingStepCode.profile],
       ).finish();
       expect(hireDone.isComplete, isTrue);
       expect(hireDone.completedSteps, <OnboardingStepCode>[
-        OnboardingStepCode.profile,
         OnboardingStepCode.capability,
       ], reason: 'hire-only never traverses the professional steps');
     });
@@ -130,32 +116,29 @@ void main() {
     test('withCapability preserves position and rebinds the path', () {
       final OnboardingProgress interim = OnboardingProgress(
         entityId: 'u1',
-        step: OnboardingStepCode.profile,
+        step: OnboardingStepCode.capability,
         capability: EntityCapability.offer,
       );
       final OnboardingProgress hired = interim.withCapability(
         EntityCapability.hire,
       );
       expect(hired.capability, EntityCapability.hire);
-      expect(hired.step, OnboardingStepCode.profile);
-      expect(hired.requiredSteps, hasLength(2));
+      expect(hired.step, OnboardingStepCode.capability);
+      expect(hired.requiredSteps, hasLength(1));
     });
 
     test('stepBack returns to previous step, keeping completedSteps', () {
       final OnboardingProgress progress = OnboardingProgress(
         entityId: 'u1',
         step: OnboardingStepCode.industry,
-        completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-        ],
+        completedSteps: <OnboardingStepCode>[OnboardingStepCode.capability],
       );
       final OnboardingProgress back = progress.stepBack();
       expect(back.step, OnboardingStepCode.capability);
       expect(back.completedSteps, progress.completedSteps);
       expect(
         progress.stepBack().stepBack().stepBack().step,
-        OnboardingStepCode.profile,
+        OnboardingStepCode.capability,
         reason: 'stays put at the first step',
       );
     });
@@ -165,7 +148,7 @@ void main() {
       final OnboardingProgress next = original.advanceTo(
         OnboardingStepCode.industry,
       );
-      expect(original.step, OnboardingStepCode.profile);
+      expect(original.step, OnboardingStepCode.capability);
       expect(identical(original, next), isFalse);
     });
 
@@ -187,7 +170,7 @@ void main() {
       final OnboardingProgress rebound = OnboardingProgress(
         entityId: 'u1',
         step: OnboardingStepCode.industry,
-        completedSteps: <OnboardingStepCode>[OnboardingStepCode.profile],
+        completedSteps: <OnboardingStepCode>[OnboardingStepCode.capability],
       ).forEntity('u2');
       expect(rebound.entityId, 'u2');
       expect(rebound.step, OnboardingStepCode.industry);
@@ -197,10 +180,7 @@ void main() {
       final OnboardingProgress progress = OnboardingProgress(
         entityId: 'u1',
         step: OnboardingStepCode.industry,
-        completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
-          OnboardingStepCode.capability,
-        ],
+        completedSteps: <OnboardingStepCode>[OnboardingStepCode.capability],
       );
       expect(progress.exited, isFalse);
       final OnboardingProgress exited = progress.withExited(true);
@@ -246,7 +226,6 @@ void main() {
           entityId: 'u1',
           step: OnboardingStepCode.tradeProof,
           completedSteps: <OnboardingStepCode>[
-            OnboardingStepCode.profile,
             OnboardingStepCode.capability,
             OnboardingStepCode.industry,
             OnboardingStepCode.identityDocument,
@@ -278,7 +257,7 @@ void main() {
           onboardingProgressKey('u1'),
           <String, dynamic>{
             'entityId': 'u1',
-            'step': 'profile',
+            'step': 'industry',
             'completedSteps': <String>[],
             'hasIdentitySubmission': false,
             'hasTradeProofSubmission': false,
@@ -297,6 +276,42 @@ void main() {
           isFalse,
           reason: 'legacy rows default to not-exited',
         );
+      },
+    );
+
+    test(
+      'legacy rows referencing the removed profile step resume at capability '
+      'and drop the obsolete entry',
+      () async {
+        final LocalStore local = LocalStore(FakeStorageEngine());
+        await local.write(
+          OnboardingProgressBox.name,
+          onboardingProgressKey('u1'),
+          <String, dynamic>{
+            'entityId': 'u1',
+            'step': 'profile',
+            'completedSteps': <String>['profile', 'capability'],
+            'hasIdentitySubmission': false,
+            'hasTradeProofSubmission': false,
+            'exited': true,
+            'updatedAt': 0,
+          },
+          (Map<String, dynamic> json) => json,
+        );
+        final HiveOnboardingProgressStore hive = hiveProgressStore(
+          store: local,
+        );
+        final OnboardingProgress? restored = await hive.read('u1');
+        expect(restored, isNotNull);
+        expect(
+          restored!.step,
+          OnboardingStepCode.capability,
+          reason: 'the obsolete profile step never reappears',
+        );
+        expect(restored.completedSteps, <OnboardingStepCode>[
+          OnboardingStepCode.capability,
+        ], reason: 'unknown/obsolete step names are dropped');
+        expect(restored.exited, isTrue);
       },
     );
   });

@@ -132,6 +132,14 @@ Map<String, dynamic> _progressToJson(OnboardingProgress progress) {
   };
 }
 
+/// Deserializes a stored progress row.
+///
+/// Legacy rows written before the registration restructuring may reference a
+/// `profile` step (identity basics now captured at registration). Unknown
+/// step names — including the removed `profile` — are dropped from
+/// `completedSteps` and an unknown resume `step` falls back to `capability`,
+/// so legacy positions resume on the capability-first wizard and the obsolete
+/// identity step never reappears.
 OnboardingProgress _progressFromJson(Map<String, dynamic> json) {
   final Iterable<dynamic> raw =
       json['completedSteps'] as List<dynamic>? ?? const <dynamic>[];
@@ -139,23 +147,38 @@ OnboardingProgress _progressFromJson(Map<String, dynamic> json) {
       .map((dynamic e) => e as String)
       .toList(growable: false);
   final int epoch = (json['updatedAt'] as num?)?.toInt() ?? 0;
+  final String? stepName = json['step'] as String?;
+  final String? capability = json['capability'] as String?;
+  final OnboardingStepCode? resumeStep =
+      OnboardingStepCode.values
+          .where((OnboardingStepCode step) => step.name == stepName)
+          .firstOrNull;
+  final List<OnboardingStepCode> knownCompleted = <OnboardingStepCode?>[
+    for (final String name in completed)
+      OnboardingStepCode.values
+          .where((OnboardingStepCode step) => step.name == name)
+          .firstOrNull
+  ].whereType<OnboardingStepCode>().toList(growable: false);
   return OnboardingProgress(
     entityId: json['entityId'] as String? ?? '',
-    step: OnboardingStepCode.values.firstWhere(
-      (OnboardingStepCode step) => step.name == json['step'],
-      orElse: () => OnboardingStepCode.profile,
-    ),
-    completedSteps: <OnboardingStepCode>[
-      for (final String name in completed)
-        OnboardingStepCode.values.firstWhere(
-          (OnboardingStepCode step) => step.name == name,
-          orElse: () => OnboardingStepCode.profile,
-        ),
-    ],
-    capability: EntityCapability.fromName(json['capability'] as String?),
+    step: resumeStep ?? OnboardingStepCode.capability,
+    completedSteps: knownCompleted,
+    capability: EntityCapability.fromName(capability),
     hasIdentitySubmission: json['hasIdentitySubmission'] as bool? ?? false,
     hasTradeProofSubmission: json['hasTradeProofSubmission'] as bool? ?? false,
     exited: json['exited'] as bool? ?? false,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(epoch),
   );
+}
+
+/// Adds [Iterable.firstOrNull] for null-safe lookups above (Dart 3 core
+/// contract, kept local to avoid an extension import).
+extension _FirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull {
+    final Iterator<T> iterator = this.iterator;
+    if (iterator.moveNext()) {
+      return iterator.current;
+    }
+    return null;
+  }
 }

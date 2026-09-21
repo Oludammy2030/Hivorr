@@ -48,7 +48,7 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('active state shows the success state with the 6 done steps', (
+    testWidgets('active state shows the success state with the 5 done steps', (
       WidgetTester tester,
     ) async {
       final (_, OnboardingTestStack stack) = await pumpComplete(tester);
@@ -61,10 +61,9 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(HivorrSuccessState), findsOneWidget);
-      expect(find.text('Your 6 steps'), findsOneWidget);
+      expect(find.text('Your 5 steps'), findsOneWidget);
       for (final String label in <String>[
         'What will you do?',
-        'Profile',
         'Industry',
         'Profession',
         'Identity',
@@ -78,7 +77,7 @@ void main() {
       }
       expect(
         find.byIcon(Icons.check_circle),
-        findsNWidgets(6),
+        findsNWidgets(5),
         reason: 'every step card is marked done',
       );
       stack.provider.dispose();

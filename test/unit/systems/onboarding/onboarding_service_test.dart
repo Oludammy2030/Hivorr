@@ -55,11 +55,11 @@ void main() {
       expect(stack.service.progress!.isComplete, isTrue);
     });
 
-    test('resume of a fresh entity starts at profile (FV-08)', () async {
+    test('resume of a fresh entity starts at capability (FV-08)', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       final OnboardingStepCode step = await stack.service.resume('u1');
-      expect(step, OnboardingStepCode.profile);
-      expect(stack.service.currentStep, OnboardingStepCode.profile);
+      expect(step, OnboardingStepCode.capability);
+      expect(stack.service.currentStep, OnboardingStepCode.capability);
     });
 
     test(
@@ -77,7 +77,6 @@ void main() {
           walked.add(before);
         }
         expect(walked, <OnboardingStepCode>[
-          OnboardingStepCode.profile,
           OnboardingStepCode.capability,
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
@@ -99,7 +98,7 @@ void main() {
       await stack.service.advance();
       expect(
         (await stack.store.read('u1'))!.step,
-        OnboardingStepCode.capability,
+        OnboardingStepCode.industry,
       );
     });
 
@@ -108,7 +107,6 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.service.resume('u1');
-        await stack.service.advance(); // profile → capability
         await stack.service.selectCapability(EntityCapability.offer);
         expect(stack.service.progress!.capability, EntityCapability.offer);
         expect(stack.service.currentStep, OnboardingStepCode.industry);
@@ -131,10 +129,9 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.service.resume('u1');
-        await stack.service.advance(); // profile → capability
         await stack.service.selectCapability(EntityCapability.hire); // finishes
         expect(stack.service.progress!.isComplete, isTrue);
-        expect(stack.service.progress!.requiredSteps, hasLength(2));
+        expect(stack.service.progress!.requiredSteps, hasLength(1));
       },
     );
 
@@ -342,7 +339,7 @@ void main() {
       final LogEntry persist = sink.entries.firstWhere(
         (LogEntry e) => e.message == 'Onboarding progress persisted',
       );
-      expect(persist.context['step'], 'capability');
+      expect(persist.context['step'], 'industry');
       expect(persist.context['isComplete'], isFalse);
     });
 
@@ -645,7 +642,7 @@ void main() {
       await stack.service.advance();
       await stack.service.exitWizard();
       expect(stack.service.progress!.exited, isTrue);
-      expect(stack.service.progress!.step, OnboardingStepCode.capability);
+      expect(stack.service.progress!.step, OnboardingStepCode.industry);
       expect((await stack.store.read('u1'))!.exited, isTrue);
     });
 
@@ -667,7 +664,7 @@ void main() {
         await stack.service.exitWizard();
         await stack.service.continueRegistration();
         expect(stack.service.progress!.exited, isFalse);
-        expect(stack.service.progress!.step, OnboardingStepCode.capability);
+        expect(stack.service.progress!.step, OnboardingStepCode.industry);
         expect((await stack.store.read('u1'))!.exited, isFalse);
       },
     );

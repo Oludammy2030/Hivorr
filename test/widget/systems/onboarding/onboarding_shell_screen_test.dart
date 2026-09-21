@@ -31,7 +31,7 @@ void main() {
         (s.provider.isComplete
             ? RoutePaths.onboardingComplete
             : RoutePaths.onboardingRouteFor(
-                s.provider.currentStep ?? OnboardingStepCode.profile,
+                s.provider.currentStep ?? OnboardingStepCode.capability,
               ));
     await pumpOnboardingScreen(
       tester,
@@ -53,22 +53,21 @@ void main() {
       expect(find.text('Back'), findsOneWidget);
       expect(
         find.text('Wizard progress is saved automatically.'),
-        findsNothing,
-        reason: 'profile step configures the primary CTA',
+        findsOneWidget,
+        reason: 'capability step auto-advances — no primary CTA is configured',
       );
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
       stack.provider.dispose();
     });
 
-    testWidgets('profile step shows the disabled Save & continue CTA', (
+    testWidgets('capability step renders the usage decision cards', (
       WidgetTester tester,
     ) async {
       final OnboardingTestStack stack = await pumpShell(tester);
-      expect(find.text('Save & continue'), findsOneWidget);
-      final HivorrButton button = tester.widget<HivorrButton>(
-        find.widgetWithText(HivorrButton, 'Save & continue'),
-      );
-      expect(button.onPressed, isNull, reason: 'names not yet provided');
+      expect(find.text('What will you do on Hivorr?'), findsOneWidget);
+      expect(find.text('Hire Professionals'), findsOneWidget);
+      expect(find.text('Offer Professional Services'), findsOneWidget);
+      expect(find.text('Do both'), findsOneWidget);
       stack.provider.dispose();
     });
 
@@ -89,7 +88,7 @@ void main() {
     testWidgets(
       'Save & exit persists progress, marks exited, and routes home',
       (WidgetTester tester) async {
-        final OnboardingTestStack stack = await pumpShell(tester, advances: 2);
+        final OnboardingTestStack stack = await pumpShell(tester, advances: 1);
         expect(stack.provider.progress!.step, OnboardingStepCode.industry);
         await tester.tap(find.text('Exit'));
         await tester.pumpAndSettle();
@@ -113,26 +112,26 @@ void main() {
     testWidgets('industry step shows the disabled Save & continue CTA', (
       WidgetTester tester,
     ) async {
-      final OnboardingTestStack stack = await pumpShell(tester, advances: 2);
+      final OnboardingTestStack stack = await pumpShell(tester, advances: 1);
       expect(find.text('Save & continue'), findsOneWidget);
       final HivorrButton button = tester.widget<HivorrButton>(
         find.widgetWithText(HivorrButton, 'Save & continue'),
       );
       expect(button.onPressed, isNull, reason: 'no industry selected yet');
-      expect(find.bySemanticsLabel('Step 3 of 5'), findsOneWidget);
+      expect(find.bySemanticsLabel('Step 2 of 4'), findsOneWidget);
       stack.provider.dispose();
     });
 
     testWidgets('a trade-proof step without a bound profession falls back', (
       WidgetTester tester,
     ) async {
-      final OnboardingTestStack stack = await pumpShell(tester, advances: 4);
+      final OnboardingTestStack stack = await pumpShell(tester, advances: 3);
       expect(stack.provider.currentStep, OnboardingStepCode.tradeProof);
       // taxonomy selection was never made in this stack.
       expect(
         find.text('Which industry best describes you?'),
         findsOneWidget,
-        reason: 'defensive index 2 renders the combined selection step',
+        reason: 'defensive index 1 renders the combined selection step',
       );
       stack.provider.dispose();
     });
@@ -140,7 +139,7 @@ void main() {
     testWidgets('complete state renders success + no back affordance', (
       WidgetTester tester,
     ) async {
-      final OnboardingTestStack stack = await pumpShell(tester, advances: 5);
+      final OnboardingTestStack stack = await pumpShell(tester, advances: 4);
       expect(stack.provider.isComplete, isTrue);
       expect(find.text('You’re registered'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_back), findsNothing);
@@ -152,7 +151,7 @@ void main() {
     testWidgets('system back on the terminal step routes home', (
       WidgetTester tester,
     ) async {
-      final OnboardingTestStack stack = await pumpShell(tester, advances: 5);
+      final OnboardingTestStack stack = await pumpShell(tester, advances: 4);
       final bool popped = await tester.binding.handlePopRoute();
       expect(popped, isTrue);
       await tester.pumpAndSettle();
@@ -163,8 +162,8 @@ void main() {
     testWidgets('ProgressIndicator reflects the active step via the provider', (
       WidgetTester tester,
     ) async {
-      final OnboardingTestStack stack = await pumpShell(tester, advances: 2);
-      expect(find.bySemanticsLabel('Step 3 of 5'), findsOneWidget);
+      final OnboardingTestStack stack = await pumpShell(tester, advances: 1);
+      expect(find.bySemanticsLabel('Step 2 of 4'), findsOneWidget);
       stack.provider.dispose();
     });
 
@@ -176,7 +175,7 @@ void main() {
       await pumpOnboardingScreen(
         tester,
         const OnboardingShellScreen(),
-        path: '/onboarding/profile',
+        path: '/onboarding/capability',
         providers: s.buildProviders(),
         dark: true,
       );
@@ -185,45 +184,6 @@ void main() {
       s.provider.dispose();
     });
 
-    testWidgets(
-      'system Back with the keyboard open only dismisses the keyboard',
-      (WidgetTester tester) async {
-        final OnboardingTestStack stack = await pumpShell(tester);
-        await tester.enterText(find.byType(TextField).first, 'Ada');
-        expect(
-          FocusManager.instance.primaryFocus?.context
-              ?.findAncestorWidgetOfExactType<EditableText>(),
-          isNotNull,
-          reason: 'a text field holds focus so the IME is open',
-        );
-        final bool first = await tester.binding.handlePopRoute();
-        expect(first, isTrue);
-        await tester.pumpAndSettle();
-        expect(
-          find.text('Registration'),
-          findsOneWidget,
-          reason: 'first back dismisses the keyboard, it must not navigate',
-        );
-        expect(find.text('Save my progress and exit?'), findsNothing);
-        expect(
-          FocusManager.instance.primaryFocus?.context
-              ?.findAncestorWidgetOfExactType<EditableText>(),
-          isNull,
-          reason: 'keyboard focus was released',
-        );
-
-        final bool second = await tester.binding.handlePopRoute();
-        expect(second, isTrue);
-        await tester.pumpAndSettle();
-        expect(
-          find.text('Save my progress and exit?'),
-          findsOneWidget,
-          reason: 'the next back proceeds to the exit flow',
-        );
-        stack.provider.dispose();
-      },
-    );
-
     testWidgets('a stale /onboarding URL is re-aligned to the provider step', (
       WidgetTester tester,
     ) async {
@@ -231,8 +191,8 @@ void main() {
       // saved wizard sits further along.
       final OnboardingTestStack stack = await pumpShell(
         tester,
-        advances: 2,
-        path: '/onboarding/profile',
+        advances: 1,
+        path: '/onboarding/capability',
       );
       await tester.pumpAndSettle();
       expect(

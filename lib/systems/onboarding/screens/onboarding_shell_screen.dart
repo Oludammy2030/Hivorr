@@ -15,34 +15,33 @@ import 'package:hivorr/systems/onboarding/screens/capability_selection_screen.da
 import 'package:hivorr/systems/onboarding/screens/identity_verification_step_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/industry_profession_selection_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_complete_screen.dart';
-import 'package:hivorr/systems/onboarding/screens/profile_setup_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/trade_proof_step_screen.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_exit_confirm_dialog.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_progress_indicator.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:provider/provider.dart';
 
-/// Shell for the capability-aware registration wizard (EP-02-18 FV-28, registration restructuring).
+/// Shell for the capability-aware registration wizard (EP-02-18 FV-28,
+/// registration restructuring).
 ///
-/// For new registrations identity (first/middle/last, displayName, phone,
-/// email) is captured at account creation and hydrated into `entity_profiles`
-/// before onboarding starts — onboarding therefore begins at capability
-/// (hire / offer / both). Legacy accounts whose profile is still missing still
-/// traverse Basic Information (now split-identity with required phone) as step 0
-/// for backward compatibility; the resume coercion in `OnboardingService`
-/// promotes them to capability once the profile exists. Consumer-only entities
-/// finish after capability, professional/`both` continue through industry &
-/// profession selection → identity → trade proof. Progress is stored by
-/// [OnboardingProgress] and the shell renders the tracker, the active step
-/// body (kept alive in an [IndexedStack]), and the standard CTA bar
-/// (`Back` / `Continue`/`Submit`). The shell is registered once under the
-/// single `/onboarding/:step` route, so step transitions update the URL in
-/// place without recreating the shell's State (controllers and step bodies
-/// survive). The provider remains the source of truth: [go_router] URL and
-/// current step stay aligned via [_reconcileUrl]. Back returns to the previous
-/// stage — while a text field has focus, the first Back only dismisses the
-/// keyboard ([_dismissKeyboardIfOpen]); the explicit AppBar `Exit` affordance
-/// (and Back on the first stage) opens [OnboardingExitConfirmDialog]
+/// Identity (first/middle/last, displayName, phone, email) is captured at
+/// account creation and hydrated into `entity_profiles` before onboarding
+/// starts — onboarding therefore begins at the capability decision
+/// (hire / offer / both) and never re-asks for basic identity information.
+/// Bio and avatar are profile concerns handled later via Profile → Edit
+/// Profile, never in-wizard. Consumer-only entities finish after capability,
+/// professional/`both` continue through industry & profession selection →
+/// identity → trade proof. Progress is stored by [OnboardingProgress] and the
+/// shell renders the tracker, the active step body (kept alive in an
+/// [IndexedStack]), and the standard CTA bar (`Back` / `Continue`/`Submit`).
+/// The shell is registered once under the single `/onboarding/:step` route,
+/// so step transitions update the URL in place without recreating the shell's
+/// State (controllers and step bodies survive). The provider remains the
+/// source of truth: [go_router] URL and current step stay aligned via
+/// [_reconcileUrl]. Back returns to the previous stage — while a text field
+/// has focus, the first Back only dismisses the keyboard
+/// ([_dismissKeyboardIfOpen]); the explicit AppBar `Exit` affordance (and
+/// Back on the first stage) opens [OnboardingExitConfirmDialog]
 /// (Save & exit).
 class OnboardingShellScreen extends StatefulWidget {
   const OnboardingShellScreen({super.key});
@@ -66,7 +65,7 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
   Widget build(BuildContext context) {
     final OnboardingProvider provider = context.watch<OnboardingProvider>();
     final OnboardingStepCode step =
-        provider.currentStep ?? OnboardingStepCode.profile;
+        provider.currentStep ?? OnboardingStepCode.capability;
     final bool terminal = provider.isComplete;
     // Defensive: never present the trade-proof step without a bound
     // profession — bounce the active body back to the combined industry &
@@ -130,10 +129,6 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
                       showProfessionFallback,
                     ),
                     children: <Widget>[
-                      ProfileSetupScreen(
-                        active: step == OnboardingStepCode.profile,
-                        controller: _controller,
-                      ),
                       CapabilitySelectionScreen(
                         active: step == OnboardingStepCode.capability,
                         controller: _controller,
@@ -191,13 +186,10 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     if (step == null) {
       return;
     }
+    // Capability is the wizard's first (and identity-free) step — Back there
+    // means "leave the wizard" (exit-and-save).
     final bool atFirstInteractiveStep =
-        step == OnboardingStepCode.profile ||
-        (step == OnboardingStepCode.capability &&
-            (provider.progress?.completedSteps.contains(
-                  OnboardingStepCode.profile,
-                ) ??
-                false));
+        step == OnboardingStepCode.capability;
     if (atFirstInteractiveStep) {
       unawaited(_maybeExit(context, provider));
       return;
@@ -241,7 +233,7 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     final String canonical = provider.isComplete
         ? RoutePaths.onboardingComplete
         : RoutePaths.onboardingRouteFor(
-            provider.currentStep ?? OnboardingStepCode.profile,
+            provider.currentStep ?? OnboardingStepCode.capability,
           );
     final String current = GoRouterState.of(context).uri.path;
     if (current == canonical) {
@@ -266,10 +258,10 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     bool showProfessionFallback,
   ) {
     if (terminal) {
-      return 5; // completion screen (last IndexedStack child)
+      return 4; // completion screen (last IndexedStack child)
     }
     if (showProfessionFallback) {
-      return 2; // combined industry+profession step (trade-proof needs a bound profession)
+      return 1; // combined industry+profession step (trade-proof needs a bound profession)
     }
     return step.ordinal;
   }

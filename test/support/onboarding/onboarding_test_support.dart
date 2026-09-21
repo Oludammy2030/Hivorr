@@ -18,7 +18,6 @@ import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
 import 'package:hivorr/data/repositories/onboarding_repository.dart';
 import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
-import 'package:hivorr/systems/onboarding/models/picked_avatar.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/verification/models/picked_document.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
@@ -270,13 +269,6 @@ PickedDocument seedPickedFile() => PickedDocument(
   mimeType: 'image/png',
 );
 
-/// A small valid avatar image.
-PickedAvatar seedPickedAvatar() => PickedAvatar(
-  bytes: seedPngBytes(),
-  fileName: 'me.png',
-  mimeType: 'image/png',
-);
-
 /// Marker screen used by the onboarding test router so navigation assertions
 /// can target a stable label instead of the destination UI.
 class OnboardingMarkerScreen extends StatelessWidget {
@@ -314,7 +306,6 @@ GoRouter onboardingTestRouter({
 
 const List<(String, String)> _markers = <(String, String)>[
   (RouteNames.onboardingCapability, 'ONBOARDING-CAPABILITY'),
-  (RouteNames.onboardingProfile, 'ONBOARDING-PROFILE'),
   (RouteNames.onboardingIndustry, 'ONBOARDING-INDUSTRY'),
   (RouteNames.onboardingIdentity, 'ONBOARDING-IDENTITY'),
   (RouteNames.onboardingTradeProof, 'ONBOARDING-TRADE-PROOF'),
@@ -362,7 +353,6 @@ GoRoute _marker(String name, String label) => GoRoute(
 String? _nameFor(String path) => switch (path) {
   RoutePaths.onboarding => RouteNames.onboarding,
   RoutePaths.onboardingCapability => RouteNames.onboardingCapability,
-  RoutePaths.onboardingProfile => RouteNames.onboardingProfile,
   RoutePaths.onboardingIndustry => RouteNames.onboardingIndustry,
   RoutePaths.onboardingIdentity => RouteNames.onboardingIdentity,
   RoutePaths.onboardingTradeProof => RouteNames.onboardingTradeProof,
@@ -375,7 +365,6 @@ String? _nameFor(String path) => switch (path) {
 String _pathFor(String name) => switch (name) {
   RouteNames.onboarding => RoutePaths.onboarding,
   RouteNames.onboardingCapability => RoutePaths.onboardingCapability,
-  RouteNames.onboardingProfile => RoutePaths.onboardingProfile,
   RouteNames.onboardingIndustry => RoutePaths.onboardingIndustry,
   RouteNames.onboardingIdentity => RoutePaths.onboardingIdentity,
   RouteNames.onboardingTradeProof => RoutePaths.onboardingTradeProof,

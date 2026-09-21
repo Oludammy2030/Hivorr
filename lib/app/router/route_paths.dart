@@ -64,9 +64,11 @@ abstract final class RoutePaths {
   static const String kycUpgrade = '/verification/kyc/upgrade';
 
   /// Onboarding wizard routes (EP-02-18) — private authenticated flow, no SEO.
+  ///
+  /// Identity basics are captured at registration; the wizard starts at the
+  /// capability decision, so no profile step route exists.
   static const String onboarding = '/onboarding';
   static const String onboardingCapability = '/onboarding/capability';
-  static const String onboardingProfile = '/onboarding/profile';
   static const String onboardingIndustry = '/onboarding/industry';
   static const String onboardingIdentity = '/onboarding/identity';
   static const String onboardingTradeProof = '/onboarding/trade-proof';
@@ -76,7 +78,6 @@ abstract final class RoutePaths {
   /// (EP-02-18 §5.7). `completed` maps to the completion screen.
   static String onboardingRouteFor(OnboardingStepCode step) => switch (step) {
     OnboardingStepCode.capability => onboardingCapability,
-    OnboardingStepCode.profile => onboardingProfile,
     OnboardingStepCode.industry => onboardingIndustry,
     OnboardingStepCode.identityDocument => onboardingIdentity,
     OnboardingStepCode.tradeProof => onboardingTradeProof,

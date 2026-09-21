@@ -123,16 +123,10 @@ class OnboardingService {
   /// fix for refresh/relaunch regressions, where the volatile local store was
   /// the only completion record. Offline/transient fetch failures degrade to
   /// the local store (cache-only) without marking the state authoritative.
-  /// When nothing is saved, a fresh progress at `profile` is started (not
-  /// persisted until the first [advance]). Tracing
+  /// When nothing is saved, a fresh progress at `capability` is started (not
+  /// persisted until the first [advance]) — identity basics were captured at
+  /// registration, so the wizard never asks for them again. Tracing
   /// `onboarding.resume.duration` wraps the hydration.
-  ///
-  /// Registration-restructuring extension: if the server reports
-  /// `profile_exists=true` (registration captured identity before onboarding)
-  /// and the local resume position is still at `profile` with no completed
-  /// steps, the wizard is coerced to `capability` (profile considered done)
-  /// so onboarding never re-asks for names/email/phone. Legacy users without
-  /// a profile stay at `profile`.
   Future<OnboardingStepCode> resume(String entityId) async {
     final ISentrySpan? span = _tracer?.startTransaction(
       'onboarding.resume',
@@ -141,67 +135,6 @@ class OnboardingService {
     try {
       OnboardingProgress? progress = await _serverHydrate(entityId);
       progress ??= await _store.read(entityId);
-      // Capability-first coercion for registration-captured identity.
-      if (progress == null) {
-        // Check server profile existence for fresh accounts (no local row).
-        final OnboardingRepository? repo = _onboardingRepository;
-        if (repo != null) {
-          try {
-            final OnboardingStatus probe = await repo.getStatus();
-            // Update authoritative flags if _serverHydrate didn't already.
-            if (!_serverHydrated) {
-              _serverHydrated = true;
-              _serverCompleted = probe.completed;
-            }
-            if (probe.profileExists && !probe.completed) {
-              progress = OnboardingProgress(
-                entityId: entityId,
-                step: OnboardingStepCode.capability,
-                completedSteps: const <OnboardingStepCode>[
-                  OnboardingStepCode.profile,
-                ],
-                capability: probe.capability ?? EntityCapability.both,
-              );
-              await _store.save(progress);
-              _logger?.info(
-                'Onboarding coerced to capability (profile pre-filled at registration)',
-                <String, Object?>{'entityId': _redactor.redact(entityId)},
-              );
-            }
-          } on ApiException {
-            // Probe failed — keep null so fallback creates profile step (fail-closed).
-          }
-        }
-      } else if (progress.step == OnboardingStepCode.profile &&
-          progress.completedSteps.isEmpty) {
-        // Existing local row at profile but server already has profile — promote.
-        final OnboardingRepository? repo = _onboardingRepository;
-        if (repo != null) {
-          try {
-            final OnboardingStatus probe = await repo.getStatus();
-            if (probe.profileExists && !probe.completed) {
-              progress = OnboardingProgress(
-                entityId: entityId,
-                step: OnboardingStepCode.capability,
-                completedSteps: const <OnboardingStepCode>[
-                  OnboardingStepCode.profile,
-                ],
-                capability: probe.capability ?? progress.capability,
-                hasIdentitySubmission: progress.hasIdentitySubmission,
-                hasTradeProofSubmission: progress.hasTradeProofSubmission,
-                exited: progress.exited,
-              );
-              await _store.save(progress);
-              _logger?.info(
-                'Onboarding promoted from profile to capability (registration identity present)',
-                <String, Object?>{'entityId': _redactor.redact(entityId)},
-              );
-            }
-          } on ApiException {
-            // Keep original progress.
-          }
-        }
-      }
       _progress = progress ?? OnboardingProgress(entityId: entityId);
       final OnboardingStepCode step = _progress!.step;
       _logger?.info('Onboarding progress hydrated', <String, Object?>{
@@ -255,7 +188,6 @@ class OnboardingService {
             ? OnboardingStepCode.tradeProof
             : OnboardingStepCode.capability,
         completedSteps: <OnboardingStepCode>[
-          OnboardingStepCode.profile,
           OnboardingStepCode.capability,
           if (capability.requiresProfessionalWizard) ...<OnboardingStepCode>[
             OnboardingStepCode.industry,
@@ -286,7 +218,7 @@ class OnboardingService {
 
   /// Advances one step along the capability path and persists (plan §5.4).
   ///
-  /// `profile → capability → industry (incl. profession) → identityDocument →
+  /// `capability → industry (incl. profession) → identityDocument →
   /// tradeProof` for professional/`both` entities; a hire-only entity finishes
   /// right after the capability step (industry/profession/verification are
   /// never on its path). Reaching the end first stamps completion
@@ -316,7 +248,7 @@ class OnboardingService {
   ///
   /// The capability is persisted **server-side first**
   /// (`entity_onboarding_status_update`) as soon as the decision is reached;
-  /// a hire choice finishes the wizard in the same RPC (profile-only path,
+  /// a hire choice finishes the wizard in the same RPC (capability-only path,
   /// validated server-side), while professional/`both` choices continue into
   /// industry selection. Only after the server accepts is the local position
   /// advanced/persisted, so the local cache never lies about the authority.
@@ -355,9 +287,10 @@ class OnboardingService {
   /// Stamps server-side completion via [OnboardingRepository.update].
   ///
   /// No-op when no repository is wired (legacy local-only seam). The server
-  /// re-verifies every required step (`profile`, `capability`, and for
-  /// offer/both: professional role, profession bind, identity document, trade
-  /// proof) and raises `PLT003` when incomplete — that propagates unchanged.
+  /// re-verifies every required step (the registration-hydrated profile row,
+  /// `capability`, and for offer/both: professional role, profession bind,
+  /// identity document, trade proof) and raises `PLT003` when incomplete —
+  /// that propagates unchanged.
   Future<void> _completeOnServer(EntityCapability capability) async {
     final OnboardingRepository? repo = _onboardingRepository;
     if (repo == null) {
@@ -426,13 +359,15 @@ class OnboardingService {
     await _persist(resumed, 'onboarding.resume');
   }
 
-  /// Completes the profile step: avatar upload → profile RPC → avatar_path
+  /// Writes profile data: avatar upload → profile RPC → avatar_path
   /// update (DoD TT-04 call order; plan §5.4, §5.6).
   ///
-  /// Split-identity variant (registration restructuring): when [firstName]/[lastName]
-  /// etc are provided they are preferred; legacy [legalName] kept for backward
-  /// compatibility. Bio/avatar remain optional (profile-completed later).
-  /// When [avatarBytes] is provided the avatar is uploaded first to the
+  /// Not part of the onboarding wizard anymore — identity is captured at
+  /// registration — but retained as the profile-write orchestration for the
+  /// Profile/Edit Profile experience (bio and avatar are optional profile
+  /// concerns, never onboarding blockers). Split-identity parameters
+  /// ([firstName]/[lastName] etc) are preferred; legacy [legalName] is kept
+  /// for backward compatibility. When [avatarBytes] is provided the avatar is uploaded first to the
   /// canonical `profile-avatars/{entityId}/avatar.{ext}` path (`upsert: true`),
   /// validated against the profile-avatar rules (5 MiB, `jpeg/png/webp`) before
   /// any network call. Then the profile is written via `entity_profile_update`

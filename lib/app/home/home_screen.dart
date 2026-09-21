@@ -136,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     final OnboardingStepCode step =
-        onboarding.currentStep ?? OnboardingStepCode.profile;
+        onboarding.currentStep ?? OnboardingStepCode.capability;
     context.go(RoutePaths.onboardingRouteFor(step));
   }
 }
