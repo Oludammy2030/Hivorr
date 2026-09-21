@@ -44,19 +44,21 @@ Each is `create or replace function` / `alter table … add column` idempotent; 
 
 ## CI hardening (already committed)
 
-- `.github/workflows/reusable-supabase-migration.yml` — pinned `supabase/setup-cli@46f7f98…` + `supabase db push`.
+- `.github/workflows/reusable-supabase-migration.yml` — pinned `supabase/setup-cli@46f7f98…` + `supabase db push`. Its migrate job declares `environment: ${{ inputs.environment-name }}` so environment-scoped secrets resolve directly inside the reusable workflow.
 - `.github/workflows/staging-deployment.yml` now runs `migrate → build → deploy`; `production-promotion.yml` runs `verify → migrate → build → manual_approval → deploy`.
 
 **Required repo/environment secrets/vars** (add to `staging` and `production` environments, not repo-wide):
 - `SUPABASE_ACCESS_TOKEN` (secret, env)
-- `SUPABASE_DB_PASSWORD` (secret, env)
+- `SUPABASE_DB_PASSWORD` (secret, env, optional — link falls back to access-token pooler)
 - `STAGING_SUPABASE_PROJECT_REF` / `PRODUCTION_SUPABASE_PROJECT_REF` (var, optional; derived from `*_HIVORR_SUPABASE_URL` if empty)
 
-Until those secrets exist, the migration job logs `::warning::… skipped` and lets the build proceed (draft protection inactive) — add them to enable drift protection.
+Fail-closed: if `SUPABASE_ACCESS_TOKEN` is missing, the migration job errors and build/deploy are skipped — drift protection can never silently deactivate.
+
+> History: the first hardening attempt (#58) forwarded the token through a relay job's `needs` outputs. GitHub suppresses job outputs whose values contain secrets (`Skip output 'supabase-access-token' since it may contain secret`), so the reusable workflow received an empty token, skipped with a warning, and run `35516728591` deployed `8be8f43` to production without its `20260920*` migrations. Fixed by resolving secrets via the migrate job's own `environment:`.
 
 ## Post-fix verification
 
-- Re-trigger `Production Promotion` for `9ece964222a10c663373b053cd04b33379a4b0cc` (`gh workflow run production-promotion.yml -f commit_sha=9ece964…`) or approve existing run `35499187524` after DB push.
+- Production is deployed via `production-promotion.yml` (verify → migrate → build → manual approval → deploy). As of 2026-09-20 production runs `8be8f43` with all 28 migrations; DB parity is verified with the anon probes below (`42501` = object exists, `42703`/`PGRST202`/`PGRST205` = drift).
 - Post-deploy: `curl -s https://hivorr.pages.dev` 200, plus ephemeral signup smoke (see Investigation doc §18) — `entity_profile_update` → `entity_onboarding_status_update(p_capability:hire)` → `PLT000`.
 
 ## Rollback
