@@ -17,12 +17,20 @@
 #       If not set, derived from SUPABASE_URL host `https://<ref>.supabase.co`.
 #     SUPABASE_URL                   — Supabase project HTTPS URL (for derivation fallback)
 #   Secrets:
-#     SUPABASE_ACCESS_TOKEN          — Supabase personal access token (supabase login token) — **required**
-#     SUPABASE_DB_PASSWORD           — Remote Postgres password (Dashboard → Database → Connection string) — **optional**; if not set, `supabase link` is tried without `--password` (pooler via access token)
+#     SUPABASE_ACCESS_TOKEN          — Supabase personal access token — **required**
+#     SUPABASE_DB_PASSWORD           — Remote Postgres password — **optional**; if not set,
+#       `supabase link` is tried without `--password` (pooler via access token)
 #
-# If SUPABASE_ACCESS_TOKEN is not configured, the job logs a warning and skips
-# (drift protection inactive) — add it to enable. `SUPABASE_DB_PASSWORD` is
-# optional; the link step will attempt both with and without `--password`.
+# The migrate job declares `environment: ${{ inputs.environment-name }}` so the
+# environment-scoped secrets resolve directly inside this workflow. Callers must
+# NOT forward secrets through job outputs — GitHub suppresses outputs whose
+# values contain secrets (`Skip output 'supabase-access-token' since it may
+# contain secret`), which silently emptied the token and let run 35516728591
+# deploy `8be8f43` without its `20260920*` migrations (2026-09-20 incident).
+#
+# Fail-closed: if SUPABASE_ACCESS_TOKEN is not configured the job errors and the
+# dependent build/deploy jobs are skipped — drift protection can never silently
+# deactivate.
 
 name: Reusable Supabase Migration
 
@@ -47,13 +55,6 @@ on:
         required: false
         type: boolean
         default: false
-    secrets:
-      supabase-access-token:
-        description: Supabase personal access token
-        required: false
-      supabase-db-password:
-        description: Remote Postgres password
-        required: false
 
 permissions:
   contents: read
@@ -62,6 +63,7 @@ jobs:
   migrate:
     name: Push migrations (${{ inputs.environment-name }})
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment-name }}
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -78,32 +80,27 @@ jobs:
             echo "::error::supabase-url is required"
             exit 1
           fi
-          if [ -z "${{ secrets.supabase-access-token }}" ]; then
-            echo "::warning::SUPABASE_ACCESS_TOKEN not configured in the ${{ inputs.environment-name }} environment — DB migration will be skipped until it is added (drift protection inactive). Add via GitHub → Settings → Environments → ${{ inputs.environment-name }} → Secrets."
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-            if [ -z "${{ secrets.supabase-db-password }}" ]; then
-              echo "::notice::SUPABASE_DB_PASSWORD not set — will try supabase link without --password (access-token pooler)."
-            fi
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN is not configured in the ${{ inputs.environment-name }} environment — failing closed so the schema cannot drift from the deployed artifact. Add it via GitHub → Settings → Environments → ${{ inputs.environment-name }} → Secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+            echo "::notice::SUPABASE_DB_PASSWORD not set — will try supabase link without --password (access-token pooler)."
           fi
           COUNT=$(ls -1 supabase/migrations/*.sql 2>/dev/null | wc -l)
           echo "Local migration files: $COUNT"
           ls -1 supabase/migrations/*.sql
 
       - name: Setup Supabase CLI
-        if: steps.validate.outputs.skip != 'true'
         uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
         with:
           version: 2.115.0
 
       - name: Verify pinned CLI version
-        if: steps.validate.outputs.skip != 'true'
         run: supabase --version
 
       - name: Derive project ref
         id: project-ref
-        if: steps.validate.outputs.skip != 'true'
         shell: bash
         env:
           INPUT_REF: ${{ inputs.supabase-project-ref }}
@@ -124,11 +121,10 @@ jobs:
           echo "Project ref: $REF"
 
       - name: Link remote project
-        if: steps.validate.outputs.skip != 'true'
         shell: bash
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.supabase-db-password }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           set -e
           echo "Linking to project ${{ steps.project-ref.outputs.ref }}..."
@@ -139,10 +135,9 @@ jobs:
           fi
 
       - name: Dry-run migration diff
-        if: steps.validate.outputs.skip != 'true'
         shell: bash
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -e
           echo "Checking remote migration status..."
@@ -152,10 +147,10 @@ jobs:
           supabase migration list --linked 2>&1 | tail -30 || true
 
       - name: Push migrations
-        if: steps.validate.outputs.skip != 'true' && inputs.dry-run == false
+        if: inputs.dry-run == false
         shell: bash
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.supabase-access-token }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -e
           echo "Pushing migrations to ${{ inputs.environment-name }} (${{ steps.project-ref.outputs.ref }})..."
