@@ -119,7 +119,7 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('PLT005 conflict keeps the wizard on the combined step', (
+    testWidgets('PLT005 conflict continues to identity verification', (
       WidgetTester tester,
     ) async {
       final OnboardingTestStack s = buildOnboardingStack();
@@ -137,14 +137,20 @@ void main() {
       await tester.pumpAndSettle();
       controller.onPrimary!.call();
       await tester.pumpAndSettle();
+      expect(stack.remote.bindProfessionCallCount, 1);
       expect(
-        find.text(
-          'This profession is already linked to your account. Choose another '
-          'one or continue with your selection.',
-        ),
-        findsOneWidget,
+        stack.remote.lastBoundProfessionId,
+        isNull,
+        reason: 'the duplicate bind was rejected by the unique constraint',
       );
-      expect(stack.provider.submitState, SubmitState.error);
+      expect(
+        find.text('ONBOARDING-IDENTITY'),
+        findsOneWidget,
+        reason:
+            'an existing profession binding satisfies the authoritative '
+            'completion gate, so the wizard continues with the selection',
+      );
+      expect(stack.provider.submitState, SubmitState.success);
       stack.provider.dispose();
     });
 
