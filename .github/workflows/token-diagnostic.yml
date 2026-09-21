@@ -47,9 +47,21 @@ jobs:
             https://api.supabase.com/v1/projects)
           echo "[${{ matrix.scope }}] management API -> HTTP $code"
           if [ "$code" = "200" ]; then
-            count=$(jq length /tmp/out.json)
-            echo "[${{ matrix.scope }}] token is VALID — can list $count project(s)"
+            echo "[${{ matrix.scope }}] token is VALID — visible project refs: $(jq -r 'map(.id) | join(", ")' /tmp/out.json)"
           else
             echo "[${{ matrix.scope }}] token is REJECTED — response body (no secret material):"
             head -c 300 /tmp/out.json; echo
           fi
+
+      - name: Probe per-project access
+        if: matrix.environment != ''
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          for ref in cgxkiczmwzydhoroclvf fxpcgtetvzlexbptqiwp; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              "https://api.supabase.com/v1/projects/$ref")
+            echo "[${{ matrix.scope }}] GET /v1/projects/$ref -> HTTP $code"
+          done
