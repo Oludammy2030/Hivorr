@@ -1,8 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/home/home_screen.dart';
-import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:provider/provider.dart';
@@ -102,13 +99,7 @@ void main() {
     });
   });
 
-  group('HomeScreen admin console entry point (EP-02-11)', () {
-    GoRoute adminMarker(String path, String label) => GoRoute(
-      path: path,
-      builder: (BuildContext context, GoRouterState state) =>
-          Scaffold(body: Center(child: Text(label))),
-    );
-
+  group('HomeScreen legacy gateway removed', () {
     Future<void> pumpHomeAsAdmin(
       WidgetTester tester, {
       required bool isAdmin,
@@ -123,55 +114,34 @@ void main() {
         tester,
         const HomeScreen(),
         path: '/',
-        routes: <RouteBase>[
-          adminMarker(RoutePaths.adminReviewQueue, 'ADMIN-REVIEW-QUEUE'),
-          adminMarker(RoutePaths.adminManageUsers, 'ADMIN-MANAGE-USERS'),
-        ],
         providers: <SingleChildWidget>[
           ...stack.buildProviders(),
           ChangeNotifierProvider<AdminReviewProvider>.value(value: provider),
         ],
       );
-      // Let the post-frame checkAdmin hydrate and rebuild.
       await tester.pumpAndSettle();
     }
 
-    testWidgets('hides the console for non-admins', (
+    testWidgets('shows only Welcome for non-admins (gateway removed)', (
       WidgetTester tester,
     ) async {
       await pumpHomeAsAdmin(tester, isAdmin: false);
+      expect(find.text('Welcome to Hivorr'), findsOneWidget);
+      expect(find.text('Super Admin Dashboard'), findsNothing);
       expect(find.text('Verification & Approvals'), findsNothing);
       expect(find.text('Manage users'), findsNothing);
+    });
+
+    testWidgets('shows only Welcome for platform admins (gateway removed)', (
+      WidgetTester tester,
+    ) async {
+      await pumpHomeAsAdmin(tester, isAdmin: true);
+      // Legacy gateway buttons have been removed; admin is redirected
+      // by RouteGuard to /admin/dashboard instead of via Home.
+      expect(find.text('Welcome to Hivorr'), findsOneWidget);
       expect(find.text('Super Admin Dashboard'), findsNothing);
-      expect(find.text('Welcome to Hivorr'), findsOneWidget);
-    });
-
-    testWidgets('shows the console for platform admins', (
-      WidgetTester tester,
-    ) async {
-      await pumpHomeAsAdmin(tester, isAdmin: true);
-      expect(find.text('Super Admin Dashboard'), findsOneWidget);
-      expect(find.text('Verification & Approvals'), findsOneWidget);
-      expect(find.text('Manage users'), findsOneWidget);
-      expect(find.text('Welcome to Hivorr'), findsOneWidget);
-    });
-
-    testWidgets('Review queue button opens the approval console', (
-      WidgetTester tester,
-    ) async {
-      await pumpHomeAsAdmin(tester, isAdmin: true);
-      await tester.tap(find.text('Verification & Approvals'));
-      await tester.pumpAndSettle();
-      expect(find.text('ADMIN-REVIEW-QUEUE'), findsOneWidget);
-    });
-
-    testWidgets('Manage users button opens the directory', (
-      WidgetTester tester,
-    ) async {
-      await pumpHomeAsAdmin(tester, isAdmin: true);
-      await tester.tap(find.text('Manage users'));
-      await tester.pumpAndSettle();
-      expect(find.text('ADMIN-MANAGE-USERS'), findsOneWidget);
+      expect(find.text('Verification & Approvals'), findsNothing);
+      expect(find.text('Manage users'), findsNothing);
     });
   });
 }
