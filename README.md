@@ -1,5 +1,7 @@
 # hivorr
 
+Super Admin Dashboard and capability-filtered Users submenu (`hire`/`offer`/`both`) via `SuperAdminShell`.
+
 A new Flutter project.
 
 ## Getting Started
