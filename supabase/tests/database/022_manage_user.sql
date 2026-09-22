@@ -107,7 +107,7 @@ select set_eq(
      ) k $$,
   $$ select unnest(array[
        'id', 'display_name', 'legal_name', 'avatar_path', 'status',
-       'roles', 'kyc_tier', 'is_admin', 'onboarding_completed', 'created_at'
+       'capability', 'roles', 'kyc_tier', 'is_admin', 'onboarding_completed', 'created_at'
      ]) $$,
   'list rows carry exactly the canonical key set'
 );

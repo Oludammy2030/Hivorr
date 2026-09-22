@@ -140,8 +140,9 @@ void main() {
       WidgetTester tester,
     ) async {
       await pumpHomeAsAdmin(tester, isAdmin: false);
-      expect(find.text('Review queue'), findsNothing);
+      expect(find.text('Verification & Approvals'), findsNothing);
       expect(find.text('Manage users'), findsNothing);
+      expect(find.text('Super Admin Dashboard'), findsNothing);
       expect(find.text('Welcome to Hivorr'), findsOneWidget);
     });
 
@@ -149,7 +150,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await pumpHomeAsAdmin(tester, isAdmin: true);
-      expect(find.text('Review queue'), findsOneWidget);
+      expect(find.text('Super Admin Dashboard'), findsOneWidget);
+      expect(find.text('Verification & Approvals'), findsOneWidget);
       expect(find.text('Manage users'), findsOneWidget);
       expect(find.text('Welcome to Hivorr'), findsOneWidget);
     });
@@ -158,7 +160,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await pumpHomeAsAdmin(tester, isAdmin: true);
-      await tester.tap(find.text('Review queue'));
+      await tester.tap(find.text('Verification & Approvals'));
       await tester.pumpAndSettle();
       expect(find.text('ADMIN-REVIEW-QUEUE'), findsOneWidget);
     });

@@ -47,14 +47,27 @@ abstract final class RoutePaths {
   static const String tradeProofUpload = '/verification/trade-proof';
   static const String tradeVerificationStatus = '/verification/trade/status';
 
-  /// Admin review queue (EP-02-11, simplified internal screen).
+  /// Super Admin shell root.
+  static const String adminRoot = '/admin';
+
+  /// Super Admin dashboard (landing).
+  static const String adminDashboard = '/admin/dashboard';
+
+  /// Admin review queue (EP-02-11). UI label: Verification & Approvals.
   static const String adminReviewQueue = '/admin/review-queue';
+
+  /// Verification & Approvals alias (new canonical label).
+  static const String adminVerificationApprovals = '/admin/review-queue';
 
   /// Admin review detail (EP-02-11, document viewer + audit trail).
   static const String adminReviewDetail = '/admin/review-queue/:submissionId';
 
-  /// Manage User directory (EP-02-11 admin console).
+  /// Manage User directory (EP-02-11 admin console). All Users.
   static const String adminManageUsers = '/admin/users';
+
+  /// Filtered Users sub-routes (same population, capability-filtered).
+  static const String adminUsersProfessionals = '/admin/users/professionals';
+  static const String adminUsersClients = '/admin/users/clients';
 
   /// Manage User detail (EP-02-11 admin console, single-user posture).
   static const String adminManageUserDetail = '/admin/users/:userId';

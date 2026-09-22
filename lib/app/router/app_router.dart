@@ -25,8 +25,10 @@ import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/systems/admin/screens/admin_dashboard_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
+import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
@@ -238,33 +240,70 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) =>
               const TradeVerificationStatusScreen(),
         ),
-        GoRoute(
-          path: RoutePaths.adminReviewQueue,
-          name: RouteNames.adminReviewQueue,
-          builder: (BuildContext context, GoRouterState state) =>
-              const AdminReviewQueueScreen(),
-        ),
-        GoRoute(
-          path: RoutePaths.adminReviewDetail,
-          name: RouteNames.adminReviewDetail,
-          builder: (BuildContext context, GoRouterState state) =>
-              AdminReviewDetailScreen(
-                submissionId: state.pathParameters['submissionId'] ?? '',
-              ),
-        ),
-        GoRoute(
-          path: RoutePaths.adminManageUsers,
-          name: RouteNames.adminManageUsers,
-          builder: (BuildContext context, GoRouterState state) =>
-              const ManageUserScreen(),
-        ),
-        GoRoute(
-          path: RoutePaths.adminManageUserDetail,
-          name: RouteNames.adminManageUserDetail,
-          builder: (BuildContext context, GoRouterState state) =>
-              ManageUserDetailScreen(
-                userId: state.pathParameters['userId'] ?? '',
-              ),
+        // Super Admin shell (narrow nav + workspace). Keeps legacy
+        // review-queue paths while introducing /admin/dashboard landing.
+        ShellRoute(
+          builder: (BuildContext context, GoRouterState state, Widget child) =>
+              SuperAdminShell(child: child),
+          routes: <RouteBase>[
+            GoRoute(
+              path: RoutePaths.adminRoot,
+              redirect: (BuildContext context, GoRouterState state) =>
+                  RoutePaths.adminDashboard,
+            ),
+            GoRoute(
+              path: RoutePaths.adminDashboard,
+              name: RouteNames.adminDashboard,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const AdminDashboardScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.adminReviewQueue,
+              name: RouteNames.adminReviewQueue,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const AdminReviewQueueScreen(),
+            ),
+            // Alias so nav can use Verification & Approvals name.
+            GoRoute(
+              path: '/admin/verifications',
+              redirect: (BuildContext context, GoRouterState state) =>
+                  RoutePaths.adminReviewQueue,
+            ),
+            GoRoute(
+              path: RoutePaths.adminReviewDetail,
+              name: RouteNames.adminReviewDetail,
+              builder: (BuildContext context, GoRouterState state) =>
+                  AdminReviewDetailScreen(
+                    submissionId: state.pathParameters['submissionId'] ?? '',
+                  ),
+            ),
+            GoRoute(
+              path: RoutePaths.adminManageUsers,
+              name: RouteNames.adminManageUsers,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const ManageUserScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.adminUsersProfessionals,
+              name: RouteNames.adminManageUsersProfessionals,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const ManageUserScreen(capability: 'professional'),
+            ),
+            GoRoute(
+              path: RoutePaths.adminUsersClients,
+              name: RouteNames.adminManageUsersClients,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const ManageUserScreen(capability: 'client'),
+            ),
+            GoRoute(
+              path: RoutePaths.adminManageUserDetail,
+              name: RouteNames.adminManageUserDetail,
+              builder: (BuildContext context, GoRouterState state) =>
+                  ManageUserDetailScreen(
+                    userId: state.pathParameters['userId'] ?? '',
+                  ),
+            ),
+          ],
         ),
         GoRoute(
           path: RoutePaths.kycStatus,

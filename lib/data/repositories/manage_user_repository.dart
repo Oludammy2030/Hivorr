@@ -5,9 +5,15 @@
 /// business systems and UI consume this interface (ARCHITECTURE.md).
 abstract class ManageUserRepository {
   /// Returns a paginated directory page of users.
+  ///
+  /// [capability] is the Super Admin Users submenu filter: `null` = All Users,
+  /// `professional` = offer+both, `client` = hire+both, or a raw capability
+  /// `hire|offer|both` for exact matches. `both` appears in both filtered views
+  /// per the one-population principle.
   Future<ManageUserDirectoryPage> listUsers({
     String? search,
     String? status,
+    String? capability,
     int offset = 0,
     int limit = 20,
   });
@@ -46,6 +52,7 @@ class ManageUserListItem {
     this.legalName,
     this.avatarPath,
     this.kycTier,
+    this.capability,
   });
 
   final String id;
@@ -55,6 +62,7 @@ class ManageUserListItem {
   final String status;
   final List<String> roles;
   final String? kycTier;
+  final String? capability;
   final bool isAdmin;
   final bool onboardingCompleted;
   final DateTime createdAt;

@@ -106,9 +106,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (isAdmin) ...<Widget>[
                   const SizedBox(height: HivorrSpacing.xl),
                   HivorrButton(
-                    label: 'Review queue',
+                    label: 'Super Admin Dashboard',
                     isExpanded: true,
-                    onPressed: () => context.go(RoutePaths.adminReviewQueue),
+                    onPressed: () => context.go(RoutePaths.adminDashboard),
+                  ),
+                  const SizedBox(height: HivorrSpacing.sm),
+                  HivorrButton(
+                    label: 'Verification & Approvals',
+                    variant: HivorrButtonVariant.outline,
+                    isExpanded: true,
+                    onPressed: () =>
+                        context.go(RoutePaths.adminVerificationApprovals),
                   ),
                   const SizedBox(height: HivorrSpacing.sm),
                   HivorrButton(

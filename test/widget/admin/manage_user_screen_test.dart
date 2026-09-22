@@ -49,7 +49,38 @@ void main() {
   group('ManageUserScreen layout', () {
     testWidgets('renders the app bar title', (WidgetTester tester) async {
       await pumpScreenWith(tester);
-      expect(find.text('Manage users'), findsOneWidget);
+      expect(find.text('All Users'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('renders capability-filtered title', (
+      WidgetTester tester,
+    ) async {
+      final FakeManageUserRepository resolvedManage =
+          FakeManageUserRepository();
+      final FakeAdminReviewRepository resolvedAdmin =
+          FakeAdminReviewRepository(isAdmin: true);
+      final ManageUserProvider manageProvider = ManageUserProvider(
+        repo: resolvedManage,
+      );
+      final AdminReviewProvider adminProvider = AdminReviewProvider(
+        repo: resolvedAdmin,
+      );
+      await pumpApp(
+        tester,
+        const ManageUserScreen(capability: 'professional'),
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<ManageUserProvider>.value(
+            value: manageProvider,
+          ),
+          ChangeNotifierProvider<AdminReviewProvider>.value(
+            value: adminProvider,
+          ),
+        ],
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('Professionals'), findsOneWidget);
       await unmount(tester);
     });
 
