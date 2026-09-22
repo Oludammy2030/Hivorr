@@ -161,7 +161,7 @@ grant execute on function public.platform_demo_records_get(uuid) to authenticate
 grant execute on function public.platform_demo_records_create(text, jsonb) to authenticated, service_role;
 grant execute on function public.platform_demo_records_update(uuid, jsonb) to authenticated, service_role;
 
-grant execute on function public.entity_profile_update(text, text, text) to authenticated, service_role;
+grant execute on function public.entity_profile_update(text, text, text, text, text, text, text) to authenticated, service_role;
 grant execute on function public.entity_roles_activate(text) to authenticated, service_role;
 grant execute on function public.entity_roles_deactivate(text) to authenticated, service_role;
 grant execute on function public.entity_profession_bind(uuid) to authenticated, service_role;
