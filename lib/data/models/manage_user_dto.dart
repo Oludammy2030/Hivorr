@@ -9,8 +9,10 @@
 /// A single directory row returned by `manage_user_list` (data.users[]).
 ///
 /// Canonical server row:
-///   id, display_name, legal_name, avatar_path, status, roles[],
+///   id, display_name, legal_name, avatar_path, status, capability, roles[],
 ///   kyc_tier, is_admin, onboarding_completed, created_at
+/// `capability` added by 20260922090001 so the admin Users submenu
+/// (All/Professionals/Clients) can filter without a second roundtrip.
 class ManageUserListItemDto {
   const ManageUserListItemDto({
     required this.id,
@@ -18,6 +20,7 @@ class ManageUserListItemDto {
     this.legalName,
     this.avatarPath,
     required this.status,
+    this.capability,
     required this.roles,
     this.kycTier,
     required this.isAdmin,
@@ -33,6 +36,7 @@ class ManageUserListItemDto {
       legalName: json['legal_name'] as String?,
       avatarPath: json['avatar_path'] as String?,
       status: (json['status'] as String?) ?? 'active',
+      capability: json['capability'] as String?,
       roles: rolesValue is List
           ? rolesValue.whereType<String>().toList(growable: false)
           : const <String>[],
@@ -50,6 +54,7 @@ class ManageUserListItemDto {
   final String? legalName;
   final String? avatarPath;
   final String status;
+  final String? capability;
   final List<String> roles;
   final String? kycTier;
   final bool isAdmin;

@@ -27,6 +27,7 @@ class FakeManageUserRepository implements ManageUserRepository {
   int setStatusCallCount = 0;
   int resetCallCount = 0;
   String? lastQueriedStatus;
+  String? lastQueriedCapability;
   String? lastStatusChange;
   String? lastResetId;
 
@@ -40,17 +41,43 @@ class FakeManageUserRepository implements ManageUserRepository {
   Future<ManageUserDirectoryPage> listUsers({
     String? search,
     String? status,
+    String? capability,
     int offset = 0,
     int limit = 20,
   }) async {
     listCallCount++;
     lastQueriedStatus = status;
+    lastQueriedCapability = capability;
     if (nextError != null) throw _consumeError();
-    final int start = offset.clamp(0, _users.length);
-    final int end = (offset + limit).clamp(start, _users.length);
+    Iterable<ManageUserListItem> filtered = _users;
+    if (capability != null) {
+      filtered = filtered.where((ManageUserListItem u) {
+        if (capability == 'professional') {
+          return u.capability == 'offer' || u.capability == 'both';
+        }
+        if (capability == 'client') {
+          return u.capability == 'hire' || u.capability == 'both';
+        }
+        return u.capability == capability;
+      });
+    }
+    if (search != null && search.isNotEmpty) {
+      final String term = search.toLowerCase();
+      filtered = filtered.where(
+        (ManageUserListItem u) =>
+            u.displayName.toLowerCase().contains(term) ||
+            (u.legalName?.toLowerCase().contains(term) ?? false),
+      );
+    }
+    if (status != null) {
+      filtered = filtered.where((ManageUserListItem u) => u.status == status);
+    }
+    final List<ManageUserListItem> list = filtered.toList(growable: false);
+    final int start = offset.clamp(0, list.length);
+    final int end = (offset + limit).clamp(start, list.length);
     return ManageUserDirectoryPage(
-      users: _users.sublist(start, end),
-      totalCount: _users.length,
+      users: list.sublist(start, end),
+      totalCount: list.length,
     );
   }
 
@@ -83,6 +110,7 @@ class FakeManageUserRepository implements ManageUserRepository {
             legalName: e.legalName,
             avatarPath: e.avatarPath,
             status: status,
+            capability: e.capability,
             roles: e.roles,
             kycTier: e.kycTier,
             isAdmin: e.isAdmin,
@@ -148,6 +176,7 @@ ManageUserListItem manageUserListItem({
   String? legalName,
   String? avatarPath,
   String status = 'active',
+  String? capability = 'hire',
   List<String> roles = const <String>['freelancer'],
   String? kycTier = 'tier_1',
   bool isAdmin = false,
@@ -159,6 +188,7 @@ ManageUserListItem manageUserListItem({
   legalName: legalName,
   avatarPath: avatarPath,
   status: status,
+  capability: capability,
   roles: roles,
   kycTier: kycTier,
   isAdmin: isAdmin,

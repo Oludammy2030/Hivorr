@@ -36,6 +36,7 @@ class ManageUserProvider extends ChangeNotifier {
   bool _hasMore = true;
   String? _search;
   String? _status;
+  String? _capability;
   bool _listHydrated = false;
   static const int _pageSize = 20;
 
@@ -69,17 +70,27 @@ class ManageUserProvider extends ChangeNotifier {
   /// The active status filter applied to the last [loadUsers] call.
   String? get statusFilter => _status;
 
+  /// The active capability filter applied to the last [loadUsers] call.
+  /// `null` = All Users, `professional` = offer+both, `client` = hire+both.
+  String? get capabilityFilter => _capability;
+
   /// Whether the directory has been fetched at least once.
   bool get isListHydrated => _listHydrated;
 
   /// Fetches the first page of the directory (resets pagination).
   ///
-  /// [search]/[status] change the active filter; pass `null` to clear.
-  Future<void> loadUsers({String? search, String? status}) async {
+  /// [search]/[status]/[capability] change the active filter; pass `null` to
+  /// clear. `capability` values: `hire|offer|both|professional|client`.
+  Future<void> loadUsers({
+    String? search,
+    String? status,
+    String? capability,
+  }) async {
     _loading = true;
     _error = null;
     _search = search;
     _status = status;
+    _capability = capability;
     _currentOffset = 0;
     _hasMore = true;
     _listHydrated = true;
@@ -88,6 +99,7 @@ class ManageUserProvider extends ChangeNotifier {
       final ManageUserDirectoryPage page = await _repo.listUsers(
         search: search,
         status: status,
+        capability: capability,
         limit: _pageSize,
         offset: 0,
       );
@@ -116,6 +128,7 @@ class ManageUserProvider extends ChangeNotifier {
       final ManageUserDirectoryPage page = await _repo.listUsers(
         search: _search,
         status: _status,
+        capability: _capability,
         limit: _pageSize,
         offset: _currentOffset,
       );
@@ -228,6 +241,7 @@ class ManageUserProvider extends ChangeNotifier {
       legalName: user.legalName,
       avatarPath: user.avatarPath,
       status: status,
+      capability: user.capability,
       roles: user.roles,
       kycTier: user.kycTier,
       isAdmin: user.isAdmin,

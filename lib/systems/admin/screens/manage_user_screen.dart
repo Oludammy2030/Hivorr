@@ -21,8 +21,14 @@ import 'package:provider/provider.dart';
 /// Tapping a row navigates to the detail screen. Admin gating is shared with
 /// the review console: [AdminGate.isAdmin] over the [AdminReviewProvider]
 /// (fail-closed), while directory data flows through the [ManageUserProvider].
+///
+/// [capability] is the Users submenu filter per the Super Admin spec:
+/// `null` = All Users, `professional` = offer+both, `client` = hire+both.
+/// A user with `both` appears in all three views (single population).
 class ManageUserScreen extends StatefulWidget {
-  const ManageUserScreen({super.key});
+  const ManageUserScreen({super.key, this.capability});
+
+  final String? capability;
 
   @override
   State<ManageUserScreen> createState() => _ManageUserScreenState();
@@ -31,6 +37,20 @@ class ManageUserScreen extends StatefulWidget {
 class _ManageUserScreenState extends State<ManageUserScreen> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedStatus;
+
+  String? get _capability => widget.capability;
+
+  String get _title => switch (_capability) {
+        'professional' => 'Professionals',
+        'client' => 'Clients',
+        _ => 'All Users',
+      };
+
+  String get _emptySubtitle => switch (_capability) {
+        'professional' => 'No professionals match the current filters.',
+        'client' => 'No clients match the current filters.',
+        _ => 'No users match the current search and filters.',
+      };
 
   @override
   void initState() {
@@ -44,11 +64,29 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
         admin.checkAdmin().then((_) {
           if (!mounted) return;
           if (AdminGate.isAdmin(admin)) {
-            unawaited(manage.loadUsers());
+            unawaited(manage.loadUsers(capability: _capability));
           }
         }),
       );
     });
+  }
+
+  @override
+  void didUpdateWidget(ManageUserScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.capability != widget.capability) {
+      final ManageUserProvider manage = context.read<ManageUserProvider>();
+      final AdminReviewProvider admin = context.read<AdminReviewProvider>();
+      if (AdminGate.isAdmin(admin)) {
+        unawaited(manage.loadUsers(
+          capability: _capability,
+          search: _searchController.text.trim().isEmpty
+              ? null
+              : _searchController.text.trim(),
+          status: _selectedStatus,
+        ));
+      }
+    }
   }
 
   @override
@@ -64,7 +102,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Manage users', style: context.textTheme.titleLarge),
+        title: Text(_title, style: context.textTheme.titleLarge),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -73,6 +111,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
               provider.loadUsers(
                 search: provider.search,
                 status: provider.statusFilter,
+                capability: _capability,
               ),
             ),
           ),
@@ -124,6 +163,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
                 provider.loadUsers(
                   search: value.trim().isEmpty ? null : value.trim(),
                   status: _selectedStatus,
+                  capability: _capability,
                 ),
               ),
             ),
@@ -140,6 +180,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
                       ? null
                       : _searchController.text.trim(),
                   status: status,
+                  capability: _capability,
                 ),
               );
             },
@@ -186,13 +227,14 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
       return HivorrEmptyState(
         icon: Icon(Icons.group_outlined, color: context.colorScheme.primary),
         title: 'No users found',
-        subtitle: 'No users match the current search and filters.',
+        subtitle: _emptySubtitle,
       );
     }
     return RefreshIndicator(
       onRefresh: () => provider.loadUsers(
         search: provider.search,
         status: provider.statusFilter,
+        capability: _capability,
       ),
       child: ListView.builder(
         padding: const EdgeInsets.all(HivorrSpacing.lg),
@@ -275,6 +317,14 @@ class _UserCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                    if (user.capability != null && user.capability!.isNotEmpty)
+                      Text(
+                        _capabilityLabel(user.capability!),
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     if (user.kycTier != null && user.kycTier!.isNotEmpty)
                       Text(
                         'KYC: ${user.kycTier}',
@@ -306,6 +356,13 @@ class _UserCard extends StatelessWidget {
         : (user.legalName ?? '');
     return name.isNotEmpty ? name : 'Unnamed user';
   }
+
+  static String _capabilityLabel(String cap) => switch (cap) {
+        'hire' => 'Client',
+        'offer' => 'Professional',
+        'both' => 'Both',
+        _ => cap,
+      };
 }
 
 class _StatusChip extends StatelessWidget {

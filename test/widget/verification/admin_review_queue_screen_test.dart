@@ -40,7 +40,7 @@ void main() {
   group('AdminReviewQueueScreen layout', () {
     testWidgets('renders the app bar title', (WidgetTester tester) async {
       await pumpScreenWith(tester);
-      expect(find.text('Review queue'), findsOneWidget);
+      expect(find.text('Verification & Approvals'), findsOneWidget);
       await unmount(tester);
     });
 
@@ -99,7 +99,7 @@ void main() {
 
       // Before the post-frame callback completes, loading shows first.
       await tester.pump();
-      expect(find.text('Review queue'), findsOneWidget);
+      expect(find.text('Verification & Approvals'), findsOneWidget);
       await unmount(tester);
     });
 

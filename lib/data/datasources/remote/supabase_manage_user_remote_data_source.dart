@@ -32,6 +32,7 @@ class SupabaseManageUserRemoteDataSource extends BaseApiService
   Future<ManageUserListEnvelopeDto> listUsers({
     String? search,
     String? status,
+    String? capability,
     int offset = 0,
     int limit = 20,
   }) => _guard(() async {
@@ -44,6 +45,9 @@ class SupabaseManageUserRemoteDataSource extends BaseApiService
     }
     if (status != null && status.isNotEmpty) {
       params['p_status'] = status;
+    }
+    if (capability != null && capability.isNotEmpty) {
+      params['p_capability'] = capability;
     }
     final Map<String, dynamic> envelope = await supabase
         .rpc<Map<String, dynamic>>('manage_user_list', params: params);

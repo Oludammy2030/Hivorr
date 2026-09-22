@@ -18,12 +18,14 @@ class ManageUserRepositoryImpl implements ManageUserRepository {
   Future<ManageUserDirectoryPage> listUsers({
     String? search,
     String? status,
+    String? capability,
     int offset = 0,
     int limit = 20,
   }) async {
     final ManageUserListEnvelopeDto envelope = await _remote.listUsers(
       search: search,
       status: status,
+      capability: capability,
       offset: offset,
       limit: limit,
     );
@@ -94,6 +96,7 @@ class ManageUserRepositoryImpl implements ManageUserRepository {
       legalName: dto.legalName,
       avatarPath: dto.avatarPath,
       status: dto.status,
+      capability: dto.capability,
       roles: dto.roles,
       kycTier: dto.kycTier,
       isAdmin: dto.isAdmin,

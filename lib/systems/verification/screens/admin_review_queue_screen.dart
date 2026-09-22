@@ -54,7 +54,8 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Review queue', style: context.textTheme.titleLarge),
+        title: Text('Verification & Approvals',
+            style: context.textTheme.titleLarge),
         actions: <Widget>[
           PopupMenuButton<String?>(
             icon: const Icon(Icons.filter_list),
