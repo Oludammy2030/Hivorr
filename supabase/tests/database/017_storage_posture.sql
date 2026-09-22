@@ -1,19 +1,20 @@
--- EP-02-06: Storage Infrastructure Posture
+-- EP-02-06: Storage Infrastructure Posture (+ EP-03-01 bucket)
 --
--- Validates the 3 storage buckets + storage.objects RLS policies (EP-02-06 TIP
--- §14.1). Mirrors the 013_financial_schema_posture.sql / 015_dispute_schema_
--- posture.sql style: begin; set search_path to extensions, public, storage;
--- select plan(N); ... select * from finish(); rollback;
+-- Validates the 4 storage buckets + storage.objects RLS policies (EP-02-06 TIP
+-- §14.1 + EP-03-01 service-listing-media). Mirrors the 013_financial_schema_
+-- posture.sql / 015_dispute_schema_posture.sql style: begin; set search_path to
+-- extensions, public, storage; select plan(N); ... select * from finish();
+-- rollback;
 --
 -- Covers:
---   - All 3 buckets exist with correct public / file_size_limit / MIME allowlist.
+--   - All 4 buckets exist with correct public / file_size_limit / MIME allowlist.
 --   - storage.objects RLS enabled; >= 11 policies across all buckets.
 --   - anon has zero INSERT/UPDATE/DELETE policies (default-deny write).
---   - credential-documents is private & owner-scoped (no anon SELECT); the two
+--   - credential-documents is private & owner-scoped (no anon SELECT); the three
 --     public buckets grant SELECT to anon + authenticated.
 --   - Every policy carries the bucket_id conjunct (no cross-bucket leakage).
 --   - No storage_% SECURITY DEFINER function (013/015 regression guard keeps).
---   - Buckets are well-formed (not-null created_at, exactly 3 rows).
+--   - Buckets are well-formed (not-null created_at, exactly 4 rows).
 --   - storage schema not in supabase_realtime.
 --   - Role-simulated leakage: an authenticated user cannot read another
 --     entity's credential under the private bucket (001-style harness).
@@ -172,14 +173,14 @@ select is(
   'no storage_% function is SECURITY DEFINER'
 );
 
--- ─── 21. exactly 3 buckets with not-null ids (well-formed catalog) ─────────────
+-- ─── 21. exactly 4 buckets with not-null ids (well-formed catalog) ─────────────
 select is(
   (select count(*)::int from storage.buckets where id is not null and btrim(id) <> ''),
-  3,
-  'storage.buckets contains exactly 3 rows with non-empty ids'
+  4,
+  'storage.buckets contains exactly 4 rows with non-empty ids'
 );
 
--- ─── 22. all 3 buckets created_at not null ────────────────────────────────────
+-- ─── 22. all 4 buckets created_at not null ────────────────────────────────────
 select is(
   (select count(*)::int from storage.buckets where created_at is null),
   0,
