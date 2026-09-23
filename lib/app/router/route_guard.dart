@@ -2,6 +2,7 @@ import 'package:hivorr/app/entry/entry_platform.dart';
 import 'package:hivorr/app/entry/entry_state_provider.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
+import 'package:hivorr/config/permissions/admin_gate.dart';
 import 'package:hivorr/core/authentication/guards/auth_guard.dart';
 import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
@@ -101,16 +102,26 @@ class RouteGuard {
         return RoutePaths.home;
       }
 
-      // Admin routes (/admin/*) are not gated at the router level: the admin
-      // screens enforce authorization internally via the AdminGate fail-closed
-      // "Admin access required" state. Gating here on the hydrated admin flag
-      // would deadlock — the flag is only populated once those screens mount —
-      // locking platform admins out of the review console entirely. Only the
-      // authentication walls above apply.
+      // Admin routes (/admin/*) are not fully gated at the router level
+      // for read: the admin screens enforce authorization internally via the
+      // AdminGate fail-closed "Admin access required" state.
 
       final String? onboardingRedirect = _onboardingResumeRedirect(location);
       if (onboardingRedirect != null) {
         return onboardingRedirect;
+      }
+
+      // Super Admins go directly to the control panel. The old
+      // "Welcome to Hivorr / Super Admin Dashboard / Verification &
+      // Approvals / Manage Users" gateway has been removed — the control
+      // panel at /admin/dashboard is now the primary admin experience.
+      // Hydration is async: isAdmin is null before first checkAdmin(),
+      // so the redirect is deferred until the flag hydrates (via
+      // refreshListenable on adminReviewProvider). Onboarding takes
+      // precedence above so an incomplete wizard still resumes.
+      if (location == RoutePaths.home &&
+          AdminGate.isAdmin(adminReviewProvider)) {
+        return RoutePaths.adminDashboard;
       }
       return null;
     }

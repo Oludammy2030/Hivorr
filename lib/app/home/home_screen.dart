@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_paths.dart';
-import 'package:hivorr/config/permissions/admin_gate.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -21,10 +20,11 @@ import 'package:provider/provider.dart';
 /// minimal empty state — once the wizard is complete, feature screens replace
 /// this placeholder (EP-02+).
 ///
-/// Platform admins additionally see a console entry-point to the review
-/// queue and manage-users directory.  The admin flag is hydrated lazily
-/// from [AdminReviewProvider] (which is only provided in production);
-/// the widget degrades gracefully when the provider is absent.
+/// Super Admins no longer see a legacy gateway here. Authenticated
+/// platform admins are redirected by [RouteGuard] directly to
+/// [RoutePaths.adminDashboard] (the Super Admin Control Panel) so the
+/// old "Welcome to Hivorr / Super Admin Dashboard / Verification &
+/// Approvals / Manage Users" menu has been removed.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -41,9 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateAdmin());
   }
 
-  /// Calls [AdminReviewProvider.checkAdmin] once on mount when the
-  /// provider is available.  This is safe in test harnesses that do
-  /// not supply the provider — [_maybeAdmin] falls back to `null`.
   void _hydrateAdmin() {
     if (!mounted) return;
     final AdminReviewProvider? admin = _maybeAdmin(context);
@@ -53,11 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Optional read of [AdminReviewProvider].
-  ///
-  /// The provider is conditionally wired at the root (only prod admin
-  /// builds).  `Provider.of<T?>` does not resolve a non-nullable
-  /// registration, so this fall back to `null` instead of throwing.
   AdminReviewProvider? _maybeAdmin(
     BuildContext context, {
     bool listen = false,
@@ -78,9 +70,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
     final bool showResume =
         onboarding.progress != null && !complete && onboarding.exited;
-
-    final AdminReviewProvider? admin = _maybeAdmin(context, listen: true);
-    final bool isAdmin = AdminGate.isAdmin(admin);
 
     return Scaffold(
       appBar: AppBar(title: Text('Home', style: context.textTheme.titleLarge)),
@@ -103,29 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Welcome to Hivorr',
                     style: context.textTheme.titleMedium,
                   ),
-                if (isAdmin) ...<Widget>[
-                  const SizedBox(height: HivorrSpacing.xl),
-                  HivorrButton(
-                    label: 'Super Admin Dashboard',
-                    isExpanded: true,
-                    onPressed: () => context.go(RoutePaths.adminDashboard),
-                  ),
-                  const SizedBox(height: HivorrSpacing.sm),
-                  HivorrButton(
-                    label: 'Verification & Approvals',
-                    variant: HivorrButtonVariant.outline,
-                    isExpanded: true,
-                    onPressed: () =>
-                        context.go(RoutePaths.adminVerificationApprovals),
-                  ),
-                  const SizedBox(height: HivorrSpacing.sm),
-                  HivorrButton(
-                    label: 'Manage users',
-                    variant: HivorrButtonVariant.outline,
-                    isExpanded: true,
-                    onPressed: () => context.go(RoutePaths.adminManageUsers),
-                  ),
-                ],
               ],
             ),
           ),

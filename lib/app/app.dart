@@ -214,13 +214,18 @@ class _HivorrAppState extends State<HivorrApp> {
       environment: widget.environment,
     );
     widget.authProvider.addListener(_hydrateOnboarding);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateOnboarding());
+    widget.authProvider.addListener(_hydrateAdmin);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _hydrateOnboarding();
+      _hydrateAdmin();
+    });
   }
 
   @override
   void dispose() {
     _router.dispose();
     widget.authProvider.removeListener(_hydrateOnboarding);
+    widget.authProvider.removeListener(_hydrateAdmin);
     widget.lifecycleObserver.dispose();
     if (_ownsEntryState) {
       _entryState.dispose();
@@ -243,6 +248,14 @@ class _HivorrAppState extends State<HivorrApp> {
       return;
     }
     unawaited(onboarding.loadProgress(entityId));
+  }
+
+  void _hydrateAdmin() {
+    final AdminReviewProvider? admin = widget.adminReviewProvider;
+    if (admin == null || !widget.authProvider.isSignedIn) {
+      return;
+    }
+    unawaited(admin.checkAdmin());
   }
 
   @override
