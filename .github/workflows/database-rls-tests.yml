@@ -46,14 +46,32 @@ jobs:
       - name: Verify pinned CLI version
         run: supabase --version
 
+      - name: Pre-pull Supabase images from public.ecr.aws to bypass GHCR rate-limit
+        shell: bash
+        run: |
+          set -e
+          echo "Pre-pulling Supabase images from public.ecr.aws (bypass ghcr.io 44000/minute)..."
+          # supabase start pulls from ghcr.io by default; pre-pull from public.ecr.aws
+          # and tag as ghcr.io so supabase start reuses cached layers.
+          for img in postgres:15.8.1.085 postgres-meta:v0.98.0 postgrest:v16.1 storage-api:v1.69.11 gotrue:v2.195.0 realtime:v2.129.0 edge-runtime:v1.74.3 studio:2026.08.17-sha-0c1da8f kong:2.8.1 inbucket:v0.0.0 supavisor:2.4.14 imgproxy:v0.14.0 vector:0.53.0-alpine logflare:1.50.2; do
+            echo "Pulling public.ecr.aws/supabase/$img..."
+            if docker pull public.ecr.aws/supabase/$img; then
+              docker tag public.ecr.aws/supabase/$img ghcr.io/supabase/$img || true
+              docker tag public.ecr.aws/supabase/$img supabase/$img || true
+            else
+              echo "Warning: failed to pull public.ecr.aws/supabase/$img, will retry via ghcr.io on supabase start"
+            fi
+          done
+          echo "Pre-pull complete, cached images:"
+          docker images | grep -E "supabase|postgres" || true
+
       - name: Start local Supabase instance
         shell: bash
         run: |
           set -e
           # GHCR rate-limit (toomanyrequests: 44000/minute) is transient on
           # ubuntu-24.04 runners pulling supabase/* via ghcr.io mirror.
-          # Use public.ecr.aws directly (SUPABASE_INTERNAL_IMAGE_REGISTRY) and
-          # retry with backoff; supabase start is idempotent and reuses pulled images.
+          # Retry with backoff; supabase start is idempotent and reuses pulled images.
           for i in 1 2 3 4 5 6 7 8; do
             echo "Attempt $i/8: supabase start (registry=$SUPABASE_INTERNAL_IMAGE_REGISTRY)..."
             if supabase start; then
@@ -68,7 +86,6 @@ jobs:
             SLEEP=$((i * 30))
             echo "supabase start failed (GHCR toomanyrequests), retrying in ${SLEEP}s..."
             supabase stop --no-backup || true
-            # Brief pause to let GHCR rate-limit window reset; also prune to free space
             docker system prune -f || true
             sleep $SLEEP
           done
