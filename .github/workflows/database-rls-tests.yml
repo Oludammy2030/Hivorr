@@ -45,7 +45,29 @@ jobs:
         run: supabase --version
 
       - name: Start local Supabase instance
-        run: supabase start
+        shell: bash
+        run: |
+          set -e
+          # GHCR rate-limit (toomanyrequests: 44000/minute) is transient on
+          # ubuntu-24.04 runners pulling supabase/* via ghcr.io mirror.
+          # Retry with backoff; supabase start is idempotent and will reuse
+          # any images already pulled.
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i/5: supabase start..."
+            if supabase start; then
+              echo "supabase start succeeded on attempt $i"
+              break
+            fi
+            RC=$?
+            if [ "$i" -eq 5 ]; then
+              echo "::error::supabase start failed after 5 attempts (GHCR toomanyrequests)"
+              exit $RC
+            fi
+            SLEEP=$((i * 15))
+            echo "supabase start failed (GHCR toomanyrequests), retrying in ${SLEEP}s..."
+            supabase stop --no-backup || true
+            sleep $SLEEP
+          done
 
       - name: Rebuild clean database from migrations
         run: supabase db reset
