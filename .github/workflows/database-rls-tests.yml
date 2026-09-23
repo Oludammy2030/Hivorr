@@ -32,6 +32,8 @@ jobs:
     name: RLS & RPC Enforcement Suite
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: public.ecr.aws
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -50,22 +52,24 @@ jobs:
           set -e
           # GHCR rate-limit (toomanyrequests: 44000/minute) is transient on
           # ubuntu-24.04 runners pulling supabase/* via ghcr.io mirror.
-          # Retry with backoff; supabase start is idempotent and will reuse
-          # any images already pulled.
-          for i in 1 2 3 4 5; do
-            echo "Attempt $i/5: supabase start..."
+          # Use public.ecr.aws directly (SUPABASE_INTERNAL_IMAGE_REGISTRY) and
+          # retry with backoff; supabase start is idempotent and reuses pulled images.
+          for i in 1 2 3 4 5 6 7 8; do
+            echo "Attempt $i/8: supabase start (registry=$SUPABASE_INTERNAL_IMAGE_REGISTRY)..."
             if supabase start; then
               echo "supabase start succeeded on attempt $i"
               break
             fi
             RC=$?
-            if [ "$i" -eq 5 ]; then
-              echo "::error::supabase start failed after 5 attempts (GHCR toomanyrequests)"
+            if [ "$i" -eq 8 ]; then
+              echo "::error::supabase start failed after 8 attempts (GHCR toomanyrequests)"
               exit $RC
             fi
-            SLEEP=$((i * 15))
+            SLEEP=$((i * 30))
             echo "supabase start failed (GHCR toomanyrequests), retrying in ${SLEEP}s..."
             supabase stop --no-backup || true
+            # Brief pause to let GHCR rate-limit window reset; also prune to free space
+            docker system prune -f || true
             sleep $SLEEP
           done
 
