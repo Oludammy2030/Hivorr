@@ -212,7 +212,7 @@ select is(
   'no service_% function is SECURITY DEFINER'
 );
 
--- ─── 16. Exactly 7 service_% RPCs ─────────────────────────────────────────────
+-- ─── 16. Exactly 15 service_% RPCs (7 marketplace + 8 contract) ─────────────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -220,8 +220,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prorettype <> 'trigger'::regtype),
-  7,
-  'exactly 7 service_% RPCs exist (6 listing + favorite_toggle)'
+  15,
+  'exactly 15 service_% RPCs exist (7 listing + 8 contract)'
 );
 
 -- ─── 17. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -281,26 +281,26 @@ select is(
   'anon can execute exactly one service_% function'
 );
 
--- ─── 22. authenticated EXECUTE on all 7 ───────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 15 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'authenticated'),
-  7,
-  'authenticated can execute all 7 service_% RPCs'
+  15,
+  'authenticated can execute all 15 service_% RPCs (7 marketplace + 8 contract)'
 );
 
--- ─── 23. service_role EXECUTE on all 7 ────────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 15 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'service_role'),
-  7,
-  'service_role can execute all 7 service_% RPCs'
+  15,
+  'service_role can execute all 15 service_% RPCs'
 );
 
 -- ─── 24. The anon-executable RPC is service_listing_get ───────────────────────
