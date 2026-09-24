@@ -21,7 +21,7 @@
 
 begin;
 set search_path to extensions, public;
-select plan(28);
+select plan(30);
 
 -- ─── 0. All 3 tables exist ────────────────────────────────────────────────────
 select has_table('public', 'service_listings', 'service_listings exists');
@@ -53,17 +53,30 @@ select is(
   'anon has no INSERT/UPDATE/DELETE grants on the marketplace tables'
 );
 
--- ─── 3. Server-computed columns have zero client grants ───────────────────────
+-- ─── 3. Server-computed columns have zero client grants (search_vector/view_count) ─
 select is(
   (select count(*)::int
      from information_schema.role_column_grants
     where grantee = 'authenticated'
       and table_schema = 'public'
       and table_name = 'service_listings'
-      and column_name in ('search_vector', 'avg_rating', 'review_count', 'view_count')
+      and column_name in ('search_vector', 'view_count')
       and privilege_type in ('INSERT', 'UPDATE')),
   0,
-  'search_vector/avg_rating/review_count/view_count are not client-writable'
+  'search_vector/view_count are not client-writable'
+);
+
+-- ─── 3b. avg_rating/review_count have authenticated UPDATE for reveal cache (EP-03-03 deviation) ─
+select is(
+  (select count(*)::int
+     from information_schema.role_column_grants
+    where grantee = 'authenticated'
+      and table_schema = 'public'
+      and table_name = 'service_listings'
+      and column_name in ('avg_rating', 'review_count')
+      and privilege_type = 'UPDATE'),
+  2,
+  'avg_rating/review_count have authenticated UPDATE grants for reveal cache (EP-03-03 approved deviation, mirrors financial_balances)'
 );
 
 -- ─── 4. Guarded publish columns carry UPDATE grants (approved deviation) ──────
@@ -200,7 +213,7 @@ select is(
   'the 4 named marketplace triggers exist (2 updated_at + search_vector + D5 guard)'
 );
 
--- ─── 15. No service_% SECURITY DEFINER ────────────────────────────────────────
+-- ─── 15. Exactly 1 service_% SECURITY DEFINER (service_review_reveal_if_ready) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -208,11 +221,15 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prosecdef),
-  0,
-  'no service_% function is SECURITY DEFINER'
+  1,
+  'exactly one service_% function is SECURITY DEFINER (service_review_reveal_if_ready, approved deviation for double-blind count)'
+);
+select ok(
+  (select p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname='public' and p.proname='service_review_reveal_if_ready'),
+  'service_review_reveal_if_ready is SECURITY DEFINER'
 );
 
--- ─── 16. Exactly 15 service_% RPCs (7 marketplace + 8 contract) ─────────────
+-- ─── 16. Exactly 19 service_% RPCs (7 marketplace + 8 contract + 4 review) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -220,8 +237,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prorettype <> 'trigger'::regtype),
-  15,
-  'exactly 15 service_% RPCs exist (7 listing + 8 contract)'
+  19,
+  'exactly 19 service_% RPCs exist (7 listing + 8 contract + 4 review)'
 );
 
 -- ─── 17. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -270,43 +287,44 @@ select is(
   '4 storage.objects policies exist for service-listing-media'
 );
 
--- ─── 21. anon EXECUTE: only service_listing_get ───────────────────────────────
+-- ─── 21. anon EXECUTE: service_listing_get + service_review_get_for_listing ──────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'anon'),
-  1,
-  'anon can execute exactly one service_% function'
+  2,
+  'anon can execute exactly two service_% functions (listing_get + review_get_for_listing)'
 );
 
--- ─── 22. authenticated EXECUTE on all 15 ──────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 19 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'authenticated'),
-  15,
-  'authenticated can execute all 15 service_% RPCs (7 marketplace + 8 contract)'
+  19,
+  'authenticated can execute all 19 service_% RPCs (7 marketplace + 8 contract + 4 review)'
 );
 
--- ─── 23. service_role EXECUTE on all 15 ───────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 19 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'service_role'),
-  15,
-  'service_role can execute all 15 service_% RPCs'
+  19,
+  'service_role can execute all 19 service_% RPCs'
 );
 
--- ─── 24. The anon-executable RPC is service_listing_get ───────────────────────
+-- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing ─
 select ok(
-  has_function_privilege('anon', 'public.service_listing_get(uuid)', 'EXECUTE'),
-  'the anon-executable service_% function is service_listing_get'
+  has_function_privilege('anon', 'public.service_listing_get(uuid)', 'EXECUTE')
+  and has_function_privilege('anon', 'public.service_review_get_for_listing(uuid, integer, uuid)', 'EXECUTE'),
+  'the anon-executable service_% functions are service_listing_get + review_get_for_listing'
 );
 
 -- ─── 25. RLS policy surface: 4 + 4 + 3 ────────────────────────────────────────
