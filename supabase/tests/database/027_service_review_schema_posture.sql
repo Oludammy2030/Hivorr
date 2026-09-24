@@ -299,14 +299,14 @@ select is(
   'service_role can execute all 4 service_review_% RPCs'
 );
 
--- ─── 21. RLS policy surface: 5 policies (4 on reviews + 1 on aggregates) ───────
+-- ─── 21. RLS policy surface: 7 policies (4 on reviews + 3 on aggregates) ───────
 select is(
   (select count(*)::int
      from pg_policies
     where schemaname = 'public'
       and tablename in ('service_reviews', 'service_review_aggregates')),
-  5,
-  'exactly 5 RLS policies on the 2 review tables (4 on reviews + 1 on aggregates)'
+  7,
+  'exactly 7 RLS policies on the 2 review tables (4 on reviews + 3 on aggregates)'
 );
 
 -- ─── 22. service_listings cache UPDATE grant (narrow) ─────────────────────────

@@ -212,6 +212,35 @@ create policy service_review_aggregates_select
   on public.service_review_aggregates for select to anon, authenticated
   using (true);
 
+drop policy if exists service_review_aggregates_insert on public.service_review_aggregates;
+create policy service_review_aggregates_insert
+  on public.service_review_aggregates for insert to authenticated
+  with check (true);
+
+drop policy if exists service_review_aggregates_update on public.service_review_aggregates;
+create policy service_review_aggregates_update
+  on public.service_review_aggregates for update to authenticated
+  using (true)
+  with check (true);
+
+drop policy if exists service_listings_update_review_cache on public.service_listings;
+create policy service_listings_update_review_cache
+  on public.service_listings for update to authenticated
+  using (
+    exists (
+      select 1 from public.service_contracts c
+       where c.service_listing_id = service_listings.id
+         and (c.client_entity_id = auth.uid() or c.professional_entity_id = auth.uid())
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.service_contracts c
+       where c.service_listing_id = service_listings.id
+         and (c.client_entity_id = auth.uid() or c.professional_entity_id = auth.uid())
+    )
+  );
+
 -- =============================================================================
 -- SECTION 4: RPCs (all SECURITY INVOKER)
 -- =============================================================================

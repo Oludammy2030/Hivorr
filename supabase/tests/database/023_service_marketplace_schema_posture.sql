@@ -327,14 +327,14 @@ select ok(
   'the anon-executable service_% functions are service_listing_get + review_get_for_listing'
 );
 
--- ─── 25. RLS policy surface: 4 + 4 + 3 ────────────────────────────────────────
+-- ─── 25. RLS policy surface: 5 + 4 + 3 (extra service_listings_update_review_cache from EP-03-03) ─
 select is(
   (select count(*)::int
      from pg_policies
     where schemaname = 'public'
       and tablename in ('service_listings', 'service_listing_media', 'service_favorites')),
-  11,
-  'exactly 11 RLS policies on the 3 marketplace tables (4+4+3)'
+  12,
+  'exactly 12 RLS policies on the 3 marketplace tables (5+4+3 with review cache)'
 );
 
 select * from finish();
