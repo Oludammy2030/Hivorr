@@ -642,16 +642,17 @@ select throws_ok($$ update public.service_listings
    where id = current_setting('test.l4')::uuid
      and entity_id = current_setting('test.a')::uuid $$,
   '42501', null, 'view_count has no authenticated UPDATE grant (42501)');
-select throws_ok($$ update public.service_listings
-    set avg_rating = 4
-   where id = current_setting('test.l4')::uuid
-     and entity_id = current_setting('test.a')::uuid $$,
-  '42501', null, 'avg_rating has no authenticated UPDATE grant (42501)');
-select throws_ok($$ update public.service_listings
-    set review_count = 9
-   where id = current_setting('test.l4')::uuid
-     and entity_id = current_setting('test.a')::uuid $$,
-  '42501', null, 'review_count has no authenticated UPDATE grant (42501)');
+-- EP-03-03 approved deviation: avg_rating/review_count now have authenticated UPDATE for reveal cache
+select lives_ok($$ update public.service_listings
+     set avg_rating = 4
+    where id = current_setting('test.l4')::uuid
+      and entity_id = current_setting('test.a')::uuid $$,
+   'avg_rating now has authenticated UPDATE grant for reveal cache (EP-03-03 deviation)');
+select lives_ok($$ update public.service_listings
+     set review_count = 9
+    where id = current_setting('test.l4')::uuid
+      and entity_id = current_setting('test.a')::uuid $$,
+   'review_count now has authenticated UPDATE grant for reveal cache (EP-03-03 deviation)');
 select throws_ok($$ update public.service_listings
     set search_vector = to_tsvector('english', 'injected')
    where id = current_setting('test.l4')::uuid
