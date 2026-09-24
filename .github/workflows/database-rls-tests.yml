@@ -53,17 +53,27 @@ jobs:
           echo "Pre-pulling Supabase images from public.ecr.aws (bypass ghcr.io 44000/minute)..."
           # supabase start pulls from ghcr.io by default; pre-pull from public.ecr.aws
           # and tag as ghcr.io so supabase start reuses cached layers.
-          for img in postgres:15.8.1.085 postgres-meta:v0.98.0 postgrest:v16.1 storage-api:v1.69.11 gotrue:v2.195.0 realtime:v2.129.0 edge-runtime:v1.74.3 studio:2026.08.17-sha-0c1da8f kong:2.8.1 inbucket:v0.0.0 supavisor:2.4.14 imgproxy:v0.14.0 vector:0.53.0-alpine logflare:1.50.2; do
+          # Also pre-pull pg_prove for supabase test db.
+          for img in postgres:15.8.1.085 postgres-meta:v0.98.0 postgrest:v16.1 storage-api:v1.69.11 gotrue:v2.195.0 realtime:v2.129.0 edge-runtime:v1.74.3 studio:2026.08.17-sha-0c1da8f kong:2.8.1 inbucket:v0.0.0 supavisor:2.4.14 imgproxy:v0.14.0 vector:0.53.0-alpine logflare:1.50.2 pg_prove:3.36; do
             echo "Pulling public.ecr.aws/supabase/$img..."
             if docker pull public.ecr.aws/supabase/$img; then
               docker tag public.ecr.aws/supabase/$img ghcr.io/supabase/$img || true
               docker tag public.ecr.aws/supabase/$img supabase/$img || true
             else
               echo "Warning: failed to pull public.ecr.aws/supabase/$img, will retry via ghcr.io on supabase start"
+              # Fallback: try ghcr.io directly with retry
+              for r in 1 2 3; do
+                if docker pull ghcr.io/supabase/$img; then
+                  docker tag ghcr.io/supabase/$img public.ecr.aws/supabase/$img || true
+                  break
+                fi
+                echo "ghcr.io pull failed for $img, retry $r/3 in $((r*5))s..."
+                sleep $((r*5))
+              done || true
             fi
           done
           echo "Pre-pull complete, cached images:"
-          docker images | grep -E "supabase|postgres" || true
+          docker images | grep -E "supabase|postgres|pg_prove" || true
 
       - name: Start local Supabase instance
         shell: bash
@@ -91,10 +101,44 @@ jobs:
           done
 
       - name: Rebuild clean database from migrations
-        run: supabase db reset
+        shell: bash
+        run: |
+          set -e
+          for i in 1 2 3; do
+            echo "Attempt $i/3: supabase db reset..."
+            if supabase db reset; then
+              echo "supabase db reset succeeded on attempt $i"
+              break
+            fi
+            RC=$?
+            if [ "$i" -eq 3 ]; then
+              echo "::error::supabase db reset failed after 3 attempts"
+              exit $RC
+            fi
+            SLEEP=$((i * 10))
+            echo "supabase db reset failed, retrying in ${SLEEP}s..."
+            sleep $SLEEP
+          done
 
       - name: Run pgTAP enforcement suite
-        run: supabase test db
+        shell: bash
+        run: |
+          set -e
+          for i in 1 2 3; do
+            echo "Attempt $i/3: supabase test db..."
+            if supabase test db; then
+              echo "supabase test db succeeded on attempt $i"
+              break
+            fi
+            RC=$?
+            if [ "$i" -eq 3 ]; then
+              echo "::error::supabase test db failed after 3 attempts"
+              exit $RC
+            fi
+            SLEEP=$((i * 10))
+            echo "supabase test db failed (likely GHCR pg_prove pull), retrying in ${SLEEP}s..."
+            sleep $SLEEP
+          done
 
       - name: Migration secret scan
         shell: bash
