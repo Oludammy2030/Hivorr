@@ -211,13 +211,18 @@ create policy messages_insert
 -- =============================================================================
 
 -- ─── 5a. conversation_ensure_for_contract ────────────────────────────────────
+-- SECURITY DEFINER required to insert both participants (client and professional)
+-- without RLS recursion: the second participant insert (professional) is performed
+-- by the client caller and would violate participant self-insert RLS. DEFINER
+-- bypasses RLS for the two inserts while still validating caller is a
+-- participant via service_contracts (pinned search_path, narrowly scoped).
 create or replace function public.conversation_ensure_for_contract(
   p_contract_id uuid
 )
 returns jsonb
 language plpgsql
-security invoker
-set search_path = public
+security definer
+set search_path = pg_catalog, public
 volatile
 as $$
 declare

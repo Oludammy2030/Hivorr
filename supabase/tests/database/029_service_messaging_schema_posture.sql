@@ -12,7 +12,7 @@
 
 begin;
 set search_path to extensions, public;
-select plan(28);
+select plan(29);
 
 -- ─── 0. All 3 tables exist ────────────────────────────────────────────────────
 select has_table('public', 'conversations', 'conversations exists');
@@ -201,7 +201,7 @@ select is(
   'messages has no updated_at trigger (immutable)'
 );
 
--- ─── 14. No conversation_%/message_% SECURITY DEFINER ───────────────────────
+-- ─── 14. Exactly 1 conversation_%/message_% SECURITY DEFINER (ensure) ────────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -209,8 +209,12 @@ select is(
     where n.nspname = 'public'
       and (p.proname like 'conversation\_%' or p.proname like 'message\_%')
       and p.prosecdef),
-  0,
-  'no conversation_%/message_% function is SECURITY DEFINER'
+  1,
+  'exactly one messaging function is SECURITY DEFINER (conversation_ensure_for_contract)'
+);
+select ok(
+  (select p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname='public' and p.proname='conversation_ensure_for_contract'),
+  'conversation_ensure_for_contract is SECURITY DEFINER'
 );
 
 -- ─── 15. Exactly 4 messaging RPCs (jsonb) ────────────────────────────────────
