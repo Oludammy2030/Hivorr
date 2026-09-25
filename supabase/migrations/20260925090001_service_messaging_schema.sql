@@ -359,27 +359,18 @@ begin
     perform public.platform_raise_error('PLT003', 'Client message id is required.');
   end if;
 
-  -- Validate conversation exists and caller is participant (RLS-filtered, no oracle)
+  -- Validate conversation exists (any authenticated can see via USING true) and caller is participant
   select c.id into v_conversation
     from public.conversations c
    where c.id = p_conversation_id
-     and exists (select 1 from public.conversation_participants cp where cp.conversation_id = c.id and cp.entity_id = v_actor)
   for update;
 
   if not found then
-    -- Check if conversation exists at all to keep identical PLT004 for foreign vs unknown
-    if not exists (select 1 from public.conversations where id = p_conversation_id) then
-      perform public.platform_raise_error('PLT004', 'Conversation not found.');
-    end if;
-    -- Exists but not participant -> same PLT004 (no oracle)
     perform public.platform_raise_error('PLT004', 'Conversation not found.');
   end if;
 
-  -- Also check via service_role bypass: if service_role, skip participant check
-  if current_user in ('service_role', 'postgres') then
-    -- allow service_role regardless, already validated existence above
-    null;
-  else
+  -- Participant check (identical PLT004 for foreign vs unknown, no oracle)
+  if current_user not in ('service_role', 'postgres') then
     if not exists (select 1 from public.conversation_participants cp where cp.conversation_id = p_conversation_id and cp.entity_id = v_actor) then
       perform public.platform_raise_error('PLT004', 'Conversation not found.');
     end if;
