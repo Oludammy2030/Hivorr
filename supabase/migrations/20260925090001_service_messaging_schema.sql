@@ -269,7 +269,7 @@ begin
 
   if v_contract.client_entity_id <> v_actor
      and v_contract.professional_entity_id <> v_actor
-     and current_user not in ('service_role', 'postgres') then
+     and coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role','postgres') then
     perform public.platform_raise_error('PLT004', 'Conversation context not found.');
   end if;
 
@@ -521,14 +521,14 @@ begin
     perform public.platform_raise_error('PLT003', 'Limit must be between 1 and 100.');
   end if;
 
-  -- Participant check (identical PLT004 for foreign vs unknown)
-  if not exists (select 1 from public.conversation_participants cp where cp.conversation_id = p_conversation_id and cp.entity_id = v_actor)
-     and current_user not in ('service_role', 'postgres') then
-    -- Keep identical message for unknown conversation as well
-    if not exists (select 1 from public.conversations where id = p_conversation_id) then
+  -- Participant check (identical PLT004 for foreign vs unknown) - use JWT role for DEFINER
+  if coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role','postgres') then
+    if not exists (select 1 from public.conversation_participants cp where cp.conversation_id = p_conversation_id and cp.entity_id = v_actor) then
+      if not exists (select 1 from public.conversations where id = p_conversation_id) then
+        perform public.platform_raise_error('PLT004', 'Conversation not found.');
+      end if;
       perform public.platform_raise_error('PLT004', 'Conversation not found.');
     end if;
-    perform public.platform_raise_error('PLT004', 'Conversation not found.');
   end if;
 
   if p_cursor is not null then
@@ -585,13 +585,13 @@ grant execute on function public.conversation_list(integer, uuid) to authenticat
 grant execute on function public.message_list(uuid, integer, uuid) to authenticated, service_role;
 
 comment on function public.conversation_ensure_for_contract(uuid) is
-  'SECURITY INVOKER, VOLATILE. Idempotent 1:1 per service_contracts, participant-validated PLT004, ON CONFLICT DO NOTHING + 2 participants. Audit-logged.';
+  'SECURITY DEFINER, VOLATILE. Idempotent 1:1 per service_contracts, participant-validated PLT004, ON CONFLICT DO NOTHING + 2 participants. Audit-logged. Pinned search_path.';
 comment on function public.message_send(uuid, text, text, uuid) is
-  'SECURITY INVOKER, VOLATILE. Opaque ciphertext 20-8000 + client_message_id dedup ON CONFLICT, participant EXISTS PLT004, preview left120 + PII regexp.';
+  'SECURITY DEFINER, VOLATILE. Opaque ciphertext 20-8000 + client_message_id dedup ON CONFLICT, participant EXISTS PLT004, preview left120 + PII regexp. Pinned search_path.';
 comment on function public.conversation_list(integer, uuid) is
-  'SECURITY INVOKER, STABLE. Keyset (created_at DESC, id DESC) via conversation_participants + LATERAL last preview, PLT003 limit, unknown cursor [] .';
+  'SECURITY DEFINER, STABLE. Participant-scoped keyset (created_at DESC, id DESC) via conversation_participants join + LATERAL last preview, PLT003 limit, unknown cursor [] . Pinned search_path.';
 comment on function public.message_list(uuid, integer, uuid) is
-  'SECURITY INVOKER, STABLE. Keyset (created_at DESC, id DESC) via messages_conversation_created_idx, participant PLT004, touches last_read_at.';
+  'SECURITY DEFINER, STABLE. Participant-scoped keyset (created_at DESC, id DESC) via messages_conversation_created_idx, participant PLT004, touches last_read_at. Pinned search_path.';
 
 -- =============================================================================
 -- SECTION 7: Realtime publication (guarded, idempotent)
