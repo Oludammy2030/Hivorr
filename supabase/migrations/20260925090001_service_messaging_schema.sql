@@ -174,16 +174,48 @@ create policy conversations_insert
 drop policy if exists conversation_participants_select on public.conversation_participants;
 create policy conversation_participants_select
   on public.conversation_participants for select to authenticated
-  using (entity_id = auth.uid());
+  using (
+    entity_id = auth.uid()
+    or exists (
+      select 1 from public.conversations c
+      join public.service_contracts sc on sc.id = c.contract_id
+     where c.id = conversation_participants.conversation_id
+       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
+    )
+  );
 drop policy if exists conversation_participants_insert on public.conversation_participants;
 create policy conversation_participants_insert
   on public.conversation_participants for insert to authenticated
-  with check (true);
+  with check (
+    entity_id = auth.uid()
+    or exists (
+      select 1 from public.service_contracts c
+      join public.conversations conv on conv.id = conversation_participants.conversation_id
+     where conv.contract_id = c.id
+       and (c.client_entity_id = auth.uid() or c.professional_entity_id = auth.uid())
+    )
+  );
 drop policy if exists conversation_participants_update on public.conversation_participants;
 create policy conversation_participants_update
   on public.conversation_participants for update to authenticated
-  using (entity_id = auth.uid())
-  with check (entity_id = auth.uid());
+  using (
+    entity_id = auth.uid()
+    or exists (
+      select 1 from public.conversations c
+      join public.service_contracts sc on sc.id = c.contract_id
+     where c.id = conversation_participants.conversation_id
+       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
+    )
+  )
+  with check (
+    entity_id = auth.uid()
+    or exists (
+      select 1 from public.conversations c
+      join public.service_contracts sc on sc.id = c.contract_id
+     where c.id = conversation_participants.conversation_id
+       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
+    )
+  );
 
 -- messages: participant-only select/insert
 drop policy if exists messages_select on public.messages;
@@ -242,7 +274,8 @@ begin
 
   if v_contract.client_entity_id <> v_actor
      and v_contract.professional_entity_id <> v_actor
-     and current_user not in ('service_role', 'postgres') then
+     and coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role','postgres')
+     and session_user not in ('service_role','postgres') then
     perform public.platform_raise_error('PLT004', 'Conversation context not found.');
   end if;
 
