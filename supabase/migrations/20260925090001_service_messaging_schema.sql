@@ -286,9 +286,6 @@ begin
     select id into v_conversation_id from public.conversations where contract_id = p_contract_id;
   end if;
 
-  -- Lock conversation row before inserting participants
-  perform 1 from public.conversations where id = v_conversation_id for update;
-
   -- Insert both participants (PK ON CONFLICT DO NOTHING for concurrent ensure)
   insert into public.conversation_participants (conversation_id, entity_id)
   values (v_conversation_id, v_client)
@@ -359,11 +356,10 @@ begin
     perform public.platform_raise_error('PLT003', 'Client message id is required.');
   end if;
 
-  -- Validate conversation exists (any authenticated can see via USING true) and caller is participant
+  -- Validate conversation exists (any authenticated can see via USING true)
   select c.id into v_conversation
     from public.conversations c
-   where c.id = p_conversation_id
-  for update;
+   where c.id = p_conversation_id;
 
   if not found then
     perform public.platform_raise_error('PLT004', 'Conversation not found.');
