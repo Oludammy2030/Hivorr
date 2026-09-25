@@ -161,11 +161,11 @@ grant select on public.messages to authenticated;
 grant insert (conversation_id, sender_entity_id, body_encrypted, body_preview, client_message_id) on public.messages to authenticated;
 grant select, insert, update, delete on public.messages to service_role;
 
--- Policies: participant-only via EXISTS join (Plan:179 leakage mitigation)
+-- Policies: participant-only via service_contracts (avoid recursive RLS) + entity check
 drop policy if exists conversations_select on public.conversations;
 create policy conversations_select
   on public.conversations for select to authenticated
-  using (exists (select 1 from public.conversation_participants cp where cp.conversation_id = conversations.id and cp.entity_id = auth.uid()));
+  using (exists (select 1 from public.service_contracts sc where sc.id = conversations.contract_id and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())));
 drop policy if exists conversations_insert on public.conversations;
 create policy conversations_insert
   on public.conversations for insert to authenticated
@@ -174,15 +174,7 @@ create policy conversations_insert
 drop policy if exists conversation_participants_select on public.conversation_participants;
 create policy conversation_participants_select
   on public.conversation_participants for select to authenticated
-  using (
-    entity_id = auth.uid()
-    or exists (
-      select 1 from public.conversations c
-      join public.service_contracts sc on sc.id = c.contract_id
-     where c.id = conversation_participants.conversation_id
-       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
-    )
-  );
+  using (entity_id = auth.uid());
 drop policy if exists conversation_participants_insert on public.conversation_participants;
 create policy conversation_participants_insert
   on public.conversation_participants for insert to authenticated
@@ -198,24 +190,8 @@ create policy conversation_participants_insert
 drop policy if exists conversation_participants_update on public.conversation_participants;
 create policy conversation_participants_update
   on public.conversation_participants for update to authenticated
-  using (
-    entity_id = auth.uid()
-    or exists (
-      select 1 from public.conversations c
-      join public.service_contracts sc on sc.id = c.contract_id
-     where c.id = conversation_participants.conversation_id
-       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
-    )
-  )
-  with check (
-    entity_id = auth.uid()
-    or exists (
-      select 1 from public.conversations c
-      join public.service_contracts sc on sc.id = c.contract_id
-     where c.id = conversation_participants.conversation_id
-       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
-    )
-  );
+  using (entity_id = auth.uid())
+  with check (entity_id = auth.uid());
 
 -- messages: participant-only select/insert
 drop policy if exists messages_select on public.messages;
