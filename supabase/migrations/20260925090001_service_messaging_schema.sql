@@ -557,10 +557,10 @@ begin
 
   if not v_has_more then v_next := null; end if;
 
-  -- Touch last_read_at for requester (fire-and-forget, ignore errors)
+  -- Touch last_read_at for requester (fire-and-forget, ignore errors) - use auth.uid() directly for DEFINER
   begin
     update public.conversation_participants set last_read_at = now()
-     where conversation_id = p_conversation_id and entity_id = v_actor;
+     where conversation_id = p_conversation_id and entity_id = auth.uid();
   exception when others then null;
   end;
 
