@@ -174,7 +174,15 @@ create policy conversations_insert
 drop policy if exists conversation_participants_select on public.conversation_participants;
 create policy conversation_participants_select
   on public.conversation_participants for select to authenticated
-  using (exists (select 1 from public.conversation_participants cp2 where cp2.conversation_id = conversation_participants.conversation_id and cp2.entity_id = auth.uid()));
+  using (
+    entity_id = auth.uid()
+    or exists (
+      select 1 from public.conversations c
+      join public.service_contracts sc on sc.id = c.contract_id
+     where c.id = conversation_participants.conversation_id
+       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
+    )
+  );
 drop policy if exists conversation_participants_insert on public.conversation_participants;
 create policy conversation_participants_insert
   on public.conversation_participants for insert to authenticated
@@ -190,8 +198,24 @@ create policy conversation_participants_insert
 drop policy if exists conversation_participants_update on public.conversation_participants;
 create policy conversation_participants_update
   on public.conversation_participants for update to authenticated
-  using (exists (select 1 from public.conversation_participants cp where cp.conversation_id = conversation_participants.conversation_id and cp.entity_id = auth.uid()))
-  with check (exists (select 1 from public.conversation_participants cp where cp.conversation_id = conversation_participants.conversation_id and cp.entity_id = auth.uid()));
+  using (
+    entity_id = auth.uid()
+    or exists (
+      select 1 from public.conversations c
+      join public.service_contracts sc on sc.id = c.contract_id
+     where c.id = conversation_participants.conversation_id
+       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
+    )
+  )
+  with check (
+    entity_id = auth.uid()
+    or exists (
+      select 1 from public.conversations c
+      join public.service_contracts sc on sc.id = c.contract_id
+     where c.id = conversation_participants.conversation_id
+       and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())
+    )
+  );
 
 -- messages: participant-only select/insert
 drop policy if exists messages_select on public.messages;
