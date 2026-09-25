@@ -147,8 +147,8 @@ revoke all on
   public.messages
 from anon, authenticated, service_role;
 
--- conversations: authenticated participant read + insert via RPC (SECURITY INVOKER needs INSERT grant)
-grant select, insert on public.conversations to authenticated;
+-- conversations: authenticated participant read + insert via RPC (SECURITY INVOKER needs INSERT+UPDATE for FOR UPDATE lock)
+grant select, insert, update on public.conversations to authenticated;
 grant select, insert, update, delete on public.conversations to service_role;
 
 -- conversation_participants: authenticated read+insert+update(last_read_at)
