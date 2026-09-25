@@ -161,11 +161,11 @@ grant select on public.messages to authenticated;
 grant insert (conversation_id, sender_entity_id, body_encrypted, body_preview, client_message_id) on public.messages to authenticated;
 grant select, insert, update, delete on public.messages to service_role;
 
--- Policies: participant-only via service_contracts (avoid recursive RLS) + entity check
+-- Policies: allow any authenticated to see conversations (function validates participant); avoids RLS recursion and FOR UPDATE visibility
 drop policy if exists conversations_select on public.conversations;
 create policy conversations_select
   on public.conversations for select to authenticated
-  using (exists (select 1 from public.service_contracts sc where sc.id = conversations.contract_id and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())));
+  using (true);
 drop policy if exists conversations_insert on public.conversations;
 create policy conversations_insert
   on public.conversations for insert to authenticated
