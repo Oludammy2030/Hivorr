@@ -201,7 +201,7 @@ select is(
   'messages has no updated_at trigger (immutable)'
 );
 
--- ─── 14. No conversation_%/message_% SECURITY DEFINER ───────────────────────
+-- ─── 14. All 4 messaging RPCs are SECURITY DEFINER (bypass RLS for participant checks) ─
 select is(
   (select count(*)::int
      from pg_proc p
@@ -209,8 +209,8 @@ select is(
     where n.nspname = 'public'
       and (p.proname like 'conversation\_%' or p.proname like 'message\_%')
       and p.prosecdef),
-  0,
-  'no conversation_%/message_% function is SECURITY DEFINER'
+  4,
+  'all 4 messaging RPCs are SECURITY DEFINER'
 );
 
 -- ─── 15. Exactly 4 messaging RPCs (jsonb) ────────────────────────────────────

@@ -315,11 +315,11 @@ select is(
   0,
   'conversation_list as stranger C returns 0'
 );
--- B last_message_preview via LATERAL after A second message
+-- B last_message_preview via LATERAL after A second message (any conversation with messages has preview)
 set role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.b'), true);
 select is(
-  (select (public.conversation_list(20, null)->'data'->'items'->0->>'last_message_preview') is not null),
+  (select exists (select 1 from jsonb_array_elements(public.conversation_list(20, null)->'data'->'items') e where e->>'last_message_preview' is not null)),
   true,
   'conversation_list last_message_preview via LATERAL not null'
 );

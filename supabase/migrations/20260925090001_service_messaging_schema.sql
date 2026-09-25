@@ -161,11 +161,11 @@ grant select on public.messages to authenticated;
 grant insert (conversation_id, sender_entity_id, body_encrypted, body_preview, client_message_id) on public.messages to authenticated;
 grant select, insert, update, delete on public.messages to service_role;
 
--- Policies: allow any authenticated to see conversations (function validates participant); avoids RLS recursion and FOR UPDATE visibility
+-- Policies: participant-only via service_contracts (avoids recursion, ensures B sees conv1 but C does not)
 drop policy if exists conversations_select on public.conversations;
 create policy conversations_select
   on public.conversations for select to authenticated
-  using (true);
+  using (exists (select 1 from public.service_contracts sc where sc.id = conversations.contract_id and (sc.client_entity_id = auth.uid() or sc.professional_entity_id = auth.uid())));
 drop policy if exists conversations_insert on public.conversations;
 create policy conversations_insert
   on public.conversations for insert to authenticated
@@ -240,8 +240,8 @@ create or replace function public.conversation_ensure_for_contract(
 )
 returns jsonb
 language plpgsql
-security invoker
-set search_path = public
+security definer
+set search_path = pg_catalog, public
 volatile
 as $$
 declare
@@ -324,8 +324,8 @@ create or replace function public.message_send(
 )
 returns jsonb
 language plpgsql
-security invoker
-set search_path = public
+security definer
+set search_path = pg_catalog, public
 volatile
 as $$
 declare
@@ -365,8 +365,8 @@ begin
     perform public.platform_raise_error('PLT004', 'Conversation not found.');
   end if;
 
-  -- Participant check (identical PLT004 for foreign vs unknown, no oracle)
-  if current_user not in ('service_role', 'postgres') then
+  -- Participant check (identical PLT004 for foreign vs unknown, no oracle) - use JWT role for DEFINER
+  if coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role','postgres') then
     if not exists (select 1 from public.conversation_participants cp where cp.conversation_id = p_conversation_id and cp.entity_id = v_actor) then
       perform public.platform_raise_error('PLT004', 'Conversation not found.');
     end if;
@@ -377,6 +377,8 @@ begin
   if v_preview is not null then
     v_preview := regexp_replace(v_preview, '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '***@***.***', 'g');
     v_preview := regexp_replace(v_preview, '\+?234[\s-]?\d{3}[\s-]?\d{3}[\s-]?\d{4}', '***-****-****', 'g');
+    v_preview := regexp_replace(v_preview, '0\d{10}', '***-****-****', 'g');
+    v_preview := regexp_replace(v_preview, '\+?\d{10,15}', '***', 'g');
     v_preview := regexp_replace(v_preview, 'Bearer\s+\S+', 'Bearer ***', 'g');
     v_preview := regexp_replace(v_preview, 'eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', '***', 'g');
     v_preview := regexp_replace(v_preview, '\b\d{10}\b', '***', 'g');
@@ -426,8 +428,8 @@ create or replace function public.conversation_list(
 )
 returns jsonb
 language plpgsql
-security invoker
-set search_path = public
+security definer
+set search_path = pg_catalog, public
 stable
 as $$
 declare
@@ -495,8 +497,8 @@ create or replace function public.message_list(
 )
 returns jsonb
 language plpgsql
-security invoker
-set search_path = public
+security definer
+set search_path = pg_catalog, public
 stable
 as $$
 declare
