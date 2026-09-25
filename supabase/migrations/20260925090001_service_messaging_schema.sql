@@ -235,18 +235,13 @@ create policy messages_insert
 -- =============================================================================
 
 -- ─── 5a. conversation_ensure_for_contract ────────────────────────────────────
--- SECURITY DEFINER required to insert both participants (client and professional)
--- without RLS recursion: the second participant insert (professional) is performed
--- by the client caller and would violate participant self-insert RLS. DEFINER
--- bypasses RLS for the two inserts while still validating caller is a
--- participant via service_contracts (pinned search_path, narrowly scoped).
 create or replace function public.conversation_ensure_for_contract(
   p_contract_id uuid
 )
 returns jsonb
 language plpgsql
-security definer
-set search_path = pg_catalog, public
+security invoker
+set search_path = public
 volatile
 as $$
 declare
@@ -274,8 +269,7 @@ begin
 
   if v_contract.client_entity_id <> v_actor
      and v_contract.professional_entity_id <> v_actor
-     and coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role','postgres')
-     and session_user not in ('service_role','postgres') then
+     and current_user not in ('service_role', 'postgres') then
     perform public.platform_raise_error('PLT004', 'Conversation context not found.');
   end if;
 
