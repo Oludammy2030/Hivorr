@@ -229,7 +229,7 @@ select ok(
   'service_review_reveal_if_ready is SECURITY DEFINER'
 );
 
--- ─── 16. Exactly 19 service_% RPCs (7 marketplace + 8 contract + 4 review) ─────
+-- ─── 16. Exactly 21 service_% RPCs (7 marketplace + 8 contract + 4 review + 2 ranking) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -237,8 +237,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prorettype <> 'trigger'::regtype),
-  19,
-  'exactly 19 service_% RPCs exist (7 listing + 8 contract + 4 review)'
+  21,
+  'exactly 21 service_% RPCs exist (7 listing + 8 contract + 4 review + 2 ranking)'
 );
 
 -- ─── 17. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -287,44 +287,46 @@ select is(
   '4 storage.objects policies exist for service-listing-media'
 );
 
--- ─── 21. anon EXECUTE: service_listing_get + service_review_get_for_listing ──────
+-- ─── 21. anon EXECUTE: service_listing_get + service_review_get_for_listing + ranking_search + weights_get ──────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'anon'),
-  2,
-  'anon can execute exactly two service_% functions (listing_get + review_get_for_listing)'
+  4,
+  'anon can execute exactly four service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get)'
 );
 
--- ─── 22. authenticated EXECUTE on all 19 ──────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 21 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'authenticated'),
-  19,
-  'authenticated can execute all 19 service_% RPCs (7 marketplace + 8 contract + 4 review)'
+  21,
+  'authenticated can execute all 21 service_% RPCs (7 marketplace + 8 contract + 4 review + 2 ranking)'
 );
 
--- ─── 23. service_role EXECUTE on all 19 ───────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 21 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'service_role'),
-  19,
-  'service_role can execute all 19 service_% RPCs'
+  21,
+  'service_role can execute all 21 service_% RPCs'
 );
 
--- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing ─
+-- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing + ranking_search + weights_get ─
 select ok(
   has_function_privilege('anon', 'public.service_listing_get(uuid)', 'EXECUTE')
-  and has_function_privilege('anon', 'public.service_review_get_for_listing(uuid, integer, uuid)', 'EXECUTE'),
-  'the anon-executable service_% functions are service_listing_get + review_get_for_listing'
+  and has_function_privilege('anon', 'public.service_review_get_for_listing(uuid, integer, uuid)', 'EXECUTE')
+  and has_function_privilege('anon', 'public.service_ranking_search(uuid, text, jsonb, jsonb, integer)', 'EXECUTE')
+  and has_function_privilege('anon', 'public.service_ranking_weights_get()', 'EXECUTE'),
+  'the anon-executable service_% functions are service_listing_get + review_get_for_listing + ranking_search + weights_get'
 );
 
 -- ─── 25. RLS policy surface: 4 + 4 + 3 ────────────────────────────────────────
