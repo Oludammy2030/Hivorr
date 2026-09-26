@@ -90,22 +90,26 @@ class MarketplaceSearchProvider extends ChangeNotifier {
   /// Callers must not client-sort the returned list (CI lint checks
   /// `sort.*score`).
   Future<void> search({int limit = 20}) => _run(() async {
-        final ServiceSearchPage page = await repository.search(
-          professionId: _professionId,
-          query: _query.trim().isEmpty ? null : _query.trim(),
-          filters: _filters.isEmpty ? null : _filters,
-          cursor: null,
-          limit: limit,
-        );
-        _items = page.items;
-        _hasMore = page.hasMore;
-        _nextCursor = page.nextCursor;
-        _weightsVersion = page.weightsVersion;
-      });
+    final ServiceSearchPage page = await repository.search(
+      professionId: _professionId,
+      query: _query.trim().isEmpty ? null : _query.trim(),
+      filters: _filters.isEmpty ? null : _filters,
+      cursor: null,
+      limit: limit,
+    );
+    _items = page.items;
+    _hasMore = page.hasMore;
+    _nextCursor = page.nextCursor;
+    _weightsVersion = page.weightsVersion;
+  });
 
   /// Loads the next page using `nextCursor` (keyset `score,id`).
   Future<void> loadMore({int limit = 20}) async {
-    if (!_hasMore || _nextCursor == null || _state == MarketplaceSearchState.loading) return;
+    if (!_hasMore ||
+        _nextCursor == null ||
+        _state == MarketplaceSearchState.loading) {
+      return;
+    }
     await _run(() async {
       final ServiceSearchPage page = await repository.search(
         professionId: _professionId,
@@ -132,7 +136,10 @@ class MarketplaceSearchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _run(Future<void> Function() action, {bool isLoadMore = false}) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    bool isLoadMore = false,
+  }) async {
     if (!isLoadMore) {
       _state = MarketplaceSearchState.loading;
       _error = null;
