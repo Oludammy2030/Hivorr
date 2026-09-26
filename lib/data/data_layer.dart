@@ -1,13 +1,17 @@
 import 'package:hivorr/config/wallet/wallet_conversion_pairs_config.dart';
 import 'package:hivorr/config/wallet/wallet_conversion_rates_seed.dart';
 import 'package:hivorr/core/api/api_initializer.dart';
+import 'package:hivorr/core/cache/cache_manager.dart';
 import 'package:hivorr/core/database/local_store.dart';
 import 'package:hivorr/core/database/storage_engine.dart';
 import 'package:hivorr/core/logging/hivorr_logger.dart';
 import 'package:hivorr/core/storage/storage_service.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
+import 'package:hivorr/data/datasources/local/hive_service_search_local_data_source.dart';
+import 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+import 'package:hivorr/data/datasources/remote/service_search_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
@@ -34,6 +38,7 @@ import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
+import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
@@ -59,12 +64,15 @@ import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
 import 'package:hivorr/data/repositories/onboarding_repository.dart';
 import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
+import 'package:hivorr/data/repositories/service_search_repository.dart';
+import 'package:hivorr/data/repositories/service_search_repository_impl.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
 import 'package:hivorr/data/repositories/trade_verification_repository.dart';
 import 'package:hivorr/data/repositories/trade_verification_repository_impl.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository_impl.dart';
+import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dart';
 import 'package:hivorr/systems/finance/services/conversion_rate_source.dart';
 import 'package:hivorr/systems/finance/services/conversion_service.dart';
@@ -76,8 +84,11 @@ import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/support/services/dispute_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
+import 'package:hivorr/workspace/profession_registry/taxonomy_engine.dart';
 
 export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
+export 'package:hivorr/data/datasources/local/hive_service_search_local_data_source.dart';
+export 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 export 'package:hivorr/data/datasources/remote/conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
@@ -95,6 +106,8 @@ export 'package:hivorr/data/datasources/remote/manage_user_remote_data_source.da
 export 'package:hivorr/data/datasources/remote/onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/service_search_envelope_parser.dart';
+export 'package:hivorr/data/datasources/remote/service_search_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
@@ -142,6 +155,7 @@ export 'package:hivorr/data/entities/profession.dart';
 export 'package:hivorr/data/entities/public_credential.dart';
 export 'package:hivorr/data/entities/public_profession.dart';
 export 'package:hivorr/data/entities/public_profile.dart';
+export 'package:hivorr/data/entities/service_listing.dart';
 export 'package:hivorr/data/entities/trade_verification_status.dart';
 export 'package:hivorr/data/entities/verification_status.dart';
 export 'package:hivorr/data/entities/verification_submission.dart';
@@ -161,6 +175,7 @@ export 'package:hivorr/data/mappers/industry_mapper.dart';
 export 'package:hivorr/data/mappers/onboarding_status_mapper.dart';
 export 'package:hivorr/data/mappers/portfolio_mappers.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
+export 'package:hivorr/data/mappers/service_listing_mapper.dart';
 export 'package:hivorr/data/mappers/verification_mapper.dart';
 export 'package:hivorr/data/models/balance_dto.dart';
 export 'package:hivorr/data/models/conversion_preview_dto.dart';
@@ -192,6 +207,7 @@ export 'package:hivorr/data/models/profession_dto.dart';
 export 'package:hivorr/data/models/public_credential_dto.dart';
 export 'package:hivorr/data/models/public_profession_dto.dart';
 export 'package:hivorr/data/models/public_profile_dto.dart';
+export 'package:hivorr/data/models/service_listing_dto.dart';
 export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
@@ -206,6 +222,7 @@ export 'package:hivorr/data/providers/financial_payout_provider.dart';
 export 'package:hivorr/data/providers/financial_provider.dart';
 export 'package:hivorr/data/providers/kyc_provider.dart';
 export 'package:hivorr/data/providers/manage_user_provider.dart';
+export 'package:hivorr/data/providers/marketplace_search_provider.dart';
 export 'package:hivorr/data/providers/onboarding_provider.dart';
 export 'package:hivorr/data/providers/portfolio_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
@@ -236,6 +253,8 @@ export 'package:hivorr/data/repositories/onboarding_repository.dart';
 export 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 export 'package:hivorr/data/repositories/portfolio_repository.dart';
 export 'package:hivorr/data/repositories/portfolio_repository_impl.dart';
+export 'package:hivorr/data/repositories/service_search_repository.dart';
+export 'package:hivorr/data/repositories/service_search_repository_impl.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository_impl.dart';
 export 'package:hivorr/data/repositories/trade_verification_repository.dart';
@@ -285,6 +304,57 @@ registerTaxonomyLayer(ApiLayer apiLayer) {
   return (
     repository: repository,
     provider: TaxonomyProvider(repository: repository),
+  );
+}
+
+/// Wires the ranked marketplace-search data slice for EP-03-07.
+///
+/// Builds the [ServiceSearchRepository] (browse cache-first, FTS
+/// network-first) over the single `service_ranking_search` RPC seam and
+/// returns a ready [MarketplaceSearchProvider] plus the [ServiceSearchIndex]
+/// offline-browse hydrator. Mirrors `registerTaxonomyLayer`: ordering stays
+/// server-decided (`AGENT.md:7`), the client never resorts `items`.
+///
+/// The local datasource degrades gracefully: when [storageEngine] is supplied
+/// the [HiveServiceSearchLocalDataSource] persists ranked pages across
+/// restarts (fronted by the shared [CacheManager] when initialized),
+/// otherwise the transient `CacheManagerServiceSearchLocalDataSource`
+/// (in-memory fallback until the app initializes the shared cache).
+/// Exposed for the bootstrap to register in the widget tree's MultiProvider
+/// (consumer: EP-03-09 discovery screens).
+///
+/// Returns repository, provider, and index so callers can provide the
+/// repository as a `Provider<ServiceSearchRepository>` alongside the
+/// `ChangeNotifierProvider<MarketplaceSearchProvider>`.
+/// No new `GIN`/`search_vector` DDL — FTS composes the EP-03-01 trigger +
+/// `GIN(search_vector)` via the EP-03-06 ranking RPC (plan §7.1).
+({
+  ServiceSearchRepository repository,
+  MarketplaceSearchProvider provider,
+  ServiceSearchIndex index,
+})
+registerMarketplaceSearchLayer(
+  ApiLayer apiLayer, {
+  required TaxonomyRepository taxonomyRepository,
+  StorageEngine? storageEngine,
+}) {
+  final remote = SupabaseServiceSearchRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final ServiceSearchLocalDataSource local = HiveServiceSearchLocalDataSource(
+    store: storageEngine != null ? LocalStore(storageEngine) : null,
+    cache: CacheManager.isInitialized ? CacheManager.instance : null,
+  );
+  final repository = ServiceSearchRepositoryImpl(remote: remote, local: local);
+  return (
+    repository: repository,
+    provider: MarketplaceSearchProvider(repository: repository),
+    index: ServiceSearchIndex(
+      repository: repository,
+      taxonomy: TaxonomyEngine(repository: taxonomyRepository),
+    ),
   );
 }
 

@@ -13,6 +13,7 @@ import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
+import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
@@ -30,6 +31,9 @@ class BootstrapResult {
     required this.localeProvider,
     required this.taxonomyRepository,
     required this.taxonomyProvider,
+    this.marketplaceSearchRepository,
+    this.marketplaceSearchProvider,
+    this.marketplaceSearchIndex,
     required this.verificationRepository,
     required this.verificationProvider,
     this.escrowRepository,
@@ -68,6 +72,16 @@ class BootstrapResult {
 
   /// Taxonomy provider surfaced to the widget tree (EP-02-07).
   final TaxonomyProvider taxonomyProvider;
+
+  /// Ranked marketplace-search repository (EP-03-07). Optional for testability.
+  final ServiceSearchRepository? marketplaceSearchRepository;
+
+  /// Ranked marketplace-search provider surfaced to the widget tree (EP-03-07).
+  final MarketplaceSearchProvider? marketplaceSearchProvider;
+
+  /// Offline-browse cache warmer for ranked discovery (EP-03-07). Optional
+  /// for testability; ranking stays server-decided (`AGENT.md:7`).
+  final ServiceSearchIndex? marketplaceSearchIndex;
 
   /// Identity-verification repository (EP-02-10).
   final VerificationRepository verificationRepository;
@@ -193,6 +207,16 @@ class AppBootstrap {
     await localeProvider.initialize();
     final ({TaxonomyRepository repository, TaxonomyProvider provider})
     taxonomy = registerTaxonomyLayer(apiLayer);
+    final ({
+      ServiceSearchRepository repository,
+      MarketplaceSearchProvider provider,
+      ServiceSearchIndex index,
+    })
+    marketplaceSearch = registerMarketplaceSearchLayer(
+      apiLayer,
+      taxonomyRepository: taxonomy.repository,
+      storageEngine: storage,
+    );
     final ({VerificationRepository repository, VerificationProvider provider})
     verification = registerVerificationLayer(apiLayer);
     final ({EscrowRepository repository, EscrowProvider provider}) escrow =
@@ -255,6 +279,9 @@ class AppBootstrap {
       localeProvider: localeProvider,
       taxonomyRepository: taxonomy.repository,
       taxonomyProvider: taxonomy.provider,
+      marketplaceSearchRepository: marketplaceSearch.repository,
+      marketplaceSearchProvider: marketplaceSearch.provider,
+      marketplaceSearchIndex: marketplaceSearch.index,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,
       escrowRepository: escrow.repository,

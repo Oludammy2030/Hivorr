@@ -162,6 +162,7 @@ class ServiceSearchFilters {
     this.currencyCode,
     this.ratingMin,
     this.isTradeVerifiedOnly,
+    this.availabilityDate,
   });
 
   final String? professionId;
@@ -171,6 +172,7 @@ class ServiceSearchFilters {
   final String? currencyCode; // ISO 4217, active only
   final double? ratingMin; // 0..5
   final bool? isTradeVerifiedOnly; // alias is_verified_only
+  final DateTime? availabilityDate; // timestamptz, PLT003 on bad cast server-side
 
   bool get isEmpty =>
       professionId == null &&
@@ -179,7 +181,8 @@ class ServiceSearchFilters {
       priceMax == null &&
       currencyCode == null &&
       ratingMin == null &&
-      isTradeVerifiedOnly == null;
+      isTradeVerifiedOnly == null &&
+      availabilityDate == null;
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> m = <String, dynamic>{};
@@ -191,6 +194,9 @@ class ServiceSearchFilters {
     if (ratingMin != null) m['rating_min'] = ratingMin;
     if (isTradeVerifiedOnly != null) {
       m['is_trade_verified_only'] = isTradeVerifiedOnly;
+    }
+    if (availabilityDate != null) {
+      m['availability_date'] = availabilityDate!.toIso8601String();
     }
     return m;
   }
