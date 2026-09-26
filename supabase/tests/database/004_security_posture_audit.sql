@@ -7,7 +7,7 @@
 
 begin;
 set search_path to extensions, public;
-select plan(19);
+select plan(20);
 
 -- ─── Tables exist ───────────────────────────────────────────────────────────
 select has_table('public', 'platform_audit_log', 'platform_audit_log exists');
@@ -26,14 +26,26 @@ select is(
 );
 
 -- ─── Default-deny privileges ────────────────────────────────────────────────
+-- EP-03-06 adds platform_config with anon SELECT for public ranking weights (exception to default-deny)
 select is(
   (select count(*)::int
      from information_schema.role_table_grants
     where table_schema = 'public'
       and table_name like 'platform\_%'
+      and table_name <> 'platform_config'
       and grantee = 'anon'),
   0,
-  'anon has zero table grants on platform tables'
+  'anon has zero table grants on platform tables except platform_config'
+);
+select is(
+  (select count(*)::int
+     from information_schema.role_table_grants
+    where table_schema = 'public'
+      and table_name = 'platform_config'
+      and grantee = 'anon'
+      and privilege_type = 'SELECT'),
+  1,
+  'anon has SELECT on platform_config for public ranking weights (EP-03-06)'
 );
 
 select is(
