@@ -21,6 +21,7 @@ import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
+import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
@@ -34,8 +35,10 @@ import 'package:hivorr/data/repositories/financial_payout_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/portfolio_repository.dart';
+import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
+import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
 import 'package:provider/provider.dart';
@@ -54,6 +57,9 @@ class HivorrApp extends StatefulWidget {
     required this.lifecycleObserver,
     required this.taxonomyRepository,
     required this.taxonomyProvider,
+    this.marketplaceSearchRepository,
+    this.marketplaceSearchProvider,
+    this.marketplaceSearchIndex,
     this.verificationRepository,
     this.verificationProvider,
     this.escrowRepository,
@@ -89,6 +95,16 @@ class HivorrApp extends StatefulWidget {
   final AppLifecycleObserver lifecycleObserver;
   final TaxonomyRepository taxonomyRepository;
   final TaxonomyProvider taxonomyProvider;
+
+  /// Ranked marketplace-search repository (EP-03-07). Optional for testability.
+  final ServiceSearchRepository? marketplaceSearchRepository;
+
+  /// Ranked marketplace-search provider surfaced to the widget tree (EP-03-07).
+  final MarketplaceSearchProvider? marketplaceSearchProvider;
+
+  /// Offline-browse cache warmer for ranked discovery (EP-03-07). Optional
+  /// for testability; ranking stays server-decided (`AGENT.md:7`).
+  final ServiceSearchIndex? marketplaceSearchIndex;
 
   /// Identity-verification repository (EP-02-10). Optional for testability.
   final VerificationRepository? verificationRepository;
@@ -260,6 +276,12 @@ class _HivorrAppState extends State<HivorrApp> {
 
   @override
   Widget build(BuildContext context) {
+    final ServiceSearchRepository? marketplaceSearchRepository =
+        widget.marketplaceSearchRepository;
+    final MarketplaceSearchProvider? marketplaceSearchProvider =
+        widget.marketplaceSearchProvider;
+    final ServiceSearchIndex? marketplaceSearchIndex =
+        widget.marketplaceSearchIndex;
     final VerificationRepository? verificationRepository =
         widget.verificationRepository;
     final VerificationProvider? verificationProvider =
@@ -295,6 +317,16 @@ class _HivorrAppState extends State<HivorrApp> {
         ChangeNotifierProvider<TaxonomyProvider>.value(
           value: widget.taxonomyProvider,
         ),
+        if (marketplaceSearchRepository != null)
+          Provider<ServiceSearchRepository>.value(
+            value: marketplaceSearchRepository,
+          ),
+        if (marketplaceSearchProvider != null)
+          ChangeNotifierProvider<MarketplaceSearchProvider>.value(
+            value: marketplaceSearchProvider,
+          ),
+        if (marketplaceSearchIndex != null)
+          Provider<ServiceSearchIndex>.value(value: marketplaceSearchIndex),
         if (verificationRepository != null)
           Provider<VerificationRepository>.value(value: verificationRepository),
         if (verificationProvider != null)

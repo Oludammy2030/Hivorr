@@ -4,7 +4,7 @@
 
 begin;
 set search_path to extensions, public;
-select plan(15);
+select plan(22);
 
 -- ── 1. Deterministic: same query twice → same items ─────────────────────
 select is(
@@ -97,6 +97,48 @@ select throws_ok(
   $$ select public.service_ranking_search(p_filters=>'{"rating_min":6}'::jsonb) $$,
   'P0001', null,
   'rating_min 6 throws PLT003'
+);
+
+-- ── 12. FTS query 'legal drafting' executes (ts_rank tie-break path) ──────
+select lives_ok(
+  $$ select public.service_ranking_search(p_query=>'legal drafting', p_limit=>5) $$,
+  'FTS query legal drafting executes'
+);
+select ok(
+  (select jsonb_array_length((service_ranking_search(p_query=>'legal drafting', p_limit=>50)->'data'->'items')::jsonb) <=
+          jsonb_array_length((service_ranking_search(p_limit=>50)->'data'->'items')::jsonb)),
+  'FTS query count does not exceed unfiltered count (ts_rank subset)'
+);
+
+-- ── 13. currency_code filter subset + unsupported currency PLT003 ──────────
+select ok(
+  (select jsonb_array_length((service_ranking_search(p_filters=>'{"currency_code":"NGN"}'::jsonb, p_limit=>50)->'data'->'items')::jsonb) <=
+          jsonb_array_length((service_ranking_search(p_limit=>50)->'data'->'items')::jsonb)),
+  'currency_code NGN filter does not increase result count'
+);
+select throws_ok(
+  $$ select public.service_ranking_search(p_filters=>'{"currency_code":"ZZZ"}'::jsonb) $$,
+  'P0001', null,
+  'unsupported currency throws PLT003'
+);
+
+-- ── 14. price range subset + inverted range PLT003 ─────────────────────────
+select ok(
+  (select jsonb_array_length((service_ranking_search(p_filters=>'{"price_min":1000,"price_max":5000}'::jsonb, p_limit=>50)->'data'->'items')::jsonb) <=
+          jsonb_array_length((service_ranking_search(p_limit=>50)->'data'->'items')::jsonb)),
+  'price_min/price_max filter does not increase result count'
+);
+select throws_ok(
+  $$ select public.service_ranking_search(p_filters=>'{"price_min":5000,"price_max":100}'::jsonb) $$,
+  'P0001', null,
+  'price_max below price_min throws PLT003'
+);
+
+-- ── 15. Unknown industry_id throws PLT004 ──────────────────────────────────
+select throws_ok(
+  $$ select public.service_ranking_search(p_filters=>'{"industry_id":"00000000-0000-4000-a000-000000000099"}'::jsonb) $$,
+  'P0001', null,
+  'unknown industry_id throws PLT004'
 );
 
 select * from finish();

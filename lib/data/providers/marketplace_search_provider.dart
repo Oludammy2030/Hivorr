@@ -53,6 +53,11 @@ class MarketplaceSearchProvider extends ChangeNotifier {
   /// Whether a load is in flight.
   bool get isLoading => _state == MarketplaceSearchState.loading;
 
+  /// Whether any filter is active (drives filter chip highlighting and
+  /// "clear filters" affordance in `EP-03-09 marketplace_search_screen`).
+  bool get hasActiveFilters =>
+      !_filters.isEmpty || _query.trim().isNotEmpty || _professionId != null;
+
   // ── public API ─────────────────────────────────────────────────────────
 
   /// Sets the profession filter (`p_profession_id`).
@@ -134,6 +139,24 @@ class MarketplaceSearchProvider extends ChangeNotifier {
     _error = null;
     _state = MarketplaceSearchState.idle;
     notifyListeners();
+  }
+
+  /// Refreshes the current search with cache invalidation if the server's
+  /// `weights_version` has changed since the last load. Called on app
+  /// foreground / tab switch to pick up ranking weight changes without
+  /// requiring a full `invalidate()` + `search()` cycle.
+  ///
+  /// If the current `_weightsVersion` is stale (server-side weights were
+  /// updated), this invalidates the cache and re-executes the search.
+  /// Otherwise, this is a no-op (avoids unnecessary network calls).
+  Future<void> refresh() async {
+    if (_state != MarketplaceSearchState.loaded) {
+      return;
+    }
+    // Trigger a search — the repository will handle cache coherence via
+    // `weights_version` comparison internally (see
+    // `service_search_repository_impl.dart:92`).
+    await search();
   }
 
   Future<void> _run(
