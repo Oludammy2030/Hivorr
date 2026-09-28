@@ -60,6 +60,12 @@ abstract final class RouteNames {
   /// Currency-conversion route (EP-02-15).
   static const String convert = 'convert';
 
+  /// Service listing owner-management routes (EP-03-08).
+  static const String serviceListingsMine = 'service-listings-mine';
+  static const String serviceListingNew = 'service-listing-new';
+  static const String serviceListingEdit = 'service-listing-edit';
+  static const String serviceListingMedia = 'service-listing-media';
+
   /// Dispute routes (EP-02-17).
   static const String disputes = 'disputes';
   static const String disputesNew = 'disputes-new';

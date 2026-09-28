@@ -37,9 +37,10 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 /// is used directly (simpler, retried, and retry-aware). No polling is used.
 ///
 /// **Public vs private guidance:** `getPublicUrl` is only valid for public
-/// buckets (`profile-avatars`, `portfolio-items`). `credential-documents` is
-/// private — use [download] or `createSignedUrl` (60–300 s TTL) instead. Calling
-/// `getPublicUrl` on the private bucket throws [StorageValidationException].
+/// buckets (`profile-avatars`, `portfolio-items`, `service-listing-media`).
+/// `credential-documents` is private — use [download] or `createSignedUrl`
+/// (60–300 s TTL) instead. Calling `getPublicUrl` on the private bucket
+/// throws [StorageValidationException].
 class SupabaseStorageService implements StorageService {
   SupabaseStorageService({
     required supabase.SupabaseStorageClient storageClient,

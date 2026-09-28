@@ -11,6 +11,7 @@ import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/hive_service_search_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+import 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_search_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
@@ -23,6 +24,7 @@ import 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_so
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_service_listing_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
@@ -40,6 +42,7 @@ import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
@@ -64,6 +67,8 @@ import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
 import 'package:hivorr/data/repositories/onboarding_repository.dart';
 import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
+import 'package:hivorr/data/repositories/service_listing_repository.dart';
+import 'package:hivorr/data/repositories/service_listing_repository_impl.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/service_search_repository_impl.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
@@ -80,6 +85,7 @@ import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/finance/services/financial_deposit_service.dart';
 import 'package:hivorr/systems/finance/services/financial_payout_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
+import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/support/services/dispute_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
@@ -106,6 +112,8 @@ export 'package:hivorr/data/datasources/remote/manage_user_remote_data_source.da
 export 'package:hivorr/data/datasources/remote/onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/service_listing_envelope_parser.dart';
+export 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/service_search_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/service_search_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
@@ -120,6 +128,7 @@ export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.d
 export 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_portfolio_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_service_listing_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_trade_verification_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
@@ -147,6 +156,7 @@ export 'package:hivorr/data/entities/financial_profile.dart';
 export 'package:hivorr/data/entities/financial_status.dart';
 export 'package:hivorr/data/entities/industry.dart';
 export 'package:hivorr/data/entities/kyc_level.dart';
+export 'package:hivorr/data/entities/listing_media.dart';
 export 'package:hivorr/data/entities/onboarding_progress.dart';
 export 'package:hivorr/data/entities/onboarding_status.dart';
 export 'package:hivorr/data/entities/payout_account.dart';
@@ -199,6 +209,7 @@ export 'package:hivorr/data/models/financial_profile_dto.dart';
 export 'package:hivorr/data/models/financial_status_dto.dart';
 export 'package:hivorr/data/models/industry_dto.dart';
 export 'package:hivorr/data/models/kyc_level_dto.dart';
+export 'package:hivorr/data/models/listing_media_dto.dart';
 export 'package:hivorr/data/models/manage_user_dto.dart';
 export 'package:hivorr/data/models/onboarding_status_dto.dart';
 export 'package:hivorr/data/models/payout_bind_dto.dart';
@@ -225,6 +236,7 @@ export 'package:hivorr/data/providers/manage_user_provider.dart';
 export 'package:hivorr/data/providers/marketplace_search_provider.dart';
 export 'package:hivorr/data/providers/onboarding_provider.dart';
 export 'package:hivorr/data/providers/portfolio_provider.dart';
+export 'package:hivorr/data/providers/service_listing_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
 export 'package:hivorr/data/providers/taxonomy_provider.dart';
 export 'package:hivorr/data/providers/trade_verification_provider.dart';
@@ -253,6 +265,8 @@ export 'package:hivorr/data/repositories/onboarding_repository.dart';
 export 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 export 'package:hivorr/data/repositories/portfolio_repository.dart';
 export 'package:hivorr/data/repositories/portfolio_repository_impl.dart';
+export 'package:hivorr/data/repositories/service_listing_repository.dart';
+export 'package:hivorr/data/repositories/service_listing_repository_impl.dart';
 export 'package:hivorr/data/repositories/service_search_repository.dart';
 export 'package:hivorr/data/repositories/service_search_repository_impl.dart';
 export 'package:hivorr/data/repositories/taxonomy_repository.dart';
@@ -644,6 +658,48 @@ registerConversionLayer(
   final repository = DisputeRepositoryImpl(remote: remote);
   final service = DisputeService(repository: repository);
   return (repository: repository, provider: DisputeProvider(service: service));
+}
+
+/// Wires the service listing owner-management slice for EP-03-08.
+///
+/// Builds the [ServiceListingRepository] and [ServiceListingService] over
+/// the [ApiLayer] and returns a ready [ServiceListingProvider]. Mirrors
+/// `registerDisputeLayer`: all six owner RPCs are live, reads are RLS-scoped,
+/// and the trade gate stays server-side — the client never writes
+/// `service_listings` tables and never references the service-role-only
+/// `reported` transition.
+({
+  ServiceListingRepository repository,
+  ServiceListingProvider provider,
+  ServiceListingService service,
+})
+registerServiceListingLayer(
+  ApiLayer apiLayer, {
+  ServiceListingRemoteDataSource? dataSource,
+  StorageService? storage,
+  HivorrLogger? logger,
+}) {
+  final ServiceListingRemoteDataSource resolvedDataSource =
+      dataSource ??
+      SupabaseServiceListingRemoteDataSource(
+        dio: apiLayer.dio,
+        supabase: apiLayer.supabaseClient,
+        exceptionMapper: apiLayer.exceptionMapper,
+      );
+  final ServiceListingRepository repository = ServiceListingRepositoryImpl(
+    remote: resolvedDataSource,
+  );
+  final ServiceListingService service = ServiceListingService(
+    repository: repository,
+    supabase: apiLayer.supabaseClient,
+    storage: storage,
+    logger: logger,
+  );
+  return (
+    repository: repository,
+    provider: ServiceListingProvider(service: service, logger: logger),
+    service: service,
+  );
 }
 
 /// Wires the onboarding data slice for EP-02-18.

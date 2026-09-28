@@ -114,6 +114,20 @@ abstract final class RoutePaths {
   /// Currency-conversion screen (EP-02-15).
   static const String convert = '/finance/convert';
 
+  /// Service listing owner-management screens (EP-03-08, protected).
+  static const String serviceListingsMine = '/services/mine';
+  static const String serviceListingNew = '/services/mine/new';
+  static const String serviceListingEdit = '/services/mine/:id/edit';
+  static const String serviceListingMedia = '/services/mine/:id/media';
+
+  /// Builds a URL-encoded service listing edit path.
+  static String serviceListingEditFor({required String id}) =>
+      '/services/mine/${Uri.encodeComponent(id)}/edit';
+
+  /// Builds a URL-encoded service listing media path.
+  static String serviceListingMediaFor({required String id}) =>
+      '/services/mine/${Uri.encodeComponent(id)}/media';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 

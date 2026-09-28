@@ -34,6 +34,9 @@ import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
+import 'package:hivorr/systems/marketplace/screens/my_listings_screen.dart';
+import 'package:hivorr/systems/marketplace/screens/service_listing_form_screen.dart';
+import 'package:hivorr/systems/marketplace/screens/service_listing_media_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
 import 'package:hivorr/systems/portfolio/screens/professional_profile_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
@@ -373,6 +376,34 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) =>
               DisputeEvidenceFormScreen(
                 caseId: state.pathParameters['caseId'] ?? '',
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.serviceListingsMine,
+          name: RouteNames.serviceListingsMine,
+          builder: (BuildContext context, GoRouterState state) =>
+              const MyListingsScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.serviceListingNew,
+          name: RouteNames.serviceListingNew,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ServiceListingFormScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.serviceListingEdit,
+          name: RouteNames.serviceListingEdit,
+          builder: (BuildContext context, GoRouterState state) =>
+              ServiceListingFormScreen(
+                listingId: state.pathParameters['id'],
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.serviceListingMedia,
+          name: RouteNames.serviceListingMedia,
+          builder: (BuildContext context, GoRouterState state) =>
+              ServiceListingMediaScreen(
+                listingId: state.pathParameters['id'] ?? '',
               ),
         ),
         GoRoute(
