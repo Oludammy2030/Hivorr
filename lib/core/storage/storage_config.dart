@@ -8,7 +8,7 @@
 /// values to catch drift (EP-02-08 DoD DV-01..03).
 library;
 
-/// The exact bucket IDs provisioned in EP-02-06.
+/// The exact bucket IDs provisioned in EP-02-06 plus EP-03-01.
 abstract final class StorageBuckets {
   const StorageBuckets._();
 
@@ -21,11 +21,16 @@ abstract final class StorageBuckets {
   /// Public-read container for portfolio showcase items.
   static const String portfolioItems = 'portfolio-items';
 
+  /// Public-read container for service listing media (EP-03-01
+  /// `20260921090001_service_marketplace_schema.sql` bucket section).
+  static const String serviceListingMedia = 'service-listing-media';
+
   /// The complete allowlisted bucket set accepted by the storage service.
   static const Set<String> all = <String>{
     credentialDocuments,
     profileAvatars,
     portfolioItems,
+    serviceListingMedia,
   };
 }
 
@@ -42,11 +47,15 @@ abstract final class StorageLimits {
   /// 10 MiB for `portfolio-items`.
   static const int portfolioItems = 10485760;
 
+  /// 10 MiB for `service-listing-media` (EP-03-01 bucket definition).
+  static const int serviceListingMedia = 10485760;
+
   /// Returns the configured byte limit for [bucket], or `null` if unknown.
   static int? forBucket(String bucket) => switch (bucket) {
     StorageBuckets.credentialDocuments => credentialDocuments,
     StorageBuckets.profileAvatars => profileAvatars,
     StorageBuckets.portfolioItems => portfolioItems,
+    StorageBuckets.serviceListingMedia => serviceListingMedia,
     _ => null,
   };
 }
@@ -78,11 +87,20 @@ abstract final class StorageMimeTypes {
     'application/pdf',
   };
 
+  /// `service-listing-media`: jpeg, png, webp, pdf (EP-03-01).
+  static const Set<String> serviceListingMedia = <String>{
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/pdf',
+  };
+
   /// Returns the allowed MIME set for [bucket], or `null` if unknown.
   static Set<String>? forBucket(String bucket) => switch (bucket) {
     StorageBuckets.credentialDocuments => credentialDocuments,
     StorageBuckets.profileAvatars => profileAvatars,
     StorageBuckets.portfolioItems => portfolioItems,
+    StorageBuckets.serviceListingMedia => serviceListingMedia,
     _ => null,
   };
 }
@@ -100,11 +118,15 @@ abstract final class StorageBucketVisibilities {
   /// Public-read bucket (`portfolio-items`).
   static const bool portfolioItems = true;
 
+  /// Public-read bucket (`service-listing-media`, EP-03-01).
+  static const bool serviceListingMedia = true;
+
   /// Returns the public-read flag for [bucket], or `null` if unknown.
   static bool? forBucket(String bucket) => switch (bucket) {
     StorageBuckets.credentialDocuments => credentialDocuments,
     StorageBuckets.profileAvatars => profileAvatars,
     StorageBuckets.portfolioItems => portfolioItems,
+    StorageBuckets.serviceListingMedia => serviceListingMedia,
     _ => null,
   };
 }

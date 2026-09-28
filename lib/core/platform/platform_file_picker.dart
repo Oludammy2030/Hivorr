@@ -33,12 +33,36 @@ class PlatformFilePicker {
     'webp',
   ];
 
+  /// Allowed extensions for service listing media (`service-listing-media`
+  /// bucket rules, EP-03-08 — same set as credential documents).
+  static const List<String> listingMediaExtensions = documentExtensions;
+
   /// Picks an identity/trade document and returns its bytes + name + MIME.
   ///
   /// Returns `null` when the user cancels the platform dialog.
   Future<PickedDocument?> pickDocument() async {
     final PlatformFile? file = await _pickFile(
       allowedExtensions: documentExtensions,
+    );
+    final Uint8List? bytes = await _readBytes(file);
+    if (bytes == null) {
+      return null;
+    }
+    return PickedDocument(
+      bytes: bytes,
+      fileName: file!.name,
+      mimeType: _mimeFor(file.extension),
+    );
+  }
+
+  /// Picks a service listing media file (EP-03-08) and returns its bytes +
+  /// name + MIME.
+  ///
+  /// Uses the `service-listing-media` allowlist (JPG/PNG/WebP/PDF).
+  /// Returns `null` when the user cancels the platform dialog.
+  Future<PickedDocument?> pickListingMedia() async {
+    final PlatformFile? file = await _pickFile(
+      allowedExtensions: listingMediaExtensions,
     );
     final Uint8List? bytes = await _readBytes(file);
     if (bytes == null) {

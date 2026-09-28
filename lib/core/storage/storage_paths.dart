@@ -158,4 +158,32 @@ abstract final class StoragePaths {
     }
     return '$safeId/$safeItem/$safeName';
   }
+
+  /// Builds a `service-listing-media` path (EP-03-08):
+  /// `{entityId}/{listingId}/{uuid}_{sanitizedFileName}`.
+  ///
+  /// The first segment is the uploader's entity id so the storage RLS gate
+  /// `(storage.foldername(name))[1] = auth.uid()::text`
+  /// (`20260921090001_service_marketplace_schema.sql` bucket policies) passes.
+  /// The leading UUID segment prevents collision while the sanitized original
+  /// name remains human-readable. Mirrors [disputeEvidence].
+  static String listingMedia({
+    required String entityId,
+    required String listingId,
+    required String fileName,
+  }) {
+    _validateEntityId(entityId);
+    if (listingId.isEmpty) {
+      throw const StorageValidationException(
+        'Listing id cannot be empty.',
+        field: 'listingId',
+      );
+    }
+    final safeId = sanitize(entityId);
+    final safeListing = sanitize(listingId);
+    final safeName = sanitize(fileName);
+    final random = _uuid.v4();
+    final name = safeName.isEmpty ? random : '${random}_$safeName';
+    return '$safeId/$safeListing/$name';
+  }
 }
