@@ -35,6 +35,17 @@ class HivorrBottomSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: HivorrSpacing.sm),
+              decoration: BoxDecoration(
+                color: colors.outline,
+                borderRadius: BorderRadius.circular(ext.radiusSm),
+              ),
+            ),
+          ),
           if (title != null) ...<Widget>[
             Text(
               title!,

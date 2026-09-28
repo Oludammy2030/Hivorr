@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 
 /// Hivorr typography system.
 ///
-/// Family is **Inter**, bundled offline as a variable TTF and registered with
-/// weight entries (400/500/600/700) in `pubspec.yaml`, so `fontWeight` maps to
-/// the `wght` variation. Widgets MUST consume these styles via `TextTheme` and
-/// must never set `fontFamily` explicitly (see `VISUAL-IDENTITY.md` §6).
+/// Family is **Plus Jakarta Sans**, bundled offline as a variable TTF and
+/// registered with weight entries (400/500/600/700) in `pubspec.yaml`, so
+/// `fontWeight` maps to the `wght` variation. Widgets MUST consume these
+/// styles via `TextTheme` and must never set `fontFamily` explicitly
+/// (see `VISUAL-IDENTITY.md` §6).
 class AppTextTheme {
   AppTextTheme._();
 
-  static const String fontFamily = 'Inter';
+  static const String fontFamily = 'Plus Jakarta Sans';
 
   static const TextTheme textTheme = TextTheme(
     displayLarge: TextStyle(

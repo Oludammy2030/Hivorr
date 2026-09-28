@@ -25,13 +25,13 @@ void main() {
   });
 
   group('AppTextTheme', () {
-    test('fontFamily is Inter (bundled offline)', () {
-      expect(AppTextTheme.fontFamily, 'Inter');
+    test('fontFamily is Plus Jakarta Sans (bundled offline)', () {
+      expect(AppTextTheme.fontFamily, 'Plus Jakarta Sans');
     });
 
-    test('bodyMedium uses Inter and regular weight', () {
+    test('bodyMedium uses Plus Jakarta Sans and regular weight', () {
       final style = AppTextTheme.textTheme.bodyMedium;
-      expect(style?.fontFamily, 'Inter');
+      expect(style?.fontFamily, 'Plus Jakarta Sans');
       expect(style?.fontWeight, FontWeight.w400);
     });
 
@@ -67,8 +67,11 @@ void main() {
       );
     });
 
-    test('text theme fontFamily is Inter', () {
-      expect(AppTheme.lightTheme.textTheme.bodyMedium!.fontFamily, 'Inter');
+    test('text theme fontFamily is Plus Jakarta Sans', () {
+      expect(
+        AppTheme.lightTheme.textTheme.bodyMedium!.fontFamily,
+        'Plus Jakarta Sans',
+      );
     });
 
     test('AppThemeExtension exposes semantic colors', () {

@@ -120,8 +120,8 @@ All tokens are exposed through `ColorScheme` (light/dark) in `lib/app/theme/app_
 
 | Property | Value |
 |---|---|
-| Family | **Inter** (OFL license) |
-| Delivery | Bundled offline as a single variable `.ttf` (`assets/fonts/Inter-Variable.ttf`) in `assets/fonts/` (no runtime fetch — required for offline-first, unreliable-network targeting). Registered with weight entries `400/500/600/700` so `fontWeight` maps to the `wght` variation. |
+| Family | **Plus Jakarta Sans** (OFL license) |
+| Delivery | Bundled offline as a single variable `.ttf` (`assets/fonts/PlusJakartaSans-Variable.ttf`) in `assets/fonts/` (no runtime fetch — required for offline-first, unreliable-network targeting). Registered with weight entries `400/500/600/700` so `fontWeight` maps to the `wght` variation. (`assets/fonts/Inter-Variable.ttf` retained as a fallback during migration.) |
 | Weights | Regular `400`, Medium `500`, SemiBold `600`, Bold `700` (all from the one variable file) |
 | Application | Applied via `TextTheme` in `lib/app/theme/app_text_theme.dart`; every widget inherits it. Never set `fontFamily` per-widget. |
 
@@ -141,9 +141,9 @@ Text colors come from `colorScheme.onSurface` / `onSurfaceVariant` — never har
 | Asset | File | Description |
 |---|---|---|
 | Mark | `assets/images/logo.svg` | Hub-and-spoke network: a central silver node (the Universal Entity) linked by silver connectors to three silver role-nodes, on a cerulean rounded tile |
-| Wordmark | `assets/images/logo_wordmark.svg` | Mark + "Hivorr" wordmark in Inter |
+| Wordmark | `assets/images/logo_wordmark.svg` | Mark + "Hivorr" wordmark in Plus Jakarta Sans |
 | App Icon / Favicon | `assets/images/logo_icon.svg` | Mark-only: the hub-and-spoke network on a cerulean rounded square (1:1). Use for launcher icons, favicons, tab bar badges |
-| Horizontal lockup | `assets/images/logo_horizontal.svg` | Emblem left + "Hivorr" wordmark in Inter, on transparent (3.2:1). Use for app headers / nav bars |
+| Horizontal lockup | `assets/images/logo_horizontal.svg` | Emblem left + "Hivorr" wordmark in Plus Jakarta Sans, on transparent (3.2:1). Use for app headers / nav bars |
 | Stacked lockup | `assets/images/logo_stacked.svg` | Emblem above the "Hivorr" wordmark, on transparent (256:300). Use for login / splash / empty states |
 | Monochrome lockup | `assets/images/logo_monochrome.svg` | Single-color wordmark + emblem, no tile, tintable (defaults white). Use on dark headers / footers |
 | Loading | `assets/images/logo_loading.svg` | Transparent background, full mark in primary cerulean, SMIL rotate animation — used as the loading / processing indicator |
@@ -186,7 +186,7 @@ Text colors come from `colorScheme.onSurface` / `onSurfaceVariant` — never har
 ## 7. Enforcement
 
 - `documents/Context/AGENT.md` Rule: *"All UI MUST use `AppTheme` tokens defined in `VISUAL-IDENTITY.md`; never hardcode colors or fonts."*
-- Tests assert `ColorScheme.primary == #0B6E99` and `TextTheme.bodyMedium.fontFamily == 'Inter'`.
+- Tests assert `ColorScheme.primary == #0B6E99` and `TextTheme.bodyMedium.fontFamily == 'Plus Jakarta Sans'`.
 - Any UI task (EP-02+) that hardcodes a color/font fails its Definition of Done.
 - Any UI task (EP-02+) that uses **non-token** spacing, border radius, elevation/shadow, or motion — or ships an unmindful/off-brand empty, loading, error, or success state — fails its Definition of Done under §9 (the finish & experience standard).
 

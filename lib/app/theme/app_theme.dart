@@ -61,7 +61,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     infoContainer: AppColors.infoContainer,
     onInfoContainer: AppColors.onInfoContainer,
     radiusSm: 8,
-    radiusMd: 12,
+    radiusMd: 16,
     radiusLg: 20,
     spacing: 8,
   );
@@ -80,7 +80,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     infoContainer: Color(0xFF0C4A6E),
     onInfoContainer: Color(0xFFBAE6FD),
     radiusSm: 8,
-    radiusMd: 12,
+    radiusMd: 16,
     radiusLg: 20,
     spacing: 8,
   );
