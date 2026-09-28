@@ -241,7 +241,7 @@ void main() {
         expect(bg, isNot(AppTheme.lightTheme.colorScheme.primary));
       });
 
-      testWidgets('textTheme fontFamily is the theme token (Inter)', (
+      testWidgets('textTheme fontFamily is the theme token (Plus Jakarta Sans)', (
         WidgetTester tester,
       ) async {
         await _pumpScreenAt(

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80" role="img" aria-label="Hivorr">
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80" role="img" aria-label="Hivorr">
   <title>Hivorr</title>
   <!-- Monochrome, single-color lockup (no tile). Recolor at runtime via the
        LogoMonochrome widget's `color` (default white) for dark headers/footers. -->
@@ -13,5 +13,5 @@
     <circle cx="190" cy="180" r="17"/>
     <circle cx="128" cy="128" r="24"/>
   </g>
-  <text x="70" y="53" font-family="Inter, sans-serif" font-size="40" font-weight="700" letter-spacing="-0.5" fill="#FFFFFF">Hivorr</text>
+  <text x="70" y="53" font-family="Plus Jakarta Sans, sans-serif" font-size="40" font-weight="700" letter-spacing="-0.5" fill="#FFFFFF">Hivorr</text>
 </svg>
