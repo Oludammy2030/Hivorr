@@ -9,7 +9,7 @@ import 'package:hivorr/data/entities/listing_media.dart';
 /// All listing writes flow through the client-callable RPCs
 /// (`service_listing_create/update/publish/unpublish`); this repository
 /// **never** writes `service_listings` tables directly and **never** attempts
-/// the service_role-only `reported` transition.
+/// the service-role-only `reported` transition.
 abstract class ServiceListingRepository {
   /// Creates a draft (default) or published listing, then re-reads the
   /// authoritative row via `service_listing_get`.

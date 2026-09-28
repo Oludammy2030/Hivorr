@@ -43,7 +43,7 @@ abstract class ServiceListingRemoteDataSource {
   Future<Map<String, dynamic>> publishListing(String listingId);
 
   /// Unpublishes a published listing to `paused`
-  /// (`service_listing_unpublish`, VOLATILE). `reported` is service_role-only
+  /// (`service_listing_unpublish`, VOLATILE). `reported` is service-role-only
   /// and is never passed by the client.
   Future<Map<String, dynamic>> unpublishListing(String listingId);
 

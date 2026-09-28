@@ -13,7 +13,7 @@ import 'package:hivorr/data/models/listing_media_dto.dart';
 /// [ServiceListingEnvelopeParser]. Mirrors
 /// `SupabaseDisputeRemoteDataSource` (`_guard(mapDataException)` + `p_*`
 /// params). This class never writes `service_listings` tables directly and
-/// never references service_role-only transitions (`reported`).
+/// never references service-role-only transitions (`reported`).
 class SupabaseServiceListingRemoteDataSource extends BaseApiService
     implements ServiceListingRemoteDataSource {
   SupabaseServiceListingRemoteDataSource({
