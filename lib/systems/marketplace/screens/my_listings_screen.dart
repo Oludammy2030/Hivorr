@@ -161,6 +161,7 @@ class _MyListingsScreenState extends State<MyListingsScreen>
       appBar: AppBar(
         title: Text('My listings', style: context.textTheme.titleLarge),
       ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(RoutePaths.serviceListingNew),
         tooltip: 'Create listing',

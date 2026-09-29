@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/conversation.dart';
@@ -18,6 +20,7 @@ import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/communication/services/message_crypto.dart';
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
+import 'package:hivorr/systems/dashboard/widgets/messaging_thread_meta.dart';
 import 'package:provider/provider.dart';
 
 /// One contract-scoped message thread (EP-04-04).
@@ -157,9 +160,25 @@ class _ConversationScreenState extends State<ConversationScreen>
               )
             : selected == null
             ? const HivorrLoadingState()
-            : Column(
-                children: <Widget>[
-                  if (messaging.messagesHasMore)
+            : Builder(
+                builder: (BuildContext context) {
+                  final List<Hire> threadHires = _threadHires(context);
+                  final String workTitle =
+                      MessagingThreadMeta.workTitleFor(
+                        threadHires,
+                        selected,
+                      );
+                  final Hire? threadHire = MessagingThreadMeta.hireFor(
+                    threadHires,
+                    selected,
+                  );
+                  return Column(
+                    children: <Widget>[
+                      _ThreadWorkBanner(
+                        workTitle: workTitle,
+                        hire: threadHire,
+                      ),
+                      if (messaging.messagesHasMore)
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         vertical: HivorrSpacing.xs,
@@ -201,8 +220,70 @@ class _ConversationScreenState extends State<ConversationScreen>
                     sending: messaging.isSending,
                     onSend: _send,
                   ),
-                ],
+                    ],
+                  );
+                },
               ),
+      ),
+    );
+  }
+
+  List<Hire> _threadHires(BuildContext context) {
+    try {
+      return context.watch<HireProvider>().hires;
+    } on ProviderNotFoundException {
+      return const <Hire>[];
+    }
+  }
+}
+
+/// Banner binding the open thread to its Service Request.
+///
+/// Resolved per conversation from the linked hire — selecting another
+/// thread updates this title automatically because it reads
+/// `MessagingProvider.selected` on every build.
+class _ThreadWorkBanner extends StatelessWidget {
+  const _ThreadWorkBanner({required this.workTitle, required this.hire});
+
+  final String workTitle;
+  final Hire? hire;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return InkWell(
+      onTap: hire == null
+          ? null
+          : () => context.go(RoutePaths.dashboardHireDetail(hire!.id)),
+      child: Container(
+        color: colors.primaryContainer.withValues(alpha: 0.5),
+        padding: const EdgeInsets.symmetric(
+          horizontal: HivorrSpacing.md,
+          vertical: HivorrSpacing.sm,
+        ),
+        child: Row(
+          children: <Widget>[
+            Icon(
+              Icons.business_center_outlined,
+              size: 18,
+              color: colors.primary,
+            ),
+            const SizedBox(width: HivorrSpacing.sm),
+            Expanded(
+              child: Text(
+                workTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.titleSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (hire != null)
+              Icon(Icons.chevron_right, size: 20, color: colors.primary),
+          ],
+        ),
       ),
     );
   }
@@ -221,12 +302,8 @@ class _Bubble extends StatelessWidget {
     final Alignment alignment = mine
         ? Alignment.centerRight
         : Alignment.centerLeft;
-    final Color fill = mine
-        ? colors.primaryContainer
-        : colors.surfaceContainerHighest;
-    final Color foreground = mine
-        ? colors.onPrimaryContainer
-        : colors.onSurface;
+    final Color fill = mine ? colors.primary : colors.surface;
+    final Color foreground = mine ? colors.onPrimary : colors.onSurface;
     return Align(
       alignment: alignment,
       child: Container(
@@ -241,6 +318,7 @@ class _Bubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: fill,
           borderRadius: BorderRadius.circular(16),
+          border: mine ? null : Border.all(color: colors.outlineVariant),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
