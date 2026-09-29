@@ -11,6 +11,7 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
@@ -134,7 +135,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
               title: Text('My Jobs', style: context.textTheme.titleLarge),
             )
           : null,
-      body: SafeArea(
+      body: MobileSafeBody(
         child: Column(
           children: <Widget>[
             if (!isMobile) const _MyJobsTopBar(),
@@ -143,7 +144,9 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                 onRefresh: _load,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(HivorrSpacing.lg),
+                  padding: MobileCompact.scrollPaddingForBreakpoint(
+                    context.breakpoint,
+                  ),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(
@@ -156,14 +159,22 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                             total: posted.length,
                             openCount: openCount,
                           ),
-                          const SizedBox(height: HivorrSpacing.lg),
+                          SizedBox(
+                            height: isMobile
+                                ? HivorrSpacing.md
+                                : HivorrSpacing.lg,
+                          ),
                           _TabRow(
                             tabs: _tabs,
                             activeKey: _activeTab,
                             onSelect: (String key) =>
                                 setState(() => _activeTab = key),
                           ),
-                          const SizedBox(height: HivorrSpacing.lg),
+                          SizedBox(
+                            height: isMobile
+                                ? HivorrSpacing.md
+                                : HivorrSpacing.lg,
+                          ),
                           _Body(
                             jobs: jobs,
                             posted: posted,

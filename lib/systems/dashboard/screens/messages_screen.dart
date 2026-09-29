@@ -13,6 +13,7 @@ import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
@@ -151,7 +152,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ),
         ],
       ),
-      body: SafeArea(
+      body: MobileSafeBody(
         child: messaging.isLoading && messaging.conversations.isEmpty
             ? const HivorrLoadingState()
             : messaging.lastError != null && messaging.conversations.isEmpty
@@ -833,12 +834,12 @@ class _Bubble extends StatelessWidget {
         : Alignment.centerLeft;
     final Color fill = mine ? colors.primary : colors.surface;
     final Color foreground = mine ? colors.onPrimary : colors.onSurface;
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+    final double maxBubble = MobileCompact.bubbleMaxWidth(screenWidth);
     return Align(
       alignment: alignment,
       child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.6,
-        ),
+        constraints: BoxConstraints(maxWidth: maxBubble),
         margin: const EdgeInsets.symmetric(vertical: HivorrSpacing.xs),
         padding: const EdgeInsets.symmetric(
           horizontal: HivorrSpacing.md,
@@ -897,17 +898,23 @@ class _PaneComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(top: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.fromLTRB(
-        HivorrSpacing.md,
-        HivorrSpacing.sm,
-        HivorrSpacing.md,
-        HivorrSpacing.md,
-      ),
+    // SafeArea keeps the composer above the home indicator; Scaffold resize
+    // handles the keyboard (no manual viewInsets padding — that would
+    // double-offset).
+    return SafeArea(
+      top: false,
+      bottom: true,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          border: Border(top: BorderSide(color: colors.outlineVariant)),
+        ),
+        padding: const EdgeInsets.fromLTRB(
+          HivorrSpacing.md,
+          HivorrSpacing.sm,
+          HivorrSpacing.md,
+          HivorrSpacing.md,
+        ),
       child: Row(
         children: <Widget>[
           IconButton(
@@ -960,6 +967,7 @@ class _PaneComposer extends StatelessWidget {
                 : const Icon(Icons.send_outlined, size: 20),
           ),
         ],
+        ),
       ),
     );
   }

@@ -13,6 +13,7 @@ import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
@@ -149,7 +150,7 @@ class _ConversationScreenState extends State<ConversationScreen>
           ),
         ],
       ),
-      body: SafeArea(
+      body: MobileSafeBody(
         child: messaging.isLoading && selected == null
             ? const HivorrLoadingState()
             : messaging.lastError != null && selected == null
@@ -304,12 +305,12 @@ class _Bubble extends StatelessWidget {
         : Alignment.centerLeft;
     final Color fill = mine ? colors.primary : colors.surface;
     final Color foreground = mine ? colors.onPrimary : colors.onSurface;
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+    final double maxBubble = MobileCompact.bubbleMaxWidth(screenWidth);
     return Align(
       alignment: alignment,
       child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
+        constraints: BoxConstraints(maxWidth: maxBubble),
         margin: const EdgeInsets.symmetric(vertical: HivorrSpacing.xs),
         padding: const EdgeInsets.symmetric(
           horizontal: HivorrSpacing.md,
@@ -358,48 +359,56 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: context.colorScheme.outlineVariant),
+    // SafeArea keeps the composer above the home indicator/gesture bar;
+    // the Scaffold's resize handles the keyboard so no manual viewInsets
+    // padding is added (that would double-offset above the keyboard).
+    return SafeArea(
+      top: false,
+      bottom: true,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.colorScheme.surface,
+          border: Border(
+            top: BorderSide(color: context.colorScheme.outlineVariant),
+          ),
         ),
-      ),
-      padding: const EdgeInsets.fromLTRB(
-        HivorrSpacing.md,
-        HivorrSpacing.sm,
-        HivorrSpacing.md,
-        HivorrSpacing.md,
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: TextField(
-              controller: controller,
-              minLines: 1,
-              maxLines: 4,
-              maxLength: MessageCrypto.maxPlaintextLength,
-              decoration: const InputDecoration(
-                hintText: 'Write a message…',
-                border: OutlineInputBorder(),
-                counterText: '',
+        padding: const EdgeInsets.fromLTRB(
+          HivorrSpacing.md,
+          HivorrSpacing.sm,
+          HivorrSpacing.md,
+          HivorrSpacing.md,
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: TextField(
+                controller: controller,
+                minLines: 1,
+                maxLines: 4,
+                maxLength: MessageCrypto.maxPlaintextLength,
+                decoration: const InputDecoration(
+                  hintText: 'Write a message…',
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => onSend(),
               ),
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => onSend(),
             ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          IconButton.filled(
-            tooltip: 'Send',
-            icon: sending
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.send),
-            onPressed: sending ? null : onSend,
-          ),
-        ],
+            const SizedBox(width: HivorrSpacing.sm),
+            IconButton.filled(
+              tooltip: 'Send',
+              icon: sending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send),
+              onPressed: sending ? null : onSend,
+            ),
+          ],
+        ),
       ),
     );
   }

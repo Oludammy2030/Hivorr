@@ -62,6 +62,85 @@ class DashboardNavItem {
   }
 }
 
+/// Mobile primary destinations for the bottom navigation (<600dp).
+///
+/// Returns at most the mode-relevant primaries in bar order:
+/// hire-only → Overview, My Jobs, Messages;
+/// offer-only → Overview, Find Jobs, Messages;
+/// both (no active mode) → Overview, My Jobs, Find Jobs, Messages.
+/// The `More` tab itself is rendered by the shell and is not included here.
+List<DashboardNavItem> mobilePrimaryNavItems({
+  required bool hire,
+  required bool offer,
+}) {
+  DashboardNavItem byLocation(String location) {
+    return dashboardNavItems.firstWhere(
+      (DashboardNavItem item) => item.location == location,
+    );
+  }
+
+  final List<DashboardNavItem> primaries = <DashboardNavItem>[
+    byLocation('/dashboard'),
+  ];
+  if (hire) {
+    primaries.add(byLocation('/dashboard/jobs'));
+  }
+  if (offer) {
+    primaries.add(byLocation('/dashboard/opportunities'));
+  }
+  primaries.add(byLocation('/dashboard/messages'));
+  return primaries;
+}
+
+/// Mobile overflow destinations shown under the `More` bottom sheet.
+///
+/// Every capability-visible item that is not already a primary tab, in the
+/// canonical [dashboardNavItems] order (section grouping preserved by the
+/// sheet). Comparison is by `location + label` so the shared
+/// `/dashboard/applications` work/hiring variants do not collapse into each
+/// other when `hire && offer`.
+List<DashboardNavItem> mobileOverflowNavItems({
+  required bool hire,
+  required bool offer,
+}) {
+  final List<DashboardNavItem> primaries = mobilePrimaryNavItems(
+    hire: hire,
+    offer: offer,
+  );
+  final Set<String> primaryKeys = <String>{
+    for (final DashboardNavItem item in primaries)
+      '${item.location}|${item.label}',
+  };
+  return dashboardNavItems
+      .where(
+        (DashboardNavItem item) =>
+            item.visibleFor(hire: hire, offer: offer) &&
+            !primaryKeys.contains('${item.location}|${item.label}'),
+      )
+      .toList(growable: false);
+}
+
+/// Whether [location] is covered by one of the mobile primary tabs.
+bool isMobilePrimaryLocation(
+  String location, {
+  required bool hire,
+  required bool offer,
+}) {
+  final List<DashboardNavItem> primaries = mobilePrimaryNavItems(
+    hire: hire,
+    offer: offer,
+  );
+  for (final DashboardNavItem item in primaries) {
+    final String base = item.location.split('?').first;
+    if (base == '/dashboard') {
+      if (location == '/dashboard') return true;
+    } else if (location == base || location.startsWith('$base/')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// The full dashboard navigation, ordered for the combined Both experience.
 const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
   DashboardNavItem(

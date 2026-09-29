@@ -15,6 +15,7 @@ export 'package:hivorr/systems/dashboard/screens/messages_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/my_jobs_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/notifications_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
+export 'package:hivorr/systems/dashboard/shell/dashboard_more_sheet.dart';
 export 'package:hivorr/systems/dashboard/shell/dashboard_sidebar.dart';
 export 'package:hivorr/systems/dashboard/shell/hivorr_dashboard_shell.dart';
 export 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';

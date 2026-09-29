@@ -14,6 +14,7 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
@@ -94,7 +95,7 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
       appBar: AppBar(
         title: Text('Find Jobs', style: context.textTheme.titleLarge),
       ),
-      body: SafeArea(
+      body: MobileSafeBody(
         child: Column(
           children: <Widget>[
             Padding(
