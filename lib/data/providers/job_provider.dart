@@ -252,6 +252,21 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<ApplicationPage> listApplications({String? status}) =>
       _service.listMyApplications(status: status);
 
+  /// Lists applications received on one owned job (screen-local paging for
+  /// the client Applications inbox). Pass-through to the service — no
+  /// selection/detail state is touched.
+  Future<ApplicationPage> listApplicationsForJob(
+    String jobId, {
+    String? status,
+    int limit = 20,
+    String? cursor,
+  }) => _service.listApplicationsForJob(
+    jobId,
+    status: status,
+    limit: limit,
+    cursor: cursor,
+  );
+
   /// Loads and memoizes the professional's own applications (activity feed).
   Future<void> loadApplications({String? status}) async {
     if (isLoading) return;

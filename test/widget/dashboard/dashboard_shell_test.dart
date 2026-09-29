@@ -26,6 +26,7 @@ void main() {
       await pumpSidebar(tester, DashboardCapability.hire);
       expect(find.text('Post a Job'), findsOneWidget);
       expect(find.text('My Jobs'), findsOneWidget);
+      expect(find.text('Applications'), findsOneWidget);
       expect(find.text('Payments'), findsOneWidget);
       expect(find.text('MY HIRING'), findsOneWidget);
       expect(find.text('Find Jobs'), findsNothing);
@@ -44,6 +45,7 @@ void main() {
       expect(find.text('MY WORK'), findsOneWidget);
       expect(find.text('Post a Job'), findsNothing);
       expect(find.text('My Jobs'), findsNothing);
+      expect(find.text('Applications'), findsNothing);
       expect(find.text('Payments'), findsNothing);
     });
 
