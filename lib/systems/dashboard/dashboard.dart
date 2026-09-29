@@ -1,6 +1,7 @@
 export 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 export 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
 export 'package:hivorr/systems/dashboard/screens/account_screen.dart';
+export 'package:hivorr/systems/dashboard/screens/conversation_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/dashboard_settings_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/finance_hubs_screen.dart';
@@ -12,7 +13,6 @@ export 'package:hivorr/systems/dashboard/screens/messages_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/my_jobs_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/notifications_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
-export 'package:hivorr/systems/dashboard/services/messaging_service.dart';
 export 'package:hivorr/systems/dashboard/shell/dashboard_sidebar.dart';
 export 'package:hivorr/systems/dashboard/shell/hivorr_dashboard_shell.dart';
 export 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';

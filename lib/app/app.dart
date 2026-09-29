@@ -24,6 +24,7 @@ import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
+import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
@@ -38,6 +39,7 @@ import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/hire_repository.dart';
 import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
+import 'package:hivorr/data/repositories/messaging_repository.dart';
 import 'package:hivorr/data/repositories/portfolio_repository.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
@@ -82,6 +84,8 @@ class HivorrApp extends StatefulWidget {
     this.jobProvider,
     this.hireRepository,
     this.hireProvider,
+    this.messagingRepository,
+    this.messagingProvider,
     this.onboardingService,
     this.onboardingProvider,
     this.onboardingStore,
@@ -167,6 +171,12 @@ class HivorrApp extends StatefulWidget {
 
   /// Quotations/hires provider surfaced to the widget tree (EP-04-02).
   final HireProvider? hireProvider;
+
+  /// Messaging repository (EP-04-04). Optional for testability.
+  final MessagingRepository? messagingRepository;
+
+  /// Messaging provider surfaced to the widget tree (EP-04-04).
+  final MessagingProvider? messagingProvider;
 
   /// Onboarding service (EP-02-18). Optional for testability.
   final OnboardingService? onboardingService;
@@ -324,6 +334,8 @@ class _HivorrAppState extends State<HivorrApp> {
     final JobProvider? jobProvider = widget.jobProvider;
     final HireRepository? hireRepository = widget.hireRepository;
     final HireProvider? hireProvider = widget.hireProvider;
+    final MessagingRepository? messagingRepository = widget.messagingRepository;
+    final MessagingProvider? messagingProvider = widget.messagingProvider;
     final OnboardingService? onboardingService = widget.onboardingService;
     final OnboardingProvider? onboardingProvider = widget.onboardingProvider;
     final OnboardingProgressStore? onboardingStore = widget.onboardingStore;
@@ -397,6 +409,12 @@ class _HivorrAppState extends State<HivorrApp> {
           Provider<HireRepository>.value(value: hireRepository),
         if (hireProvider != null)
           ChangeNotifierProvider<HireProvider>.value(value: hireProvider),
+        if (messagingRepository != null)
+          Provider<MessagingRepository>.value(value: messagingRepository),
+        if (messagingProvider != null)
+          ChangeNotifierProvider<MessagingProvider>.value(
+            value: messagingProvider,
+          ),
         if (onboardingStore != null)
           Provider<OnboardingProgressStore>.value(value: onboardingStore),
         Provider<PlatformFilePicker>.value(

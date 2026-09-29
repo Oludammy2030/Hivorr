@@ -38,7 +38,8 @@ abstract final class RouteNames {
   static const String tradeProofUpload = 'trade-proof-upload';
   static const String tradeVerificationStatus = 'trade-verification-status';
   static const String adminReviewQueue = 'admin-review-queue';
-  static const String adminVerificationApprovals = 'admin-verification-approvals';
+  static const String adminVerificationApprovals =
+      'admin-verification-approvals';
   static const String adminReviewDetail = 'admin-review-detail';
   static const String adminDashboard = 'admin-dashboard';
 
@@ -98,6 +99,7 @@ abstract final class RouteNames {
   static const String dashboardHires = 'dashboard-hires';
   static const String dashboardHireDetail = 'dashboard-hire-detail';
   static const String dashboardMessages = 'dashboard-messages';
+  static const String dashboardMessageThread = 'dashboard-message-thread';
   static const String dashboardNotifications = 'dashboard-notifications';
   static const String dashboardPayments = 'dashboard-payments';
   static const String dashboardEarnings = 'dashboard-earnings';

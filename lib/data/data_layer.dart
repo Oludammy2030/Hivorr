@@ -25,6 +25,7 @@ import 'package:hivorr/data/datasources/remote/supabase_hires_remote_data_source
 import 'package:hivorr/data/datasources/remote/supabase_jobs_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_messaging_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_service_listing_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
@@ -45,6 +46,7 @@ import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
+import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
@@ -73,6 +75,8 @@ import 'package:hivorr/data/repositories/kyc_repository.dart';
 import 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
+import 'package:hivorr/data/repositories/messaging_repository.dart';
+import 'package:hivorr/data/repositories/messaging_repository_impl.dart';
 import 'package:hivorr/data/repositories/onboarding_repository.dart';
 import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
@@ -87,6 +91,7 @@ import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository_impl.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dart';
+import 'package:hivorr/systems/communication/services/messaging_service.dart';
 import 'package:hivorr/systems/finance/services/conversion_rate_source.dart';
 import 'package:hivorr/systems/finance/services/conversion_service.dart';
 import 'package:hivorr/systems/finance/services/escrow_service.dart';
@@ -122,6 +127,8 @@ export 'package:hivorr/data/datasources/remote/jobs_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/jobs_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/manage_user_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/messaging_envelope_parser.dart';
+export 'package:hivorr/data/datasources/remote/messaging_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_remote_data_source.dart';
@@ -141,6 +148,7 @@ export 'package:hivorr/data/datasources/remote/supabase_hires_remote_data_source
 export 'package:hivorr/data/datasources/remote/supabase_jobs_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_messaging_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_portfolio_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_service_listing_remote_data_source.dart';
@@ -153,6 +161,7 @@ export 'package:hivorr/data/datasources/remote/trade_verification_remote_data_so
 export 'package:hivorr/data/datasources/remote/verification_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/verification_remote_data_source.dart';
 export 'package:hivorr/data/entities/balance.dart';
+export 'package:hivorr/data/entities/conversation.dart';
 export 'package:hivorr/data/entities/conversion_preview.dart';
 export 'package:hivorr/data/entities/currency_account.dart';
 export 'package:hivorr/data/entities/currency_conversion.dart';
@@ -203,12 +212,14 @@ export 'package:hivorr/data/mappers/financial_payout_mapper.dart';
 export 'package:hivorr/data/mappers/hire_mapper.dart';
 export 'package:hivorr/data/mappers/industry_mapper.dart';
 export 'package:hivorr/data/mappers/job_mapper.dart';
+export 'package:hivorr/data/mappers/messaging_mapper.dart';
 export 'package:hivorr/data/mappers/onboarding_status_mapper.dart';
 export 'package:hivorr/data/mappers/portfolio_mappers.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
 export 'package:hivorr/data/mappers/service_listing_mapper.dart';
 export 'package:hivorr/data/mappers/verification_mapper.dart';
 export 'package:hivorr/data/models/balance_dto.dart';
+export 'package:hivorr/data/models/conversation_dto.dart';
 export 'package:hivorr/data/models/conversion_preview_dto.dart';
 export 'package:hivorr/data/models/currency_conversion_dto.dart';
 export 'package:hivorr/data/models/deposit_dto.dart';
@@ -238,6 +249,7 @@ export 'package:hivorr/data/models/job_quotation_dto.dart';
 export 'package:hivorr/data/models/kyc_level_dto.dart';
 export 'package:hivorr/data/models/listing_media_dto.dart';
 export 'package:hivorr/data/models/manage_user_dto.dart';
+export 'package:hivorr/data/models/messaging_envelopes_dto.dart';
 export 'package:hivorr/data/models/onboarding_status_dto.dart';
 export 'package:hivorr/data/models/payout_bind_dto.dart';
 export 'package:hivorr/data/models/portfolio_item_dto.dart';
@@ -263,6 +275,7 @@ export 'package:hivorr/data/providers/job_provider.dart';
 export 'package:hivorr/data/providers/kyc_provider.dart';
 export 'package:hivorr/data/providers/manage_user_provider.dart';
 export 'package:hivorr/data/providers/marketplace_search_provider.dart';
+export 'package:hivorr/data/providers/messaging_provider.dart';
 export 'package:hivorr/data/providers/onboarding_provider.dart';
 export 'package:hivorr/data/providers/portfolio_provider.dart';
 export 'package:hivorr/data/providers/service_listing_provider.dart';
@@ -294,6 +307,8 @@ export 'package:hivorr/data/repositories/kyc_repository.dart';
 export 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 export 'package:hivorr/data/repositories/manage_user_repository.dart';
 export 'package:hivorr/data/repositories/manage_user_repository_impl.dart';
+export 'package:hivorr/data/repositories/messaging_repository.dart';
+export 'package:hivorr/data/repositories/messaging_repository_impl.dart';
 export 'package:hivorr/data/repositories/onboarding_repository.dart';
 export 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 export 'package:hivorr/data/repositories/portfolio_repository.dart';
@@ -308,6 +323,8 @@ export 'package:hivorr/data/repositories/trade_verification_repository.dart';
 export 'package:hivorr/data/repositories/trade_verification_repository_impl.dart';
 export 'package:hivorr/data/repositories/verification_repository.dart';
 export 'package:hivorr/data/repositories/verification_repository_impl.dart';
+export 'package:hivorr/systems/communication/services/message_crypto.dart';
+export 'package:hivorr/systems/communication/services/messaging_service.dart';
 export 'package:hivorr/systems/jobs/models/job_status.dart';
 export 'package:hivorr/systems/jobs/services/hire_service.dart';
 export 'package:hivorr/systems/jobs/services/job_service.dart';
@@ -775,6 +792,28 @@ registerServiceListingLayer(
   final repository = HireRepositoryImpl(remote: remote);
   final service = HireService(repository: repository);
   return (repository: repository, provider: HireProvider(service: service));
+}
+
+/// Wires the messaging data slice for EP-04-04.
+///
+/// Builds the [MessagingRepository] and [MessagingService] over the
+/// [ApiLayer] and returns a ready [MessagingProvider]. Mirrors
+/// `registerHiresLayer`: all four authenticated RPCs are live, reads are
+/// RLS participant-scoped, payloads stay opaque — the client never writes
+/// messaging tables and never handles plaintext outside `MessageCrypto`.
+({MessagingRepository repository, MessagingProvider provider})
+registerMessagingLayer(ApiLayer apiLayer) {
+  final remote = SupabaseMessagingRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = MessagingRepositoryImpl(remote: remote);
+  final service = MessagingService(repository: repository);
+  return (
+    repository: repository,
+    provider: MessagingProvider(service: service),
+  );
 }
 
 /// Wires the onboarding data slice for EP-02-18.
