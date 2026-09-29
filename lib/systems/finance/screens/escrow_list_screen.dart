@@ -115,11 +115,19 @@ class _EscrowListScreenState extends State<EscrowListScreen>
             onRefresh: _load,
             child: ListView.separated(
               padding: const EdgeInsets.all(HivorrSpacing.lg),
-              itemCount: provider.escrows.length,
+              itemCount: provider.escrows.length + 1,
               separatorBuilder: (BuildContext context, int index) =>
                   const SizedBox(height: HivorrSpacing.md),
               itemBuilder: (BuildContext context, int index) {
-                final escrow = provider.escrows[index];
+                if (index == 0) {
+                  return Text(
+                    '${provider.escrows.length} escrows',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  );
+                }
+                final escrow = provider.escrows[index - 1];
                 return EscrowCard(
                   escrow: escrow,
                   onTap: () => context.push('/finance/escrow/${escrow.id}'),

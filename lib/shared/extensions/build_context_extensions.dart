@@ -21,6 +21,12 @@ extension BuildContextExtensions on BuildContext {
   AppThemeExtension get appExtension =>
       Theme.of(this).extension<AppThemeExtension>()!;
 
+  /// Role accent tokens from [RoleThemeExtension] (VISUAL-IDENTITY.md §3).
+  /// Accent-only — never a separate ThemeData. Use for role navigation,
+  /// primary actions in that context, and dashboard accents.
+  RoleThemeExtension get roleTheme =>
+      Theme.of(this).extension<RoleThemeExtension>()!;
+
   /// Media query data for the current context.
   MediaQueryData get mediaQuery => MediaQuery.of(this);
 

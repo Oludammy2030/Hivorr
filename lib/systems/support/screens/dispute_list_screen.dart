@@ -108,6 +108,15 @@ class _DisputeListScreenState extends State<DisputeListScreen>
               padding: const EdgeInsets.all(HivorrSpacing.lg),
               children: <Widget>[
                 _FilterChips(selected: _statusFilter, onSelected: _applyFilter),
+                const SizedBox(height: HivorrSpacing.sm),
+                Text(
+                  _statusFilter == null
+                      ? '${provider.disputes.length} disputes'
+                      : '${provider.disputes.length} · ${DisputeStatus.forCode(_statusFilter!)?.label ?? _statusFilter!}',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: HivorrSpacing.md),
                 for (final DisputeCase case_ in provider.disputes) ...[
                   _DisputeCard(

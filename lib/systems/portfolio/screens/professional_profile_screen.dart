@@ -149,7 +149,15 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
         ),
         if (hasCredentials) ...<Widget>[
           const SizedBox(height: HivorrSpacing.lg),
-          const HivorrSectionHeader(title: 'Credentials'),
+          HivorrSectionHeader(
+            title: 'Credentials',
+            action: Text(
+              '${credentials.length}',
+              style: context.textTheme.labelMedium?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
           for (final PublicCredential credential in credentials) ...<Widget>[
             Padding(
               padding: const EdgeInsets.only(bottom: HivorrSpacing.sm),
@@ -159,7 +167,15 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
         ],
         if (hasPortfolio) ...<Widget>[
           const SizedBox(height: HivorrSpacing.lg),
-          const HivorrSectionHeader(title: 'Portfolio'),
+          HivorrSectionHeader(
+            title: 'Portfolio',
+            action: Text(
+              '${profile.portfolioItems.length}',
+              style: context.textTheme.labelMedium?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
           PortfolioGrid(
             items: profile.portfolioItems,
             mediaUrlBuilder: _resolveMediaUrl,

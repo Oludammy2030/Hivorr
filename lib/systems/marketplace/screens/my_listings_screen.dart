@@ -77,6 +77,9 @@ class _MyListingsScreenState extends State<MyListingsScreen>
     unawaited(_provider.loadMine(status: status));
   }
 
+  String _filterLabel(String status) =>
+      status[0].toUpperCase() + status.substring(1);
+
   Future<void> _publish(MyServiceListing listing) async {
     setState(() => _acting = true);
     try {
@@ -211,40 +214,66 @@ class _MyListingsScreenState extends State<MyListingsScreen>
                       ),
                     );
                   }
-                  return RefreshIndicator(
-                    onRefresh: _load,
-                    child: ListView.separated(
-                      itemCount: provider.listings.length +
-                          (provider.hasMore ? 1 : 0),
-                      separatorBuilder: (_, _) => const SizedBox(
-                        height: HivorrSpacing.sm,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: HivorrSpacing.xs,
+                        ),
+                        child: Text(
+                          _statusFilter == null
+                              ? '${provider.listings.length} listings'
+                              : '${provider.listings.length} · ${_filterLabel(_statusFilter!)}',
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
-                      itemBuilder: (BuildContext context, int index) {
-                        if (index >= provider.listings.length) {
-                          return _LoadMore(
-                            onLoadMore: provider.loadMore,
-                          );
-                        }
-                        final MyServiceListing listing =
-                            provider.listings[index];
-                        return ServiceListingCard(
-                          listing: listing,
-                          isBusy: _acting,
-                          onTap: () => context.push(
-                            RoutePaths.serviceListingEditFor(id: listing.id),
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: _load,
+                          child: ListView.separated(
+                            itemCount: provider.listings.length +
+                                (provider.hasMore ? 1 : 0),
+                            separatorBuilder: (_, _) => const SizedBox(
+                              height: HivorrSpacing.sm,
+                            ),
+                            itemBuilder: (BuildContext context, int index) {
+                              if (index >= provider.listings.length) {
+                                return _LoadMore(
+                                  onLoadMore: provider.loadMore,
+                                );
+                              }
+                              final MyServiceListing listing =
+                                  provider.listings[index];
+                              return ServiceListingCard(
+                                listing: listing,
+                                isBusy: _acting,
+                                onTap: () => context.push(
+                                  RoutePaths.serviceListingEditFor(
+                                    id: listing.id,
+                                  ),
+                                ),
+                                onEdit: () => context.push(
+                                  RoutePaths.serviceListingEditFor(
+                                    id: listing.id,
+                                  ),
+                                ),
+                                onMedia: () => context.push(
+                                  RoutePaths.serviceListingMediaFor(
+                                    id: listing.id,
+                                  ),
+                                ),
+                                onPublish: () => _publish(listing),
+                                onUnpublish: () =>
+                                    _confirmUnpublish(listing),
+                              );
+                            },
                           ),
-                          onEdit: () => context.push(
-                            RoutePaths.serviceListingEditFor(id: listing.id),
-                          ),
-                          onMedia: () => context.push(
-                            RoutePaths.serviceListingMediaFor(id: listing.id),
-                          ),
-                          onPublish: () => _publish(listing),
-                          onUnpublish: () =>
-                              _confirmUnpublish(listing),
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),

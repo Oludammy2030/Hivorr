@@ -7,6 +7,7 @@ import 'package:hivorr/config/permissions/admin_gate.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
+import 'package:hivorr/shared/components/hivorr_data_table.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -130,6 +131,24 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
             : Column(
                 children: <Widget>[
                   _filters(provider),
+                  if (provider.isListHydrated)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        HivorrSpacing.lg,
+                        0,
+                        HivorrSpacing.lg,
+                        HivorrSpacing.xs,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${provider.totalCount} users',
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
                   Expanded(child: _body(provider)),
                 ],
               ),
@@ -236,34 +255,141 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
         status: provider.statusFilter,
         capability: _capability,
       ),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(HivorrSpacing.lg),
-        itemCount: provider.users.length + (provider.hasMore ? 1 : 0),
-        itemBuilder: (BuildContext context, int index) {
-          if (index == provider.users.length) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: HivorrSpacing.md),
-              child: Center(
-                child: provider.isLoading
-                    ? const CircularProgressIndicator()
-                    : HivorrButton(
-                        label: 'Load more',
-                        onPressed: () => unawaited(provider.loadMore()),
-                      ),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints c) {
+          if (c.maxWidth >= 720) {
+            return _DirectoryTable(
+              provider: provider,
+              onUserTap: (ManageUserListItem user) => context.pushNamed(
+                RouteNames.adminManageUserDetail,
+                pathParameters: <String, String>{'userId': user.id},
               ),
+              onLoadMore: () => unawaited(provider.loadMore()),
             );
           }
-          final ManageUserListItem user = provider.users[index];
-          return _UserCard(
-            key: ValueKey<String>(user.id),
-            user: user,
-            onTap: () => context.pushNamed(
-              RouteNames.adminManageUserDetail,
-              pathParameters: <String, String>{'userId': user.id},
-            ),
+          return ListView.builder(
+            padding: const EdgeInsets.all(HivorrSpacing.lg),
+            itemCount: provider.users.length + (provider.hasMore ? 1 : 0),
+            itemBuilder: (BuildContext context, int index) {
+              if (index == provider.users.length) {
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: HivorrSpacing.md),
+                  child: Center(
+                    child: provider.isLoading
+                        ? const CircularProgressIndicator()
+                        : HivorrButton(
+                            label: 'Load more',
+                            onPressed: () => unawaited(provider.loadMore()),
+                          ),
+                  ),
+                );
+              }
+              final ManageUserListItem user = provider.users[index];
+              return _UserCard(
+                key: ValueKey<String>(user.id),
+                user: user,
+                onTap: () => context.pushNamed(
+                  RouteNames.adminManageUserDetail,
+                  pathParameters: <String, String>{'userId': user.id},
+                ),
+              );
+            },
           );
         },
       ),
+    );
+  }
+}
+
+/// Dense directory table for wide admin views (VISUAL-IDENTITY.md §20).
+class _DirectoryTable extends StatelessWidget {
+  const _DirectoryTable({
+    required this.provider,
+    required this.onUserTap,
+    required this.onLoadMore,
+  });
+
+  final ManageUserProvider provider;
+  final ValueChanged<ManageUserListItem> onUserTap;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(HivorrSpacing.lg),
+      children: <Widget>[
+        HivorrCard(
+          padding: EdgeInsets.zero,
+          child: HivorrDataTable(
+            columns: const <HivorrDataColumn>[
+              HivorrDataColumn('User', flex: 2),
+              HivorrDataColumn('Capability'),
+              HivorrDataColumn('KYC'),
+              HivorrDataColumn('Status'),
+            ],
+            rows: <HivorrDataRow>[
+              for (final ManageUserListItem user in provider.users)
+                HivorrDataRow(
+                  onTap: () => onUserTap(user),
+                  cells: <HivorrDataCell>[
+                    HivorrDataCell(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            _UserCard.displayNameOf(user),
+                            style: context.textTheme.titleSmall,
+                          ),
+                          if (user.roles.isNotEmpty)
+                            Text(
+                              user.roles.join(', '),
+                              style: context.textTheme.bodySmall?.copyWith(
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+                      flex: 2,
+                    ),
+                    HivorrDataCell(
+                      Text(
+                        user.capability != null &&
+                                user.capability!.isNotEmpty
+                            ? _UserCard.capabilityLabelOf(user.capability!)
+                            : '—',
+                        style: context.textTheme.bodySmall,
+                      ),
+                    ),
+                    HivorrDataCell(
+                      Text(
+                        user.kycTier != null && user.kycTier!.isNotEmpty
+                            ? user.kycTier!
+                            : '—',
+                        style: context.textTheme.bodySmall,
+                      ),
+                    ),
+                    HivorrDataCell(_StatusChip(status: user.status)),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        if (provider.hasMore)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: HivorrSpacing.md),
+            child: Center(
+              child: provider.isLoading
+                  ? const CircularProgressIndicator()
+                  : HivorrButton(
+                      label: 'Load more',
+                      variant: HivorrButtonVariant.outline,
+                      onPressed: onLoadMore,
+                    ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -276,7 +402,7 @@ class _UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String name = _displayName(user);
+    final String name = _UserCard.displayNameOf(user);
     return Padding(
       padding: const EdgeInsets.only(bottom: HivorrSpacing.md),
       child: HivorrCard(
@@ -319,7 +445,7 @@ class _UserCard extends StatelessWidget {
                       ),
                     if (user.capability != null && user.capability!.isNotEmpty)
                       Text(
-                        _capabilityLabel(user.capability!),
+                        _UserCard.capabilityLabelOf(user.capability!),
                         style: context.textTheme.labelSmall?.copyWith(
                           color: context.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
@@ -350,14 +476,14 @@ class _UserCard extends StatelessWidget {
     );
   }
 
-  static String _displayName(ManageUserListItem user) {
+  static String displayNameOf(ManageUserListItem user) {
     final String name = user.displayName.isNotEmpty
         ? user.displayName
         : (user.legalName ?? '');
     return name.isNotEmpty ? name : 'Unnamed user';
   }
 
-  static String _capabilityLabel(String cap) => switch (cap) {
+  static String capabilityLabelOf(String cap) => switch (cap) {
         'hire' => 'Client',
         'offer' => 'Professional',
         'both' => 'Both',

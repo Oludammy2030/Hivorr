@@ -35,15 +35,10 @@ class HivorrCard extends StatelessWidget {
         color: colors.surface,
         borderRadius: BorderRadius.circular(radius),
         border: elevation == 0 ? Border.all(color: colors.outline) : null,
-        // Make-like soft depth: 0 2px 12px rgba(15,22,38,0.07).
+        // Token elevation scale (VISUAL-IDENTITY.md §9):
+        // flat = outline hairline, raised = soft Level-1 shadow.
         boxShadow: elevation > 0
-            ? <BoxShadow>[
-                BoxShadow(
-                  color: colors.shadow.withValues(alpha: 0.07),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-              ]
+            ? HivorrElevation.raised(colors.shadow)
             : null,
       ),
       child: Padding(

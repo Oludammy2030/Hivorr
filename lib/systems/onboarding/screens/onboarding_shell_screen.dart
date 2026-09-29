@@ -297,10 +297,17 @@ class _BottomBar extends StatelessWidget {
       listenable: controller,
       builder: (BuildContext context, Widget? child) {
         final bool hasPrimary = controller.primaryLabel.isNotEmpty;
+        final ColorScheme colors = context.colorScheme;
 
         return SafeArea(
           top: false,
-          child: Padding(
+          child: Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              border: Border(
+                top: BorderSide(color: colors.outlineVariant),
+              ),
+            ),
             padding: EdgeInsets.fromLTRB(
               HivorrSpacing.lg,
               HivorrSpacing.sm,

@@ -120,9 +120,23 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
       onRefresh: () => provider.loadQueue(submissionType: _selectedType),
       child: ListView.builder(
         padding: const EdgeInsets.all(HivorrSpacing.lg),
-        itemCount: provider.queue.length + (provider.hasMore ? 1 : 0),
+        itemCount: provider.queue.length + (provider.hasMore ? 1 : 0) + 1,
         itemBuilder: (BuildContext context, int index) {
-          if (index == provider.queue.length) {
+          if (index == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: HivorrSpacing.sm),
+              child: Text(
+                _selectedType == null
+                    ? '${provider.queue.length} awaiting review'
+                    : '${provider.queue.length} · ${_selectedType!}',
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            );
+          }
+          final int queueIndex = index - 1;
+          if (queueIndex == provider.queue.length) {
             // Load more trigger.
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: HivorrSpacing.md),
@@ -137,7 +151,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
               ),
             );
           }
-          final entry = provider.queue[index];
+          final entry = provider.queue[queueIndex];
           return _QueueCard(
             key: ValueKey<String>(entry.submissionId),
             entry: entry,

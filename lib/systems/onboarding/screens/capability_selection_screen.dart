@@ -120,13 +120,30 @@ class _CapabilityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    final RoleThemeExtension roles = context.roleTheme;
+    final (Color tileBg, Color tileFg) = switch (capability) {
+      EntityCapability.hire => (roles.clientContainer, roles.clientPrimary),
+      EntityCapability.offer => (
+        roles.professionalContainer,
+        roles.professionalPrimary,
+      ),
+      EntityCapability.both => (roles.bothContainer, roles.bothPrimary),
+    };
     return HivorrCard(
       onTap: onTap,
       padding: const EdgeInsets.all(HivorrSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(_iconFor(capability), size: 28, color: colors.primary),
+          Container(
+            padding: const EdgeInsets.all(HivorrSpacing.sm),
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(ext.radiusSm),
+            ),
+            child: Icon(_iconFor(capability), size: 28, color: tileFg),
+          ),
           const SizedBox(width: HivorrSpacing.md),
           Expanded(
             child: Column(

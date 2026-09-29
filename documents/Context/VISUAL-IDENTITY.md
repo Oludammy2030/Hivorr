@@ -1,250 +1,470 @@
-# Hivorr — Visual Identity (Project Source of Truth)
+# Hivorr — Visual Identity, Design System & Beautification Rules
 
 **Status:** Active — binding across the entire project (EP-01 → EP-08).
 **Owner:** Design System (EP-01-16) is the first implementer; every later UI task and agent MUST conform.
-**Authority:** This document is the canonical specification for Hivorr's visual identity. The runtime values in `lib/app/theme/app_colors.dart` and `lib/app/theme/app_text_theme.dart` MUST equal the hex/weights defined here. If code and this document disagree, this document wins and the code is fixed.
+**Authority:** This document is the canonical specification for Hivorr's visual identity, UI design language, layout principles and beautification standards. The runtime values in `lib/app/theme/app_colors.dart`, `lib/app/theme/app_text_theme.dart` and `lib/app/theme/app_theme.dart` (`AppThemeExtension` + `RoleThemeExtension`) MUST equal the hex/weights/durations defined here. If code and this document disagree, this document wins and the code is fixed. Do not create a duplicate visual document.
+
+> How to use this document: when a developer or AI agent creates a completely new Hivorr page, follow this file top to bottom — §1 purpose → §13 composition → §14 hierarchy → §15 surfaces → §22 workflow → §31 checklist. No separate "make it beautiful" instruction is needed. The system itself teaches how to make Hivorr beautiful.
 
 ---
 
-## 1. Purpose
+## 1. Purpose & Design Philosophy
 
-Hivorr is an "operating system for modern human existence" built on trust and financial integrity. The visual identity must communicate **trust, stability, and financial growth** across every surface — mobile, web, and desktop — and remain consistent from the first splash screen through all eight engineering phases.
+Hivorr is a modern professional-services ecosystem built on trust and financial integrity. The visual identity must communicate **trust, professionalism, quality, modern technology, simplicity, convenience, confidence, accessibility, African-market relevance, and premium digital-product quality** across every surface — mobile, web, and desktop.
 
-This document defines:
-- The project color (signature brand color) and accent
-- The full light + dark color token set
-- The typography system
-- The logo (mark + wordmark)
+The interface must feel **intentionally designed rather than assembled from unrelated components**. Every page has:
 
-It does **not** define component-level UI (buttons, cards, etc.) — that lives in the EP-01-16 Design System implementation, which consumes these tokens.
+```text
+Purpose + Visual hierarchy + Structured content
++ Meaningful whitespace + Clear actions + Consistent visual language
+```
 
-§9 defines the **premium visual finish & experience bar** — how these tokens are combined to feel *intelligent, professional, modern, and human-centered*. §2–§5 govern *what* the tokens are; §9 governs *how they look and feel* and is binding alongside the rest of this document.
-
----
-
-## 2. Brand Color
-
-| Role | Name | Hex | Rationale |
-|---|---|---|---|
-| **Project color (signature / primary)** | Cerulean | `#0B6E99` | Calm, confident blue — conveys trust, stability, and reliability (core to a finance/trust platform). |
-| **Accent (secondary)** | Emerald | `#10B981` | Growth green — signals financial progress, prosperity, and positive outcomes (success, money, CTAs). |
-
-These two hues are the only brand colors. All other colors in §3 are neutral or semantic support derived to work with them.
-
-**Usage rules**
-- Primary (`#0B6E99`) is used for: app bars, key CTAs, active states, links, focus rings, primary navigation.
-- Accent (`#10B981`) is used for: success states, positive financial signals (balances, earnings), secondary CTAs, verification/badge accents.
-- Never use the accent as a full-screen background. Never place text directly on the accent at small sizes without sufficient contrast.
+§2–§12 govern *what* the tokens are; §13–§25 govern *how they are composed* into polished pages and are binding alongside the tokens.
 
 ---
 
-## 3. Color Tokens
+## 2. Core Hivorr Colors
 
-All tokens are exposed through `ColorScheme` (light/dark) in `lib/app/theme/app_colors.dart`. Widgets MUST use `Theme.of(context).colorScheme.*` / `AppThemeExtension` — never hardcode `Colors.*` or raw hex.
-
-### 3.1 Light theme
+Single unified ecosystem. These are the only hues permitted.
 
 | Token | Hex | Used for |
 |---|---|---|
-| `primary` | `#0B6E99` | Primary brand surfaces/controls |
-| `onPrimary` | `#FFFFFF` | Text/icon on primary |
-| `primaryContainer` | `#D3E7F0` | Low-emphasis primary fills (selected chips, banners) |
-| `onPrimaryContainer` | `#062E40` | Text/icon on primaryContainer |
-| `secondary` | `#10B981` | Accent surfaces/controls |
-| `onSecondary` | `#FFFFFF` | Text/icon on secondary |
-| `secondaryContainer` | `#A7F3D0` | Low-emphasis accent fills |
-| `onSecondaryContainer` | `#053B29` | Text/icon on secondaryContainer |
-| `surface` | `#FFFFFF` | Cards, sheets, dialogs |
-| `onSurface` | `#0F172A` | Primary text on surface |
-| `surfaceContainerHighest` | `#E2E8F0` | Disabled fills, dividers, track |
-| `onSurfaceVariant` | `#475569` | Secondary text, icons, hints |
-| `outline` | `#CBD5E1` | Borders, dividers |
-| `background` | `#F7F9FB` | App background |
-| `onBackground` | `#0F172A` | Text on background |
-| `error` | `#DC2626` | Error controls |
-| `onError` | `#FFFFFF` | Text/icon on error |
-| `errorContainer` | `#FEE2E2` | Error banners/snackbars |
-| `onErrorContainer` | `#7F1D1D` | Text on errorContainer |
-| `success` | `#16A34A` | Positive/financial signals |
-| `onSuccess` | `#FFFFFF` | Text/icon on success |
-| `successContainer` | `#DCFCE7` | Success banners |
-| `onSuccessContainer` | `#14532D` | Text on successContainer |
-| `warning` | `#F59E0B` | Caution states |
-| `onWarning` | `#1F2937` | Text/icon on warning |
-| `warningContainer` | `#FEF3C7` | Warning banners |
-| `onWarningContainer` | `#78350F` | Text on warningContainer |
-| `info` | `#0EA5E9` | Informational states |
-| `onInfo` | `#FFFFFF` | Text/icon on info |
-| `infoContainer` | `#E0F2FE` | Info banners |
-| `onInfoContainer` | `#0C4A6E` | Text on infoContainer |
+| Primary brand | `#2D3FE7` | Brand signature, Client primary, key CTAs, active states, links, focus rings, primary navigation |
+| Light brand / primaryContainer | `#EEF0FD` | Low-emphasis primary fills (selected chips, banners, role tint backgrounds) |
+| Brand deep (gradient start / admin primary) | `#1A2AD4` | Gradient start, Admin primary, text on `primaryContainer` |
+| Brand bright (gradient end) | `#4F5FEF` | Gradient end only — never as flat text/background |
+| Orange | `#F97316` | Warning surfaces/controls |
+| Light orange / warningContainer | `#FFF7ED` | Warning banners |
+| Cyan | `#0891B2` | Information surfaces/controls |
+| Light cyan / infoContainer | `#E0F2FE` | Info banners |
+| Red | `#EF4444` | Error / destructive surfaces/controls |
+| Light red / errorContainer | `#FEF2F2` | Error banners/snackbars |
+| Purple (Both / secondary) | `#8B5CF6` | Both-account identity, combined controls, mode indicators, secondary brand surfaces |
+| Light purple / secondaryContainer | `#F3F0FF` | Low-emphasis purple fills |
+| Background | `#F0F2F8` | App background (light) |
+| Surface | `#FFFFFF` | Cards, sheets, dialogs (light) |
+| Primary text | `#0F1626` | Primary text on light surfaces/background |
+| Secondary text | `#6B7280` | Secondary text, icons, hints (light) |
+| Muted text | `#9CA3AF` | Captions, placeholders, disabled hints (light) |
 
-### 3.2 Dark theme
+**Brand gradient (constrained use only):**
+
+```text
+#1A2AD4 → #2D3FE7 → #4F5FEF
+```
+
+Use only for hero accents, Both/admin identity moments, and primary CTA fills where the gradient measurably improves hierarchy. Never as random decoration (§23). Never place small body text directly on the gradient without verified contrast.
+
+**Usage rules**
+
+- Primary (`#2D3FE7`) is used for: app bars, key CTAs, active states, links, focus rings, primary navigation, hiring actions, job-management emphasis, Client dashboard accents.
+- Purple (`#8B5CF6`) is used for: unified Both identity, combined controls, secondary brand surfaces. Never as full-screen background.
+- Never introduce a third brand hue outside this section.
+- Widgets MUST use `Theme.of(context).colorScheme.*` / `AppThemeExtension` / `RoleThemeExtension` — never hardcode `Colors.*` or raw hex.
+
+---
+
+## 3. Role-Based Color System (accent-only)
+
+Hivorr remains **one unified visual ecosystem**. Operating contexts use different **accent colors** — not different themes. There is no per-role `ThemeData`. Roles resolve through `RoleThemeExtension` (accent-only) on top of the single `ColorScheme`.
+
+| Context | Primary | Light | Use for |
+|---|---|---|---|
+| Client | `#2D3FE7` | `#EEF0FD` | Client navigation, primary/hiring actions, job-management emphasis, Client dashboard accents |
+| Professional | `#16A34A` | `#DCFCE7` | Professional navigation, job discovery, application actions, professional work, earnings, Professional dashboard accents |
+| Both | `#8B5CF6` | `#F3F0FF` | Unified Both identity, combined controls, mode indicators, Both navigation, combined hiring/professional sections |
+| Admin | `#1A2AD4` + accent `#8B5CF6` | — | Distinct operational environment while recognizably Hivorr (sidebar, operational panels, management controls) |
+
+Rules:
+
+- Role color affects **navigation, primary actions in that context, and dashboard accents** — never body text, never full-bleed backgrounds.
+- A "Both" user sees the purple identity in mode indicators and combined sections; drilling into a Client-only or Professional-only flow uses that flow's accent for its primary action.
+- `DashboardCapability` (hire/offer/both) drives visibility; `RoleThemeExtension` drives color. Never hardcode role hex at call sites — read `context.roleTheme.clientPrimary`, `.professionalPrimary`, `.bothPrimary`, `.adminPrimary`.
+- Status is never communicated through color alone (see §25).
+
+---
+
+## 4. Semantic Colors
+
+Semantic colors retain their meaning across the entire platform, in every role context.
+
+| Role | Base | Container | On-container |
+|---|---|---|---|
+| Success | `#16A34A` | `#DCFCE7` | `#14532D` |
+| Warning | `#F97316` | `#FFF7ED` | `#78350F` |
+| Information | `#0891B2` | `#E0F2FE` | `#0C4A6E` |
+| Error / destructive | `#EF4444` | `#FEF2F2` | `#7F1D1D` |
+
+Notes:
+
+- Professional green (`#16A34A`) doubles as the Professional role accent (§3) and the success token. In a Professional context, pair it with explicit labels/icons so "role" and "status" are never ambiguous.
+- `onSuccess #FFFFFF`, `onWarning #1F2937`, `onInfo #FFFFFF`, `onError #FFFFFF` for text/icons on the base fills.
+- Dark-theme semantic values live in `AppThemeExtension.dark` (see §5.2) and MUST be used via the extension — never derived inline.
+
+---
+
+## 5. Color Tokens (ColorScheme)
+
+All tokens are exposed through `ColorScheme` (light/dark) in `lib/app/theme/app_colors.dart`. Semantic success/warning/info live in `AppThemeExtension` (no `ColorScheme` slot). Role accents live in `RoleThemeExtension`.
+
+### 5.1 Light theme
+
+| Token | Hex | Used for |
+|---|---|---|
+| `primary` | `#2D3FE7` | Primary brand surfaces/controls |
+| `onPrimary` | `#FFFFFF` | Text/icon on primary |
+| `primaryContainer` | `#EEF0FD` | Low-emphasis primary fills |
+| `onPrimaryContainer` | `#1A2AD4` | Text/icon on primaryContainer |
+| `secondary` | `#8B5CF6` | Both/unified accent surfaces |
+| `onSecondary` | `#FFFFFF` | Text/icon on secondary |
+| `secondaryContainer` | `#F3F0FF` | Low-emphasis accent fills |
+| `onSecondaryContainer` | `#5B21B6` | Text/icon on secondaryContainer |
+| `surface` | `#FFFFFF` | Cards, sheets, dialogs |
+| `onSurface` | `#0F1626` | Primary text on surface |
+| `surfaceContainerHighest` | `#E6EAF3` | Disabled fills, dividers, track |
+| `onSurfaceVariant` | `#6B7280` | Secondary text, icons, hints |
+| `outline` | `#D8DFEA` | Borders, dividers |
+| `background` | `#F0F2F8` | App background |
+| `onBackground` | `#0F1626` | Text on background |
+| `error` | `#EF4444` | Error controls |
+| `onError` | `#FFFFFF` | Text/icon on error |
+| `errorContainer` | `#FEF2F2` | Error banners/snackbars |
+| `onErrorContainer` | `#7F1D1D` | Text on errorContainer |
+
+Muted text `#9CA3AF` is used for captions/placeholders via `TextStyle.color` from the extension — never as a surface fill.
+
+### 5.2 Dark theme
+
+Derived for contrast on dark surfaces (AA). Light hexes MUST NOT be reused on dark backgrounds.
 
 | Token | Hex |
 |---|---|
-| `primary` | `#6CB8D6` |
-| `onPrimary` | `#06222E` |
-| `primaryContainer` | `#0B4A66` |
-| `onPrimaryContainer` | `#CDE8F4` |
-| `secondary` | `#34D399` |
-| `onSecondary` | `#063322` |
-| `secondaryContainer` | `#065F46` |
-| `onSecondaryContainer` | `#A7F3D0` |
-| `surface` | `#0B1220` |
-| `onSurface` | `#E5E7EB` |
-| `surfaceContainerHighest` | `#1E293B` |
-| `onSurfaceVariant` | `#94A3B8` |
+| `primary` | `#8B9DFF` |
+| `onPrimary` | `#0F173D` |
+| `primaryContainer` | `#1A2AD4` |
+| `onPrimaryContainer` | `#E0E4FF` |
+| `secondary` | `#B7A6FF` |
+| `onSecondary` | `#2A1650` |
+| `secondaryContainer` | `#4C2FB3` |
+| `onSecondaryContainer` | `#EDE9FE` |
+| `surface` | `#131A2E` |
+| `onSurface` | `#E8EBF3` |
+| `surfaceContainerHighest` | `#232C47` |
+| `onSurfaceVariant` | `#A7B0C2` |
 | `outline` | `#334155` |
-| `background` | `#0F172A` |
-| `onBackground` | `#E5E7EB` |
+| `background` | `#0F1626` |
+| `onBackground` | `#E8EBF3` |
 | `error` | `#F87171` |
 | `onError` | `#7F1D1D` |
 | `errorContainer` | `#450A0A` |
 | `onErrorContainer` | `#FCA5A5` |
-| `success` | `#22C55E` |
-| `onSuccess` | `#052E16` |
-| `successContainer` | `#14532D` |
-| `onSuccessContainer` | `#BBF7D0` |
-| `warning` | `#FBBF24` |
-| `onWarning` | `#3A2A06` |
-| `warningContainer` | `#5C3B00` |
-| `onWarningContainer` | `#FDE68A` |
-| `info` | `#38BDF8` |
-| `onInfo` | `#062A3A` |
-| `infoContainer` | `#0C4A6E` |
-| `onInfoContainer` | `#BAE6FD` |
+| `success` (ext) | `#22C55E` |
+| `onSuccess` (ext) | `#052E16` |
+| `successContainer` (ext) | `#14532D` |
+| `onSuccessContainer` (ext) | `#BBF7D0` |
+| `warning` (ext) | `#FBBF24` |
+| `onWarning` (ext) | `#3A2A06` |
+| `warningContainer` (ext) | `#5C3B00` |
+| `onWarningContainer` (ext) | `#FDE68A` |
+| `info` (ext) | `#38BDF8` |
+| `onInfo` (ext) | `#062A3A` |
+| `infoContainer` (ext) | `#0C4A6E` |
+| `onInfoContainer` (ext) | `#BAE6FD` |
 
 ---
 
-## 4. Typography
+## 6. Typography
 
 | Property | Value |
 |---|---|
-| Family | **Plus Jakarta Sans** (OFL license) |
-| Delivery | Bundled offline as a single variable `.ttf` (`assets/fonts/PlusJakartaSans-Variable.ttf`) in `assets/fonts/` (no runtime fetch — required for offline-first, unreliable-network targeting). Registered with weight entries `400/500/600/700` so `fontWeight` maps to the `wght` variation. (`assets/fonts/Inter-Variable.ttf` retained as a fallback during migration.) |
-| Weights | Regular `400`, Medium `500`, SemiBold `600`, Bold `700` (all from the one variable file) |
-| Application | Applied via `TextTheme` in `lib/app/theme/app_text_theme.dart`; every widget inherits it. Never set `fontFamily` per-widget. |
+| Family | **Plus Jakarta Sans** (OFL), bundled offline (`assets/fonts/PlusJakartaSans-Variable.ttf`, weights 400/500/600/700). Inter retained as fallback during migration. |
+| Delivery | No runtime fetch. Registered in `pubspec.yaml`; applied via `TextTheme` in `lib/app/theme/app_text_theme.dart`. Never set `fontFamily` per-widget. |
+| Colors | `colorScheme.onSurface` / `onSurfaceVariant` / muted `#9CA3AF` — never hardcoded. |
 
-**Role mapping (TextTheme)**
-- `displaySmall/Medium/Large` → Bold (700)
-- `headline*` → SemiBold (600)
-- `titleLarge` → SemiBold (600); `titleMedium/Small` → Medium (500)
-- `bodyLarge/Medium/Small` → Regular (400)
-- `labelLarge` (buttons) → Medium (500); `labelMedium/Small` → Medium (500)
+**Hivorr type roles → TextTheme mapping (hierarchy, not decoration):**
 
-Text colors come from `colorScheme.onSurface` / `onSurfaceVariant` — never hardcoded.
+| Hivorr role | TextTheme | Weight | Use |
+|---|---|---|---|
+| Display / hero heading | `displaySmall` (36) / `displayMedium` (45) | 700 | Landing heroes, major public headers only |
+| Page heading | `headlineMedium` (28) / `headlineSmall` (24) | 600 | Dashboard / detail page titles, auth titles |
+| Section heading | `titleLarge` (22) | 600 | `HivorrSectionHeader`, content sections |
+| Card heading | `titleMedium` (16) / `titleSmall` (14) | 500 | `HivorrCard` titles, list-tile titles |
+| Body text | `bodyLarge` (16) / `bodyMedium` (14) | 400 | Paragraphs, descriptions |
+| Supporting text | `bodySmall` (12) | 400 | Hints, secondary explanations |
+| Metadata / labels | `labelLarge` (14) / `labelMedium` (12) | 500 | Buttons, chips, badges, form labels |
+| Captions | `labelSmall` (11) | 500 | Timestamps, counts, muted `#9CA3AF` |
+
+Avoid excessive size variation. One hero size per page; section headings share one style; card headings share one style. Line-heights and letter-spacing come from the theme — never ad-hoc.
 
 ---
 
-## 5. Logo
+## 7. Spacing System
+
+Token source: `HivorrSpacing` (`lib/shared/helpers/hivorr_spacing.dart`, 8pt base from `AppThemeExtension.spacing`).
+
+| Token | Value | Use |
+|---|---|---|
+| `xs` | 4dp | Tight gaps (icon-to-text) |
+| `sm` | 8dp | Standard element gaps |
+| `md` | 16dp | Card padding, section padding, mobile screen padding |
+| `lg` | 24dp | Web content-pane padding, major gaps |
+| `xl` | 32dp | Major section separation |
+| `xxl` | 48dp | Page-level vertical spacing |
+
+Rules:
+
+- Never ad-hoc `EdgeInsets`. Related elements sit closer; unrelated elements get more separation.
+- Screen padding: 16dp mobile / 24dp web content panes; section gaps follow the scale.
+- Content width: focused content (forms, fields, auth) lives in a centered pane (`HivorrContentPane`, max ≈ 720dp) with symmetric gutters — never full-bleed just because the parent is wide. Genuinely full-width surfaces (dashboards, data views) remain allowed.
+- Related: headings → paragraphs → controls tighten; cards → headings → sections loosen.
+
+---
+
+## 8. Border Radius
+
+Token source: `AppThemeExtension` (`radiusSm/Md/Lg`). One radius language across cards, buttons, inputs, modals.
+
+| Token | Value | Use |
+|---|---|---|
+| `radiusSm` | 8dp | Buttons, text fields, badges, small chips |
+| `radiusMd` | 16dp | Cards, standard surfaces, dialogs |
+| `radiusLg` | 24dp | Modal bottom-sheet top corners |
+| Pill | Full (`StadiumBorder` / `999`) | Filter chips, status pills, `_PageIndicator` dots |
+
+Do not use extreme rounding everywhere. Do not mix unrelated radius styles without purpose. Sheets use `radiusLg` top corners with a drag handle (`HivorrBottomSheet`).
+
+---
+
+## 9. Shadows & Elevation
+
+Elevation is token-driven and **soft/subtle** — cards lift gently; no hard drop shadows, no heavy contrast.
+
+| Level | Treatment | Use |
+|---|---|---|
+| 0 (flat) | No shadow + `outline` hairline border | Static containment, lists, stacked cards |
+| 1 (raised) | `0 2px 12px rgba(15,22,38,0.07)` | Interactive cards (`HivorrCard elevation>0`), hover lift on web |
+| 2 (overlay) | Soft overlay shadow (dialog/sheet) | `HivorrDialog`, `HivorrBottomSheet` |
+| 3 (floating) | Snackbar / FAB lift | `HivorrSnackbar`, FABs |
+
+Prefer elevation for interactive/modal surfaces; prefer borders for static containment. Never heavily shadow every card. Some cards use no shadow + subtle border depending on importance.
+
+---
+
+## 10. Borders
+
+Borders are subtle and purposeful (`colorScheme.outline`).
+
+Use borders to: separate content, define input boundaries, organize tables, distinguish flat panels, establish structure. Do not outline every element unnecessarily. Flat cards (`elevation == 0`) carry the hairline; raised cards drop the border and use the Level-1 shadow instead — never both.
+
+---
+
+## 11. Iconography
+
+One consistent icon family (Material icons). Icons must communicate meaning, support scanning, share sizing, and align correctly with text. Icon color comes from `onSurfaceVariant` / role accent — never random hues. Do not use icons purely as decoration. Where status is shown, pair the icon with a text label (never color alone).
+
+---
+
+## 12. Imagery & Visual Content
+
+Use imagery intentionally where it contributes to trust, storytelling, service discovery, professional identity, marketplace understanding, or visual interest. Hero supporting visuals, service/category previews, professional portfolio photos, and contextual UI previews are appropriate. Never add random stock imagery to fill space. No image/video hero is currently canonical — when introduced, it must use brand-consistent art with clear space and contrast, and must degrade gracefully offline.
+
+---
+
+## 13. Page Composition
+
+Every major page has intentional composition with a clear beginning, middle and end. Before implementing, establish:
+
+- What is the primary purpose? Most important information? Primary action?
+- What should users notice next? What belongs together vs. visually separated?
+- Where do whitespace, cards, panels belong? What happens visually on scroll?
+
+Hierarchy flows:
+
+```text
+Page purpose → Primary action → Primary information
+→ Supporting information → Secondary actions → Additional information
+```
+
+Establish hierarchy with typography, size, weight, spacing, color, positioning, cards, imagery, and icons. Do not make every element visually loud.
+
+---
+
+## 14. The "Do Not Look Static" Rule
+
+Pages must not feel like plain documents in a browser. Avoid structures whose primary visual is only heading → paragraph → button → paragraph → button → empty space.
+
+When information can be meaningfully grouped, organize it into: cards, panels, feature blocks, content sections, grids, lists, statistic blocks, action panels, category tiles, information surfaces, highlighted areas, visual dividers, contextual sections.
+
+Purpose is visual structure and hierarchy — not decoration.
+
+---
+
+## 15. Card Usage
+
+Use cards when they improve grouping, readability, hierarchy, scanning, comparison, discoverability, or interaction. Appropriate: job, professional, service, category, dashboard metric, application, quotation, payment, activity, feature, testimonial, notification, and action cards (all built on `HivorrCard`).
+
+Do not turn everything into a card. Avoid card-inside-card-inside-card and excessive borders/shadows. Use tables, lists, `HivorrSectionHeader` + dividers, timelines, and panels where they communicate better. Flat (bordered) vs. raised (shadowed) follows §9.
+
+---
+
+## 16. Hero Sections
+
+Major landing and important public pages may use a strong hero containing: clear headline (`displaySmall`), supporting message (`bodyLarge`), primary CTA, secondary CTA where appropriate, and a supporting visual/content element.
+
+Do not create enormous empty heroes for spaciousness. Use space purposefully with subtle background shapes, cards, floating info panels, service/category previews, statistics, illustrations, or contextual UI previews. The hero must communicate page value within seconds.
+
+---
+
+## 17. Homepage Design Principle
+
+The homepage is the entrance to a modern professional-services ecosystem — never a static information page. Compose from purposeful sections such as: hero, service discovery, popular categories, professional/service previews, marketplace activity, trust indicators, platform benefits, how Hivorr works, featured opportunities, calls to action, supporting information, footer.
+
+Each section has a clear purpose tied to product requirements. Never add sections to inflate length.
+
+---
+
+## 18. Section Rhythm
+
+Long pages need visual rhythm — never identical stacked sections. Vary coherently, e.g.:
+
+```text
+Hero → Card Grid → Split Content → Feature Panel
+→ Statistics → Marketplace Cards → CTA
+```
+
+Variation stays coherent; never random layouts for variety's sake. Alternate background (background vs. surface), density, and structure (`PublicSection` eyebrow/title/body + children) while keeping spacing tokens constant.
+
+---
+
+## 19. Whitespace
+
+Whitespace separates sections, groups related content, improves readability, emphasizes important elements, and prevents clutter. Be generous — one primary action per view; content breathes. But avoid accidental empty areas that feel unfinished. Whitespace is intentional, not leftover.
+
+---
+
+## 20. Content Density
+
+Different surfaces need different density. Never apply one density everywhere.
+
+- **Marketing / public:** more whitespace, stronger storytelling, larger headings, stronger imagery, larger cards, fewer dense tables.
+- **Dashboards:** higher density — compact cards, summaries, tables, lists, quick actions (`Wrap`), activity panels.
+- **Admin:** highest density — structured tables, filters, metrics, operational panels, charts, management controls (`SuperAdminShell` + sidebar).
+
+---
+
+## 21. Component Consistency
+
+Once established, reuse the visual language. Future job cards, professional cards, metric cards, CTAs, buttons, inputs, modals, and navigation items MUST reuse or extend the existing pattern instead of inventing visually unrelated versions. Hivorr grows through a system, not isolated page designs.
+
+Canonical catalog (all token-built, in `lib/shared/` unless noted):
+
+Buttons (`HivorrButton` primary/secondary/outline/text, s/m/l, ≥48dp) · Text fields (`HivorrTextField`, calm filled/outlined, focus ring = primary) · Cards (`HivorrCard`) · Chips (`HivorrChip` primary/secondary/surface) · Badges (`HivorrBadge` success/error/warning/info + domain badges: KYC, trade-verified, escrow, hiring, listing) · Avatar · Divider · Section header · List tile (48dp min) · Dialog / Bottom sheet · Empty / Loading / Error / Success states + `HivorrLoader` (breathing pulse, 1800ms — never a bare spinner or dead-end) · Snackbar (4s) · Hero panel (`HivorrHeroPanel`, gradient + white actions + `HivorrHeroStat`) · Stat band (`HivorrStatBand`/`HivorrStatItem`) · Feature card (`HivorrFeatureCard`, tinted icon tile, role-tintable) · CTA band (`HivorrCtaBand`) · FAQ item (`HivorrFaqItem`) · Pricing tier (`HivorrPricingTier`, honest copy only) · Step card (`HivorrStepCard`) · Data table (`HivorrDataTable` + cells, wide admin views) · Mini bars (`HivorrMiniBars`, real numbers only, no chart dependency) · Layouts (`HivorrScreenScaffold`, `HivorrResponsiveScaffold`, `HivorrContentPane`, `Breakpoints` 600/1024) · Helpers (`HivorrSpacing`, formatters, validators, `BuildContext` extensions).
+
+---
+
+## 22. New Page Beautification Rule
+
+Whenever a new page or feature is created:
+
+1. Identify the page purpose (§13).
+2. Identify the appropriate existing components/patterns (§21).
+3. Reuse those patterns — check utilities before creating components.
+4. Determine whether the page needs cards, panels, grids, lists, statistics, feature sections, imagery, CTAs, tabs, filters, or supporting visuals (§14–§15).
+5. Compose with established spacing, typography, color, radius, shadow and component rules (§5–§12), applying the correct role accent (§3) and density tier (§20).
+6. Check against the visual system — the result looks like a new page within Hivorr, not a new design by a different designer.
+
+---
+
+## 23. No Generic Template / No Decoration Without Purpose
+
+Do not ship generic Header + Three Cards + Table layouts for every page. Choose layout by page purpose — Hivorr has its own recognizable character.
+
+Do not add random gradients, excessive animations, unnecessary shadows, excessive rounding, random illustrations, excessive icons, decorative cards, or unnecessary badges. Every visual element must contribute to hierarchy, usability, comprehension, navigation, trust, branding, or interaction.
+
+Motion: token durations 150–300ms, standard easing, fade + slide; animate only to communicate (press, list feedback, state change). Loader is the breathing `HivorrLoader`, not a spin.
+
+---
+
+## 24. Responsive Beautification
+
+Beautification works across desktop, laptop, tablet, and mobile. Never merely shrink desktop.
+
+Cards reorganize (`Wrap` / `LayoutBuilder` 1→2→3 cols); sections stack intelligently; navigation adapts (sidebar/rail ≥600dp, bottom nav + drawer on mobile); typography scales; spacing stays intentional. Mobile is a deliberately designed Hivorr experience — forms use available width with screen padding, never a cramped column. Tablet (600–1023) and desktop (≥1024) are distinct (`Breakpoints`), not one "wide" layout.
+
+---
+
+## 25. Accessibility (premium = universally usable)
+
+Beauty never costs usability. WCAG AA contrast floor **plus**: comfortable targets (≥48dp), readable line-heights, visible focus in light and dark, touch-friendly controls, meaningful labels, icons supported by text where necessary, status never through color alone.
+
+---
+
+## 26. Logo
 
 | Asset | File | Description |
 |---|---|---|
-| Mark | `assets/images/logo.svg` | Hub-and-spoke network: a central silver node (the Universal Entity) linked by silver connectors to three silver role-nodes, on a cerulean rounded tile |
-| Wordmark | `assets/images/logo_wordmark.svg` | Mark + "Hivorr" wordmark in Plus Jakarta Sans |
-| App Icon / Favicon | `assets/images/logo_icon.svg` | Mark-only: the hub-and-spoke network on a cerulean rounded square (1:1). Use for launcher icons, favicons, tab bar badges |
-| Horizontal lockup | `assets/images/logo_horizontal.svg` | Emblem left + "Hivorr" wordmark in Plus Jakarta Sans, on transparent (3.2:1). Use for app headers / nav bars |
-| Stacked lockup | `assets/images/logo_stacked.svg` | Emblem above the "Hivorr" wordmark, on transparent (256:300). Use for login / splash / empty states |
-| Monochrome lockup | `assets/images/logo_monochrome.svg` | Single-color wordmark + emblem, no tile, tintable (defaults white). Use on dark headers / footers |
-| Loading | `assets/images/logo_loading.svg` | Transparent background, full mark in primary cerulean, SMIL rotate animation — used as the loading / processing indicator |
-| Loader (monochrome) | `lib/app/widgets/hivorr_loader.dart` + `assets/images/hivorr_loader.svg` | Monochrome node-network (single color, transparent, nodes filled to match the brand mark). `HivorrLoader` widget does a staggered breathing pulse (no 360° spin); `hivorr_loader.svg` is the standalone CSS-keyframe version for web/HTML |
+| Mark | `assets/images/logo.svg` | Hub-and-spoke network (silver nodes) on a brand `#2D3FE7` rounded tile |
+| Wordmark | `assets/images/logo_wordmark.svg` | Brand-tile mark + "Hivorr" in Plus Jakarta Sans (`#2D3FE7` text, for light surfaces) |
+| App Icon / Favicon | `assets/images/logo_icon.svg` | Mark-only (1:1) on brand `#2D3FE7` tile — source for launcher icons, favicons, badges |
+| Horizontal lockup | `assets/images/logo_horizontal.svg` | Transparent (no tile); silver emblem + `#2D3FE7` wordmark for light surfaces — use monochrome on dark |
+| Stacked lockup | `assets/images/logo_stacked.svg` | Brand-tile emblem above `#2D3FE7` wordmark (256:300) for login/splash/empty states |
+| Monochrome lockup | `assets/images/logo_monochrome.svg` | Single-color, tintable (defaults white) for dark headers/footers |
+| Loader (monochrome) | `lib/app/widgets/hivorr_loader.dart` + `assets/images/hivorr_loader.svg` | Monochrome node-network (`currentColor`); `HivorrLoader` staggered breathing pulse (no 360° spin) |
 
-**Reusable Flutter widgets** (in `lib/app/widgets/logo_variants.dart`, via `flutter_svg`):
+Widgets in `lib/app/widgets/logo_variants.dart` (`LogoIcon`, `LogoHorizontal`, `LogoStacked`, `LogoMonochrome`) via `flutter_svg`. Raster launcher icons generated by `flutter_launcher_icons` (config in `pubspec.yaml`).
 
-| Widget | Variant | Notes |
-|---|---|---|
-| `LogoIcon` | App Icon | square; pass `size` |
-| `LogoHorizontal` | Horizontal lockup | height-first; width derived from 3.2:1 |
-| `LogoStacked` | Stacked lockup | height-first; width derived from 256:300 |
-| `LogoMonochrome` | Monochrome lockup | height-first; `color` defaults to `Colors.white` (tinted via `ColorFilter`) |
-
-**Generated raster icons** (produced by `flutter_launcher_icons`, re-run after editing the mark):
-- Source inputs: `assets/images/logo_icon.png` (transparent) + `assets/images/logo_icon_ios.png` (opaque, cerulean bg, for App Store alpha compliance).
-- Outputs: Android `mipmap-*` + adaptive (`ic_launcher_foreground`, adaptive bg `#0B6E99`), iOS `AppIcon.appiconset` (21 sizes), Web `favicon.png` + `web/icons/*` (192/512 + maskable).
-- Config lives in `pubspec.yaml` under `flutter_launcher_icons:`.
-
-**Notes**
-- The logo is an **on-brand placeholder** generated from the project colors. It is intentionally replaceable: final brand art can drop into the same paths without code changes.
-- **Concept:** a hub-and-spoke network — the central silver node is the **Universal Entity** (one identity for every user), the three silver nodes are life roles (professional, commerce, daily living), and the silver links are the compounding network effects across roles. This mirrors the EP-01 vision of an "operating system for modern human existence."
-- Rendered in-app via the `flutter_svg` package (AppBar, splash). Web/app launcher icons are generated from the mark.
-- **Clear space:** keep padding around the mark ≥ 25% of its height on all sides.
-- **Minimum size:** mark ≥ 24dp on screen; wordmark text ≥ 14sp.
-- **Color:** use the brand cerulean/emerald from §2. On colored backgrounds, use the `onPrimary`/white variant or a monochrome mark for contrast. Never recolor the mark to arbitrary hues.
+Clear space ≥ 25% of mark height; minimum 24dp mark / 14sp wordmark. On colored backgrounds use the `onPrimary`/white or monochrome variant. Never recolor to arbitrary hues. After any palette change, re-verify logo contrast on `#2D3FE7`, `#F0F2F8`, and dark `#0F1626`.
 
 ---
 
-## 6. Anti-Patterns (forbidden)
+## 27. Anti-Patterns (forbidden)
 
-- Hardcoding `Colors.*` or raw hex in widgets instead of using `Theme`/`AppThemeExtension`.
-- Setting `fontFamily` explicitly on a `TextStyle` instead of relying on `TextTheme`.
-- Introducing a third brand hue outside §2.
-- Using the accent (`#10B981`) as a full-bleed background.
-- Fetching fonts from a network at runtime.
+- Hardcoding `Colors.*` or raw hex in widgets instead of `Theme`/`AppThemeExtension`/`RoleThemeExtension`.
+- Setting `fontFamily` per-widget instead of `TextTheme`.
+- Introducing a hue outside §2.
+- Using accent/gradient as full-bleed background or small text without contrast.
+- Fetching fonts from network at runtime.
+- Card-inside-card-inside-card; every card heavily shadowed; outlining every element.
+- Non-token spacing, radius, elevation/shadow, or motion.
+- Bare spinners / dead-end empty states (always branded state widgets with guidance + next action).
+- Static heading-paragraph-button pages where grouping (§14–§15) applies.
+- Generic Header + Three Cards + Table on every page; decoration without purpose.
 
 ---
 
-## 7. Enforcement
+## 28. Enforcement
 
 - `documents/Context/AGENT.md` Rule: *"All UI MUST use `AppTheme` tokens defined in `VISUAL-IDENTITY.md`; never hardcode colors or fonts."*
-- Tests assert `ColorScheme.primary == #0B6E99` and `TextTheme.bodyMedium.fontFamily == 'Plus Jakarta Sans'`.
+- Tests assert `ColorScheme.primary == #2D3FE7`, `background == #F0F2F8`, `TextTheme.bodyMedium.fontFamily == 'Plus Jakarta Sans'`, and `RoleThemeExtension` role hexes.
 - Any UI task (EP-02+) that hardcodes a color/font fails its Definition of Done.
-- Any UI task (EP-02+) that uses **non-token** spacing, border radius, elevation/shadow, or motion — or ships an unmindful/off-brand empty, loading, error, or success state — fails its Definition of Done under §9 (the finish & experience standard).
+- Any UI task (EP-02+) that uses **non-token** spacing, radius, elevation/shadow, or motion — or ships an unmindful/off-brand empty, loading, error, or success state — fails its Definition of Done under §21 (the finish & experience standard).
+- Quality gate: §31 checklist must pass before a page is considered complete.
 
 ---
 
-## 8. Change Process
+## 29. Change Process
 
-To change a brand color, font, or the logo: update this document FIRST, then update `lib/app/theme/*` and the asset files to match, then bump the relevant test expectations. Never edit code tokens without updating this source of truth.
+To change a brand/role color, font, radius, shadow, motion, or the logo: update this document FIRST, then update `lib/app/theme/*` and assets to match, then bump test expectations. Never edit code tokens without updating this source of truth.
 
 ---
 
-## 9. Visual Finish & Experience Standard
+## 30. Design System Evolution
 
-**Status:** Active — binding across the entire project (EP-01 → EP-08). Every UI task and agent MUST conform alongside §2–§7.
+When a new component introduces a genuinely reusable pattern: decide whether it becomes shared (add to `lib/shared/` + barrel export), document the visual rule here if reusable, and reuse it in future features. The system grows richer without growing inconsistent.
 
-### 9.1 Design personality (the bar)
+---
 
-Every Hivorr surface must feel like an **intelligent professional ecosystem**: premium, modern, and human-centered. That means calm confidence, trust and financial integrity conveyed through restraint — **not** flashy glass, neon, or gimmick. If a screen feels busy, aggressive, or generic, it fails this standard.
+## 31. Visual Quality Check + The Permanent Rule
 
-### 9.2 Principles
+Before considering any page complete, verify:
 
-- **Calm & uncluttered** — generous whitespace; one primary action per view; content breathes.
-- **Trust-forward** — soft depth over hard edges; subtle, predictable; nothing harsh.
-- **Consistency over cleverness** — every screen reads as the same product.
-- **Human warmth** — friendly microcopy, smooth (never frantic) motion, warm empty/success/error states.
+- Does the page have a clear purpose? Is the primary action obvious? Is hierarchy clear?
+- Is the page visually structured (not static)? Is whitespace intentional?
+- Are cards used where they genuinely improve the experience — and other layouts where cards would be inappropriate?
+- Does the page feel visually complete, professional, and recognizably Hivorr?
+- Does it use the correct role color? Are existing components reused?
+- Is it responsive (desktop/tablet/mobile deliberate)? Consistent with established components?
+- Does it avoid generic-template looks and unnecessary decoration?
+- Contrast, focus, targets, and labels (§25) — in light AND dark?
 
-### 9.3 Spacing & layout rhythm
-
-Token source: `AppThemeExtension.spacing`.
-
-- 8pt grid base. Use the token spacings; never ad-hoc `EdgeInsets`.
-- Border radius via tokens: cards/standard surfaces **16dp**; modal bottom sheets **24dp top corners**.
-- Screen padding: 16dp mobile / 24dp on web content panes; section gaps follow the spacing scale.
-- **Content width & centering** — use the space the content requires, not the full available width. Standard forms and focused content (fields, avatars, and their associated actions) should be contained in a comfortable, visually centered pane on larger screens (desktop) rather than stretching edge-to-edge; govern the inner pane's width with the token scale (target ≈ 720dp max) and keep symmetric gutters around it. The content container owns the width — it must not force its fields or primary actions to full-bleed just because the parent is wide. Genuinely full-width surfaces (dashboards, data views, and similar content whose purpose justifies them) remain allowed.
-- **Responsive width behavior** — the width guidance above is direction, not a fixed-width mandate. On desktop, prefer the centered, constrained pane with token padding; on tablet and mobile, allow layouts to use available width with token screen padding so forms stay comfortably usable (never a cramped column) down to small screens. Interfaces should adapt, not stretch or squeeze.
-
-### 9.4 Depth & elevation
-
-- Elevation is token-driven and **soft/subtle** — cards lift gently over the background; no hard drop shadows, no heavy contrast.
-- Prefer elevation for interactive/modal surfaces; prefer borders (token `outline`) for static containment.
-
-### 9.5 Motion & micro-interactions
-
-- Token-driven durations & curves (target **150–300ms**, standard easing). Prefer fade + slide transitions.
-- Animate only to communicate: button press, list feedback, state changes. No gratuitous animation.
-- Loader: use `HivorrLoader` (breathing pulse, not a spin) for brand moments.
-
-### 9.6 Component finish (uses EP-01-16 primitives)
-
-- **Buttons** — clear hierarchy: primary = cerulean; financial-action CTA = emerald (secondary); outline/text for low-emphasis. Confident padding; ≥48dp tap targets.
-- **Text fields** — calm filled/outlined states; clear focus ring (primary); legible error text using `error` tokens.
-- **Cards** — token radius + soft elevation; consistent internal padding; subtle hover lift on web.
-- **Empty / loading / error / success states** — always use the branded illustrated-slot widgets (`HivorrEmptyState`, `HivorrLoadingState`, `HivorrErrorState`, `HivorrSnackbar`). Never a bare spinner or a dead-end: provide guidance or a next action.
-
-### 9.7 Accessibility ceiling (premium = universally usable)
-
-- WCAG AA contrast (the existing floor) **plus** comfortable touch targets (≥48dp), readable line-heights, and visible focus in both light and dark themes.
-
-### 9.8 Enforcement
-
-Extends §7. A UI task fails its Definition of Done if it uses **non-token** spacing, border radius, elevation/shadow, or motion, **or** ships an unmindful/off-brand empty, loading, error, or success state — not only when it hardcodes a color or font.
+**The permanent Hivorr visual rule:** every new page inherits the established visual language rather than inventing its own. A new page feels like *"another beautifully designed Hivorr page"* — never *"a new page that happens to be inside Hivorr."* Prioritize consistency + hierarchy + purposeful composition + beautiful spacing + reusable components + role-aware color + meaningful surfaces + responsive design + professional polish.

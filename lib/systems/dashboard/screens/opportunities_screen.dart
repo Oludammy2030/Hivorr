@@ -103,6 +103,26 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
                 onChanged: _onSearchChanged,
               ),
             ),
+            if (jobs.discovery.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  HivorrSpacing.md,
+                  0,
+                  HivorrSpacing.md,
+                  HivorrSpacing.xs,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    jobs.discoveryHasMore
+                        ? '${jobs.discovery.length}+ open jobs'
+                        : '${jobs.discovery.length} open jobs',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
             Expanded(
               child: _Body(jobs: jobs, onRetry: () => _load(refresh: true)),
             ),

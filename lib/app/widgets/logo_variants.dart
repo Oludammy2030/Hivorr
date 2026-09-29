@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 /// Reusable Hivorr logo variants.
 ///
 /// All variants render the brand mark consistently (hub-and-spoke network of
-/// silver nodes + cerulean tile where applicable). See
+/// silver nodes + brand tile #2D3FE7 where applicable). See
 /// `documents/Context/VISUAL-IDENTITY.md` §5 for the canonical artwork and the
 /// guidance on when to use each variant.
 ///
@@ -30,7 +30,7 @@ class LogoIcon extends StatelessWidget {
 
 /// Horizontal lockup: emblem to the left of the "Hivorr" wordmark.
 ///
-/// Uses the cerulean-tile wordmark variant (`logo_wordmark.svg`) for light
+/// Uses the brand-tile wordmark variant (`logo_wordmark.svg`) for light
 /// surfaces. See `documents/Context/VISUAL-IDENTITY.md` §5 for variant
 /// guidance.
 class LogoHorizontal extends StatelessWidget {
@@ -70,7 +70,7 @@ class LogoStacked extends StatelessWidget {
   );
 }
 
-/// Monochrome lockup: single-color wordmark + emblem (no tile, no cerulean),
+/// Monochrome lockup: single-color wordmark + emblem (no tile, no brand color),
 /// tinted via [color]. Defaults to white for dark headers/footers.
 class LogoMonochrome extends StatelessWidget {
   const LogoMonochrome({

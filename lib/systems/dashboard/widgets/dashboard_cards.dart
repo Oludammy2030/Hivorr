@@ -10,7 +10,9 @@ import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
 /// Summary metric card for dashboard overviews (EP-04-03).
 ///
 /// Tappable stat tile built on [HivorrCard] (mirrors the admin `_StatCard`
-/// without duplicating it).
+/// without duplicating it). Tint the icon tile via [accent]/[accentContainer]
+/// — e.g. the role containers from `context.roleTheme` — so hiring metrics
+/// read Client and work metrics read Professional (VISUAL-IDENTITY.md §3).
 class DashboardMetricCard extends StatelessWidget {
   const DashboardMetricCard({
     super.key,
@@ -19,6 +21,8 @@ class DashboardMetricCard extends StatelessWidget {
     required this.value,
     this.subtitle,
     this.onTap,
+    this.accent,
+    this.accentContainer,
   });
 
   final IconData icon;
@@ -26,10 +30,13 @@ class DashboardMetricCard extends StatelessWidget {
   final String value;
   final String? subtitle;
   final VoidCallback? onTap;
+  final Color? accent;
+  final Color? accentContainer;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
     return HivorrCard(
       onTap: onTap,
       child: Column(
@@ -37,7 +44,18 @@ class DashboardMetricCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(icon, size: 18, color: colors.primary),
+              Container(
+                padding: const EdgeInsets.all(HivorrSpacing.xs),
+                decoration: BoxDecoration(
+                  color: accentContainer ?? colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(ext.radiusSm),
+                ),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: accent ?? colors.primary,
+                ),
+              ),
               const SizedBox(width: HivorrSpacing.sm),
               Expanded(
                 child: Text(
