@@ -79,6 +79,8 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
   List<Job> _posted = const <Job>[];
   List<Job> _applied = const <Job>[];
   List<JobApplication> _myApplications = const <JobApplication>[];
+  List<JobApplication> _recentReceived = const <JobApplication>[];
+  bool _recentReceivedLoading = false;
   Job? _selected;
   List<JobApplication> _applications = const <JobApplication>[];
   JobApplication? _myApplication;
@@ -103,6 +105,14 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// The current professional's applications (loaded via [loadApplications]).
   List<JobApplication> get myApplications => _myApplications;
+
+  /// Recently received applications across the client's own jobs, newest
+  /// first (loaded via [loadRecentReceived] for the client overview feed).
+  /// Never touches the selection/detail state used by the job detail screen.
+  List<JobApplication> get recentReceived => _recentReceived;
+
+  /// Whether the received-applications feed is loading.
+  bool get isRecentReceivedLoading => _recentReceivedLoading;
 
   /// The selected job, or `null` before [select].
   Job? get selected => _selected;
@@ -262,6 +272,52 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
         'code': e.code,
       });
     } finally {
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  /// Loads recently received applications across the client's own jobs for
+  /// the client overview feed (newest first, capped at [maxTotal]).
+  ///
+  /// Bounded by design: at most [maxJobs] per-job listing calls (only jobs
+  /// with a non-zero application count), [perJob] rows each. Failures keep
+  /// the previous feed and never touch [_error]/selection state, so a feed
+  /// failure cannot blank the overview or disturb the job detail screen.
+  Future<void> loadRecentReceived({
+    int maxJobs = 3,
+    int perJob = 10,
+    int maxTotal = 3,
+  }) async {
+    if (_recentReceivedLoading || _disposed) {
+      return;
+    }
+    _recentReceivedLoading = true;
+    notifyListeners();
+    try {
+      final List<Job> targets = _posted
+          .where((Job job) => job.applicationsCount > 0)
+          .take(maxJobs)
+          .toList(growable: false);
+      final List<JobApplication> merged = <JobApplication>[];
+      for (final Job job in targets) {
+        final ApplicationPage page = await _service.listApplicationsForJob(
+          job.id,
+          limit: perJob,
+        );
+        merged.addAll(page.applications);
+      }
+      merged.sort(
+        (JobApplication a, JobApplication b) =>
+            b.submittedAt.compareTo(a.submittedAt),
+      );
+      _recentReceived = merged.take(maxTotal).toList(growable: false);
+    } on ApiException catch (e) {
+      _logger?.warning('Received applications feed failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
+    } finally {
+      _recentReceivedLoading = false;
       if (!_disposed) notifyListeners();
     }
   }
