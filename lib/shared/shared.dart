@@ -21,6 +21,7 @@ export 'layouts/breakpoints.dart';
 export 'layouts/hivorr_content_pane.dart';
 export 'layouts/hivorr_responsive_scaffold.dart';
 export 'layouts/hivorr_screen_scaffold.dart';
+export 'layouts/mobile_compact.dart';
 export 'mixins/form_validation_mixin.dart';
 export 'mixins/loading_state_mixin.dart';
 export 'validators/hivorr_validators.dart';

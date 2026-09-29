@@ -10,6 +10,7 @@ import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
@@ -228,13 +229,17 @@ class _JobFormScreenState extends State<JobFormScreen> {
               title: Text(appBarTitle, style: context.textTheme.titleLarge),
             )
           : null,
-      body: SafeArea(
+      body: MobileSafeBody(
         child: Column(
           children: <Widget>[
             if (!isMobile) _PostJobTopBar(title: appBarTitle),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(HivorrSpacing.lg),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: MobileCompact.scrollPaddingForBreakpoint(
+                  context.breakpoint,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
