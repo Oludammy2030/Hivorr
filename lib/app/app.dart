@@ -45,6 +45,7 @@ import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
+import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
 import 'package:provider/provider.dart';
@@ -451,6 +452,11 @@ class _HivorrAppState extends State<HivorrApp> {
             value: widget.manageUserProvider!,
           ),
         ChangeNotifierProvider<EntryStateProvider>.value(value: _entryState),
+        // Both-role operating mode toggle (UI-only, ephemeral — never touches
+        // account role, capability, or permissions).
+        ChangeNotifierProvider<DashboardViewModeProvider>(
+          create: (_) => DashboardViewModeProvider(),
+        ),
       ],
       child: Builder(
         builder: (BuildContext context) {

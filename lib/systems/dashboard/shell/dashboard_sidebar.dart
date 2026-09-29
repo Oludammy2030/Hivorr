@@ -6,31 +6,51 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
+import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
+import 'package:hivorr/systems/dashboard/widgets/dashboard_mode_toggle.dart';
 
 /// Capability-filtered left navigation for the dashboard shell (EP-04-03).
 ///
 /// Renders the single combined navigation grouped by section headers
 /// (My Work / My Hiring / Shared). Hire sees hiring + shared, offer sees
-/// work + shared, both sees everything. Mirrors the `SuperAdminSidebar`
-/// visual language (narrow rail preserving the workspace).
+/// work + shared. When [viewMode] is supplied for a `both` capability, the
+/// nav is filtered to the current operating mode (Professional → work +
+/// shared, Client → hiring + shared); the account role itself is unchanged.
+/// Without [viewMode], `both` keeps the legacy combined navigation.
+/// Mirrors the `SuperAdminSidebar` visual language (narrow rail preserving
+/// the workspace).
 class DashboardSidebar extends StatelessWidget {
   const DashboardSidebar({
     super.key,
     required this.location,
     required this.capability,
+    this.viewMode,
     this.onNavigate,
   });
 
   final String location;
   final DashboardCapability capability;
+
+  /// Current operating mode for `both` users. Null preserves the combined
+  /// navigation (used by legacy callers/tests); the shell always supplies it.
+  final DashboardViewMode? viewMode;
   final VoidCallback? onNavigate;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final TextTheme text = context.textTheme;
-    final bool hire = capability.showsHiring;
-    final bool offer = capability.showsWork;
+    final bool hire;
+    final bool offer;
+    if (capability != DashboardCapability.both || viewMode == null) {
+      hire = capability.showsHiring;
+      offer = capability.showsWork;
+    } else {
+      hire = viewMode == DashboardViewMode.client;
+      offer = viewMode == DashboardViewMode.professional;
+    }
+    final bool showModeToggle =
+        capability == DashboardCapability.both && viewMode != null;
     final List<DashboardNavItem> visible = dashboardNavItems
         .where(
           (DashboardNavItem item) => item.visibleFor(hire: hire, offer: offer),
@@ -105,6 +125,10 @@ class DashboardSidebar extends StatelessWidget {
                     letterSpacing: 0.8,
                   ),
                 ),
+                if (showModeToggle) ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.sm),
+                  const DashboardModeToggle(),
+                ],
               ],
             ),
           ),

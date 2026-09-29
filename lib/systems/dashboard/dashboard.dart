@@ -1,5 +1,6 @@
 export 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 export 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
+export 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 export 'package:hivorr/systems/dashboard/screens/account_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/conversation_screen.dart';
 export 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
@@ -16,6 +17,7 @@ export 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
 export 'package:hivorr/systems/dashboard/shell/dashboard_sidebar.dart';
 export 'package:hivorr/systems/dashboard/shell/hivorr_dashboard_shell.dart';
 export 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';
+export 'package:hivorr/systems/dashboard/widgets/dashboard_mode_toggle.dart';
 export 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 export 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
 export 'package:hivorr/systems/dashboard/widgets/quick_actions.dart';

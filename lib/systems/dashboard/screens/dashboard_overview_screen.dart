@@ -18,6 +18,7 @@ import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
+import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/quick_actions.dart';
@@ -91,6 +92,23 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     final DashboardCapability capability = DashboardCapability.fromEntity(
       onboarding.progress?.capability ?? EntityCapability.both,
     );
+    // Operating mode for `both` users (UI-only). Falls back to combined
+    // navigation when the provider is absent (e.g. legacy widget tests).
+    DashboardViewMode? viewMode;
+    try {
+      viewMode = context.watch<DashboardViewModeProvider>().mode;
+    } catch (_) {
+      viewMode = null;
+    }
+    final bool showHiring;
+    final bool showWork;
+    if (capability != DashboardCapability.both || viewMode == null) {
+      showHiring = capability.showsHiring;
+      showWork = capability.showsWork;
+    } else {
+      showHiring = viewMode == DashboardViewMode.client;
+      showWork = viewMode == DashboardViewMode.professional;
+    }
     final JobProvider jobs = context.watch<JobProvider>();
     final HireProvider hires = context.watch<HireProvider>();
 
@@ -130,21 +148,28 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          _WelcomeHeader(capability: capability),
+                          _WelcomeHeader(
+                            capability: capability,
+                            viewMode: viewMode,
+                          ),
                           const SizedBox(height: HivorrSpacing.md),
                           _MetricsGrid(
-                            capability: capability,
+                            showHiring: showHiring,
+                            showWork: showWork,
                             isWide: isWide,
                             maxWidth: c.maxWidth,
                           ),
                           const SizedBox(height: HivorrSpacing.xl),
                           const HivorrSectionHeader(title: 'Quick actions'),
-                          _QuickActions(capability: capability),
-                          if (capability.showsHiring) ...<Widget>[
+                          _QuickActions(
+                            showHiring: showHiring,
+                            showWork: showWork,
+                          ),
+                          if (showHiring) ...<Widget>[
                             const SizedBox(height: HivorrSpacing.xl),
                             _HiringSection(isWide: isWide),
                           ],
-                          if (capability.showsWork) ...<Widget>[
+                          if (showWork) ...<Widget>[
                             const SizedBox(height: HivorrSpacing.xl),
                             _WorkSection(isWide: isWide),
                           ],
@@ -164,31 +189,59 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
 }
 
 class _WelcomeHeader extends StatelessWidget {
-  const _WelcomeHeader({required this.capability});
+  const _WelcomeHeader({required this.capability, this.viewMode});
 
   final DashboardCapability capability;
 
+  /// Current operating mode for `both` users; null keeps the `Both` pill.
+  final DashboardViewMode? viewMode;
+
   @override
   Widget build(BuildContext context) {
+    final bool isBothWithMode =
+        capability == DashboardCapability.both && viewMode != null;
     final String subtitle = switch (capability) {
       DashboardCapability.hire =>
         'Post jobs, review applications, and hire verified professionals.',
       DashboardCapability.offer =>
         'Find jobs, manage applications, and track your work.',
+      DashboardCapability.both when isBothWithMode =>
+        viewMode == DashboardViewMode.professional
+            ? 'Find jobs, manage applications, and track your work.'
+            : 'Post jobs, review applications, and hire verified professionals.',
       DashboardCapability.both =>
         'Manage your hiring and your professional work in one place.',
     };
     final RoleThemeExtension roles = context.roleTheme;
-    final (Color pillBg, Color pillFg) = switch (capability) {
+    final (Color pillBg, Color pillFg, String pillLabel) =
+        switch (capability) {
       DashboardCapability.hire => (
         roles.clientContainer,
         roles.clientPrimary,
+        '${capability.label} mode',
       ),
       DashboardCapability.offer => (
         roles.professionalContainer,
         roles.professionalPrimary,
+        '${capability.label} mode',
       ),
-      DashboardCapability.both => (roles.bothContainer, roles.bothPrimary),
+      DashboardCapability.both when isBothWithMode =>
+        viewMode == DashboardViewMode.professional
+            ? (
+                roles.professionalContainer,
+                roles.professionalPrimary,
+                'Professional mode',
+              )
+            : (
+                roles.clientContainer,
+                roles.clientPrimary,
+                'Client mode',
+              ),
+      DashboardCapability.both => (
+        roles.bothContainer,
+        roles.bothPrimary,
+        '${capability.label} mode',
+      ),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +256,7 @@ class _WelcomeHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            '${capability.label} mode',
+            pillLabel,
             style: context.textTheme.labelSmall?.copyWith(
               color: pillFg,
               fontWeight: FontWeight.w700,
@@ -231,12 +284,14 @@ class _WelcomeHeader extends StatelessWidget {
 
 class _MetricsGrid extends StatelessWidget {
   const _MetricsGrid({
-    required this.capability,
+    required this.showHiring,
+    required this.showWork,
     required this.isWide,
     required this.maxWidth,
   });
 
-  final DashboardCapability capability;
+  final bool showHiring;
+  final bool showWork;
   final bool isWide;
   final double maxWidth;
   @override
@@ -246,7 +301,7 @@ class _MetricsGrid extends StatelessWidget {
     final RoleThemeExtension roles = context.roleTheme;
     final double cardWidth = isWide ? 220 : maxWidth;
     final List<Widget> cards = <Widget>[];
-    if (capability.showsHiring) {
+    if (showHiring) {
       final int open = jobs.posted.where((j) => j.isOpen).length;
       cards.addAll(<Widget>[
         _Sized(
@@ -280,7 +335,7 @@ class _MetricsGrid extends StatelessWidget {
         ),
       ]);
     }
-    if (capability.showsWork) {
+    if (showWork) {
       cards.addAll(<Widget>[
         _Sized(
           width: cardWidth,
@@ -332,14 +387,15 @@ class _Sized extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.capability});
+  const _QuickActions({required this.showHiring, required this.showWork});
 
-  final DashboardCapability capability;
+  final bool showHiring;
+  final bool showWork;
 
   @override
   Widget build(BuildContext context) {
     final List<DashboardQuickAction> actions = <DashboardQuickAction>[];
-    if (capability.showsHiring) {
+    if (showHiring) {
       actions.addAll(<DashboardQuickAction>[
         DashboardQuickAction(
           label: 'Post a Job',
@@ -354,12 +410,12 @@ class _QuickActions extends StatelessWidget {
         ),
       ]);
     }
-    if (capability.showsWork) {
+    if (showWork) {
       actions.addAll(<DashboardQuickAction>[
         DashboardQuickAction(
           label: 'Find Jobs',
           icon: Icons.search,
-          primary: !capability.showsHiring,
+          primary: !showHiring,
           onTap: () => context.go(RoutePaths.dashboardOpportunities),
         ),
         DashboardQuickAction(
