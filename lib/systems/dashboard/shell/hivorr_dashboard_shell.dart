@@ -114,7 +114,10 @@ class _Workspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(color: context.colorScheme.surface, child: child);
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: child,
+    );
   }
 }
 

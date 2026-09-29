@@ -155,7 +155,7 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
       );
     }
     content = ColoredBox(
-      color: context.colorScheme.surfaceContainer,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: content,
     );
     return Column(
