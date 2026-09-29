@@ -106,6 +106,8 @@ class _InitializationScreenState extends State<InitializationScreen> {
         jobProvider: _result!.jobProvider,
         hireRepository: _result!.hireRepository,
         hireProvider: _result!.hireProvider,
+        messagingRepository: _result!.messagingRepository,
+        messagingProvider: _result!.messagingProvider,
         onboardingService: _result!.onboardingService,
         onboardingProvider: _result!.onboardingProvider,
         onboardingStore: _result!.onboardingStore,

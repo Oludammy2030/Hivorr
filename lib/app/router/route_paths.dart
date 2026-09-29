@@ -176,8 +176,13 @@ abstract final class RoutePaths {
   static String dashboardHireDetail(String id) =>
       '/dashboard/hires/${Uri.encodeComponent(id)}';
 
+  /// Builds a URL-encoded dashboard message thread path.
+  static String dashboardMessageThread(String id) =>
+      '/dashboard/messages/${Uri.encodeComponent(id)}';
+
   /// Shared dashboard routes.
   static const String dashboardMessages = '/dashboard/messages';
+  static const String dashboardMessageThreadRoute = '/dashboard/messages/:id';
   static const String dashboardNotifications = '/dashboard/notifications';
   static const String dashboardPayments = '/dashboard/payments';
   static const String dashboardEarnings = '/dashboard/earnings';

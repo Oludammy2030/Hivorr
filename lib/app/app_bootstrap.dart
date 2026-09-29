@@ -52,6 +52,8 @@ class BootstrapResult {
     this.jobProvider,
     this.hireRepository,
     this.hireProvider,
+    this.messagingRepository,
+    this.messagingProvider,
     this.onboardingService,
     this.onboardingProvider,
     this.onboardingStore,
@@ -140,6 +142,12 @@ class BootstrapResult {
 
   /// Quotations/hires provider surfaced to the widget tree (EP-04-02).
   final HireProvider? hireProvider;
+
+  /// Messaging repository (EP-04-04). Optional for testability.
+  final MessagingRepository? messagingRepository;
+
+  /// Messaging provider surfaced to the widget tree (EP-04-04).
+  final MessagingProvider? messagingProvider;
 
   /// Onboarding service (EP-02-18). Optional for testability.
   final OnboardingService? onboardingService;
@@ -268,6 +276,8 @@ class AppBootstrap {
         registerJobsLayer(apiLayer);
     final ({HireRepository repository, HireProvider provider}) hires =
         registerHiresLayer(apiLayer);
+    final ({MessagingRepository repository, MessagingProvider provider})
+    messaging = registerMessagingLayer(apiLayer);
     final ({
       OnboardingService service,
       OnboardingProvider provider,
@@ -320,6 +330,8 @@ class AppBootstrap {
       jobProvider: jobs.provider,
       hireRepository: hires.repository,
       hireProvider: hires.provider,
+      messagingRepository: messaging.repository,
+      messagingProvider: messaging.provider,
       onboardingService: onboarding.service,
       onboardingProvider: onboarding.provider,
       onboardingStore: onboarding.store,

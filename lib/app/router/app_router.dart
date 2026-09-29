@@ -31,6 +31,7 @@ import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
 import 'package:hivorr/systems/dashboard/screens/account_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/conversation_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_settings_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/finance_hubs_screen.dart';
@@ -356,17 +357,13 @@ class AppRouter {
               path: RoutePaths.dashboardJobDetailRoute,
               name: RouteNames.dashboardJobDetail,
               builder: (BuildContext context, GoRouterState state) =>
-                  JobDetailScreen(
-                    jobId: state.pathParameters['id'] ?? '',
-                  ),
+                  JobDetailScreen(jobId: state.pathParameters['id'] ?? ''),
             ),
             GoRoute(
               path: RoutePaths.dashboardJobEditRoute,
               name: RouteNames.dashboardJobEdit,
               builder: (BuildContext context, GoRouterState state) =>
-                  JobFormScreen(
-                    jobId: state.pathParameters['id'],
-                  ),
+                  JobFormScreen(jobId: state.pathParameters['id']),
             ),
             GoRoute(
               path: RoutePaths.dashboardOpportunities,
@@ -385,23 +382,28 @@ class AppRouter {
               name: RouteNames.dashboardHires,
               builder: (BuildContext context, GoRouterState state) =>
                   HiresScreen(
-                    role:
-                        state.uri.queryParameters['role'] ?? 'client',
+                    role: state.uri.queryParameters['role'] ?? 'client',
                   ),
             ),
             GoRoute(
               path: RoutePaths.dashboardHireDetailRoute,
               name: RouteNames.dashboardHireDetail,
               builder: (BuildContext context, GoRouterState state) =>
-                  HireDetailScreen(
-                    hireId: state.pathParameters['id'] ?? '',
-                  ),
+                  HireDetailScreen(hireId: state.pathParameters['id'] ?? ''),
             ),
             GoRoute(
               path: RoutePaths.dashboardMessages,
               name: RouteNames.dashboardMessages,
               builder: (BuildContext context, GoRouterState state) =>
                   const MessagesScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardMessageThreadRoute,
+              name: RouteNames.dashboardMessageThread,
+              builder: (BuildContext context, GoRouterState state) =>
+                  ConversationScreen(
+                    conversationId: state.pathParameters['id'] ?? '',
+                  ),
             ),
             GoRoute(
               path: RoutePaths.dashboardNotifications,
@@ -521,9 +523,7 @@ class AppRouter {
           path: RoutePaths.serviceListingEdit,
           name: RouteNames.serviceListingEdit,
           builder: (BuildContext context, GoRouterState state) =>
-              ServiceListingFormScreen(
-                listingId: state.pathParameters['id'],
-              ),
+              ServiceListingFormScreen(listingId: state.pathParameters['id']),
         ),
         GoRoute(
           path: RoutePaths.serviceListingMedia,

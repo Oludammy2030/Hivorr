@@ -9,6 +9,7 @@ import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/hire.dart';
 import 'package:hivorr/data/entities/job_quotation.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
+import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
@@ -123,6 +124,25 @@ class _DetailBody extends StatelessWidget {
   })
   onAction;
 
+  Future<void> _openThread(BuildContext context, String contractId) async {
+    try {
+      final conversation = await context
+          .read<MessagingProvider>()
+          .ensureForContract(contractId);
+      if (!context.mounted) return;
+      context.go(RoutePaths.dashboardMessageThread(conversation.id));
+    } on ApiException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        HivorrSnackbar.show(
+          context,
+          message: e.message,
+          variant: HivorrSnackbarVariant.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final HireProvider hires = context.watch<HireProvider>();
@@ -192,6 +212,14 @@ class _DetailBody extends StatelessWidget {
                   label: 'View Contract',
                   variant: HivorrButtonVariant.outline,
                   onPressed: () => context.go('/finance/escrow/$contractId'),
+                ),
+              if (contractId != null)
+                HivorrButton(
+                  label: 'Message',
+                  variant: HivorrButtonVariant.outline,
+                  onPressed: acting
+                      ? null
+                      : () => _openThread(context, contractId),
                 ),
               if (hire.isPending)
                 HivorrButton(

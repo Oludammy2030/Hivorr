@@ -1,40 +1,36 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:hivorr/core/api/exceptions/api_exception.dart';
+import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/data/entities/conversation.dart';
+import 'package:hivorr/data/entities/hire.dart';
+import 'package:hivorr/data/providers/hire_provider.dart';
+import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
+import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
-import 'package:hivorr/systems/dashboard/services/messaging_service.dart';
+import 'package:provider/provider.dart';
 
-/// Messages inbox over the [MessagingService] seam (EP-04-03).
+/// Messages inbox: contract-scoped threads (EP-04-04).
 ///
-/// Conversations are contract-scoped threads (one per hire). Until the
-/// conversations read path is connected, the seam reports none and this
-/// screen renders its honest empty state with the next action — no
-/// fabricated threads. Structure (list, refresh, error/retry) stays put for
-/// the RPC swap.
+/// Threads resolve titles from the hire list (job title per linked
+/// contract); unknown contracts fall back to a short contract reference.
+/// Each thread shows the server-redacted preview — opening it decrypts the
+/// full history. Empty/error/loading/refresh states included.
 class MessagesScreen extends StatefulWidget {
-  const MessagesScreen({
-    super.key,
-    this.service = const EmptyMessagingService(),
-  });
-
-  final MessagingService service;
+  const MessagesScreen({super.key});
 
   @override
   State<MessagesScreen> createState() => _MessagesScreenState();
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
-  List<ConversationSummary> _items = const <ConversationSummary>[];
-  bool _loading = true;
-  String? _error;
-
   @override
   void initState() {
     super.initState();
@@ -42,49 +38,68 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final List<ConversationSummary> items = await widget.service
-          .listConversations();
-      if (!mounted) return;
-      setState(() {
-        _items = items;
-        _loading = false;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = e.message;
-      });
-    } on Object catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = e.toString();
-      });
+    if (!mounted) return;
+    final HireProvider? hires = _maybeHires(context);
+    if (hires != null && hires.hires.isEmpty && !hires.isLoading) {
+      unawaited(hires.loadList());
     }
+    await context.read<MessagingProvider>().loadConversations();
+  }
+
+  HireProvider? _maybeHires(BuildContext context) {
+    try {
+      return context.read<HireProvider>();
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
+  String _titleFor(BuildContext context, Conversation conversation) {
+    HireProvider? hires;
+    try {
+      hires = context.watch<HireProvider>();
+    } on ProviderNotFoundException {
+      hires = null;
+    }
+    final List<Hire> all = hires?.hires ?? const <Hire>[];
+    for (final Hire hire in all) {
+      if (hire.contractId == conversation.contractId &&
+          (hire.jobTitle ?? '').isNotEmpty) {
+        return hire.jobTitle!;
+      }
+    }
+    final String contract = conversation.contractId;
+    final String short = contract.length <= 8
+        ? contract
+        : contract.substring(contract.length - 8);
+    return 'Contract …$short';
   }
 
   @override
   Widget build(BuildContext context) {
+    final MessagingProvider messaging = context.watch<MessagingProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Messages', style: context.textTheme.titleLarge),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Refresh',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => unawaited(_load()),
+          ),
+        ],
       ),
       body: SafeArea(
-        child: _loading
+        child: messaging.isLoading && messaging.conversations.isEmpty
             ? const HivorrLoadingState()
-            : _error != null
+            : messaging.lastError != null && messaging.conversations.isEmpty
             ? HivorrErrorState(
                 message: 'Could not load messages',
-                detail: _error!,
+                detail: messaging.lastError!.message,
                 onRetry: () => unawaited(_load()),
               )
-            : _items.isEmpty
+            : messaging.conversations.isEmpty
             ? const HivorrEmptyState(
                 title: 'No messages yet',
                 subtitle:
@@ -94,29 +109,52 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 onRefresh: _load,
                 child: ListView.separated(
                   padding: const EdgeInsets.all(HivorrSpacing.md),
-                  itemCount: _items.length,
+                  itemCount: messaging.conversations.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: HivorrSpacing.sm),
                   itemBuilder: (BuildContext context, int i) {
-                    final ConversationSummary conversation = _items[i];
+                    final Conversation conversation =
+                        messaging.conversations[i];
                     return HivorrCard(
-                      onTap: () {},
+                      onTap: () => context.go(
+                        RoutePaths.dashboardMessageThread(conversation.id),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            conversation.title,
-                            style: context.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Text(
+                                  _titleFor(context, conversation),
+                                  style: context.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              if (conversation.lastMessageAt != null)
+                                Text(
+                                  HivorrFormatters.relative(
+                                    conversation.lastMessageAt!,
+                                  ),
+                                  style: context.textTheme.labelSmall?.copyWith(
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
                           ),
-                          if (conversation.lastMessage != null) ...<Widget>[
+                          if (conversation.lastMessagePreview != null &&
+                              conversation
+                                  .lastMessagePreview!
+                                  .isNotEmpty) ...<Widget>[
                             const SizedBox(height: HivorrSpacing.xs),
                             Text(
-                              conversation.lastMessage!,
+                              conversation.lastMessagePreview!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: context.textTheme.bodySmall,
+                              style: context.textTheme.bodySmall?.copyWith(
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ],

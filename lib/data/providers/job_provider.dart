@@ -78,6 +78,7 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
   String? _discoveryCursor;
   List<Job> _posted = const <Job>[];
   List<Job> _applied = const <Job>[];
+  List<JobApplication> _myApplications = const <JobApplication>[];
   Job? _selected;
   List<JobApplication> _applications = const <JobApplication>[];
   JobApplication? _myApplication;
@@ -99,6 +100,9 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Jobs the current professional applied to.
   List<Job> get applied => _applied;
+
+  /// The current professional's applications (loaded via [loadApplications]).
+  List<JobApplication> get myApplications => _myApplications;
 
   /// The selected job, or `null` before [select].
   Job? get selected => _selected;
@@ -237,6 +241,30 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Lists the professional's own applications (screen-local paging).
   Future<ApplicationPage> listApplications({String? status}) =>
       _service.listMyApplications(status: status);
+
+  /// Loads and memoizes the professional's own applications (activity feed).
+  Future<void> loadApplications({String? status}) async {
+    if (isLoading) return;
+    _loadState = JobLoadState.loading;
+    _error = null;
+    notifyListeners();
+    try {
+      final ApplicationPage page = await _service.listMyApplications(
+        status: status,
+      );
+      _myApplications = page.applications;
+      _loadState = JobLoadState.loaded;
+    } on ApiException catch (e) {
+      _error = e;
+      _loadState = JobLoadState.error;
+      _logger?.warning('Applications load failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
+    } finally {
+      if (!_disposed) notifyListeners();
+    }
+  }
 
   /// Creates a draft job and selects it.
   Future<Job> create({
