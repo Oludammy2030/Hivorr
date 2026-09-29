@@ -162,6 +162,21 @@ Future<void> enterField(WidgetTester tester, String label, String value) async {
   await tester.pump();
 }
 
+/// Enters credentials on the reference-style login form, whose labels sit
+/// above borderless filled fields (no [InputDecoration.labelText]), so the
+/// generic [enterField] lookup cannot see them. Field order is stable:
+/// email first, password second.
+Future<void> enterLoginCredentials(
+  WidgetTester tester, {
+  required String email,
+  required String password,
+}) async {
+  final Finder fields = find.byType(TextField);
+  await tester.enterText(fields.at(0), email);
+  await tester.enterText(fields.at(1), password);
+  await tester.pump();
+}
+
 /// Fills the new required identity fields for registration restructuring.
 Future<void> fillRegistrationIdentity(WidgetTester tester) async {
   await enterField(tester, 'First name', 'Jane');
@@ -183,38 +198,32 @@ void main() {
         authProvider: provider,
       );
 
-      expect(find.text('Welcome back'), findsOneWidget);
-      expect(find.text('Email address'), findsOneWidget);
+      expect(find.textContaining('Welcome back'), findsOneWidget);
+      expect(find.text('Email'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Sign in'), findsOneWidget);
+      expect(find.text('Sign In'), findsOneWidget);
       expect(find.text('Forgot password?'), findsOneWidget);
-      expect(find.text('New here? Create your free account'), findsOneWidget);
+      expect(find.text('New to Hivorr? '), findsOneWidget);
+      expect(find.text('Create account'), findsOneWidget);
     });
 
-    testWidgets('Sign in is disabled until email and password are entered', (
+    testWidgets('empty submit shows inline guidance and stays put', (
       tester,
     ) async {
       final service = _ScriptedAuthService();
       final provider = AuthProvider(service: service);
       addTearDown(provider.dispose);
 
-      await pumpAuth(
-        tester,
-        router: doorRouter(initialLocation: RoutePaths.login),
-        authProvider: provider,
-      );
+      final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
+      await pumpAuth(tester, router: router, authProvider: provider);
 
-      HivorrButton button() =>
-          tester.widget<HivorrButton>(find.byType(HivorrButton));
-      expect(button().onPressed, isNull);
-
-      await enterField(tester, 'Email address', 'me@example.com');
+      await tester.ensureVisible(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign In'));
       await tester.pump();
-      expect(button().onPressed, isNull);
 
-      await enterField(tester, 'Password', 'secret1');
-      await tester.pump();
-      expect(button().onPressed, isNotNull);
+      expect(find.text('Enter your email and password.'), findsOneWidget);
+      expect(router.routerDelegate.state.matchedLocation, RoutePaths.login);
     });
 
     testWidgets('successful sign-in routes to the preserved ?next', (
@@ -230,9 +239,14 @@ void main() {
       );
       await pumpAuth(tester, router: router, authProvider: provider);
 
-      await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'secret1');
-      await tester.tap(find.text('Sign in'));
+      await enterLoginCredentials(
+        tester,
+        email: 'me@example.com',
+        password: 'secret1',
+      );
+      await tester.ensureVisible(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
 
       expect(router.routerDelegate.state.matchedLocation, '/p/acme/1');
@@ -252,9 +266,14 @@ void main() {
       final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
       await pumpAuth(tester, router: router, authProvider: provider);
 
-      await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'wrong-pass');
-      await tester.tap(find.text('Sign in'));
+      await enterLoginCredentials(
+        tester,
+        email: 'me@example.com',
+        password: 'wrong-pass',
+      );
+      await tester.ensureVisible(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
 
       expect(find.text('Invalid email or password'), findsOneWidget);
@@ -275,9 +294,14 @@ void main() {
       final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
       await pumpAuth(tester, router: router, authProvider: provider);
 
-      await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'any-password');
-      await tester.tap(find.text('Sign in'));
+      await enterLoginCredentials(
+        tester,
+        email: 'me@example.com',
+        password: 'any-password',
+      );
+      await tester.ensureVisible(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
 
       expect(
@@ -308,9 +332,14 @@ void main() {
       final GoRouter router = doorRouter(initialLocation: RoutePaths.login);
       await pumpAuth(tester, router: router, authProvider: provider);
 
-      await enterField(tester, 'Email address', 'me@example.com');
-      await enterField(tester, 'Password', 'any-password');
-      await tester.tap(find.text('Sign in'));
+      await enterLoginCredentials(
+        tester,
+        email: 'me@example.com',
+        password: 'any-password',
+      );
+      await tester.ensureVisible(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
 
       expect(
