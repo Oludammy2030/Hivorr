@@ -6,6 +6,10 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 /// Step summary card: icon + title + description + completion state
 /// (EP-02-18 FV-36). Spacing/radius come from [AppThemeExtension]
 /// (VISUAL-IDENTITY.md 8pt grid, 16dp cards).
+///
+/// Tint the active/done accents via [accent] (defaults to primary) — e.g. the
+/// role colors from `context.roleTheme` so the completion recap reads in the
+/// entity's capability color (VISUAL-IDENTITY.md §3).
 class OnboardingStepCard extends StatelessWidget {
   const OnboardingStepCard({
     super.key,
@@ -15,6 +19,7 @@ class OnboardingStepCard extends StatelessWidget {
     this.stepNumber,
     this.isDone = false,
     this.isActive = false,
+    this.accent,
   });
 
   /// Leading step icon.
@@ -35,16 +40,20 @@ class OnboardingStepCard extends StatelessWidget {
   /// Whether this is the current step (primary container highlight).
   final bool isActive;
 
+  /// Accent for the active border, icon and done check. Defaults to primary.
+  final Color? accent;
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final AppThemeExtension ext = context.appExtension;
+    final Color accentColor = accent ?? colors.primary;
 
     final Color background = isActive
         ? colors.primaryContainer
         : colors.surfaceContainerLowest;
 
-    final Color? borderColor = isActive ? colors.primary : null;
+    final Color? borderColor = isActive ? accentColor : null;
 
     return Container(
       padding: const EdgeInsets.all(HivorrSpacing.md),
@@ -62,7 +71,7 @@ class OnboardingStepCard extends StatelessWidget {
             icon,
             size: 28,
             color: isActive || isDone
-                ? colors.primary
+                ? accentColor
                 : colors.onSurfaceVariant,
           ),
           const SizedBox(width: HivorrSpacing.md),
@@ -83,7 +92,7 @@ class OnboardingStepCard extends StatelessWidget {
           ),
           if (isDone) ...<Widget>[
             const SizedBox(width: HivorrSpacing.sm),
-            Icon(Icons.check_circle, color: colors.primary, size: 20),
+            Icon(Icons.check_circle, color: accentColor, size: 20),
           ] else if (stepNumber != null) ...<Widget>[
             const SizedBox(width: HivorrSpacing.sm),
             Text(

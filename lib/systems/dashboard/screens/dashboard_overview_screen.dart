@@ -13,6 +13,7 @@ import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
@@ -177,9 +178,39 @@ class _WelcomeHeader extends StatelessWidget {
       DashboardCapability.both =>
         'Manage your hiring and your professional work in one place.',
     };
+    final RoleThemeExtension roles = context.roleTheme;
+    final (Color pillBg, Color pillFg) = switch (capability) {
+      DashboardCapability.hire => (
+        roles.clientContainer,
+        roles.clientPrimary,
+      ),
+      DashboardCapability.offer => (
+        roles.professionalContainer,
+        roles.professionalPrimary,
+      ),
+      DashboardCapability.both => (roles.bothContainer, roles.bothPrimary),
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: HivorrSpacing.sm,
+            vertical: HivorrSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: pillBg,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            '${capability.label} mode',
+            style: context.textTheme.labelSmall?.copyWith(
+              color: pillFg,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: HivorrSpacing.sm),
         Text(
           'Welcome back',
           style: context.textTheme.headlineSmall?.copyWith(
@@ -208,11 +239,11 @@ class _MetricsGrid extends StatelessWidget {
   final DashboardCapability capability;
   final bool isWide;
   final double maxWidth;
-
   @override
   Widget build(BuildContext context) {
     final JobProvider jobs = context.watch<JobProvider>();
     final HireProvider hires = context.watch<HireProvider>();
+    final RoleThemeExtension roles = context.roleTheme;
     final double cardWidth = isWide ? 220 : maxWidth;
     final List<Widget> cards = <Widget>[];
     if (capability.showsHiring) {
@@ -227,6 +258,8 @@ class _MetricsGrid extends StatelessWidget {
                 ? '…'
                 : '${jobs.posted.length}',
             subtitle: '$open open',
+            accent: roles.clientPrimary,
+            accentContainer: roles.clientContainer,
             onTap: () => context.go(RoutePaths.dashboardJobs),
           ),
         ),
@@ -239,7 +272,10 @@ class _MetricsGrid extends StatelessWidget {
                 ? '…'
                 : '${hires.hires.length}',
             subtitle: 'Client side',
-            onTap: () => context.go('${RoutePaths.dashboardHires}?role=client'),
+            accent: roles.clientPrimary,
+            accentContainer: roles.clientContainer,
+            onTap: () =>
+                context.go('${RoutePaths.dashboardHires}?role=client'),
           ),
         ),
       ]);
@@ -255,6 +291,8 @@ class _MetricsGrid extends StatelessWidget {
                 ? '…'
                 : '${jobs.discovery.length}',
             subtitle: 'Available now',
+            accent: roles.professionalPrimary,
+            accentContainer: roles.professionalContainer,
             onTap: () => context.go(RoutePaths.dashboardOpportunities),
           ),
         ),
@@ -267,6 +305,8 @@ class _MetricsGrid extends StatelessWidget {
                 ? '…'
                 : '${hires.hires.length}',
             subtitle: 'Professional side',
+            accent: roles.professionalPrimary,
+            accentContainer: roles.professionalContainer,
             onTap: () =>
                 context.go('${RoutePaths.dashboardHires}?role=professional'),
           ),
@@ -458,24 +498,26 @@ class _FinanceSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         const HivorrSectionHeader(title: 'Money'),
-        DashboardQuickActions(
-          actions: <DashboardQuickAction>[
-            DashboardQuickAction(
-              label: 'Payments',
-              icon: Icons.payments_outlined,
-              onTap: () => context.go(RoutePaths.dashboardPayments),
-            ),
-            DashboardQuickAction(
-              label: 'Earnings',
-              icon: Icons.account_balance_wallet_outlined,
-              onTap: () => context.go(RoutePaths.dashboardEarnings),
-            ),
-            DashboardQuickAction(
-              label: 'Escrow',
-              icon: Icons.lock_outline,
-              onTap: () => context.go(RoutePaths.escrow),
-            ),
-          ],
+        HivorrCard(
+          child: DashboardQuickActions(
+            actions: <DashboardQuickAction>[
+              DashboardQuickAction(
+                label: 'Payments',
+                icon: Icons.payments_outlined,
+                onTap: () => context.go(RoutePaths.dashboardPayments),
+              ),
+              DashboardQuickAction(
+                label: 'Earnings',
+                icon: Icons.account_balance_wallet_outlined,
+                onTap: () => context.go(RoutePaths.dashboardEarnings),
+              ),
+              DashboardQuickAction(
+                label: 'Escrow',
+                icon: Icons.lock_outline,
+                onTap: () => context.go(RoutePaths.escrow),
+              ),
+            ],
+          ),
         ),
       ],
     );

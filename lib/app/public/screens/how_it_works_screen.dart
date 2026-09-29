@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/public/widgets/public_page_scaffold.dart';
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/shared/components/hivorr_cta_band.dart';
+import 'package:hivorr/shared/components/hivorr_step_card.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
 
 /// Public `/how-it-works` page — the one-account journey and trust flywheel.
 class HowItWorksScreen extends StatelessWidget {
@@ -22,12 +25,9 @@ class HowItWorksScreen extends StatelessWidget {
             eyebrow: 'FROM FIRST LAUNCH',
             title: 'Get operating in three steps',
           ),
+          const SizedBox(height: HivorrSpacing.lg),
+          const _StepsTimeline(),
           const SizedBox(height: HivorrSpacing.xl),
-          for (final _Step step in _steps) ...<Widget>[
-            _StepCard(step: step),
-            const SizedBox(height: HivorrSpacing.lg),
-          ],
-          const SizedBox(height: HivorrSpacing.md),
           const PublicSection(
             title: 'The trust flywheel',
             body:
@@ -38,19 +38,24 @@ class HowItWorksScreen extends StatelessWidget {
                 'dimensions — that is what makes Hivorr hard to leave.',
           ),
           const SizedBox(height: HivorrSpacing.xl),
-          HivorrButton(
-            label: 'Create your free account',
-            size: HivorrButtonSize.large,
-            onPressed: () => context.go(RoutePaths.signup),
-          ),
-          const SizedBox(height: HivorrSpacing.md),
-          TextButton(
-            onPressed: () => context.go(RoutePaths.features),
-            style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text(
-              'See what you can do',
-              style: context.textTheme.labelLarge,
-            ),
+          HivorrCtaBand(
+            title: 'Start your flywheel today.',
+            subtitle: 'One account, verified once, compounding everywhere.',
+            actions: <Widget>[
+              HivorrButton(
+                label: 'Create your free account',
+                size: HivorrButtonSize.large,
+                onPressed: () => context.go(RoutePaths.signup),
+              ),
+              TextButton(
+                onPressed: () => context.go(RoutePaths.features),
+                style: TextButton.styleFrom(foregroundColor: colors.primary),
+                child: Text(
+                  'See what you can do',
+                  style: context.textTheme.labelLarge,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -85,6 +90,48 @@ const List<_Step> _steps = <_Step>[
   ),
 ];
 
+/// Numbered steps in raised cards joined by a primary rail accent.
+class _StepsTimeline extends StatelessWidget {
+  const _StepsTimeline();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        for (int i = 0; i < _steps.length; i++) ...<Widget>[
+          HivorrCard(
+            elevation: 1,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  width: 4,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    color: colors.primary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: HivorrSpacing.md),
+                Expanded(
+                  child: HivorrStepCard(
+                    step: _steps[i].number,
+                    title: _steps[i].title,
+                    body: _steps[i].body,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (i < _steps.length - 1) const SizedBox(height: HivorrSpacing.md),
+        ],
+      ],
+    );
+  }
+}
+
 class _HowHeader extends StatelessWidget {
   const _HowHeader();
 
@@ -104,43 +151,6 @@ class _HowHeader extends StatelessWidget {
         Text(
           'One account, one identity, every role your life needs — powered by '
           'verification, escrow and a record that follows you.',
-          style: context.textTheme.bodyLarge?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StepCard extends StatelessWidget {
-  const _StepCard({required this.step});
-
-  final _Step step;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          '0${step.number}',
-          style: context.textTheme.labelLarge?.copyWith(
-            color: colors.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: HivorrSpacing.xs),
-        Text(
-          step.title,
-          style: context.textTheme.titleLarge?.copyWith(
-            color: colors.onSurface,
-          ),
-        ),
-        const SizedBox(height: HivorrSpacing.sm),
-        Text(
-          step.body,
           style: context.textTheme.bodyLarge?.copyWith(
             color: colors.onSurfaceVariant,
           ),

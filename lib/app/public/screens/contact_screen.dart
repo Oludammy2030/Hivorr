@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hivorr/app/public/widgets/public_info_row.dart';
 import 'package:hivorr/app/public/widgets/public_page_scaffold.dart';
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/shared/components/hivorr_feature_card.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -21,48 +21,75 @@ class ContactScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          PublicInfoRow(
-            icon: Icons.help_outline,
-            title: 'Help center',
-            body:
-                'Find answers about account, verification, payments and more.',
+          LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints c) {
+              final bool isWide = c.maxWidth >= 720;
+              final double cardWidth = isWide
+                  ? (c.maxWidth - 2 * HivorrSpacing.md) / 3
+                  : c.maxWidth;
+              return Wrap(
+                spacing: HivorrSpacing.md,
+                runSpacing: HivorrSpacing.md,
+                children: <Widget>[
+                  SizedBox(
+                    width: cardWidth,
+                    child: HivorrFeatureCard(
+                      icon: Icons.help_outline,
+                      title: 'Help center',
+                      body:
+                          'Find answers about account, verification, payments and more.',
+                    ),
+                  ),
+                  SizedBox(
+                    width: cardWidth,
+                    child: HivorrFeatureCard(
+                      icon: Icons.shield_outlined,
+                      title: 'Security & trust',
+                      body:
+                          'How Hivorr protects every engagement, start to finish.',
+                    ),
+                  ),
+                  SizedBox(
+                    width: cardWidth,
+                    child: HivorrFeatureCard(
+                      icon: Icons.person_add_alt_outlined,
+                      title: 'Talk to us as a professional',
+                      body:
+                          'Support from the Hivorr help ecosystem is available in-app '
+                          'once your account is created.',
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: HivorrSpacing.md),
-          TextButton(
-            onPressed: () => context.go(RoutePaths.help),
-            style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text(
-              'Open the Help center',
-              style: context.textTheme.labelLarge,
-            ),
-          ),
-          const SizedBox(height: HivorrSpacing.xl),
-          PublicInfoRow(
-            icon: Icons.shield_outlined,
-            title: 'Security & trust',
-            body: 'How Hivorr protects every engagement, start to finish.',
-          ),
-          const SizedBox(height: HivorrSpacing.md),
-          TextButton(
-            onPressed: () => context.go(RoutePaths.security),
-            style: TextButton.styleFrom(foregroundColor: colors.primary),
-            child: Text(
-              'See our trust model',
-              style: context.textTheme.labelLarge,
-            ),
-          ),
-          const SizedBox(height: HivorrSpacing.xl),
-          PublicInfoRow(
-            icon: Icons.person_add_alt_outlined,
-            title: 'Talk to us as a professional',
-            body:
-                'Support from the Hivorr help ecosystem is available in-app '
-                'once your account is created.',
-          ),
-          const SizedBox(height: HivorrSpacing.md),
-          HivorrButton(
-            label: 'Create your free account',
-            onPressed: () => context.go(RoutePaths.signup),
+          const SizedBox(height: HivorrSpacing.lg),
+          Wrap(
+            spacing: HivorrSpacing.sm,
+            runSpacing: HivorrSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              TextButton(
+                onPressed: () => context.go(RoutePaths.help),
+                style: TextButton.styleFrom(foregroundColor: colors.primary),
+                child: Text(
+                  'Open the Help center',
+                  style: context.textTheme.labelLarge,
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.go(RoutePaths.security),
+                style: TextButton.styleFrom(foregroundColor: colors.primary),
+                child: Text(
+                  'See our trust model',
+                  style: context.textTheme.labelLarge,
+                ),
+              ),
+              HivorrButton(
+                label: 'Create your free account',
+                onPressed: () => context.go(RoutePaths.signup),
+              ),
+            ],
           ),
         ],
       ),

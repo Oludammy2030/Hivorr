@@ -97,8 +97,9 @@ class ServiceListingCard extends StatelessWidget {
           const SizedBox(height: HivorrSpacing.xs),
           Text(
             _priceLine(listing),
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+            style: context.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: context.colorScheme.primary,
             ),
           ),
           if (onPublish != null ||

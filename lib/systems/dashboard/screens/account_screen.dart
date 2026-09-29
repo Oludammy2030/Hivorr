@@ -51,11 +51,20 @@ class AccountScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            capability.label,
-                            style: context.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          Row(
+                            children: <Widget>[
+                              Flexible(
+                                child: Text(
+                                  capability.label,
+                                  style: context.textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(width: HivorrSpacing.sm),
+                              _RoleChip(capability: capability),
+                            ],
                           ),
                           if (email.isNotEmpty)
                             Text(
@@ -109,6 +118,42 @@ class AccountScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  const _RoleChip({required this.capability});
+
+  final DashboardCapability capability;
+
+  @override
+  Widget build(BuildContext context) {
+    final RoleThemeExtension roles = context.roleTheme;
+    final (Color bg, Color fg) = switch (capability) {
+      DashboardCapability.hire => (roles.clientContainer, roles.clientPrimary),
+      DashboardCapability.offer => (
+        roles.professionalContainer,
+        roles.professionalPrimary,
+      ),
+      DashboardCapability.both => (roles.bothContainer, roles.bothPrimary),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        capability.label,
+        style: context.textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

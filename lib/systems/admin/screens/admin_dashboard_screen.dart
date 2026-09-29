@@ -7,6 +7,7 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/permissions/admin_gate.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
+import 'package:hivorr/shared/components/hivorr_mini_bars.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -56,6 +57,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final AdminReviewProvider admin = context.watch<AdminReviewProvider>();
     final ManageUserProvider users = context.watch<ManageUserProvider>();
     final bool isAdmin = AdminGate.isAdmin(admin);
+    final RoleThemeExtension roles = context.roleTheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -115,6 +117,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               onTap: () =>
                                   context.go(RoutePaths.adminManageUsers),
                               width: isWide ? 220 : c.maxWidth,
+                              accent: roles.adminPrimary,
+                              accentContainer: roles.clientContainer,
                             ),
                             _StatCard(
                               icon: Icons.verified_user_outlined,
@@ -129,6 +133,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               onTap: () => context
                                   .go(RoutePaths.adminVerificationApprovals),
                               width: isWide ? 220 : c.maxWidth,
+                              accent: roles.adminPrimary,
+                              accentContainer: roles.clientContainer,
                             ),
                             _StatCard(
                               icon: Icons.task_alt,
@@ -136,6 +142,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               value: '—',
                               subtitle: 'Not yet connected',
                               width: isWide ? 220 : c.maxWidth,
+                              accent: roles.adminPrimary,
+                              accentContainer: roles.clientContainer,
                             ),
                             _StatCard(
                               icon: Icons.block_outlined,
@@ -143,6 +151,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               value: '—',
                               subtitle: 'Not yet connected',
                               width: isWide ? 220 : c.maxWidth,
+                              accent: roles.adminPrimary,
+                              accentContainer: roles.clientContainer,
                             ),
                           ],
                         ),
@@ -195,24 +205,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: HivorrSpacing.lg),
-                        HivorrCard(
-                          child: Padding(
-                            padding: const EdgeInsets.all(HivorrSpacing.md),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text('Charts',
-                                    style: context.textTheme.titleSmall),
-                                const SizedBox(height: HivorrSpacing.xs),
-                                Text(
-                                  'User growth and verification trend charts will render here when the analytics source is connected. No mock data.',
-                                  style: context.textTheme.bodySmall?.copyWith(
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        _PlatformMix(
+                          userCount: users.isListHydrated
+                              ? users.totalCount
+                              : null,
+                          pendingCount: admin.queue.isNotEmpty ||
+                                  (!admin.isLoadingQueue &&
+                                      admin.lastError == null)
+                              ? admin.queue.length
+                              : null,
                         ),
                       ],
                     ),
@@ -220,6 +221,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 },
               ),
       ),
+    );
+  }
+}
+
+/// Platform mix bars: real directory + queue counts only. Renders the honest
+/// empty state until both sources are hydrated (no mock-data rule).
+class _PlatformMix extends StatelessWidget {
+  const _PlatformMix({required this.userCount, required this.pendingCount});
+
+  final int? userCount;
+  final int? pendingCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<HivorrBarDatum> items = <HivorrBarDatum>[
+      if (userCount != null)
+        HivorrBarDatum(label: 'Directory users', value: userCount!),
+      if (pendingCount != null)
+        HivorrBarDatum(label: 'Pending review', value: pendingCount!),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text('Platform mix',
+            style: context.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            )),
+        const SizedBox(height: HivorrSpacing.sm),
+        HivorrMiniBars(
+          items: items,
+          emptyLabel:
+              'User growth and verification trend charts will render here when the analytics source is connected. No mock data.',
+          accent: context.roleTheme.adminPrimary,
+        ),
+      ],
     );
   }
 }
@@ -232,6 +268,8 @@ class _StatCard extends StatelessWidget {
     required this.subtitle,
     required this.width,
     this.onTap,
+    this.accent,
+    this.accentContainer,
   });
 
   final IconData icon;
@@ -240,10 +278,13 @@ class _StatCard extends StatelessWidget {
   final String subtitle;
   final double width;
   final VoidCallback? onTap;
+  final Color? accent;
+  final Color? accentContainer;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
     return SizedBox(
       width: width,
       child: HivorrCard(
@@ -255,7 +296,18 @@ class _StatCard extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Icon(icon, size: 18, color: colors.primary),
+                  Container(
+                    padding: const EdgeInsets.all(HivorrSpacing.xs),
+                    decoration: BoxDecoration(
+                      color: accentContainer ?? colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(ext.radiusSm),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 18,
+                      color: accent ?? colors.primary,
+                    ),
+                  ),
                   const SizedBox(width: HivorrSpacing.sm),
                   Expanded(
                     child: Text(label,

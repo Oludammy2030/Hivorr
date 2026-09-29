@@ -52,6 +52,12 @@ void main() {
       );
       expect(find.text('I already have an account — sign in'), findsOneWidget);
       expect(find.text('Create your free account'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.text('Trust is the foundation, not a feature'),
+        400,
+        scrollable: bodyScroll(),
+      );
+      await tester.pumpAndSettle();
       expect(
         find.text('Trust is the foundation, not a feature'),
         findsOneWidget,

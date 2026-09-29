@@ -49,6 +49,7 @@ import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
+import 'package:hivorr/systems/local_commerce/screens/store_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/my_listings_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_form_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_media_screen.dart';
@@ -209,13 +210,13 @@ class AppRouter {
           path: RoutePaths.profile,
           name: RouteNames.profile,
           builder: (BuildContext context, GoRouterState state) =>
-              const PlaceholderScreen(title: 'Profile'),
+              const AccountScreen(),
         ),
         GoRoute(
           path: RoutePaths.settings,
           name: RouteNames.settings,
           builder: (BuildContext context, GoRouterState state) =>
-              const PlaceholderScreen(title: 'Settings'),
+              const DashboardSettingsScreen(),
         ),
         GoRoute(
           path: RoutePaths.publicProfileRoute,
@@ -230,9 +231,7 @@ class AppRouter {
           path: RoutePaths.publicStoreRoute,
           name: RouteNames.publicStore,
           builder: (BuildContext context, GoRouterState state) =>
-              PlaceholderScreen(
-                title: 'Store — ${state.pathParameters['storeId'] ?? ''}',
-              ),
+              const StoreScreen(),
         ),
         GoRoute(
           path: RoutePaths.verificationIdentity,
@@ -554,26 +553,3 @@ class AppRouter {
   }
 }
 
-/// Minimal route-target placeholder.
-///
-/// Stub only — EP-02+ replaces these with real feature screens. Must not
-/// contain business logic (EP-01-15 §3).
-class PlaceholderScreen extends StatelessWidget {
-  const PlaceholderScreen({super.key, required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium,
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}

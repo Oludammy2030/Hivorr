@@ -103,6 +103,26 @@ class _HiresScreenState extends State<HiresScreen> {
                 },
               ),
             ),
+            if (hires.hires.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  HivorrSpacing.md,
+                  HivorrSpacing.xs,
+                  HivorrSpacing.md,
+                  0,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _statusFilter == null
+                        ? '${hires.hires.length} ${isClient ? 'hires' : 'contracts'}'
+                        : '${hires.hires.length} · ${_label(_statusFilter!)}',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
             Expanded(
               child: hires.isLoading && hires.hires.isEmpty
                   ? const HivorrLoadingState()

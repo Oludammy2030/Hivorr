@@ -93,6 +93,26 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                 },
               ),
             ),
+            if (jobs.posted.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  HivorrSpacing.md,
+                  HivorrSpacing.xs,
+                  HivorrSpacing.md,
+                  0,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _statusFilter == null
+                        ? '${jobs.posted.length} jobs'
+                        : '${filtered.length} of ${jobs.posted.length} jobs · ${_label(_statusFilter!)}',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
             Expanded(
               child: _Body(jobs: jobs, filtered: filtered, onRetry: _load),
             ),

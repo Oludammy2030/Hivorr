@@ -1,8 +1,17 @@
 export 'components/hivorr_bottom_sheet.dart';
+export 'components/hivorr_cta_band.dart';
+export 'components/hivorr_data_table.dart';
 export 'components/hivorr_dialog.dart';
+export 'components/hivorr_faq_item.dart';
+export 'components/hivorr_feature_card.dart';
 export 'components/hivorr_form_field.dart';
+export 'components/hivorr_hero_panel.dart';
 export 'components/hivorr_list_tile.dart';
+export 'components/hivorr_mini_bars.dart';
+export 'components/hivorr_pricing_tier.dart';
 export 'components/hivorr_section_header.dart';
+export 'components/hivorr_stat_band.dart';
+export 'components/hivorr_step_card.dart';
 export 'extensions/build_context_extensions.dart';
 export 'extensions/numeric_extensions.dart';
 export 'extensions/string_extensions.dart';

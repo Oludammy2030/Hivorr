@@ -96,6 +96,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       title: 'Create your free account',
       subtitle:
           'Your basic identity is captured here — onboarding will start with how you want to use Hivorr.',
+      highlights: const <AuthHighlight>[
+        AuthHighlight(
+          icon: Icons.search_rounded,
+          text: 'Hire screened professionals with protected payments.',
+        ),
+        AuthHighlight(
+          icon: Icons.work_outline,
+          text: 'Offer your work and grow a portable reputation.',
+        ),
+        AuthHighlight(
+          icon: Icons.storefront_outlined,
+          text: 'Buy, sell and deliver inside the same account.',
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[

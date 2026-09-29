@@ -40,6 +40,12 @@ class OnboardingCompleteScreen extends StatelessWidget {
     final EntityCapability capability =
         progress?.capability ?? EntityCapability.both;
     final List<OnboardingStep> pathSteps = _stepsFor(capability);
+    final RoleThemeExtension roles = context.roleTheme;
+    final Color capabilityAccent = switch (capability) {
+      EntityCapability.hire => roles.clientPrimary,
+      EntityCapability.offer => roles.professionalPrimary,
+      EntityCapability.both => roles.bothPrimary,
+    };
     controller.hidePrimary();
 
     return SafeArea(
@@ -71,6 +77,7 @@ class OnboardingCompleteScreen extends StatelessWidget {
                   title: step.label,
                   description: step.description,
                   isDone: true,
+                  accent: capabilityAccent,
                 ),
               ),
             if (capability.requiresProfessionalWizard)

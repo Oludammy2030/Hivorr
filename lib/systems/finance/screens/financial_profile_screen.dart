@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/data/entities/currency_account.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
+import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -161,11 +162,15 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
 
                 // Currency accounts list.
                 if (provider.accounts.isNotEmpty) ...<Widget>[
-                  Text(
-                    'Receiving Accounts',
-                    style: context.textTheme.titleMedium,
+                  HivorrSectionHeader(
+                    title: 'Receiving Accounts',
+                    action: Text(
+                      '${provider.accounts.length}',
+                      style: context.textTheme.labelMedium?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: HivorrSpacing.sm),
                   ...provider.accounts.map(
                     (CurrencyAccount account) => Padding(
                       padding: const EdgeInsets.only(bottom: HivorrSpacing.sm),
@@ -173,11 +178,7 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
                     ),
                   ),
                 ] else ...<Widget>[
-                  Text(
-                    'Receiving Accounts',
-                    style: context.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: HivorrSpacing.sm),
+                  const HivorrSectionHeader(title: 'Receiving Accounts'),
                   Text(
                     'No receiving accounts configured yet.',
                     style: context.textTheme.bodyMedium?.copyWith(
@@ -188,8 +189,7 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
 
                 // Payout accounts (EP-02-16).
                 const SizedBox(height: HivorrSpacing.xl),
-                Text('Payout Accounts', style: context.textTheme.titleMedium),
-                const SizedBox(height: HivorrSpacing.sm),
+                const HivorrSectionHeader(title: 'Payout Accounts'),
                 PayoutAccountView(
                   cashoutLimit: provider.status?.cashoutLimit,
                   currencyCode: provider.profile!.defaultCurrency,
@@ -200,8 +200,7 @@ class _FinancialProfileScreenState extends State<FinancialProfileScreen>
                 const SizedBox(height: HivorrSpacing.lg),
                 const FinanceHistoryBadge(),
                 const SizedBox(height: HivorrSpacing.lg),
-                Text('Deposits', style: context.textTheme.titleMedium),
-                const SizedBox(height: HivorrSpacing.sm),
+                const HivorrSectionHeader(title: 'Deposits'),
                 const DepositDetailsPanel(),
               ],
             ),

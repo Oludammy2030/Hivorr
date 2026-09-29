@@ -227,39 +227,62 @@ class _ServiceListingMediaScreenState
                 ),
               );
             }
-            return GridView.builder(
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: HivorrSpacing.sm,
-                crossAxisSpacing: HivorrSpacing.sm,
-                childAspectRatio: 0.85,
-              ),
-              itemCount: media.length + _pending.length,
-              itemBuilder: (BuildContext context, int index) {
-                if (index < media.length) {
-                  final ListingMedia item = media[index];
-                  return ListingMediaTile(
-                    media: item,
-                    imageUrl: service.mediaPublicUrl(item.storagePath),
-                    onDelete: _busy ? null : () => _confirmDelete(item),
-                  );
-                }
-                final _PendingUpload pending =
-                    _pending[index - media.length];
-                return ListingMediaTile(
-                  imageUrl: null,
-                  fileName: pending.fileName,
-                  progress: pending.error == null
-                      ? pending.progress
-                      : null,
-                  errorMessage: pending.error,
-                  onRetry: () => _uploadPending(pending),
-                  onDelete: () =>
-                      setState(() => _pending.remove(pending)),
-                );
-              },
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    HivorrSpacing.sm,
+                    HivorrSpacing.xs,
+                    HivorrSpacing.sm,
+                    0,
+                  ),
+                  child: Text(
+                    media.length == 1
+                        ? '1 photo · the first photo is the cover'
+                        : '${media.length} photos · the first photo is the cover',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(HivorrSpacing.sm),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: HivorrSpacing.sm,
+                      crossAxisSpacing: HivorrSpacing.sm,
+                      childAspectRatio: 0.85,
+                    ),
+                    itemCount: media.length + _pending.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      if (index < media.length) {
+                        final ListingMedia item = media[index];
+                        return ListingMediaTile(
+                          media: item,
+                          imageUrl: service.mediaPublicUrl(item.storagePath),
+                          onDelete: _busy ? null : () => _confirmDelete(item),
+                        );
+                      }
+                      final _PendingUpload pending =
+                          _pending[index - media.length];
+                      return ListingMediaTile(
+                        imageUrl: null,
+                        fileName: pending.fileName,
+                        progress: pending.error == null
+                            ? pending.progress
+                            : null,
+                        errorMessage: pending.error,
+                        onRetry: () => _uploadPending(pending),
+                        onDelete: () =>
+                            setState(() => _pending.remove(pending)),
+                      );
+                    },
+                  ),
+                ),
+              ],
             );
           },
         ),

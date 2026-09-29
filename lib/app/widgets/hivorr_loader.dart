@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'package:hivorr/app/theme/app_colors.dart';
+import 'package:hivorr/app/theme/app_theme.dart';
 
 /// Monochrome Hivorr loading indicator.
 ///
@@ -19,7 +20,7 @@ class HivorrLoader extends StatefulWidget {
     super.key,
     this.size = 48,
     this.color = AppColors.brandPrimary,
-    this.duration = const Duration(milliseconds: 1800),
+    this.duration = HivorrMotion.loader,
     this.strokeWidth,
   });
 

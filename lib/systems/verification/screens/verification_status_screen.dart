@@ -10,6 +10,7 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/verification/widgets/identity_verified_badge.dart';
@@ -159,18 +160,25 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen>
             KycLevelCard(level: provider.kycLevel ?? status.kycLevel),
             const SizedBox(height: HivorrSpacing.lg),
           ],
-          _CounterRow(
-            icon: Icons.hourglass_top,
-            label: 'Pending submissions',
-            value: status.pendingSubmissions,
-            colors: context.colorScheme,
-          ),
-          const SizedBox(height: HivorrSpacing.xs),
-          _CounterRow(
-            icon: Icons.inbox_outlined,
-            label: 'Total submissions',
-            value: status.totalSubmissions,
-            colors: context.colorScheme,
+          HivorrCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                _CounterRow(
+                  icon: Icons.hourglass_top,
+                  label: 'Pending submissions',
+                  value: status.pendingSubmissions,
+                  colors: context.colorScheme,
+                ),
+                const SizedBox(height: HivorrSpacing.sm),
+                _CounterRow(
+                  icon: Icons.inbox_outlined,
+                  label: 'Total submissions',
+                  value: status.totalSubmissions,
+                  colors: context.colorScheme,
+                ),
+              ],
+            ),
           ),
         ],
       ),

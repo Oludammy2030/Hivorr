@@ -17,6 +17,7 @@ import 'package:hivorr/app/public/screens/pricing_screen.dart';
 import 'package:hivorr/app/public/screens/security_screen.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/systems/local_commerce/screens/store_screen.dart';
 
 /// Builds a [GoRouter] hosting the public Website and auth door screens so
 /// widget tests can drive real navigation ([PublicNavBar], footer, auth forms)
@@ -119,6 +120,12 @@ GoRouter doorRouter({String initialLocation = RoutePaths.welcome}) {
         path: RoutePaths.publicProfileRoute,
         name: RouteNames.publicProfile,
         builder: _placeholder('Public profile'),
+      ),
+      GoRoute(
+        path: RoutePaths.publicStoreRoute,
+        name: RouteNames.publicStore,
+        builder: (BuildContext context, GoRouterState state) =>
+            const StoreScreen(),
       ),
     ],
   );

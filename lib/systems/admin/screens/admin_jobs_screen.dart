@@ -90,11 +90,22 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
               )
             : ListView.separated(
                 padding: const EdgeInsets.all(HivorrSpacing.lg),
-                itemCount: jobs.discovery.length,
+                itemCount: jobs.discovery.length + 1,
                 separatorBuilder: (_, _) =>
                     const SizedBox(height: HivorrSpacing.sm),
                 itemBuilder: (BuildContext context, int i) {
-                  final job = jobs.discovery[i];
+                  if (i == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: HivorrSpacing.xs),
+                      child: Text(
+                        '${jobs.discovery.length} open jobs across the platform',
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    );
+                  }
+                  final job = jobs.discovery[i - 1];
                   return JobCard(
                     job: job,
                     onTap: () =>

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hivorr/app/public/widgets/public_info_row.dart';
 import 'package:hivorr/app/public/widgets/public_page_scaffold.dart';
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/shared/components/hivorr_cta_band.dart';
+import 'package:hivorr/shared/components/hivorr_faq_item.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -20,28 +21,31 @@ class HelpScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const PublicInfoRow(
-            icon: Icons.rocket_launch_outlined,
-            title: 'Getting started',
-            body:
+          const PublicSection(
+            eyebrow: 'SELF-SERVE FIRST',
+            title: 'Answers, then a human path',
+          ),
+          const SizedBox(height: HivorrSpacing.lg),
+          const HivorrFaqItem(
+            question: 'Getting started',
+            answer:
                 'Create an account, complete your Basic Information and '
                 'choose your capability — hire, offer, or both.',
           ),
-          const SizedBox(height: HivorrSpacing.md),
+          const SizedBox(height: HivorrSpacing.sm),
           TextButton(
             onPressed: () => context.go(RoutePaths.howItWorks),
             style: TextButton.styleFrom(foregroundColor: colors.primary),
             child: Text('How it works', style: context.textTheme.labelLarge),
           ),
-          const SizedBox(height: HivorrSpacing.xl),
-          const PublicInfoRow(
-            icon: Icons.badge_outlined,
-            title: 'Account & verification',
-            body:
+          const SizedBox(height: HivorrSpacing.lg),
+          const HivorrFaqItem(
+            question: 'Account & verification',
+            answer:
                 'One verified identity. Sign in, reset your password, and '
                 'manage verification from your account.',
           ),
-          const SizedBox(height: HivorrSpacing.md),
+          const SizedBox(height: HivorrSpacing.sm),
           Wrap(
             spacing: HivorrSpacing.sm,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -61,15 +65,14 @@ class HelpScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: HivorrSpacing.xl),
-          const PublicInfoRow(
-            icon: Icons.shield_outlined,
-            title: 'Trust & safety',
-            body:
+          const SizedBox(height: HivorrSpacing.lg),
+          const HivorrFaqItem(
+            question: 'Trust & safety',
+            answer:
                 'Escrow-protected payments, verification gates and evidence-'
                 'based dispute resolution.',
           ),
-          const SizedBox(height: HivorrSpacing.md),
+          const SizedBox(height: HivorrSpacing.sm),
           TextButton(
             onPressed: () => context.go(RoutePaths.security),
             style: TextButton.styleFrom(foregroundColor: colors.primary),
@@ -78,18 +81,22 @@ class HelpScreen extends StatelessWidget {
               style: context.textTheme.labelLarge,
             ),
           ),
-          const SizedBox(height: HivorrSpacing.xl),
-          const PublicInfoRow(
-            icon: Icons.contact_support_outlined,
-            title: 'Still stuck?',
-            body:
+          const SizedBox(height: HivorrSpacing.lg),
+          const HivorrFaqItem(
+            question: 'Still stuck?',
+            answer:
                 'If you can’t find an answer here, our in-app support guides '
                 'you to the right place once you’re signed in.',
           ),
-          const SizedBox(height: HivorrSpacing.md),
-          HivorrButton(
-            label: 'Create your free account',
-            onPressed: () => context.go(RoutePaths.signup),
+          const SizedBox(height: HivorrSpacing.xl),
+          HivorrCtaBand(
+            title: 'Get the full help ecosystem in-app.',
+            actions: <Widget>[
+              HivorrButton(
+                label: 'Create your free account',
+                onPressed: () => context.go(RoutePaths.signup),
+              ),
+            ],
           ),
         ],
       ),

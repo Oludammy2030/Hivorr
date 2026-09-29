@@ -7,7 +7,8 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 /// Public Website footer: sectioned navigation links and the entity statement.
 ///
 /// Pure presentation, token-driven (AGENT.md Rule 5). Links navigate via
-/// [GoRouter]; the footer is safe to render on any public route.
+/// [GoRouter]; the footer is safe to render on any public route. Columns sit
+/// side by side on wide screens and stack on mobile.
 class PublicFooter extends StatelessWidget {
   const PublicFooter({super.key});
 
@@ -27,53 +28,116 @@ class PublicFooter extends StatelessWidget {
               horizontal: HivorrSpacing.lg,
               vertical: HivorrSpacing.xl,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _FooterColumn(
-                  title: 'Company',
-                  links: const <_FooterLink>[
-                    _FooterLink('Home', RoutePaths.welcome),
-                    _FooterLink('About', RoutePaths.about),
-                    _FooterLink('Contact', RoutePaths.contact),
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints c) {
+                final bool isWide = c.maxWidth >= 720;
+                final Widget columns = isWide
+                    ? const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Expanded(
+                            child: _FooterColumn(
+                              title: 'Company',
+                              links: <_FooterLink>[
+                                _FooterLink('Home', RoutePaths.welcome),
+                                _FooterLink('About', RoutePaths.about),
+                                _FooterLink('Contact', RoutePaths.contact),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: _FooterColumn(
+                              title: 'Platform',
+                              links: <_FooterLink>[
+                                _FooterLink(
+                                  'How it works',
+                                  RoutePaths.howItWorks,
+                                ),
+                                _FooterLink('Features', RoutePaths.features),
+                                _FooterLink('Security', RoutePaths.security),
+                                _FooterLink('Help', RoutePaths.help),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: _FooterColumn(
+                              title: 'Get started',
+                              links: <_FooterLink>[
+                                _FooterLink(
+                                  'Create account',
+                                  RoutePaths.signup,
+                                ),
+                                _FooterLink('Sign in', RoutePaths.login),
+                                _FooterLink(
+                                  'Forgot password',
+                                  RoutePaths.forgotPassword,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          _FooterColumn(
+                            title: 'Company',
+                            links: <_FooterLink>[
+                              _FooterLink('Home', RoutePaths.welcome),
+                              _FooterLink('About', RoutePaths.about),
+                              _FooterLink('Contact', RoutePaths.contact),
+                            ],
+                          ),
+                          SizedBox(height: HivorrSpacing.lg),
+                          _FooterColumn(
+                            title: 'Platform',
+                            links: <_FooterLink>[
+                              _FooterLink(
+                                'How it works',
+                                RoutePaths.howItWorks,
+                              ),
+                              _FooterLink('Features', RoutePaths.features),
+                              _FooterLink('Security', RoutePaths.security),
+                              _FooterLink('Help', RoutePaths.help),
+                            ],
+                          ),
+                          SizedBox(height: HivorrSpacing.lg),
+                          _FooterColumn(
+                            title: 'Get started',
+                            links: <_FooterLink>[
+                              _FooterLink('Create account', RoutePaths.signup),
+                              _FooterLink('Sign in', RoutePaths.login),
+                              _FooterLink(
+                                'Forgot password',
+                                RoutePaths.forgotPassword,
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    columns,
+                    const SizedBox(height: HivorrSpacing.xl),
+                    const _FooterDivider(),
+                    const SizedBox(height: HivorrSpacing.md),
+                    Text(
+                      'Hivorr — an operating system for modern human existence.',
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: HivorrSpacing.xs),
+                    Text(
+                      '© Hivorr · AfriNova Digital Limited',
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
                   ],
-                ),
-                const SizedBox(height: HivorrSpacing.lg),
-                _FooterColumn(
-                  title: 'Platform',
-                  links: const <_FooterLink>[
-                    _FooterLink('How it works', RoutePaths.howItWorks),
-                    _FooterLink('Features', RoutePaths.features),
-                    _FooterLink('Security', RoutePaths.security),
-                    _FooterLink('Help', RoutePaths.help),
-                  ],
-                ),
-                const SizedBox(height: HivorrSpacing.lg),
-                _FooterColumn(
-                  title: 'Get started',
-                  links: const <_FooterLink>[
-                    _FooterLink('Create account', RoutePaths.signup),
-                    _FooterLink('Sign in', RoutePaths.login),
-                    _FooterLink('Forgot password', RoutePaths.forgotPassword),
-                  ],
-                ),
-                const SizedBox(height: HivorrSpacing.xl),
-                const _FooterDivider(),
-                const SizedBox(height: HivorrSpacing.md),
-                Text(
-                  'Hivorr — an operating system for modern human existence.',
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: HivorrSpacing.xs),
-                Text(
-                  '© Hivorr · AfriNova Digital Limited',
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ),
