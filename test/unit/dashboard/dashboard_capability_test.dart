@@ -54,6 +54,7 @@ void main() {
           'Overview',
           'Post a Job',
           'My Jobs',
+          'Applications',
           'Hires',
           'Payments',
         ]),
@@ -77,6 +78,7 @@ void main() {
       );
       expect(labels, isNot(contains('Post a Job')));
       expect(labels, isNot(contains('My Jobs')));
+      expect(labels, isNot(contains('Applications')));
       expect(labels, isNot(contains('Payments')));
     });
 

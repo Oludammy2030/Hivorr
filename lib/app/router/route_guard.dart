@@ -250,9 +250,11 @@ class RouteGuard {
   ///
   /// Hiring-only destinations (`/dashboard/jobs` except detail, payments)
   /// require capability hire|both; work-only destinations (opportunities,
-  /// applications, earnings) require offer|both. Pre-hydration (null
-  /// capability) allows navigation — the default `both` keeps the user
-  /// unstranded and the server enforces per-row authority.
+  /// earnings) require offer|both. `/dashboard/applications` is shared:
+  /// professionals see their own applications, clients see the Jobs +
+  /// Applicants inbox. Pre-hydration (null capability) allows navigation —
+  /// the default `both` keeps the user unstranded and the server enforces
+  /// per-row authority.
   String? _dashboardCapabilityRedirect(String location) {
     if (!location.startsWith('${RoutePaths.dashboard}/') &&
         location != RoutePaths.dashboard) {
@@ -283,7 +285,6 @@ class RouteGuard {
 
   static bool _isWorkRoute(String location) =>
       location == RoutePaths.dashboardOpportunities ||
-      location == RoutePaths.dashboardApplications ||
       location == RoutePaths.dashboardEarnings;
 
   static bool _isPublicContentView(String location) =>

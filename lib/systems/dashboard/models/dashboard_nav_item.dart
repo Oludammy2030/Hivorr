@@ -122,6 +122,14 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     showForOffer: false,
   ),
   DashboardNavItem(
+    label: 'Applications',
+    icon: Icons.group_outlined,
+    activeIcon: Icons.group,
+    location: '/dashboard/applications',
+    section: DashboardNavSection.hiring,
+    showForOffer: false,
+  ),
+  DashboardNavItem(
     label: 'Hires',
     icon: Icons.handshake_outlined,
     activeIcon: Icons.handshake,

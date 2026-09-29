@@ -40,14 +40,12 @@ void main() {
         RoutePaths.dashboard,
       );
       expect(
-        guard.redirectResolver(RoutePaths.dashboardApplications),
-        RoutePaths.dashboard,
-      );
-      expect(
         guard.redirectResolver(RoutePaths.dashboardEarnings),
         RoutePaths.dashboard,
       );
-      // Hiring + shared routes stay open.
+      // Hiring + shared routes stay open (applications is shared: clients
+      // see the Jobs + Applicants inbox, professionals see their own list).
+      expect(guard.redirectResolver(RoutePaths.dashboardApplications), isNull);
       expect(guard.redirectResolver(RoutePaths.dashboardJobs), isNull);
       expect(guard.redirectResolver(RoutePaths.dashboard), isNull);
       expect(guard.redirectResolver(RoutePaths.dashboardMessages), isNull);
@@ -71,8 +69,9 @@ void main() {
         guard.redirectResolver(RoutePaths.dashboardPayments),
         RoutePaths.dashboard,
       );
-      // Work + shared routes stay open.
+      // Work + shared routes stay open (applications is shared).
       expect(guard.redirectResolver(RoutePaths.dashboardOpportunities), isNull);
+      expect(guard.redirectResolver(RoutePaths.dashboardApplications), isNull);
       expect(guard.redirectResolver(RoutePaths.dashboard), isNull);
     });
 
