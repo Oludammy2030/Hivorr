@@ -72,6 +72,9 @@ abstract final class RoutePaths {
   /// Manage User detail (EP-02-11 admin console, single-user posture).
   static const String adminManageUserDetail = '/admin/users/:userId';
 
+  /// Admin Jobs & Projects (EP-04-03, platform hiring visibility).
+  static const String adminJobs = '/admin/jobs';
+
   /// KYC status + upgrade screens (EP-02-12).
   static const String kycStatus = '/verification/kyc';
   static const String kycUpgrade = '/verification/kyc/upgrade';
@@ -143,4 +146,41 @@ abstract final class RoutePaths {
   /// `publicStore(storeId: 'xyz-456')` → `/store/xyz-456`.
   static String publicStore({required String storeId}) =>
       '/store/${Uri.encodeComponent(storeId)}';
+
+  /// Role-aware dashboard shell root (EP-04-03).
+  static const String dashboard = '/dashboard';
+
+  /// Client hiring routes (capability hire|both).
+  static const String dashboardJobs = '/dashboard/jobs';
+  static const String dashboardJobNew = '/dashboard/jobs/new';
+  static const String dashboardJobDetailRoute = '/dashboard/jobs/:id';
+  static const String dashboardJobEditRoute = '/dashboard/jobs/:id/edit';
+
+  /// Builds a URL-encoded dashboard job detail path.
+  static String dashboardJobDetail(String id) =>
+      '/dashboard/jobs/${Uri.encodeComponent(id)}';
+
+  /// Builds a URL-encoded dashboard job edit path.
+  static String dashboardJobEdit(String id) =>
+      '/dashboard/jobs/${Uri.encodeComponent(id)}/edit';
+
+  /// Professional work routes (capability offer|both).
+  static const String dashboardOpportunities = '/dashboard/opportunities';
+  static const String dashboardApplications = '/dashboard/applications';
+
+  /// Hires routes (both sides; `?role=client|professional` scopes the list).
+  static const String dashboardHires = '/dashboard/hires';
+  static const String dashboardHireDetailRoute = '/dashboard/hires/:id';
+
+  /// Builds a URL-encoded dashboard hire detail path.
+  static String dashboardHireDetail(String id) =>
+      '/dashboard/hires/${Uri.encodeComponent(id)}';
+
+  /// Shared dashboard routes.
+  static const String dashboardMessages = '/dashboard/messages';
+  static const String dashboardNotifications = '/dashboard/notifications';
+  static const String dashboardPayments = '/dashboard/payments';
+  static const String dashboardEarnings = '/dashboard/earnings';
+  static const String dashboardAccount = '/dashboard/account';
+  static const String dashboardSettings = '/dashboard/settings';
 }

@@ -49,6 +49,9 @@ abstract final class RouteNames {
   static const String adminManageUsersClients = 'admin-manage-users-clients';
   static const String adminManageUserDetail = 'admin-manage-user-detail';
 
+  /// Admin Jobs & Projects (EP-04-03).
+  static const String adminJobs = 'admin-jobs';
+
   /// Financial profile routes (EP-02-13).
   static const String finance = 'finance';
   static const String financeCreate = 'finance-create';
@@ -83,4 +86,21 @@ abstract final class RouteNames {
   static const String onboardingIdentity = 'onboarding-identity';
   static const String onboardingTradeProof = 'onboarding-trade-proof';
   static const String onboardingComplete = 'onboarding-complete';
+
+  /// Role-aware dashboard routes (EP-04-03).
+  static const String dashboard = 'dashboard';
+  static const String dashboardJobs = 'dashboard-jobs';
+  static const String dashboardJobNew = 'dashboard-job-new';
+  static const String dashboardJobDetail = 'dashboard-job-detail';
+  static const String dashboardJobEdit = 'dashboard-job-edit';
+  static const String dashboardOpportunities = 'dashboard-opportunities';
+  static const String dashboardApplications = 'dashboard-applications';
+  static const String dashboardHires = 'dashboard-hires';
+  static const String dashboardHireDetail = 'dashboard-hire-detail';
+  static const String dashboardMessages = 'dashboard-messages';
+  static const String dashboardNotifications = 'dashboard-notifications';
+  static const String dashboardPayments = 'dashboard-payments';
+  static const String dashboardEarnings = 'dashboard-earnings';
+  static const String dashboardAccount = 'dashboard-account';
+  static const String dashboardSettings = 'dashboard-settings';
 }

@@ -9,6 +9,7 @@ import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 
 /// Adapts the EP-01-09 [AuthGuard] to the GoRouter redirect flow.
 ///
@@ -99,7 +100,7 @@ class RouteGuard {
         return _verificationGateResumeTarget(sessionEmail);
       }
       if (guard.isPublicRoute(location)) {
-        return RoutePaths.home;
+        return RoutePaths.dashboard;
       }
 
       // Admin routes (/admin/*) are not fully gated at the router level
@@ -111,17 +112,28 @@ class RouteGuard {
         return onboardingRedirect;
       }
 
-      // Super Admins go directly to the control panel. The old
-      // "Welcome to Hivorr / Super Admin Dashboard / Verification &
-      // Approvals / Manage Users" gateway has been removed — the control
-      // panel at /admin/dashboard is now the primary admin experience.
+      // Super Admins go directly to the control panel. Every other complete
+      // entity lands on the role-aware dashboard. The legacy placeholder
+      // home stays reachable as a redirector (HomeScreen forwards).
       // Hydration is async: isAdmin is null before first checkAdmin(),
       // so the redirect is deferred until the flag hydrates (via
       // refreshListenable on adminReviewProvider). Onboarding takes
       // precedence above so an incomplete wizard still resumes.
-      if (location == RoutePaths.home &&
-          AdminGate.isAdmin(adminReviewProvider)) {
-        return RoutePaths.adminDashboard;
+      if (location == RoutePaths.home) {
+        if (AdminGate.isAdmin(adminReviewProvider)) {
+          return RoutePaths.adminDashboard;
+        }
+        return RoutePaths.dashboard;
+      }
+
+      // Capability gate for dashboard sub-routes (EP-04-03): hiring-only
+      // destinations require hire|both, work-only destinations require
+      // offer|both. Shared destinations (overview, job detail, hires,
+      // messages, notifications, account, settings) stay open — the server
+      // remains authoritative per row (PLT002/PLT004 on misuse).
+      final String? dashboardRedirect = _dashboardCapabilityRedirect(location);
+      if (dashboardRedirect != null) {
+        return dashboardRedirect;
       }
       return null;
     }
@@ -195,11 +207,12 @@ class RouteGuard {
 
   /// Entry gate for incomplete entities (EP-02-18 §5.5, FV-44):
   ///
-  /// * placeholder home + hydrated incomplete wizard → the resume step — unless
-  ///   the wizard was deliberately exited ([OnboardingProvider.exited]), in
-  ///   which case home stays reachable so its "Continue registration" action
-  ///   can drive the return (clearing the flag re-engages this redirect);
-  /// * any onboarding route + completed wizard → home.
+  /// * placeholder home or any dashboard route + hydrated incomplete wizard
+  ///   → the resume step — unless the wizard was deliberately exited
+  ///   ([OnboardingProvider.exited]), in which case home stays reachable so
+  ///   its "Continue registration" action can drive the return (clearing the
+  ///   flag re-engages this redirect);
+  /// * any onboarding route + completed wizard → dashboard.
   ///
   /// `null` when the provider is absent or not hydrated yet (no redirect beats
   /// a wrong redirect; the merged `refreshListenable` re-runs this once
@@ -220,14 +233,58 @@ class RouteGuard {
     // offline hydration failure).
     final bool complete =
         onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
-    if (location == RoutePaths.home && !complete && !onboarding.exited) {
+    if ((location == RoutePaths.home ||
+            location.startsWith('${RoutePaths.dashboard}/') ||
+            location == RoutePaths.dashboard) &&
+        !complete &&
+        !onboarding.exited) {
       return RoutePaths.onboardingRouteFor(step);
     }
     if (location.startsWith(RoutePaths.onboarding) && complete) {
-      return RoutePaths.home;
+      return RoutePaths.dashboard;
     }
     return null;
   }
+
+  /// Capability gate for dashboard sub-routes (EP-04-03).
+  ///
+  /// Hiring-only destinations (`/dashboard/jobs` except detail, payments)
+  /// require capability hire|both; work-only destinations (opportunities,
+  /// applications, earnings) require offer|both. Pre-hydration (null
+  /// capability) allows navigation — the default `both` keeps the user
+  /// unstranded and the server enforces per-row authority.
+  String? _dashboardCapabilityRedirect(String location) {
+    if (!location.startsWith('${RoutePaths.dashboard}/') &&
+        location != RoutePaths.dashboard) {
+      return null;
+    }
+    final EntityCapability capability =
+        onboardingProvider?.progress?.capability ?? EntityCapability.both;
+    final bool hire = capability != EntityCapability.offer;
+    final bool offer = capability != EntityCapability.hire;
+    if (!hire && _isHiringRoute(location)) {
+      return RoutePaths.dashboard;
+    }
+    if (!offer && _isWorkRoute(location)) {
+      return RoutePaths.dashboard;
+    }
+    return null;
+  }
+
+  static bool _isHiringRoute(String location) {
+    if (location == RoutePaths.dashboardJobs ||
+        location == RoutePaths.dashboardJobNew ||
+        location.endsWith('/edit') ||
+        location == RoutePaths.dashboardPayments) {
+      return true;
+    }
+    return false;
+  }
+
+  static bool _isWorkRoute(String location) =>
+      location == RoutePaths.dashboardOpportunities ||
+      location == RoutePaths.dashboardApplications ||
+      location == RoutePaths.dashboardEarnings;
 
   static bool _isPublicContentView(String location) =>
       location.startsWith('/p/') || location.startsWith('/store/');

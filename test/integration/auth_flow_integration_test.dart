@@ -303,8 +303,8 @@ void main() {
         await pumpEventQueue();
         expect(provider.isSignedIn, isTrue);
         expect(routeGuard.redirectResolver('/profile'), isNull);
-        expect(routeGuard.redirectResolver('/'), isNull);
-        expect(routeGuard.redirectResolver('/login'), RoutePaths.home);
+        expect(routeGuard.redirectResolver('/'), RoutePaths.dashboard);
+        expect(routeGuard.redirectResolver('/login'), RoutePaths.dashboard);
 
         await service.signOut();
         await pumpEventQueue();

@@ -113,10 +113,8 @@ class _SuperAdminSidebarState extends State<SuperAdminSidebar> {
                   icon: Icons.work_outline,
                   activeIcon: Icons.work,
                   label: 'Jobs & Projects',
-                  enabled: false,
-                  badge: 'Soon',
                   selected: widget.location.startsWith('/admin/jobs'),
-                  onTap: () {},
+                  onTap: () => _go(context, RoutePaths.adminJobs),
                 ),
                 _NavItem(
                   icon: Icons.flag_outlined,

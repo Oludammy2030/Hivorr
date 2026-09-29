@@ -132,7 +132,7 @@ void main() {
       });
 
       test(
-        'authenticated user is bounced from public Website pages to home',
+        'authenticated user is bounced from public Website pages to dashboard',
         () {
           final provider = FakeAuthProvider(
             initialStatus: AuthStatus.authenticated,
@@ -149,23 +149,26 @@ void main() {
           ]) {
             expect(
               guard.redirectResolver(path),
-              RoutePaths.home,
-              reason: "$path should bounce to home when authenticated",
+              RoutePaths.dashboard,
+              reason: "$path should bounce to dashboard when authenticated",
             );
           }
         },
       );
 
-      test('authenticated users are bounced from public doors to home', () {
-        final provider = FakeAuthProvider(
-          initialStatus: AuthStatus.authenticated,
-        );
-        final guard = RouteGuard(authProvider: provider);
-        expect(guard.redirectResolver('/welcome'), RoutePaths.home);
-        expect(guard.redirectResolver('/intro'), RoutePaths.home);
-        expect(guard.redirectResolver('/'), isNull);
-        expect(guard.redirectResolver('/profile'), isNull);
-      });
+      test(
+        'authenticated users are bounced from public doors to dashboard',
+        () {
+          final provider = FakeAuthProvider(
+            initialStatus: AuthStatus.authenticated,
+          );
+          final guard = RouteGuard(authProvider: provider);
+          expect(guard.redirectResolver('/welcome'), RoutePaths.dashboard);
+          expect(guard.redirectResolver('/intro'), RoutePaths.dashboard);
+          expect(guard.redirectResolver('/'), RoutePaths.dashboard);
+          expect(guard.redirectResolver('/profile'), isNull);
+        },
+      );
     });
 
     test('unauthenticated returning user is redirected to /login', () {
@@ -198,12 +201,12 @@ void main() {
       expect(guard.redirectResolver('/store/abc'), isNull);
     });
 
-    test('authenticated user is allowed on protected and content routes', () {
+    test('authenticated user is routed from home to the dashboard', () {
       final provider = FakeAuthProvider(
         initialStatus: AuthStatus.authenticated,
       );
       final guard = RouteGuard(authProvider: provider);
-      expect(guard.redirectResolver('/'), isNull);
+      expect(guard.redirectResolver('/'), RoutePaths.dashboard);
       expect(guard.redirectResolver('/profile'), isNull);
       expect(guard.redirectResolver('/p/john/123'), isNull);
       expect(guard.redirectResolver('/store/abc'), isNull);
@@ -252,14 +255,17 @@ void main() {
       },
     );
 
-    test('authenticated user is bounced from public-only auth routes to /', () {
-      final provider = FakeAuthProvider(
-        initialStatus: AuthStatus.authenticated,
-      );
-      final guard = RouteGuard(authProvider: provider);
-      expect(guard.redirectResolver('/login'), '/');
-      expect(guard.redirectResolver('/signup'), '/');
-    });
+    test(
+      'authenticated user is bounced from public-only auth routes to /dashboard',
+      () {
+        final provider = FakeAuthProvider(
+          initialStatus: AuthStatus.authenticated,
+        );
+        final guard = RouteGuard(authProvider: provider);
+        expect(guard.redirectResolver('/login'), RoutePaths.dashboard);
+        expect(guard.redirectResolver('/signup'), RoutePaths.dashboard);
+      },
+    );
 
     test('authenticated but unverified session is confined to the verification '
         'gate (fail-closed)', () {
@@ -297,14 +303,14 @@ void main() {
       }
     });
 
-    test('an unverified session without an email is left untouched', () {
+    test('an unverified session without an email is routed to dashboard', () {
       final provider = FakeAuthProvider(initialStatus: AuthStatus.authenticated)
         ..sessionOverride = const AuthSession(
           entityId: 'u1',
           isEmailConfirmed: false,
         );
       final guard = RouteGuard(authProvider: provider);
-      expect(guard.redirectResolver('/'), isNull);
+      expect(guard.redirectResolver('/'), RoutePaths.dashboard);
     });
 
     test('verified sessions are unaffected by the verification gate', () {
@@ -315,9 +321,9 @@ void main() {
           isEmailConfirmed: true,
         );
       final guard = RouteGuard(authProvider: provider);
-      expect(guard.redirectResolver('/'), isNull);
+      expect(guard.redirectResolver('/'), RoutePaths.dashboard);
       expect(guard.redirectResolver('/profile'), isNull);
-      expect(guard.redirectResolver('/login'), '/');
+      expect(guard.redirectResolver('/login'), RoutePaths.dashboard);
     });
 
     test('initial (pre-init) status is fail-closed to /login', () {
@@ -433,7 +439,7 @@ void main() {
     });
 
     test(
-      'an exited incomplete wizard keeps home reachable (no force-resume)',
+      'an exited incomplete wizard keeps home off the wizard (dashboard forward)',
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
@@ -446,7 +452,12 @@ void main() {
           ),
           onboardingProvider: stack.provider,
         );
-        expect(guard.redirectResolver(RoutePaths.home), isNull);
+        expect(
+          guard.redirectResolver(RoutePaths.home),
+          RoutePaths.dashboard,
+          reason:
+              'exited wizards are not force-resumed; home forwards to the dashboard',
+        );
         expect(
           guard.redirectResolver(RoutePaths.onboardingCapability),
           isNull,
@@ -497,7 +508,7 @@ void main() {
     );
 
     test(
-      'a completed exited wizard reads as complete; home stays all-clear',
+      'a completed exited wizard reads as complete; home forwards to dashboard',
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
@@ -511,8 +522,14 @@ void main() {
           ),
           onboardingProvider: stack.provider,
         );
-        expect(guard.redirectResolver(RoutePaths.home), isNull);
-        expect(guard.redirectResolver(RoutePaths.onboarding), RoutePaths.home);
+        expect(
+          guard.redirectResolver(RoutePaths.home),
+          RoutePaths.dashboard,
+        );
+        expect(
+          guard.redirectResolver(RoutePaths.onboarding),
+          RoutePaths.dashboard,
+        );
         stack.provider.dispose();
       },
     );
@@ -524,7 +541,7 @@ void main() {
     });
 
     test(
-      'server-completed relaunch with an empty store short-circuits to home',
+      'server-completed relaunch with an empty store short-circuits to dashboard',
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         stack.onboardingRemote.status = OnboardingStatusDto(
@@ -544,12 +561,12 @@ void main() {
         );
         expect(
           guard.redirectResolver(RoutePaths.home),
-          isNull,
-          reason: 'home stays reachable for a completed wizard',
+          RoutePaths.dashboard,
+          reason: 'dashboard stays reachable for a completed wizard',
         );
         expect(
           guard.redirectResolver(RoutePaths.onboardingCapability),
-          RoutePaths.home,
+          RoutePaths.dashboard,
           reason: 'a completed wizard bounces away from onboarding routes',
         );
         stack.provider.dispose();
@@ -619,8 +636,9 @@ void main() {
         );
         expect(
           guard.redirectResolver(RoutePaths.home),
-          isNull,
-          reason: 'offline fallback to the cached completion keeps home usable',
+          RoutePaths.dashboard,
+          reason:
+              'offline fallback to the cached completion keeps the dashboard usable',
         );
         stack.provider.dispose();
       },
