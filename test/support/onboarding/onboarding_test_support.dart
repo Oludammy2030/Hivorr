@@ -311,6 +311,7 @@ const List<(String, String)> _markers = <(String, String)>[
   (RouteNames.onboardingTradeProof, 'ONBOARDING-TRADE-PROOF'),
   (RouteNames.onboardingComplete, 'ONBOARDING-COMPLETE'),
   (RouteNames.home, 'HOME'),
+  (RouteNames.dashboard, 'DASHBOARD'),
   (RouteNames.verificationStatus, 'VERIFICATION-STATUS'),
 ];
 
@@ -358,6 +359,7 @@ String? _nameFor(String path) => switch (path) {
   RoutePaths.onboardingTradeProof => RouteNames.onboardingTradeProof,
   RoutePaths.onboardingComplete => RouteNames.onboardingComplete,
   RoutePaths.home => RouteNames.home,
+  RoutePaths.dashboard => RouteNames.dashboard,
   RoutePaths.verificationStatus => RouteNames.verificationStatus,
   _ => null,
 };
@@ -370,6 +372,7 @@ String _pathFor(String name) => switch (name) {
   RouteNames.onboardingTradeProof => RoutePaths.onboardingTradeProof,
   RouteNames.onboardingComplete => RoutePaths.onboardingComplete,
   RouteNames.home => RoutePaths.home,
+  RouteNames.dashboard => RoutePaths.dashboard,
   RouteNames.verificationStatus => RoutePaths.verificationStatus,
   _ => RoutePaths.onboarding,
 };

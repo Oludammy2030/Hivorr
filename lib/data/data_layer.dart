@@ -21,6 +21,8 @@ import 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_sourc
 import 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_hires_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_jobs_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
@@ -38,6 +40,8 @@ import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
+import 'package:hivorr/data/providers/hire_provider.dart';
+import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/kyc_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
@@ -61,6 +65,10 @@ import 'package:hivorr/data/repositories/financial_payout_repository.dart';
 import 'package:hivorr/data/repositories/financial_payout_repository_impl.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository_impl.dart';
+import 'package:hivorr/data/repositories/hire_repository.dart';
+import 'package:hivorr/data/repositories/hire_repository_impl.dart';
+import 'package:hivorr/data/repositories/job_repository.dart';
+import 'package:hivorr/data/repositories/job_repository_impl.dart';
 import 'package:hivorr/data/repositories/kyc_repository.dart';
 import 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
@@ -85,6 +93,8 @@ import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/finance/services/financial_deposit_service.dart';
 import 'package:hivorr/systems/finance/services/financial_payout_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
+import 'package:hivorr/systems/jobs/services/hire_service.dart';
+import 'package:hivorr/systems/jobs/services/job_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/support/services/dispute_service.dart';
@@ -107,6 +117,9 @@ export 'package:hivorr/data/datasources/remote/financial_deposit_remote_data_sou
 export 'package:hivorr/data/datasources/remote/financial_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/financial_payout_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/financial_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/hires_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/jobs_envelope_parser.dart';
+export 'package:hivorr/data/datasources/remote/jobs_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/manage_user_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/onboarding_remote_data_source.dart';
@@ -124,6 +137,8 @@ export 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_sourc
 export 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_payout_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_hires_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_jobs_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
@@ -154,7 +169,11 @@ export 'package:hivorr/data/entities/escrow_milestone.dart';
 export 'package:hivorr/data/entities/escrow_transaction.dart';
 export 'package:hivorr/data/entities/financial_profile.dart';
 export 'package:hivorr/data/entities/financial_status.dart';
+export 'package:hivorr/data/entities/hire.dart';
 export 'package:hivorr/data/entities/industry.dart';
+export 'package:hivorr/data/entities/job.dart';
+export 'package:hivorr/data/entities/job_application.dart';
+export 'package:hivorr/data/entities/job_quotation.dart';
 export 'package:hivorr/data/entities/kyc_level.dart';
 export 'package:hivorr/data/entities/listing_media.dart';
 export 'package:hivorr/data/entities/onboarding_progress.dart';
@@ -181,7 +200,9 @@ export 'package:hivorr/data/mappers/escrow_mapper.dart';
 export 'package:hivorr/data/mappers/financial_deposit_mapper.dart';
 export 'package:hivorr/data/mappers/financial_mapper.dart';
 export 'package:hivorr/data/mappers/financial_payout_mapper.dart';
+export 'package:hivorr/data/mappers/hire_mapper.dart';
 export 'package:hivorr/data/mappers/industry_mapper.dart';
+export 'package:hivorr/data/mappers/job_mapper.dart';
 export 'package:hivorr/data/mappers/onboarding_status_mapper.dart';
 export 'package:hivorr/data/mappers/portfolio_mappers.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
@@ -207,7 +228,13 @@ export 'package:hivorr/data/models/escrow_milestone_input.dart';
 export 'package:hivorr/data/models/escrow_transaction_dto.dart';
 export 'package:hivorr/data/models/financial_profile_dto.dart';
 export 'package:hivorr/data/models/financial_status_dto.dart';
+export 'package:hivorr/data/models/hire_dto.dart';
+export 'package:hivorr/data/models/hire_envelopes_dto.dart';
 export 'package:hivorr/data/models/industry_dto.dart';
+export 'package:hivorr/data/models/job_application_dto.dart';
+export 'package:hivorr/data/models/job_dto.dart';
+export 'package:hivorr/data/models/job_envelopes_dto.dart';
+export 'package:hivorr/data/models/job_quotation_dto.dart';
 export 'package:hivorr/data/models/kyc_level_dto.dart';
 export 'package:hivorr/data/models/listing_media_dto.dart';
 export 'package:hivorr/data/models/manage_user_dto.dart';
@@ -231,6 +258,8 @@ export 'package:hivorr/data/providers/escrow_provider.dart';
 export 'package:hivorr/data/providers/financial_deposit_provider.dart';
 export 'package:hivorr/data/providers/financial_payout_provider.dart';
 export 'package:hivorr/data/providers/financial_provider.dart';
+export 'package:hivorr/data/providers/hire_provider.dart';
+export 'package:hivorr/data/providers/job_provider.dart';
 export 'package:hivorr/data/providers/kyc_provider.dart';
 export 'package:hivorr/data/providers/manage_user_provider.dart';
 export 'package:hivorr/data/providers/marketplace_search_provider.dart';
@@ -257,6 +286,10 @@ export 'package:hivorr/data/repositories/financial_payout_repository.dart';
 export 'package:hivorr/data/repositories/financial_payout_repository_impl.dart';
 export 'package:hivorr/data/repositories/financial_repository.dart';
 export 'package:hivorr/data/repositories/financial_repository_impl.dart';
+export 'package:hivorr/data/repositories/hire_repository.dart';
+export 'package:hivorr/data/repositories/hire_repository_impl.dart';
+export 'package:hivorr/data/repositories/job_repository.dart';
+export 'package:hivorr/data/repositories/job_repository_impl.dart';
 export 'package:hivorr/data/repositories/kyc_repository.dart';
 export 'package:hivorr/data/repositories/kyc_repository_impl.dart';
 export 'package:hivorr/data/repositories/manage_user_repository.dart';
@@ -275,6 +308,9 @@ export 'package:hivorr/data/repositories/trade_verification_repository.dart';
 export 'package:hivorr/data/repositories/trade_verification_repository_impl.dart';
 export 'package:hivorr/data/repositories/verification_repository.dart';
 export 'package:hivorr/data/repositories/verification_repository_impl.dart';
+export 'package:hivorr/systems/jobs/models/job_status.dart';
+export 'package:hivorr/systems/jobs/services/hire_service.dart';
+export 'package:hivorr/systems/jobs/services/job_service.dart';
 export 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 export 'package:hivorr/systems/support/services/dispute_service.dart';
 
@@ -700,6 +736,45 @@ registerServiceListingLayer(
     provider: ServiceListingProvider(service: service, logger: logger),
     service: service,
   );
+}
+
+/// Wires the jobs/applications data slice for EP-04-01.
+///
+/// Builds the [JobRepository] and [JobService] over the [ApiLayer] and
+/// returns a ready [JobProvider]. Mirrors `registerDisputeLayer`: all sixteen
+/// authenticated RPCs are live, reads are RLS-scoped, and capability gates
+/// stay server-side — the client never writes `jobs` tables.
+({JobRepository repository, JobProvider provider}) registerJobsLayer(
+  ApiLayer apiLayer,
+) {
+  final remote = SupabaseJobsRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = JobRepositoryImpl(remote: remote);
+  final service = JobService(repository: repository);
+  return (repository: repository, provider: JobProvider(service: service));
+}
+
+/// Wires the quotations/hires data slice for EP-04-02.
+///
+/// Builds the [HireRepository] and [HireService] over the [ApiLayer] and
+/// returns a ready [HireProvider]. Mirrors `registerJobsLayer`: all eight
+/// authenticated RPCs are live; `hire_accept` creates the linked
+/// `service_contracts` row server-side — the client never writes hiring or
+/// contract tables.
+({HireRepository repository, HireProvider provider}) registerHiresLayer(
+  ApiLayer apiLayer,
+) {
+  final remote = SupabaseHiresRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = HireRepositoryImpl(remote: remote);
+  final service = HireService(repository: repository);
+  return (repository: repository, provider: HireProvider(service: service));
 }
 
 /// Wires the onboarding data slice for EP-02-18.

@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+
+/// Navigation sections for the single combined dashboard nav (EP-04-03).
+///
+/// Both accounts see all sections with headers (My Work / My Hiring /
+/// Shared); hire sees hiring + shared; offer sees work + shared. No mode
+/// state — visibility is pure capability filtering.
+enum DashboardNavSection {
+  /// Professional-work side.
+  work('My Work'),
+
+  /// Hiring side.
+  hiring('My Hiring'),
+
+  /// Shared across both sides.
+  shared('Shared');
+
+  const DashboardNavSection(this.label);
+
+  /// Section header label.
+  final String label;
+}
+
+/// A single dashboard navigation destination (EP-04-03).
+class DashboardNavItem {
+  const DashboardNavItem({
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+    required this.location,
+    required this.section,
+    this.showForHire = true,
+    this.showForOffer = true,
+  });
+
+  /// Nav label.
+  final String label;
+
+  /// Idle icon.
+  final IconData icon;
+
+  /// Selected icon.
+  final IconData activeIcon;
+
+  /// Target location.
+  final String location;
+
+  /// Section grouping.
+  final DashboardNavSection section;
+
+  /// Visible for hire/both capabilities.
+  final bool showForHire;
+
+  /// Visible for offer/both capabilities.
+  final bool showForOffer;
+
+  /// Whether [capability] (as hire/offer flags) may see this item.
+  bool visibleFor({required bool hire, required bool offer}) {
+    if (hire && offer) return true;
+    if (hire) return showForHire;
+    return showForOffer;
+  }
+}
+
+/// The full dashboard navigation, ordered for the combined Both experience.
+const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
+  DashboardNavItem(
+    label: 'Overview',
+    icon: Icons.dashboard_outlined,
+    activeIcon: Icons.dashboard,
+    location: '/dashboard',
+    section: DashboardNavSection.shared,
+  ),
+  // My Work (professional side).
+  DashboardNavItem(
+    label: 'Find Jobs',
+    icon: Icons.search_outlined,
+    activeIcon: Icons.search,
+    location: '/dashboard/opportunities',
+    section: DashboardNavSection.work,
+    showForHire: false,
+  ),
+  DashboardNavItem(
+    label: 'My Applications',
+    icon: Icons.send_outlined,
+    activeIcon: Icons.send,
+    location: '/dashboard/applications',
+    section: DashboardNavSection.work,
+    showForHire: false,
+  ),
+  DashboardNavItem(
+    label: 'My Work',
+    icon: Icons.work_outline,
+    activeIcon: Icons.work,
+    location: '/dashboard/hires?role=professional',
+    section: DashboardNavSection.work,
+    showForHire: false,
+  ),
+  DashboardNavItem(
+    label: 'Earnings',
+    icon: Icons.account_balance_wallet_outlined,
+    activeIcon: Icons.account_balance_wallet,
+    location: '/dashboard/earnings',
+    section: DashboardNavSection.work,
+    showForHire: false,
+  ),
+  // My Hiring (client side).
+  DashboardNavItem(
+    label: 'Post a Job',
+    icon: Icons.add_circle_outline,
+    activeIcon: Icons.add_circle,
+    location: '/dashboard/jobs/new',
+    section: DashboardNavSection.hiring,
+    showForOffer: false,
+  ),
+  DashboardNavItem(
+    label: 'My Jobs',
+    icon: Icons.business_center_outlined,
+    activeIcon: Icons.business_center,
+    location: '/dashboard/jobs',
+    section: DashboardNavSection.hiring,
+    showForOffer: false,
+  ),
+  DashboardNavItem(
+    label: 'Hires',
+    icon: Icons.handshake_outlined,
+    activeIcon: Icons.handshake,
+    location: '/dashboard/hires?role=client',
+    section: DashboardNavSection.hiring,
+    showForOffer: false,
+  ),
+  DashboardNavItem(
+    label: 'Payments',
+    icon: Icons.payments_outlined,
+    activeIcon: Icons.payments,
+    location: '/dashboard/payments',
+    section: DashboardNavSection.hiring,
+    showForOffer: false,
+  ),
+  // Shared.
+  DashboardNavItem(
+    label: 'Messages',
+    icon: Icons.mail_outline,
+    activeIcon: Icons.mail,
+    location: '/dashboard/messages',
+    section: DashboardNavSection.shared,
+  ),
+  DashboardNavItem(
+    label: 'Notifications',
+    icon: Icons.notifications_outlined,
+    activeIcon: Icons.notifications,
+    location: '/dashboard/notifications',
+    section: DashboardNavSection.shared,
+  ),
+  DashboardNavItem(
+    label: 'Account',
+    icon: Icons.person_outline,
+    activeIcon: Icons.person,
+    location: '/dashboard/account',
+    section: DashboardNavSection.shared,
+  ),
+  DashboardNavItem(
+    label: 'Settings',
+    icon: Icons.settings_outlined,
+    activeIcon: Icons.settings,
+    location: '/dashboard/settings',
+    section: DashboardNavSection.shared,
+  ),
+];

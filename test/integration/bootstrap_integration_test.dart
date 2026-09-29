@@ -216,9 +216,15 @@ void main() {
         );
         final RouteGuard guard = RouteGuard(authProvider: authProvider);
 
-        expect(guard.redirectResolver(RoutePaths.home), isNull);
+        expect(
+          guard.redirectResolver(RoutePaths.home),
+          RoutePaths.dashboard,
+        );
         expect(guard.redirectResolver(RoutePaths.profile), isNull);
-        expect(guard.redirectResolver(RoutePaths.login), RoutePaths.home);
+        expect(
+          guard.redirectResolver(RoutePaths.login),
+          RoutePaths.dashboard,
+        );
       });
     });
 
@@ -256,6 +262,9 @@ void main() {
               lifecycleObserver: observer,
               taxonomyRepository: result.taxonomyRepository,
               taxonomyProvider: result.taxonomyProvider,
+              onboardingProvider: result.onboardingProvider,
+              jobProvider: result.jobProvider,
+              hireProvider: result.hireProvider,
             ),
           );
           await tester.pumpAndSettle();
@@ -263,7 +272,10 @@ void main() {
           expect(find.byType(HivorrApp), findsOneWidget);
 
           final RouteGuard guard = RouteGuard(authProvider: authProvider);
-          expect(guard.redirectResolver(RoutePaths.home), isNull);
+          expect(
+            guard.redirectResolver(RoutePaths.home),
+            RoutePaths.dashboard,
+          );
 
           // Cancel the Supabase auto-refresh timer started by the scripted
           // ApiLayer so the test binding does not report a pending timer.

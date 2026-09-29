@@ -11,14 +11,14 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:provider/provider.dart';
 
-/// Post-auth placeholder home (EP-02-18 §5.5).
+/// Post-auth entry redirector (EP-04-03).
 ///
 /// For an incomplete wizard that was deliberately exited
 /// ([OnboardingProgress.exited]), the screen surfaces a "Continue
 /// registration" action that clears the exit flag (re-engaging the guard's
-/// resume redirect) and returns to the saved step. Every other state renders a
-/// minimal empty state — once the wizard is complete, feature screens replace
-/// this placeholder (EP-02+).
+/// resume redirect) and returns to the saved step. Every other state forwards
+/// to the role-aware dashboard ([RoutePaths.dashboard]) — admins are
+/// redirected by [RouteGuard] directly to [RoutePaths.adminDashboard].
 ///
 /// Super Admins no longer see a legacy gateway here. Authenticated
 /// platform admins are redirected by [RouteGuard] directly to
@@ -34,6 +34,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _adminChecked = false;
+  bool _forwarded = false;
 
   @override
   void initState() {
@@ -71,6 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool showResume =
         onboarding.progress != null && !complete && onboarding.exited;
 
+    if (!showResume && !_forwarded) {
+      _forwarded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go(RoutePaths.dashboard);
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text('Home', style: context.textTheme.titleLarge)),
       body: Center(
@@ -105,6 +113,8 @@ class _HomeScreenState extends State<HomeScreen> {
     BuildContext context,
     OnboardingProvider onboarding,
   ) async {
+    // Suppress the dashboard auto-forward: this tap owns the navigation.
+    _forwarded = true;
     await onboarding.continueRegistration();
     if (!context.mounted) {
       return;

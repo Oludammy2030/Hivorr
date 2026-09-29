@@ -48,6 +48,10 @@ class BootstrapResult {
     this.depositProvider,
     this.disputeRepository,
     this.disputeProvider,
+    this.jobRepository,
+    this.jobProvider,
+    this.hireRepository,
+    this.hireProvider,
     this.onboardingService,
     this.onboardingProvider,
     this.onboardingStore,
@@ -124,6 +128,18 @@ class BootstrapResult {
 
   /// Dispute-resolution provider surfaced to the widget tree (EP-02-17).
   final DisputeProvider? disputeProvider;
+
+  /// Jobs/applications repository (EP-04-01). Optional for testability.
+  final JobRepository? jobRepository;
+
+  /// Jobs/applications provider surfaced to the widget tree (EP-04-01).
+  final JobProvider? jobProvider;
+
+  /// Quotations/hires repository (EP-04-02). Optional for testability.
+  final HireRepository? hireRepository;
+
+  /// Quotations/hires provider surfaced to the widget tree (EP-04-02).
+  final HireProvider? hireProvider;
 
   /// Onboarding service (EP-02-18). Optional for testability.
   final OnboardingService? onboardingService;
@@ -248,6 +264,10 @@ class AppBootstrap {
     );
     final ({DisputeRepository repository, DisputeProvider provider}) dispute =
         registerDisputeLayer(apiLayer);
+    final ({JobRepository repository, JobProvider provider}) jobs =
+        registerJobsLayer(apiLayer);
+    final ({HireRepository repository, HireProvider provider}) hires =
+        registerHiresLayer(apiLayer);
     final ({
       OnboardingService service,
       OnboardingProvider provider,
@@ -296,6 +316,10 @@ class AppBootstrap {
       depositProvider: deposit.provider,
       disputeRepository: dispute.repository,
       disputeProvider: dispute.provider,
+      jobRepository: jobs.repository,
+      jobProvider: jobs.provider,
+      hireRepository: hires.repository,
+      hireProvider: hires.provider,
       onboardingService: onboarding.service,
       onboardingProvider: onboarding.provider,
       onboardingStore: onboarding.store,

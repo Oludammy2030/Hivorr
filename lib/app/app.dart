@@ -20,6 +20,8 @@ import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/financial_provider.dart';
+import 'package:hivorr/data/providers/hire_provider.dart';
+import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -33,6 +35,8 @@ import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/financial_deposit_repository.dart';
 import 'package:hivorr/data/repositories/financial_payout_repository.dart';
 import 'package:hivorr/data/repositories/financial_repository.dart';
+import 'package:hivorr/data/repositories/hire_repository.dart';
+import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/portfolio_repository.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
@@ -74,6 +78,10 @@ class HivorrApp extends StatefulWidget {
     this.depositProvider,
     this.disputeRepository,
     this.disputeProvider,
+    this.jobRepository,
+    this.jobProvider,
+    this.hireRepository,
+    this.hireProvider,
     this.onboardingService,
     this.onboardingProvider,
     this.onboardingStore,
@@ -147,6 +155,18 @@ class HivorrApp extends StatefulWidget {
 
   /// Dispute-resolution provider surfaced to the widget tree (EP-02-17).
   final DisputeProvider? disputeProvider;
+
+  /// Jobs/applications repository (EP-04-01). Optional for testability.
+  final JobRepository? jobRepository;
+
+  /// Jobs/applications provider surfaced to the widget tree (EP-04-01).
+  final JobProvider? jobProvider;
+
+  /// Quotations/hires repository (EP-04-02). Optional for testability.
+  final HireRepository? hireRepository;
+
+  /// Quotations/hires provider surfaced to the widget tree (EP-04-02).
+  final HireProvider? hireProvider;
 
   /// Onboarding service (EP-02-18). Optional for testability.
   final OnboardingService? onboardingService;
@@ -300,6 +320,10 @@ class _HivorrAppState extends State<HivorrApp> {
     final FinancialDepositProvider? depositProvider = widget.depositProvider;
     final DisputeRepository? disputeRepository = widget.disputeRepository;
     final DisputeProvider? disputeProvider = widget.disputeProvider;
+    final JobRepository? jobRepository = widget.jobRepository;
+    final JobProvider? jobProvider = widget.jobProvider;
+    final HireRepository? hireRepository = widget.hireRepository;
+    final HireProvider? hireProvider = widget.hireProvider;
     final OnboardingService? onboardingService = widget.onboardingService;
     final OnboardingProvider? onboardingProvider = widget.onboardingProvider;
     final OnboardingProgressStore? onboardingStore = widget.onboardingStore;
@@ -365,6 +389,14 @@ class _HivorrAppState extends State<HivorrApp> {
           Provider<DisputeRepository>.value(value: disputeRepository),
         if (disputeProvider != null)
           ChangeNotifierProvider<DisputeProvider>.value(value: disputeProvider),
+        if (jobRepository != null)
+          Provider<JobRepository>.value(value: jobRepository),
+        if (jobProvider != null)
+          ChangeNotifierProvider<JobProvider>.value(value: jobProvider),
+        if (hireRepository != null)
+          Provider<HireRepository>.value(value: hireRepository),
+        if (hireProvider != null)
+          ChangeNotifierProvider<HireProvider>.value(value: hireProvider),
         if (onboardingStore != null)
           Provider<OnboardingProgressStore>.value(value: onboardingStore),
         Provider<PlatformFilePicker>.value(

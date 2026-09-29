@@ -26,9 +26,23 @@ import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/systems/admin/screens/admin_dashboard_screen.dart';
+import 'package:hivorr/systems/admin/screens/admin_jobs_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
+import 'package:hivorr/systems/dashboard/screens/account_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/dashboard_settings_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/finance_hubs_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/hire_detail_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/hires_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/job_detail_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/job_form_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/messages_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/my_jobs_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/notifications_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
+import 'package:hivorr/systems/dashboard/shell/hivorr_dashboard_shell.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
@@ -305,6 +319,119 @@ class AppRouter {
                   ManageUserDetailScreen(
                     userId: state.pathParameters['userId'] ?? '',
                   ),
+            ),
+            GoRoute(
+              path: RoutePaths.adminJobs,
+              name: RouteNames.adminJobs,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const AdminJobsScreen(),
+            ),
+          ],
+        ),
+        // Role-aware dashboard shell (capability-filtered nav + workspace).
+        // Static segments (`new`) precede `:id` so literal matching wins.
+        ShellRoute(
+          builder: (BuildContext context, GoRouterState state, Widget child) =>
+              HivorrDashboardShell(child: child),
+          routes: <RouteBase>[
+            GoRoute(
+              path: RoutePaths.dashboard,
+              name: RouteNames.dashboard,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const DashboardOverviewScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardJobs,
+              name: RouteNames.dashboardJobs,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const MyJobsScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardJobNew,
+              name: RouteNames.dashboardJobNew,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const JobFormScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardJobDetailRoute,
+              name: RouteNames.dashboardJobDetail,
+              builder: (BuildContext context, GoRouterState state) =>
+                  JobDetailScreen(
+                    jobId: state.pathParameters['id'] ?? '',
+                  ),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardJobEditRoute,
+              name: RouteNames.dashboardJobEdit,
+              builder: (BuildContext context, GoRouterState state) =>
+                  JobFormScreen(
+                    jobId: state.pathParameters['id'],
+                  ),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardOpportunities,
+              name: RouteNames.dashboardOpportunities,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const OpportunitiesScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardApplications,
+              name: RouteNames.dashboardApplications,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const MyApplicationsScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardHires,
+              name: RouteNames.dashboardHires,
+              builder: (BuildContext context, GoRouterState state) =>
+                  HiresScreen(
+                    role:
+                        state.uri.queryParameters['role'] ?? 'client',
+                  ),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardHireDetailRoute,
+              name: RouteNames.dashboardHireDetail,
+              builder: (BuildContext context, GoRouterState state) =>
+                  HireDetailScreen(
+                    hireId: state.pathParameters['id'] ?? '',
+                  ),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardMessages,
+              name: RouteNames.dashboardMessages,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const MessagesScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardNotifications,
+              name: RouteNames.dashboardNotifications,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const NotificationsScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardPayments,
+              name: RouteNames.dashboardPayments,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const PaymentsScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardEarnings,
+              name: RouteNames.dashboardEarnings,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const EarningsScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardAccount,
+              name: RouteNames.dashboardAccount,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const AccountScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardSettings,
+              name: RouteNames.dashboardSettings,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const DashboardSettingsScreen(),
             ),
           ],
         ),

@@ -31,7 +31,7 @@ void main() {
     adminProvider.dispose();
   });
 
-  test('non-admin at home stays at home', () async {
+  test('non-admin at home is redirected to the dashboard', () async {
     final OnboardingTestStack stack = buildOnboardingStack();
     await stack.hydrate('u1');
     for (int i = 0; i < 4; i++) {
@@ -46,7 +46,10 @@ void main() {
       onboardingProvider: stack.provider,
       adminReviewProvider: adminProvider,
     );
-    expect(guard.redirectResolver(RoutePaths.home), isNull);
+    expect(
+      guard.redirectResolver(RoutePaths.home),
+      RoutePaths.dashboard,
+    );
     stack.provider.dispose();
     adminProvider.dispose();
   });
