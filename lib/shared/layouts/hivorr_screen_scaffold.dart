@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 
 /// Standard screen wrapper: applies [SafeArea], horizontal padding, and an
 /// optional [AppBar] / [FloatingActionButton]. Defaults its background to
-/// the scaffold background so nested [HivorrCard] surfaces stay prominent.
+/// [ColorScheme.surface] so nested cards can use the scaffold background for
+/// contrast.
 class HivorrScreenScaffold extends StatelessWidget {
   const HivorrScreenScaffold({
     super.key,
@@ -21,10 +23,10 @@ class HivorrScreenScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
     return Scaffold(
       appBar: appBar,
-      backgroundColor:
-          backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: backgroundColor ?? colors.surface,
       floatingActionButton: floatingActionButton,
       body: SafeArea(
         child: Padding(

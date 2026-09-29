@@ -259,6 +259,7 @@ class _ServiceListingFormScreenState extends State<ServiceListingFormScreen>
           style: context.textTheme.titleLarge,
         ),
       ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: HivorrContentPane(
         child: _buildBody(context),
       ),

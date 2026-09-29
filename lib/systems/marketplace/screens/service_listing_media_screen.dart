@@ -189,6 +189,7 @@ class _ServiceListingMediaScreenState
           style: context.textTheme.titleLarge,
         ),
       ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floatingActionButton: FloatingActionButton(
         onPressed: _busy ? null : _pickAndUpload,
         tooltip: 'Add photo',
