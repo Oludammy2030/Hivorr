@@ -1,3 +1,4 @@
+export 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 export 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 export 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
 export 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
