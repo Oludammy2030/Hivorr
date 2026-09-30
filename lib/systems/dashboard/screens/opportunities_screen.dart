@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
+import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/job.dart';
 import 'package:hivorr/data/entities/job_application.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
@@ -16,15 +17,14 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
-import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
-import 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
@@ -41,17 +41,29 @@ class OpportunitiesScreen extends StatefulWidget {
   State<OpportunitiesScreen> createState() => _OpportunitiesScreenState();
 }
 
+/// Client-side sort for the loaded discovery list (Filter sheet).
+///
+/// Applied to a copy of the loaded page only — server ranking stays
+/// authoritative (`AGENT.md:7`); this never refetches or reorders remotely.
+enum _FwSort { recommended, newest, budgetHigh, mostApplied }
+
 class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
   final TextEditingController _search = TextEditingController();
   final ScrollController _scroll = ScrollController();
   Timer? _debounce;
   String? _query;
+  _FwSort _sort = _FwSort.recommended;
+  bool _urgentOnly = false;
+
+  /// Session-local saved marks (heart toggle). UI-only — no saved-jobs
+  /// backend seam exists, so nothing is persisted or synced.
+  final Set<String> _savedIds = <String>{};
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load(refresh: true));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _init());
   }
 
   @override
@@ -67,6 +79,23 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
         search: _query?.isEmpty ?? true ? null : _query,
         refresh: refresh,
       );
+
+  /// Initial hydration: discovery first, then the professional's own
+  /// applications (sequential — both flip the same provider load gate, so
+  /// concurrent calls would early-return and drop a list). The own
+  /// applications drive the per-card Applied state.
+  Future<void> _init() async {
+    await _load(refresh: true);
+    if (!mounted) return;
+    await context.read<JobProvider>().loadApplications();
+  }
+
+  /// Pull-to-refresh scope: discovery page plus the own-application marks.
+  Future<void> _refresh() async {
+    await _load(refresh: true);
+    if (!mounted) return;
+    await context.read<JobProvider>().loadApplications();
+  }
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
@@ -87,53 +116,517 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
     }
   }
 
+  /// Discovery list with the session-local Filter sheet applied
+  /// (urgent-only + sort on a copy; server order untouched by default).
+  List<Job> _displayJobs(JobProvider jobs) {
+    List<Job> list = jobs.discovery;
+    if (_urgentOnly) {
+      list = list
+          .where((Job job) => job.applicationsCount >= _kFwUrgentThreshold)
+          .toList(growable: false);
+    }
+    switch (_sort) {
+      case _FwSort.recommended:
+        return list;
+      case _FwSort.newest:
+        final List<Job> sorted = list.toList();
+        sorted.sort(
+          (Job a, Job b) => _fwPostedAt(b).compareTo(_fwPostedAt(a)),
+        );
+        return sorted;
+      case _FwSort.budgetHigh:
+        final List<Job> sorted = list.toList();
+        sorted.sort(
+          (Job a, Job b) => _fwBudgetValue(
+            b,
+          ).compareTo(_fwBudgetValue(a)),
+        );
+        return sorted;
+      case _FwSort.mostApplied:
+        final List<Job> sorted = list.toList();
+        sorted.sort(
+          (Job a, Job b) => b.applicationsCount.compareTo(a.applicationsCount),
+        );
+        return sorted;
+    }
+  }
+
+  Future<void> _openFilterSheet() async {
+    final _FwFilterResult? result = await showModalBottomSheet<_FwFilterResult>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (BuildContext context) => _FwFilterSheet(
+        sort: _sort,
+        urgentOnly: _urgentOnly,
+      ),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _sort = result.sort;
+      _urgentOnly = result.urgentOnly;
+    });
+  }
+
+  void _toggleSaved(String jobId) {
+    setState(() {
+      if (!_savedIds.remove(jobId)) {
+        _savedIds.add(jobId);
+      }
+    });
+  }
+
+  /// Opens the application overlay for [job], unless the professional
+  /// already applied (data-driven guard — the card then shows Applied).
+  Future<void> _openApply(Job job, Set<String> appliedIds) async {
+    if (appliedIds.contains(job.id)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        HivorrSnackbar.show(
+          context,
+          message: 'You have already applied to this job.',
+          variant: HivorrSnackbarVariant.info,
+        ),
+      );
+      return;
+    }
+    final bool? submitted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (BuildContext context) => _FwApplyDialog(job: job),
+    );
+    if (!mounted || submitted != true) return;
+    // Submission succeeded: refresh the own-application marks (Applied
+    // state) and the discovery counts, then confirm.
+    await context.read<JobProvider>().loadApplications();
+    if (!mounted) return;
+    await _load(refresh: true);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      HivorrSnackbar.show(
+        context,
+        message: 'Application submitted.',
+        variant: HivorrSnackbarVariant.success,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final JobProvider jobs = context.watch<JobProvider>();
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Find Jobs', style: context.textTheme.titleLarge),
-      ),
-      body: MobileSafeBody(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                HivorrSpacing.md,
-                HivorrSpacing.sm,
-                HivorrSpacing.md,
-                HivorrSpacing.xs,
-              ),
-              child: HivorrTextField(
-                controller: _search,
-                hint: 'Search jobs…',
-                prefix: const Icon(Icons.search_outlined),
-                onChanged: _onSearchChanged,
-              ),
+    final bool isMobile = context.breakpoint == Breakpoint.mobile;
+    if (isMobile) {
+      return Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 48,
+          title: Text(
+            'Find Work',
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
             ),
-            if (jobs.discovery.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  HivorrSpacing.md,
-                  0,
-                  HivorrSpacing.md,
-                  HivorrSpacing.xs,
+          ),
+          actions: <Widget>[
+            IconButton(
+              tooltip: 'Notifications',
+              iconSize: 20,
+              padding: const EdgeInsets.all(HivorrSpacing.sm),
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => context.go(RoutePaths.dashboardNotifications),
+            ),
+            IconButton(
+              tooltip: 'Refresh',
+              iconSize: 20,
+              padding: const EdgeInsets.all(HivorrSpacing.sm),
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              icon: const Icon(Icons.refresh),
+              onPressed: () => unawaited(_load(refresh: true)),
+            ),
+          ],
+        ),
+        body: MobileSafeBody(
+          child: _FindWorkContent(
+            search: _search,
+            scroll: _scroll,
+            onSearchChanged: _onSearchChanged,
+            onOpenFilter: _openFilterSheet,
+            onRefresh: _refresh,
+            onApply: _openApply,
+            displayJobs: _displayJobs,
+            savedIds: _savedIds,
+            onToggleSaved: _toggleSaved,
+            filterActive:
+                _sort != _FwSort.recommended || _urgentOnly,
+          ),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const _FindWorkTopBar(),
+        Expanded(
+          child: _FindWorkContent(
+            search: _search,
+            scroll: _scroll,
+            onSearchChanged: _onSearchChanged,
+            onOpenFilter: _openFilterSheet,
+            onRefresh: _refresh,
+            onApply: _openApply,
+            displayJobs: _displayJobs,
+            savedIds: _savedIds,
+            onToggleSaved: _toggleSaved,
+            filterActive:
+                _sort != _FwSort.recommended || _urgentOnly,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Applied-applications threshold behind the `Urgent` pill and the
+/// urgent-only filter (shared with the professional overview convention).
+const int _kFwUrgentThreshold = 5;
+
+/// Professional `Find Work` top bar (reference): menu tile, page title,
+/// notification bell with attention dot, green Professional pill and the
+/// dynamic-initials account avatar.
+class _FindWorkTopBar extends StatelessWidget {
+  const _FindWorkTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final RoleThemeExtension roles = context.roleTheme;
+    bool hasDot = false;
+    try {
+      hasDot = context.watch<JobProvider>().discovery.isNotEmpty;
+    } catch (_) {
+      hasDot = false;
+    }
+    final ({String name, String initials}) identity = _fwIdentity(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.lg,
+        vertical: 14,
+      ),
+      child: Row(
+        children: <Widget>[
+          _TopBarTile(
+            tooltip: 'Menu',
+            icon: Icons.menu,
+            onTap: () {
+              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+              if (scaffold != null && scaffold.hasDrawer) {
+                scaffold.openDrawer();
+              }
+            },
+          ),
+          const SizedBox(width: HivorrSpacing.md),
+          Text(
+            'Find Work',
+            style: context.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          _TopBarTile(
+            tooltip: 'Notifications',
+            icon: Icons.notifications_outlined,
+            showDot: hasDot,
+            onTap: () => context.go(RoutePaths.dashboardNotifications),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: roles.professionalContainer.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: roles.professionalPrimary,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    jobs.discoveryHasMore
-                        ? '${jobs.discovery.length}+ open jobs'
-                        : '${jobs.discovery.length} open jobs',
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
+                const SizedBox(width: HivorrSpacing.xs),
+                Text(
+                  'Professional',
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: roles.professionalPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Tooltip(
+            message: identity.name,
+            child: InkWell(
+              onTap: () => context.go(RoutePaths.dashboardAccount),
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: roles.professionalContainer,
+                  border: Border.all(
+                    color: roles.professionalPrimary.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  identity.initials,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    color: roles.professionalPrimary,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-            Expanded(
-              child: _Body(jobs: jobs, onRetry: () => _load(refresh: true)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Reference content: white search header (search field + green Filter
+/// button + availability subtitle) above the light-grey opportunity grid.
+class _FindWorkContent extends StatelessWidget {
+  const _FindWorkContent({
+    required this.search,
+    required this.scroll,
+    required this.onSearchChanged,
+    required this.onOpenFilter,
+    required this.onRefresh,
+    required this.onApply,
+    required this.displayJobs,
+    required this.savedIds,
+    required this.onToggleSaved,
+    required this.filterActive,
+  });
+
+  final TextEditingController search;
+  final ScrollController scroll;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onOpenFilter;
+  final Future<void> Function() onRefresh;
+
+  /// Opens the application overlay for [job] with the current applied marks.
+  final Future<void> Function(Job job, Set<String> appliedIds) onApply;
+  final List<Job> Function(JobProvider jobs) displayJobs;
+  final Set<String> savedIds;
+  final ValueChanged<String> onToggleSaved;
+  final bool filterActive;
+
+  @override
+  Widget build(BuildContext context) {
+    final JobProvider jobs = context.watch<JobProvider>();
+    final bool searching =
+        search.text.trim().isNotEmpty;
+    // Data-driven applied marks: every own application row (any status —
+    // one row exists per job+professional) marks its job as Applied.
+    final Set<String> appliedIds = <String>{
+      for (final JobApplication app in jobs.myApplications) app.jobId,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        ColoredBox(
+          color: context.colorScheme.surface,
+          child: Padding(
+            padding: EdgeInsets.all(
+              context.breakpoint == Breakpoint.mobile
+                  ? HivorrSpacing.md
+                  : HivorrSpacing.lg,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _FindWorkSearchField(
+                        controller: search,
+                        onChanged: onSearchChanged,
+                      ),
+                    ),
+                    const SizedBox(width: HivorrSpacing.sm),
+                    _FindWorkFilterButton(
+                      active: filterActive,
+                      onPressed: onOpenFilter,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: HivorrSpacing.sm),
+                _FindWorkSubtitle(
+                  total: jobs.discovery.length,
+                  hasMore: jobs.discoveryHasMore,
+                  searching: searching,
+                  query: search.text.trim(),
+                  shown: displayJobs(jobs).length,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: ColoredBox(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: _FindWorkGrid(
+              jobs: jobs,
+              displayed: displayJobs(jobs),
+              searching: searching,
+              scroll: scroll,
+              onRefresh: onRefresh,
+              appliedIds: appliedIds,
+              onApply: (Job job) => onApply(job, appliedIds),
+              savedIds: savedIds,
+              onToggleSaved: onToggleSaved,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Borderless filled search field (reference): light-grey rounded input with
+/// a search prefix.
+class _FindWorkSearchField extends StatelessWidget {
+  const _FindWorkSearchField({
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Semantics(
+      textField: true,
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: context.textTheme.bodyMedium,
+        decoration: InputDecoration(
+          hintText: 'Search jobs by title, company, or skill…',
+          hintStyle: context.textTheme.bodyMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
+          prefixIcon: Icon(
+            Icons.search_outlined,
+            size: 20,
+            color: colors.onSurfaceVariant,
+          ),
+          filled: true,
+          fillColor: colors.surfaceContainerHighest.withValues(
+            alpha: context.isDarkMode ? 1.0 : 0.55,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: HivorrSpacing.md,
+            vertical: 14,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: context.roleTheme.professionalPrimary,
+              width: 1.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Green Filter button (reference): funnel icon + label, filled with the
+/// professional accent; dot badge while a filter is active.
+class _FindWorkFilterButton extends StatelessWidget {
+  const _FindWorkFilterButton({
+    required this.active,
+    required this.onPressed,
+  });
+
+  final bool active;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final RoleThemeExtension roles = context.roleTheme;
+    final ColorScheme colors = context.colorScheme;
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: roles.professionalPrimary,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                Icon(
+                  Icons.filter_list,
+                  size: 20,
+                  color: colors.onPrimary,
+                ),
+                if (active)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: colors.onPrimary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: roles.professionalPrimary,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: HivorrSpacing.xs),
+            Text(
+              'Filter',
+              style: context.textTheme.labelLarge?.copyWith(
+                color: colors.onPrimary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -142,11 +635,75 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
   }
 }
 
-class _Body extends StatelessWidget {
-  const _Body({required this.jobs, required this.onRetry});
+class _FindWorkSubtitle extends StatelessWidget {
+  const _FindWorkSubtitle({
+    required this.total,
+    required this.hasMore,
+    required this.searching,
+    required this.query,
+    required this.shown,
+  });
+
+  final int total;
+  final bool hasMore;
+  final bool searching;
+  final String query;
+  final int shown;
+
+  @override
+  Widget build(BuildContext context) {
+    final String text;
+    if (searching) {
+      text = shown == 1
+          ? '1 result for "$query"'
+          : '$shown results for "$query"';
+    } else if (hasMore) {
+      text = '$total+ opportunities available · Matched to your skills';
+    } else if (total == 1) {
+      text = '1 opportunity available · Matched to your skills';
+    } else {
+      text = '$total opportunities available · Matched to your skills';
+    }
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: context.textTheme.bodySmall?.copyWith(
+        color: context.colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+/// Responsive opportunity grid (reference): two columns on wide layouts,
+/// one column on narrow widths. Cards keep a fixed extent per row so the
+/// action row aligns, with pull-to-refresh and infinite pagination kept.
+class _FindWorkGrid extends StatelessWidget {
+  const _FindWorkGrid({
+    required this.jobs,
+    required this.displayed,
+    required this.searching,
+    required this.scroll,
+    required this.onRefresh,
+    required this.appliedIds,
+    required this.onApply,
+    required this.savedIds,
+    required this.onToggleSaved,
+  });
 
   final JobProvider jobs;
-  final Future<void> Function() onRetry;
+  final List<Job> displayed;
+  final bool searching;
+  final ScrollController scroll;
+  final Future<void> Function() onRefresh;
+
+  /// Own-application job marks driving the per-card Applied state.
+  final Set<String> appliedIds;
+
+  /// Opens the application overlay for a not-yet-applied job.
+  final ValueChanged<Job> onApply;
+  final Set<String> savedIds;
+  final ValueChanged<String> onToggleSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +714,7 @@ class _Body extends StatelessWidget {
       return HivorrErrorState(
         message: 'Could not load jobs',
         detail: jobs.lastError!.message,
-        onRetry: () => unawaited(onRetry()),
+        onRetry: () => unawaited(onRefresh()),
       );
     }
     if (jobs.discovery.isEmpty) {
@@ -167,28 +724,958 @@ class _Body extends StatelessWidget {
             'New hiring requests appear here as soon as clients publish them. Check back soon.',
       );
     }
-    return RefreshIndicator(
-      onRefresh: onRetry,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(HivorrSpacing.md),
-        itemCount: jobs.discovery.length + (jobs.discoveryHasMore ? 1 : 0),
-        separatorBuilder: (_, _) => const SizedBox(height: HivorrSpacing.sm),
-        itemBuilder: (BuildContext context, int i) {
-          if (i >= jobs.discovery.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: HivorrSpacing.md),
-              child: HivorrLoadingState(),
-            );
-          }
-          final Job job = jobs.discovery[i];
-          return JobCard(
-            job: job,
+    if (displayed.isEmpty) {
+      return HivorrEmptyState(
+        title: searching ? 'No matches found' : 'No urgent jobs right now',
+        subtitle: searching
+            ? 'Try a different keyword or clear the search.'
+            : 'Clear the urgent-only filter to see every opportunity.',
+      );
+    }
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints c) {
+        final bool twoCol = c.maxWidth >= 900;
+        final bool compact = MobileCompact.isCompactWidth(c.maxWidth);
+        return RefreshIndicator(
+          onRefresh: onRefresh,
+          child: GridView.builder(
+            controller: scroll,
+            padding: EdgeInsets.all(compact ? HivorrSpacing.md : 20),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: twoCol ? 2 : 1,
+              crossAxisSpacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+              mainAxisSpacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+              mainAxisExtent: twoCol ? 330 : 310,
+            ),
+            itemCount:
+                displayed.length + (jobs.discoveryHasMore && !_filtered() ? 1 : 0),
+            itemBuilder: (BuildContext context, int i) {
+              if (i >= displayed.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: HivorrSpacing.md),
+                  child: HivorrLoadingState(),
+                );
+              }
+              final Job job = displayed[i];
+              return _FindWorkCard(
+                job: job,
+                applied: appliedIds.contains(job.id),
+                onApply: () => onApply(job),
+                saved: savedIds.contains(job.id),
+                onToggleSaved: () => onToggleSaved(job.id),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  /// The trailing pagination loader belongs to the unfiltered server feed;
+  /// filtered/sorted views page through the loaded copy instead.
+  bool _filtered() => displayed.length != jobs.discovery.length;
+}
+
+/// Reference opportunity card: category pills left with price + applicant
+/// count right, title, description, location + time-ago meta, then a green
+/// Apply Now action (light-green Applied pill once the professional's own
+/// application exists for the job) beside a session-local save toggle.
+class _FindWorkCard extends StatelessWidget {
+  const _FindWorkCard({
+    required this.job,
+    required this.applied,
+    required this.onApply,
+    required this.saved,
+    required this.onToggleSaved,
+  });
+
+  final Job job;
+
+  /// Whether the logged-in professional already applied (own application
+  /// row exists) — drives the Applied state, never hardcoded.
+  final bool applied;
+
+  /// Opens the application overlay (guarded: applied jobs never reach it).
+  final VoidCallback onApply;
+  final bool saved;
+  final VoidCallback onToggleSaved;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final RoleThemeExtension roles = context.roleTheme;
+    final AppThemeExtension ext = context.appExtension;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final String? budget = _fwBudget(job);
+    final bool urgent = job.applicationsCount >= _kFwUrgentThreshold;
+    final String category = _fwCategory(job) ?? 'Open';
+    final String postedAgo = _fwTimeAgo(_fwPostedAt(job));
+    // The detail tap covers the header block only (sibling of the action
+    // row): nesting the Apply/Save buttons inside a card-wide InkWell
+    // would fire both taps from one press.
+    return HivorrCard(
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.md : HivorrSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          InkWell(
             onTap: () => context.go(RoutePaths.dashboardJobDetail(job.id)),
-          );
-        },
+            borderRadius: BorderRadius.circular(8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: <Widget>[
+                          _FwPill(
+                            label: category,
+                            background: colors.primaryContainer,
+                            foreground: colors.primary,
+                          ),
+                          if (urgent)
+                            _FwPill(
+                              label: 'Urgent',
+                              background: colors.errorContainer,
+                              foreground: colors.error,
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: HivorrSpacing.sm),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        if (budget != null)
+                          Text(
+                            budget,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.titleMedium?.copyWith(
+                              color: ext.success,
+                              fontWeight: FontWeight.w800,
+                              fontSize: compact ? 16 : 18,
+                            ),
+                          ),
+                        Text(
+                          '${job.applicationsCount} applied',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: HivorrSpacing.sm),
+                Text(
+                  job.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: compact ? 15 : 17,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _fwCompanyLine(job),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontSize: compact ? 13 : 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  job.description.split('\n').first.trim(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontSize: compact ? 13 : 14,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(height: 4),
+          Row(
+            children: <Widget>[
+              if (job.location != null && job.location!.isNotEmpty) ...<Widget>[
+                Icon(
+                  Icons.place_outlined,
+                  size: 14,
+                  color: colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    job.location!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: HivorrSpacing.sm),
+              ],
+              Icon(
+                Icons.schedule_outlined,
+                size: 14,
+                color: colors.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                postedAgo,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: applied
+                    ? _FwAppliedPill(
+                        onTap: () => context.go(
+                          RoutePaths.dashboardJobDetail(job.id),
+                        ),
+                      )
+                    : InkWell(
+                        onTap: onApply,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: roles.professionalPrimary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(
+                                Icons.description_outlined,
+                                size: 18,
+                                color: colors.onPrimary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Apply Now',
+                                style: context.textTheme.labelLarge?.copyWith(
+                                  color: colors.onPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+              ),
+              const SizedBox(width: HivorrSpacing.sm),
+              Tooltip(
+                message: saved ? 'Saved' : 'Save',
+                child: InkWell(
+                  onTap: onToggleSaved,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest.withValues(
+                        alpha: context.isDarkMode ? 1.0 : 0.55,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      saved ? Icons.favorite : Icons.favorite_border,
+                      size: 22,
+                      color: saved
+                          ? colors.error
+                          : colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
+}
+
+/// Applied state (reference): light-green action tile with a check mark
+/// and bold green label, replacing Apply Now on the applied job only.
+/// Tapping still opens the job detail (own application + withdraw live
+/// there), so the tile never dead-ends.
+class _FwAppliedPill extends StatelessWidget {
+  const _FwAppliedPill({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppThemeExtension ext = context.appExtension;
+    return Tooltip(
+      message: 'You have applied to this job',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: ext.successContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.check_circle_outline,
+                size: 20,
+                color: ext.success,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Applied!',
+                style: context.textTheme.labelLarge?.copyWith(
+                  color: ext.success,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FwPill extends StatelessWidget {
+  const _FwPill({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: context.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 11,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+}
+
+/// Filter sheet result (sort + urgent-only over the loaded discovery page).
+class _FwFilterResult {
+  const _FwFilterResult({required this.sort, required this.urgentOnly});
+
+  final _FwSort sort;
+  final bool urgentOnly;
+}
+
+/// Session-local filter sheet: sort order plus an urgent-only switch.
+/// Sorting/filtering applies to the already-loaded discovery page — no new
+/// backend query, server ranking stays authoritative.
+class _FwFilterSheet extends StatefulWidget {
+  const _FwFilterSheet({required this.sort, required this.urgentOnly});
+
+  final _FwSort sort;
+  final bool urgentOnly;
+
+  @override
+  State<_FwFilterSheet> createState() => _FwFilterSheetState();
+}
+
+class _FwFilterSheetState extends State<_FwFilterSheet> {
+  late _FwSort _sort = widget.sort;
+  late bool _urgentOnly = widget.urgentOnly;
+
+  static const List<(_FwSort, String)> _options = <(_FwSort, String)>[
+    (_FwSort.recommended, 'Recommended'),
+    (_FwSort.newest, 'Newest first'),
+    (_FwSort.budgetHigh, 'Highest budget'),
+    (_FwSort.mostApplied, 'Most applied'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final RoleThemeExtension roles = context.roleTheme;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            HivorrSpacing.lg,
+            0,
+            HivorrSpacing.lg,
+            HivorrSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      'Filter',
+                      style: context.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _sort = _FwSort.recommended;
+                      _urgentOnly = false;
+                    }),
+                    child: const Text('Reset'),
+                  ),
+                  IconButton(
+                    tooltip: 'Close',
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              Text(
+                'Sort by',
+                style: context.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: HivorrSpacing.xs),
+              RadioGroup<_FwSort>(
+                groupValue: _sort,
+                onChanged: (_FwSort? v) {
+                  if (v != null) setState(() => _sort = v);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    for (final (_FwSort value, String label) in _options)
+                      RadioListTile<_FwSort>(
+                        value: value,
+                        title: Text(label),
+                        activeColor: roles.professionalPrimary,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                      ),
+                  ],
+                ),
+              ),
+              SwitchListTile(
+                value: _urgentOnly,
+                onChanged: (bool v) => setState(() => _urgentOnly = v),
+                title: const Text('Urgent only'),
+                subtitle: Text(
+                  'Jobs with $_kFwUrgentThreshold+ applications',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                activeThumbColor: roles.professionalPrimary,
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
+              const SizedBox(height: HivorrSpacing.sm),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(
+                  _FwFilterResult(sort: _sort, urgentOnly: _urgentOnly),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: roles.professionalPrimary,
+                  foregroundColor: context.colorScheme.onPrimary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  'Show results',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Application overlay (reference): centered white dialog over the dimmed
+/// Find Work page — no navigation. Proposed rate + cover letter + optional
+/// portfolio link, submitted through the shared [JobProvider.apply] seam so
+/// the row lands in Client → Applications for this job like any other
+/// application. The caller refreshes its lists on a `true` pop.
+class _FwApplyDialog extends StatefulWidget {
+  const _FwApplyDialog({required this.job});
+
+  final Job job;
+
+  @override
+  State<_FwApplyDialog> createState() => _FwApplyDialogState();
+}
+
+class _FwApplyDialogState extends State<_FwApplyDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _rate = TextEditingController();
+  final TextEditingController _cover = TextEditingController();
+  final TextEditingController _portfolio = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _rate.dispose();
+    _cover.dispose();
+    _portfolio.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _fieldDecoration(String hint) {
+    final ColorScheme colors = context.colorScheme;
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: context.textTheme.bodyMedium?.copyWith(
+        color: colors.onSurfaceVariant,
+      ),
+      filled: true,
+      fillColor: colors.surfaceContainerHighest.withValues(
+        alpha: context.isDarkMode ? 1.0 : 0.55,
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.md,
+        vertical: 14,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: context.roleTheme.professionalPrimary,
+          width: 1.5,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.error, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: HivorrSpacing.xs),
+      child: Text(
+        text,
+        style: context.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final String cover = _cover.text.trim();
+    final String link = _portfolio.text.trim();
+    final String coverNote = link.isEmpty ? cover : '$cover\n\nPortfolio: $link';
+    // Backend CHECK is 20–2000 chars on the stored note (link included).
+    if (coverNote.length > 2000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        HivorrSnackbar.show(
+          context,
+          message: 'Cover letter plus link must fit 2000 characters.',
+          variant: HivorrSnackbarVariant.error,
+        ),
+      );
+      return;
+    }
+    setState(() => _sending = true);
+    try {
+      await context.read<JobProvider>().apply(
+        jobId: widget.job.id,
+        coverNote: coverNote,
+        quotedAmount: _fwParseRate(_rate.text),
+        currencyCode: widget.job.currencyCode,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      // A duplicate race (row already exists server-side) still ends in
+      // the Applied state once the marks refresh — never a dead error.
+      await context.read<JobProvider>().loadApplications();
+      if (!mounted) return;
+      final bool nowApplied = context
+          .read<JobProvider>()
+          .myApplications
+          .any((JobApplication app) => app.jobId == widget.job.id);
+      if (nowApplied) {
+        Navigator.of(context).pop(true);
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        HivorrSnackbar.show(
+          context,
+          message: e.message,
+          variant: HivorrSnackbarVariant.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Dialog(
+      insetPadding: const EdgeInsets.all(HivorrSpacing.md),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(HivorrSpacing.lg),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        'Submit Application',
+                        style: context.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: _sending
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceContainerHighest.withValues(
+                            alpha: context.isDarkMode ? 1.0 : 0.55,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: HivorrSpacing.lg),
+                _label('Your Proposed Rate'),
+                TextFormField(
+                  controller: _rate,
+                  keyboardType: TextInputType.text,
+                  decoration: _fieldDecoration(r'e.g. $45/hr or $2,500 fixed'),
+                  validator: (String? v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    return _fwParseRate(v) == null
+                        ? 'Enter an amount, e.g. 2500.'
+                        : null;
+                  },
+                ),
+                const SizedBox(height: HivorrSpacing.md),
+                _label('Cover Letter'),
+                TextFormField(
+                  controller: _cover,
+                  maxLines: 5,
+                  minLines: 5,
+                  decoration: _fieldDecoration(
+                    "Explain why you're the best fit for this role…",
+                  ),
+                  validator: (String? v) {
+                    final String t = (v ?? '').trim();
+                    if (t.length < 20 || t.length > 2000) {
+                      return 'Cover letter must be 20 to 2000 characters.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: HivorrSpacing.md),
+                _label('Relevant Portfolio Link (optional)'),
+                TextFormField(
+                  controller: _portfolio,
+                  keyboardType: TextInputType.url,
+                  decoration: _fieldDecoration(
+                    'github.com/yourname or portfolio.com',
+                  ),
+                  validator: (String? v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    return v.trim().length >= 4
+                        ? null
+                        : 'Enter a valid link.';
+                  },
+                ),
+                const SizedBox(height: HivorrSpacing.lg),
+                InkWell(
+                  onTap: _sending ? null : _submit,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: <Color>[
+                          Color(0xFF22C55E),
+                          Color(0xFF16A34A),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        if (_sending)
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                colors.onPrimary,
+                              ),
+                            ),
+                          )
+                        else
+                          Icon(
+                            Icons.description_outlined,
+                            size: 20,
+                            color: colors.onPrimary,
+                          ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _sending ? 'Submitting…' : 'Submit Application',
+                          style: context.textTheme.titleMedium?.copyWith(
+                            color: colors.onPrimary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Find Work helpers (pure Dart) ──────────────────────────────────────────
+
+/// Company line: client display names are not exposed to the professional
+/// dashboard, so the description lead stands in (overview convention).
+String _fwCompanyLine(Job job) {
+  final String lead = job.description.split('\n').first.trim();
+  if (lead.isEmpty) return 'Private Client';
+  if (lead.length > 48) return lead.substring(0, 48).trimRight();
+  return lead;
+}
+
+/// Category pill: short profession/industry label, else null (caller falls
+/// back to the `Open` status pill).
+String? _fwCategory(Job job) {
+  final String? raw = job.professionId ?? job.industryId;
+  if (raw == null || raw.isEmpty) return null;
+  final String cleaned = raw
+      .split(RegExp(r'[-_]'))
+      .map(
+        (String p) =>
+            p.isEmpty ? p : p[0].toUpperCase() + p.substring(1).toLowerCase(),
+      )
+      .join(' ');
+  if (cleaned.isEmpty || cleaned.length > 18) return null;
+  return cleaned;
+}
+
+DateTime _fwPostedAt(Job job) =>
+    job.postedAt ?? job.createdAt;
+
+double _fwBudgetValue(Job job) =>
+    job.budgetMax ?? job.budgetMin ?? 0;
+
+/// Budget text (`$3,500` / `$3,000 – $5,000`), or null when unordered.
+String? _fwBudget(Job job) {
+  String fmt(double v) =>
+      '${_fwCurrencySymbol(job.currencyCode)}${_fwGrouped(v)}';
+  final double? min = job.budgetMin;
+  final double? max = job.budgetMax;
+  if (min != null && max != null) {
+    if (min == max) return fmt(max);
+    return '${fmt(min)} – ${fmt(max)}';
+  }
+  final double? single = max ?? min;
+  if (single == null) return null;
+  return fmt(single);
+}
+
+/// Parses the first positive amount out of free-text rate input
+/// (`$2,500 fixed` → `2500`, `45/hr` → `45`), or null when no usable
+/// amount is present. The stored quote stays numeric for the backend
+/// while the professional keeps the reference's free-text field.
+double? _fwParseRate(String input) {
+  final RegExpMatch? match = RegExp(
+    r'[\d,]+(\.\d+)?',
+  ).firstMatch(input);
+  if (match == null) return null;
+  final double? value = double.tryParse(
+    match.group(0)!.replaceAll(',', ''),
+  );
+  if (value == null || value <= 0) return null;
+  return value;
+}
+
+String _fwCurrencySymbol(String code) => switch (code.toUpperCase()) {
+  'USD' => r'$',
+  'NGN' => '₦',
+  'GHS' => '₵',
+  'GBP' => '£',
+  _ => '$code ',
+};
+
+String _fwGrouped(double value) =>
+    HivorrFormatters.number(value, decimals: 0);
+
+/// Compact time-ago (`30m ago`, `2h ago`, `3d ago`) from the posted date.
+String _fwTimeAgo(DateTime at) {
+  final Duration diff = DateTime.now().difference(at);
+  if (diff.isNegative || diff.inSeconds < 60) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inDays < 7) return '${diff.inDays}d ago';
+  if (diff.inDays < 30) return '${diff.inDays ~/ 7}w ago';
+  if (diff.inDays < 365) return '${diff.inDays ~/ 30}mo ago';
+  return '${diff.inDays ~/ 365}y ago';
+}
+
+/// Professional identity from stored backend profile data (first/last
+/// names → full name + initials; email-prefix fallback; never hardcoded).
+({String name, String initials}) _fwIdentity(BuildContext context) {
+  try {
+    final AuthProvider auth = context.watch<AuthProvider>();
+    final session = auth.currentSession;
+    final String? full = session?.fullName;
+    if (full != null && full.isNotEmpty) {
+      return (name: full, initials: session!.initials ?? _fwInitials(full));
+    }
+    final String? display = session?.displayName?.trim();
+    if (display != null && display.isNotEmpty) {
+      return (
+        name: display,
+        initials: session!.initials ?? _fwInitials(display),
+      );
+    }
+    final String? email = session?.email;
+    if (email != null && email.isNotEmpty) {
+      final String pretty = _fwPrettifyEmailPrefix(email);
+      return (name: pretty, initials: _fwInitials(pretty));
+    }
+  } catch (_) {
+    // Auth provider absent (isolated test) — fall through.
+  }
+  return (name: 'Professional', initials: 'P');
+}
+
+String _fwPrettifyEmailPrefix(String email) {
+  final String local = email.split('@').first.trim();
+  if (local.isEmpty) return 'Professional';
+  final List<String> words = local
+      .split(RegExp(r'[._\-]+'))
+      .where((String part) => part.isNotEmpty)
+      .map(
+        (String part) =>
+            part[0].toUpperCase() + part.substring(1).toLowerCase(),
+      )
+      .toList(growable: false);
+  if (words.isEmpty) return 'Professional';
+  return words.join(' ');
+}
+
+String _fwInitials(String name) {
+  final List<String> words = name
+      .split(RegExp(r'\s+'))
+      .where((String part) => part.isNotEmpty)
+      .toList(growable: false);
+  if (words.isEmpty) return 'P';
+  if (words.length == 1) return words.first[0].toUpperCase();
+  return '${words.first[0].toUpperCase()}${words[1][0].toUpperCase()}';
 }
 
 /// Role-aware Applications entry (EP-04-03).

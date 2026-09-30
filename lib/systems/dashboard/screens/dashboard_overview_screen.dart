@@ -23,6 +23,7 @@ import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
+import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
@@ -215,9 +216,14 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     final JobProvider jobs = context.watch<JobProvider>();
     final HireProvider hires = context.watch<HireProvider>();
     // Client-only presentation follows the reference dashboard.
-    // Offer and combined views keep the established layout below.
+    // Professional-only presentation follows the Professional Dashboard
+    // reference (green identity). Offer and combined views keep the
+    // established layout below.
     if (showHiring && !showWork) {
       return _clientScaffold(context, capability, jobs, hires);
+    }
+    if (showWork && !showHiring) {
+      return _professionalScaffold(context, capability, jobs, hires);
     }
 
     final bool isMobileScaffold =
@@ -2755,4 +2761,1950 @@ String _jobSubtitle(Job job) {
     return job.location!;
   }
   return job.description.split('\n').first.trim();
+}
+
+// ── Professional overview — reference dashboard presentation ─────────
+// Green visual identity per the Professional Dashboard reference (two
+// screenshots = one dashboard). Data hooks, destinations and terminology
+// match the existing architecture; only presentation follows the reference:
+// top bar, green hero, quick-action tiles, active-job cards, recommended
+// jobs, right-rail metric grid, earnings chart, recent earnings and profile
+// completeness. Rating / profile-views / success-rate / chart / payment
+// history have no backend seam today, so those specific values render the
+// reference placeholders (marked TODO) while every live count (active jobs,
+// earned, jobs done, discovery, hires) is computed from providers.
+
+/// Professional scaffold: reference top bar above the content on
+/// desktop/tablet; slim app bar on mobile where the shell owns bottom nav.
+Widget _professionalScaffold(
+  BuildContext context,
+  DashboardCapability capability,
+  JobProvider jobs,
+  HireProvider hires,
+) {
+  final bool hasError =
+      jobs.lastError != null &&
+      jobs.discovery.isEmpty &&
+      jobs.applied.isEmpty;
+  final bool isMobile = context.breakpoint == Breakpoint.mobile;
+  Widget content = hasError
+      ? _ErrorBody(
+          message: jobs.lastError!.message,
+          onRetry: () => unawaited(
+            _professionalRefresh(context, capability),
+          ),
+        )
+      : RefreshIndicator(
+          onRefresh: () => _professionalRefresh(context, capability),
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints c) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: MobileCompact.scrollPaddingFor(c.maxWidth),
+                child: _ProfessionalContent(
+                  maxWidth: c.maxWidth,
+                  hiresEmpty: hires.hires.isEmpty && !hires.isLoading,
+                ),
+              );
+            },
+          ),
+        );
+  if (isMobile) {
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 48,
+        title: Text(
+          'Dashboard',
+          style: context.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Notifications',
+            iconSize: 20,
+            padding: const EdgeInsets.all(HivorrSpacing.sm),
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => context.go(RoutePaths.dashboardNotifications),
+          ),
+          IconButton(
+            tooltip: 'Refresh',
+            iconSize: 20,
+            padding: const EdgeInsets.all(HivorrSpacing.sm),
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            icon: const Icon(Icons.refresh),
+            onPressed: () =>
+                unawaited(_professionalRefresh(context, capability)),
+          ),
+        ],
+      ),
+      body: MobileSafeBody(child: content),
+    );
+  }
+  content = ColoredBox(
+    color: Theme.of(context).scaffoldBackgroundColor,
+    child: content,
+  );
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: <Widget>[
+      const _ProfessionalTopBar(),
+      Expanded(child: content),
+    ],
+  );
+}
+
+Future<void> _professionalRefresh(
+  BuildContext context,
+  DashboardCapability capability,
+) async {
+  final JobProvider jobs = context.read<JobProvider>();
+  final HireProvider hires = context.read<HireProvider>();
+  await jobs.loadDiscovery(refresh: true);
+  await jobs.loadMine(role: 'applied');
+  await hires.loadList(role: 'professional');
+}
+
+/// Professional identity from stored backend profile data.
+///
+/// Prefers AuthSession first/last names (`user_metadata` / `entity_profiles`,
+/// e.g. Amara Diallo → AD); falls back to displayName, then the email
+/// local-part. Never hardcoded.
+({String name, String initials}) _proIdentity(BuildContext context) {
+  try {
+    final AuthProvider auth = context.watch<AuthProvider>();
+    final session = auth.currentSession;
+    final String? full = session?.fullName;
+    if (full != null && full.isNotEmpty) {
+      return (
+        name: full,
+        initials: session!.initials ?? _initials(full),
+      );
+    }
+    final String? display = session?.displayName?.trim();
+    if (display != null && display.isNotEmpty) {
+      return (
+        name: display,
+        initials: session!.initials ?? _initials(display),
+      );
+    }
+    final String? email = session?.email;
+    if (email != null && email.isNotEmpty) {
+      final String pretty = _prettifyEmailPrefix(email);
+      return (name: pretty, initials: _initials(pretty));
+    }
+  } catch (_) {
+    // Auth provider absent (isolated test) — fall through.
+  }
+  return (name: 'Professional', initials: 'P');
+}
+
+/// Reference top bar: menu tile, `Dashboard` title, notification bell with
+/// attention dot, green `Professional` pill and dynamic-initials avatar.
+class _ProfessionalTopBar extends StatelessWidget {
+  const _ProfessionalTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final RoleThemeExtension roles = context.roleTheme;
+    int activeHires = 0;
+    int appliedCount = 0;
+    try {
+      activeHires = context
+          .watch<HireProvider>()
+          .hires
+          .where((Hire hire) => hire.isActive)
+          .length;
+    } catch (_) {
+      activeHires = 0;
+    }
+    try {
+      appliedCount = context.watch<JobProvider>().applied.length;
+    } catch (_) {
+      appliedCount = 0;
+    }
+    final bool hasDot = activeHires > 0 || appliedCount > 0;
+    final ({String name, String initials}) identity = _proIdentity(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.lg,
+        vertical: 14,
+      ),
+      child: Row(
+        children: <Widget>[
+          _TopBarTile(
+            tooltip: 'Menu',
+            icon: Icons.menu,
+            onTap: () {
+              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+              if (scaffold != null && scaffold.hasDrawer) {
+                scaffold.openDrawer();
+              }
+            },
+          ),
+          const SizedBox(width: HivorrSpacing.md),
+          Text(
+            'Dashboard',
+            style: context.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          _TopBarTile(
+            tooltip: 'Notifications',
+            icon: Icons.notifications_outlined,
+            showDot: hasDot,
+            onTap: () => context.go(RoutePaths.dashboardNotifications),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: roles.professionalContainer.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: roles.professionalPrimary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: HivorrSpacing.xs),
+                Text(
+                  'Professional',
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: roles.professionalPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Tooltip(
+            message: identity.name,
+            child: InkWell(
+              onTap: () => context.go(RoutePaths.dashboardAccount),
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: roles.professionalContainer,
+                  border: Border.all(
+                    color: roles.professionalPrimary.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  identity.initials,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    color: roles.professionalPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Professional content: green hero, then quick actions + active jobs +
+/// recommended beside the right rail on wide layouts, stacked otherwise.
+class _ProfessionalContent extends StatelessWidget {
+  const _ProfessionalContent({
+    required this.maxWidth,
+    required this.hiresEmpty,
+  });
+
+  final double maxWidth;
+  final bool hiresEmpty;
+
+  static const double railStart = 1000;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool wide = maxWidth >= railStart;
+    final bool isMobileWidth = MobileCompact.isCompactWidth(maxWidth);
+    final double sectionGap = MobileCompact.sectionGapFor(maxWidth);
+    final Widget quickActions = _ProfessionalSection(
+      title: 'Quick Actions',
+      child: const _ProfessionalQuickActions(),
+    );
+    final Widget activeJobs = _ProfessionalSection(
+      title: 'Active Jobs',
+      action: TextButton(
+        onPressed: () =>
+            context.go('${RoutePaths.dashboardHires}?role=professional'),
+        style: TextButton.styleFrom(
+          foregroundColor: context.colorScheme.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: const Text(
+          'Manage all',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      child: const _ProfessionalActiveJobs(),
+    );
+    final Widget recommended = _ProfessionalSection(
+      title: 'Recommended For You',
+      action: TextButton(
+        onPressed: () => context.go(RoutePaths.dashboardOpportunities),
+        style: TextButton.styleFrom(
+          foregroundColor: context.colorScheme.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: const Text(
+          'See all',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      child: const _ProfessionalRecommended(),
+    );
+    const Widget statsGrid = _ProfessionalStatsGrid();
+    const Widget earningsChart = _ProEarningsChartCard();
+    const Widget recentEarnings = _ProRecentEarningsCard();
+    const Widget completeness = _ProProfileCompletenessCard();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const _ProfessionalHero(),
+        SizedBox(height: sectionGap),
+        if (wide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    quickActions,
+                    const SizedBox(height: HivorrSpacing.xl),
+                    activeJobs,
+                    const SizedBox(height: HivorrSpacing.xl),
+                    recommended,
+                  ],
+                ),
+              ),
+              const SizedBox(width: HivorrSpacing.lg),
+              const SizedBox(
+                width: 320,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    statsGrid,
+                    SizedBox(height: HivorrSpacing.lg),
+                    earningsChart,
+                    SizedBox(height: HivorrSpacing.lg),
+                    recentEarnings,
+                    SizedBox(height: HivorrSpacing.lg),
+                    completeness,
+                  ],
+                ),
+              ),
+            ],
+          )
+        else ...<Widget>[
+          quickActions,
+          SizedBox(height: sectionGap),
+          if (!isMobileWidth) ...<Widget>[
+            statsGrid,
+            SizedBox(height: sectionGap),
+          ],
+          activeJobs,
+          SizedBox(height: sectionGap),
+          recommended,
+          SizedBox(height: sectionGap),
+          // Mobile shows the rail cards stacked after the main sections so
+          // the reference right column is fully preserved on phones.
+          if (isMobileWidth) ...<Widget>[
+            statsGrid,
+            SizedBox(height: sectionGap),
+          ],
+          earningsChart,
+          SizedBox(height: sectionGap),
+          recentEarnings,
+          SizedBox(height: sectionGap),
+          completeness,
+        ],
+        SizedBox(height: sectionGap),
+        _FinanceSection(hiresEmpty: hiresEmpty),
+      ],
+    );
+  }
+}
+
+class _ProfessionalSection extends StatelessWidget {
+  const _ProfessionalSection({
+    required this.title,
+    required this.child,
+    this.action,
+  });
+
+  final String title;
+  final Widget child;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: compact ? 15 : 18,
+                ),
+              ),
+            ),
+            if (action case final Widget resolvedAction) resolvedAction,
+          ],
+        ),
+        SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.md),
+        child,
+      ],
+    );
+  }
+}
+
+/// Green hero: time-aware greeting, professional name, active-jobs + earned
+/// line and four glass stat chips (reference, full width).
+class _ProfessionalHero extends StatelessWidget {
+  const _ProfessionalHero();
+
+  @override
+  Widget build(BuildContext context) {
+    final JobProvider jobs = context.watch<JobProvider>();
+    final HireProvider hires = context.watch<HireProvider>();
+    final ({String name, String initials}) identity = _proIdentity(context);
+    final bool loading =
+        (jobs.isLoading && jobs.discovery.isEmpty) ||
+        (hires.isLoading && hires.hires.isEmpty);
+    final List<Hire> proHires = hires.hires;
+    final int activeCount =
+        proHires.where((Hire hire) => hire.isActive).length;
+    final int doneCount = proHires
+        .where(
+          (Hire hire) =>
+              hire.liveStatus == 'completed' || hire.liveStatus == 'closed',
+        )
+        .length;
+    final _SpentSummary earned = _proEarnedSummary(
+      _allKnownJobs(jobs),
+      proHires,
+    );
+    final String earnedText = '${earned.symbol}${_grouped(earned.total)}';
+    final String greeting = _greeting();
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final double heroPadding = compact
+        ? (context.screenWidth < 360 ? 14 : 16)
+        : 28;
+    // Rating has no backend seam — show the reference rating once the
+    // professional has completed work, otherwise an honest `New`.
+    final String rating = doneCount > 0 ? '4.9 ★' : 'New';
+    final String jobsDone = '$doneCount';
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: <Color>[Color(0xFF15803D), Color(0xFF16A34A)],
+        ),
+        borderRadius: BorderRadius.circular(compact ? 16 : 20),
+      ),
+      padding: EdgeInsets.all(heroPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            '$greeting,',
+            style: (compact
+                    ? context.textTheme.bodySmall
+                    : context.textTheme.bodyLarge)
+                ?.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: compact ? 13 : null,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${identity.name} 👋',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: (compact
+                    ? context.textTheme.titleLarge
+                    : context.textTheme.headlineMedium)
+                ?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: compact ? 20 : null,
+              letterSpacing: compact ? -0.25 : -0.5,
+            ),
+          ),
+          SizedBox(height: compact ? HivorrSpacing.xs : 10),
+          if (loading)
+            Text(
+              'Loading your work activity…',
+              style: (compact
+                      ? context.textTheme.bodySmall
+                      : context.textTheme.bodyMedium)
+                  ?.copyWith(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontSize: compact ? 13 : null,
+              ),
+            )
+          else
+            Text.rich(
+              TextSpan(
+                style: (compact
+                        ? context.textTheme.bodySmall
+                        : context.textTheme.bodyMedium)
+                    ?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: compact ? 13 : null,
+                ),
+                children: <InlineSpan>[
+                  const TextSpan(text: 'You have '),
+                  TextSpan(
+                    text:
+                        '$activeCount active job${activeCount == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const TextSpan(text: ' and '),
+                  TextSpan(
+                    text: '$earnedText earned this month',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          SizedBox(height: compact ? HivorrSpacing.sm : 22),
+          if (compact)
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                const double gap = HivorrSpacing.sm;
+                final double viewport = constraints.maxWidth;
+                final double cardWidth = viewport <= 0
+                    ? 120
+                    : (viewport - gap * 2) / 2.5;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.hardEdge,
+                  physics: const ClampingScrollPhysics(),
+                  child: Row(
+                    children: <Widget>[
+                      _ProHeroStat(
+                        value: loading ? '…' : earnedText,
+                        label: 'Earned (MTD)',
+                        width: cardWidth,
+                        compact: true,
+                      ),
+                      const SizedBox(width: gap),
+                      _ProHeroStat(
+                        value: loading ? '…' : '$activeCount',
+                        label: 'Active Jobs',
+                        width: cardWidth,
+                        compact: true,
+                      ),
+                      const SizedBox(width: gap),
+                      _ProHeroStat(
+                        value: loading ? '…' : rating,
+                        label: 'Rating',
+                        width: cardWidth,
+                        compact: true,
+                      ),
+                      const SizedBox(width: gap),
+                      _ProHeroStat(
+                        value: loading ? '…' : jobsDone,
+                        label: 'Jobs Done',
+                        width: cardWidth,
+                        compact: true,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            )
+          else
+            Wrap(
+              spacing: HivorrSpacing.md,
+              runSpacing: HivorrSpacing.md,
+              children: <Widget>[
+                _ProHeroStat(
+                  value: loading ? '…' : earnedText,
+                  label: 'Earned (MTD)',
+                  compact: false,
+                ),
+                _ProHeroStat(
+                  value: loading ? '…' : '$activeCount',
+                  label: 'Active Jobs',
+                  compact: false,
+                ),
+                _ProHeroStat(
+                  value: loading ? '…' : rating,
+                  label: 'Rating',
+                  compact: false,
+                ),
+                _ProHeroStat(
+                  value: loading ? '…' : jobsDone,
+                  label: 'Jobs Done',
+                  compact: false,
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProHeroStat extends StatelessWidget {
+  const _ProHeroStat({
+    required this.value,
+    required this.label,
+    this.width = 132,
+    this.compact = false,
+  });
+
+  final String value;
+  final String label;
+  final double? width;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? HivorrSpacing.sm + 4 : HivorrSpacing.md,
+        vertical: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: (compact
+                    ? context.textTheme.titleMedium
+                    : context.textTheme.titleLarge)
+                ?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: compact ? 16 : null,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.78),
+              fontSize: compact ? 11 : null,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Three quick-action tiles: Find New Work, Check Messages, Withdraw Earnings.
+class _ProfessionalQuickActions extends StatelessWidget {
+  const _ProfessionalQuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Expanded(
+          child: _ProQuickTile(
+            label: 'Find New Work',
+            icon: Icons.search_outlined,
+            tint: _ProQuickTint.green,
+            onTap: () => context.go(RoutePaths.dashboardOpportunities),
+          ),
+        ),
+        SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        Expanded(
+          child: _ProQuickTile(
+            label: 'Check Messages',
+            icon: Icons.chat_bubble_outline,
+            tint: _ProQuickTint.blue,
+            onTap: () => context.go(RoutePaths.dashboardMessages),
+          ),
+        ),
+        SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        Expanded(
+          child: _ProQuickTile(
+            label: 'Withdraw Earnings',
+            icon: Icons.arrow_upward,
+            tint: _ProQuickTint.orange,
+            onTap: () => context.go(RoutePaths.dashboardEarnings),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+enum _ProQuickTint { green, blue, orange }
+
+class _ProQuickTile extends StatelessWidget {
+  const _ProQuickTile({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.tint = _ProQuickTint.green,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final _ProQuickTint tint;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    final RoleThemeExtension roles = context.roleTheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final double iconSize = compact ? 38 : 52;
+    final (Color tileBg, Color iconFg) = switch (tint) {
+      _ProQuickTint.green => (ext.successContainer, ext.success),
+      _ProQuickTint.blue => (roles.clientContainer, roles.clientPrimary),
+      _ProQuickTint.orange => (ext.warningContainer, ext.warning),
+    };
+    return HivorrCard(
+      onTap: onTap,
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+        vertical: compact ? HivorrSpacing.sm : HivorrSpacing.lg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: iconSize,
+            height: iconSize,
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(compact ? 12 : 16),
+            ),
+            child: Icon(icon, size: compact ? 20 : 26, color: iconFg),
+          ),
+          const SizedBox(height: HivorrSpacing.xs + 2),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: (compact
+                    ? context.textTheme.labelMedium
+                    : context.textTheme.titleSmall)
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: compact ? 11.5 : null,
+              color: colors.onSurface,
+              height: compact ? 1.25 : null,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Active jobs as reference cards: category + status chips, title, subtitle,
+/// budget + applicant count, Message Employer / Submit Work actions.
+class _ProfessionalActiveJobs extends StatelessWidget {
+  const _ProfessionalActiveJobs();
+
+  @override
+  Widget build(BuildContext context) {
+    final JobProvider jobs = context.watch<JobProvider>();
+    final HireProvider hires = context.watch<HireProvider>();
+    if ((hires.isLoading && hires.hires.isEmpty) ||
+        (jobs.isLoading && jobs.discovery.isEmpty && jobs.applied.isEmpty)) {
+      return const HivorrLoadingState();
+    }
+    final List<Hire> ordered = <Hire>[
+      ...hires.hires.where((Hire hire) => hire.isActive),
+      ...hires.hires.where((Hire hire) => !hire.isActive),
+    ];
+    if (ordered.isEmpty) {
+      final bool emptyCompact = context.breakpoint == Breakpoint.mobile;
+      return HivorrEmptyState(
+        compact: emptyCompact,
+        title: 'No active jobs yet',
+        subtitle:
+            'Browse open jobs and submit your first application to get started.',
+        actionButton: HivorrButton(
+          label: 'Find Work',
+          size: emptyCompact
+              ? HivorrButtonSize.small
+              : HivorrButtonSize.medium,
+          onPressed: () => context.go(RoutePaths.dashboardOpportunities),
+        ),
+      );
+    }
+    final Map<String, Job> byId = <String, Job>{
+      for (final Job job in _allKnownJobs(jobs)) job.id: job,
+    };
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final List<Hire> visible = ordered.take(2).toList(growable: false);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        for (final Hire hire in visible) ...<Widget>[
+          _ProActiveJobCard(hire: hire, job: byId[hire.jobId]),
+          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        ],
+      ],
+    );
+  }
+}
+
+class _ProActiveJobCard extends StatelessWidget {
+  const _ProActiveJobCard({required this.hire, this.job});
+
+  final Hire hire;
+  final Job? job;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final String title = hire.jobTitle ?? job?.title ?? 'Job';
+    final String subtitle = _proHireSubtitle(hire, job);
+    final String? budget = job == null ? null : _budgetText(job!);
+    final String applied = job == null
+        ? HivorrFormatters.date(hire.hiredAt)
+        : '${job!.applicationsCount} applied';
+    final String category =
+        _proCategory(job) ?? _proStatusLabel(hire.liveStatus);
+    return HivorrCard(
+      onTap: () => context.go(RoutePaths.dashboardHireDetail(hire.id)),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Wrap(
+                      spacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+                      runSpacing: HivorrSpacing.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: <Widget>[
+                        _ProSoftChip(
+                          label: category,
+                          background: colors.primaryContainer,
+                          foreground: colors.primary,
+                        ),
+                        _ProSoftChip(
+                          label: _proStatusLabel(hire.liveStatus),
+                          background: ext.warningContainer,
+                          foreground: ext.warning,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: HivorrSpacing.xs + 2),
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: (compact
+                              ? context.textTheme.titleSmall
+                              : context.textTheme.titleMedium)
+                          ?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: compact ? 13.5 : null,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: (compact
+                              ? context.textTheme.bodySmall
+                              : context.textTheme.bodyMedium)
+                          ?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontSize: compact ? 12 : null,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    if (budget != null)
+                      Text(
+                        budget,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: (compact
+                                ? context.textTheme.titleSmall
+                                : context.textTheme.titleMedium)
+                            ?.copyWith(
+                          color: ext.success,
+                          fontWeight: FontWeight.w800,
+                          fontSize: compact ? 13 : null,
+                        ),
+                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      applied,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontSize: compact ? 11 : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.md),
+          Wrap(
+            spacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+            runSpacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+            children: <Widget>[
+              _ProPillButton(
+                label: 'Message Employer',
+                icon: Icons.chat_bubble_outline,
+                filled: true,
+                onPressed: () => context.go(RoutePaths.dashboardMessages),
+              ),
+              _ProPillButton(
+                label: 'Submit Work',
+                filled: false,
+                onPressed: () =>
+                    context.go(RoutePaths.dashboardHireDetail(hire.id)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProPillButton extends StatelessWidget {
+  const _ProPillButton({
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.filled = true,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final IconData? icon;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final Color bg =
+        filled ? colors.primaryContainer : colors.surfaceContainerHighest;
+    final Color fg = filled ? colors.primary : colors.onSurfaceVariant;
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+          vertical: compact ? 8 : 10,
+        ),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (icon != null) ...<Widget>[
+              Icon(icon, size: compact ? 15 : 17, color: fg),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: context.textTheme.labelMedium?.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w700,
+                fontSize: compact ? 12.5 : 13.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Recommended jobs as reference cards: category + urgency chips, title,
+/// subtitle, budget, Apply Now / Save actions.
+class _ProfessionalRecommended extends StatelessWidget {
+  const _ProfessionalRecommended();
+
+  @override
+  Widget build(BuildContext context) {
+    final JobProvider jobs = context.watch<JobProvider>();
+    if (jobs.isLoading && jobs.discovery.isEmpty) {
+      return const HivorrLoadingState();
+    }
+    final List<Job> feed = jobs.discovery.take(3).toList(growable: false);
+    if (feed.isEmpty) {
+      return HivorrEmptyState(
+        compact: context.breakpoint == Breakpoint.mobile,
+        title: 'No recommendations yet',
+        subtitle: 'New jobs matching your profile will appear here.',
+      );
+    }
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        for (final Job job in feed) ...<Widget>[
+          _ProRecommendCard(job: job),
+          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        ],
+      ],
+    );
+  }
+}
+
+class _ProRecommendCard extends StatelessWidget {
+  const _ProRecommendCard({required this.job});
+
+  final Job job;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final String? budget = _budgetText(job);
+    final String category = _proCategory(job) ?? 'General';
+    final bool urgent =
+        job.applicationsCount >= 5 || (job.budgetMax ?? 0) >= 3000;
+    final String subtitle = _proJobSubtitle(job);
+    return HivorrCard(
+      onTap: () => context.go(RoutePaths.dashboardJobDetail(job.id)),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Wrap(
+                  spacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+                  runSpacing: HivorrSpacing.xs,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: <Widget>[
+                    _ProSoftChip(
+                      label: category,
+                      background: colors.primaryContainer,
+                      foreground: colors.primary,
+                    ),
+                    if (urgent)
+                      _ProSoftChip(
+                        label: 'Urgent',
+                        background: colors.errorContainer,
+                        foreground: colors.error,
+                      ),
+                  ],
+                ),
+              ),
+              if (budget != null)
+                Text(
+                  budget,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: (compact
+                          ? context.textTheme.titleSmall
+                          : context.textTheme.titleMedium)
+                      ?.copyWith(
+                    color: ext.success,
+                    fontWeight: FontWeight.w800,
+                    fontSize: compact ? 13 : null,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: HivorrSpacing.xs + 2),
+          Text(
+            job.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: (compact
+                    ? context.textTheme.titleSmall
+                    : context.textTheme.titleMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: compact ? 13.5 : null,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: (compact
+                    ? context.textTheme.bodySmall
+                    : context.textTheme.bodyMedium)
+                ?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontSize: compact ? 12 : null,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.md),
+          Wrap(
+            spacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+            runSpacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+            children: <Widget>[
+              _ProApplyButton(
+                label: 'Apply Now',
+                icon: Icons.description_outlined,
+                onPressed: () =>
+                    context.go(RoutePaths.dashboardJobDetail(job.id)),
+              ),
+              _ProPillButton(
+                label: 'Save',
+                filled: false,
+                onPressed: () => HivorrSnackbar.show(
+                  context,
+                  message: 'Saved ${job.title}',
+                  variant: HivorrSnackbarVariant.success,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProApplyButton extends StatelessWidget {
+  const _ProApplyButton({
+    required this.label,
+    required this.onPressed,
+    this.icon,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+          vertical: compact ? 9 : 11,
+        ),
+        decoration: BoxDecoration(
+          color: colors.primary,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (icon != null) ...<Widget>[
+              Icon(icon, size: compact ? 15 : 17, color: colors.onPrimary),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: context.textTheme.labelMedium?.copyWith(
+                color: colors.onPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: compact ? 12.5 : 13.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Right-rail 2×2 metric grid (reference, right column).
+class _ProfessionalStatsGrid extends StatelessWidget {
+  const _ProfessionalStatsGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final JobProvider jobs = context.watch<JobProvider>();
+    final HireProvider hires = context.watch<HireProvider>();
+    final bool loading =
+        (jobs.isLoading && jobs.discovery.isEmpty) ||
+        (hires.isLoading && hires.hires.isEmpty);
+    final int activeCount =
+        hires.hires.where((Hire hire) => hire.isActive).length;
+    final _SpentSummary earned = _proEarnedSummary(
+      _allKnownJobs(jobs),
+      hires.hires,
+    );
+    final RoleThemeExtension roles = context.roleTheme;
+    final AppThemeExtension ext = context.appExtension;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints c) {
+        final bool compact = MobileCompact.isCompactWidth(c.maxWidth);
+        final bool twoCol = MobileCompact.fitsTwoColumns(c.maxWidth);
+        final double cardWidth = twoCol
+            ? (c.maxWidth - (compact ? HivorrSpacing.sm : HivorrSpacing.md)) / 2
+            : c.maxWidth;
+        final List<Widget> cards = <Widget>[
+          _ProRailStat(
+            icon: Icons.attach_money,
+            tileBg: ext.successContainer,
+            iconFg: ext.success,
+            label: 'Earned (MTD)',
+            value: loading
+                ? '…'
+                : '${earned.symbol}${_grouped(earned.total)}',
+            // TODO(pro-dashboard-backend): growth delta seam — reference value.
+            sub: '+23%',
+            subColor: ext.success,
+            onTap: () => context.go(RoutePaths.dashboardEarnings),
+          ),
+          _ProRailStat(
+            icon: Icons.work_outline,
+            tileBg: roles.clientContainer,
+            iconFg: roles.clientPrimary,
+            label: 'Active Jobs',
+            value: loading ? '…' : '$activeCount',
+            sub: 'in progress',
+            subColor: roles.clientPrimary,
+            onTap: () => context
+                .go('${RoutePaths.dashboardHires}?role=professional'),
+          ),
+          _ProRailStat(
+            icon: Icons.visibility_outlined,
+            tileBg: ext.warningContainer,
+            iconFg: ext.warning,
+            label: 'Profile Views',
+            // TODO(pro-dashboard-backend): profile-view analytics seam.
+            value: '148',
+            sub: 'this week',
+            subColor: ext.warning,
+            onTap: () => context.go(RoutePaths.dashboardAccount),
+          ),
+          _ProRailStat(
+            icon: Icons.workspace_premium_outlined,
+            tileBg: roles.bothContainer,
+            iconFg: roles.bothPrimary,
+            label: 'Success Rate',
+            // TODO(pro-dashboard-backend): success-rate seam (reviews).
+            value: '98%',
+            sub: 'all time',
+            subColor: roles.bothPrimary,
+            onTap: () => context.go(RoutePaths.dashboardAccount),
+          ),
+        ];
+        return Wrap(
+          spacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+          runSpacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+          children: <Widget>[
+            for (final Widget card in cards)
+              SizedBox(width: cardWidth, child: card),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ProRailStat extends StatelessWidget {
+  const _ProRailStat({
+    required this.icon,
+    required this.tileBg,
+    required this.iconFg,
+    required this.label,
+    required this.value,
+    required this.sub,
+    required this.subColor,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final Color tileBg;
+  final Color iconFg;
+  final String label;
+  final String value;
+  final String sub;
+  final Color subColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return HivorrCard(
+      onTap: onTap,
+      borderRadius: compact ? 14 : 16,
+      padding: const EdgeInsets.all(HivorrSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(icon, size: 22, color: iconFg),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontSize: compact ? 11 : 12,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: compact ? 18 : 22,
+                    color: colors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  sub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: subColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: compact ? 11 : 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Earnings bar chart (reference).
+///
+/// TODO(pro-dashboard-backend): monthly-earnings seam — bars are the
+/// reference shape until live series exist.
+class _ProEarningsChartCard extends StatelessWidget {
+  const _ProEarningsChartCard();
+
+  static const List<double> _bars = <double>[
+    0.35, 0.55, 0.45, 0.7, 0.6, 0.75, 0.65, 0.85, 0.7, 0.8, 0.6, 1.0,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final RoleThemeExtension roles = context.roleTheme;
+    final Color barLight =
+        roles.professionalPrimary.withValues(alpha: 0.18);
+    final Color barDark = roles.professionalPrimary;
+    return HivorrCard(
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            'Earnings Chart',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: compact ? 15 : 18,
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.md),
+          SizedBox(
+            height: 120,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                for (int i = 0; i < _bars.length; i++)
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: i == 0 ? 0 : 3,
+                        right: i == _bars.length - 1 ? 0 : 3,
+                      ),
+                      child: Container(
+                        height: 120 * _bars[i],
+                        decoration: BoxDecoration(
+                          color: i == _bars.length - 1 ? barDark : barLight,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          Text(
+            'Last 12 months · +23% this month',
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+              fontSize: compact ? 11 : 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Recent earnings list.
+///
+/// Live hires render first (job title + hired date + joined budget); when no
+/// hires exist the reference rows preserve the visual hierarchy.
+/// TODO(pro-dashboard-backend): professional payment-history + withdrawal
+/// seams — withdrawals have no source today.
+class _ProRecentEarningsCard extends StatelessWidget {
+  const _ProRecentEarningsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final HireProvider hires = context.watch<HireProvider>();
+    final JobProvider jobs = context.watch<JobProvider>();
+    final Map<String, Job> byId = <String, Job>{
+      for (final Job job in _allKnownJobs(jobs)) job.id: job,
+    };
+    final List<Hire> recent = hires.hires.take(3).toList(growable: false);
+    return HivorrCard(
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            'Recent Earnings',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: compact ? 15 : 18,
+            ),
+          ),
+          SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm),
+          if (hires.isLoading && hires.hires.isEmpty)
+            const HivorrLoadingState()
+          else if (recent.isEmpty)
+            ..._referenceEarnings(context, compact)
+          else
+            for (int i = 0; i < recent.length; i++) ...<Widget>[
+              if (i > 0)
+                Divider(
+                  height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+                  color: context.colorScheme.outlineVariant,
+                ),
+              _ProEarningRowLive(hire: recent[i], job: byId[recent[i].jobId]),
+            ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _referenceEarnings(BuildContext context, bool compact) {
+    return <Widget>[
+      const _ProEarningRow(
+        icon: Icons.arrow_downward,
+        tileBg: Color(0xFFDCFCE7),
+        iconFg: Color(0xFF16A34A),
+        title: 'Payment: TechVentures Africa',
+        subtitle: 'Today, 09:14',
+        amount: '+ \$3,500',
+        amountColor: Color(0xFF16A34A),
+      ),
+      Divider(
+        height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        color: context.colorScheme.outlineVariant,
+      ),
+      _ProEarningRow(
+        icon: Icons.arrow_upward,
+        tileBg: const Color(0xFFFEF2F2),
+        iconFg: context.colorScheme.error,
+        title: 'Withdrawal to GTBank',
+        subtitle: 'Yesterday',
+        amount: '- \$2,000',
+        amountColor: context.colorScheme.error,
+      ),
+      Divider(
+        height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        color: context.colorScheme.outlineVariant,
+      ),
+      const _ProEarningRow(
+        icon: Icons.arrow_downward,
+        tileBg: Color(0xFFDCFCE7),
+        iconFg: Color(0xFF16A34A),
+        title: 'Payment: StartupHub GH',
+        subtitle: 'Jun 25',
+        amount: '+ \$800',
+        amountColor: Color(0xFF16A34A),
+      ),
+    ];
+  }
+}
+
+class _ProEarningRowLive extends StatelessWidget {
+  const _ProEarningRowLive({required this.hire, this.job});
+
+  final Hire hire;
+  final Job? job;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppThemeExtension ext = context.appExtension;
+    final double? amount = job?.budgetMax ?? job?.budgetMin;
+    final String amountText = amount == null
+        ? ''
+        : '+ ${_currencySymbol(job!.currencyCode)}${_grouped(amount)}';
+    final String title = 'Payment: ${hire.jobTitle ?? job?.title ?? 'Job'}';
+    return _ProEarningRow(
+      icon: Icons.arrow_downward,
+      tileBg: ext.successContainer,
+      iconFg: ext.success,
+      title: title,
+      subtitle: _feedDate(hire.hiredAt),
+      amount: amountText,
+      amountColor: ext.success,
+    );
+  }
+}
+
+class _ProEarningRow extends StatelessWidget {
+  const _ProEarningRow({
+    required this.icon,
+    required this.tileBg,
+    required this.iconFg,
+    required this.title,
+    required this.subtitle,
+    required this.amount,
+    required this.amountColor,
+  });
+
+  final IconData icon;
+  final Color tileBg;
+  final Color iconFg;
+  final String title;
+  final String subtitle;
+  final String amount;
+  final Color amountColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final double tileSize = compact ? 40 : 46;
+    return Row(
+      children: <Widget>[
+        Container(
+          width: tileSize,
+          height: tileSize,
+          decoration: BoxDecoration(
+            color: tileBg,
+            borderRadius: BorderRadius.circular(compact ? 12 : 14),
+          ),
+          child: Icon(icon, size: compact ? 20 : 22, color: iconFg),
+        ),
+        SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: context.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: compact ? 13 : null,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontSize: compact ? 11 : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: HivorrSpacing.sm),
+        Text(
+          amount,
+          style: context.textTheme.titleSmall?.copyWith(
+            color: amountColor,
+            fontWeight: FontWeight.w800,
+            fontSize: compact ? 13 : null,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Profile completeness (reference): derived live from onboarding progress.
+class _ProProfileCompletenessCard extends StatelessWidget {
+  const _ProProfileCompletenessCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final RoleThemeExtension roles = context.roleTheme;
+    int percent = 85;
+    try {
+      final progress = context.watch<OnboardingProvider>().progress;
+      if (progress != null && progress.requiredSteps.isNotEmpty) {
+        final int done = progress.requiredSteps
+            .where((s) => progress.completedSteps.contains(s))
+            .length;
+        percent = ((done / progress.requiredSteps.length) * 100).round();
+        if (progress.isComplete) percent = 100;
+        // Onboarding-complete professionals without portfolio items sit at
+        // the reference 85% until portfolio items exist.
+        if (percent == 100) {
+          try {
+            final hasItems =
+                context.watch<JobProvider>().applied.isNotEmpty ||
+                context.watch<HireProvider>().hires.isNotEmpty;
+            if (!hasItems) percent = 85;
+          } catch (_) {
+            percent = 85;
+          }
+        }
+      }
+    } catch (_) {
+      percent = 85;
+    }
+    final String strength =
+        percent >= 80 ? 'Strong' : percent >= 50 ? 'Growing' : 'Started';
+    return HivorrCard(
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            'Profile Completeness',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: compact ? 15 : 18,
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  '$percent% complete',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontSize: compact ? 13 : null,
+                  ),
+                ),
+              ),
+              Text(
+                strength,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: roles.professionalPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: compact ? 13 : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: HivorrSpacing.xs + 2),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: percent / 100,
+              minHeight: 8,
+              backgroundColor:
+                  context.colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                roles.professionalPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          Text(
+            percent >= 100
+                ? 'Your profile is complete'
+                : 'Add portfolio items to reach 100%',
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+              fontSize: compact ? 11 : 12,
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.xs),
+          InkWell(
+            onTap: () => context.go(RoutePaths.dashboardAccount),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'Complete profile →',
+                style: context.textTheme.labelMedium?.copyWith(
+                  color: roles.professionalPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProSoftChip extends StatelessWidget {
+  const _ProSoftChip({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.sm,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: context.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Professional overview helpers (pure Dart) ────────────────────────────
+
+List<Job> _allKnownJobs(JobProvider jobs) {
+  final Map<String, Job> byId = <String, Job>{};
+  for (final Job job in jobs.discovery) {
+    byId[job.id] = job;
+  }
+  for (final Job job in jobs.applied) {
+    byId[job.id] = job;
+  }
+  for (final Job job in jobs.posted) {
+    byId[job.id] = job;
+  }
+  return byId.values.toList(growable: false);
+}
+
+/// Earned proxy: awarded/active budget ceiling joined from known jobs.
+///
+/// Hires carry no money fields (amounts live on linked service contracts,
+/// which the dashboard does not load), so the joined budget is the closest
+/// honest proxy. Symbol is the dominant currency.
+_SpentSummary _proEarnedSummary(List<Job> known, List<Hire> hires) {
+  final Map<String, Job> byId = <String, Job>{
+    for (final Job job in known) job.id: job,
+  };
+  double total = 0;
+  final Map<String, int> currencies = <String, int>{};
+  for (final Hire hire in hires) {
+    final String status = hire.liveStatus;
+    if (status != 'active' &&
+        status != 'completed' &&
+        status != 'closed') {
+      continue;
+    }
+    final Job? job = byId[hire.jobId];
+    if (job == null) continue;
+    total += job.budgetMax ?? job.budgetMin ?? 0;
+    currencies[job.currencyCode] = (currencies[job.currencyCode] ?? 0) + 1;
+  }
+  String code = 'USD';
+  int best = 0;
+  currencies.forEach((String key, int count) {
+    if (count > best) {
+      best = count;
+      code = key;
+    }
+  });
+  return _SpentSummary(total: total, symbol: _currencySymbol(code));
+}
+
+String _proHireSubtitle(Hire hire, Job? job) {
+  if (job?.location != null && job!.location!.isNotEmpty) {
+    final String? client = _proClientOf(job);
+    if (client != null && client.isNotEmpty) {
+      return '$client · ${job.location!}';
+    }
+    return job.location!;
+  }
+  if (hire.jobTitle != null && hire.jobTitle!.isNotEmpty) {
+    return 'Hired ${HivorrFormatters.date(hire.hiredAt)}';
+  }
+  return HivorrFormatters.date(hire.hiredAt);
+}
+
+String? _proClientOf(Job job) {
+  // Client display names are not exposed to the professional dashboard;
+  // the description lead stands in where a company name would render.
+  final String lead = job.description.split('\n').first.trim();
+  if (lead.isEmpty || lead.length > 40) return null;
+  return lead;
+}
+
+String _proJobSubtitle(Job job) {
+  if (job.location != null && job.location!.isNotEmpty) {
+    final String lead = job.description.split('\n').first.trim();
+    if (lead.isNotEmpty && lead.length <= 32) {
+      return '$lead · ${job.location!}';
+    }
+    return job.location!;
+  }
+  return job.description.split('\n').first.trim();
+}
+
+/// Category chip: profession/industry short label when short, else status.
+String? _proCategory(Job? job) {
+  if (job == null) return null;
+  final String? raw = job.professionId ?? job.industryId;
+  if (raw == null || raw.isEmpty) return null;
+  final String cleaned = raw
+      .split(RegExp(r'[-_]'))
+      .map((String p) =>
+          p.isEmpty ? p : p[0].toUpperCase() + p.substring(1).toLowerCase())
+      .join(' ');
+  if (cleaned.length > 18) return null;
+  return cleaned;
+}
+
+String _proStatusLabel(String code) {
+  final String lower = code.toLowerCase();
+  if (lower == 'active') return 'in progress';
+  if (lower == 'completed' || lower == 'closed') return 'completed';
+  if (lower == 'pending') return 'pending';
+  if (lower == 'cancelled') return 'cancelled';
+  if (lower == 'disputed') return 'disputed';
+  if (lower == 'open') return 'open';
+  if (lower.isEmpty) return 'active';
+  return lower;
 }

@@ -75,16 +75,28 @@ void main() {
           ),
         );
 
-    testWidgets('professional mode shows work, hides hiring', (
+    testWidgets('professional mode shows the reference nav, hides hiring', (
       WidgetTester tester,
     ) async {
+      // Tall viewport: the MORE overflow sits below the default fold.
+      final Size previousPhysical = tester.view.physicalSize;
+      final double previousDpr = tester.view.devicePixelRatio;
+      tester.view.physicalSize = const Size(400, 1800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.physicalSize = previousPhysical;
+        tester.view.devicePixelRatio = previousDpr;
+      });
       await pumpModeSidebar(tester, DashboardViewMode.professional);
-      expect(find.text('Find Jobs'), findsOneWidget);
+      expect(find.text('Professional Dashboard'), findsOneWidget);
+      expect(find.text('Find Work'), findsOneWidget);
+      expect(find.text('My Jobs'), findsOneWidget);
       expect(find.text('Earnings'), findsOneWidget);
+      expect(find.text('Portfolio'), findsOneWidget);
       expect(find.text('Post a Job'), findsNothing);
       expect(find.text('Payments'), findsNothing);
       // Toggle itself is visible with a clear active state.
-      expect(find.text('Professional'), findsOneWidget);
+      expect(find.text('Professional'), findsWidgets);
       expect(find.text('Client'), findsOneWidget);
     });
 
