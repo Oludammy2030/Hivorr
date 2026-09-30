@@ -35,16 +35,36 @@ void main() {
       expect(find.text('Messages'), findsOneWidget);
     });
 
-    testWidgets('offer sees work + shared sections', (
+    testWidgets('offer sees the Professional Dashboard reference nav', (
       WidgetTester tester,
     ) async {
+      // Tall viewport: the sidebar ListView lazily builds only visible
+      // children, and the MORE overflow sits below the default fold.
+      final Size previousPhysical = tester.view.physicalSize;
+      final double previousDpr = tester.view.devicePixelRatio;
+      tester.view.physicalSize = const Size(400, 1800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.physicalSize = previousPhysical;
+        tester.view.devicePixelRatio = previousDpr;
+      });
       await pumpSidebar(tester, DashboardCapability.offer);
-      expect(find.text('Find Jobs'), findsOneWidget);
-      expect(find.text('My Applications'), findsOneWidget);
+      // Reference primaries (green Professional identity).
+      expect(find.text('Professional Dashboard'), findsOneWidget);
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.text('Find Work'), findsOneWidget);
+      expect(find.text('My Jobs'), findsOneWidget);
+      expect(find.text('Messages'), findsOneWidget);
       expect(find.text('Earnings'), findsOneWidget);
-      expect(find.text('MY WORK'), findsOneWidget);
+      expect(find.text('Portfolio'), findsOneWidget);
+      // Preserved overflow: remaining work/shared destinations live under
+      // MORE instead of being removed.
+      expect(find.text('MORE'), findsOneWidget);
+      expect(find.text('My Applications'), findsOneWidget);
+      expect(find.text('Notifications'), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
+      // Hiring-side destinations stay hidden for professional-only.
       expect(find.text('Post a Job'), findsNothing);
-      expect(find.text('My Jobs'), findsNothing);
       expect(find.text('Applications'), findsNothing);
       expect(find.text('Payments'), findsNothing);
     });

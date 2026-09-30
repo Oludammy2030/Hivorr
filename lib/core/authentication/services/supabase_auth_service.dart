@@ -449,15 +449,28 @@ class SupabaseAuthService implements AuthService {
     }
   }
 
-  AuthSession _toAuthSession(Session session) => AuthSession(
-    entityId: session.user.id,
-    expiresAt: session.expiresAt == null
-        ? null
-        : DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000),
-    provider: session.user.appMetadata['provider'] as String?,
-    email: session.user.email,
-    isEmailConfirmed: session.user.emailConfirmedAt != null,
-  );
+  AuthSession _toAuthSession(Session session) {
+    final Map<String, dynamic> meta = session.user.userMetadata ?? {};
+    String? metaStr(String key) {
+      final Object? v = meta[key];
+      if (v is! String) return null;
+      final String t = v.trim();
+      return t.isEmpty ? null : t;
+    }
+
+    return AuthSession(
+      entityId: session.user.id,
+      expiresAt: session.expiresAt == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000),
+      provider: session.user.appMetadata['provider'] as String?,
+      email: session.user.email,
+      isEmailConfirmed: session.user.emailConfirmedAt != null,
+      firstName: metaStr('first_name'),
+      lastName: metaStr('last_name'),
+      displayName: metaStr('display_name'),
+    );
+  }
 
   ApiException _mapError(Object error) {
     if (error is ApiException) {
