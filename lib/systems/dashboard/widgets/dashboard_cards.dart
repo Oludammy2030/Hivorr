@@ -37,8 +37,12 @@ class DashboardMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final AppThemeExtension ext = context.appExtension;
+    final bool compact = context.screenWidth < 600;
     return HivorrCard(
       onTap: onTap,
+      padding: compact
+          ? const EdgeInsets.all(HivorrSpacing.sm + 4)
+          : const EdgeInsets.all(HivorrSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -52,7 +56,7 @@ class DashboardMetricCard extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  size: 18,
+                  size: compact ? 16 : 18,
                   color: accent ?? colors.primary,
                 ),
               ),
@@ -60,18 +64,27 @@ class DashboardMetricCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: context.textTheme.labelMedium?.copyWith(
                     color: colors.onSurfaceVariant,
+                    fontSize: compact ? 11 : null,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: HivorrSpacing.sm),
+          SizedBox(
+            height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+          ),
           Text(
             value,
-            style: context.textTheme.headlineSmall?.copyWith(
+            style: (compact
+                    ? context.textTheme.titleLarge
+                    : context.textTheme.headlineSmall)
+                ?.copyWith(
               fontWeight: FontWeight.w800,
+              fontSize: compact ? 20 : null,
             ),
           ),
           if (subtitle != null && subtitle!.isNotEmpty) ...<Widget>[
@@ -99,8 +112,12 @@ class JobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final bool compact = context.screenWidth < 600;
     return HivorrCard(
       onTap: onTap,
+      padding: compact
+          ? const EdgeInsets.all(HivorrSpacing.sm + 4)
+          : const EdgeInsets.all(HivorrSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -112,6 +129,7 @@ class JobCard extends StatelessWidget {
                   job.title,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    fontSize: compact ? 13.5 : null,
                   ),
                 ),
               ),
@@ -126,9 +144,12 @@ class JobCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
+              fontSize: compact ? 12 : null,
             ),
           ),
-          const SizedBox(height: HivorrSpacing.sm),
+          SizedBox(
+            height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+          ),
           Wrap(
             spacing: HivorrSpacing.sm,
             runSpacing: HivorrSpacing.xs,

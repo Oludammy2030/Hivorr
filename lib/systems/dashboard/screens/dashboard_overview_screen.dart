@@ -140,15 +140,34 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     if (isMobile) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Overview', style: context.textTheme.titleLarge),
+          toolbarHeight: 48,
+          title: Text(
+            'Overview',
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
+          ),
           actions: <Widget>[
             IconButton(
               tooltip: 'Notifications',
+              iconSize: 20,
+              padding: const EdgeInsets.all(HivorrSpacing.sm),
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => context.go(RoutePaths.dashboardNotifications),
             ),
             IconButton(
               tooltip: 'Refresh',
+              iconSize: 20,
+              padding: const EdgeInsets.all(HivorrSpacing.sm),
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
               icon: const Icon(Icons.refresh),
               onPressed: () => unawaited(_refresh(capability)),
             ),
@@ -201,17 +220,42 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
       return _clientScaffold(context, capability, jobs, hires);
     }
 
+    final bool isMobileScaffold =
+        context.breakpoint == Breakpoint.mobile;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Overview', style: context.textTheme.titleLarge),
+        toolbarHeight: isMobileScaffold ? 48 : null,
+        title: Text(
+          'Overview',
+          style: isMobileScaffold
+              ? context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                )
+              : context.textTheme.titleLarge,
+        ),
         actions: <Widget>[
           IconButton(
             tooltip: 'Notifications',
+            iconSize: isMobileScaffold ? 20 : null,
+            padding: isMobileScaffold
+                ? const EdgeInsets.all(HivorrSpacing.sm)
+                : null,
+            constraints: isMobileScaffold
+                ? const BoxConstraints(minWidth: 40, minHeight: 40)
+                : null,
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () => context.go(RoutePaths.dashboardNotifications),
           ),
           IconButton(
             tooltip: 'Refresh',
+            iconSize: isMobileScaffold ? 20 : null,
+            padding: isMobileScaffold
+                ? const EdgeInsets.all(HivorrSpacing.sm)
+                : null,
+            constraints: isMobileScaffold
+                ? const BoxConstraints(minWidth: 40, minHeight: 40)
+                : null,
             icon: const Icon(Icons.refresh),
             onPressed: () => unawaited(_refresh(capability)),
           ),
@@ -351,6 +395,7 @@ class _WelcomeHeader extends StatelessWidget {
         '${capability.label} mode',
       ),
     };
+    final bool compact = context.breakpoint == Breakpoint.mobile;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -371,18 +416,28 @@ class _WelcomeHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: HivorrSpacing.sm),
+        SizedBox(
+          height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+        ),
         Text(
           'Welcome back',
-          style: context.textTheme.headlineSmall?.copyWith(
+          style: (compact
+                  ? context.textTheme.titleLarge
+                  : context.textTheme.headlineSmall)
+              ?.copyWith(
             fontWeight: FontWeight.w800,
+            fontSize: compact ? 20 : null,
           ),
         ),
         const SizedBox(height: HivorrSpacing.xs),
         Text(
           subtitle,
-          style: context.textTheme.bodyMedium?.copyWith(
+          style: (compact
+                  ? context.textTheme.bodySmall
+                  : context.textTheme.bodyMedium)
+              ?.copyWith(
             color: context.colorScheme.onSurfaceVariant,
+            fontSize: compact ? 13 : null,
           ),
         ),
       ],
@@ -580,11 +635,15 @@ class _HiringSection extends StatelessWidget {
           const HivorrLoadingState()
         else if (recent.isEmpty)
           HivorrEmptyState(
+            compact: context.breakpoint == Breakpoint.mobile,
             title: 'No jobs posted yet',
             subtitle:
                 'Create your first job and start receiving applications from qualified professionals.',
             actionButton: HivorrButton(
               label: 'Post a Job',
+              size: context.breakpoint == Breakpoint.mobile
+                  ? HivorrButtonSize.small
+                  : HivorrButtonSize.medium,
               onPressed: () => context.go(RoutePaths.dashboardJobNew),
             ),
           )
@@ -629,11 +688,15 @@ class _WorkSection extends StatelessWidget {
           const HivorrLoadingState()
         else if (recentJobs.isEmpty && recentHires.isEmpty)
           HivorrEmptyState(
+            compact: context.breakpoint == Breakpoint.mobile,
             title: 'No work yet',
             subtitle:
                 'Browse open jobs and submit your first application to get started.',
             actionButton: HivorrButton(
               label: 'Find Jobs',
+              size: context.breakpoint == Breakpoint.mobile
+                  ? HivorrButtonSize.small
+                  : HivorrButtonSize.medium,
               onPressed: () => context.go(RoutePaths.dashboardOpportunities),
             ),
           )
@@ -1060,14 +1123,14 @@ class _ClientSection extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  fontSize: compact ? 17 : 18,
+                  fontSize: compact ? 15 : 18,
                 ),
               ),
             ),
             if (action case final Widget resolvedAction) resolvedAction,
           ],
         ),
-        SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.md),
         child,
       ],
     );
@@ -1107,12 +1170,12 @@ class _ClientHero extends StatelessWidget {
     final String hour = _greeting();
     final bool compact = context.breakpoint == Breakpoint.mobile;
     final double heroPadding = compact
-        ? (context.screenWidth < 360 ? 16 : 20)
+        ? (context.screenWidth < 360 ? 14 : 16)
         : 28;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.brandPrimary,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(compact ? 16 : 20),
       ),
       padding: EdgeInsets.all(heroPadding),
       child: Column(
@@ -1121,39 +1184,49 @@ class _ClientHero extends StatelessWidget {
           Text(
             '$hour,',
             style: (compact
-                    ? context.textTheme.bodyMedium
+                    ? context.textTheme.bodySmall
                     : context.textTheme.bodyLarge)
                 ?.copyWith(
               color: Colors.white.withValues(alpha: 0.85),
+              fontSize: compact ? 13 : null,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             '$displayName \u{1F3E2}',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: (compact
-                    ? context.textTheme.headlineSmall
+                    ? context.textTheme.titleLarge
                     : context.textTheme.headlineMedium)
                 ?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
+              fontSize: compact ? 20 : null,
+              letterSpacing: compact ? -0.25 : -0.5,
             ),
           ),
-          SizedBox(height: compact ? HivorrSpacing.sm : 10),
+          SizedBox(height: compact ? HivorrSpacing.xs : 10),
           if (loading)
             Text(
               'Loading your hiring activity…',
-              style: context.textTheme.bodyMedium?.copyWith(
+              style: (compact
+                      ? context.textTheme.bodySmall
+                      : context.textTheme.bodyMedium)
+                  ?.copyWith(
                 color: Colors.white.withValues(alpha: 0.85),
+                fontSize: compact ? 13 : null,
               ),
             )
           else if (totalApps > 0)
             Text.rich(
               TextSpan(
-                style: context.textTheme.bodyMedium?.copyWith(
+                style: (compact
+                        ? context.textTheme.bodySmall
+                        : context.textTheme.bodyMedium)
+                    ?.copyWith(
                   color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: compact ? 13 : null,
                 ),
                 children: <InlineSpan>[
                   const TextSpan(text: 'You have '),
@@ -1167,56 +1240,94 @@ class _ClientHero extends StatelessWidget {
                   const TextSpan(text: ' across your active jobs'),
                 ],
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             )
           else
             Text(
               'No new applications across your active jobs yet',
-              style: context.textTheme.bodyMedium?.copyWith(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: (compact
+                      ? context.textTheme.bodySmall
+                      : context.textTheme.bodyMedium)
+                  ?.copyWith(
                 color: Colors.white.withValues(alpha: 0.9),
+                fontSize: compact ? 13 : null,
               ),
             ),
-          SizedBox(height: compact ? HivorrSpacing.md : 22),
-          LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints c) {
-              // Two fluid chips per row on phones so 320px never overflows;
-              // desktop keeps the fixed 132dp reference chips.
-              final double? statWidth = compact
-                  ? (c.maxWidth - HivorrSpacing.sm) / 2
-                  : null;
-              return Wrap(
-                spacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-                runSpacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-                children: <Widget>[
-                  _HeroStat(
-                    value: loading ? '…' : '$postedCount',
-                    label: 'Jobs Posted',
-                    width: statWidth,
-                    compact: compact,
-                  ),
-                  _HeroStat(
-                    value: loading ? '…' : '$activeHires',
-                    label: 'Active Hires',
-                    width: statWidth,
-                    compact: compact,
-                  ),
-                  _HeroStat(
-                    value: loading
-                        ? '…'
-                        : '${spent.symbol}${_grouped(spent.total)}',
-                    label: 'Total Spent',
-                    width: statWidth,
-                    compact: compact,
-                  ),
-                  _HeroStat(
-                    value: loading ? '…' : '$totalApps',
-                    label: 'Applications',
-                    width: statWidth,
-                    compact: compact,
-                  ),
-                ],
-              );
-            },
-          ),
+          SizedBox(height: compact ? HivorrSpacing.sm : 22),
+          if (compact)
+            Semantics(
+              label: 'Hiring statistics',
+              explicitChildNodes: true,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                child: Row(
+                  children: <Widget>[
+                    _HeroStat(
+                      value: loading ? '…' : '$postedCount',
+                      label: 'Jobs Posted',
+                      width: 132,
+                      compact: true,
+                    ),
+                    const SizedBox(width: HivorrSpacing.sm),
+                    _HeroStat(
+                      value: loading ? '…' : '$activeHires',
+                      label: 'Active Hires',
+                      width: 132,
+                      compact: true,
+                    ),
+                    const SizedBox(width: HivorrSpacing.sm),
+                    _HeroStat(
+                      value: loading
+                          ? '…'
+                          : '${spent.symbol}${_grouped(spent.total)}',
+                      label: 'Total Spent',
+                      width: 132,
+                      compact: true,
+                    ),
+                    const SizedBox(width: HivorrSpacing.sm),
+                    _HeroStat(
+                      value: loading ? '…' : '$totalApps',
+                      label: 'Applications',
+                      width: 132,
+                      compact: true,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Wrap(
+              spacing: HivorrSpacing.md,
+              runSpacing: HivorrSpacing.md,
+              children: <Widget>[
+                _HeroStat(
+                  value: loading ? '…' : '$postedCount',
+                  label: 'Jobs Posted',
+                  compact: false,
+                ),
+                _HeroStat(
+                  value: loading ? '…' : '$activeHires',
+                  label: 'Active Hires',
+                  compact: false,
+                ),
+                _HeroStat(
+                  value: loading
+                      ? '…'
+                      : '${spent.symbol}${_grouped(spent.total)}',
+                  label: 'Total Spent',
+                  compact: false,
+                ),
+                _HeroStat(
+                  value: loading ? '…' : '$totalApps',
+                  label: 'Applications',
+                  compact: false,
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -1241,7 +1352,7 @@ class _HeroStat extends StatelessWidget {
     return Container(
       width: width,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+        horizontal: compact ? HivorrSpacing.sm + 4 : HivorrSpacing.md,
         vertical: compact ? HivorrSpacing.sm : HivorrSpacing.md,
       ),
       decoration: BoxDecoration(
@@ -1262,16 +1373,18 @@ class _HeroStat extends StatelessWidget {
                 ?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
+              fontSize: compact ? 16 : null,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.bodySmall?.copyWith(
               color: Colors.white.withValues(alpha: 0.78),
+              fontSize: compact ? 11 : null,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1341,7 +1454,7 @@ class _QuickTile extends StatelessWidget {
     final AppThemeExtension ext = context.appExtension;
     final RoleThemeExtension roles = context.roleTheme;
     final bool compact = context.breakpoint == Breakpoint.mobile;
-    final double iconSize = compact ? 44 : 52;
+    final double iconSize = compact ? 38 : 52;
     final (Color tileBg, Color iconFg) = switch (tint) {
       _QuickTint.lavender => (roles.clientContainer, roles.clientPrimary),
       _QuickTint.green => (ext.successContainer, ext.success),
@@ -1349,10 +1462,10 @@ class _QuickTile extends StatelessWidget {
     };
     return HivorrCard(
       onTap: onTap,
-      borderRadius: 16,
+      borderRadius: compact ? 14 : 16,
       padding: EdgeInsets.symmetric(
         horizontal: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-        vertical: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        vertical: compact ? HivorrSpacing.sm + 2 : HivorrSpacing.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1364,9 +1477,9 @@ class _QuickTile extends StatelessWidget {
               color: tileBg,
               borderRadius: BorderRadius.circular(compact ? 12 : 16),
             ),
-            child: Icon(icon, size: compact ? 22 : 26, color: iconFg),
+            child: Icon(icon, size: compact ? 20 : 26, color: iconFg),
           ),
-          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+          const SizedBox(height: HivorrSpacing.xs + 2),
           Text(
             label,
             maxLines: 2,
@@ -1376,6 +1489,7 @@ class _QuickTile extends StatelessWidget {
                     : context.textTheme.titleSmall)
                 ?.copyWith(
               fontWeight: FontWeight.w700,
+              fontSize: compact ? 11.5 : null,
               color: colors.onSurface,
             ),
             textAlign: TextAlign.center,
@@ -1401,22 +1515,31 @@ class _ClientActiveJobs extends StatelessWidget {
       return const HivorrLoadingState();
     }
     if (ordered.isEmpty) {
+      final bool emptyCompact =
+          context.breakpoint == Breakpoint.mobile;
       return HivorrEmptyState(
+        compact: emptyCompact,
         title: 'No jobs posted yet',
         subtitle:
             'Create your first job and start receiving applications from qualified professionals.',
         actionButton: HivorrButton(
           label: 'Post a Job',
+          size: emptyCompact
+              ? HivorrButtonSize.small
+              : HivorrButtonSize.medium,
           onPressed: () => context.go(RoutePaths.dashboardJobNew),
         ),
       );
     }
+    final bool compact = context.breakpoint == Breakpoint.mobile;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         for (final Job job in ordered) ...<Widget>[
           _ClientJobCard(job: job),
-          const SizedBox(height: HivorrSpacing.md),
+          SizedBox(
+            height: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+          ),
         ],
       ],
     );
@@ -1438,7 +1561,8 @@ class _ClientRecentApplications extends StatelessWidget {
     }
     final List<JobApplication> feed = jobs.recentReceived;
     if (feed.isEmpty) {
-      return const HivorrEmptyState(
+      return HivorrEmptyState(
+        compact: context.breakpoint == Breakpoint.mobile,
         title: 'No applications yet',
         subtitle:
             'Applications to your jobs will appear here as soon as professionals apply.',
@@ -1447,6 +1571,7 @@ class _ClientRecentApplications extends StatelessWidget {
     final Map<String, String> titles = <String, String>{
       for (final Job job in jobs.posted) job.id: job.title,
     };
+    final bool compact = context.breakpoint == Breakpoint.mobile;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -1456,7 +1581,9 @@ class _ClientRecentApplications extends StatelessWidget {
             jobTitle:
                 application.jobTitle ?? titles[application.jobId] ?? 'Job',
           ),
-          const SizedBox(height: HivorrSpacing.md),
+          SizedBox(
+            height: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+          ),
         ],
       ],
     );
@@ -1477,7 +1604,7 @@ class _ReceivedApplicationRow extends StatelessWidget {
     final ColorScheme colors = context.colorScheme;
     final RoleThemeExtension roles = context.roleTheme;
     final bool compact = context.breakpoint == Breakpoint.mobile;
-    final double avatarSize = compact ? 40 : 48;
+    final double avatarSize = compact ? 36 : 48;
     final String quote = application.quotedAmount == null
         ? 'Application'
         : '${application.currencyCode} '
@@ -1486,8 +1613,10 @@ class _ReceivedApplicationRow extends StatelessWidget {
     return HivorrCard(
       onTap: () =>
           context.go(RoutePaths.dashboardJobDetail(application.jobId)),
-      borderRadius: 16,
-      padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -1500,7 +1629,7 @@ class _ReceivedApplicationRow extends StatelessWidget {
             ),
             child: Icon(
               Icons.person_outline,
-              size: compact ? 20 : 24,
+              size: compact ? 18 : 24,
               color: roles.clientPrimary,
             ),
           ),
@@ -1515,13 +1644,18 @@ class _ReceivedApplicationRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    fontSize: compact ? 13 : null,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   jobTitle,
-                  style: context.textTheme.bodyMedium?.copyWith(
+                  style: (compact
+                          ? context.textTheme.bodySmall
+                          : context.textTheme.bodyMedium)
+                      ?.copyWith(
                     color: colors.onSurfaceVariant,
+                    fontSize: compact ? 12 : null,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1531,6 +1665,7 @@ class _ReceivedApplicationRow extends StatelessWidget {
                   application.coverNote.split('\n').first.trim(),
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
+                    fontSize: compact ? 11 : null,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1544,13 +1679,14 @@ class _ReceivedApplicationRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
                 HiringStatusBadge(code: application.status),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   _feedDate(application.submittedAt),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
+                    fontSize: compact ? 11 : null,
                   ),
                 ),
               ],
@@ -1587,8 +1723,10 @@ class _CurrentHiresCard extends StatelessWidget {
     }
     final bool compact = context.breakpoint == Breakpoint.mobile;
     return HivorrCard(
-      borderRadius: 16,
-      padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -1598,23 +1736,30 @@ class _CurrentHiresCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              fontSize: compact ? 17 : 18,
+              fontSize: compact ? 15 : 18,
             ),
           ),
-          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+          SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.md),
           if (hires.isLoading && hires.hires.isEmpty)
             const HivorrLoadingState()
           else if (current.isEmpty)
             Text(
               'No current hires yet',
-              style: context.textTheme.bodyMedium?.copyWith(
+              style: (compact
+                      ? context.textTheme.bodySmall
+                      : context.textTheme.bodyMedium)
+                  ?.copyWith(
                 color: colors.onSurfaceVariant,
+                fontSize: compact ? 12 : null,
               ),
             )
           else
             for (int i = 0; i < current.length; i++) ...<Widget>[
               if (i > 0)
-                Divider(height: HivorrSpacing.lg, color: colors.outlineVariant),
+                Divider(
+                  height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+                  color: colors.outlineVariant,
+                ),
               _CurrentHireRow(
                 hire: current[i],
                 tintIndex: i,
@@ -1657,6 +1802,8 @@ class _CurrentHireRow extends StatelessWidget {
     };
     final String statusLabel =
         HiringStatus.forCode(hire.liveStatus)?.label ?? hire.liveStatus;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final double avatarSize = compact ? 38 : 44;
     return InkWell(
       onTap: () => context.go(RoutePaths.dashboardHireDetail(hire.id)),
       borderRadius: BorderRadius.circular(12),
@@ -1665,15 +1812,21 @@ class _CurrentHireRow extends StatelessWidget {
         child: Row(
           children: <Widget>[
             Container(
-              width: 44,
-              height: 44,
+              width: avatarSize,
+              height: avatarSize,
               decoration: BoxDecoration(
                 color: tileBg,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.person_outline, size: 22, color: iconFg),
+              child: Icon(
+                Icons.person_outline,
+                size: compact ? 20 : 22,
+                color: iconFg,
+              ),
             ),
-            const SizedBox(width: HivorrSpacing.md),
+            SizedBox(
+              width: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1682,6 +1835,7 @@ class _CurrentHireRow extends StatelessWidget {
                     jobTitle,
                     style: context.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
+                      fontSize: compact ? 13 : null,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1691,6 +1845,7 @@ class _CurrentHireRow extends StatelessWidget {
                     '$statusLabel · since ${HivorrFormatters.date(hire.hiredAt)}',
                     style: context.textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
+                      fontSize: compact ? 11 : null,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1718,21 +1873,23 @@ class _ChatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final RoleThemeExtension roles = context.roleTheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final double tileSize = compact ? 36 : 40;
     return Tooltip(
       message: 'Message',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(compact ? 10 : 12),
         child: Container(
-          width: 40,
-          height: 40,
+          width: tileSize,
+          height: tileSize,
           decoration: BoxDecoration(
             color: roles.clientContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(compact ? 10 : 12),
           ),
           child: Icon(
             Icons.chat_bubble_outline,
-            size: 20,
+            size: compact ? 18 : 20,
             color: roles.clientPrimary,
           ),
         ),
@@ -1759,8 +1916,8 @@ class _ClientJobCard extends StatelessWidget {
         '${job.applicationsCount} Applicant${job.applicationsCount == 1 ? '' : 's'}';
     return HivorrCard(
       onTap: () => context.go(RoutePaths.dashboardJobDetail(job.id)),
-      borderRadius: 16,
-      padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -1772,7 +1929,7 @@ class _ClientJobCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Wrap(
-                      spacing: HivorrSpacing.sm,
+                      spacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
                       runSpacing: HivorrSpacing.xs,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: <Widget>[
@@ -1786,7 +1943,7 @@ class _ClientJobCard extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: HivorrSpacing.sm),
+                    const SizedBox(height: HivorrSpacing.xs + 2),
                     Text(
                       job.title,
                       maxLines: 2,
@@ -1796,13 +1953,18 @@ class _ClientJobCard extends StatelessWidget {
                               : context.textTheme.titleMedium)
                           ?.copyWith(
                         fontWeight: FontWeight.w800,
+                        fontSize: compact ? 13.5 : null,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       _jobSubtitle(job),
-                      style: context.textTheme.bodyMedium?.copyWith(
+                      style: (compact
+                              ? context.textTheme.bodySmall
+                              : context.textTheme.bodyMedium)
+                          ?.copyWith(
                         color: colors.onSurfaceVariant,
+                        fontSize: compact ? 12 : null,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1827,15 +1989,17 @@ class _ClientJobCard extends StatelessWidget {
                             ?.copyWith(
                           color: ext.success,
                           fontWeight: FontWeight.w800,
+                          fontSize: compact ? 13 : null,
                         ),
                       ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       applied,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
+                        fontSize: compact ? 11 : null,
                       ),
                     ),
                   ],
@@ -1843,46 +2007,58 @@ class _ClientJobCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+          SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.md),
           Wrap(
-            spacing: HivorrSpacing.sm,
-            runSpacing: HivorrSpacing.sm,
+            spacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
+            runSpacing: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
             children: <Widget>[
               ElevatedButton.icon(
                 onPressed: () =>
                     context.go(RoutePaths.dashboardJobDetail(job.id)),
-                icon: const Icon(Icons.people_outline, size: 18),
+                icon: Icon(
+                  Icons.people_outline,
+                  size: compact ? 16 : 18,
+                ),
                 label: Text(applicants),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
                   foregroundColor: colors.onPrimary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(compact ? 8 : 10),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: HivorrSpacing.md,
-                    vertical: HivorrSpacing.sm,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? HivorrSpacing.sm + 4 : HivorrSpacing.md,
+                    vertical: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
                   ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  textStyle: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: compact ? 13 : null,
+                  ),
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: () => context.go(RoutePaths.dashboardMessages),
-                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                icon: Icon(
+                  Icons.chat_bubble_outline,
+                  size: compact ? 16 : 18,
+                ),
                 label: const Text('Message'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.surfaceContainerHighest,
                   foregroundColor: colors.onSurface,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(compact ? 8 : 10),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: HivorrSpacing.md,
-                    vertical: HivorrSpacing.sm,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? HivorrSpacing.sm + 4 : HivorrSpacing.md,
+                    vertical: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm,
                   ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  textStyle: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: compact ? 13 : null,
+                  ),
                 ),
               ),
             ],
@@ -2011,22 +2187,22 @@ class _RailStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final bool compact = context.breakpoint == Breakpoint.mobile;
-    final double tileSize = compact ? 36 : 44;
+    final double tileSize = compact ? 32 : 44;
     return HivorrCard(
       onTap: onTap,
-      borderRadius: 16,
-      padding: const EdgeInsets.all(HivorrSpacing.sm),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(compact ? HivorrSpacing.sm + 2 : HivorrSpacing.sm),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Container(
             width: tileSize,
             height: tileSize,
             decoration: BoxDecoration(
               color: tileBg,
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(compact ? 10 : 13),
             ),
-            child: Icon(icon, size: compact ? 18 : 22, color: iconFg),
+            child: Icon(icon, size: compact ? 16 : 22, color: iconFg),
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Expanded(
@@ -2040,9 +2216,10 @@ class _RailStatCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
+                    fontSize: compact ? 11 : null,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   value,
                   maxLines: 1,
@@ -2052,6 +2229,7 @@ class _RailStatCard extends StatelessWidget {
                           : context.textTheme.titleLarge)
                       ?.copyWith(
                     fontWeight: FontWeight.w800,
+                    fontSize: compact ? 15 : null,
                     color: colors.onSurface,
                   ),
                 ),
@@ -2064,6 +2242,7 @@ class _RailStatCard extends StatelessWidget {
                     style: context.textTheme.bodySmall?.copyWith(
                       color: subColor,
                       fontWeight: FontWeight.w600,
+                      fontSize: compact ? 11 : null,
                     ),
                   ),
                 ],
@@ -2129,8 +2308,10 @@ class _SpendingOverviewCard extends StatelessWidget {
         '${summary.symbol}${_grouped(summary.spent)} / '
         '${summary.symbol}${_grouped(summary.budget)}';
     return HivorrCard(
-      borderRadius: 16,
-      padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -2140,18 +2321,22 @@ class _SpendingOverviewCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              fontSize: compact ? 17 : 18,
+              fontSize: compact ? 15 : 18,
             ),
           ),
-          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+          SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.md),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
                 child: Text(
                   'Monthly budget used',
-                  style: context.textTheme.bodyMedium?.copyWith(
+                  style: (compact
+                          ? context.textTheme.bodySmall
+                          : context.textTheme.bodyMedium)
+                      ?.copyWith(
                     color: colors.onSurfaceVariant,
+                    fontSize: compact ? 12 : null,
                   ),
                 ),
               ),
@@ -2161,18 +2346,19 @@ class _SpendingOverviewCard extends StatelessWidget {
                   used,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
+                    fontSize: compact ? 13 : null,
                   ),
                   textAlign: TextAlign.end,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: HivorrSpacing.sm),
+          const SizedBox(height: HivorrSpacing.xs + 2),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: summary.usedShare,
-              minHeight: 8,
+              minHeight: compact ? 6 : 8,
               backgroundColor: colors.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
             ),
@@ -2182,21 +2368,26 @@ class _SpendingOverviewCard extends StatelessWidget {
             '${summary.usedPercent}% of monthly budget',
             style: context.textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
+              fontSize: compact ? 11 : null,
             ),
           ),
-          const SizedBox(height: HivorrSpacing.md),
+          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: HivorrSpacing.md,
-              vertical: 14,
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? HivorrSpacing.sm + 4 : HivorrSpacing.md,
+              vertical: compact ? 10 : 14,
             ),
             decoration: BoxDecoration(
               color: ext.warningContainer,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(compact ? 10 : 12),
             ),
             child: Row(
               children: <Widget>[
-                Icon(Icons.lock_outline, size: 20, color: ext.warning),
+                Icon(
+                  Icons.lock_outline,
+                  size: compact ? 18 : 20,
+                  color: ext.warning,
+                ),
                 const SizedBox(width: HivorrSpacing.sm),
                 Expanded(
                   child: Text(
@@ -2204,6 +2395,7 @@ class _SpendingOverviewCard extends StatelessWidget {
                     style: context.textTheme.titleSmall?.copyWith(
                       color: ext.warning,
                       fontWeight: FontWeight.w700,
+                      fontSize: compact ? 13 : null,
                     ),
                   ),
                 ),
@@ -2230,8 +2422,10 @@ class _RecentPaymentsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool compact = context.breakpoint == Breakpoint.mobile;
     return HivorrCard(
-      borderRadius: 16,
-      padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.sm + 4 : HivorrSpacing.lg,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -2244,7 +2438,7 @@ class _RecentPaymentsCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    fontSize: compact ? 17 : 18,
+                    fontSize: compact ? 15 : 18,
                   ),
                 ),
               ),
@@ -2258,12 +2452,15 @@ class _RecentPaymentsCard extends StatelessWidget {
                 ),
                 child: const Text(
                   'See all',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: HivorrSpacing.sm),
+          SizedBox(height: compact ? HivorrSpacing.xs + 2 : HivorrSpacing.sm),
           if (payments.isEmpty)
             Text(
               'No payments yet',
@@ -2275,7 +2472,7 @@ class _RecentPaymentsCard extends StatelessWidget {
             for (int i = 0; i < payments.length; i++) ...<Widget>[
               if (i > 0)
                 Divider(
-                  height: HivorrSpacing.lg,
+                  height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
                   color: context.colorScheme.outlineVariant,
                 ),
               _PaymentRow(payment: payments[i]),
@@ -2295,6 +2492,7 @@ class _PaymentRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final AppThemeExtension ext = context.appExtension;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
     final bool isEscrow = payment.kind == ClientPaymentKind.escrow;
     final Color tileBg =
         isEscrow ? ext.warningContainer : colors.errorContainer;
@@ -2303,22 +2501,23 @@ class _PaymentRow extends StatelessWidget {
     final String amount = isEscrow
         ? '${payment.symbol}${_grouped(payment.amount)}'
         : '-${payment.symbol}${_grouped(payment.amount.abs())}';
+    final double tileSize = compact ? 40 : 46;
     return Row(
       children: <Widget>[
         Container(
-          width: 46,
-          height: 46,
+          width: tileSize,
+          height: tileSize,
           decoration: BoxDecoration(
             color: tileBg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(compact ? 12 : 14),
           ),
           child: Icon(
             isEscrow ? Icons.lock_outline : Icons.arrow_upward,
-            size: 22,
+            size: compact ? 20 : 22,
             color: iconFg,
           ),
         ),
-        const SizedBox(width: HivorrSpacing.md),
+        SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2327,6 +2526,7 @@ class _PaymentRow extends StatelessWidget {
                 payment.title,
                 style: context.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
+                  fontSize: compact ? 13 : null,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -2336,6 +2536,7 @@ class _PaymentRow extends StatelessWidget {
                 payment.date,
                 style: context.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
+                  fontSize: compact ? 11 : null,
                 ),
               ),
             ],
@@ -2347,6 +2548,7 @@ class _PaymentRow extends StatelessWidget {
           style: context.textTheme.titleSmall?.copyWith(
             color: amountFg,
             fontWeight: FontWeight.w800,
+            fontSize: compact ? 13 : null,
           ),
         ),
       ],

@@ -12,6 +12,7 @@ class HivorrEmptyState extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.actionButton,
+    this.compact = false,
   });
 
   /// Leading illustration. Defaults to [Icons.inbox_outlined].
@@ -26,39 +27,55 @@ class HivorrEmptyState extends StatelessWidget {
   /// Optional call-to-action (typically a [HivorrButton]).
   final Widget? actionButton;
 
+  /// Compact mobile density: smaller icon/padding/gaps. Desktop unchanged.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
+    final double iconSize = compact ? 34 : 48;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(HivorrSpacing.lg),
+        padding: EdgeInsets.all(
+          compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             IconTheme.merge(
               data: IconThemeData(
-                size: 48,
+                size: iconSize,
                 color: context.colorScheme.onSurfaceVariant,
               ),
               child: icon ?? const Icon(Icons.inbox_outlined),
             ),
-            const SizedBox(height: HivorrSpacing.md),
+            SizedBox(
+              height: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+            ),
             Text(
               title,
-              style: context.textTheme.titleMedium,
+              style: context.textTheme.titleMedium?.copyWith(
+                fontSize: compact ? 15 : null,
+              ),
               textAlign: TextAlign.center,
             ),
             if (subtitle != null && subtitle!.isNotEmpty) ...<Widget>[
               const SizedBox(height: HivorrSpacing.xs),
               Text(
                 subtitle!,
-                style: context.textTheme.bodyMedium?.copyWith(
+                style: (compact
+                        ? context.textTheme.bodySmall
+                        : context.textTheme.bodyMedium)
+                    ?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
+                  fontSize: compact ? 12 : null,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
             if (actionButton != null) ...<Widget>[
-              const SizedBox(height: HivorrSpacing.md),
+              SizedBox(
+                height: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+              ),
               actionButton!,
             ],
           ],
