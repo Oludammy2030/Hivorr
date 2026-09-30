@@ -983,6 +983,10 @@ class _ClientContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool wide = maxWidth >= railStart;
+    // Mobile (<600dp) hides the standalone metric rail — those stats already
+    // live inside the blue hero carousel. Desktop/tablet keep the reference
+    // rail 100% unchanged.
+    final bool isMobileWidth = MobileCompact.isCompactWidth(maxWidth);
     // Compact vertical rhythm on phones (<600dp); desktop keeps the airy
     // reference spacing (see MobileCompact contract).
     final double sectionGap = MobileCompact.sectionGapFor(maxWidth);
@@ -1076,8 +1080,13 @@ class _ClientContent extends StatelessWidget {
         else ...<Widget>[
           quickActions,
           SizedBox(height: sectionGap),
-          const _ClientStatsGrid(),
-          SizedBox(height: sectionGap),
+          // Mobile fintech: drop the duplicate standalone metrics
+          // (Jobs Posted / Active Hires / Total Spent / Open Apps) — they
+          // already slide inside the blue hero. Tablet (600-999) keeps them.
+          if (!isMobileWidth) ...<Widget>[
+            const _ClientStatsGrid(),
+            SizedBox(height: sectionGap),
+          ],
           // TODO(client-dashboard-backend): mock rail cards — connect live
           // spending/payments when the seams exist (see above).
           const _SpendingOverviewCard(
@@ -1173,6 +1182,9 @@ class _ClientHero extends StatelessWidget {
         ? (context.screenWidth < 360 ? 14 : 16)
         : 28;
     return Container(
+      // Clip the sliding metric carousel strictly inside the blue bounds so
+      // cards never paint past the rounded corners / screen edges (mobile).
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.brandPrimary,
         borderRadius: BorderRadius.circular(compact ? 16 : 20),
@@ -1261,42 +1273,57 @@ class _ClientHero extends StatelessWidget {
             Semantics(
               label: 'Hiring statistics',
               explicitChildNodes: true,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
-                child: Row(
-                  children: <Widget>[
-                    _HeroStat(
-                      value: loading ? '…' : '$postedCount',
-                      label: 'Jobs Posted',
-                      width: 132,
-                      compact: true,
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  // Mobile fintech carousel: exactly 2 full cards + a
+                  // half-peeking 3rd card to affordance scrollability.
+                  // 2.5 * card + 2 * gap == viewport (hero inner width).
+                  const double gap = HivorrSpacing.sm;
+                  final double viewport = constraints.maxWidth;
+                  final double cardWidth = viewport <= 0
+                      ? 120
+                      : (viewport - gap * 2) / 2.5;
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    // Hard-edge clip keeps the slide strictly within the blue
+                    // header — zero overflow past container / screen edges.
+                    clipBehavior: Clip.hardEdge,
+                    physics: const ClampingScrollPhysics(),
+                    child: Row(
+                      children: <Widget>[
+                        _HeroStat(
+                          value: loading ? '…' : '$postedCount',
+                          label: 'Jobs Posted',
+                          width: cardWidth,
+                          compact: true,
+                        ),
+                        const SizedBox(width: gap),
+                        _HeroStat(
+                          value: loading ? '…' : '$activeHires',
+                          label: 'Active Hires',
+                          width: cardWidth,
+                          compact: true,
+                        ),
+                        const SizedBox(width: gap),
+                        _HeroStat(
+                          value: loading
+                              ? '…'
+                              : '${spent.symbol}${_grouped(spent.total)}',
+                          label: 'Total Spent',
+                          width: cardWidth,
+                          compact: true,
+                        ),
+                        const SizedBox(width: gap),
+                        _HeroStat(
+                          value: loading ? '…' : '$totalApps',
+                          label: 'Applications',
+                          width: cardWidth,
+                          compact: true,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: HivorrSpacing.sm),
-                    _HeroStat(
-                      value: loading ? '…' : '$activeHires',
-                      label: 'Active Hires',
-                      width: 132,
-                      compact: true,
-                    ),
-                    const SizedBox(width: HivorrSpacing.sm),
-                    _HeroStat(
-                      value: loading
-                          ? '…'
-                          : '${spent.symbol}${_grouped(spent.total)}',
-                      label: 'Total Spent',
-                      width: 132,
-                      compact: true,
-                    ),
-                    const SizedBox(width: HivorrSpacing.sm),
-                    _HeroStat(
-                      value: loading ? '…' : '$totalApps',
-                      label: 'Applications',
-                      width: 132,
-                      compact: true,
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             )
           else
@@ -1401,7 +1428,11 @@ class _ClientQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool compact = context.breakpoint == Breakpoint.mobile;
+    // Mobile fintech quick links: compact 3-column grid. Desktop keeps the
+    // reference Row unchanged. (No stretch — the Row lives in a vertical
+    // scroll with unbounded height, so stretch would break layout.)
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
           child: _QuickTile(
@@ -1465,7 +1496,8 @@ class _QuickTile extends StatelessWidget {
       borderRadius: compact ? 14 : 16,
       padding: EdgeInsets.symmetric(
         horizontal: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-        vertical: compact ? HivorrSpacing.sm + 2 : HivorrSpacing.lg,
+        // Compact fintech rhythm on phones; desktop keeps airy reference.
+        vertical: compact ? HivorrSpacing.sm : HivorrSpacing.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1491,6 +1523,8 @@ class _QuickTile extends StatelessWidget {
               fontWeight: FontWeight.w700,
               fontSize: compact ? 11.5 : null,
               color: colors.onSurface,
+              // Tight 2-line banking label that never clips at 320px.
+              height: compact ? 1.25 : null,
             ),
             textAlign: TextAlign.center,
           ),
