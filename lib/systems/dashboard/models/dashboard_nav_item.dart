@@ -240,7 +240,7 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     section: DashboardNavSection.shared,
   ),
   DashboardNavItem(
-    label: 'Account',
+    label: 'Provider',
     icon: Icons.person_outline,
     activeIcon: Icons.person,
     location: '/dashboard/account',

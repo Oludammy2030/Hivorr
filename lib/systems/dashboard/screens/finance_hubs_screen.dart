@@ -292,7 +292,7 @@ class _PaymentsTopBar extends StatelessWidget {
                 ),
                 const SizedBox(width: HivorrSpacing.xs),
                 Text(
-                  'Employer',
+                  'Client',
                   style: context.textTheme.labelMedium?.copyWith(
                     color: roles.clientPrimary,
                     fontWeight: FontWeight.w700,
@@ -303,7 +303,7 @@ class _PaymentsTopBar extends StatelessWidget {
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Tooltip(
-            message: 'Account',
+            message: 'Provider',
             child: InkWell(
               onTap: () => context.go(RoutePaths.dashboardAccount),
               borderRadius: BorderRadius.circular(999),

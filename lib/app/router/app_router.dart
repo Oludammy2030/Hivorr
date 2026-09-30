@@ -30,7 +30,6 @@ import 'package:hivorr/systems/admin/screens/admin_jobs_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
-import 'package:hivorr/systems/dashboard/screens/account_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/conversation_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_settings_screen.dart';
@@ -43,6 +42,7 @@ import 'package:hivorr/systems/dashboard/screens/messages_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/my_jobs_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/notifications_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/provider_screen.dart';
 import 'package:hivorr/systems/dashboard/shell/hivorr_dashboard_shell.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
@@ -210,7 +210,7 @@ class AppRouter {
           path: RoutePaths.profile,
           name: RouteNames.profile,
           builder: (BuildContext context, GoRouterState state) =>
-              const AccountScreen(),
+              const ProviderScreen(),
         ),
         GoRoute(
           path: RoutePaths.settings,
@@ -426,7 +426,7 @@ class AppRouter {
               path: RoutePaths.dashboardAccount,
               name: RouteNames.dashboardAccount,
               builder: (BuildContext context, GoRouterState state) =>
-                  const AccountScreen(),
+                  const ProviderScreen(),
             ),
             GoRoute(
               path: RoutePaths.dashboardSettings,

@@ -725,7 +725,7 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
 }
 
 /// Desktop top bar matching the reference: menu tile, page title, bell,
-/// Employer pill and account avatar.
+/// Client pill and account avatar.
 class _ApplicationsTopBar extends StatelessWidget {
   const _ApplicationsTopBar();
 
@@ -798,7 +798,7 @@ class _ApplicationsTopBar extends StatelessWidget {
                 ),
                 const SizedBox(width: HivorrSpacing.xs),
                 Text(
-                  'Employer',
+                  'Client',
                   style: context.textTheme.labelMedium?.copyWith(
                     color: roleTheme.clientPrimary,
                     fontWeight: FontWeight.w700,
