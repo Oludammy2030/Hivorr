@@ -331,7 +331,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
 }
 
 /// Desktop top bar matching the reference: menu tile, page title, bell,
-/// Employer pill and account avatar.
+/// Client pill and account avatar.
 class _PostJobTopBar extends StatelessWidget {
   const _PostJobTopBar({required this.title});
 
@@ -396,7 +396,7 @@ class _PostJobTopBar extends StatelessWidget {
                 ),
                 const SizedBox(width: HivorrSpacing.xs),
                 Text(
-                  'Employer',
+                  'Client',
                   style: context.textTheme.labelMedium?.copyWith(
                     color: roleTheme.clientPrimary,
                     fontWeight: FontWeight.w700,

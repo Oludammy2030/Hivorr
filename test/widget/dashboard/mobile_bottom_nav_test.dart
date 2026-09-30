@@ -106,7 +106,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(find.text('More'), findsOneWidget);
-        expect(find.text('Account'), findsOneWidget);
+        expect(find.text('Provider'), findsOneWidget);
         // Overflow sheet must not repeat the primary tabs.
         expect(find.text('Hiring'), findsNothing);
       });

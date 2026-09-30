@@ -98,7 +98,7 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     }
   }
 
-  /// Client (employer) overview chrome matching the reference dashboard.
+  /// Client overview chrome matching the reference dashboard.
   ///
   /// Desktop/tablet render the reference top bar above the content (the shell
   /// owns no app bar there); mobile keeps a slim app bar since the shell
@@ -214,7 +214,7 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     }
     final JobProvider jobs = context.watch<JobProvider>();
     final HireProvider hires = context.watch<HireProvider>();
-    // Client-only (employer) presentation follows the reference dashboard.
+    // Client-only presentation follows the reference dashboard.
     // Offer and combined views keep the established layout below.
     if (showHiring && !showWork) {
       return _clientScaffold(context, capability, jobs, hires);
@@ -779,7 +779,7 @@ class _ErrorBody extends StatelessWidget {
   }
 }
 
-// ── Client (employer) overview — reference dashboard presentation ──────────
+// ── Client overview — reference dashboard presentation ──────────
 // Data hooks, destinations and terminology match the other views; only the
 // layout follows the reference (top bar, blue hero, quick-action tiles,
 // active-job cards, right-rail metric grid).
@@ -883,7 +883,7 @@ class _ClientTopBar extends StatelessWidget {
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Tooltip(
-            message: 'Account',
+            message: 'Provider',
             child: InkWell(
               onTap: () => context.go(RoutePaths.dashboardAccount),
               borderRadius: BorderRadius.circular(999),
