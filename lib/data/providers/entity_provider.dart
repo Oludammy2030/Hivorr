@@ -56,6 +56,22 @@ class EntityProvider extends ChangeNotifier {
   Future<void> loadRoles(String entityId) =>
       _run(() async => _roles = await repository.getRoles(entityId));
 
+  /// Persists a Storage-uploaded avatar path and refreshes local state.
+  ///
+  /// Mirrors [EntityRepository.updateAvatarPath]: the caller uploads bytes to
+  /// `profile-avatars/{entityId}/avatar.{ext}` first (see
+  /// `OnboardingService.completeProfile` for the canonical sequence), then
+  /// binds the returned path here.
+  Future<void> updateAvatarPath({
+    required String entityId,
+    required String avatarPath,
+  }) => _run(
+    () async => _profile = await repository.updateAvatarPath(
+      entityId: entityId,
+      avatarPath: avatarPath,
+    ),
+  );
+
   /// Updates the profile and refreshes local state.
   Future<void> updateProfile({
     required String entityId,

@@ -92,7 +92,8 @@ void main() {
       expect(find.text('Find Work'), findsOneWidget);
       expect(find.text('My Jobs'), findsOneWidget);
       expect(find.text('Earnings'), findsOneWidget);
-      expect(find.text('Portfolio'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Portfolio'), findsNothing);
       expect(find.text('Post a Job'), findsNothing);
       expect(find.text('Payments'), findsNothing);
       // Toggle itself is visible with a clear active state.

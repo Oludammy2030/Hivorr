@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 ///
 /// Professional (offer) mode renders the Professional Dashboard reference
 /// (green identity, `Dashboard / Find Work / My Jobs / Messages / Earnings /
-/// Portfolio` primaries + a `More` overflow for the remaining capability
+/// Profile` primaries + a `More` overflow for the remaining capability
 /// items so nothing is removed). Hire / Both modes keep the established
 /// grouped navigation (My Work / My Hiring / Shared).
 class DashboardSidebar extends StatelessWidget {
@@ -211,7 +211,7 @@ class DashboardSidebar extends StatelessWidget {
 ///
 /// Primary structure matches the reference exactly: Hivorr logo, green
 /// `Professional Dashboard` banner, then `Dashboard / Find Work / My Jobs /
-/// Messages / Earnings / Portfolio`. Remaining capability-visible destinations
+/// Messages / Earnings / Profile`. Remaining capability-visible destinations
 /// (e.g. `My Applications`, `Notifications`, `Settings`) render under a
 /// `MORE` header so existing functionality is preserved, not removed.
 /// The footer user card derives name + initials from the stored backend
@@ -260,10 +260,10 @@ class _ProfessionalSidebar extends StatelessWidget {
       activeIcon: Icons.account_balance_wallet,
     ),
     _ProNavDef(
-      display: 'Portfolio',
+      display: 'Profile',
       location: '/dashboard/account',
-      icon: Icons.workspace_premium_outlined,
-      activeIcon: Icons.workspace_premium,
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
     ),
   ];
 

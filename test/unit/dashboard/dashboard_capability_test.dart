@@ -55,10 +55,11 @@ void main() {
           'Post a Job',
           'My Jobs',
           'Applications',
-          'Hires',
           'Payments',
         ]),
       );
+      // Client hires live under My Jobs (consolidated) — no Hires entry.
+      expect(labels, isNot(contains('Hires')));
       expect(labels, isNot(contains('Find Jobs')));
       expect(labels, isNot(contains('My Applications')));
       expect(labels, isNot(contains('Earnings')));

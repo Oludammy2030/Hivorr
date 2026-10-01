@@ -5,8 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
+import 'package:hivorr/data/entities/conversation.dart';
+import 'package:hivorr/data/entities/hire.dart';
 import 'package:hivorr/data/entities/job.dart';
+import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
+import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -17,20 +21,28 @@ import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
 import 'package:provider/provider.dart';
 
 /// Client's posted jobs with reference tab filters (EP-04-03).
 ///
-/// One page, four selectable views at the top of the body:
+/// One page, six selectable views at the top of the body:
 ///
-/// `All Jobs | Open | In Progress | Completed`
+/// `All Jobs | Open | In Progress | Completed | Cancelled | Disputed`
 ///
 /// backed by `GET job_list_mine(posted)` with client-side filtering:
 /// all → everything, open → `open`, in progress → `awarded`,
-/// completed → `completed`. Draft/paused/cancelled rows only surface under
-/// All Jobs (no server vocabulary change). Card actions reuse the existing
-/// destinations: Applications/title → job detail (applications inbox),
-/// Chat → messages, Close → `cancel` with confirm (hidden once terminal).
+/// completed → `completed`, cancelled → `cancelled`, disputed → jobs with
+/// at least one `disputed` hire (jobs carry no disputed code — disputes live
+/// on the linked hire/contract, consolidated here from the former Hires hub).
+/// Draft/paused rows only surface under All Jobs (no server vocabulary
+/// change). Card actions reuse the existing destinations: Applications/title
+/// → job detail (applications inbox), Chat → messages, Close → `cancel` with
+/// confirm (hidden once terminal). Each card also carries its Engagements
+/// (linked hires consolidated from Hires): live status badges plus View Hire
+/// (hire detail), Message (contract thread), Contract (escrow), Cancel Hire
+/// (pending, with confirm), Complete Hire (completed contract) and File
+/// Dispute (escrow) — same seams the hire detail uses.
 /// Visual direction matches the My Posted Jobs reference: light page
 /// background, white two-column cards, pill tabs, green price, blue
 /// applications CTA.
@@ -47,6 +59,8 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
     _JobsTab(label: 'Open', key: 'open'),
     _JobsTab(label: 'In Progress', key: 'awarded'),
     _JobsTab(label: 'Completed', key: 'completed'),
+    _JobsTab(label: 'Cancelled', key: 'cancelled'),
+    _JobsTab(label: 'Disputed', key: 'disputed'),
   ];
 
   static const double _contentMaxWidth = 1120;
@@ -54,6 +68,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
 
   String _activeTab = 'all';
   final Set<String> _closing = <String>{};
+  final Set<String> _actingHires = <String>{};
 
   @override
   void initState() {
@@ -61,9 +76,26 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() => context.read<JobProvider>().loadMine(role: 'posted');
+  Future<void> _load() async {
+    final JobProvider jobs = context.read<JobProvider>();
+    final HireProvider hires = context.read<HireProvider>();
+    await jobs.loadMine(role: 'posted');
+    await hires.loadList(role: 'client');
+  }
 
-  List<Job> _filtered(List<Job> posted) {
+  Future<void> _refreshHires() =>
+      context.read<HireProvider>().loadList(role: 'client');
+
+  /// Groups client hires by their job for card-level engagement sections.
+  Map<String, List<Hire>> _hiresByJob(List<Hire> hires) {
+    final Map<String, List<Hire>> byJob = <String, List<Hire>>{};
+    for (final Hire hire in hires) {
+      byJob.putIfAbsent(hire.jobId, () => <Hire>[]).add(hire);
+    }
+    return byJob;
+  }
+
+  List<Job> _filtered(List<Job> posted, Map<String, List<Hire>> hiresByJob) {
     switch (_activeTab) {
       case 'open':
         return posted.where((Job j) => j.status == 'open').toList();
@@ -71,6 +103,16 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
         return posted.where((Job j) => j.status == 'awarded').toList();
       case 'completed':
         return posted.where((Job j) => j.status == 'completed').toList();
+      case 'cancelled':
+        return posted.where((Job j) => j.status == 'cancelled').toList();
+      case 'disputed':
+        return posted
+            .where(
+              (Job j) => (hiresByJob[j.id] ?? const <Hire>[]).any(
+                (Hire h) => h.liveStatus == 'disputed',
+              ),
+            )
+            .toList();
       case 'all':
       default:
         return posted;
@@ -120,11 +162,95 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
     }
   }
 
+  /// Cancels a pending hire (consolidated from the Hires hub — same
+  /// `HireProvider.cancelHire` seam the hire detail uses).
+  Future<void> _confirmCancelHire(Hire hire) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Cancel hire?'),
+        content: Text(
+          'This will cancel the hire for "${hire.jobTitle ?? 'this job'}" '
+          'and release the professional.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep Hire'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Cancel Hire'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _actingHires.add(hire.id));
+    try {
+      await context.read<HireProvider>().cancelHire(hire.id);
+      if (!mounted) return;
+      _snack('Hire cancelled.', HivorrSnackbarVariant.success);
+      unawaited(_refreshHires());
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _snack(e.message, HivorrSnackbarVariant.error);
+    } finally {
+      if (mounted) setState(() => _actingHires.remove(hire.id));
+    }
+  }
+
+  /// Completes a hire on a completed contract (consolidated from the Hires
+  /// hub — same `HireProvider.completeHire` seam the hire detail uses).
+  Future<void> _completeHire(Hire hire) async {
+    if (_actingHires.contains(hire.id)) return;
+    setState(() => _actingHires.add(hire.id));
+    try {
+      await context.read<HireProvider>().completeHire(hire.id);
+      if (!mounted) return;
+      _snack('Hire completed.', HivorrSnackbarVariant.success);
+      unawaited(_refreshHires());
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _snack(e.message, HivorrSnackbarVariant.error);
+    } finally {
+      if (mounted) setState(() => _actingHires.remove(hire.id));
+    }
+  }
+
+  /// Opens the contract thread for a hire (same
+  /// `MessagingProvider.ensureForContract` seam the hire detail uses),
+  /// falling back to the Messages list when no thread resolves.
+  Future<void> _openHireThread(Hire hire) async {
+    final String contractId = hire.contractId?.trim() ?? '';
+    if (contractId.isEmpty) {
+      if (mounted) context.go(RoutePaths.dashboardMessages);
+      return;
+    }
+    try {
+      final Conversation conversation = await context
+          .read<MessagingProvider>()
+          .ensureForContract(contractId);
+      if (!mounted) return;
+      context.go(RoutePaths.dashboardMessageThread(conversation.id));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _snack(e.message, HivorrSnackbarVariant.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final JobProvider jobs = context.watch<JobProvider>();
+    final HireProvider hireProvider = context.watch<HireProvider>();
     final List<Job> posted = jobs.posted;
-    final List<Job> filtered = _filtered(posted);
+    final Map<String, List<Hire>> hiresByJob = _hiresByJob(
+      hireProvider.hires,
+    );
+    final List<Job> filtered = _filtered(posted, hiresByJob);
     final int openCount = posted.where((Job j) => j.status == 'open').length;
     final bool isMobile = context.breakpoint == Breakpoint.mobile;
 
@@ -181,9 +307,14 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                             filtered: filtered,
                             activeTab: _activeTab,
                             closing: _closing,
+                            hiresByJob: hiresByJob,
+                            actingHires: _actingHires,
                             gridBreakpoint: _gridBreakpoint,
                             onRetry: _load,
                             onClose: _confirmClose,
+                            onCancelHire: _confirmCancelHire,
+                            onCompleteHire: _completeHire,
+                            onMessageHire: _openHireThread,
                           ),
                         ],
                       ),
@@ -415,7 +546,7 @@ class _PageHeader extends StatelessWidget {
   }
 }
 
-/// Pill tab row: All Jobs | Open | In Progress | Completed.
+/// Pill tab row: All Jobs | Open | In Progress | Completed | Cancelled | Disputed.
 class _TabRow extends StatelessWidget {
   const _TabRow({
     required this.tabs,
@@ -502,9 +633,14 @@ class _Body extends StatelessWidget {
     required this.filtered,
     required this.activeTab,
     required this.closing,
+    required this.hiresByJob,
+    required this.actingHires,
     required this.gridBreakpoint,
     required this.onRetry,
     required this.onClose,
+    required this.onCancelHire,
+    required this.onCompleteHire,
+    required this.onMessageHire,
   });
 
   final JobProvider jobs;
@@ -512,9 +648,14 @@ class _Body extends StatelessWidget {
   final List<Job> filtered;
   final String activeTab;
   final Set<String> closing;
+  final Map<String, List<Hire>> hiresByJob;
+  final Set<String> actingHires;
   final double gridBreakpoint;
   final Future<void> Function() onRetry;
   final Future<void> Function(Job job) onClose;
+  final Future<void> Function(Hire hire) onCancelHire;
+  final Future<void> Function(Hire hire) onCompleteHire;
+  final Future<void> Function(Hire hire) onMessageHire;
 
   @override
   Widget build(BuildContext context) {
@@ -549,17 +690,23 @@ class _Body extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
+        Widget card(Job job) => _PostedJobCard(
+              job: job,
+              hires: hiresByJob[job.id] ?? const <Hire>[],
+              closing: closing.contains(job.id),
+              actingHires: actingHires,
+              onClose: () => onClose(job),
+              onCancelHire: onCancelHire,
+              onCompleteHire: onCompleteHire,
+              onMessageHire: onMessageHire,
+            );
         if (c.maxWidth < gridBreakpoint) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               for (int i = 0; i < filtered.length; i++) ...<Widget>[
                 if (i > 0) const SizedBox(height: HivorrSpacing.md),
-                _PostedJobCard(
-                  job: filtered[i],
-                  closing: closing.contains(filtered[i].id),
-                  onClose: () => onClose(filtered[i]),
-                ),
+                card(filtered[i]),
               ],
             ],
           );
@@ -579,21 +726,11 @@ class _Body extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Expanded(
-                    child: _PostedJobCard(
-                      job: rows[r][0],
-                      closing: closing.contains(rows[r][0].id),
-                      onClose: () => onClose(rows[r][0]),
-                    ),
-                  ),
+                  Expanded(child: card(rows[r][0])),
                   const SizedBox(width: HivorrSpacing.md),
                   Expanded(
                     child: rows[r].length > 1
-                        ? _PostedJobCard(
-                            job: rows[r][1],
-                            closing: closing.contains(rows[r][1].id),
-                            onClose: () => onClose(rows[r][1]),
-                          )
+                        ? card(rows[r][1])
                         : const SizedBox.shrink(),
                   ),
                 ],
@@ -609,22 +746,37 @@ class _Body extends StatelessWidget {
         'open' => 'No open jobs',
         'awarded' => 'Nothing in progress',
         'completed' => 'No completed jobs',
+        'cancelled' => 'No cancelled jobs',
+        'disputed' => 'No disputed jobs',
         _ => 'Nothing here yet',
       };
 }
 
 /// Reference job card: category + status pills, green price, title,
-/// client · location, Applications / Chat / Close actions.
+/// client · location, Applications / Chat / Close actions, plus the
+/// Engagements section (linked hires consolidated from the Hires hub).
 class _PostedJobCard extends StatelessWidget {
   const _PostedJobCard({
     required this.job,
+    required this.hires,
     required this.closing,
+    required this.actingHires,
     required this.onClose,
+    required this.onCancelHire,
+    required this.onCompleteHire,
+    required this.onMessageHire,
   });
 
   final Job job;
+
+  /// Linked hires for this job (may be empty — section hidden then).
+  final List<Hire> hires;
   final bool closing;
+  final Set<String> actingHires;
   final VoidCallback onClose;
+  final Future<void> Function(Hire hire) onCancelHire;
+  final Future<void> Function(Hire hire) onCompleteHire;
+  final Future<void> Function(Hire hire) onMessageHire;
 
   bool get _closable => job.isEditable || job.isAwarded;
 
@@ -711,6 +863,16 @@ class _PostedJobCard extends StatelessWidget {
                   ),
               ],
             ),
+            if (hires.isNotEmpty) ...<Widget>[
+              const SizedBox(height: HivorrSpacing.md),
+              _EngagementsBlock(
+                hires: hires,
+                actingHires: actingHires,
+                onCancelHire: onCancelHire,
+                onCompleteHire: onCompleteHire,
+                onMessageHire: onMessageHire,
+              ),
+            ],
           ],
         ),
       ),
@@ -720,6 +882,177 @@ class _PostedJobCard extends StatelessWidget {
   String _subtitle(Job job) {
     final String location = (job.location ?? '').trim();
     return location.isEmpty ? 'Remote' : location;
+  }
+}
+
+/// Engagements consolidated from the Hires hub: one row per linked hire
+/// with its live status badge plus the hire-level actions that previously
+/// lived behind Hires → hire detail.
+///
+/// Cancel Hire (pending hires, confirmed), Complete Hire (completed
+/// contracts), Message (contract thread), Contract (linked escrow) and File
+/// Dispute (escrow dispute filing) all reuse the hire-detail seams — nothing
+/// is duplicated, and no hire data, record or workflow is lost.
+class _EngagementsBlock extends StatelessWidget {
+  const _EngagementsBlock({
+    required this.hires,
+    required this.actingHires,
+    required this.onCancelHire,
+    required this.onCompleteHire,
+    required this.onMessageHire,
+  });
+
+  final List<Hire> hires;
+  final Set<String> actingHires;
+  final Future<void> Function(Hire hire) onCancelHire;
+  final Future<void> Function(Hire hire) onCompleteHire;
+  final Future<void> Function(Hire hire) onMessageHire;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    return Container(
+      padding: const EdgeInsets.all(HivorrSpacing.md),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(
+          alpha: context.isDarkMode ? 1.0 : 0.45,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Engagements (${hires.length})',
+            style: context.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          for (int i = 0; i < hires.length; i++) ...<Widget>[
+            if (i > 0) const SizedBox(height: HivorrSpacing.sm),
+            _EngagementRow(
+              hire: hires[i],
+              acting: actingHires.contains(hires[i].id),
+              warningFill: ext.warningContainer,
+              warningForeground: ext.warning,
+              onCancelHire: onCancelHire,
+              onCompleteHire: onCompleteHire,
+              onMessageHire: onMessageHire,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EngagementRow extends StatelessWidget {
+  const _EngagementRow({
+    required this.hire,
+    required this.acting,
+    required this.warningFill,
+    required this.warningForeground,
+    required this.onCancelHire,
+    required this.onCompleteHire,
+    required this.onMessageHire,
+  });
+
+  final Hire hire;
+  final bool acting;
+  final Color warningFill;
+  final Color warningForeground;
+  final Future<void> Function(Hire hire) onCancelHire;
+  final Future<void> Function(Hire hire) onCompleteHire;
+  final Future<void> Function(Hire hire) onMessageHire;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final String? contractId = hire.contractId?.trim().isEmpty ?? true
+        ? null
+        : hire.contractId!.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                hire.jobTitle ?? 'Hire',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: HivorrSpacing.sm),
+            HiringStatusBadge(code: hire.liveStatus),
+          ],
+        ),
+        const SizedBox(height: HivorrSpacing.xs),
+        Wrap(
+          spacing: HivorrSpacing.sm,
+          runSpacing: HivorrSpacing.sm,
+          children: <Widget>[
+            _GhostButton(
+              label: 'View Hire',
+              icon: Icons.visibility_outlined,
+              fill: colors.primaryContainer.withValues(
+                alpha: context.isDarkMode ? 0.5 : 0.7,
+              ),
+              foreground: colors.primary,
+              onTap: () =>
+                  context.go(RoutePaths.dashboardHireDetail(hire.id)),
+            ),
+            _GhostButton(
+              label: 'Message',
+              icon: Icons.chat_bubble_outline,
+              fill: colors.surface,
+              foreground: colors.onSurfaceVariant,
+              onTap: () => onMessageHire(hire),
+            ),
+            if (contractId != null)
+              _GhostButton(
+                label: 'Contract',
+                icon: Icons.lock_outline,
+                fill: colors.surface,
+                foreground: colors.onSurfaceVariant,
+                onTap: () =>
+                    context.go('/finance/escrow/$contractId'),
+              ),
+            if (hire.isPending)
+              _GhostButton(
+                label: acting ? 'Cancelling…' : 'Cancel Hire',
+                icon: Icons.close,
+                fill: colors.errorContainer,
+                foreground: colors.error,
+                onTap: acting ? null : () => onCancelHire(hire),
+              ),
+            if (hire.liveStatus == 'completed')
+              _GhostButton(
+                label: acting ? 'Working…' : 'Complete Hire',
+                icon: Icons.check_circle_outline,
+                fill: colors.primary,
+                foreground: colors.onPrimary,
+                onTap: acting ? null : () => onCompleteHire(hire),
+              ),
+            if (contractId != null)
+              _GhostButton(
+                label: 'File Dispute',
+                icon: Icons.flag_outlined,
+                fill: warningFill,
+                foreground: warningForeground,
+                onTap: () =>
+                    context.go(RoutePaths.disputesFile(contractId)),
+              ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
