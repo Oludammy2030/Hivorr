@@ -73,8 +73,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (!AdminGate.isAdmin(admin)) {
       return SafeArea(
         child: HivorrEmptyState(
-          icon: Icon(Icons.admin_panel_settings_outlined,
-              color: context.colorScheme.primary),
+          icon: Icon(
+            Icons.admin_panel_settings_outlined,
+            color: context.colorScheme.primary,
+          ),
           title: 'Admin access required',
           subtitle: 'You do not have platform admin privileges.',
         ),
@@ -103,8 +105,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (liveUsers != null && liveUsers > 0) {
       totalUsers = _formatCount(liveUsers);
     }
-    final String activeJobs =
-        liveJobs != null && liveJobs > 0 ? _formatCount(liveJobs) : '1,247';
+    final String activeJobs = liveJobs != null && liveJobs > 0
+        ? _formatCount(liveJobs)
+        : '1,247';
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -144,8 +147,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     value: totalUsers,
                     sub: '+12% MTD',
                     subColor: context.roleTheme.clientPrimary,
-                    onTap: () =>
-                        context.go(RoutePaths.adminManageUsers),
+                    onTap: () => context.go(RoutePaths.adminManageUsers),
                   ),
                   _OverviewStatCard(
                     icon: Icons.work_outline,
@@ -174,8 +176,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     value: '14',
                     sub: '-3 this week',
                     subColor: const Color(0xFFEF4444),
-                    onTap: () => context.go(
-                        RoutePaths.adminVerificationApprovals),
+                    onTap: () =>
+                        context.go(RoutePaths.adminVerificationApprovals),
                   ),
                   const _OverviewStatCard(
                     icon: Icons.lock_outline,
@@ -202,10 +204,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Expanded(
-                      flex: 2,
-                      child: _RevenueCard(),
-                    ),
+                    const Expanded(flex: 2, child: _RevenueCard()),
                     const SizedBox(width: HivorrSpacing.lg),
                     Expanded(
                       flex: 1,
@@ -213,7 +212,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         children: <Widget>[
                           _FlaggedCard(
                             onOpen: () => context.go(
-                                RoutePaths.adminVerificationApprovals),
+                              RoutePaths.adminVerificationApprovals,
+                            ),
                           ),
                           const SizedBox(height: HivorrSpacing.lg),
                           const _JobSplitCard(),
@@ -243,8 +243,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String _todayLabel() {
     final DateTime now = DateTime.now();
     const List<String> months = <String>[
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
@@ -275,8 +285,7 @@ class _StatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const double gap = HivorrSpacing.md;
-    final double cardWidth =
-        (maxWidth - gap * (columns - 1)) / columns;
+    final double cardWidth = (maxWidth - gap * (columns - 1)) / columns;
     return Wrap(
       spacing: gap,
       runSpacing: gap,
@@ -456,7 +465,13 @@ class _RevenueCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               for (final String tick in <String>[
-                '1', '3', '5', '7', '9', '11', '13'
+                '1',
+                '3',
+                '5',
+                '7',
+                '9',
+                '11',
+                '13',
               ])
                 Text(
                   tick,

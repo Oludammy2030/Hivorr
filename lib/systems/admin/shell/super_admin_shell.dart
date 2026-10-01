@@ -135,8 +135,10 @@ class _SuperAdminShellState extends State<SuperAdminShell> {
     );
   }
 
-  AdminReviewProvider? _maybeAdmin(BuildContext context,
-      {bool listen = false}) {
+  AdminReviewProvider? _maybeAdmin(
+    BuildContext context, {
+    bool listen = false,
+  }) {
     try {
       return listen
           ? context.watch<AdminReviewProvider>()
@@ -163,9 +165,7 @@ class _AdminTopBar extends StatelessWidget {
     return Container(
       color: colors.surface,
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: colors.outlineVariant),
-        ),
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: HivorrSpacing.lg,
@@ -207,8 +207,11 @@ class _AdminTopBar extends StatelessWidget {
 }
 
 class _ChromeButton extends StatelessWidget {
-  const _ChromeButton(
-      {required this.icon, required this.onTap, required this.tooltip});
+  const _ChromeButton({
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
@@ -370,9 +373,6 @@ class _Workspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: const Color(0xFFF0F2F8),
-      child: child,
-    );
+    return ColoredBox(color: const Color(0xFFF0F2F8), child: child);
   }
 }

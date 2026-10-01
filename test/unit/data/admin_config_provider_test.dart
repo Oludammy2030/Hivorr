@@ -40,8 +40,10 @@ void main() {
         ),
         isNull,
       );
-      expect(await writer.setToggle(AdminConfigToggle.maintenanceMode, true),
-          isNull);
+      expect(
+        await writer.setToggle(AdminConfigToggle.maintenanceMode, true),
+        isNull,
+      );
 
       final AdminConfigProvider reader = build();
       await reader.load();
@@ -110,9 +112,9 @@ void main() {
       await provider.load();
 
       expect(
-          await provider.setToggle(
-              AdminConfigToggle.registrations, false),
-          isNull);
+        await provider.setToggle(AdminConfigToggle.registrations, false),
+        isNull,
+      );
       expect(provider.registrationsEnabled, isFalse);
 
       final AdminConfigProvider reader = build();

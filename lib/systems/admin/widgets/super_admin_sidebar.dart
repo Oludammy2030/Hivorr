@@ -21,11 +21,7 @@ import 'package:provider/provider.dart';
 /// Verification & Approvals, Jobs, plus Payments / Settings as disabled
 /// coming-soon placeholders. No duplicate services or routes.
 class SuperAdminSidebar extends StatefulWidget {
-  const SuperAdminSidebar({
-    super.key,
-    required this.location,
-    this.onNavigate,
-  });
+  const SuperAdminSidebar({super.key, required this.location, this.onNavigate});
 
   final String location;
   final VoidCallback? onNavigate;
@@ -119,7 +115,8 @@ class _SuperAdminSidebarState extends State<SuperAdminSidebar> {
                   icon: Icons.bar_chart_outlined,
                   activeIcon: Icons.bar_chart,
                   label: 'Overview',
-                  selected: widget.location == RoutePaths.adminDashboard ||
+                  selected:
+                      widget.location == RoutePaths.adminDashboard ||
                       widget.location == '/admin' ||
                       widget.location == '/admin/',
                   onTap: () => _go(context, RoutePaths.adminDashboard),
@@ -153,7 +150,8 @@ class _SuperAdminSidebarState extends State<SuperAdminSidebar> {
                   icon: Icons.verified_user_outlined,
                   activeIcon: Icons.verified_user,
                   label: 'Verification &\nApprovals',
-                  selected: widget.location.startsWith('/admin/review-queue') ||
+                  selected:
+                      widget.location.startsWith('/admin/review-queue') ||
                       widget.location.startsWith('/admin/verifications'),
                   onTap: () =>
                       _go(context, RoutePaths.adminVerificationApprovals),
@@ -208,9 +206,7 @@ class _UsersParent extends StatelessWidget {
     return Column(
       children: <Widget>[
         Material(
-          color: parentActive
-              ? colors.secondaryContainer
-              : Colors.transparent,
+          color: parentActive ? colors.secondaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             onTap: onToggle,
@@ -238,10 +234,10 @@ class _UsersParent extends StatelessWidget {
                     child: Text(
                       'Users',
                       style: context.textTheme.labelMedium?.copyWith(
-                        fontWeight:
-                            parentActive ? FontWeight.w700 : FontWeight.w500,
-                        color:
-                            parentActive ? admin : colors.onSurfaceVariant,
+                        fontWeight: parentActive
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: parentActive ? admin : colors.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -259,7 +255,8 @@ class _UsersParent extends StatelessWidget {
           const SizedBox(height: 2),
           _SubItem(
             label: 'All Users',
-            selected: location == RoutePaths.adminManageUsers ||
+            selected:
+                location == RoutePaths.adminManageUsers ||
                 location == '/admin/users',
             onTap: () => onNavigate(RoutePaths.adminManageUsers),
           ),
@@ -297,8 +294,7 @@ class _SubItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Material(
-        color:
-            selected ? colors.secondaryContainer : Colors.transparent,
+        color: selected ? colors.secondaryContainer : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onTap,
@@ -322,8 +318,7 @@ class _SubItem extends StatelessWidget {
                 Text(
                   label,
                   style: context.textTheme.labelSmall?.copyWith(
-                    fontWeight:
-                        selected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     color: selected ? admin : colors.onSurfaceVariant,
                   ),
                 ),
@@ -355,8 +350,7 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final Color admin = context.roleTheme.adminPrimary;
-    final Color fg =
-        selected ? admin : colors.onSurfaceVariant;
+    final Color fg = selected ? admin : colors.onSurfaceVariant;
 
     return Material(
       color: selected ? colors.secondaryContainer : Colors.transparent,
@@ -383,8 +377,7 @@ class _NavItem extends StatelessWidget {
                 child: Text(
                   label,
                   style: context.textTheme.labelMedium?.copyWith(
-                    fontWeight:
-                        selected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     color: fg,
                   ),
                 ),
@@ -494,7 +487,10 @@ class _AdminIdentityRow extends StatelessWidget {
     } catch (_) {
       // Provider absent (isolated widget test) — fall through.
     }
-    return const _AdminIdentity(name: 'Super Admin', displayName: 'Super Admin');
+    return const _AdminIdentity(
+      name: 'Super Admin',
+      displayName: 'Super Admin',
+    );
   }
 
   String _prettifyEmailPrefix(String email) {
@@ -503,8 +499,10 @@ class _AdminIdentityRow extends StatelessWidget {
     final List<String> words = local
         .split(RegExp(r'[._\-]+'))
         .where((String part) => part.isNotEmpty)
-        .map((String part) =>
-            part[0].toUpperCase() + part.substring(1).toLowerCase())
+        .map(
+          (String part) =>
+              part[0].toUpperCase() + part.substring(1).toLowerCase(),
+        )
         .toList(growable: false);
     if (words.isEmpty) return 'Super Admin';
     return words.join(' ');

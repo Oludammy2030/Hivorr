@@ -173,11 +173,11 @@ class AdminConfigProvider extends ChangeNotifier {
   }
 
   bool _valueOf(AdminConfigToggle toggle) => switch (toggle) {
-        AdminConfigToggle.registrations => _registrationsEnabled,
-        AdminConfigToggle.jobPosting => _jobPostingEnabled,
-        AdminConfigToggle.autoKycApproval => _autoKycApprovalEnabled,
-        AdminConfigToggle.maintenanceMode => _maintenanceModeEnabled,
-      };
+    AdminConfigToggle.registrations => _registrationsEnabled,
+    AdminConfigToggle.jobPosting => _jobPostingEnabled,
+    AdminConfigToggle.autoKycApproval => _autoKycApprovalEnabled,
+    AdminConfigToggle.maintenanceMode => _maintenanceModeEnabled,
+  };
 
   void _setValue(AdminConfigToggle toggle, bool enabled) {
     switch (toggle) {
@@ -209,31 +209,31 @@ class AdminConfigProvider extends ChangeNotifier {
     }
 
     _platformFeePercent = asDouble(
-        raw['platformFeePercent'], defaultPlatformFeePercent);
-    _escrowReleaseDays =
-        asInt(raw['escrowReleaseDays'], defaultEscrowReleaseDays);
-    _maxJobBudgetUsd =
-        asDouble(raw['maxJobBudgetUsd'], defaultMaxJobBudgetUsd);
-    _minJobBudgetUsd =
-        asDouble(raw['minJobBudgetUsd'], defaultMinJobBudgetUsd);
+      raw['platformFeePercent'],
+      defaultPlatformFeePercent,
+    );
+    _escrowReleaseDays = asInt(
+      raw['escrowReleaseDays'],
+      defaultEscrowReleaseDays,
+    );
+    _maxJobBudgetUsd = asDouble(raw['maxJobBudgetUsd'], defaultMaxJobBudgetUsd);
+    _minJobBudgetUsd = asDouble(raw['minJobBudgetUsd'], defaultMinJobBudgetUsd);
     _registrationsEnabled = asBool(raw['registrationsEnabled'], true);
     _jobPostingEnabled = asBool(raw['jobPostingEnabled'], true);
-    _autoKycApprovalEnabled =
-        asBool(raw['autoKycApprovalEnabled'], false);
-    _maintenanceModeEnabled =
-        asBool(raw['maintenanceModeEnabled'], false);
+    _autoKycApprovalEnabled = asBool(raw['autoKycApprovalEnabled'], false);
+    _maintenanceModeEnabled = asBool(raw['maintenanceModeEnabled'], false);
   }
 
   Future<void> _persist() => _storage.put(box, _key, <String, dynamic>{
-        'platformFeePercent': _platformFeePercent,
-        'escrowReleaseDays': _escrowReleaseDays,
-        'maxJobBudgetUsd': _maxJobBudgetUsd,
-        'minJobBudgetUsd': _minJobBudgetUsd,
-        'registrationsEnabled': _registrationsEnabled,
-        'jobPostingEnabled': _jobPostingEnabled,
-        'autoKycApprovalEnabled': _autoKycApprovalEnabled,
-        'maintenanceModeEnabled': _maintenanceModeEnabled,
-      });
+    'platformFeePercent': _platformFeePercent,
+    'escrowReleaseDays': _escrowReleaseDays,
+    'maxJobBudgetUsd': _maxJobBudgetUsd,
+    'minJobBudgetUsd': _minJobBudgetUsd,
+    'registrationsEnabled': _registrationsEnabled,
+    'jobPostingEnabled': _jobPostingEnabled,
+    'autoKycApprovalEnabled': _autoKycApprovalEnabled,
+    'maintenanceModeEnabled': _maintenanceModeEnabled,
+  });
 }
 
 /// The four platform toggles from the Admin Settings reference.

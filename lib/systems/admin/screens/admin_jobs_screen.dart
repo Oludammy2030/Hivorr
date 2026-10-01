@@ -76,8 +76,10 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
     if (!AdminGate.isAdmin(admin)) {
       return SafeArea(
         child: HivorrEmptyState(
-          icon: Icon(Icons.admin_panel_settings_outlined,
-              color: context.colorScheme.primary),
+          icon: Icon(
+            Icons.admin_panel_settings_outlined,
+            color: context.colorScheme.primary,
+          ),
           title: 'Admin access required',
           subtitle: 'You do not have platform admin privileges.',
         ),
@@ -92,8 +94,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
         child: HivorrErrorState(
           message: 'Could not load jobs',
           detail: jobs.lastError!.message,
-          onRetry: () =>
-              unawaited(jobs.loadDiscovery(refresh: true)),
+          onRetry: () => unawaited(jobs.loadDiscovery(refresh: true)),
         ),
       );
     }
@@ -138,22 +139,18 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                     maxWidth: constraints.maxWidth,
                     jobs: jobs,
                     actingIds: _actingIds,
-                    onView: (Job job) => context.push(
-                      RoutePaths.dashboardJobDetail(job.id),
-                    ),
-                    onRemove: (Job job) =>
-                        _removeJob(context, jobs, job),
+                    onView: (Job job) =>
+                        context.push(RoutePaths.dashboardJobDetail(job.id)),
+                    onRemove: (Job job) => _removeJob(context, jobs, job),
                   )
                 else
                   for (final Job job in jobs.discovery) ...<Widget>[
                     _ModerationCard(
                       job: job,
                       acting: _actingIds.contains(job.id),
-                      onView: () => context.push(
-                        RoutePaths.dashboardJobDetail(job.id),
-                      ),
-                      onRemove: () =>
-                          _removeJob(context, jobs, job),
+                      onView: () =>
+                          context.push(RoutePaths.dashboardJobDetail(job.id)),
+                      onRemove: () => _removeJob(context, jobs, job),
                     ),
                     const SizedBox(height: HivorrSpacing.md),
                   ],
@@ -166,9 +163,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                       child: jobs.isLoading
                           ? const CircularProgressIndicator()
                           : OutlinedButton(
-                              onPressed: () => unawaited(
-                                jobs.loadDiscovery(),
-                              ),
+                              onPressed: () => unawaited(jobs.loadDiscovery()),
                               child: const Text('Load more'),
                             ),
                     ),
@@ -192,7 +187,8 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
     final bool confirmed = await _confirm(
       context,
       title: 'Remove',
-      message: 'Remove "${job.title}"? This cancels the job across the '
+      message:
+          'Remove "${job.title}"? This cancels the job across the '
           'platform. Cancellation runs through the standard job lifecycle, '
           'so the owning client retains authority.',
       confirmLabel: 'Remove',
@@ -202,15 +198,15 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
     try {
       await jobs.cancel(job.id, reason: 'Admin moderation removal');
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Job removed.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Job removed.')));
       unawaited(jobs.loadDiscovery(refresh: true));
     } on ApiException catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Removal failed: ${e.message}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Removal failed: ${e.message}')));
     } finally {
       if (mounted) setState(() => _actingIds.remove(job.id));
     }
@@ -385,8 +381,9 @@ class _ModerationCard extends StatelessWidget {
                 icon: Icons.visibility_outlined,
                 label: 'View',
                 foreground: colors.onSurfaceVariant,
-                background: colors.surfaceContainerHighest
-                    .withValues(alpha: 0.45),
+                background: colors.surfaceContainerHighest.withValues(
+                  alpha: 0.45,
+                ),
                 onTap: acting ? null : onView,
               ),
               if (removable) ...<Widget>[
@@ -502,32 +499,30 @@ _JobStatusLook _lookFor(String status, BuildContext context) {
   final ColorScheme colors = context.colorScheme;
   return switch (status) {
     'open' => const _JobStatusLook(
-        label: 'open',
-        color: Color(0xFF16A34A),
-        background: Color(0xFFDCFCE7),
-      ),
+      label: 'open',
+      color: Color(0xFF16A34A),
+      background: Color(0xFFDCFCE7),
+    ),
     'paused' || 'awarded' => const _JobStatusLook(
-        label: 'in-progress',
-        color: Color(0xFFF97316),
-        background: Color(0xFFFFF7ED),
-      ),
+      label: 'in-progress',
+      color: Color(0xFFF97316),
+      background: Color(0xFFFFF7ED),
+    ),
     'completed' => _JobStatusLook(
-        label: 'completed',
-        color: colors.onSurfaceVariant,
-        background:
-            colors.surfaceContainerHighest.withValues(alpha: 0.5),
-      ),
+      label: 'completed',
+      color: colors.onSurfaceVariant,
+      background: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+    ),
     'cancelled' => const _JobStatusLook(
-        label: 'cancelled',
-        color: Color(0xFFEF4444),
-        background: Color(0xFFFEF2F2),
-      ),
+      label: 'cancelled',
+      color: Color(0xFFEF4444),
+      background: Color(0xFFFEF2F2),
+    ),
     _ => _JobStatusLook(
-        label: status,
-        color: colors.onSurfaceVariant,
-        background:
-            colors.surfaceContainerHighest.withValues(alpha: 0.5),
-      ),
+      label: status,
+      color: colors.onSurfaceVariant,
+      background: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+    ),
   };
 }
 
@@ -539,8 +534,7 @@ String? _categoryOf(BuildContext context, Job job) {
   if (taxonomy == null) return null;
   final String? professionId = job.professionId;
   if (professionId != null && professionId.isNotEmpty) {
-    for (final List<Profession> list
-        in taxonomy.professionsByIndustry.values) {
+    for (final List<Profession> list in taxonomy.professionsByIndustry.values) {
       for (final Profession profession in list) {
         if (profession.id == professionId) return profession.name;
       }
@@ -581,8 +575,7 @@ String _priceOf(Job job) {
 
 /// Real location (when set) plus the relative publish time.
 String _subtitleOf(Job job) {
-  final String when =
-      HivorrFormatters.relative(job.postedAt ?? job.createdAt);
+  final String when = HivorrFormatters.relative(job.postedAt ?? job.createdAt);
   final String? location = job.location?.trim();
   if (location != null && location.isNotEmpty) {
     return '$location · $when';

@@ -86,8 +86,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     if (!AdminGate.isAdmin(admin)) {
       return SafeArea(
         child: HivorrEmptyState(
-          icon: Icon(Icons.admin_panel_settings_outlined,
-              color: context.colorScheme.primary),
+          icon: Icon(
+            Icons.admin_panel_settings_outlined,
+            color: context.colorScheme.primary,
+          ),
           title: 'Admin access required',
           subtitle: 'You do not have platform admin privileges.',
         ),
@@ -98,8 +100,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     if (config == null) {
       return SafeArea(
         child: HivorrEmptyState(
-          icon: Icon(Icons.settings_outlined,
-              color: context.colorScheme.primary),
+          icon: Icon(
+            Icons.settings_outlined,
+            color: context.colorScheme.primary,
+          ),
           title: 'Settings unavailable',
           subtitle: 'Configuration storage is not connected here.',
         ),
@@ -272,8 +276,7 @@ class _FeeCardState extends State<_FeeCard> {
                 : const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               filled: true,
-              fillColor:
-                  colors.surfaceContainerHighest.withValues(alpha: 0.35),
+              fillColor: colors.surfaceContainerHighest.withValues(alpha: 0.35),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -357,8 +360,7 @@ class _FeeCardState extends State<_FeeCard> {
             )
           else
             fields[0],
-          SizedBox(
-              height: widget.twoCol ? HivorrSpacing.md : HivorrSpacing.sm),
+          SizedBox(height: widget.twoCol ? HivorrSpacing.md : HivorrSpacing.sm),
           if (widget.twoCol)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,9 +381,7 @@ class _FeeCardState extends State<_FeeCard> {
           Align(
             alignment: Alignment.centerLeft,
             child: ElevatedButton(
-              onPressed: config.isSaving
-                  ? null
-                  : () => _save(context, config),
+              onPressed: config.isSaving ? null : () => _save(context, config),
               style: ElevatedButton.styleFrom(
                 backgroundColor: context.roleTheme.clientPrimary,
                 foregroundColor: Colors.white,
@@ -415,10 +415,7 @@ class _FeeCardState extends State<_FeeCard> {
     );
   }
 
-  Future<void> _save(
-    BuildContext context,
-    AdminConfigProvider config,
-  ) async {
+  Future<void> _save(BuildContext context, AdminConfigProvider config) async {
     setState(() {
       _feeError = null;
       _daysError = null;
@@ -458,9 +455,9 @@ class _FeeCardState extends State<_FeeCard> {
     );
     if (!context.mounted) return;
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Configuration saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Configuration saved.')));
     } else {
       if (error.contains('fee')) {
         setState(() => _feeError = error);
@@ -471,9 +468,9 @@ class _FeeCardState extends State<_FeeCard> {
       } else if (error.contains('Min')) {
         setState(() => _minError = error);
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
   }
 }
@@ -511,13 +508,11 @@ class _TogglesCard extends StatelessWidget {
                 activeTrackColor: context.roleTheme.clientPrimary,
                 onChanged: config.isSaving
                     ? null
-                    : (bool next) =>
-                        _flip(context, config, toggle, next),
+                    : (bool next) => _flip(context, config, toggle, next),
               ),
             ],
           ),
-          if (!last)
-            Divider(height: 1, color: colors.outlineVariant),
+          if (!last) Divider(height: 1, color: colors.outlineVariant),
         ],
       );
     }
@@ -575,9 +570,9 @@ class _TogglesCard extends StatelessWidget {
     final String? error = await config.setToggle(toggle, next);
     if (!context.mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
   }
 }
@@ -621,8 +616,7 @@ class _PreferencesCard extends StatelessWidget {
               _CheckRow(
                 label: locale.toLanguageTag(),
                 selected: locale == locales.currentLocale,
-                onTap: () =>
-                    unawaited(locales!.setLocale(locale)),
+                onTap: () => unawaited(locales!.setLocale(locale)),
               ),
             ],
         ],
@@ -656,16 +650,14 @@ class _CheckRow extends StatelessWidget {
               child: Text(
                 label,
                 style: context.textTheme.bodyMedium?.copyWith(
-                  fontWeight:
-                      selected ? FontWeight.w700 : FontWeight.w400,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
             ),
             Icon(
               selected ? Icons.check_circle : Icons.circle_outlined,
               size: 20,
-              color:
-                  selected ? colors.primary : colors.onSurfaceVariant,
+              color: selected ? colors.primary : colors.onSurfaceVariant,
             ),
           ],
         ),
@@ -786,8 +778,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final PasswordPolicyResult result =
-        _policy.evaluate(_controller.text);
+    final PasswordPolicyResult result = _policy.evaluate(_controller.text);
     return AlertDialog(
       title: const Text('Change Password'),
       content: SingleChildScrollView(
@@ -818,8 +809,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
       ),
       actions: <Widget>[
         TextButton(
-          onPressed:
-              _saving ? null : () => Navigator.of(context).pop(false),
+          onPressed: _saving ? null : () => Navigator.of(context).pop(false),
           child: const Text('Cancel'),
         ),
         TextButton(
@@ -841,12 +831,9 @@ class _PasswordDialogState extends State<_PasswordDialog> {
   Future<void> _submit(BuildContext context) async {
     setState(() => _saving = true);
     try {
-      await context
-          .read<AuthProvider>()
-          .updatePassword(_controller.text);
+      await context.read<AuthProvider>().updatePassword(_controller.text);
       if (!context.mounted) return;
-      final String? failure =
-          context.read<AuthProvider>().lastError?.message;
+      final String? failure = context.read<AuthProvider>().lastError?.message;
       if (failure != null) {
         setState(() {
           _error = failure;
@@ -855,9 +842,9 @@ class _PasswordDialogState extends State<_PasswordDialog> {
         return;
       }
       Navigator.of(context).pop(true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password updated.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Password updated.')));
     } catch (_) {
       if (!context.mounted) return;
       setState(() {

@@ -307,8 +307,9 @@ class AppBootstrap {
     adminReview = registerAdminReviewLayer(apiLayer);
     final ({ManageUserRepository repository, ManageUserProvider provider})
     manageUser = registerManageUserLayer(apiLayer);
-    final AdminConfigProvider adminConfig =
-        AdminConfigProvider(storage: storage);
+    final AdminConfigProvider adminConfig = AdminConfigProvider(
+      storage: storage,
+    );
     await adminConfig.load();
     return BootstrapResult(
       appConfig: appConfig,

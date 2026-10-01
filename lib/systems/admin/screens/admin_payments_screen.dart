@@ -91,8 +91,10 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
     if (!AdminGate.isAdmin(admin)) {
       return SafeArea(
         child: HivorrEmptyState(
-          icon: Icon(Icons.admin_panel_settings_outlined,
-              color: context.colorScheme.primary),
+          icon: Icon(
+            Icons.admin_panel_settings_outlined,
+            color: context.colorScheme.primary,
+          ),
           title: 'Admin access required',
           subtitle: 'You do not have platform admin privileges.',
         ),
@@ -168,8 +170,8 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                     value: pending,
                     sub: 'Payout-readiness pipeline',
                     subColor: context.appExtension.success,
-                    onTap: () => context.go(
-                        RoutePaths.adminVerificationApprovals),
+                    onTap: () =>
+                        context.go(RoutePaths.adminVerificationApprovals),
                   ),
                 ],
               ),
@@ -180,13 +182,9 @@ class _AdminPaymentsScreenState extends State<AdminPaymentsScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Expanded(
-                      child: _KycReadinessCard(users: users),
-                    ),
+                    Expanded(child: _KycReadinessCard(users: users)),
                     const SizedBox(width: HivorrSpacing.lg),
-                    const Expanded(
-                      child: _EscrowHoldingsCard(),
-                    ),
+                    const Expanded(child: _EscrowHoldingsCard()),
                   ],
                 )
               else ...<Widget>[
@@ -217,8 +215,7 @@ class _StatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const double gap = HivorrSpacing.md;
-    final double cardWidth =
-        (maxWidth - gap * (columns - 1)) / columns;
+    final double cardWidth = (maxWidth - gap * (columns - 1)) / columns;
     return Wrap(
       spacing: gap,
       runSpacing: gap,
@@ -367,8 +364,9 @@ class _KycReadinessCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final ManageUserProvider? provider = users;
-    final List<HivorrBarDatum> items =
-        provider == null ? const <HivorrBarDatum>[] : _kycOf(provider);
+    final List<HivorrBarDatum> items = provider == null
+        ? const <HivorrBarDatum>[]
+        : _kycOf(provider);
 
     return _Panel(
       child: Column(
@@ -389,12 +387,13 @@ class _KycReadinessCard extends StatelessWidget {
                 color: colors.secondaryContainer,
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
-                  onTap: () =>
-                      context.go(RoutePaths.adminManageUsers),
+                  onTap: () => context.go(RoutePaths.adminManageUsers),
                   borderRadius: BorderRadius.circular(10),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: Text(
                       'View Users',
                       style: context.textTheme.labelMedium?.copyWith(
@@ -414,15 +413,14 @@ class _KycReadinessCard extends StatelessWidget {
           else ...<Widget>[
             HivorrMiniBars(
               items: items,
-              emptyLabel:
-                  'No KYC tiers on the loaded directory rows yet.',
+              emptyLabel: 'No KYC tiers on the loaded directory rows yet.',
               accent: context.roleTheme.adminPrimary,
             ),
             const SizedBox(height: HivorrSpacing.sm),
             Text(
               provider.isListHydrated
                   ? 'Across ${provider.users.length} loaded rows · '
-                      '${provider.totalCount} total users'
+                        '${provider.totalCount} total users'
                   : 'Directory not loaded yet.',
               style: context.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
@@ -517,10 +515,7 @@ _Demand _demandOf(List<Job> jobs) {
       .where((Job job) => (job.budgetMax ?? job.budgetMin) != null)
       .toList(growable: false);
   if (budgeted.isEmpty) {
-    return const _Demand(
-      value: '—',
-      sub: 'No budgets in loaded jobs',
-    );
+    return const _Demand(value: '—', sub: 'No budgets in loaded jobs');
   }
   final Map<String, double> sums = <String, double>{};
   final Map<String, int> counts = <String, int>{};
@@ -543,9 +538,9 @@ _Demand _demandOf(List<Job> jobs) {
   };
   final int others = sums.keys.length - 1;
   return _Demand(
-    value:
-        '$symbol${HivorrFormatters.number(sums[top] ?? 0, decimals: 0)}',
-    sub: '${counts[top]} of ${jobs.length} loaded jobs · $top'
+    value: '$symbol${HivorrFormatters.number(sums[top] ?? 0, decimals: 0)}',
+    sub:
+        '${counts[top]} of ${jobs.length} loaded jobs · $top'
         '${others > 0 ? ' · +$others more currencies' : ''}',
   );
 }
@@ -554,13 +549,14 @@ List<HivorrBarDatum> _kycOf(ManageUserProvider provider) {
   final Map<String, int> counts = <String, int>{};
   for (final ManageUserListItem user in provider.users) {
     final String? tier = user.kycTier;
-    final String label =
-        (tier == null || tier.isEmpty) ? 'Unassigned' : tier;
+    final String label = (tier == null || tier.isEmpty) ? 'Unassigned' : tier;
     counts[label] = (counts[label] ?? 0) + 1;
   }
   final List<MapEntry<String, int>> entries = counts.entries.toList()
-    ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
-        b.value.compareTo(a.value));
+    ..sort(
+      (MapEntry<String, int> a, MapEntry<String, int> b) =>
+          b.value.compareTo(a.value),
+    );
   return <HivorrBarDatum>[
     for (final MapEntry<String, int> entry in entries)
       HivorrBarDatum(label: entry.key, value: entry.value),

@@ -55,16 +55,16 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
   String? get _capability => widget.capability;
 
   String get _populationLabel => switch (_capability) {
-        'professional' => 'professionals',
-        'client' => 'clients',
-        _ => 'total users',
-      };
+    'professional' => 'professionals',
+    'client' => 'clients',
+    _ => 'total users',
+  };
 
   String get _emptySubtitle => switch (_capability) {
-        'professional' => 'No professionals match the current filters.',
-        'client' => 'No clients match the current filters.',
-        _ => 'No users match the current search and filters.',
-      };
+    'professional' => 'No professionals match the current filters.',
+    'client' => 'No clients match the current filters.',
+    _ => 'No users match the current search and filters.',
+  };
 
   @override
   void initState() {
@@ -92,13 +92,15 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
       final ManageUserProvider manage = context.read<ManageUserProvider>();
       final AdminReviewProvider admin = context.read<AdminReviewProvider>();
       if (AdminGate.isAdmin(admin)) {
-        unawaited(manage.loadUsers(
-          capability: _capability,
-          search: _searchController.text.trim().isEmpty
-              ? null
-              : _searchController.text.trim(),
-          status: _selectedStatus,
-        ));
+        unawaited(
+          manage.loadUsers(
+            capability: _capability,
+            search: _searchController.text.trim().isEmpty
+                ? null
+                : _searchController.text.trim(),
+            status: _selectedStatus,
+          ),
+        );
       }
     }
   }
@@ -129,7 +131,9 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final bool wide = constraints.maxWidth >= 720;
+        // Table needs room for six columns + action pills (matches the
+        // 900px Jobs grid breakpoint); narrower widths use cards.
+        final bool wide = constraints.maxWidth >= 900;
         return RefreshIndicator(
           onRefresh: () => provider.loadUsers(
             search: provider.search,
@@ -146,8 +150,8 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
                   totalLabel: provider.isListHydrated
                       ? '${_formatCount(provider.totalCount)} $_populationLabel'
                       : (provider.isLoading
-                          ? 'Loading users…'
-                          : 'User directory'),
+                            ? 'Loading users…'
+                            : 'User directory'),
                   exporting: _exporting,
                   canExport: provider.users.isNotEmpty && !_exporting,
                   onExport: () => _exportCsv(context, provider),
@@ -212,7 +216,8 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
     final bool confirmed = await _confirm(
       context,
       title: 'Suspend',
-      message: 'Suspend $name? The account is temporarily disabled. '
+      message:
+          'Suspend $name? The account is temporarily disabled. '
           'You can reactivate it from the user detail screen.',
       confirmLabel: 'Suspend',
     );
@@ -267,8 +272,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
     setState(() => _exporting = true);
     try {
       final String csv = _buildCsv(provider.users);
-      final Uint8List bytes =
-          Uint8List.fromList(utf8.encode(csv));
+      final Uint8List bytes = Uint8List.fromList(utf8.encode(csv));
       final Uri? saved = await FilePicker.saveFile(
         dialogTitle: 'Export users CSV',
         fileName: 'hivorr_users.csv',
@@ -282,16 +286,16 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
             saved == null
                 ? 'Export cancelled.'
                 : kIsWeb
-                    ? 'Exported ${provider.users.length} users to downloads.'
-                    : 'Exported ${provider.users.length} users to $saved.',
+                ? 'Exported ${provider.users.length} users to downloads.'
+                : 'Exported ${provider.users.length} users to $saved.',
           ),
         ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -300,20 +304,23 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
   String _buildCsv(List<ManageUserListItem> users) {
     final StringBuffer out = StringBuffer();
     out.writeln(
-        'id,display_name,legal_name,capability,status,kyc_tier,roles,is_admin,onboarding_completed,created_at');
+      'id,display_name,legal_name,capability,status,kyc_tier,roles,is_admin,onboarding_completed,created_at',
+    );
     for (final ManageUserListItem user in users) {
-      out.writeln(<String>[
-        _csvCell(user.id),
-        _csvCell(user.displayName),
-        _csvCell(user.legalName ?? ''),
-        _csvCell(user.capability ?? ''),
-        _csvCell(user.status),
-        _csvCell(user.kycTier ?? ''),
-        _csvCell(user.roles.join(';')),
-        _csvCell(user.isAdmin ? 'true' : 'false'),
-        _csvCell(user.onboardingCompleted ? 'true' : 'false'),
-        _csvCell(user.createdAt.toIso8601String()),
-      ].join(','));
+      out.writeln(
+        <String>[
+          _csvCell(user.id),
+          _csvCell(user.displayName),
+          _csvCell(user.legalName ?? ''),
+          _csvCell(user.capability ?? ''),
+          _csvCell(user.status),
+          _csvCell(user.kycTier ?? ''),
+          _csvCell(user.roles.join(';')),
+          _csvCell(user.isAdmin ? 'true' : 'false'),
+          _csvCell(user.onboardingCompleted ? 'true' : 'false'),
+          _csvCell(user.createdAt.toIso8601String()),
+        ].join(','),
+      );
     }
     return out.toString();
   }
@@ -505,8 +512,7 @@ class _SearchField extends StatelessWidget {
               ? 'Filter by status'
               : 'Status: $selectedStatus',
           onSelected: onStatusSelected,
-          itemBuilder: (BuildContext context) =>
-              <PopupMenuEntry<String?>>[
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String?>>[
             const PopupMenuItem<String?>(
               value: null,
               child: Text('All statuses'),
@@ -591,8 +597,7 @@ class _Body extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.all(HivorrSpacing.xl),
         child: HivorrEmptyState(
-          icon: Icon(Icons.group_outlined,
-              color: context.colorScheme.primary),
+          icon: Icon(Icons.group_outlined, color: context.colorScheme.primary),
           title: 'No users found',
           subtitle: emptySubtitle,
         ),
@@ -643,18 +648,12 @@ class _UserTable extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
           child: Row(
             children: <Widget>[
-              Expanded(
-                flex: 22,
-                child: _HeaderLabel('User'),
-              ),
+              Expanded(flex: 22, child: _HeaderLabel('User')),
               Expanded(flex: 11, child: _HeaderLabel('Role')),
               Expanded(flex: 6, child: _HeaderLabel('Jobs')),
               Expanded(flex: 9, child: _HeaderLabel('Status')),
               Expanded(flex: 9, child: _HeaderLabel('Joined')),
-              Expanded(
-                flex: 14,
-                child: _HeaderLabel('Actions'),
-              ),
+              Expanded(flex: 14, child: _HeaderLabel('Actions')),
             ],
           ),
         ),
@@ -972,14 +971,12 @@ class _RolePill extends StatelessWidget {
     final bool employer = label == 'Employer';
     final Color fg = professional
         ? const Color(0xFF16A34A)
-        : (employer
-            ? const Color(0xFF2D3FE7)
-            : context.roleTheme.adminPrimary);
+        : (employer ? const Color(0xFF2D3FE7) : context.roleTheme.adminPrimary);
     final Color bg = professional
         ? const Color(0xFFDCFCE7)
         : (employer
-            ? const Color(0xFFEEF0FD)
-            : context.colorScheme.secondaryContainer);
+              ? const Color(0xFFEEF0FD)
+              : context.colorScheme.secondaryContainer);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -1026,18 +1023,14 @@ class _StatusDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _StatusLook look =
-        _lookFor(status, context, onboardingCompleted);
+    final _StatusLook look = _lookFor(status, context, onboardingCompleted);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Container(
           width: 6,
           height: 6,
-          decoration: BoxDecoration(
-            color: look.color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: look.color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(
@@ -1060,24 +1053,31 @@ class _StatusLook {
 }
 
 _StatusLook _lookFor(
-    String status, BuildContext context, bool onboardingCompleted) {
+  String status,
+  BuildContext context,
+  bool onboardingCompleted,
+) {
   if (status == 'active' && !onboardingCompleted) {
-    return const _StatusLook(
-        label: 'Pending', color: Color(0xFFF97316));
+    return const _StatusLook(label: 'Pending', color: Color(0xFFF97316));
   }
   return switch (status) {
-    'active' => const _StatusLook(
-        label: 'Active', color: Color(0xFF16A34A)),
+    'active' => const _StatusLook(label: 'Active', color: Color(0xFF16A34A)),
     'suspended' => const _StatusLook(
-        label: 'Suspended', color: Color(0xFFEF4444)),
+      label: 'Suspended',
+      color: Color(0xFFEF4444),
+    ),
     'deactivated' => _StatusLook(
-        label: 'Deactivated',
-        color: context.colorScheme.onSurfaceVariant),
+      label: 'Deactivated',
+      color: context.colorScheme.onSurfaceVariant,
+    ),
     'deleted' => _StatusLook(
-        label: 'Deleted', color: context.colorScheme.onSurfaceVariant),
+      label: 'Deleted',
+      color: context.colorScheme.onSurfaceVariant,
+    ),
     _ => _StatusLook(
-        label: status,
-        color: context.colorScheme.onSurfaceVariant),
+      label: status,
+      color: context.colorScheme.onSurfaceVariant,
+    ),
   };
 }
 
@@ -1153,9 +1153,7 @@ String _displayNameOf(ManageUserListItem user) {
 String _subtitleOf(ManageUserListItem user) {
   final String display = user.displayName;
   final String? legal = user.legalName;
-  if (legal != null &&
-      legal.isNotEmpty &&
-      legal != display) {
+  if (legal != null && legal.isNotEmpty && legal != display) {
     return legal;
   }
   if (user.roles.isNotEmpty) return user.roles.join(', ');
@@ -1166,15 +1164,15 @@ String _subtitleOf(ManageUserListItem user) {
 
 /// Screenshot vocabulary for capabilities: `hire` clients are Employers.
 String? _roleLabelOf(String? capability) => switch (capability) {
-      'hire' => 'Employer',
-      'client' => 'Employer',
-      'offer' => 'Professional',
-      'professional' => 'Professional',
-      'both' => 'Both',
-      null => null,
-      '' => null,
-      _ => capability,
-    };
+  'hire' => 'Employer',
+  'client' => 'Employer',
+  'offer' => 'Professional',
+  'professional' => 'Professional',
+  'both' => 'Both',
+  null => null,
+  '' => null,
+  _ => capability,
+};
 
 String _initialsOf(String name) {
   final List<String> words = name
@@ -1201,18 +1199,12 @@ class _AvatarTint {
 
 _AvatarTint _tintFor(String name) {
   const List<_AvatarTint> tints = <_AvatarTint>[
-    _AvatarTint(
-        background: Color(0xFFF3F0FF), foreground: Color(0xFF8B5CF6)),
-    _AvatarTint(
-        background: Color(0xFFDCFCE7), foreground: Color(0xFF16A34A)),
-    _AvatarTint(
-        background: Color(0xFFFFF7ED), foreground: Color(0xFFF97316)),
-    _AvatarTint(
-        background: Color(0xFFEEF0FD), foreground: Color(0xFF2D3FE7)),
-    _AvatarTint(
-        background: Color(0xFFFEF2F2), foreground: Color(0xFFEF4444)),
-    _AvatarTint(
-        background: Color(0xFFE0F2FE), foreground: Color(0xFF0891B2)),
+    _AvatarTint(background: Color(0xFFF3F0FF), foreground: Color(0xFF8B5CF6)),
+    _AvatarTint(background: Color(0xFFDCFCE7), foreground: Color(0xFF16A34A)),
+    _AvatarTint(background: Color(0xFFFFF7ED), foreground: Color(0xFFF97316)),
+    _AvatarTint(background: Color(0xFFEEF0FD), foreground: Color(0xFF2D3FE7)),
+    _AvatarTint(background: Color(0xFFFEF2F2), foreground: Color(0xFFEF4444)),
+    _AvatarTint(background: Color(0xFFE0F2FE), foreground: Color(0xFF0891B2)),
   ];
   int hash = 0;
   for (final int code in name.codeUnits) {
