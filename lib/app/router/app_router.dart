@@ -27,6 +27,8 @@ import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/systems/admin/screens/admin_dashboard_screen.dart';
 import 'package:hivorr/systems/admin/screens/admin_jobs_screen.dart';
+import 'package:hivorr/systems/admin/screens/admin_payments_screen.dart';
+import 'package:hivorr/systems/admin/screens/admin_settings_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
@@ -325,6 +327,18 @@ class AppRouter {
               name: RouteNames.adminJobs,
               builder: (BuildContext context, GoRouterState state) =>
                   const AdminJobsScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.adminPayments,
+              name: RouteNames.adminPayments,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const AdminPaymentsScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.adminSettings,
+              name: RouteNames.adminSettings,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const AdminSettingsScreen(),
             ),
           ],
         ),

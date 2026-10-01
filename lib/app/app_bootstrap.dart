@@ -66,6 +66,7 @@ class BootstrapResult {
     this.adminReviewProvider,
     this.manageUserRepository,
     this.manageUserProvider,
+    this.adminConfigProvider,
   });
 
   final AppConfig appConfig;
@@ -186,6 +187,10 @@ class BootstrapResult {
 
   /// Manage User provider surfaced to the widget tree (EP-02-11).
   final ManageUserProvider? manageUserProvider;
+
+  /// Staged platform-configuration provider for Admin Settings. Optional for
+  /// testability.
+  final AdminConfigProvider? adminConfigProvider;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -302,6 +307,9 @@ class AppBootstrap {
     adminReview = registerAdminReviewLayer(apiLayer);
     final ({ManageUserRepository repository, ManageUserProvider provider})
     manageUser = registerManageUserLayer(apiLayer);
+    final AdminConfigProvider adminConfig =
+        AdminConfigProvider(storage: storage);
+    await adminConfig.load();
     return BootstrapResult(
       appConfig: appConfig,
       apiLayer: apiLayer,
@@ -344,6 +352,7 @@ class AppBootstrap {
       adminReviewProvider: adminReview.provider,
       manageUserRepository: manageUser.repository,
       manageUserProvider: manageUser.provider,
+      adminConfigProvider: adminConfig,
     );
   }
 

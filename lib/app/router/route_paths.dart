@@ -75,6 +75,12 @@ abstract final class RoutePaths {
   /// Admin Jobs & Projects (EP-04-03, platform hiring visibility).
   static const String adminJobs = '/admin/jobs';
 
+  /// Admin Payments (platform money-movement operations).
+  static const String adminPayments = '/admin/payments';
+
+  /// Admin Settings (staged platform configuration).
+  static const String adminSettings = '/admin/settings';
+
   /// KYC status + upgrade screens (EP-02-12).
   static const String kycStatus = '/verification/kyc';
   static const String kycUpgrade = '/verification/kyc/upgrade';
