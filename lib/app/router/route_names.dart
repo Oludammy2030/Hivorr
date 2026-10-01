@@ -53,6 +53,12 @@ abstract final class RouteNames {
   /// Admin Jobs & Projects (EP-04-03).
   static const String adminJobs = 'admin-jobs';
 
+  /// Admin Payments (platform money-movement operations).
+  static const String adminPayments = 'admin-payments';
+
+  /// Admin Settings (staged platform configuration).
+  static const String adminSettings = 'admin-settings';
+
   /// Financial profile routes (EP-02-13).
   static const String finance = 'finance';
   static const String financeCreate = 'finance-create';

@@ -13,6 +13,7 @@ import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
+import 'package:hivorr/data/providers/admin_config_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
@@ -99,6 +100,7 @@ class HivorrApp extends StatefulWidget {
     this.adminReviewProvider,
     this.manageUserRepository,
     this.manageUserProvider,
+    this.adminConfigProvider,
     this.platformFilePicker,
     this.environment = AppEnvironment.production,
   });
@@ -217,6 +219,10 @@ class HivorrApp extends StatefulWidget {
 
   /// Manage User provider surfaced to the widget tree (EP-02-11).
   final ManageUserProvider? manageUserProvider;
+
+  /// Staged platform-configuration provider for Admin Settings. Optional for
+  /// testability; the settings screen shows its loading state when absent.
+  final AdminConfigProvider? adminConfigProvider;
 
   /// Real platform file picker surfaced to feature screens. Optional for
   /// testability; falls back to a fresh instance when omitted.
@@ -450,6 +456,10 @@ class _HivorrAppState extends State<HivorrApp> {
         if (widget.manageUserProvider != null)
           ChangeNotifierProvider<ManageUserProvider>.value(
             value: widget.manageUserProvider!,
+          ),
+        if (widget.adminConfigProvider != null)
+          ChangeNotifierProvider<AdminConfigProvider>.value(
+            value: widget.adminConfigProvider!,
           ),
         ChangeNotifierProvider<EntryStateProvider>.value(value: _entryState),
         // Both-role operating mode toggle (UI-only, ephemeral — never touches

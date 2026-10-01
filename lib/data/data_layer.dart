@@ -262,6 +262,7 @@ export 'package:hivorr/data/models/trade_verification_dto.dart';
 export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
 export 'package:hivorr/data/models/withdrawal_dto.dart';
+export 'package:hivorr/data/providers/admin_config_provider.dart';
 export 'package:hivorr/data/providers/admin_review_provider.dart';
 export 'package:hivorr/data/providers/conversion_provider.dart';
 export 'package:hivorr/data/providers/dispute_provider.dart';

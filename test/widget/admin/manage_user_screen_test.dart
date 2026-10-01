@@ -47,19 +47,22 @@ void main() {
   }
 
   group('ManageUserScreen layout', () {
-    testWidgets('renders the app bar title', (WidgetTester tester) async {
+    testWidgets('renders the User Management title', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
-      expect(find.text('All Users'), findsOneWidget);
+      expect(find.text('User Management'), findsOneWidget);
       await unmount(tester);
     });
 
-    testWidgets('renders capability-filtered title', (
+    testWidgets('keeps the User Management title for capability views', (
       WidgetTester tester,
     ) async {
       final FakeManageUserRepository resolvedManage =
           FakeManageUserRepository();
-      final FakeAdminReviewRepository resolvedAdmin =
-          FakeAdminReviewRepository(isAdmin: true);
+      final FakeAdminReviewRepository resolvedAdmin = FakeAdminReviewRepository(
+        isAdmin: true,
+      );
       final ManageUserProvider manageProvider = ManageUserProvider(
         repo: resolvedManage,
       );
@@ -80,7 +83,8 @@ void main() {
       );
       await tester.pump();
       await tester.pump();
-      expect(find.text('Professionals'), findsOneWidget);
+      expect(find.text('User Management'), findsOneWidget);
+      expect(find.text('0 professionals'), findsOneWidget);
       await unmount(tester);
     });
 
@@ -125,8 +129,8 @@ void main() {
       );
       expect(find.text('Ada Lovelace'), findsOneWidget);
       expect(find.text('Grace Hopper'), findsOneWidget);
-      expect(find.text('active'), findsOneWidget);
-      expect(find.text('suspended'), findsOneWidget);
+      expect(find.text('Active'), findsOneWidget);
+      expect(find.text('Suspended'), findsOneWidget);
       await unmount(tester);
     });
   });

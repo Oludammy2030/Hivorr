@@ -2,25 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/app/widgets/logo_variants.dart';
+import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/widgets/hivorr_avatar.dart';
+import 'package:provider/provider.dart';
 
 /// Narrow left-side navigation for the Super Admin shell.
 ///
-/// Per §13: narrow enough to preserve the workspace; responsive.
-/// Per §2: initial items Dashboard, Verification & Approvals, Users (with
-/// nested submenu), plus future sections as disabled/coming-soon.
+/// Visual source of truth: Super Admin Dashboard reference screenshots —
+/// white sidebar, official [LogoHorizontal] lockup, `Admin Dashboard`
+/// section label, pill-style selected item, grey unselected items, and a
+/// bottom Super Admin identity row with live profile data (never hardcoded).
 ///
-/// The Users submenu is the same Hivorr population filtered by `capability`:
-///   All Users     → /admin/users (no capability param)
-///   Professionals → /admin/users/professionals (capability=professional)
-///   Clients       → /admin/users/clients (capability=client)
+/// Functional source of truth: existing Hivorr architecture. Keeps the
+/// Users submenu (All / Professionals / Clients filtered by `capability`),
+/// Verification & Approvals, Jobs, plus Payments / Settings as disabled
+/// coming-soon placeholders. No duplicate services or routes.
 class SuperAdminSidebar extends StatefulWidget {
-  const SuperAdminSidebar({
-    super.key,
-    required this.location,
-    this.onNavigate,
-  });
+  const SuperAdminSidebar({super.key, required this.location, this.onNavigate});
 
   final String location;
   final VoidCallback? onNavigate;
@@ -55,53 +56,72 @@ class _SuperAdminSidebarState extends State<SuperAdminSidebar> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final TextTheme text = context.textTheme;
 
     return Container(
       color: colors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
+          // Official Hivorr lockup, top-left as in the reference.
+          const Padding(
+            padding: EdgeInsets.fromLTRB(
               HivorrSpacing.lg,
-              HivorrSpacing.xl,
+              HivorrSpacing.lg,
               HivorrSpacing.lg,
               HivorrSpacing.md,
             ),
-            child: Text(
-              'HIVORR\nSUPER ADMIN',
-              style: text.labelMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-                color: colors.primary,
-                height: 1.2,
-              ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: LogoHorizontal(height: 32),
+            ),
+          ),
+          // Section label: purple dot + "Admin Dashboard".
+          Container(
+            color: colors.secondaryContainer.withValues(alpha: 0.45),
+            padding: const EdgeInsets.symmetric(
+              horizontal: HivorrSpacing.lg,
+              vertical: 10,
+            ),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: context.roleTheme.adminPrimary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: HivorrSpacing.sm),
+                Text(
+                  'Admin Dashboard',
+                  style: context.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.roleTheme.adminPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
           Divider(height: 1, color: colors.outlineVariant),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: HivorrSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                vertical: HivorrSpacing.sm,
+                horizontal: 12,
+              ),
               children: <Widget>[
                 _NavItem(
-                  icon: Icons.dashboard_outlined,
-                  activeIcon: Icons.dashboard,
-                  label: 'Dashboard',
-                  selected: widget.location == RoutePaths.adminDashboard ||
+                  icon: Icons.bar_chart_outlined,
+                  activeIcon: Icons.bar_chart,
+                  label: 'Overview',
+                  selected:
+                      widget.location == RoutePaths.adminDashboard ||
                       widget.location == '/admin' ||
                       widget.location == '/admin/',
                   onTap: () => _go(context, RoutePaths.adminDashboard),
                 ),
-                _NavItem(
-                  icon: Icons.verified_user_outlined,
-                  activeIcon: Icons.verified_user,
-                  label: 'Verification &\nApprovals',
-                  selected: widget.location.startsWith('/admin/review-queue') ||
-                      widget.location == RoutePaths.adminVerificationApprovals,
-                  onTap: () =>
-                      _go(context, RoutePaths.adminVerificationApprovals),
-                ),
+                const SizedBox(height: 2),
                 _UsersParent(
                   expanded: _usersExpanded,
                   location: widget.location,
@@ -109,68 +129,46 @@ class _SuperAdminSidebarState extends State<SuperAdminSidebar> {
                       setState(() => _usersExpanded = !_usersExpanded),
                   onNavigate: (String path) => _go(context, path),
                 ),
+                const SizedBox(height: 2),
                 _NavItem(
                   icon: Icons.work_outline,
                   activeIcon: Icons.work,
-                  label: 'Jobs & Projects',
+                  label: 'Jobs',
                   selected: widget.location.startsWith('/admin/jobs'),
                   onTap: () => _go(context, RoutePaths.adminJobs),
                 ),
+                const SizedBox(height: 2),
                 _NavItem(
-                  icon: Icons.flag_outlined,
-                  activeIcon: Icons.flag,
-                  label: 'Reports / Moderation',
-                  enabled: false,
-                  badge: 'Soon',
-                  selected: widget.location.startsWith('/admin/reports'),
-                  onTap: () {},
+                  icon: Icons.account_balance_wallet_outlined,
+                  activeIcon: Icons.account_balance_wallet,
+                  label: 'Payments',
+                  selected: widget.location.startsWith('/admin/payments'),
+                  onTap: () => _go(context, RoutePaths.adminPayments),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: HivorrSpacing.md,
-                    vertical: HivorrSpacing.xs,
-                  ),
-                  child: Divider(height: 1, color: colors.outlineVariant),
+                const SizedBox(height: 2),
+                _NavItem(
+                  icon: Icons.verified_user_outlined,
+                  activeIcon: Icons.verified_user,
+                  label: 'Verification &\nApprovals',
+                  selected:
+                      widget.location.startsWith('/admin/review-queue') ||
+                      widget.location.startsWith('/admin/verifications'),
+                  onTap: () =>
+                      _go(context, RoutePaths.adminVerificationApprovals),
                 ),
+                const SizedBox(height: 2),
                 _NavItem(
                   icon: Icons.settings_outlined,
                   activeIcon: Icons.settings,
                   label: 'Settings',
-                  enabled: false,
-                  badge: 'Soon',
                   selected: widget.location.startsWith('/admin/settings'),
-                  onTap: () {},
+                  onTap: () => _go(context, RoutePaths.adminSettings),
                 ),
               ],
             ),
           ),
           Divider(height: 1, color: colors.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(HivorrSpacing.md),
-            child: InkWell(
-              onTap: () => context.go(RoutePaths.home),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: HivorrSpacing.xs,
-                  horizontal: HivorrSpacing.sm,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Icon(Icons.arrow_back,
-                        size: 16, color: colors.onSurfaceVariant),
-                    const SizedBox(width: HivorrSpacing.sm),
-                    Text(
-                      'Back to app',
-                      style: text.labelSmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          _AdminIdentityRow(onNavigate: widget.onNavigate),
         ],
       ),
     );
@@ -180,11 +178,6 @@ class _SuperAdminSidebarState extends State<SuperAdminSidebar> {
     widget.onNavigate?.call();
     if (widget.location != path) {
       context.go(path);
-    } else {
-      // already there — still close drawer on mobile
-      if (widget.onNavigate != null) {
-        // drawer already handled
-      }
     }
   }
 }
@@ -207,55 +200,63 @@ class _UsersParent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final TextTheme text = context.textTheme;
     final bool parentActive = _isUsersSection;
+    final Color admin = context.roleTheme.adminPrimary;
 
     return Column(
       children: <Widget>[
-        InkWell(
-          onTap: onToggle,
-          child: Container(
-            color: parentActive
-                ? colors.primary.withValues(alpha: 0.08)
-                : Colors.transparent,
-            padding: const EdgeInsets.symmetric(
-              horizontal: HivorrSpacing.lg,
-              vertical: 12,
-            ),
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  parentActive ? Icons.group : Icons.group_outlined,
-                  size: 20,
-                  color:
-                      parentActive ? colors.primary : colors.onSurfaceVariant,
-                ),
-                const SizedBox(width: HivorrSpacing.md),
-                Expanded(
-                  child: Text(
-                    'Users',
-                    style: text.labelMedium?.copyWith(
-                      fontWeight:
-                          parentActive ? FontWeight.w700 : FontWeight.w500,
-                      color: parentActive
-                          ? colors.primary
-                          : colors.onSurfaceVariant,
+        Material(
+          color: parentActive ? colors.secondaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: parentActive
+                  ? BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colors.outline),
+                    )
+                  : null,
+              padding: const EdgeInsets.symmetric(
+                horizontal: HivorrSpacing.md,
+                vertical: 12,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    parentActive ? Icons.people : Icons.people_outlined,
+                    size: 20,
+                    color: parentActive ? admin : colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: HivorrSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Users',
+                      style: context.textTheme.labelMedium?.copyWith(
+                        fontWeight: parentActive
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: parentActive ? admin : colors.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                ),
-                Icon(
-                  expanded ? Icons.expand_more : Icons.chevron_right,
-                  size: 18,
-                  color: colors.onSurfaceVariant,
-                ),
-              ],
+                  Icon(
+                    expanded ? Icons.expand_more : Icons.chevron_right,
+                    size: 18,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         if (expanded) ...<Widget>[
+          const SizedBox(height: 2),
           _SubItem(
             label: 'All Users',
-            selected: location == RoutePaths.adminManageUsers ||
+            selected:
+                location == RoutePaths.adminManageUsers ||
                 location == '/admin/users',
             onTap: () => onNavigate(RoutePaths.adminManageUsers),
           ),
@@ -289,36 +290,41 @@ class _SubItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        color:
-            selected ? colors.primary.withValues(alpha: 0.10) : Colors.transparent,
-        padding: const EdgeInsets.only(
-          left: 56,
-          right: HivorrSpacing.lg,
-          top: 10,
-          bottom: 10,
-        ),
-        child: Row(
-          children: <Widget>[
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: selected ? colors.primary : colors.outline,
-                shape: BoxShape.circle,
-              ),
+    final Color admin = context.roleTheme.adminPrimary;
+    return Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: Material(
+        color: selected ? colors.secondaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: HivorrSpacing.md,
+              vertical: 10,
             ),
-            const SizedBox(width: HivorrSpacing.sm),
-            Text(
-              label,
-              style: context.textTheme.labelSmall?.copyWith(
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? colors.primary : colors.onSurfaceVariant,
-              ),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: selected ? admin : colors.outline,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: HivorrSpacing.sm),
+                Text(
+                  label,
+                  style: context.textTheme.labelSmall?.copyWith(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? admin : colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -332,8 +338,6 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.enabled = true,
-    this.badge,
   });
 
   final IconData icon;
@@ -341,69 +345,173 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final bool enabled;
-  final String? badge;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final Widget content = InkWell(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        color: selected
-            ? colors.primary.withValues(alpha: 0.08)
-            : Colors.transparent,
-        padding: const EdgeInsets.symmetric(
-          horizontal: HivorrSpacing.lg,
-          vertical: 12,
-        ),
-        child: Row(
-          children: <Widget>[
-            Icon(
-              selected ? activeIcon : icon,
-              size: 20,
-              color: enabled
-                  ? (selected ? colors.primary : colors.onSurfaceVariant)
-                  : colors.outline,
-            ),
-            const SizedBox(width: HivorrSpacing.md),
-            Expanded(
-              child: Text(
-                label,
-                style: context.textTheme.labelMedium?.copyWith(
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: enabled
-                      ? (selected ? colors.primary : colors.onSurface)
-                      : colors.outline,
-                ),
-              ),
-            ),
-            if (badge != null)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.outlineVariant,
-                  borderRadius: BorderRadius.circular(999),
-                ),
+    final Color admin = context.roleTheme.adminPrimary;
+    final Color fg = selected ? admin : colors.onSurfaceVariant;
+
+    return Material(
+      color: selected ? colors.secondaryContainer : Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: selected
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colors.outline),
+                )
+              : null,
+          padding: const EdgeInsets.symmetric(
+            horizontal: HivorrSpacing.md,
+            vertical: 12,
+          ),
+          child: Row(
+            children: <Widget>[
+              Icon(selected ? activeIcon : icon, size: 20, color: fg),
+              const SizedBox(width: HivorrSpacing.md),
+              Expanded(
                 child: Text(
-                  badge!,
-                  style: context.textTheme.labelSmall?.copyWith(
-                    fontSize: 9,
-                    color: colors.onSurfaceVariant,
+                  label,
+                  style: context.textTheme.labelMedium?.copyWith(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: fg,
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-
-    if (!enabled) {
-      return Opacity(opacity: 0.6, child: content);
-    }
-    return content;
   }
+}
+
+/// Bottom identity row: live Super Admin profile + sign-out.
+///
+/// Name/initials resolve from [AuthProvider.currentSession] (full name,
+/// display name, then email prefix). Never hardcoded — falls back to
+/// "Super Admin" / "SA" only when no session is available (e.g. tests).
+class _AdminIdentityRow extends StatelessWidget {
+  const _AdminIdentityRow({this.onNavigate});
+
+  final VoidCallback? onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final _AdminIdentity identity = _resolveIdentity(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(HivorrSpacing.md),
+      child: Row(
+        children: <Widget>[
+          HivorrAvatar(
+            name: identity.name,
+            size: 36,
+            backgroundColor: colors.secondaryContainer,
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  identity.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.onSurface,
+                  ),
+                ),
+                Text(
+                  'Admin',
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Sign out',
+            icon: Icon(
+              Icons.logout_outlined,
+              size: 20,
+              color: colors.onSurfaceVariant,
+            ),
+            onPressed: () => _signOut(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    onNavigate?.call();
+    try {
+      await context.read<AuthProvider>().signOut();
+    } catch (_) {
+      if (context.mounted) context.go(RoutePaths.home);
+    }
+  }
+
+  _AdminIdentity _resolveIdentity(BuildContext context) {
+    try {
+      final AuthProvider auth = context.watch<AuthProvider>();
+      final session = auth.currentSession;
+      final String? full = session?.fullName;
+      if (full != null && full.trim().isNotEmpty) {
+        final String name = full.trim();
+        return _AdminIdentity(
+          name: name,
+          // Keep the generic Super Admin label only when nothing usable
+          // exists; a real full name always wins.
+          displayName: name,
+        );
+      }
+      final String? display = session?.displayName?.trim();
+      if (display != null && display.isNotEmpty) {
+        return _AdminIdentity(name: display, displayName: display);
+      }
+      final String? email = session?.email;
+      if (email != null && email.isNotEmpty) {
+        final String pretty = _prettifyEmailPrefix(email);
+        return _AdminIdentity(name: pretty, displayName: pretty);
+      }
+    } catch (_) {
+      // Provider absent (isolated widget test) — fall through.
+    }
+    return const _AdminIdentity(
+      name: 'Super Admin',
+      displayName: 'Super Admin',
+    );
+  }
+
+  String _prettifyEmailPrefix(String email) {
+    final String local = email.split('@').first.trim();
+    if (local.isEmpty) return 'Super Admin';
+    final List<String> words = local
+        .split(RegExp(r'[._\-]+'))
+        .where((String part) => part.isNotEmpty)
+        .map(
+          (String part) =>
+              part[0].toUpperCase() + part.substring(1).toLowerCase(),
+        )
+        .toList(growable: false);
+    if (words.isEmpty) return 'Super Admin';
+    return words.join(' ');
+  }
+}
+
+class _AdminIdentity {
+  const _AdminIdentity({required this.name, required this.displayName});
+
+  final String name;
+  final String displayName;
 }
