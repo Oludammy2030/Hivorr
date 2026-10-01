@@ -9,7 +9,7 @@ import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/repositories/hire_repository.dart';
 import 'package:hivorr/data/repositories/job_repository.dart';
-import 'package:hivorr/systems/dashboard/screens/provider_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/profile_screen.dart';
 import 'package:hivorr/systems/jobs/services/hire_service.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
@@ -88,7 +88,7 @@ class _SessionAuth extends FakeAuthProvider {
   AuthSession? get currentSession => session;
 }
 
-Future<void> pumpProvider(
+Future<void> pumpProfile(
   WidgetTester tester, {
   required String email,
   required EntityCapability capability,
@@ -128,7 +128,7 @@ Future<void> pumpProvider(
       ],
       child: MaterialApp(
         theme: AppTheme.lightTheme,
-        home: const Scaffold(body: ProviderScreen()),
+        home: const Scaffold(body: ProfileScreen()),
       ),
     ),
   );
@@ -138,14 +138,15 @@ Future<void> pumpProvider(
 void main() {
   testWidgets('desktop shows authenticated client identity, no reference data',
       (tester) async {
-    await pumpProvider(
+    await pumpProfile(
       tester,
       email: 'amara.diallo@example.com',
       capability: EntityCapability.hire,
     );
     expect(tester.takeException(), isNull);
-    expect(find.text('Provider'), findsWidgets);
-    expect(find.text('Provider Profile'), findsOneWidget);
+    expect(find.text('Profile'), findsWidgets);
+    expect(find.text('Provider'), findsNothing);
+    expect(find.text('Provider Profile'), findsNothing);
     expect(find.text('Amara Diallo'), findsWidgets);
     expect(find.text('amara.diallo@example.com'), findsWidgets);
     expect(find.text('Client'), findsWidgets);
@@ -166,23 +167,27 @@ void main() {
 
   testWidgets('different professional user gets own identity, no stale data',
       (tester) async {
-    await pumpProvider(
+    await pumpProfile(
       tester,
       email: 'john.adewale@example.com',
       capability: EntityCapability.offer,
     );
     expect(tester.takeException(), isNull);
+    // Offer capability renders the professional reference page with the
+    // session-derived identity (email-prefix fallback — no first/last
+    // names staged on this session).
     expect(find.text('John Adewale'), findsWidgets);
     expect(find.text('JA'), findsWidgets);
     expect(find.text('Professional'), findsWidgets);
-    expect(find.text('My Work'), findsOneWidget);
+    expect(find.text('Personal Information'), findsOneWidget);
+    expect(find.text('Profile Stats'), findsOneWidget);
     expect(find.text('Amara Diallo'), findsNothing);
     expect(find.text('Client'), findsNothing);
     expect(find.text('Employer'), findsNothing);
   });
 
   testWidgets('missing email renders honest empty states', (tester) async {
-    await pumpProvider(
+    await pumpProfile(
       tester,
       email: '',
       capability: EntityCapability.both,
@@ -206,7 +211,7 @@ void main() {
       1024,
       1440,
     ]) {
-      await pumpProvider(
+      await pumpProfile(
         tester,
         email: 'amara.diallo@example.com',
         capability: EntityCapability.hire,
@@ -219,8 +224,8 @@ void main() {
         reason: 'exception at ${w.toInt()}px',
       );
       expect(
-        find.text('Provider Profile'),
-        findsOneWidget,
+        find.text('Profile'),
+        findsWidgets,
         reason: 'heading missing at ${w.toInt()}px',
       );
       expect(

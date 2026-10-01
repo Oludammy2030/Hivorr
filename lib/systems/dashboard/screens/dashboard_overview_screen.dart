@@ -509,8 +509,8 @@ class _MetricsGrid extends StatelessWidget {
             subtitle: 'Client side',
             accent: roles.clientPrimary,
             accentContainer: roles.clientContainer,
-            onTap: () =>
-                context.go('${RoutePaths.dashboardHires}?role=client'),
+            // Consolidated: client hires now live under My Jobs.
+            onTap: () => context.go(RoutePaths.dashboardJobs),
           ),
         ),
       ]);
@@ -889,7 +889,7 @@ class _ClientTopBar extends StatelessWidget {
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Tooltip(
-            message: 'Provider',
+            message: 'Profile',
             child: InkWell(
               onTap: () => context.go(RoutePaths.dashboardAccount),
               borderRadius: BorderRadius.circular(999),
@@ -2163,8 +2163,8 @@ class _ClientStatsGrid extends StatelessWidget {
             value: loading ? '…' : '$activeHires',
             sub: 'in progress',
             subColor: ext.success,
-            onTap: () =>
-                context.go('${RoutePaths.dashboardHires}?role=client'),
+            // Consolidated: client hires now live under My Jobs.
+            onTap: () => context.go(RoutePaths.dashboardJobs),
           ),
           _RailStatCard(
             icon: Icons.attach_money,

@@ -208,14 +208,11 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     section: DashboardNavSection.hiring,
     showForOffer: false,
   ),
-  DashboardNavItem(
-    label: 'Hires',
-    icon: Icons.handshake_outlined,
-    activeIcon: Icons.handshake,
-    location: '/dashboard/hires?role=client',
-    section: DashboardNavSection.hiring,
-    showForOffer: false,
-  ),
+  // NOTE: the client `Hires` hub was consolidated into `My Jobs`
+  // (engagements + Cancelled/Disputed tabs live on the job cards), so no
+  // client-side Hires destination remains. The professional `My Work`
+  // (`/dashboard/hires?role=professional`) and the hire-detail route stay —
+  // My Jobs engagement actions deep-link into them.
   DashboardNavItem(
     label: 'Payments',
     icon: Icons.payments_outlined,
@@ -240,7 +237,7 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     section: DashboardNavSection.shared,
   ),
   DashboardNavItem(
-    label: 'Provider',
+    label: 'Profile',
     icon: Icons.person_outline,
     activeIcon: Icons.person,
     location: '/dashboard/account',

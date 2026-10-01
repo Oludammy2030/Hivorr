@@ -56,7 +56,8 @@ void main() {
       expect(find.text('My Jobs'), findsOneWidget);
       expect(find.text('Messages'), findsOneWidget);
       expect(find.text('Earnings'), findsOneWidget);
-      expect(find.text('Portfolio'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Portfolio'), findsNothing);
       // Preserved overflow: remaining work/shared destinations live under
       // MORE instead of being removed.
       expect(find.text('MORE'), findsOneWidget);

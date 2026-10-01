@@ -42,7 +42,7 @@ import 'package:hivorr/systems/dashboard/screens/messages_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/my_jobs_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/notifications_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
-import 'package:hivorr/systems/dashboard/screens/provider_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/profile_screen.dart';
 import 'package:hivorr/systems/dashboard/shell/hivorr_dashboard_shell.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
@@ -210,7 +210,7 @@ class AppRouter {
           path: RoutePaths.profile,
           name: RouteNames.profile,
           builder: (BuildContext context, GoRouterState state) =>
-              const ProviderScreen(),
+              const ProfileScreen(),
         ),
         GoRoute(
           path: RoutePaths.settings,
@@ -426,7 +426,7 @@ class AppRouter {
               path: RoutePaths.dashboardAccount,
               name: RouteNames.dashboardAccount,
               builder: (BuildContext context, GoRouterState state) =>
-                  const ProviderScreen(),
+                  const ProfileScreen(),
             ),
             GoRoute(
               path: RoutePaths.dashboardSettings,

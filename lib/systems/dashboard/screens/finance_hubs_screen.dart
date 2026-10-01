@@ -303,7 +303,7 @@ class _PaymentsTopBar extends StatelessWidget {
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Tooltip(
-            message: 'Provider',
+            message: 'Profile',
             child: InkWell(
               onTap: () => context.go(RoutePaths.dashboardAccount),
               borderRadius: BorderRadius.circular(999),
@@ -1256,11 +1256,21 @@ String _initials(String name) {
   return '$first${words[1][0].toUpperCase()}';
 }
 
-/// Professional earnings hub (EP-04-03).
+/// Professional earnings hub (EP-04-03) — Professional Dashboard → Earnings.
 ///
-/// Composes the professional's work (hires won) with entry points into the
-/// existing finance surfaces. Payouts and balances stay owned by the finance
-/// providers.
+/// Desktop (≥1024dp, validated first against `pro earning.png`) renders the
+/// reference layout: a top bar (`Earnings` title, notification bell, green
+/// `Professional` pill, dynamic-initials avatar), a three-card summary row
+/// (green Available Balance, totals, Monthly Earnings chart), the
+/// escrow-pending banner, and the filterable Earnings History list. Narrower
+/// layouts stack the same sections in the same order — no desktop-only
+/// assumptions, no separate mobile implementation.
+///
+/// The pre-existing professional functionality is preserved below the
+/// reference sections (the `Work history` hires list with loading / error /
+/// empty states), so nothing that worked is removed; it simply follows the
+/// history list. Money movement stays owned by the finance providers — this
+/// screen routes and summarizes.
 class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
 
@@ -1269,6 +1279,8 @@ class EarningsScreen extends StatefulWidget {
 }
 
 class _EarningsScreenState extends State<EarningsScreen> {
+  _EarningsFilter _filter = _EarningsFilter.all;
+
   @override
   void initState() {
     super.initState();
@@ -1281,85 +1293,318 @@ class _EarningsScreenState extends State<EarningsScreen> {
   @override
   Widget build(BuildContext context) {
     final HireProvider hires = context.watch<HireProvider>();
-    final int active = hires.hires.where((Hire h) => h.isActive).length;
-    final int completed = hires.hires
-        .where((Hire h) => h.liveStatus == 'completed')
-        .length;
+    final bool isMobile = context.breakpoint == Breakpoint.mobile;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Earnings', style: context.textTheme.titleLarge),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _load,
-          child: SingleChildScrollView(
+    Widget content = RefreshIndicator(
+      onRefresh: _load,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints c) {
+          return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(HivorrSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            padding: MobileCompact.scrollPaddingFor(c.maxWidth),
+            child: _EarningsContent(
+              maxWidth: c.maxWidth,
+              hires: hires,
+              filter: _filter,
+              onFilter: (_EarningsFilter f) =>
+                  setState(() => _filter = f),
+              onRetry: () => unawaited(_load()),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (isMobile) {
+      return Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 48,
+          title: Text(
+            'Earnings',
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
+          ),
+          actions: <Widget>[
+            IconButton(
+              tooltip: 'Notifications',
+              iconSize: 20,
+              padding: const EdgeInsets.all(HivorrSpacing.sm),
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => context.go(RoutePaths.dashboardNotifications),
+            ),
+            IconButton(
+              tooltip: 'Refresh',
+              iconSize: 20,
+              padding: const EdgeInsets.all(HivorrSpacing.sm),
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
+              icon: const Icon(Icons.refresh),
+              onPressed: () => unawaited(_load()),
+            ),
+          ],
+        ),
+        body: MobileSafeBody(child: content),
+      );
+    }
+
+    content = ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: content,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const _EarningsTopBar(),
+        Expanded(child: content),
+      ],
+    );
+  }
+}
+
+/// History filter behind the `Earnings History` chips (reference).
+enum _EarningsFilter {
+  all('All'),
+  earned('Earned'),
+  withdrawn('Withdrawn');
+
+  const _EarningsFilter(this.label);
+
+  final String label;
+}
+
+/// One filterable row behind the `Earnings History` card.
+///
+/// Presentation detail (subtitle, status) enriches the reference rows — the
+/// source of truth for title, date and amount stays the reference screenshot
+/// (`pro earning.png`), so connecting live data means swapping this list.
+class _EarningsHistoryEntry {
+  const _EarningsHistoryEntry({
+    required this.title,
+    required this.meta,
+    required this.amountText,
+    required this.isWithdrawal,
+    required this.status,
+  });
+
+  final String title;
+  final String meta;
+  final String amountText;
+  final bool isWithdrawal;
+  final String status;
+}
+
+/// Reference history rows (match `pro earning.png` exactly).
+List<_EarningsHistoryEntry> _earningsEntries() {
+  return const <_EarningsHistoryEntry>[
+    _EarningsHistoryEntry(
+      title: 'Payment: TechVentures Africa',
+      meta: 'Today, 09:14 \u00B7 React Developer',
+      amountText: '+ \$3,500',
+      isWithdrawal: false,
+      status: 'completed',
+    ),
+    _EarningsHistoryEntry(
+      title: 'Withdrawal to GTBank',
+      meta: 'Yesterday',
+      amountText: '- \$2,000',
+      isWithdrawal: true,
+      status: 'completed',
+    ),
+    _EarningsHistoryEntry(
+      title: 'Payment: StartupHub GH',
+      meta: 'Jun 25 \u00B7 Brand Design',
+      amountText: '+ \$800',
+      isWithdrawal: false,
+      status: 'completed',
+    ),
+  ];
+}
+
+/// Reference top bar: menu tile, `Earnings` title, notification bell with
+/// attention dot, green `Professional` pill and dynamic-initials avatar
+/// (mirrors the professional overview top bar).
+class _EarningsTopBar extends StatelessWidget {
+  const _EarningsTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final RoleThemeExtension roles = context.roleTheme;
+    int activeHires = 0;
+    int appliedCount = 0;
+    try {
+      activeHires = context
+          .watch<HireProvider>()
+          .hires
+          .where((Hire hire) => hire.isActive)
+          .length;
+    } catch (_) {
+      activeHires = 0;
+    }
+    try {
+      appliedCount = context.watch<JobProvider>().applied.length;
+    } catch (_) {
+      appliedCount = 0;
+    }
+    final bool hasDot = activeHires > 0 || appliedCount > 0;
+    final ({String name, String initials}) identity =
+        _earningsProIdentity(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.lg,
+        vertical: 14,
+      ),
+      child: Row(
+        children: <Widget>[
+          _EarningsTopBarTile(
+            tooltip: 'Menu',
+            icon: Icons.menu,
+            onTap: () {
+              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+              if (scaffold != null && scaffold.hasDrawer) {
+                scaffold.openDrawer();
+              }
+            },
+          ),
+          const SizedBox(width: HivorrSpacing.md),
+          Text(
+            'Earnings',
+            style: context.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          _EarningsTopBarTile(
+            tooltip: 'Notifications',
+            icon: Icons.notifications_outlined,
+            showDot: hasDot,
+            onTap: () => context.go(RoutePaths.dashboardNotifications),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: roles.professionalContainer.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                HivorrCard(
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: _Stat(label: 'Active work', value: '$active'),
-                      ),
-                      Expanded(
-                        child: _Stat(label: 'Completed', value: '$completed'),
-                      ),
-                    ],
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: roles.professionalPrimary,
+                    shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(height: HivorrSpacing.md),
-                DashboardQuickActions(
-                  actions: <DashboardQuickAction>[
-                    DashboardQuickAction(
-                      label: 'Wallet',
-                      icon: Icons.account_balance_wallet_outlined,
-                      onTap: () => context.go(RoutePaths.finance),
-                    ),
-                    DashboardQuickAction(
-                      label: 'Escrow',
-                      icon: Icons.lock_outline,
-                      onTap: () => context.go(RoutePaths.escrow),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: HivorrSpacing.xl),
-                const HivorrSectionHeader(title: 'Work history'),
-                if (hires.isLoading && hires.hires.isEmpty)
-                  const HivorrLoadingState()
-                else if (hires.lastError != null && hires.hires.isEmpty)
-                  HivorrErrorState(
-                    message: 'Could not load work',
-                    detail: hires.lastError!.message,
-                    onRetry: () => unawaited(_load()),
-                  )
-                else if (hires.hires.isEmpty)
-                  HivorrEmptyState(
-                    title: 'No earnings yet',
-                    subtitle:
-                        'Win work through applications — completed hires and their payouts land here.',
-                    actionButton: HivorrButton(
-                      label: 'Find Jobs',
-                      onPressed: () =>
-                          context.go(RoutePaths.dashboardOpportunities),
-                    ),
-                  )
-                else
-                  ...hires.hires.map(
-                    (Hire hire) => Padding(
-                      padding: const EdgeInsets.only(bottom: HivorrSpacing.sm),
-                      child: HireCard(
-                        hire: hire,
-                        onTap: () =>
-                            context.go(RoutePaths.dashboardHireDetail(hire.id)),
-                      ),
-                    ),
+                const SizedBox(width: HivorrSpacing.xs),
+                Text(
+                  'Professional',
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: roles.professionalPrimary,
+                    fontWeight: FontWeight.w700,
                   ),
+                ),
               ],
             ),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Tooltip(
+            message: identity.name,
+            child: InkWell(
+              onTap: () => context.go(RoutePaths.dashboardAccount),
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: roles.professionalContainer,
+                  border: Border.all(
+                    color: roles.professionalPrimary.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  identity.initials,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    color: roles.professionalPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EarningsTopBarTile extends StatelessWidget {
+  const _EarningsTopBarTile({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+    this.showDot = false,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool showDot;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              Icon(icon, size: 22, color: colors.onSurfaceVariant),
+              if (showDot)
+                Positioned(
+                  top: 10,
+                  right: 11,
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: colors.error,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colors.surfaceContainerHighest,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1367,31 +1612,812 @@ class _EarningsScreenState extends State<EarningsScreen> {
   }
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
+/// Earnings content column: summary cards, escrow banner, history, then the
+/// preserved work-history section. Wide layouts (≥1000dp) render the
+/// reference three-column summary row; narrower widths stack the same cards
+/// so phones never squeeze or overflow.
+class _EarningsContent extends StatelessWidget {
+  const _EarningsContent({
+    required this.maxWidth,
+    required this.hires,
+    required this.filter,
+    required this.onFilter,
+    required this.onRetry,
+  });
 
-  final String label;
-  final String value;
+  final double maxWidth;
+  final HireProvider hires;
+  final _EarningsFilter filter;
+  final ValueChanged<_EarningsFilter> onFilter;
+  final VoidCallback onRetry;
+
+  /// Width at or above which the three-card summary row docks side by side.
+  static const double summaryRowStart = 1000;
 
   @override
   Widget build(BuildContext context) {
+    final double sectionGap = MobileCompact.sectionGapFor(maxWidth);
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _EarningsSummaryCards(maxWidth: maxWidth),
+        SizedBox(height: sectionGap),
+        const _EarningsEscrowBanner(),
+        SizedBox(height: sectionGap),
+        _EarningsHistorySection(
+          maxWidth: maxWidth,
+          filter: filter,
+          onFilter: onFilter,
+        ),
+        SizedBox(height: sectionGap),
+        const HivorrSectionHeader(title: 'Work history'),
+        _EarningsWorkHistory(hires: hires, onRetry: onRetry),
+      ],
+    );
+  }
+}
+
+/// Reference summary row: green balance, totals, monthly chart.
+class _EarningsSummaryCards extends StatelessWidget {
+  const _EarningsSummaryCards({required this.maxWidth});
+
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool wide =
+        maxWidth >= _EarningsContent.summaryRowStart;
+    final double gap = MobileCompact.minorGapFor(maxWidth);
+    if (!wide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const _AvailableBalanceCard(),
+          SizedBox(height: gap),
+          const _EarningsTotalsCard(),
+          SizedBox(height: gap),
+          const _MonthlyEarningsCard(),
+        ],
+      );
+    }
+    return Row(
+      // NOTE: `start`, not `stretch` — this row lives inside a vertical
+      // scroll view (unbounded height), where stretch forces infinite
+      // height and crashes layout. Cards keep natural heights instead.
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          label,
-          style: context.textTheme.labelMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
+        const Expanded(flex: 5, child: _AvailableBalanceCard()),
+        SizedBox(width: gap),
+        const Expanded(flex: 4, child: _EarningsTotalsCard()),
+        SizedBox(width: gap),
+        const Expanded(flex: 4, child: _MonthlyEarningsCard()),
+      ],
+    );
+  }
+}
+
+/// Green `Available Balance` hero card (reference, left column).
+class _AvailableBalanceCard extends StatelessWidget {
+  const _AvailableBalanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final RoleThemeExtension roles = context.roleTheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final Color green = roles.professionalPrimary;
+    return Container(
+      decoration: BoxDecoration(
+        color: green,
+        borderRadius: BorderRadius.circular(compact ? 16 : 20),
+      ),
+      padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Available Balance',
+            style: (compact
+                    ? context.textTheme.bodySmall
+                    : context.textTheme.bodyMedium)
+                ?.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: compact ? 13 : null,
+            ),
           ),
+          SizedBox(height: compact ? HivorrSpacing.xs : HivorrSpacing.sm),
+          Text(
+            r'$6,154.00',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: (compact
+                    ? context.textTheme.headlineSmall
+                    : context.textTheme.headlineMedium)
+                ?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '≈ \u20A69,806,000',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: compact ? 12 : null,
+            ),
+          ),
+          SizedBox(height: compact ? HivorrSpacing.md : HivorrSpacing.lg),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => context.go(RoutePaths.finance),
+                  icon: const Icon(Icons.arrow_upward, size: 18),
+                  label: const Text('Withdraw'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: green,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: compact ? 10 : 14,
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: HivorrSpacing.sm),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go(RoutePaths.finance),
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                  label: const Text('Statement'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.white.withValues(alpha: 0.12),
+                    side: const BorderSide(
+                      color: Colors.white60,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      vertical: compact ? 10 : 14,
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// White totals card: `Total Earned (All Time)` + `In Escrow (Pending)`
+/// (reference, middle).
+class _EarningsTotalsCard extends StatelessWidget {
+  const _EarningsTotalsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return HivorrCard(
+      borderRadius: compact ? 14 : 20,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.md : HivorrSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          const _EarningsTotalRow(
+            icon: Icons.trending_up,
+            label: 'Total Earned (All Time)',
+            value: r'$28,900',
+            tile: _EarningsTotalTile.green,
+          ),
+          Divider(
+            height: compact ? HivorrSpacing.lg : HivorrSpacing.xl,
+            color: context.colorScheme.outlineVariant,
+          ),
+          const _EarningsTotalRow(
+            icon: Icons.lock_outline,
+            tile: _EarningsTotalTile.orange,
+            label: 'In Escrow (Pending)',
+            value: r'$2,800',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _EarningsTotalTile { green, orange }
+
+class _EarningsTotalRow extends StatelessWidget {
+  const _EarningsTotalRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.tile = _EarningsTotalTile.green,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final _EarningsTotalTile tile;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final Color tileBg =
+        tile == _EarningsTotalTile.orange ? ext.warningContainer : ext.successContainer;
+    final Color iconFg =
+        tile == _EarningsTotalTile.orange ? ext.warning : ext.success;
+    final double tileSize = compact ? 44 : 52;
+    return Row(
+      children: <Widget>[
+        Container(
+          width: tileSize,
+          height: tileSize,
+          decoration: BoxDecoration(
+            color: tileBg,
+            borderRadius: BorderRadius.circular(compact ? 12 : 16),
+          ),
+          child: Icon(icon, size: compact ? 22 : 26, color: iconFg),
         ),
-        const SizedBox(height: HivorrSpacing.xs),
-        Text(
-          value,
-          style: context.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+        const SizedBox(width: HivorrSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontSize: compact ? 12 : 13,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: (compact
+                        ? context.textTheme.titleLarge
+                        : context.textTheme.headlineSmall)
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
+}
+
+/// White `Monthly Earnings` chart card (reference, right column).
+///
+/// MOCK: bars are the reference shape until the monthly-earnings seam
+/// exists — the last bar highlights the current month.
+class _MonthlyEarningsCard extends StatelessWidget {
+  const _MonthlyEarningsCard();
+
+  static const List<double> _bars = <double>[
+    0.35, 0.55, 0.45, 0.7, 0.6, 0.75, 0.65, 0.85, 0.7, 0.8, 0.6, 1.0,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final RoleThemeExtension roles = context.roleTheme;
+    final Color barLight =
+        roles.professionalPrimary.withValues(alpha: 0.18);
+    final Color barDark = roles.professionalPrimary;
+    return HivorrCard(
+      borderRadius: compact ? 14 : 20,
+      padding: EdgeInsets.all(
+        compact ? HivorrSpacing.md : HivorrSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'Monthly Earnings',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: compact ? 15 : 18,
+            ),
+          ),
+          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+          SizedBox(
+            height: 120,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                for (int i = 0; i < _bars.length; i++)
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: i == 0 ? 0 : 3,
+                        right: i == _bars.length - 1 ? 0 : 3,
+                      ),
+                      child: Container(
+                        height: 120 * _bars[i],
+                        decoration: BoxDecoration(
+                          color: i == _bars.length - 1 ? barDark : barLight,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          Text(
+            '+23% vs last month',
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+              fontSize: compact ? 11 : 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Orange escrow-pending banner (reference, below the summary row).
+///
+/// MOCK: placeholder copy/amount until the escrow-hold seam exists.
+class _EarningsEscrowBanner extends StatelessWidget {
+  const _EarningsEscrowBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppThemeExtension ext = context.appExtension;
+    final ColorScheme colors = context.colorScheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return Container(
+      decoration: BoxDecoration(
+        color: ext.warningContainer,
+        borderRadius: BorderRadius.circular(compact ? 14 : 16),
+        border: Border.all(
+          color: ext.warning.withValues(alpha: 0.25),
+        ),
+      ),
+      padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Container(
+            width: compact ? 40 : 48,
+            height: compact ? 40 : 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(compact ? 12 : 14),
+            ),
+            child: Icon(
+              Icons.lock_outline,
+              size: compact ? 20 : 24,
+              color: ext.warning,
+            ),
+          ),
+          const SizedBox(width: HivorrSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Escrow Pending \u2014 Data Pipeline Architecture',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: compact ? 13 : 15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Releases when Fintech Solutions approves your delivery',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontSize: compact ? 11 : 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Text(
+            r'$2,800',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: (compact
+                    ? context.textTheme.titleMedium
+                    : context.textTheme.titleLarge)
+                ?.copyWith(
+              color: ext.warning,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Reference `Earnings History` section: title, filter chips, history card.
+class _EarningsHistorySection extends StatelessWidget {
+  const _EarningsHistorySection({
+    required this.maxWidth,
+    required this.filter,
+    required this.onFilter,
+  });
+
+  final double maxWidth;
+  final _EarningsFilter filter;
+  final ValueChanged<_EarningsFilter> onFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool compact = MobileCompact.isCompactWidth(maxWidth);
+    final List<_EarningsHistoryEntry> all = _earningsEntries();
+    final List<_EarningsHistoryEntry> visible = switch (filter) {
+      _EarningsFilter.all => all,
+      _EarningsFilter.earned =>
+        all.where((_EarningsHistoryEntry e) => !e.isWithdrawal).toList(),
+      _EarningsFilter.withdrawn =>
+        all.where((_EarningsHistoryEntry e) => e.isWithdrawal).toList(),
+    };
+    final Widget chips = Wrap(
+      spacing: HivorrSpacing.sm,
+      runSpacing: HivorrSpacing.sm,
+      children: <Widget>[
+        for (final _EarningsFilter f in _EarningsFilter.values)
+          _EarningsFilterChip(
+            label: f.label,
+            selected: f == filter,
+            onTap: () => onFilter(f),
+          ),
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (compact) ...<Widget>[
+          Text(
+            'Earnings History',
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: chips,
+          ),
+        ] else
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Earnings History',
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: HivorrSpacing.md),
+              chips,
+            ],
+          ),
+        SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        _EarningsHistoryCard(entries: visible, compact: compact),
+      ],
+    );
+  }
+}
+
+class _EarningsFilterChip extends StatelessWidget {
+  const _EarningsFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final RoleThemeExtension roles = context.roleTheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? roles.professionalPrimary : colors.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: selected
+              ? null
+              : Border.all(color: colors.outlineVariant),
+        ),
+        child: Text(
+          label,
+          style: context.textTheme.labelMedium?.copyWith(
+            color: selected
+                ? colors.onPrimary
+                : colors.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            fontSize: 12.5,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// White history list card (reference): icon tile, title/meta, amount/status.
+class _EarningsHistoryCard extends StatelessWidget {
+  const _EarningsHistoryCard({required this.entries, required this.compact});
+
+  final List<_EarningsHistoryEntry> entries;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return HivorrCard(
+        borderRadius: compact ? 14 : 16,
+        child: Text(
+          'No earnings match this filter',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    return HivorrCard(
+      borderRadius: compact ? 14 : 16,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          for (int i = 0; i < entries.length; i++) ...<Widget>[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.6,
+                ),
+              ),
+            _EarningsHistoryRow(entry: entries[i], compact: compact),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EarningsHistoryRow extends StatelessWidget {
+  const _EarningsHistoryRow({required this.entry, required this.compact});
+
+  final _EarningsHistoryEntry entry;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    final Color tileBg =
+        entry.isWithdrawal ? colors.errorContainer : ext.successContainer;
+    final Color iconFg =
+        entry.isWithdrawal ? colors.error : ext.success;
+    final Color amountFg =
+        entry.isWithdrawal ? colors.error : ext.success;
+    final double tileSize = compact ? 40 : 48;
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        vertical: compact ? HivorrSpacing.sm + 4 : HivorrSpacing.md,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Container(
+            width: tileSize,
+            height: tileSize,
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(compact ? 12 : 14),
+            ),
+            child: Icon(
+              entry.isWithdrawal ? Icons.arrow_upward : Icons.arrow_downward,
+              size: compact ? 20 : 22,
+              color: iconFg,
+            ),
+          ),
+          SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  entry.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: compact ? 13 : 14,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  entry.meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontSize: compact ? 11 : 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                entry.amountText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.titleSmall?.copyWith(
+                  color: amountFg,
+                  fontWeight: FontWeight.w800,
+                  fontSize: compact ? 13 : 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: ext.successContainer,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  entry.status,
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: ext.success,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Preserved work-history list (existing professional functionality):
+/// loading, error, empty (`No earnings yet`) and live hire rows.
+class _EarningsWorkHistory extends StatelessWidget {
+  const _EarningsWorkHistory({required this.hires, required this.onRetry});
+
+  final HireProvider hires;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (hires.isLoading && hires.hires.isEmpty) {
+      return const HivorrLoadingState();
+    }
+    if (hires.lastError != null && hires.hires.isEmpty) {
+      return HivorrErrorState(
+        message: 'Could not load work',
+        detail: hires.lastError!.message,
+        onRetry: onRetry,
+      );
+    }
+    if (hires.hires.isEmpty) {
+      return HivorrEmptyState(
+        title: 'No earnings yet',
+        subtitle:
+            'Win work through applications — completed hires and their payouts land here.',
+        actionButton: HivorrButton(
+          label: 'Find Jobs',
+          onPressed: () => context.go(RoutePaths.dashboardOpportunities),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        for (final Hire hire in hires.hires)
+          Padding(
+            padding: const EdgeInsets.only(bottom: HivorrSpacing.sm),
+            child: HireCard(
+              hire: hire,
+              onTap: () =>
+                  context.go(RoutePaths.dashboardHireDetail(hire.id)),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Professional identity from stored backend profile data.
+///
+/// Prefers AuthSession first/last names (`user_metadata` /
+/// `entity_profiles`); falls back to displayName, then the email
+/// local-part — never hardcoded. Reuses the file-local
+/// [_prettifyEmailPrefix] / [_initials] helpers.
+({String name, String initials}) _earningsProIdentity(BuildContext context) {
+  try {
+    final AuthProvider auth = context.watch<AuthProvider>();
+    final session = auth.currentSession;
+    final String? full = session?.fullName;
+    if (full != null && full.isNotEmpty) {
+      return (
+        name: full,
+        initials: session!.initials ?? _initials(full),
+      );
+    }
+    final String? display = session?.displayName?.trim();
+    if (display != null && display.isNotEmpty) {
+      return (
+        name: display,
+        initials: session!.initials ?? _initials(display),
+      );
+    }
+    final String? email = session?.email;
+    if (email != null && email.isNotEmpty) {
+      final String pretty = _prettifyEmailPrefix(email);
+      return (name: pretty, initials: _initials(pretty));
+    }
+  } catch (_) {
+    // Auth provider absent (isolated test) — fall through.
+  }
+  return (name: 'Professional', initials: 'P');
 }

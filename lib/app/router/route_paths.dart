@@ -110,6 +110,10 @@ abstract final class RoutePaths {
   /// Dispute screens (EP-02-17).
   static const String disputes = '/support/disputes';
   static const String disputesNew = '/support/disputes/file/:escrowId';
+
+  /// Builds a URL-encoded dispute-filing path for an escrow/contract id.
+  static String disputesFile(String escrowId) =>
+      '/support/disputes/file/${Uri.encodeComponent(escrowId)}';
   static const String disputeDetail = '/support/disputes/:id';
   static const String disputesEvidenceNew =
       '/support/disputes/:caseId/evidence/new';
