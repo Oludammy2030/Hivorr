@@ -16,15 +16,15 @@ import 'package:provider/provider.dart';
 /// For an incomplete wizard that was deliberately exited
 /// ([OnboardingProgress.exited]), the screen surfaces a "Continue
 /// registration" action that clears the exit flag (re-engaging the guard's
-/// resume redirect) and returns to the saved step. Every other state forwards
-/// to the role-aware dashboard ([RoutePaths.dashboard]) — admins are
-/// redirected by [RouteGuard] directly to [RoutePaths.adminDashboard].
+/// resume redirect) and returns to the saved step. Incomplete wizards that
+/// were not exited forward to [RoutePaths.dashboard] so [RouteGuard]
+/// resumes onboarding. Completed super-admins always land on
+/// [RoutePaths.adminDashboard] (staging + production); other completed
+/// entities land on [RoutePaths.dashboard].
 ///
-/// Super Admins no longer see a legacy gateway here. Authenticated
-/// platform admins are redirected by [RouteGuard] directly to
-/// [RoutePaths.adminDashboard] (the Super Admin Control Panel) so the
-/// old "Welcome to Hivorr / Super Admin Dashboard / Verification &
-/// Approvals / Manage Users" menu has been removed.
+/// Super Admins no longer see a legacy gateway here. The forward waits for
+/// `AdminReviewProvider.isAdmin` hydration so an admin never flashes the
+/// Both dashboard on entry.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -67,16 +67,45 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final OnboardingProvider onboarding = context.watch<OnboardingProvider>();
+    final AdminReviewProvider? admin = _maybeAdmin(context, listen: true);
     final bool complete =
         onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
     final bool showResume =
         onboarding.progress != null && !complete && onboarding.exited;
 
     if (!showResume && !_forwarded) {
-      _forwarded = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go(RoutePaths.dashboard);
-      });
+      if (!complete) {
+        // Incomplete wizard: forward to the dashboard so RouteGuard resumes
+        // the wizard. Applies to admins too (onboarding takes precedence).
+        _forwarded = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.go(RoutePaths.dashboard);
+        });
+      } else if (admin == null) {
+        // No admin seam (isolated tests): preserve legacy forward.
+        _forwarded = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.go(RoutePaths.dashboard);
+        });
+      } else if (admin.isAdmin == null) {
+        // Admin hydration pending: hold here so a super-admin never flashes
+        // the Both dashboard. RouteGuard defers '/' the same way.
+      } else {
+        final String target = admin.isAdmin == true
+            ? RoutePaths.adminDashboard
+            : RoutePaths.dashboard;
+        _forwarded = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.go(target);
+        });
+      }
+    }
+
+    if (!showResume && admin != null && admin.isAdmin == null && complete) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Home', style: context.textTheme.titleLarge)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     return Scaffold(

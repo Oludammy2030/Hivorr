@@ -100,6 +100,9 @@ class RouteGuard {
         return _verificationGateResumeTarget(sessionEmail);
       }
       if (guard.isPublicRoute(location)) {
+        if (AdminGate.isAdmin(adminReviewProvider)) {
+          return RoutePaths.adminDashboard;
+        }
         return RoutePaths.dashboard;
       }
 
@@ -112,18 +115,33 @@ class RouteGuard {
         return onboardingRedirect;
       }
 
-      // Super Admins go directly to the control panel. Every other complete
-      // entity lands on the role-aware dashboard. The legacy placeholder
-      // home stays reachable as a redirector (HomeScreen forwards).
-      // Hydration is async: isAdmin is null before first checkAdmin(),
-      // so the redirect is deferred until the flag hydrates (via
-      // refreshListenable on adminReviewProvider). Onboarding takes
-      // precedence above so an incomplete wizard still resumes.
+      // Super Admins always land on the control panel (staging + production).
+      // Every other complete entity lands on the role-aware dashboard.
+      // Hydration is async: isAdmin is null before first checkAdmin(), so
+      // the home redirect is deferred until the flag hydrates (via
+      // refreshListenable on adminReviewProvider) to avoid flashing the
+      // Both dashboard. Onboarding takes precedence above so an incomplete
+      // wizard still resumes. HomeScreen mirrors this and waits as well.
       if (location == RoutePaths.home) {
         if (AdminGate.isAdmin(adminReviewProvider)) {
           return RoutePaths.adminDashboard;
         }
+        // Defer only when the admin seam exists but has not hydrated yet.
+        // When no admin provider is wired (unit tests / isolated shells),
+        // preserve the legacy forward to the dashboard.
+        if (adminReviewProvider != null &&
+            adminReviewProvider?.isAdmin == null) {
+          return null;
+        }
         return RoutePaths.dashboard;
+      }
+
+      // Super-admin landing on the role-aware dashboard root goes to the
+      // control panel. Sub-routes (/dashboard/...) stay manually reachable
+      // so an admin can still verify the Both experience when needed.
+      if (location == RoutePaths.dashboard &&
+          AdminGate.isAdmin(adminReviewProvider)) {
+        return RoutePaths.adminDashboard;
       }
 
       // Capability gate for dashboard sub-routes (EP-04-03): hiring-only

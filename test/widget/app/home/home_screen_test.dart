@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/home/home_screen.dart';
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +12,16 @@ import 'package:provider/single_child_widget.dart';
 
 import '../../../support/fakes/fake_admin_review.dart';
 import '../../../support/onboarding/onboarding_test_support.dart';
+
+class _HangingAdminReviewRepository extends FakeAdminReviewRepository {
+  _HangingAdminReviewRepository() : super(isAdmin: true);
+
+  @override
+  Future<bool> checkAdmin() {
+    checkAdminCallCount++;
+    return Completer<bool>().future;
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -141,12 +156,108 @@ void main() {
       WidgetTester tester,
     ) async {
       await pumpHomeAsAdmin(tester, isAdmin: true);
-      // Legacy gateway buttons have been removed; Home forwards to the
-      // dashboard and RouteGuard routes admins to /admin/dashboard.
+      // Incomplete wizard: Home forwards to the dashboard so RouteGuard can
+      // resume onboarding. Admin landing applies once the wizard is complete.
       expect(find.text('DASHBOARD'), findsOneWidget);
       expect(find.text('Super Admin Dashboard'), findsNothing);
       expect(find.text('Verification & Approvals'), findsNothing);
       expect(find.text('Manage users'), findsNothing);
+    });
+  });
+
+  group('HomeScreen super-admin landing (completed wizard)', () {
+    List<RouteBase> adminRoutes() => <RouteBase>[
+      GoRoute(
+        path: RoutePaths.adminDashboard,
+        builder: (BuildContext context, GoRouterState state) =>
+            const OnboardingMarkerScreen(label: 'ADMIN-DASHBOARD'),
+      ),
+    ];
+
+    Future<OnboardingTestStack> completedStack() async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      for (int i = 0; i < OnboardingStepCode.values.length; i++) {
+        await stack.provider.advance();
+      }
+      expect(stack.provider.isComplete, isTrue);
+      addTearDown(stack.provider.dispose);
+      return stack;
+    }
+
+    testWidgets('completed super-admin lands on admin dashboard', (
+      WidgetTester tester,
+    ) async {
+      final OnboardingTestStack stack = await completedStack();
+      final AdminReviewProvider admin = AdminReviewProvider(
+        repo: FakeAdminReviewRepository(isAdmin: true),
+      );
+      await admin.checkAdmin();
+      addTearDown(admin.dispose);
+      await pumpOnboardingScreen(
+        tester,
+        const HomeScreen(),
+        path: '/',
+        providers: <SingleChildWidget>[
+          ...stack.buildProviders(),
+          ChangeNotifierProvider<AdminReviewProvider>.value(value: admin),
+        ],
+        routes: adminRoutes(),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('ADMIN-DASHBOARD'), findsOneWidget);
+      expect(find.text('DASHBOARD'), findsNothing);
+    });
+
+    testWidgets('completed non-admin lands on dashboard', (
+      WidgetTester tester,
+    ) async {
+      final OnboardingTestStack stack = await completedStack();
+      final AdminReviewProvider admin = AdminReviewProvider(
+        repo: FakeAdminReviewRepository(isAdmin: false),
+      );
+      await admin.checkAdmin();
+      addTearDown(admin.dispose);
+      await pumpOnboardingScreen(
+        tester,
+        const HomeScreen(),
+        path: '/',
+        providers: <SingleChildWidget>[
+          ...stack.buildProviders(),
+          ChangeNotifierProvider<AdminReviewProvider>.value(value: admin),
+        ],
+        routes: adminRoutes(),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.text('ADMIN-DASHBOARD'), findsNothing);
+    });
+
+    testWidgets('pending admin check holds on loading, never Both flash', (
+      WidgetTester tester,
+    ) async {
+      final OnboardingTestStack stack = await completedStack();
+      // Hanging repo: checkAdmin never completes, so isAdmin stays null
+      // even though HomeScreen auto-triggers checkAdmin() in initState.
+      final AdminReviewProvider admin = AdminReviewProvider(
+        repo: _HangingAdminReviewRepository(),
+      );
+      addTearDown(admin.dispose);
+      await pumpOnboardingScreen(
+        tester,
+        const HomeScreen(),
+        path: '/',
+        providers: <SingleChildWidget>[
+          ...stack.buildProviders(),
+          ChangeNotifierProvider<AdminReviewProvider>.value(value: admin),
+        ],
+        routes: adminRoutes(),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('DASHBOARD'), findsNothing);
+      expect(find.text('ADMIN-DASHBOARD'), findsNothing);
     });
   });
 }
