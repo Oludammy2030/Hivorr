@@ -72,7 +72,7 @@ void main() {
     adminProvider.dispose();
   });
 
-  test('super admin refresh at dashboard stays', () async {
+  test('super admin landing on dashboard root goes to admin dashboard', () async {
     final OnboardingTestStack stack = buildOnboardingStack();
     await stack.hydrate('u1');
     for (int i = 0; i < 4; i++) {
@@ -87,8 +87,81 @@ void main() {
       onboardingProvider: stack.provider,
       adminReviewProvider: adminProvider,
     );
+    expect(
+      guard.redirectResolver(RoutePaths.dashboard),
+      RoutePaths.adminDashboard,
+    );
     expect(guard.redirectResolver(RoutePaths.adminDashboard), isNull);
     expect(guard.redirectResolver(RoutePaths.adminManageUsers), isNull);
+    // Sub-routes stay manually reachable for Both verification.
+    expect(
+      guard.redirectResolver(RoutePaths.dashboardJobs),
+      isNull,
+    );
+    stack.provider.dispose();
+    adminProvider.dispose();
+  });
+
+  test('non-admin landing on dashboard root stays', () async {
+    final OnboardingTestStack stack = buildOnboardingStack();
+    await stack.hydrate('u1');
+    for (int i = 0; i < 4; i++) {
+      await stack.provider.advance();
+    }
+    final adminProvider = AdminReviewProvider(
+      repo: FakeAdminReviewRepository(isAdmin: false),
+    );
+    await adminProvider.checkAdmin();
+    final guard = RouteGuard(
+      authProvider: FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+      onboardingProvider: stack.provider,
+      adminReviewProvider: adminProvider,
+    );
+    expect(guard.redirectResolver(RoutePaths.dashboard), isNull);
+    stack.provider.dispose();
+    adminProvider.dispose();
+  });
+
+  test('pending admin hydration defers home redirect', () async {
+    final OnboardingTestStack stack = buildOnboardingStack();
+    await stack.hydrate('u1');
+    for (int i = 0; i < 4; i++) {
+      await stack.provider.advance();
+    }
+    final adminProvider = AdminReviewProvider(
+      repo: FakeAdminReviewRepository(isAdmin: true),
+    );
+    // No checkAdmin(): isAdmin stays null (pending).
+    final guard = RouteGuard(
+      authProvider: FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+      onboardingProvider: stack.provider,
+      adminReviewProvider: adminProvider,
+    );
+    expect(guard.redirectResolver(RoutePaths.home), isNull);
+    expect(guard.redirectResolver(RoutePaths.dashboard), isNull);
+    stack.provider.dispose();
+    adminProvider.dispose();
+  });
+
+  test('authenticated admin on public route goes to admin dashboard', () async {
+    final OnboardingTestStack stack = buildOnboardingStack();
+    await stack.hydrate('u1');
+    for (int i = 0; i < 4; i++) {
+      await stack.provider.advance();
+    }
+    final adminProvider = AdminReviewProvider(
+      repo: FakeAdminReviewRepository(isAdmin: true),
+    );
+    await adminProvider.checkAdmin();
+    final guard = RouteGuard(
+      authProvider: FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+      onboardingProvider: stack.provider,
+      adminReviewProvider: adminProvider,
+    );
+    expect(
+      guard.redirectResolver(RoutePaths.login),
+      RoutePaths.adminDashboard,
+    );
     stack.provider.dispose();
     adminProvider.dispose();
   });
