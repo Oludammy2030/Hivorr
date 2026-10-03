@@ -570,13 +570,11 @@ class _BookingCta extends StatelessWidget {
           );
           return;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          HivorrSnackbar.show(
-            context,
-            message:
-                'Proposal requests open with milestone contracts (coming next).',
-            variant: HivorrSnackbarVariant.info,
-          ),
+        // EP-03-10 contract entry: offer composer with milestone array.
+        // Self-contract and draft-listing gates stay server-side (`PLT005` /
+        // `PLT004`); this CTA is affordance only (`AGENT.md` Rule 4).
+        unawaited(
+          context.push(RoutePaths.contractOfferFor(listingId: listingId)),
         );
       },
     );

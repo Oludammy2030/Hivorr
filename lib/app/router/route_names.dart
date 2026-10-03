@@ -100,6 +100,12 @@ abstract final class RouteNames {
   static const String onboardingTradeProof = 'onboarding-trade-proof';
   static const String onboardingComplete = 'onboarding-complete';
 
+  /// Service contract engagement routes (EP-03-10).
+  static const String contracts = 'contracts';
+  static const String contractNew = 'contract-new';
+  static const String contractDetail = 'contract-detail';
+  static const String contractMilestonesEdit = 'contract-milestones-edit';
+
   /// Role-aware dashboard routes (EP-04-03).
   static const String dashboard = 'dashboard';
   static const String dashboardJobs = 'dashboard-jobs';
