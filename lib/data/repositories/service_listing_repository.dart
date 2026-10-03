@@ -58,4 +58,12 @@ abstract class ServiceListingRepository {
     int limit = 20,
     String? cursor,
   });
+
+  /// Toggles the caller's favorite for a `published` listing
+  /// (`service_favorite_toggle`, VOLATILE; `authenticated` only).
+  ///
+  /// Returns the post-toggle state (`true` when favorited). Self-favorite and
+  /// non-`published` targets surface `PLT005`; unknown listings `PLT004`.
+  /// Read-through for detail preview only — no favorites list is owned here.
+  Future<bool> toggleFavorite(String listingId);
 }

@@ -199,6 +199,37 @@ void main() {
       final guard = RouteGuard(authProvider: provider);
       expect(guard.redirectResolver('/p/john/123'), isNull);
       expect(guard.redirectResolver('/store/abc'), isNull);
+      // EP-03-09 public discovery (`published` only).
+      expect(guard.redirectResolver('/services'), isNull);
+      expect(guard.redirectResolver('/services/search'), isNull);
+      expect(
+        guard.redirectResolver(
+          '/services/3f2504e0-4f89-11d3-9a0c-0305e82c3301',
+        ),
+        isNull,
+      );
+      expect(guard.redirectResolver('/s/plumber/abc-123'), isNull);
+    });
+
+    test('unauthenticated user is kept off owner listing routes', () {
+      final provider = FakeAuthProvider(
+        initialStatus: AuthStatus.unauthenticated,
+      );
+      final guard = RouteGuard(authProvider: provider);
+      // Owner management stays protected: the `/services` public prefix must
+      // not leak `/services/mine*` to anonymous viewers.
+      expect(
+        guard.redirectResolver('/services/mine'),
+        '/login?next=/services/mine',
+      );
+      expect(
+        guard.redirectResolver('/services/mine/new'),
+        '/login?next=/services/mine/new',
+      );
+      expect(
+        guard.redirectResolver('/services/mine/abc/edit'),
+        '/login?next=/services/mine/abc/edit',
+      );
     });
 
     test('authenticated user is routed from home to the dashboard', () {

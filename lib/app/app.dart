@@ -28,6 +28,7 @@ import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
+import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
@@ -42,11 +43,13 @@ import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/messaging_repository.dart';
 import 'package:hivorr/data/repositories/portfolio_repository.dart';
+import 'package:hivorr/data/repositories/service_listing_repository.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
+import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
 import 'package:provider/provider.dart';
@@ -68,6 +71,9 @@ class HivorrApp extends StatefulWidget {
     this.marketplaceSearchRepository,
     this.marketplaceSearchProvider,
     this.marketplaceSearchIndex,
+    this.serviceListingRepository,
+    this.serviceListingProvider,
+    this.serviceListingService,
     this.verificationRepository,
     this.verificationProvider,
     this.escrowRepository,
@@ -120,6 +126,17 @@ class HivorrApp extends StatefulWidget {
   /// Offline-browse cache warmer for ranked discovery (EP-03-07). Optional
   /// for testability; ranking stays server-decided (`AGENT.md:7`).
   final ServiceSearchIndex? marketplaceSearchIndex;
+
+  /// Service listing owner repository (EP-03-08). Wired for the EP-03-09
+  /// detail re-read (`service_listing_get`) and favorite toggle.
+  final ServiceListingRepository? serviceListingRepository;
+
+  /// Service listing provider surfaced to the widget tree (EP-03-08/09).
+  final ServiceListingProvider? serviceListingProvider;
+
+  /// Service listing facade surfaced to the widget tree (EP-03-08/09,
+  /// media URL resolution + favorite toggle).
+  final ServiceListingService? serviceListingService;
 
   /// Identity-verification repository (EP-02-10). Optional for testability.
   final VerificationRepository? verificationRepository;
@@ -319,6 +336,12 @@ class _HivorrAppState extends State<HivorrApp> {
         widget.marketplaceSearchProvider;
     final ServiceSearchIndex? marketplaceSearchIndex =
         widget.marketplaceSearchIndex;
+    final ServiceListingRepository? serviceListingRepository =
+        widget.serviceListingRepository;
+    final ServiceListingProvider? serviceListingProvider =
+        widget.serviceListingProvider;
+    final ServiceListingService? serviceListingService =
+        widget.serviceListingService;
     final VerificationRepository? verificationRepository =
         widget.verificationRepository;
     final VerificationProvider? verificationProvider =
@@ -370,6 +393,16 @@ class _HivorrAppState extends State<HivorrApp> {
           ),
         if (marketplaceSearchIndex != null)
           Provider<ServiceSearchIndex>.value(value: marketplaceSearchIndex),
+        if (serviceListingRepository != null)
+          Provider<ServiceListingRepository>.value(
+            value: serviceListingRepository,
+          ),
+        if (serviceListingProvider != null)
+          ChangeNotifierProvider<ServiceListingProvider>.value(
+            value: serviceListingProvider,
+          ),
+        if (serviceListingService != null)
+          Provider<ServiceListingService>.value(value: serviceListingService),
         if (verificationRepository != null)
           Provider<VerificationRepository>.value(value: verificationRepository),
         if (verificationProvider != null)

@@ -16,6 +16,20 @@ void main() {
     expect(RoutePaths.settings, '/settings');
     expect(RoutePaths.publicProfileRoute, '/p/:slug/:id');
     expect(RoutePaths.publicStoreRoute, '/store/:storeId');
+    // EP-03-09 public discovery (published only; canonical SEO in EP-03-19).
+    expect(RoutePaths.serviceDiscovery, '/services');
+    expect(RoutePaths.serviceSearch, '/services/search');
+    expect(RoutePaths.serviceDetailRoute, '/services/:id');
+    expect(RoutePaths.serviceSeoDetailRoute, '/s/:slug/:id');
+  });
+
+  test('typed service detail builders produce URL-encoded paths', () {
+    expect(RoutePaths.serviceDetail('abc-123'), '/services/abc-123');
+    expect(RoutePaths.serviceDetail('a b/c'), '/services/a%20b%2Fc');
+    expect(
+      RoutePaths.serviceSeoDetail(slug: 'plumber', id: 'abc-123'),
+      '/s/plumber/abc-123',
+    );
   });
 
   test('typed publicProfile builder produces a URL-encoded path', () {

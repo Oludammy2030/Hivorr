@@ -23,6 +23,7 @@ import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/entities/service_listing.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/systems/admin/screens/admin_dashboard_screen.dart';
@@ -52,7 +53,10 @@ import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
 import 'package:hivorr/systems/local_commerce/screens/store_screen.dart';
+import 'package:hivorr/systems/marketplace/screens/marketplace_discovery_screen.dart';
+import 'package:hivorr/systems/marketplace/screens/marketplace_search_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/my_listings_screen.dart';
+import 'package:hivorr/systems/marketplace/screens/service_detail_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_form_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_media_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
@@ -545,6 +549,49 @@ class AppRouter {
               ServiceListingMediaScreen(
                 listingId: state.pathParameters['id'] ?? '',
               ),
+        ),
+        // Public discovery (EP-03-09, `published` only — guard allows anon).
+        // Static `/services/search` precedes the `:id` detail so literal
+        // matching wins for the search entry point.
+        GoRoute(
+          path: RoutePaths.serviceDiscovery,
+          name: RouteNames.serviceDiscovery,
+          builder: (BuildContext context, GoRouterState state) =>
+              const MarketplaceDiscoveryScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.serviceSearch,
+          name: RouteNames.serviceSearch,
+          builder: (BuildContext context, GoRouterState state) =>
+              MarketplaceSearchScreen(
+                initialQuery: state.uri.queryParameters['q'],
+                initialProfessionId:
+                    state.uri.queryParameters['profession'],
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.serviceDetailRoute,
+          name: RouteNames.serviceDetail,
+          builder: (BuildContext context, GoRouterState state) {
+            final Object? extra = state.extra;
+            return ServiceDetailScreen(
+              listingId: state.pathParameters['id'] ?? '',
+              initialListing: extra is ServiceListing ? extra : null,
+            );
+          },
+        ),
+        // SEO alias (EP-03-09 route shape; canonical meta ships in EP-03-19).
+        // `:id` is authoritative — `:slug` is cosmetic SEO context.
+        GoRoute(
+          path: RoutePaths.serviceSeoDetailRoute,
+          name: RouteNames.serviceSeoDetail,
+          builder: (BuildContext context, GoRouterState state) {
+            final Object? extra = state.extra;
+            return ServiceDetailScreen(
+              listingId: state.pathParameters['id'] ?? '',
+              initialListing: extra is ServiceListing ? extra : null,
+            );
+          },
         ),
         GoRoute(
           path: RoutePaths.onboarding,

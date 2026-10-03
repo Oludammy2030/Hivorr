@@ -306,7 +306,26 @@ class RouteGuard {
       location == RoutePaths.dashboardEarnings;
 
   static bool _isPublicContentView(String location) =>
-      location.startsWith('/p/') || location.startsWith('/store/');
+      location.startsWith('/p/') ||
+      location.startsWith('/store/') ||
+      location == RoutePaths.serviceDiscovery ||
+      location == RoutePaths.serviceSearch ||
+      location.startsWith('/s/') ||
+      _isPublicServiceDetail(location);
+
+  /// Whether [location] is a public `/services/:id` detail view.
+  ///
+  /// Single-segment only: nested owner routes (`/services/mine`,
+  /// `/services/mine/...`) and the search route stay protected/public per
+  /// their own rules — only a bare `/:id` detail is public content.
+  static bool _isPublicServiceDetail(String location) {
+    const String prefix = '/services/';
+    if (!location.startsWith(prefix)) return false;
+    final String rest = location.substring(prefix.length);
+    if (rest.isEmpty || rest.contains('/')) return false;
+    if (rest == 'mine' || rest == 'search') return false;
+    return true;
+  }
 
   /// Whether [location] is any EP-02-18 onboarding route (base or sub-step).
   static bool _isOnboardingRoute(String location) =>
