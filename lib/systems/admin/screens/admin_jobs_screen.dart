@@ -12,21 +12,30 @@ import 'package:hivorr/data/entities/profession.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
+import 'package:hivorr/shared/components/hivorr_dialog.dart';
+import 'package:hivorr/shared/components/hivorr_stat_card.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
+import 'package:hivorr/shared/widgets/hivorr_badge.dart';
+import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
+import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
+import 'package:hivorr/shared/widgets/hivorr_tint_badge.dart';
 import 'package:provider/provider.dart';
 
 /// Admin Jobs & Projects: platform hiring visibility (EP-04-03).
 ///
-/// Visual source of truth: Admin Dashboard Jobs reference screenshot —
-/// `Job Moderation` title + total-jobs subtitle and a two-column grid of
-/// white moderation cards (category pill + green price, bold title,
-/// location · relative-time subtitle, status pill + applicant count,
-/// `View` / `Remove` pills; terminal jobs show `View` only).
+/// Visual source of truth: Admin Dashboard Jobs reference screenshot — a slim
+/// total-jobs count row (the shell top bar already titles the page, §13a)
+/// and a responsive 1/2/3-column grid (§21a) of white moderation cards
+/// (category pill + green price, semibold title, location · relative-time
+/// subtitle, status badge + applicant count, `View` / `Remove` actions;
+/// terminal jobs show `View` only).
 ///
 /// Functional source of truth: existing Hivorr architecture. Lists open jobs
 /// via the shared `job_list` discovery read ([JobProvider.loadDiscovery] —
@@ -110,66 +119,59 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final bool wide = constraints.maxWidth >= 900;
+        final double width = constraints.maxWidth;
+        // Content-card columns (§21a): 1 col <600, 2 cols 600–1023, 3 cols
+        // ≥1024 — never capped at 2 like the old grid.
+        final int columns = width >= 1024 ? 3 : (width >= 600 ? 2 : 1);
+        final EdgeInsets gutter = MobileCompact.scrollPaddingFor(width);
         return RefreshIndicator(
           onRefresh: () => jobs.loadDiscovery(refresh: true),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(HivorrSpacing.lg),
+            padding: gutter,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Text(
-                  'Job Moderation',
-                  style: context.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 4),
+                // No in-body H1: the shell top bar already titles this page.
                 Text(
                   '${jobs.discovery.length} total jobs',
                   style: context.textTheme.bodySmall?.copyWith(
                     color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: HivorrSpacing.lg),
-                if (wide)
-                  _CardGrid(
-                    maxWidth: constraints.maxWidth,
-                    jobs: jobs,
-                    actingIds: _actingIds,
-                    onView: (Job job) =>
-                        context.push(RoutePaths.dashboardJobDetail(job.id)),
-                    onRemove: (Job job) => _removeJob(context, jobs, job),
-                  )
-                else
-                  for (final Job job in jobs.discovery) ...<Widget>[
-                    _ModerationCard(
-                      job: job,
-                      acting: _actingIds.contains(job.id),
-                      onView: () =>
-                          context.push(RoutePaths.dashboardJobDetail(job.id)),
-                      onRemove: () => _removeJob(context, jobs, job),
-                    ),
-                    const SizedBox(height: HivorrSpacing.md),
+                const SizedBox(height: HivorrSpacing.md),
+                HivorrStatGrid(
+                  columns: columns,
+                  maxWidth: width - gutter.horizontal,
+                  children: <Widget>[
+                    for (final Job job in jobs.discovery)
+                      _ModerationCard(
+                        job: job,
+                        acting: _actingIds.contains(job.id),
+                        onView: () => context.push(
+                          RoutePaths.dashboardJobDetail(job.id),
+                        ),
+                        onRemove: () => _removeJob(context, jobs, job),
+                      ),
                   ],
+                ),
                 if (jobs.discoveryHasMore)
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       vertical: HivorrSpacing.md,
                     ),
                     child: Center(
-                      child: jobs.isLoading
-                          ? const CircularProgressIndicator()
-                          : OutlinedButton(
-                              onPressed: () => unawaited(jobs.loadDiscovery()),
-                              child: const Text('Load more'),
-                            ),
+                      child: HivorrButton(
+                        label: 'Load more',
+                        variant: HivorrButtonVariant.outline,
+                        size: HivorrButtonSize.small,
+                        isLoading: jobs.isLoading,
+                        onPressed: () => unawaited(jobs.loadDiscovery()),
+                      ),
                     ),
                   )
                 else
-                  const SizedBox(height: HivorrSpacing.lg),
+                  const SizedBox(height: HivorrSpacing.md),
               ],
             ),
           ),
@@ -220,8 +222,8 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
   }) async {
     final bool? result = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(title),
+      builder: (BuildContext dialogContext) => HivorrDialog(
+        title: title,
         content: Text(message),
         actions: <Widget>[
           TextButton(
@@ -236,45 +238,6 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
       ),
     );
     return result ?? false;
-  }
-}
-
-/// Two-column responsive grid for wide moderation views.
-class _CardGrid extends StatelessWidget {
-  const _CardGrid({
-    required this.maxWidth,
-    required this.jobs,
-    required this.actingIds,
-    required this.onView,
-    required this.onRemove,
-  });
-
-  final double maxWidth;
-  final JobProvider jobs;
-  final Set<String> actingIds;
-  final ValueChanged<Job> onView;
-  final ValueChanged<Job> onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    const double gap = HivorrSpacing.md;
-    final double cardWidth = (maxWidth - gap) / 2;
-    return Wrap(
-      spacing: gap,
-      runSpacing: gap,
-      children: <Widget>[
-        for (final Job job in jobs.discovery)
-          SizedBox(
-            width: cardWidth,
-            child: _ModerationCard(
-              job: job,
-              acting: actingIds.contains(job.id),
-              onView: () => onView(job),
-              onRemove: () => onRemove(job),
-            ),
-          ),
-      ],
-    );
   }
 }
 
@@ -299,32 +262,20 @@ class _ModerationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final String? category = _categoryOf(context, job);
-    final _JobStatusLook status = _lookFor(job.status, context);
     final bool removable = job.isEditable;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return HivorrCard(
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
               if (category != null) ...<Widget>[
-                _Pill(
+                HivorrTintBadge(
                   label: category,
-                  foreground: const Color(0xFF2D3FE7),
-                  background: const Color(0xFFEEF0FD),
+                  foreground: context.roleTheme.clientPrimary,
+                  background: context.roleTheme.clientContainer,
                 ),
                 const SizedBox(width: HivorrSpacing.sm),
               ],
@@ -332,8 +283,8 @@ class _ModerationCard extends StatelessWidget {
               Text(
                 _priceOf(job),
                 style: context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF16A34A),
+                  fontWeight: FontWeight.w700,
+                  color: context.appExtension.success,
                 ),
               ),
             ],
@@ -343,10 +294,9 @@ class _ModerationCard extends StatelessWidget {
             job.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+            style: context.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
               color: colors.onSurface,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: 2),
@@ -361,10 +311,9 @@ class _ModerationCard extends StatelessWidget {
           const SizedBox(height: HivorrSpacing.md),
           Row(
             children: <Widget>[
-              _Pill(
-                label: status.label,
-                foreground: status.color,
-                background: status.background,
+              HivorrBadge(
+                label: _statusLabelOf(job.status),
+                variant: _statusVariantOf(job.status),
               ),
               const SizedBox(width: HivorrSpacing.sm),
               Expanded(
@@ -377,25 +326,35 @@ class _ModerationCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _ActionPill(
-                icon: Icons.visibility_outlined,
-                label: 'View',
-                foreground: colors.onSurfaceVariant,
-                background: colors.surfaceContainerHighest.withValues(
-                  alpha: 0.45,
+              // Flexible trailing cluster: one line when it fits (the
+              // reference look), wraps instead of overflowing under long
+              // locales or narrow cards.
+              Flexible(
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: HivorrSpacing.sm,
+                  runSpacing: HivorrSpacing.sm,
+                  children: <Widget>[
+                    HivorrTableAction(
+                      icon: Icons.visibility_outlined,
+                      label: 'View',
+                      foreground: colors.onSurfaceVariant,
+                      background: colors.surfaceContainerHighest.withValues(
+                        alpha: 0.45,
+                      ),
+                      onTap: acting ? null : onView,
+                    ),
+                    if (removable)
+                      HivorrTableAction(
+                        icon: Icons.close,
+                        label: 'Remove',
+                        foreground: colors.error,
+                        background: colors.errorContainer,
+                        onTap: acting ? null : onRemove,
+                      ),
+                  ],
                 ),
-                onTap: acting ? null : onView,
               ),
-              if (removable) ...<Widget>[
-                const SizedBox(width: HivorrSpacing.sm),
-                _ActionPill(
-                  icon: Icons.close,
-                  label: 'Remove',
-                  foreground: const Color(0xFFEF4444),
-                  background: const Color(0xFFFEF2F2),
-                  onTap: acting ? null : onRemove,
-                ),
-              ],
             ],
           ),
         ],
@@ -404,127 +363,24 @@ class _ModerationCard extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.label,
-    required this.foreground,
-    required this.background,
-  });
+/// Screenshot status vocabulary mapped onto the real six-state job status
+/// (§21b): `open` stays open (success); active non-open work (`paused`,
+/// `awarded`) reads as in-progress (warning); terminal states stay neutral,
+/// with `cancelled` in error red to match the admin Suspended convention.
+String _statusLabelOf(String status) => switch (status) {
+  'open' => 'open',
+  'paused' || 'awarded' => 'in-progress',
+  'completed' => 'completed',
+  'cancelled' => 'cancelled',
+  _ => status,
+};
 
-  final String label;
-  final Color foreground;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: foreground,
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
-    required this.icon,
-    required this.label,
-    required this.foreground,
-    required this.background,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color foreground;
-  final Color background;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, size: 14, color: foreground),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: context.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: foreground,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _JobStatusLook {
-  const _JobStatusLook({
-    required this.label,
-    required this.color,
-    required this.background,
-  });
-
-  final String label;
-  final Color color;
-  final Color background;
-}
-
-/// Screenshot status vocabulary mapped onto the real six-state job status:
-/// `open` stays open (green); active non-open work (`paused`, `awarded`)
-/// reads as in-progress (amber); terminal states stay neutral, with
-/// `cancelled` in red to match the admin Suspended convention.
-_JobStatusLook _lookFor(String status, BuildContext context) {
-  final ColorScheme colors = context.colorScheme;
-  return switch (status) {
-    'open' => const _JobStatusLook(
-      label: 'open',
-      color: Color(0xFF16A34A),
-      background: Color(0xFFDCFCE7),
-    ),
-    'paused' || 'awarded' => const _JobStatusLook(
-      label: 'in-progress',
-      color: Color(0xFFF97316),
-      background: Color(0xFFFFF7ED),
-    ),
-    'completed' => _JobStatusLook(
-      label: 'completed',
-      color: colors.onSurfaceVariant,
-      background: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-    ),
-    'cancelled' => const _JobStatusLook(
-      label: 'cancelled',
-      color: Color(0xFFEF4444),
-      background: Color(0xFFFEF2F2),
-    ),
-    _ => _JobStatusLook(
-      label: status,
-      color: colors.onSurfaceVariant,
-      background: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-    ),
-  };
-}
+HivorrBadgeVariant _statusVariantOf(String status) => switch (status) {
+  'open' => HivorrBadgeVariant.success,
+  'paused' || 'awarded' => HivorrBadgeVariant.warning,
+  'cancelled' => HivorrBadgeVariant.error,
+  _ => HivorrBadgeVariant.neutral,
+};
 
 /// Category pill resolved best-effort from the already-cached taxonomy
 /// (profession name, else industry name). No new RPCs are issued for labels;

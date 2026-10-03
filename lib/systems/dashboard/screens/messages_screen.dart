@@ -288,7 +288,7 @@ class _ConversationList extends StatelessWidget {
                 child: Text(
                   'Messages',
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -418,7 +418,7 @@ class _ConversationRow extends StatelessWidget {
                 initials,
                 style: context.textTheme.titleSmall?.copyWith(
                   color: avatarFg,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -722,7 +722,7 @@ class _ThreadHeader extends StatelessWidget {
               initials,
               style: context.textTheme.titleSmall?.copyWith(
                 color: colors.primary,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -734,7 +734,7 @@ class _ThreadHeader extends StatelessWidget {
                 Text(
                   peer,
                   style: context.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(

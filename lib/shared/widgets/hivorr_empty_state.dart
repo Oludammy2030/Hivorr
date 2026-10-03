@@ -32,7 +32,7 @@ class HivorrEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double iconSize = compact ? 34 : 48;
+    final double iconSize = compact ? 32 : 48;
     return Center(
       child: Padding(
         padding: EdgeInsets.all(
@@ -53,9 +53,7 @@ class HivorrEmptyState extends StatelessWidget {
             ),
             Text(
               title,
-              style: context.textTheme.titleMedium?.copyWith(
-                fontSize: compact ? 15 : null,
-              ),
+              style: context.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             if (subtitle != null && subtitle!.isNotEmpty) ...<Widget>[
@@ -67,7 +65,6 @@ class HivorrEmptyState extends StatelessWidget {
                         : context.textTheme.bodyMedium)
                     ?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
-                  fontSize: compact ? 12 : null,
                 ),
                 textAlign: TextAlign.center,
               ),

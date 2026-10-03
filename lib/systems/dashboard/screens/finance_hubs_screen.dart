@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
-import 'package:hivorr/app/theme/app_colors.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/hire.dart';
 import 'package:hivorr/data/entities/job.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
+import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
@@ -18,6 +18,7 @@ import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
+import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
@@ -91,7 +92,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             'Payments',
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: 18,
             ),
           ),
           actions: <Widget>[
@@ -216,7 +216,6 @@ class _PaymentsTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final RoleThemeExtension roles = context.roleTheme;
     int pendingApps = 0;
     try {
@@ -237,154 +236,21 @@ class _PaymentsTopBar extends StatelessWidget {
     } catch (_) {
       displayName = 'TV';
     }
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        children: <Widget>[
-          _TopBarTile(
-            tooltip: 'Menu',
-            icon: Icons.menu,
-            onTap: () {
-              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
-              if (scaffold != null && scaffold.hasDrawer) {
-                scaffold.openDrawer();
-              }
-            },
-          ),
-          const SizedBox(width: HivorrSpacing.md),
-          Text(
-            'Payments',
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const Spacer(),
-          _TopBarTile(
-            tooltip: 'Notifications',
-            icon: Icons.notifications_outlined,
-            showDot: pendingApps > 0,
-            onTap: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: roles.clientContainer,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: roles.clientPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: HivorrSpacing.xs),
-                Text(
-                  'Client',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: roles.clientPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Tooltip(
-            message: 'Profile',
-            child: InkWell(
-              onTap: () => context.go(RoutePaths.dashboardAccount),
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.primaryContainer,
-                  border: Border.all(color: colors.primary, width: 1.5),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  displayName,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopBarTile extends StatelessWidget {
-  const _TopBarTile({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool showDot;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(icon, size: 22, color: colors.onSurfaceVariant),
-              if (showDot)
-                Positioned(
-                  top: 10,
-                  right: 11,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.surfaceContainerHighest,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return HivorrDashboardTopBar(
+      title: 'Payments',
+      accentPrimary: roles.clientPrimary,
+      accentContainer: roles.clientContainer,
+      modeLabel: 'Client',
+      initials: displayName,
+      showDot: pendingApps > 0,
+      onMenu: () {
+        final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+        if (scaffold != null && scaffold.hasDrawer) {
+          scaffold.openDrawer();
+        }
+      },
+      onNotifications: () => context.go(RoutePaths.dashboardNotifications),
+      onAvatar: () => context.go(RoutePaths.dashboardAccount),
     );
   }
 }
@@ -506,10 +372,12 @@ class _CompanyBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool compact = context.breakpoint == Breakpoint.mobile;
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.brandPrimary,
-        borderRadius: BorderRadius.circular(compact ? 16 : 20),
+        color: colors.primary,
+        borderRadius: BorderRadius.circular(ext.radiusMd),
       ),
       padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
       child: Column(
@@ -521,8 +389,9 @@ class _CompanyBalanceCard extends StatelessWidget {
                     ? context.textTheme.bodySmall
                     : context.textTheme.bodyMedium)
                 ?.copyWith(
+              // White-on-brand is a deliberate §16-style exception: the
+              // balance fill is brand in both themes.
               color: Colors.white.withValues(alpha: 0.85),
-              fontSize: compact ? 13 : null,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.xs : HivorrSpacing.sm),
@@ -535,7 +404,7 @@ class _CompanyBalanceCard extends StatelessWidget {
                     : context.textTheme.headlineMedium)
                 ?.copyWith(
               color: Colors.white,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
             ),
           ),
@@ -546,7 +415,6 @@ class _CompanyBalanceCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.bodySmall?.copyWith(
               color: Colors.white.withValues(alpha: 0.7),
-              fontSize: compact ? 12 : null,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.md : HivorrSpacing.lg),
@@ -559,16 +427,17 @@ class _CompanyBalanceCard extends StatelessWidget {
                   label: const Text('Fund'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: AppColors.brandPrimary,
+                    foregroundColor: colors.primary,
                     elevation: 0,
+                    minimumSize: const Size(48, 48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                      borderRadius: BorderRadius.circular(ext.radiusXs),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: compact ? 10 : 14,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: HivorrSpacing.smMd,
                     ),
                     textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -589,11 +458,12 @@ class _CompanyBalanceCard extends StatelessWidget {
                     side: const BorderSide(
                       color: Colors.white60,
                     ),
+                    minimumSize: const Size(48, 48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                      borderRadius: BorderRadius.circular(ext.radiusXs),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: compact ? 10 : 14,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: HivorrSpacing.smMd,
                     ),
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.w700,
@@ -675,7 +545,7 @@ class _TotalRow extends StatelessWidget {
         tile == _TotalTile.orange ? ext.warningContainer : colors.errorContainer;
     final Color iconFg =
         tile == _TotalTile.orange ? ext.warning : colors.error;
-    final double tileSize = compact ? 44 : 52;
+    final double tileSize = compact ? 32 : 40;
     return Row(
       children: <Widget>[
         Container(
@@ -683,9 +553,11 @@ class _TotalRow extends StatelessWidget {
           height: tileSize,
           decoration: BoxDecoration(
             color: tileBg,
-            borderRadius: BorderRadius.circular(compact ? 12 : 16),
+            borderRadius: BorderRadius.circular(
+              compact ? ext.radiusXs : ext.radiusMd,
+            ),
           ),
-          child: Icon(icon, size: compact ? 22 : 26, color: iconFg),
+          child: Icon(icon, size: compact ? 20 : 24, color: iconFg),
         ),
         const SizedBox(width: HivorrSpacing.md),
         Expanded(
@@ -698,7 +570,6 @@ class _TotalRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
-                  fontSize: compact ? 12 : 13,
                 ),
               ),
               const SizedBox(height: 2),
@@ -709,7 +580,7 @@ class _TotalRow extends StatelessWidget {
                 style: (compact
                         ? context.textTheme.titleLarge
                         : context.textTheme.headlineSmall)
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -740,8 +611,7 @@ class _SpendingByCategoryCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: compact ? 15 : 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
@@ -793,7 +663,6 @@ class _CategoryRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
-                  fontSize: compact ? 12 : 13,
                 ),
               ),
             ),
@@ -802,7 +671,7 @@ class _CategoryRow extends StatelessWidget {
               percent,
               style: context.textTheme.labelMedium?.copyWith(
                 color: bar,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -847,11 +716,13 @@ class _EscrowBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Container(
-            width: compact ? 40 : 48,
-            height: compact ? 40 : 48,
+            width: compact ? 32 : 40,
+            height: compact ? 32 : 40,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(compact ? 12 : 14),
+              borderRadius: BorderRadius.circular(
+                compact ? ext.radiusXs : ext.radiusMd,
+              ),
             ),
             child: Icon(
               Icons.lock_outline,
@@ -869,8 +740,7 @@ class _EscrowBanner extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: compact ? 13 : 15,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -880,7 +750,6 @@ class _EscrowBanner extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: compact ? 11 : 12,
                   ),
                 ),
               ],
@@ -896,7 +765,7 @@ class _EscrowBanner extends StatelessWidget {
                     : context.textTheme.titleLarge)
                 ?.copyWith(
               color: ext.warning,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -933,10 +802,10 @@ class _PaymentHistorySection extends StatelessWidget {
       runSpacing: HivorrSpacing.sm,
       children: <Widget>[
         for (final _HistoryFilter f in _HistoryFilter.values)
-          _FilterChip(
+          HivorrChip(
             label: f.label,
-            selected: f == filter,
-            onTap: () => onFilter(f),
+            isSelected: f == filter,
+            onSelected: (_) => onFilter(f),
           ),
       ],
     );
@@ -947,8 +816,7 @@ class _PaymentHistorySection extends StatelessWidget {
           Text(
             'Payment History',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.sm),
@@ -963,8 +831,7 @@ class _PaymentHistorySection extends StatelessWidget {
                 child: Text(
                   'Payment History',
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -975,47 +842,6 @@ class _PaymentHistorySection extends StatelessWidget {
         SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
         _HistoryCard(entries: visible, compact: compact),
       ],
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? colors.primary : colors.surface,
-          borderRadius: BorderRadius.circular(999),
-          border: selected
-              ? null
-              : Border.all(color: colors.outlineVariant),
-        ),
-        child: Text(
-          label,
-          style: context.textTheme.labelMedium?.copyWith(
-            color: selected
-                ? colors.onPrimary
-                : colors.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-            fontSize: 12.5,
-          ),
-        ),
-      ),
     );
   }
 }
@@ -1114,7 +940,6 @@ class _HistoryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: compact ? 13 : 14,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1124,7 +949,6 @@ class _HistoryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: compact ? 11 : 12,
                   ),
                 ),
               ],
@@ -1141,8 +965,7 @@ class _HistoryRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.titleSmall?.copyWith(
                   color: amountFg,
-                  fontWeight: FontWeight.w800,
-                  fontSize: compact ? 13 : 14,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 4),
@@ -1160,7 +983,6 @@ class _HistoryRow extends StatelessWidget {
                   style: context.textTheme.labelSmall?.copyWith(
                     color: pillFg,
                     fontWeight: FontWeight.w700,
-                    fontSize: 11,
                   ),
                 ),
               ),
@@ -1323,7 +1145,6 @@ class _EarningsScreenState extends State<EarningsScreen> {
             'Earnings',
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: 18,
             ),
           ),
           actions: <Widget>[
@@ -1436,7 +1257,6 @@ class _EarningsTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final RoleThemeExtension roles = context.roleTheme;
     int activeHires = 0;
     int appliedCount = 0;
@@ -1457,157 +1277,22 @@ class _EarningsTopBar extends StatelessWidget {
     final bool hasDot = activeHires > 0 || appliedCount > 0;
     final ({String name, String initials}) identity =
         _earningsProIdentity(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        children: <Widget>[
-          _EarningsTopBarTile(
-            tooltip: 'Menu',
-            icon: Icons.menu,
-            onTap: () {
-              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
-              if (scaffold != null && scaffold.hasDrawer) {
-                scaffold.openDrawer();
-              }
-            },
-          ),
-          const SizedBox(width: HivorrSpacing.md),
-          Text(
-            'Earnings',
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const Spacer(),
-          _EarningsTopBarTile(
-            tooltip: 'Notifications',
-            icon: Icons.notifications_outlined,
-            showDot: hasDot,
-            onTap: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: roles.professionalContainer.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: roles.professionalPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: HivorrSpacing.xs),
-                Text(
-                  'Professional',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: roles.professionalPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Tooltip(
-            message: identity.name,
-            child: InkWell(
-              onTap: () => context.go(RoutePaths.dashboardAccount),
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: roles.professionalContainer,
-                  border: Border.all(
-                    color: roles.professionalPrimary.withValues(alpha: 0.4),
-                    width: 1.5,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  identity.initials,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: roles.professionalPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EarningsTopBarTile extends StatelessWidget {
-  const _EarningsTopBarTile({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool showDot;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(icon, size: 22, color: colors.onSurfaceVariant),
-              if (showDot)
-                Positioned(
-                  top: 10,
-                  right: 11,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.surfaceContainerHighest,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return HivorrDashboardTopBar(
+      title: 'Earnings',
+      accentPrimary: roles.professionalPrimary,
+      accentContainer: roles.professionalContainer,
+      modeLabel: 'Professional',
+      initials: identity.initials,
+      avatarTooltip: identity.name,
+      showDot: hasDot,
+      onMenu: () {
+        final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+        if (scaffold != null && scaffold.hasDrawer) {
+          scaffold.openDrawer();
+        }
+      },
+      onNotifications: () => context.go(RoutePaths.dashboardNotifications),
+      onAvatar: () => context.go(RoutePaths.dashboardAccount),
     );
   }
 }
@@ -1704,11 +1389,12 @@ class _AvailableBalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final RoleThemeExtension roles = context.roleTheme;
     final bool compact = context.breakpoint == Breakpoint.mobile;
+    final AppThemeExtension ext = context.appExtension;
     final Color green = roles.professionalPrimary;
     return Container(
       decoration: BoxDecoration(
         color: green,
-        borderRadius: BorderRadius.circular(compact ? 16 : 20),
+        borderRadius: BorderRadius.circular(ext.radiusMd),
       ),
       padding: EdgeInsets.all(compact ? HivorrSpacing.md : HivorrSpacing.lg),
       child: Column(
@@ -1720,8 +1406,9 @@ class _AvailableBalanceCard extends StatelessWidget {
                     ? context.textTheme.bodySmall
                     : context.textTheme.bodyMedium)
                 ?.copyWith(
+              // White-on-brand is a deliberate §16-style exception: the
+              // balance fill is brand in both themes.
               color: Colors.white.withValues(alpha: 0.85),
-              fontSize: compact ? 13 : null,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.xs : HivorrSpacing.sm),
@@ -1734,8 +1421,7 @@ class _AvailableBalanceCard extends StatelessWidget {
                     : context.textTheme.headlineMedium)
                 ?.copyWith(
               color: Colors.white,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 2),
@@ -1745,7 +1431,6 @@ class _AvailableBalanceCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.bodySmall?.copyWith(
               color: Colors.white.withValues(alpha: 0.7),
-              fontSize: compact ? 12 : null,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.md : HivorrSpacing.lg),
@@ -1760,14 +1445,15 @@ class _AvailableBalanceCard extends StatelessWidget {
                     backgroundColor: Colors.white,
                     foregroundColor: green,
                     elevation: 0,
+                    minimumSize: const Size(48, 48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                      borderRadius: BorderRadius.circular(ext.radiusXs),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: compact ? 10 : 14,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: HivorrSpacing.smMd,
                     ),
                     textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -1788,11 +1474,12 @@ class _AvailableBalanceCard extends StatelessWidget {
                     side: const BorderSide(
                       color: Colors.white60,
                     ),
+                    minimumSize: const Size(48, 48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                      borderRadius: BorderRadius.circular(ext.radiusXs),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: compact ? 10 : 14,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: HivorrSpacing.smMd,
                     ),
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.w700,
@@ -1871,7 +1558,7 @@ class _EarningsTotalRow extends StatelessWidget {
         tile == _EarningsTotalTile.orange ? ext.warningContainer : ext.successContainer;
     final Color iconFg =
         tile == _EarningsTotalTile.orange ? ext.warning : ext.success;
-    final double tileSize = compact ? 44 : 52;
+    final double tileSize = compact ? 32 : 40;
     return Row(
       children: <Widget>[
         Container(
@@ -1879,9 +1566,11 @@ class _EarningsTotalRow extends StatelessWidget {
           height: tileSize,
           decoration: BoxDecoration(
             color: tileBg,
-            borderRadius: BorderRadius.circular(compact ? 12 : 16),
+            borderRadius: BorderRadius.circular(
+              compact ? ext.radiusXs : ext.radiusMd,
+            ),
           ),
-          child: Icon(icon, size: compact ? 22 : 26, color: iconFg),
+          child: Icon(icon, size: compact ? 20 : 24, color: iconFg),
         ),
         const SizedBox(width: HivorrSpacing.md),
         Expanded(
@@ -1894,7 +1583,6 @@ class _EarningsTotalRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
-                  fontSize: compact ? 12 : 13,
                 ),
               ),
               const SizedBox(height: 2),
@@ -1905,7 +1593,7 @@ class _EarningsTotalRow extends StatelessWidget {
                 style: (compact
                         ? context.textTheme.titleLarge
                         : context.textTheme.headlineSmall)
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -1947,8 +1635,7 @@ class _MonthlyEarningsCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: compact ? 15 : 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
@@ -1981,7 +1668,6 @@ class _MonthlyEarningsCard extends StatelessWidget {
             '+23% vs last month',
             style: context.textTheme.bodySmall?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
-              fontSize: compact ? 11 : 12,
             ),
           ),
         ],
@@ -2014,11 +1700,13 @@ class _EarningsEscrowBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Container(
-            width: compact ? 40 : 48,
-            height: compact ? 40 : 48,
+            width: compact ? 32 : 40,
+            height: compact ? 32 : 40,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(compact ? 12 : 14),
+              borderRadius: BorderRadius.circular(
+                compact ? ext.radiusXs : ext.radiusMd,
+              ),
             ),
             child: Icon(
               Icons.lock_outline,
@@ -2036,8 +1724,7 @@ class _EarningsEscrowBanner extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: compact ? 13 : 15,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -2047,7 +1734,6 @@ class _EarningsEscrowBanner extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: compact ? 11 : 12,
                   ),
                 ),
               ],
@@ -2063,7 +1749,7 @@ class _EarningsEscrowBanner extends StatelessWidget {
                     : context.textTheme.titleLarge)
                 ?.copyWith(
               color: ext.warning,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -2114,8 +1800,7 @@ class _EarningsHistorySection extends StatelessWidget {
           Text(
             'Earnings History',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.sm),
@@ -2130,8 +1815,7 @@ class _EarningsHistorySection extends StatelessWidget {
                 child: Text(
                   'Earnings History',
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -2165,7 +1849,10 @@ class _EarningsFilterChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: HivorrSpacing.md,
+          vertical: HivorrSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: selected ? roles.professionalPrimary : colors.surface,
           borderRadius: BorderRadius.circular(999),
@@ -2180,7 +1867,6 @@ class _EarningsFilterChip extends StatelessWidget {
                 ? colors.onPrimary
                 : colors.onSurfaceVariant,
             fontWeight: FontWeight.w700,
-            fontSize: 12.5,
           ),
         ),
       ),
@@ -2281,7 +1967,6 @@ class _EarningsHistoryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: compact ? 13 : 14,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -2291,7 +1976,6 @@ class _EarningsHistoryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: compact ? 11 : 12,
                   ),
                 ),
               ],
@@ -2308,8 +1992,7 @@ class _EarningsHistoryRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.titleSmall?.copyWith(
                   color: amountFg,
-                  fontWeight: FontWeight.w800,
-                  fontSize: compact ? 13 : 14,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 4),
@@ -2327,7 +2010,6 @@ class _EarningsHistoryRow extends StatelessWidget {
                   style: context.textTheme.labelSmall?.copyWith(
                     color: ext.success,
                     fontWeight: FontWeight.w700,
-                    fontSize: 11,
                   ),
                 ),
               ),

@@ -19,6 +19,7 @@ class HivorrDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppThemeExtension ext = context.appExtension;
+    final ColorScheme colors = context.colorScheme;
     return AlertDialog(
       title: title != null
           ? Text(title!, style: context.textTheme.titleLarge)
@@ -28,6 +29,9 @@ class HivorrDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ext.radiusMd),
       ),
+      // Level-2 overlay elevation, bound to tokens (VISUAL-IDENTITY.md §9).
+      elevation: 3,
+      shadowColor: colors.shadow,
     );
   }
 }

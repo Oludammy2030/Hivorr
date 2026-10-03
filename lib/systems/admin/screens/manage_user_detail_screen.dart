@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
+import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/widgets/hivorr_badge.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
@@ -43,11 +46,26 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
     final ManageUserProvider provider = context.watch<ManageUserProvider>();
     final ManageUserDetail? detail = provider.selectedUser;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('User detail', style: context.textTheme.titleLarge),
+    // No nested Scaffold/AppBar: this screen mounts inside the admin shell,
+    // whose top bar already titles the page (§13a). A slim back row keeps
+    // the pop navigation the AppBar previously provided.
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: HivorrButton(
+              label: 'Back',
+              variant: HivorrButtonVariant.text,
+              size: HivorrButtonSize.small,
+              icon: const Icon(Icons.arrow_back, size: 20),
+              onPressed: () => context.pop(),
+            ),
+          ),
+          Expanded(child: _body(provider, detail)),
+        ],
       ),
-      body: SafeArea(child: _body(provider, detail)),
     );
   }
 
@@ -333,8 +351,8 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
   }) async {
     final bool? result = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(title),
+      builder: (BuildContext dialogContext) => HivorrDialog(
+        title: title,
         content: Text(message),
         actions: <Widget>[
           TextButton(
@@ -351,30 +369,22 @@ class _ManageUserDetailScreenState extends State<ManageUserDetailScreen> {
     return result ?? false;
   }
 
+  /// Lifecycle status in the shared badge language (§21b) — same labels as
+  /// the directory table (`Active`, not `active`).
   Widget _statusChip(String status) {
-    final Color color = switch (status) {
-      'active' => context.colorScheme.primary,
-      'suspended' => context.colorScheme.error,
-      'deactivated' => context.colorScheme.onSurfaceVariant,
-      _ => context.colorScheme.onSurfaceVariant,
+    final String label = switch (status) {
+      'active' => 'Active',
+      'suspended' => 'Suspended',
+      'deactivated' => 'Deactivated',
+      'deleted' => 'Deleted',
+      _ => status,
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.sm,
-        vertical: HivorrSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        status,
-        style: context.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    final HivorrBadgeVariant variant = switch (status) {
+      'active' => HivorrBadgeVariant.success,
+      'suspended' => HivorrBadgeVariant.error,
+      _ => HivorrBadgeVariant.neutral,
+    };
+    return HivorrBadge(label: label, variant: variant);
   }
 
   Widget _infoRow(String label, String value) {

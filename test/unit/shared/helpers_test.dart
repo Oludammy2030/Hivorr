@@ -6,6 +6,7 @@ void main() {
     test('scale values', () {
       expect(HivorrSpacing.xs, 4.0);
       expect(HivorrSpacing.sm, 8.0);
+      expect(HivorrSpacing.smMd, 12.0);
       expect(HivorrSpacing.md, 16.0);
       expect(HivorrSpacing.lg, 24.0);
       expect(HivorrSpacing.xl, 32.0);

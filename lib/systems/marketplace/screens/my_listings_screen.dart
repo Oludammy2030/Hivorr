@@ -11,7 +11,6 @@ import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
-import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/layouts/hivorr_screen_scaffold.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
@@ -42,7 +41,12 @@ class _MyListingsScreenState extends State<MyListingsScreen>
   String? _statusFilter;
   bool _acting = false;
 
-  static const List<String?> _filters = <String?>[null, 'draft', 'published', 'paused'];
+  static const List<String?> _filters = <String?>[
+    null,
+    'draft',
+    'published',
+    'paused',
+  ];
 
   @override
   void didChangeDependencies() {
@@ -167,119 +171,116 @@ class _MyListingsScreenState extends State<MyListingsScreen>
         tooltip: 'Create listing',
         child: const Icon(Icons.add),
       ),
-      body: HivorrContentPane(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            HivorrSectionHeader(
-              title: 'My listings',
-              action: HivorrButton(
-                label: 'New',
-                size: HivorrButtonSize.small,
-                onPressed: () => context.push(RoutePaths.serviceListingNew),
+      // Lists are full-width surfaces: a 1120dp cap replaces the 720dp
+      // form pane so rows can breathe on desktop (VISUAL-IDENTITY.md §7).
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              HivorrSectionHeader(
+                title: 'My listings',
+                action: HivorrButton(
+                  label: 'New',
+                  size: HivorrButtonSize.small,
+                  onPressed: () => context.push(RoutePaths.serviceListingNew),
+                ),
               ),
-            ),
-            _FilterRow(
-              selected: _statusFilter,
-              onSelected: _applyFilter,
-            ),
-            const SizedBox(height: HivorrSpacing.sm),
-            Expanded(
-              child: Consumer<ServiceListingProvider>(
-                builder: (
-                  BuildContext context,
-                  ServiceListingProvider provider,
-                  _,
-                ) {
-                  if (provider.isLoading && !provider.isLoaded) {
-                    return const HivorrLoadingState(
-                      message: 'Loading listings…',
-                    );
-                  }
-                  if (provider.lastError != null && !provider.isLoaded) {
-                    return HivorrErrorState(
-                      message: 'Failed to load listings',
-                      detail: provider.lastError!.message,
-                      onRetry: _load,
-                    );
-                  }
-                  if (provider.listings.isEmpty) {
-                    return HivorrEmptyState(
-                      title: 'No listings yet',
-                      subtitle:
-                          'Create your first service listing to start receiving work.',
-                      actionButton: HivorrButton(
-                        label: 'Create listing',
-                        onPressed: () =>
-                            context.push(RoutePaths.serviceListingNew),
-                      ),
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: HivorrSpacing.xs,
+              _FilterRow(selected: _statusFilter, onSelected: _applyFilter),
+              const SizedBox(height: HivorrSpacing.sm),
+              Expanded(
+                child: Consumer<ServiceListingProvider>(
+                  builder: (BuildContext context, ServiceListingProvider provider, _) {
+                    if (provider.isLoading && !provider.isLoaded) {
+                      return const HivorrLoadingState(
+                        message: 'Loading listings…',
+                      );
+                    }
+                    if (provider.lastError != null && !provider.isLoaded) {
+                      return HivorrErrorState(
+                        message: 'Failed to load listings',
+                        detail: provider.lastError!.message,
+                        onRetry: _load,
+                      );
+                    }
+                    if (provider.listings.isEmpty) {
+                      return HivorrEmptyState(
+                        title: 'No listings yet',
+                        subtitle:
+                            'Create your first service listing to start receiving work.',
+                        actionButton: HivorrButton(
+                          label: 'Create listing',
+                          onPressed: () =>
+                              context.push(RoutePaths.serviceListingNew),
                         ),
-                        child: Text(
-                          _statusFilter == null
-                              ? '${provider.listings.length} listings'
-                              : '${provider.listings.length} · ${_filterLabel(_statusFilter!)}',
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: HivorrSpacing.xs,
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: _load,
-                          child: ListView.separated(
-                            itemCount: provider.listings.length +
-                                (provider.hasMore ? 1 : 0),
-                            separatorBuilder: (_, _) => const SizedBox(
-                              height: HivorrSpacing.sm,
+                          child: Text(
+                            _statusFilter == null
+                                ? '${provider.listings.length} listings'
+                                : '${provider.listings.length} · ${_filterLabel(_statusFilter!)}',
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: context.colorScheme.onSurfaceVariant,
                             ),
-                            itemBuilder: (BuildContext context, int index) {
-                              if (index >= provider.listings.length) {
-                                return _LoadMore(
-                                  onLoadMore: provider.loadMore,
-                                );
-                              }
-                              final MyServiceListing listing =
-                                  provider.listings[index];
-                              return ServiceListingCard(
-                                listing: listing,
-                                isBusy: _acting,
-                                onTap: () => context.push(
-                                  RoutePaths.serviceListingEditFor(
-                                    id: listing.id,
-                                  ),
-                                ),
-                                onEdit: () => context.push(
-                                  RoutePaths.serviceListingEditFor(
-                                    id: listing.id,
-                                  ),
-                                ),
-                                onMedia: () => context.push(
-                                  RoutePaths.serviceListingMediaFor(
-                                    id: listing.id,
-                                  ),
-                                ),
-                                onPublish: () => _publish(listing),
-                                onUnpublish: () =>
-                                    _confirmUnpublish(listing),
-                              );
-                            },
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                },
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: _load,
+                            child: ListView.separated(
+                              itemCount:
+                                  provider.listings.length +
+                                  (provider.hasMore ? 1 : 0),
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: HivorrSpacing.sm),
+                              itemBuilder: (BuildContext context, int index) {
+                                if (index >= provider.listings.length) {
+                                  return _LoadMore(
+                                    onLoadMore: provider.loadMore,
+                                  );
+                                }
+                                final MyServiceListing listing =
+                                    provider.listings[index];
+                                return ServiceListingCard(
+                                  listing: listing,
+                                  isBusy: _acting,
+                                  onTap: () => context.push(
+                                    RoutePaths.serviceListingEditFor(
+                                      id: listing.id,
+                                    ),
+                                  ),
+                                  onEdit: () => context.push(
+                                    RoutePaths.serviceListingEditFor(
+                                      id: listing.id,
+                                    ),
+                                  ),
+                                  onMedia: () => context.push(
+                                    RoutePaths.serviceListingMediaFor(
+                                      id: listing.id,
+                                    ),
+                                  ),
+                                  onPublish: () => _publish(listing),
+                                  onUnpublish: () => _confirmUnpublish(listing),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

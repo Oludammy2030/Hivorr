@@ -11,19 +11,30 @@ import 'package:hivorr/config/permissions/admin_gate.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
+import 'package:hivorr/shared/components/hivorr_data_table.dart';
+import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
+import 'package:hivorr/shared/widgets/hivorr_badge.dart';
+import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_capability_badge.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
+import 'package:hivorr/shared/widgets/hivorr_divider.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
+import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
+import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 /// Manage User directory screen (EP-02-11 admin console).
 ///
-/// Visual source of truth: Admin Dashboard Users reference screenshot —
-/// `User Management` title + total-users subtitle + `Export CSV`, a white
-/// rounded card holding the search field and the
-/// User | Role | Jobs | Status | Joined | Actions table.
+/// Visual source of truth: Admin Dashboard Users reference screenshot — a
+/// slim count + `Export CSV` row (the shell top bar already titles the page,
+/// VISUAL-IDENTITY.md §13a), then a white rounded card holding the search
+/// field and the User | Role | Jobs | Status | Joined | Actions table
+/// (`HivorrDataTable`, §21c).
 ///
 /// Functional source of truth: existing Hivorr architecture. Directory data
 /// flows through [ManageUserProvider] (search + status + pagination);
@@ -131,9 +142,12 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        // Table needs room for six columns + action pills (matches the
-        // 900px Jobs grid breakpoint); narrower widths use cards.
-        final bool wide = constraints.maxWidth >= 900;
+        final double width = constraints.maxWidth;
+        // Six columns + dual action pills need ~160dp for Actions alone, so
+        // this table flips to cards below 900dp (content-driven exception to
+        // the §21a 720dp table rule — a 720dp viewport cannot host both
+        // pills without overflow).
+        final bool wide = width >= 900;
         return RefreshIndicator(
           onRefresh: () => provider.loadUsers(
             search: provider.search,
@@ -142,11 +156,11 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
           ),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(HivorrSpacing.lg),
+            padding: MobileCompact.scrollPaddingFor(width),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                _Header(
+                _DirectoryHeader(
                   totalLabel: provider.isListHydrated
                       ? '${_formatCount(provider.totalCount)} $_populationLabel'
                       : (provider.isLoading
@@ -156,7 +170,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
                   canExport: provider.users.isNotEmpty && !_exporting,
                   onExport: () => _exportCsv(context, provider),
                 ),
-                const SizedBox(height: HivorrSpacing.lg),
+                const SizedBox(height: HivorrSpacing.md),
                 _DirectoryCard(
                   wide: wide,
                   searchController: _searchController,
@@ -198,7 +212,7 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: HivorrSpacing.lg),
+                const SizedBox(height: HivorrSpacing.md),
               ],
             ),
           ),
@@ -243,8 +257,8 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
   }) async {
     final bool? result = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(title),
+      builder: (BuildContext dialogContext) => HivorrDialog(
+        title: title,
         content: Text(message),
         actions: <Widget>[
           TextButton(
@@ -336,9 +350,10 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
       NumberFormat.decimalPattern('en').format(value);
 }
 
-/// Title + subtitle + Export CSV, as in the reference.
-class _Header extends StatelessWidget {
-  const _Header({
+/// Slim count + Export CSV row. No in-body title: the shell top bar already
+/// titles this page (VISUAL-IDENTITY.md §13a).
+class _DirectoryHeader extends StatelessWidget {
+  const _DirectoryHeader({
     required this.totalLabel,
     required this.exporting,
     required this.canExport,
@@ -352,47 +367,23 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'User Management',
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: colors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                totalLabel,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        TextButton.icon(
-          onPressed: canExport ? onExport : null,
-          icon: exporting
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.filter_list_outlined, size: 18),
-          label: const Text('Export CSV'),
-          style: TextButton.styleFrom(
-            foregroundColor: context.roleTheme.clientPrimary,
-            textStyle: context.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+          child: Text(
+            totalLabel,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
+        ),
+        HivorrButton(
+          label: 'Export CSV',
+          variant: HivorrButtonVariant.text,
+          size: HivorrButtonSize.small,
+          icon: const Icon(Icons.filter_list_outlined, size: 18),
+          isLoading: exporting,
+          onPressed: canExport ? onExport : null,
         ),
       ],
     );
@@ -431,19 +422,9 @@ class _DirectoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return HivorrCard(
+      padding: EdgeInsets.zero,
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -456,7 +437,7 @@ class _DirectoryCard extends StatelessWidget {
               onStatusSelected: onStatusSelected,
             ),
           ),
-          Divider(height: 1, color: colors.outlineVariant),
+          const HivorrDivider(),
           _Body(
             wide: wide,
             provider: provider,
@@ -491,67 +472,47 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    return TextField(
+    return HivorrTextField(
       controller: controller,
+      hint: 'Search users...',
       textInputAction: TextInputAction.search,
       onSubmitted: onSearch,
-      decoration: InputDecoration(
-        hintText: 'Search users...',
-        hintStyle: context.textTheme.bodyMedium?.copyWith(
-          color: colors.onSurfaceVariant,
+      prefix: Icon(Icons.search, color: colors.onSurfaceVariant),
+      suffix: PopupMenuButton<String?>(
+        icon: Icon(
+          Icons.filter_list_outlined,
+          color: selectedStatus == null
+              ? colors.onSurfaceVariant
+              : context.roleTheme.clientPrimary,
         ),
-        prefixIcon: Icon(Icons.search, color: colors.onSurfaceVariant),
-        suffixIcon: PopupMenuButton<String?>(
-          icon: Icon(
-            Icons.filter_list_outlined,
-            color: selectedStatus == null
-                ? colors.onSurfaceVariant
-                : context.roleTheme.clientPrimary,
+        tooltip: selectedStatus == null
+            ? 'Filter by status'
+            : 'Status: $selectedStatus',
+        onSelected: onStatusSelected,
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<String?>>[
+          const PopupMenuItem<String?>(
+            value: null,
+            child: Text('All statuses'),
           ),
-          tooltip: selectedStatus == null
-              ? 'Filter by status'
-              : 'Status: $selectedStatus',
-          onSelected: onStatusSelected,
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String?>>[
-            const PopupMenuItem<String?>(
-              value: null,
-              child: Text('All statuses'),
-            ),
-            const PopupMenuItem<String?>(
-              value: 'active',
-              child: Text('Active'),
-            ),
-            const PopupMenuItem<String?>(
-              value: 'suspended',
-              child: Text('Suspended'),
-            ),
-            const PopupMenuItem<String?>(
-              value: 'deactivated',
-              child: Text('Deactivated'),
-            ),
-            const PopupMenuItem<String?>(
-              value: 'deleted',
-              child: Text('Deleted'),
-            ),
-          ],
-        ),
-        filled: true,
-        fillColor: colors.surfaceContainerHighest.withValues(alpha: 0.35),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colors.outline),
-        ),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          const PopupMenuItem<String?>(
+            value: 'active',
+            child: Text('Active'),
+          ),
+          const PopupMenuItem<String?>(
+            value: 'suspended',
+            child: Text('Suspended'),
+          ),
+          const PopupMenuItem<String?>(
+            value: 'deactivated',
+            child: Text('Deactivated'),
+          ),
+          const PopupMenuItem<String?>(
+            value: 'deleted',
+            child: Text('Deleted'),
+          ),
+        ],
       ),
+      fillColor: colors.surfaceContainerHighest.withValues(alpha: 0.35),
     );
   }
 }
@@ -579,28 +540,23 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     if (provider.isLoading && provider.users.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.all(HivorrSpacing.xl),
+        padding: EdgeInsets.all(HivorrSpacing.md),
         child: HivorrLoadingState(),
       );
     }
+    // Empty/error states carry their own internal padding.
     if (provider.lastError != null && provider.users.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(HivorrSpacing.xl),
-        child: HivorrEmptyState(
-          icon: Icon(Icons.error_outline, color: context.colorScheme.error),
-          title: 'Failed to load users',
-          subtitle: provider.lastError!.message,
-        ),
+      return HivorrEmptyState(
+        icon: Icon(Icons.error_outline, color: context.colorScheme.error),
+        title: 'Failed to load users',
+        subtitle: provider.lastError!.message,
       );
     }
     if (provider.users.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(HivorrSpacing.xl),
-        child: HivorrEmptyState(
-          icon: Icon(Icons.group_outlined, color: context.colorScheme.primary),
-          title: 'No users found',
-          subtitle: emptySubtitle,
-        ),
+      return HivorrEmptyState(
+        icon: Icon(Icons.group_outlined, color: context.colorScheme.primary),
+        title: 'No users found',
+        subtitle: emptySubtitle,
       );
     }
     if (wide) {
@@ -640,36 +596,47 @@ class _UserTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final List<ManageUserListItem> users = provider.users;
     return Column(
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-          child: Row(
-            children: <Widget>[
-              Expanded(flex: 22, child: _HeaderLabel('User')),
-              Expanded(flex: 11, child: _HeaderLabel('Role')),
-              Expanded(flex: 6, child: _HeaderLabel('Jobs')),
-              Expanded(flex: 9, child: _HeaderLabel('Status')),
-              Expanded(flex: 9, child: _HeaderLabel('Joined')),
-              Expanded(flex: 14, child: _HeaderLabel('Actions')),
-            ],
-          ),
+        HivorrDataTable(
+          // Actions carries flex 16 (not 14): the dual pills need ~160dp
+          // and the user cell ellipsizes, so it donates the room.
+          columns: const <HivorrDataColumn>[
+            HivorrDataColumn('User', flex: 20),
+            HivorrDataColumn('Role', flex: 11),
+            HivorrDataColumn('Jobs', flex: 6),
+            HivorrDataColumn('Status', flex: 9),
+            HivorrDataColumn('Joined', flex: 9),
+            HivorrDataColumn('Actions', flex: 16),
+          ],
+          rows: <HivorrDataRow>[
+            for (final ManageUserListItem user in users)
+              HivorrDataRow(
+                cells: <HivorrDataCell>[
+                  HivorrDataCell(_UserCell(user: user), flex: 20),
+                  HivorrDataCell(
+                    HivorrCapabilityBadge(capability: user.capability),
+                    flex: 11,
+                  ),
+                  const HivorrDataCell(_JobsCell(), flex: 6),
+                  HivorrDataCell(_UserStatusBadge(user: user), flex: 9),
+                  HivorrDataCell(
+                    _JoinedCell(createdAt: user.createdAt),
+                    flex: 9,
+                  ),
+                  HivorrDataCell(
+                    _UserActions(
+                      user: user,
+                      onView: () => onView(user),
+                      onSuspend: () => onSuspend(user),
+                    ),
+                    flex: 16,
+                  ),
+                ],
+              ),
+          ],
         ),
-        Divider(height: 1, color: colors.outlineVariant),
-        for (int i = 0; i < users.length; i++) ...<Widget>[
-          _UserRow(
-            user: users[i],
-            onView: () => onView(users[i]),
-            onSuspend: () => onSuspend(users[i]),
-          ),
-          if (i < users.length - 1)
-            Divider(
-              height: 1,
-              color: colors.outlineVariant.withValues(alpha: 0.6),
-            ),
-        ],
         if (provider.lastError != null)
           Padding(
             padding: const EdgeInsets.all(HivorrSpacing.md),
@@ -683,12 +650,13 @@ class _UserTable extends StatelessWidget {
         if (provider.hasMore)
           Padding(
             padding: const EdgeInsets.all(HivorrSpacing.md),
-            child: provider.isLoading
-                ? const CircularProgressIndicator()
-                : OutlinedButton(
-                    onPressed: onLoadMore,
-                    child: const Text('Load more'),
-                  ),
+            child: HivorrButton(
+              label: 'Load more',
+              variant: HivorrButtonVariant.outline,
+              size: HivorrButtonSize.small,
+              isLoading: provider.isLoading,
+              onPressed: onLoadMore,
+            ),
           )
         else
           const SizedBox(height: HivorrSpacing.md),
@@ -697,25 +665,10 @@ class _UserTable extends StatelessWidget {
   }
 }
 
-class _HeaderLabel extends StatelessWidget {
-  const _HeaderLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: context.textTheme.labelSmall?.copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-class _UserRow extends StatelessWidget {
-  const _UserRow({
+/// View + Suspend pills for one directory row (table and narrow cards share
+/// the table variant; narrow cards use full buttons — see [_NarrowCard]).
+class _UserActions extends StatelessWidget {
+  const _UserActions({
     required this.user,
     required this.onView,
     required this.onSuspend,
@@ -728,46 +681,24 @@ class _UserRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool suspendable = user.status == 'active';
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Expanded(flex: 22, child: _UserCell(user: user)),
-          Expanded(flex: 11, child: _RolePill(capability: user.capability)),
-          const Expanded(flex: 6, child: _JobsCell()),
-          Expanded(
-            flex: 9,
-            child: _StatusDot(
-              status: user.status,
-              onboardingCompleted: user.onboardingCompleted,
-            ),
-          ),
-          Expanded(flex: 9, child: _JoinedCell(createdAt: user.createdAt)),
-          Expanded(
-            flex: 14,
-            child: Row(
-              children: <Widget>[
-                _ActionPill(
-                  label: 'View',
-                  foreground: const Color(0xFF2D3FE7),
-                  background: const Color(0xFFEEF0FD),
-                  onTap: onView,
-                ),
-                if (suspendable) ...<Widget>[
-                  const SizedBox(width: HivorrSpacing.sm),
-                  _ActionPill(
-                    label: 'Suspend',
-                    foreground: const Color(0xFFEF4444),
-                    background: const Color(0xFFFEF2F2),
-                    onTap: onSuspend,
-                  ),
-                ],
-              ],
-            ),
+    return Row(
+      children: <Widget>[
+        HivorrTableAction(
+          label: 'View',
+          foreground: context.roleTheme.clientPrimary,
+          background: context.roleTheme.clientContainer,
+          onTap: onView,
+        ),
+        if (suspendable) ...<Widget>[
+          const SizedBox(width: HivorrSpacing.sm),
+          HivorrTableAction(
+            label: 'Suspend',
+            foreground: context.colorScheme.error,
+            background: context.colorScheme.errorContainer,
+            onTap: onSuspend,
           ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -793,24 +724,31 @@ class _UserList extends StatelessWidget {
       children: <Widget>[
         for (int i = 0; i < users.length; i++) ...<Widget>[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(
+              HivorrSpacing.md,
+              HivorrSpacing.smMd,
+              HivorrSpacing.md,
+              0,
+            ),
             child: _NarrowCard(
               user: users[i],
               onView: () => onView(users[i]),
               onSuspend: () => onSuspend(users[i]),
             ),
           ),
-          if (i == users.length - 1) const SizedBox(height: 16),
+          if (i == users.length - 1)
+            const SizedBox(height: HivorrSpacing.md),
         ],
         if (provider.hasMore)
           Padding(
             padding: const EdgeInsets.all(HivorrSpacing.md),
-            child: provider.isLoading
-                ? const CircularProgressIndicator()
-                : OutlinedButton(
-                    onPressed: onLoadMore,
-                    child: const Text('Load more'),
-                  ),
+            child: HivorrButton(
+              label: 'Load more',
+              variant: HivorrButtonVariant.outline,
+              size: HivorrButtonSize.small,
+              isLoading: provider.isLoading,
+              onPressed: onLoadMore,
+            ),
           )
         else
           const SizedBox(height: HivorrSpacing.sm),
@@ -833,12 +771,13 @@ class _NarrowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
     final bool suspendable = user.status == 'active';
     return Container(
       padding: const EdgeInsets.all(HivorrSpacing.md),
       decoration: BoxDecoration(
         color: colors.surfaceContainerHighest.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(ext.radiusXs),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -850,11 +789,8 @@ class _NarrowCard extends StatelessWidget {
             runSpacing: HivorrSpacing.sm,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
-              _RolePill(capability: user.capability),
-              _StatusDot(
-                status: user.status,
-                onboardingCompleted: user.onboardingCompleted,
-              ),
+              HivorrCapabilityBadge(capability: user.capability),
+              _UserStatusBadge(user: user),
               Text(
                 _joinedLabel(user.createdAt),
                 style: context.textTheme.bodySmall?.copyWith(
@@ -864,21 +800,26 @@ class _NarrowCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: HivorrSpacing.sm),
+          // Touch layout: full 48dp buttons (tables use compact actions).
           Row(
             children: <Widget>[
-              _ActionPill(
-                label: 'View',
-                foreground: const Color(0xFF2D3FE7),
-                background: const Color(0xFFEEF0FD),
-                onTap: onView,
+              Expanded(
+                child: HivorrButton(
+                  label: 'View',
+                  variant: HivorrButtonVariant.outline,
+                  size: HivorrButtonSize.small,
+                  onPressed: onView,
+                ),
               ),
               if (suspendable) ...<Widget>[
                 const SizedBox(width: HivorrSpacing.sm),
-                _ActionPill(
-                  label: 'Suspend',
-                  foreground: const Color(0xFFEF4444),
-                  background: const Color(0xFFFEF2F2),
-                  onTap: onSuspend,
+                Expanded(
+                  child: HivorrButton(
+                    label: 'Suspend',
+                    variant: HivorrButtonVariant.outline,
+                    size: HivorrButtonSize.small,
+                    onPressed: onSuspend,
+                  ),
                 ),
               ],
             ],
@@ -898,12 +839,12 @@ class _UserCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final String name = _displayNameOf(user);
-    final _AvatarTint tint = _tintFor(name);
+    final _AvatarTint tint = _tintFor(context, name);
     return Row(
       children: <Widget>[
         Container(
-          width: 40,
-          height: 40,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             color: tint.background,
             shape: BoxShape.circle,
@@ -911,8 +852,8 @@ class _UserCell extends StatelessWidget {
           child: Center(
             child: Text(
               _initialsOf(name),
-              style: context.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w800,
+              style: context.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
                 color: tint.foreground,
               ),
             ),
@@ -949,51 +890,6 @@ class _UserCell extends StatelessWidget {
   }
 }
 
-/// Role pill from the reference: `Professional` green, `Employer` blue.
-/// Falls back to the raw capability (or `—`) so real data is never hidden.
-class _RolePill extends StatelessWidget {
-  const _RolePill({required this.capability});
-
-  final String? capability;
-
-  @override
-  Widget build(BuildContext context) {
-    final String? label = _roleLabelOf(capability);
-    if (label == null) {
-      return Text(
-        '—',
-        style: context.textTheme.bodyMedium?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-    final bool professional = label == 'Professional';
-    final bool employer = label == 'Employer';
-    final Color fg = professional
-        ? const Color(0xFF16A34A)
-        : (employer ? const Color(0xFF2D3FE7) : context.roleTheme.adminPrimary);
-    final Color bg = professional
-        ? const Color(0xFFDCFCE7)
-        : (employer
-              ? const Color(0xFFEEF0FD)
-              : context.colorScheme.secondaryContainer);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: fg,
-        ),
-      ),
-    );
-  }
-}
-
 /// Jobs column: no per-user jobs aggregate RPC exists yet, so the honest
 /// unavailable mark is shown instead of fabricated counts.
 class _JobsCell extends StatelessWidget {
@@ -1011,73 +907,43 @@ class _JobsCell extends StatelessWidget {
   }
 }
 
-/// Status dot + label from the reference. `Pending` (amber) derives from
-/// live directory data: an `active` entity that has not completed
-/// onboarding yet. The underlying lifecycle value is unchanged — full
-/// status management stays on the user-detail screen.
-class _StatusDot extends StatelessWidget {
-  const _StatusDot({required this.status, required this.onboardingCompleted});
+/// Lifecycle status as a shared [HivorrBadge] (VISUAL-IDENTITY.md §21b).
+/// `Pending` (amber) derives from live directory data: an `active` entity
+/// that has not completed onboarding yet. The underlying lifecycle value is
+/// unchanged — full status management stays on the user-detail screen.
+class _UserStatusBadge extends StatelessWidget {
+  const _UserStatusBadge({required this.user});
 
-  final String status;
-  final bool onboardingCompleted;
+  final ManageUserListItem user;
 
   @override
   Widget build(BuildContext context) {
-    final _StatusLook look = _lookFor(status, context, onboardingCompleted);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(color: look.color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          look.label,
-          style: context.textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: look.color,
-          ),
-        ),
-      ],
+    return HivorrBadge(
+      label: _statusLabelOf(user.status, user.onboardingCompleted),
+      variant: _statusVariantOf(user.status, user.onboardingCompleted),
     );
   }
 }
 
-class _StatusLook {
-  const _StatusLook({required this.label, required this.color});
-
-  final String label;
-  final Color color;
+String _statusLabelOf(String status, bool onboardingCompleted) {
+  if (status == 'active' && !onboardingCompleted) return 'Pending';
+  return switch (status) {
+    'active' => 'Active',
+    'suspended' => 'Suspended',
+    'deactivated' => 'Deactivated',
+    'deleted' => 'Deleted',
+    _ => status,
+  };
 }
 
-_StatusLook _lookFor(
-  String status,
-  BuildContext context,
-  bool onboardingCompleted,
-) {
+HivorrBadgeVariant _statusVariantOf(String status, bool onboardingCompleted) {
   if (status == 'active' && !onboardingCompleted) {
-    return const _StatusLook(label: 'Pending', color: Color(0xFFF97316));
+    return HivorrBadgeVariant.warning;
   }
   return switch (status) {
-    'active' => const _StatusLook(label: 'Active', color: Color(0xFF16A34A)),
-    'suspended' => const _StatusLook(
-      label: 'Suspended',
-      color: Color(0xFFEF4444),
-    ),
-    'deactivated' => _StatusLook(
-      label: 'Deactivated',
-      color: context.colorScheme.onSurfaceVariant,
-    ),
-    'deleted' => _StatusLook(
-      label: 'Deleted',
-      color: context.colorScheme.onSurfaceVariant,
-    ),
-    _ => _StatusLook(
-      label: status,
-      color: context.colorScheme.onSurfaceVariant,
-    ),
+    'active' => HivorrBadgeVariant.success,
+    'suspended' => HivorrBadgeVariant.error,
+    _ => HivorrBadgeVariant.neutral,
   };
 }
 
@@ -1102,42 +968,6 @@ String _joinedLabel(DateTime createdAt) {
     return DateFormat('MMM yyyy', 'en').format(createdAt);
   } catch (_) {
     return '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}';
-  }
-}
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
-    required this.label,
-    required this.foreground,
-    required this.background,
-    required this.onTap,
-  });
-
-  final String label;
-  final Color foreground;
-  final Color background;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            label,
-            style: context.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: foreground,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -1197,14 +1027,33 @@ class _AvatarTint {
   final Color foreground;
 }
 
-_AvatarTint _tintFor(String name) {
-  const List<_AvatarTint> tints = <_AvatarTint>[
-    _AvatarTint(background: Color(0xFFF3F0FF), foreground: Color(0xFF8B5CF6)),
-    _AvatarTint(background: Color(0xFFDCFCE7), foreground: Color(0xFF16A34A)),
-    _AvatarTint(background: Color(0xFFFFF7ED), foreground: Color(0xFFF97316)),
-    _AvatarTint(background: Color(0xFFEEF0FD), foreground: Color(0xFF2D3FE7)),
-    _AvatarTint(background: Color(0xFFFEF2F2), foreground: Color(0xFFEF4444)),
-    _AvatarTint(background: Color(0xFFE0F2FE), foreground: Color(0xFF0891B2)),
+/// Avatar tints bound to theme tokens (dark-mode safe) instead of raw hex.
+_AvatarTint _tintFor(BuildContext context, String name) {
+  final RoleThemeExtension roles = context.roleTheme;
+  final AppThemeExtension ext = context.appExtension;
+  final ColorScheme colors = context.colorScheme;
+  final List<_AvatarTint> tints = <_AvatarTint>[
+    _AvatarTint(
+      background: roles.bothContainer,
+      foreground: roles.bothPrimary,
+    ),
+    _AvatarTint(
+      background: ext.successContainer,
+      foreground: ext.success,
+    ),
+    _AvatarTint(
+      background: ext.warningContainer,
+      foreground: ext.warning,
+    ),
+    _AvatarTint(
+      background: roles.clientContainer,
+      foreground: roles.clientPrimary,
+    ),
+    _AvatarTint(
+      background: colors.errorContainer,
+      foreground: colors.error,
+    ),
+    _AvatarTint(background: ext.infoContainer, foreground: ext.info),
   ];
   int hash = 0;
   for (final int code in name.codeUnits) {

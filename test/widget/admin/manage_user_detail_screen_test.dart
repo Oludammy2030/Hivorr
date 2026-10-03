@@ -46,9 +46,13 @@ void main() {
   }
 
   group('ManageUserDetailScreen layout', () {
-    testWidgets('renders the app bar title', (WidgetTester tester) async {
+    testWidgets('renders a back row instead of a nested app bar', (
+      WidgetTester tester,
+    ) async {
+      // The shell top bar owns the page title (§13a): no in-body H1.
       await pumpScreenWith(tester);
-      expect(find.text('User detail'), findsOneWidget);
+      expect(find.text('User detail'), findsNothing);
+      expect(find.text('Back'), findsOneWidget);
       await unmount(tester);
     });
 
@@ -56,7 +60,7 @@ void main() {
       await pumpScreenWith(tester);
       // Name appears in the entity header + profile card row.
       expect(find.text('Test User'), findsWidgets);
-      expect(find.text('active'), findsOneWidget);
+      expect(find.text('Active'), findsOneWidget);
       await scrollTo(tester, find.text('Verification summary'));
       expect(find.text('Verification summary'), findsOneWidget);
       await unmount(tester);

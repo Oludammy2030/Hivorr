@@ -58,7 +58,8 @@ class HivorrChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected ? fill : null,
         border: Border.all(color: isSelected ? border : colors.outline),
-        borderRadius: BorderRadius.circular(ext.radiusLg),
+        // True pill per VISUAL-IDENTITY.md §8 (§8a): 999, not radiusLg.
+        borderRadius: BorderRadius.circular(999),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: HivorrSpacing.md,
@@ -88,7 +89,7 @@ class HivorrChip extends StatelessWidget {
     final Widget chip = tapEnabled
         ? InkWell(
             onTap: () => onSelected!(!isSelected),
-            borderRadius: BorderRadius.circular(ext.radiusLg),
+            borderRadius: BorderRadius.circular(999),
             splashColor: colors.primary.withValues(alpha: 0.12),
             child: inner,
           )

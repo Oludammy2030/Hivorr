@@ -180,7 +180,7 @@ class _HeaderCard extends StatelessWidget {
                 child: Text(
                   job.title,
                   style: context.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

@@ -39,8 +39,8 @@ void main() {
     });
 
     test('section rhythm stays compact but not crowded', () {
-      expect(MobileCompact.sectionGapFor(390), HivorrSpacing.lg);
-      expect(MobileCompact.sectionGapFor(1024), HivorrSpacing.xl);
+      expect(MobileCompact.sectionGapFor(390), HivorrSpacing.md);
+      expect(MobileCompact.sectionGapFor(1024), HivorrSpacing.lg);
       expect(MobileCompact.minorGapFor(390), HivorrSpacing.sm);
       expect(MobileCompact.minorGapFor(1024), HivorrSpacing.md);
     });

@@ -196,6 +196,26 @@ Derived for contrast on dark surfaces (AA). Light hexes MUST NOT be reused on da
 
 Avoid excessive size variation. One hero size per page; section headings share one style; card headings share one style. Line-heights and letter-spacing come from the theme — never ad-hoc.
 
+### 6a. Font-Weight Usage Rules
+
+Weights are hierarchy tools with exactly four jobs: (1) page/section/card titles, (2) key numeric values, (3) the primary action label in a group, (4) status words inside badges. Weight by role (binding):
+
+| Role | Style | Weight |
+|---|---|---|
+| Page title | `headlineSmall` (24) | 700 |
+| Section title | `titleMedium` (16) | 600–700 |
+| Card title | `titleSmall` (14) | 600 |
+| Stat/metric value | `titleLarge` (22) / `headlineSmall` (24) | 700 |
+| Button/pill/tab labels | `labelLarge`/`labelMedium` | 500–700 |
+| Body | `bodyLarge`/`bodyMedium`/`bodySmall` | 400 |
+| Metadata/captions | `labelSmall` | 500 |
+
+Rules:
+
+- `FontWeight.w800` is retired from functional UI. It may appear only in landing/marketing display text, explicitly documented at the call site.
+- Never set `fontSize` per-widget; map to the nearest §6 scale step (11→`labelSmall` 11, 11.5/12→`bodySmall` 12, 12.5/13/13.5→`bodyMedium` 14, 15→`titleSmall` 14 semibold or `titleMedium` 16, 18→`titleMedium` 16, 20→`titleLarge` 22).
+- If more than ~15% of visible words on a screen are semibold-or-up, the screen fails review — weight escalation flattens hierarchy.
+
 ---
 
 ## 7. Spacing System
@@ -206,6 +226,7 @@ Token source: `HivorrSpacing` (`lib/shared/helpers/hivorr_spacing.dart`, 8pt bas
 |---|---|---|
 | `xs` | 4dp | Tight gaps (icon-to-text) |
 | `sm` | 8dp | Standard element gaps |
+| `smMd` | 12dp | Compact component interiors (compact card padding, pill verticals, tile gaps) |
 | `md` | 16dp | Card padding, section padding, mobile screen padding |
 | `lg` | 24dp | Web content-pane padding, major gaps |
 | `xl` | 32dp | Major section separation |
@@ -218,6 +239,13 @@ Rules:
 - Content width: focused content (forms, fields, auth) lives in a centered pane (`HivorrContentPane`, max ≈ 720dp) with symmetric gutters — never full-bleed just because the parent is wide. Genuinely full-width surfaces (dashboards, data views) remain allowed.
 - Related: headings → paragraphs → controls tighten; cards → headings → sections loosen.
 
+### 7a. Interior-Spacing Rules
+
+- Micro-gaps ≤4dp inside text stacks (title→subtitle) may stay literal.
+- Everything ≥6dp MUST be a token. Raw `6/10/12/14/20/22/28` literals fail review.
+- Card padding per tier: 16 standard / 12 compact (`smMd`) / 24 hero-or-sparse / 32 landing hero. `20` is retired.
+- In-card rhythm: title → content `sm`–`md`; list items `sm` or hairline dividers.
+
 ---
 
 ## 8. Border Radius
@@ -227,11 +255,17 @@ Token source: `AppThemeExtension` (`radiusSm/Md/Lg`). One radius language across
 | Token | Value | Use |
 |---|---|---|
 | `radiusSm` | 8dp | Buttons, text fields, badges, small chips |
+| `radiusXs` | 12dp | Icon tiles, inner elements, compact pills |
 | `radiusMd` | 16dp | Cards, standard surfaces, dialogs |
 | `radiusLg` | 24dp | Modal bottom-sheet top corners |
 | Pill | Full (`StadiumBorder` / `999`) | Filter chips, status pills, `_PageIndicator` dots |
 
 Do not use extreme rounding everywhere. Do not mix unrelated radius styles without purpose. Sheets use `radiusLg` top corners with a drag handle (`HivorrBottomSheet`).
+
+### 8a. Radius Policy
+
+- Selectable chips (`HivorrChip`) are true pills (`StadiumBorder` / `999`), not fixed-corner rounding.
+- Raw `10/14/20` radii collapse to the nearest token (10→8, 14→12/16, 20→16).
 
 ---
 
@@ -287,6 +321,13 @@ Page purpose → Primary action → Primary information
 
 Establish hierarchy with typography, size, weight, spacing, color, positioning, cards, imagery, and icons. Do not make every element visually loud.
 
+### 13a. Shell & Chrome Rules
+
+- The shell owns the page title. Screens mounted inside a shell MUST NOT render a duplicate in-body H1; the in-body header (title + subtitle + gap) is deleted where the shell already titles the page.
+- Navigation chrome comes from shared shell components only — no per-screen top bars, sidebars, or nav rows.
+- Chrome controls (menu, bell, close, back) expose a ≥48dp hit area (`IconButton` constraints), even where the visible tile is 40–44dp.
+- Sidebar metrics: fixed width per shell (248 admin / 264 dashboard / 280 shared rail), nav items ≥44dp, section labels `labelSmall`.
+
 ---
 
 ## 14. The "Do Not Look Static" Rule
@@ -304,6 +345,14 @@ Purpose is visual structure and hierarchy — not decoration.
 Use cards when they improve grouping, readability, hierarchy, scanning, comparison, discoverability, or interaction. Appropriate: job, professional, service, category, dashboard metric, application, quotation, payment, activity, feature, testimonial, notification, and action cards (all built on `HivorrCard`).
 
 Do not turn everything into a card. Avoid card-inside-card-inside-card and excessive borders/shadows. Use tables, lists, `HivorrSectionHeader` + dividers, timelines, and panels where they communicate better. Flat (bordered) vs. raised (shadowed) follows §9.
+
+### 15a. Card Sizing Principles
+
+- Functional card padding: 16 standard / 12 compact. 24 only for hero panels or genuinely sparse content; 32 for landing heroes only.
+- Flat (bordered) for static containment; raised (Level-1 shadow) for interactive cards — never both (§9–§10).
+- Card-in-card nesting is banned; use dividers, sections, or list rows inside one card.
+- Fixed-height content blocks are banned, except media/document viewers, which carry a documented exception plus a collapsed mobile variant.
+- Card height is content-driven; long text is clamped with `maxLines`, never accommodated with fixed extents.
 
 ---
 
@@ -350,6 +399,20 @@ Different surfaces need different density. Never apply one density everywhere.
 - **Dashboards:** higher density — compact cards, summaries, tables, lists, quick actions (`Wrap`), activity panels.
 - **Admin:** highest density — structured tables, filters, metrics, operational panels, charts, management controls (`SuperAdminShell` + sidebar).
 
+### 20a. Per-Tier Density Contracts
+
+"Highest density" is specified, not aspirational:
+
+| Concern | Marketing / public | Dashboards | Admin |
+|---|---|---|---|
+| Card padding | 16–32 | 16 standard / 12 compact | 16 standard / 12 compact |
+| Section gaps | 24–32 | 16 standard / 24 major | 16 standard / 24 major |
+| Screen gutters | 24 | 16 mobile / 24 web | 16 mobile / 24 web |
+| Stat icon tiles | 40–52 | 40 | 40 |
+| Table/list rows | — | 44–52 standard | 40 dense tables / 44–52 lists |
+| Content columns (≥1024) | 2–3 | 3 | 3 |
+| Headings | display + 22–28 | 24 page / 16 section | 24 page / 16 section |
+
 ---
 
 ## 21. Component Consistency
@@ -359,6 +422,35 @@ Once established, reuse the visual language. Future job cards, professional card
 Canonical catalog (all token-built, in `lib/shared/` unless noted):
 
 Buttons (`HivorrButton` primary/secondary/outline/text, s/m/l, ≥48dp) · Text fields (`HivorrTextField`, calm filled/outlined, focus ring = primary) · Cards (`HivorrCard`) · Chips (`HivorrChip` primary/secondary/surface) · Badges (`HivorrBadge` success/error/warning/info + domain badges: KYC, trade-verified, escrow, hiring, listing) · Avatar · Divider · Section header · List tile (48dp min) · Dialog / Bottom sheet · Empty / Loading / Error / Success states + `HivorrLoader` (breathing pulse, 1800ms — never a bare spinner or dead-end) · Snackbar (4s) · Hero panel (`HivorrHeroPanel`, gradient + white actions + `HivorrHeroStat`) · Stat band (`HivorrStatBand`/`HivorrStatItem`) · Feature card (`HivorrFeatureCard`, tinted icon tile, role-tintable) · CTA band (`HivorrCtaBand`) · FAQ item (`HivorrFaqItem`) · Pricing tier (`HivorrPricingTier`, honest copy only) · Step card (`HivorrStepCard`) · Data table (`HivorrDataTable` + cells, wide admin views) · Mini bars (`HivorrMiniBars`, real numbers only, no chart dependency) · Layouts (`HivorrScreenScaffold`, `HivorrResponsiveScaffold`, `HivorrContentPane`, `Breakpoints` 600/1024) · Helpers (`HivorrSpacing`, formatters, validators, `BuildContext` extensions).
+
+### 21a. Grid & Breakpoint Policy
+
+- Breakpoints are 600/1024 (`Breakpoints`), plus a 720 rule for table→card flips. Thresholds of 700/900/1000/1100 are retired.
+- Columns follow available width + content importance:
+
+| Content | <600 | 600–1023 | ≥1024 |
+|---|---|---|---|
+| Stat/metric cards | 2 | 2–3 | 3–4 |
+| Content cards (jobs, listings) | 1 | 2 | 3 |
+| Media tiles | 2 | 3 | 3 |
+| Operational tables | cards | table | table |
+
+- Column widths are computed by shared grid helpers (the portfolio grid is the reference implementation). Fixed `mainAxisExtent` cards are banned.
+- Content-driven exception: wide action tables (6+ columns with dual row actions, e.g. Admin Users) flip table→cards at 900dp instead of 720dp — the actions column needs ~160dp and narrower viewports overflow. Document the exception at the call site.
+- Tablet (600–1023) is a distinct designed layout, never a stretched phone layout (§24a).
+
+### 21b. Status Language Registry
+
+- One status vocabulary per domain (KYC, trade-verified, escrow, hiring, listing), each an extension of `HivorrBadge` — never a local pill reimplementation.
+- Within a domain, status is exactly one construct (pill XOR dot+label XOR chip), always paired with a text label — never color alone (§25).
+
+### 21c. Table Standard
+
+- Operational lists use `HivorrDataTable`. Hand-rolled flex tables are banned.
+- Row heights: 40 dense tables / 44–52 standard rows. The 48dp floor (§25) applies to touch rows (list tiles), not to data rows.
+- Header `labelSmall` uppercase; cell padding horizontal 16, vertical 8.
+- Dense-table row actions (`HivorrTableAction`, compact pill ≈34dp) are permitted inside ≥720dp admin tables, where 48dp buttons would force ≥64dp rows. Narrow-card (touch) layouts, form CTAs, dialog actions, and standalone buttons always stay ≥48dp (`HivorrButton`).
+- Compact card actions in dense dashboard grids (job/hire cards at 2–3 columns) also use `HivorrTableAction`: full 48dp buttons would dominate these cards and break the reference action clusters. The exception covers tables and dense card grids only.
 
 ---
 
@@ -391,11 +483,23 @@ Beautification works across desktop, laptop, tablet, and mobile. Never merely sh
 
 Cards reorganize (`Wrap` / `LayoutBuilder` 1→2→3 cols); sections stack intelligently; navigation adapts (sidebar/rail ≥600dp, bottom nav + drawer on mobile); typography scales; spacing stays intentional. Mobile is a deliberately designed Hivorr experience — forms use available width with screen padding, never a cramped column. Tablet (600–1023) and desktop (≥1024) are distinct (`Breakpoints`), not one "wide" layout.
 
+### 24a. Tablet Rules
+
+- 600–1023dp is a first-class layout: 2-column content grids, rail/sidebar navigation, 16dp gutters, full-width forms in panes.
+- Verify every migrated screen at 320 / 360 / 600 / 1024 / 1920dp in light AND dark before sign-off.
+
 ---
 
 ## 25. Accessibility (premium = universally usable)
 
 Beauty never costs usability. WCAG AA contrast floor **plus**: comfortable targets (≥48dp), readable line-heights, visible focus in light and dark, touch-friendly controls, meaningful labels, icons supported by text where necessary, status never through color alone.
+
+### 25a. Readability Floors (binding minima)
+
+- Body text ≥12 (11 for captions only). Buttons/inputs ≥48dp total height.
+- Table data-rows ≥40dp; pills/badges use `HivorrBadge` metrics or larger.
+- 1.3× text-scale must produce no overflow on any functional screen.
+- Any proposal below these floors fails review on accessibility grounds — density never comes from sub-floor targets.
 
 ---
 
@@ -429,6 +533,12 @@ Clear space ≥ 25% of mark height; minimum 24dp mark / 14sp wordmark. On colore
 - Bare spinners / dead-end empty states (always branded state widgets with guidance + next action).
 - Static heading-paragraph-button pages where grouping (§14–§15) applies.
 - Generic Header + Three Cards + Table on every page; decoration without purpose.
+
+### 27a. AI Implementation Rules
+
+- Reuse-before-creation: before building any visual element, search `lib/shared/`. If a canonical exists, reuse or extend it. A new private visual duplicate of an existing canonical fails Definition of Done.
+- Spacing ≥6dp MUST be a token; `fontSize`/`fontFamily` per-widget is banned; `Colors.*`/raw hex at call sites is banned; `w800` in functional UI is banned; non-600/1024/720 breakpoints are banned.
+- Token changes follow §29: document first, then `lib/app/theme/*`, then tests.
 
 ---
 
@@ -468,3 +578,11 @@ Before considering any page complete, verify:
 - Contrast, focus, targets, and labels (§25) — in light AND dark?
 
 **The permanent Hivorr visual rule:** every new page inherits the established visual language rather than inventing its own. A new page feels like *"another beautifully designed Hivorr page"* — never *"a new page that happens to be inside Hivorr."* Prioritize consistency + hierarchy + purposeful composition + beautiful spacing + reusable components + role-aware color + meaningful surfaces + responsive design + professional polish.
+
+### 31a. Density Checklist (extends §31)
+
+- Card padding is 12 or 16 (24+ only with a documented hero/sparse reason)?
+- Section gaps 16 (24 major, 32 marketing-only)? No duplicate titles in shells?
+- Columns reach the §21a counts at width? No fixed-height content blocks?
+- Touch targets ≥48? Data-rows ≥40? No w800, no `fontSize:` literals, no raw hex?
+- Verified at 320/600/1024/1920 in light AND dark?
