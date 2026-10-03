@@ -167,6 +167,13 @@ class ServiceListingRepositoryImpl implements ServiceListingRepository {
   }
 
   @override
+  Future<bool> toggleFavorite(String listingId) async {
+    _requireNonEmpty(listingId, 'listingId');
+    final Map<String, dynamic> data = await _remote.toggleFavorite(listingId);
+    return data['favorited'] == true;
+  }
+
+  @override
   Future<MyListingPage> listMine({
     String? status,
     int limit = 20,

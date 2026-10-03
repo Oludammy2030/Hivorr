@@ -1,3 +1,4 @@
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/entities/service_listing.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
 
@@ -25,6 +26,10 @@ class FakeServiceSearchRepository implements ServiceSearchRepository {
   /// The last `query` passed to [search].
   String? lastQuery;
 
+  /// When set, [search] throws this instead of returning a page (e.g. a
+  /// `PLT004` [ApiException] for no-oracle empty-state tests).
+  ApiException? searchError;
+
   @override
   Future<ServiceSearchPage> search({
     String? professionId,
@@ -36,6 +41,8 @@ class FakeServiceSearchRepository implements ServiceSearchRepository {
     searchCallCount++;
     lastProfessionId = professionId;
     lastQuery = query;
+    final ApiException? error = searchError;
+    if (error != null) throw error;
     return ServiceSearchPage(
       items: _items,
       hasMore: hasMore,

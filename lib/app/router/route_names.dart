@@ -76,6 +76,12 @@ abstract final class RouteNames {
   static const String serviceListingEdit = 'service-listing-edit';
   static const String serviceListingMedia = 'service-listing-media';
 
+  /// Public discovery routes (EP-03-09).
+  static const String serviceDiscovery = 'service-discovery';
+  static const String serviceSearch = 'service-search';
+  static const String serviceDetail = 'service-detail';
+  static const String serviceSeoDetail = 'service-seo-detail';
+
   /// Dispute routes (EP-02-17).
   static const String disputes = 'disputes';
   static const String disputesNew = 'disputes-new';

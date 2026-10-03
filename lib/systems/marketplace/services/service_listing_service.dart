@@ -151,6 +151,21 @@ class ServiceListingService {
         return listing;
       });
 
+  /// Toggles the caller's favorite for a `published` listing
+  /// (`service_favorite_toggle` read-through for detail preview only).
+  ///
+  /// Returns the post-toggle state (`true` when favorited). Self-favorite and
+  /// non-`published` targets surface `PLT005`; unknown listings `PLT004`.
+  Future<bool> toggleFavorite(String listingId) =>
+      _tracedAndLogged('marketplace.listing.favorite', () async {
+        final bool favorited = await _repository.toggleFavorite(listingId);
+        _logger?.info('Listing favorite toggled', <String, Object?>{
+          'listingId': _redactor.redact(listingId),
+          'favorited': favorited,
+        });
+        return favorited;
+      });
+
   Future<MyServiceListing> createListing({
     required String professionId,
     required String title,

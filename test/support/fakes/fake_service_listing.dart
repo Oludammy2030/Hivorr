@@ -1,5 +1,7 @@
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 import 'package:hivorr/data/entities/listing_media.dart';
+import 'package:hivorr/data/entities/service_listing.dart';
 import 'package:hivorr/data/models/listing_media_dto.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
 
@@ -166,7 +168,7 @@ class FakeServiceListingRemoteDataSource
 
   @override
   Future<Map<String, dynamic>> toggleFavorite(String listingId) async =>
-      <String, dynamic>{'listing_id': listingId, 'is_favorite': true};
+      <String, dynamic>{'listing_id': listingId, 'favorited': true};
 }
 
 /// In-memory fake for [ServiceListingRepository] (EP-03-08 widget tests).
@@ -178,6 +180,10 @@ class FakeServiceListingRepository implements ServiceListingRepository {
 
   int listCalls = 0;
   String? lastStatus;
+
+  /// When set, [getListing] throws this instead of returning a row (e.g. a
+  /// `PLT004` [ApiException] for not-found detail tests).
+  ApiException? getListingError;
 
   static MyServiceListing listing({
     required String id,
@@ -288,8 +294,11 @@ class FakeServiceListingRepository implements ServiceListingRepository {
   }
 
   @override
-  Future<MyServiceListing> getListing(String listingId) async =>
-      _rows.firstWhere((e) => e.id == listingId);
+  Future<MyServiceListing> getListing(String listingId) async {
+    final ApiException? error = getListingError;
+    if (error != null) throw error;
+    return _rows.firstWhere((e) => e.id == listingId);
+  }
 
   @override
   Future<MyListingPage> listMine({
@@ -307,4 +316,55 @@ class FakeServiceListingRepository implements ServiceListingRepository {
       hasMore: false,
     );
   }
+
+  /// In-memory favorite set for EP-03-09 discovery widget tests.
+  final Set<String> favorites = <String>{};
+
+  @override
+  Future<bool> toggleFavorite(String listingId) async {
+    if (favorites.contains(listingId)) {
+      favorites.remove(listingId);
+      return false;
+    }
+    favorites.add(listingId);
+    return true;
+  }
 }
+
+/// Ranked-listing fixture for EP-03-09 discovery tests (RPC order is the
+/// list order — never re-sorted by consumers).
+ServiceListing rankedListing({
+  required String id,
+  String title = 'Certified plumbing repair service',
+  double avgRating = 4.5,
+  int reviewCount = 3,
+  bool verified = true,
+  double? score,
+  String professionId = 'prof-1',
+  String professionName = 'Plumber',
+  String entityId = 'entity-9',
+  String pricingType = 'fixed',
+  double? priceMin = 5000,
+  double? priceMax = 15000,
+}) => ServiceListing(
+  id: id,
+  entityId: entityId,
+  professionId: professionId,
+  industryId: 'ind-1',
+  slug: 'listing-$id',
+  title: title,
+  description:
+      'Full home plumbing inspection, leak repair, and fixture replacement with a written service report and warranty.',
+  pricingType: pricingType,
+  priceMin: priceMin,
+  priceMax: priceMax,
+  currencyCode: 'NGN',
+  avgRating: avgRating,
+  reviewCount: reviewCount,
+  isTradeVerifiedCache: verified,
+  professionSlug: 'plumber',
+  professionName: professionName,
+  industrySlug: 'artisans',
+  industryName: 'Artisans',
+  score: score,
+);

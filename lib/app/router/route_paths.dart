@@ -141,6 +141,27 @@ abstract final class RoutePaths {
   static String serviceListingMediaFor({required String id}) =>
       '/services/mine/${Uri.encodeComponent(id)}/media';
 
+  /// Public service discovery browse (EP-03-09, `published` only).
+  static const String serviceDiscovery = '/services';
+
+  /// Public ranked search (EP-03-09). Optional query params: `q`, `profession`.
+  static const String serviceSearch = '/services/search';
+
+  /// Public service detail route. Parameter: `id` (authoritative).
+  static const String serviceDetailRoute = '/services/:id';
+
+  /// Builds a URL-encoded public service detail path.
+  static String serviceDetail(String id) =>
+      '/services/${Uri.encodeComponent(id)}';
+
+  /// SEO alias for the public service detail (EP-03-09 route shape; canonical
+  /// meta ships in EP-03-19). Parameters: `slug` (cosmetic), `id`.
+  static const String serviceSeoDetailRoute = '/s/:slug/:id';
+
+  /// Builds a URL-encoded SEO service detail path.
+  static String serviceSeoDetail({required String slug, required String id}) =>
+      '/s/${Uri.encodeComponent(slug)}/${Uri.encodeComponent(id)}';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 

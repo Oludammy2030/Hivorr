@@ -11,9 +11,11 @@ import 'package:hivorr/core/api/api_initializer.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
+import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
@@ -34,6 +36,9 @@ class BootstrapResult {
     this.marketplaceSearchRepository,
     this.marketplaceSearchProvider,
     this.marketplaceSearchIndex,
+    this.serviceListingRepository,
+    this.serviceListingProvider,
+    this.serviceListingService,
     required this.verificationRepository,
     required this.verificationProvider,
     this.escrowRepository,
@@ -89,6 +94,19 @@ class BootstrapResult {
   /// Offline-browse cache warmer for ranked discovery (EP-03-07). Optional
   /// for testability; ranking stays server-decided (`AGENT.md:7`).
   final ServiceSearchIndex? marketplaceSearchIndex;
+
+  /// Service listing owner repository (EP-03-08). Wired for the EP-03-09
+  /// detail re-read (`service_listing_get`) and favorite toggle
+  /// (`service_favorite_toggle`); also serves the owner screens that already
+  /// consume the provider/service from the tree.
+  final ServiceListingRepository? serviceListingRepository;
+
+  /// Service listing provider surfaced to the widget tree (EP-03-08/09).
+  final ServiceListingProvider? serviceListingProvider;
+
+  /// Service listing facade surfaced to the widget tree (EP-03-08/09,
+  /// media URL resolution + favorite toggle).
+  final ServiceListingService? serviceListingService;
 
   /// Identity-verification repository (EP-02-10).
   final VerificationRepository verificationRepository;
@@ -246,6 +264,24 @@ class AppBootstrap {
       taxonomyRepository: taxonomy.repository,
       storageEngine: storage,
     );
+    // EP-03-09 discovery detail + favorites (reuses the EP-03-08 owner
+    // slice verbatim: `service_listing_get` re-read, `service_favorite_toggle`
+    // read-through, `service-listing-media` public URL resolution). Wiring the
+    // existing layer also serves the owner screens, which already resolve the
+    // provider/service from the tree.
+    final ({
+      ServiceListingRepository repository,
+      ServiceListingProvider provider,
+      ServiceListingService service,
+    })
+    serviceListing = registerServiceListingLayer(
+      apiLayer,
+      storage: SupabaseStorageService(
+        storageClient: apiLayer.supabaseClient.storage,
+        dio: apiLayer.dio,
+        tokenProvider: apiLayer.tokenProvider,
+      ),
+    );
     final ({VerificationRepository repository, VerificationProvider provider})
     verification = registerVerificationLayer(apiLayer);
     final ({EscrowRepository repository, EscrowProvider provider}) escrow =
@@ -321,6 +357,9 @@ class AppBootstrap {
       marketplaceSearchRepository: marketplaceSearch.repository,
       marketplaceSearchProvider: marketplaceSearch.provider,
       marketplaceSearchIndex: marketplaceSearch.index,
+      serviceListingRepository: serviceListing.repository,
+      serviceListingProvider: serviceListing.provider,
+      serviceListingService: serviceListing.service,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,
       escrowRepository: escrow.repository,
