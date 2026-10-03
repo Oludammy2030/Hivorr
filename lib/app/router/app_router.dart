@@ -47,6 +47,10 @@ import 'package:hivorr/systems/dashboard/screens/notifications_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/profile_screen.dart';
 import 'package:hivorr/systems/dashboard/shell/hivorr_dashboard_shell.dart';
+import 'package:hivorr/systems/documents/screens/contract_detail_screen.dart';
+import 'package:hivorr/systems/documents/screens/contract_list_screen.dart';
+import 'package:hivorr/systems/documents/screens/contract_offer_screen.dart';
+import 'package:hivorr/systems/documents/screens/milestone_editor_screen.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
@@ -548,6 +552,37 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) =>
               ServiceListingMediaScreen(
                 listingId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        // Service contracts (EP-03-10, protected — guard keeps login gate).
+        GoRoute(
+          path: RoutePaths.contracts,
+          name: RouteNames.contracts,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ContractListScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.contractNew,
+          name: RouteNames.contractNew,
+          builder: (BuildContext context, GoRouterState state) =>
+              ContractOfferScreen(
+                listingId: state.uri.queryParameters['listingId'] ?? '',
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.contractMilestonesEditRoute,
+          name: RouteNames.contractMilestonesEdit,
+          builder: (BuildContext context, GoRouterState state) =>
+              MilestoneEditorScreen(
+                contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.contractDetailRoute,
+          name: RouteNames.contractDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              ContractDetailScreen(
+                contractId: state.pathParameters['id'] ?? '',
               ),
         ),
         // Public discovery (EP-03-09, `published` only — guard allows anon).

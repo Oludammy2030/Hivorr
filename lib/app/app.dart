@@ -28,6 +28,7 @@ import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
+import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
@@ -43,12 +44,14 @@ import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/messaging_repository.dart';
 import 'package:hivorr/data/repositories/portfolio_repository.dart';
+import 'package:hivorr/data/repositories/service_contract_repository.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
+import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
@@ -74,6 +77,9 @@ class HivorrApp extends StatefulWidget {
     this.serviceListingRepository,
     this.serviceListingProvider,
     this.serviceListingService,
+    this.serviceContractRepository,
+    this.serviceContractProvider,
+    this.serviceContractService,
     this.verificationRepository,
     this.verificationProvider,
     this.escrowRepository,
@@ -137,6 +143,17 @@ class HivorrApp extends StatefulWidget {
   /// Service listing facade surfaced to the widget tree (EP-03-08/09,
   /// media URL resolution + favorite toggle).
   final ServiceListingService? serviceListingService;
+
+  /// Service contract engagement repository (EP-03-10). Optional for
+  /// testability.
+  final ServiceContractRepository? serviceContractRepository;
+
+  /// Service contract provider surfaced to the widget tree (EP-03-10).
+  final ServiceContractProvider? serviceContractProvider;
+
+  /// Contract facade surfaced to the widget tree (EP-03-10, offer/accept
+  /// orchestration + evidence URL resolution).
+  final ContractService? serviceContractService;
 
   /// Identity-verification repository (EP-02-10). Optional for testability.
   final VerificationRepository? verificationRepository;
@@ -342,6 +359,12 @@ class _HivorrAppState extends State<HivorrApp> {
         widget.serviceListingProvider;
     final ServiceListingService? serviceListingService =
         widget.serviceListingService;
+    final ServiceContractRepository? serviceContractRepository =
+        widget.serviceContractRepository;
+    final ServiceContractProvider? serviceContractProvider =
+        widget.serviceContractProvider;
+    final ContractService? serviceContractService =
+        widget.serviceContractService;
     final VerificationRepository? verificationRepository =
         widget.verificationRepository;
     final VerificationProvider? verificationProvider =
@@ -403,6 +426,16 @@ class _HivorrAppState extends State<HivorrApp> {
           ),
         if (serviceListingService != null)
           Provider<ServiceListingService>.value(value: serviceListingService),
+        if (serviceContractRepository != null)
+          Provider<ServiceContractRepository>.value(
+            value: serviceContractRepository,
+          ),
+        if (serviceContractProvider != null)
+          ChangeNotifierProvider<ServiceContractProvider>.value(
+            value: serviceContractProvider,
+          ),
+        if (serviceContractService != null)
+          Provider<ContractService>.value(value: serviceContractService),
         if (verificationRepository != null)
           Provider<VerificationRepository>.value(value: verificationRepository),
         if (verificationProvider != null)

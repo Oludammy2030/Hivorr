@@ -15,6 +15,7 @@ import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
+import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
@@ -39,6 +40,9 @@ class BootstrapResult {
     this.serviceListingRepository,
     this.serviceListingProvider,
     this.serviceListingService,
+    this.serviceContractRepository,
+    this.serviceContractProvider,
+    this.serviceContractService,
     required this.verificationRepository,
     required this.verificationProvider,
     this.escrowRepository,
@@ -107,6 +111,17 @@ class BootstrapResult {
   /// Service listing facade surfaced to the widget tree (EP-03-08/09,
   /// media URL resolution + favorite toggle).
   final ServiceListingService? serviceListingService;
+
+  /// Service contract engagement repository (EP-03-10). Optional for
+  /// testability.
+  final ServiceContractRepository? serviceContractRepository;
+
+  /// Service contract provider surfaced to the widget tree (EP-03-10).
+  final ServiceContractProvider? serviceContractProvider;
+
+  /// Contract facade surfaced to the widget tree (EP-03-10, offer/accept
+  /// orchestration + evidence URL resolution).
+  final ContractService? serviceContractService;
 
   /// Identity-verification repository (EP-02-10).
   final VerificationRepository verificationRepository;
@@ -313,6 +328,22 @@ class AppBootstrap {
     );
     final ({DisputeRepository repository, DisputeProvider provider}) dispute =
         registerDisputeLayer(apiLayer);
+    // EP-03-10 contract engagement slice (offer/accept/verify/close over the
+    // EP-03-02 RPCs + `service-listing-media` evidence uploads). Wired for the
+    // contract screens, which resolve the provider/service from the tree.
+    final ({
+      ServiceContractRepository repository,
+      ServiceContractProvider provider,
+      ContractService service,
+    })
+    serviceContract = registerServiceContractLayer(
+      apiLayer,
+      storage: SupabaseStorageService(
+        storageClient: apiLayer.supabaseClient.storage,
+        dio: apiLayer.dio,
+        tokenProvider: apiLayer.tokenProvider,
+      ),
+    );
     final ({JobRepository repository, JobProvider provider}) jobs =
         registerJobsLayer(apiLayer);
     final ({HireRepository repository, HireProvider provider}) hires =
@@ -360,6 +391,9 @@ class AppBootstrap {
       serviceListingRepository: serviceListing.repository,
       serviceListingProvider: serviceListing.provider,
       serviceListingService: serviceListing.service,
+      serviceContractRepository: serviceContract.repository,
+      serviceContractProvider: serviceContract.provider,
+      serviceContractService: serviceContract.service,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,
       escrowRepository: escrow.repository,

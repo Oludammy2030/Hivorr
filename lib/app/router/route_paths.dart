@@ -178,6 +178,25 @@ abstract final class RoutePaths {
   static String publicStore({required String storeId}) =>
       '/store/${Uri.encodeComponent(storeId)}';
 
+  /// Service contract engagement screens (EP-03-10, protected).
+  static const String contracts = '/contracts';
+  static const String contractNew = '/contracts/new';
+  static const String contractDetailRoute = '/contracts/:id';
+  static const String contractMilestonesEditRoute =
+      '/contracts/:id/milestones/edit';
+
+  /// Builds a URL-encoded contract detail path.
+  static String contractDetail(String id) =>
+      '/contracts/${Uri.encodeComponent(id)}';
+
+  /// Builds a URL-encoded contract offer path for a listing.
+  static String contractOfferFor({required String listingId}) =>
+      '/contracts/new?listingId=${Uri.encodeComponent(listingId)}';
+
+  /// Builds a URL-encoded contract milestone editor path.
+  static String contractMilestonesEdit(String id) =>
+      '/contracts/${Uri.encodeComponent(id)}/milestones/edit';
+
   /// Role-aware dashboard shell root (EP-04-03).
   static const String dashboard = '/dashboard';
 
