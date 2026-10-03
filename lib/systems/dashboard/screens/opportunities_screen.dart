@@ -11,6 +11,8 @@ import 'package:hivorr/data/entities/job_application.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
+import 'package:hivorr/shared/components/hivorr_stat_card.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -23,6 +25,7 @@ import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/shared/widgets/hivorr_tint_badge.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
@@ -299,7 +302,6 @@ class _FindWorkTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final RoleThemeExtension roles = context.roleTheme;
     bool hasDot = false;
     try {
@@ -308,100 +310,22 @@ class _FindWorkTopBar extends StatelessWidget {
       hasDot = false;
     }
     final ({String name, String initials}) identity = _fwIdentity(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        children: <Widget>[
-          _TopBarTile(
-            tooltip: 'Menu',
-            icon: Icons.menu,
-            onTap: () {
-              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
-              if (scaffold != null && scaffold.hasDrawer) {
-                scaffold.openDrawer();
-              }
-            },
-          ),
-          const SizedBox(width: HivorrSpacing.md),
-          Text(
-            'Find Work',
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const Spacer(),
-          _TopBarTile(
-            tooltip: 'Notifications',
-            icon: Icons.notifications_outlined,
-            showDot: hasDot,
-            onTap: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: roles.professionalContainer.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: roles.professionalPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: HivorrSpacing.xs),
-                Text(
-                  'Professional',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: roles.professionalPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Tooltip(
-            message: identity.name,
-            child: InkWell(
-              onTap: () => context.go(RoutePaths.dashboardAccount),
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: roles.professionalContainer,
-                  border: Border.all(
-                    color: roles.professionalPrimary.withValues(alpha: 0.4),
-                    width: 1.5,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  identity.initials,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: roles.professionalPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return HivorrDashboardTopBar(
+      title: 'Find Work',
+      accentPrimary: roles.professionalPrimary,
+      accentContainer: roles.professionalContainer,
+      modeLabel: 'Professional',
+      initials: identity.initials,
+      avatarTooltip: identity.name,
+      showDot: hasDot,
+      onMenu: () {
+        final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+        if (scaffold != null && scaffold.hasDrawer) {
+          scaffold.openDrawer();
+        }
+      },
+      onNotifications: () => context.go(RoutePaths.dashboardNotifications),
+      onAvatar: () => context.go(RoutePaths.dashboardAccount),
     );
   }
 }
@@ -675,9 +599,10 @@ class _FindWorkSubtitle extends StatelessWidget {
   }
 }
 
-/// Responsive opportunity grid (reference): two columns on wide layouts,
-/// one column on narrow widths. Cards keep a fixed extent per row so the
-/// action row aligns, with pull-to-refresh and infinite pagination kept.
+/// Responsive opportunity grid (reference): content-card columns per §21a
+/// (1 col <600, 2 cols 600–1023, 3 cols ≥1024). Cards are content-driven —
+/// the old fixed 310/330dp extents forced empty space into every card.
+/// Pull-to-refresh and infinite pagination are kept.
 class _FindWorkGrid extends StatelessWidget {
   const _FindWorkGrid({
     required this.jobs,
@@ -734,37 +659,45 @@ class _FindWorkGrid extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
-        final bool twoCol = c.maxWidth >= 900;
-        final bool compact = MobileCompact.isCompactWidth(c.maxWidth);
+        final double width = c.maxWidth;
+        final int columns = width >= 1024 ? 3 : (width >= 600 ? 2 : 1);
+        final bool compact = MobileCompact.isCompactWidth(width);
+        final EdgeInsets gutter = EdgeInsets.all(
+          compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        );
+        final bool showLoader =
+            jobs.discoveryHasMore && !_filtered();
         return RefreshIndicator(
           onRefresh: onRefresh,
-          child: GridView.builder(
+          child: SingleChildScrollView(
             controller: scroll,
-            padding: EdgeInsets.all(compact ? HivorrSpacing.md : 20),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: twoCol ? 2 : 1,
-              crossAxisSpacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-              mainAxisSpacing: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-              mainAxisExtent: twoCol ? 330 : 310,
+            padding: gutter,
+            child: Column(
+              children: <Widget>[
+                HivorrStatGrid(
+                  columns: columns,
+                  maxWidth: width - gutter.horizontal,
+                  gap: compact ? HivorrSpacing.sm : HivorrSpacing.md,
+                  children: <Widget>[
+                    for (final Job job in displayed)
+                      _FindWorkCard(
+                        job: job,
+                        applied: appliedIds.contains(job.id),
+                        onApply: () => onApply(job),
+                        saved: savedIds.contains(job.id),
+                        onToggleSaved: () => onToggleSaved(job.id),
+                      ),
+                  ],
+                ),
+                if (showLoader)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: HivorrSpacing.md,
+                    ),
+                    child: HivorrLoadingState(),
+                  ),
+              ],
             ),
-            itemCount:
-                displayed.length + (jobs.discoveryHasMore && !_filtered() ? 1 : 0),
-            itemBuilder: (BuildContext context, int i) {
-              if (i >= displayed.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: HivorrSpacing.md),
-                  child: HivorrLoadingState(),
-                );
-              }
-              final Job job = displayed[i];
-              return _FindWorkCard(
-                job: job,
-                applied: appliedIds.contains(job.id),
-                onApply: () => onApply(job),
-                saved: savedIds.contains(job.id),
-                onToggleSaved: () => onToggleSaved(job.id),
-              );
-            },
           ),
         );
       },
@@ -814,9 +747,8 @@ class _FindWorkCard extends StatelessWidget {
     // row): nesting the Apply/Save buttons inside a card-wide InkWell
     // would fire both taps from one press.
     return HivorrCard(
-      borderRadius: compact ? 14 : 16,
       padding: EdgeInsets.all(
-        compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        compact ? HivorrSpacing.smMd : HivorrSpacing.md,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -833,16 +765,16 @@ class _FindWorkCard extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
+                        spacing: HivorrSpacing.sm,
+                        runSpacing: HivorrSpacing.xs,
                         children: <Widget>[
-                          _FwPill(
+                          HivorrTintBadge(
                             label: category,
                             background: colors.primaryContainer,
                             foreground: colors.primary,
                           ),
                           if (urgent)
-                            _FwPill(
+                            HivorrTintBadge(
                               label: 'Urgent',
                               background: colors.errorContainer,
                               foreground: colors.error,
@@ -862,17 +794,15 @@ class _FindWorkCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: context.textTheme.titleMedium?.copyWith(
                               color: ext.success,
-                              fontWeight: FontWeight.w800,
-                              fontSize: compact ? 16 : 18,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         Text(
                           '${job.applicationsCount} applied',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: context.textTheme.bodySmall?.copyWith(
+                          style: context.textTheme.labelSmall?.copyWith(
                             color: colors.onSurfaceVariant,
-                            fontSize: 11,
                           ),
                         ),
                       ],
@@ -885,8 +815,7 @@ class _FindWorkCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: compact ? 15 : 17,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -896,7 +825,6 @@ class _FindWorkCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontSize: compact ? 13 : 14,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -906,15 +834,13 @@ class _FindWorkCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodyMedium?.copyWith(
                     color: colors.onSurface,
-                    fontSize: compact ? 13 : 14,
                     height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
-          const Spacer(),
-          const SizedBox(height: 4),
+          const SizedBox(height: HivorrSpacing.sm),
           Row(
             children: <Widget>[
               if (job.location != null && job.location!.isNotEmpty) ...<Widget>[
@@ -929,9 +855,8 @@ class _FindWorkCard extends StatelessWidget {
                     job.location!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.bodySmall?.copyWith(
+                    style: context.textTheme.labelSmall?.copyWith(
                       color: colors.onSurfaceVariant,
-                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -945,9 +870,8 @@ class _FindWorkCard extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 postedAgo,
-                style: context.textTheme.bodySmall?.copyWith(
+                style: context.textTheme.labelSmall?.copyWith(
                   color: colors.onSurfaceVariant,
-                  fontSize: 12,
                 ),
               ),
             ],
@@ -964,12 +888,18 @@ class _FindWorkCard extends StatelessWidget {
                       )
                     : InkWell(
                         onTap: onApply,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(
+                          ext.radiusXs,
+                        ),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: HivorrSpacing.smMd,
+                          ),
                           decoration: BoxDecoration(
                             color: roles.professionalPrimary,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(
+                              ext.radiusXs,
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -980,7 +910,7 @@ class _FindWorkCard extends StatelessWidget {
                                 size: 18,
                                 color: colors.onPrimary,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: HivorrSpacing.xs),
                               Text(
                                 'Apply Now',
                                 style: context.textTheme.labelLarge?.copyWith(
@@ -998,19 +928,19 @@ class _FindWorkCard extends StatelessWidget {
                 message: saved ? 'Saved' : 'Save',
                 child: InkWell(
                   onTap: onToggleSaved,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(ext.radiusXs),
                   child: Container(
-                    width: 52,
-                    height: 52,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: colors.surfaceContainerHighest.withValues(
                         alpha: context.isDarkMode ? 1.0 : 0.55,
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(ext.radiusXs),
                     ),
                     child: Icon(
                       saved ? Icons.favorite : Icons.favorite_border,
-                      size: 22,
+                      size: 20,
                       color: saved
                           ? colors.error
                           : colors.onSurfaceVariant,
@@ -1042,12 +972,14 @@ class _FwAppliedPill extends StatelessWidget {
       message: 'You have applied to this job',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(ext.radiusXs),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            vertical: HivorrSpacing.smMd,
+          ),
           decoration: BoxDecoration(
             color: ext.successContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(ext.radiusXs),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1058,47 +990,16 @@ class _FwAppliedPill extends StatelessWidget {
                 size: 20,
                 color: ext.success,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: HivorrSpacing.xs),
               Text(
                 'Applied!',
                 style: context.textTheme.labelLarge?.copyWith(
                   color: ext.success,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FwPill extends StatelessWidget {
-  const _FwPill({
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
-          color: foreground,
         ),
       ),
     );
@@ -1163,7 +1064,7 @@ class _FwFilterSheetState extends State<_FwFilterSheet> {
                     child: Text(
                       'Filter',
                       style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -1406,8 +1307,8 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
                     Expanded(
                       child: Text(
                         'Submit Application',
-                        style: context.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                style: context.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -1520,9 +1421,9 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
                         const SizedBox(width: 8),
                         Text(
                           _sending ? 'Submitting…' : 'Submit Application',
-                          style: context.textTheme.titleMedium?.copyWith(
-                            color: colors.onPrimary,
-                            fontWeight: FontWeight.w800,
+                style: context.textTheme.titleMedium?.copyWith(
+                  color: colors.onPrimary,
+                  fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
@@ -2098,8 +1999,8 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
                       children: <Widget>[
                         Text(
                           'Applications',
-                          style: context.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
                             color: context.colorScheme.onSurface,
                           ),
                         ),
@@ -2218,7 +2119,6 @@ class _ApplicationsTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final roleTheme = context.roleTheme;
     int pendingApps = 0;
     try {
@@ -2230,148 +2130,21 @@ class _ApplicationsTopBar extends StatelessWidget {
     } catch (_) {
       pendingApps = 0;
     }
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        children: <Widget>[
-          _TopBarTile(
-            tooltip: 'Menu',
-            icon: Icons.menu,
-            onTap: () {
-              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
-              if (scaffold != null && scaffold.hasDrawer) {
-                scaffold.openDrawer();
-              }
-            },
-          ),
-          const SizedBox(width: HivorrSpacing.md),
-          Text(
-            'Applications',
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const Spacer(),
-          _TopBarTile(
-            tooltip: 'Notifications',
-            icon: Icons.notifications_outlined,
-            showDot: pendingApps > 0,
-            onTap: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: roleTheme.clientContainer,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: roleTheme.clientPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: HivorrSpacing.xs),
-                Text(
-                  'Client',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: roleTheme.clientPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          InkWell(
-            onTap: () => context.go(RoutePaths.dashboardAccount),
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.primaryContainer,
-                border: Border.all(color: colors.primary, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'TV',
-                style: context.textTheme.titleSmall?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopBarTile extends StatelessWidget {
-  const _TopBarTile({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool showDot;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(icon, size: 22, color: colors.onSurfaceVariant),
-              if (showDot)
-                Positioned(
-                  top: 10,
-                  right: 11,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.surface, width: 1.5),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return HivorrDashboardTopBar(
+      title: 'Applications',
+      accentPrimary: roleTheme.clientPrimary,
+      accentContainer: roleTheme.clientContainer,
+      modeLabel: 'Client',
+      initials: 'TV',
+      showDot: pendingApps > 0,
+      onMenu: () {
+        final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+        if (scaffold != null && scaffold.hasDrawer) {
+          scaffold.openDrawer();
+        }
+      },
+      onNotifications: () => context.go(RoutePaths.dashboardNotifications),
+      onAvatar: () => context.go(RoutePaths.dashboardAccount),
     );
   }
 }
@@ -2796,7 +2569,7 @@ class _ApplicantsHeader extends StatelessWidget {
               Text(
                 job.title,
                 style: context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: HivorrSpacing.xs),
@@ -2893,13 +2666,13 @@ class _ApplicantCard extends StatelessWidget {
                 border: Border.all(color: colors.primary, width: 1.2),
               ),
               alignment: Alignment.center,
-              child: Text(
-                _initials,
-                style: context.textTheme.titleMedium?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w800,
+                child: Text(
+                  _initials,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
             ),
             const SizedBox(width: HivorrSpacing.sm),
             Expanded(
@@ -2908,8 +2681,8 @@ class _ApplicantCard extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     'Applicant · $_shortId',
-                    style: context.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+                style: context.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),

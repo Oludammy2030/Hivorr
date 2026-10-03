@@ -150,9 +150,9 @@ class _DisputeDetailScreenState extends State<DisputeDetailScreen>
               padding: const EdgeInsets.all(HivorrSpacing.lg),
               children: <Widget>[
                 _HeaderCard(case_: case_, onViewEscrow: widget.onViewEscrow),
-                const SizedBox(height: HivorrSpacing.lg),
+                const SizedBox(height: HivorrSpacing.md),
                 _ReasonCard(reason: case_.reason),
-                const SizedBox(height: HivorrSpacing.lg),
+                const SizedBox(height: HivorrSpacing.md),
                 _EvidenceSection(
                   evidence: provider.evidence,
                   canSubmit: case_.acceptsEvidence,
@@ -165,7 +165,7 @@ class _DisputeDetailScreenState extends State<DisputeDetailScreen>
                   onPreview: widget.onPreviewFile,
                 ),
                 if (provider.resolution != null) ...[
-                  const SizedBox(height: HivorrSpacing.lg),
+                  const SizedBox(height: HivorrSpacing.md),
                   _ResolutionCard(resolution: provider.resolution!),
                 ],
                 if (case_.isOpen) ...[
@@ -180,7 +180,7 @@ class _DisputeDetailScreenState extends State<DisputeDetailScreen>
                     },
                   ),
                 ],
-                const SizedBox(height: HivorrSpacing.lg),
+                const SizedBox(height: HivorrSpacing.md),
                 const _ImmutabilityNote(),
               ],
             ),

@@ -47,15 +47,18 @@ void main() {
   }
 
   group('ManageUserScreen layout', () {
-    testWidgets('renders the User Management title', (
-      WidgetTester tester,
-    ) async {
-      await pumpScreenWith(tester);
-      expect(find.text('User Management'), findsOneWidget);
-      await unmount(tester);
-    });
+    testWidgets(
+      'renders count and export without duplicating the shell title',
+      (WidgetTester tester) async {
+        await pumpScreenWith(tester);
+        // The shell top bar owns the page title (§13a): no in-body H1.
+        expect(find.text('User Management'), findsNothing);
+        expect(find.text('Export CSV'), findsOneWidget);
+        await unmount(tester);
+      },
+    );
 
-    testWidgets('keeps the User Management title for capability views', (
+    testWidgets('keeps the count label for capability views', (
       WidgetTester tester,
     ) async {
       final FakeManageUserRepository resolvedManage =
@@ -83,8 +86,9 @@ void main() {
       );
       await tester.pump();
       await tester.pump();
-      expect(find.text('User Management'), findsOneWidget);
+      expect(find.text('User Management'), findsNothing);
       expect(find.text('0 professionals'), findsOneWidget);
+      expect(find.text('Export CSV'), findsOneWidget);
       await unmount(tester);
     });
 

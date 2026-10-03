@@ -18,6 +18,7 @@ import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -174,7 +175,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Profile',
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: 18,
             ),
           ),
           actions: <Widget>[
@@ -247,7 +247,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Profile',
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: 18,
             ),
           ),
           actions: <Widget>[
@@ -298,7 +297,6 @@ class _ProfileTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final RoleThemeExtension roles = context.roleTheme;
     int pendingApps = 0;
     try {
@@ -311,154 +309,21 @@ class _ProfileTopBar extends StatelessWidget {
       pendingApps = 0;
     }
     final String identity = _displayIdentity(email);
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        children: <Widget>[
-          _TopBarTile(
-            tooltip: 'Menu',
-            icon: Icons.menu,
-            onTap: () {
-              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
-              if (scaffold != null && scaffold.hasDrawer) {
-                scaffold.openDrawer();
-              }
-            },
-          ),
-          const SizedBox(width: HivorrSpacing.md),
-          Text(
-            'Profile',
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const Spacer(),
-          _TopBarTile(
-            tooltip: 'Notifications',
-            icon: Icons.notifications_outlined,
-            showDot: pendingApps > 0,
-            onTap: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _pillContainer(roles, capability),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _pillForeground(roles, capability),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: HivorrSpacing.xs),
-                Text(
-                  capability.label,
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: _pillForeground(roles, capability),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Tooltip(
-            message: 'Profile',
-            child: InkWell(
-              onTap: () => context.go(RoutePaths.dashboardAccount),
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.primaryContainer,
-                  border: Border.all(color: colors.primary, width: 1.5),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  _initials(identity),
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopBarTile extends StatelessWidget {
-  const _TopBarTile({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool showDot;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(icon, size: 22, color: colors.onSurfaceVariant),
-              if (showDot)
-                Positioned(
-                  top: 10,
-                  right: 11,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.surfaceContainerHighest,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return HivorrDashboardTopBar(
+      title: 'Profile',
+      accentPrimary: _pillForeground(roles, capability),
+      accentContainer: _pillContainer(roles, capability),
+      modeLabel: capability.label,
+      initials: _initials(identity),
+      showDot: pendingApps > 0,
+      onMenu: () {
+        final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+        if (scaffold != null && scaffold.hasDrawer) {
+          scaffold.openDrawer();
+        }
+      },
+      onNotifications: () => context.go(RoutePaths.dashboardNotifications),
+      onAvatar: () => context.go(RoutePaths.dashboardAccount),
     );
   }
 }
@@ -542,9 +407,8 @@ class _ProfileContent extends StatelessWidget {
       children: <Widget>[
         Text(
           'Profile',
-          style: context.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            fontSize: compact ? 20 : 28,
+          style: context.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w700,
           ),
         ),
         SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
@@ -658,8 +522,7 @@ class _ContactCard extends StatelessWidget {
           Text(
             'Contact',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: compact ? 15 : 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
@@ -699,7 +562,7 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final bool compact = context.breakpoint == Breakpoint.mobile;
+    final AppThemeExtension ext = context.appExtension;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -713,13 +576,13 @@ class _Field extends StatelessWidget {
         const SizedBox(height: HivorrSpacing.xs),
         Container(
           width: double.infinity,
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: HivorrSpacing.md,
-            vertical: compact ? 12 : 14,
+            vertical: HivorrSpacing.smMd,
           ),
           decoration: BoxDecoration(
             color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(compact ? 10 : 12),
+            borderRadius: BorderRadius.circular(ext.radiusXs),
           ),
           child: Text(
             value,
@@ -727,7 +590,6 @@ class _Field extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.bodyMedium?.copyWith(
               color: muted ? colors.onSurfaceVariant : colors.onSurface,
-              fontSize: compact ? 13 : null,
             ),
           ),
         ),
@@ -735,9 +597,8 @@ class _Field extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             hint!,
-            style: context.textTheme.bodySmall?.copyWith(
+            style: context.textTheme.labelSmall?.copyWith(
               color: colors.onSurfaceVariant,
-              fontSize: compact ? 11 : 12,
             ),
           ),
         ],
@@ -819,8 +680,7 @@ class _StatsCard extends StatelessWidget {
           Text(
             'Stats',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: compact ? 15 : 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
@@ -837,7 +697,6 @@ class _StatsCard extends StatelessWidget {
                     rows[i].label,
                     style: context.textTheme.bodySmall?.copyWith(
                       color: context.colorScheme.onSurfaceVariant,
-                      fontSize: compact ? 12 : 13,
                     ),
                   ),
                 ),
@@ -845,8 +704,7 @@ class _StatsCard extends StatelessWidget {
                 Text(
                   rows[i].value,
                   style: context.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: compact ? 13 : 14,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -1336,8 +1194,7 @@ class _ProProfileBodyState extends State<_ProProfileBody> {
               child: Text(
                 'Portfolio Items',
                 style: context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -1498,9 +1355,7 @@ class _ProCoverHeader extends StatelessWidget {
             initials,
             style: context.textTheme.headlineMedium?.copyWith(
               color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 30,
-              letterSpacing: 0.5,
+              fontWeight: FontWeight.w700,
             ),
           )
         : Container(
@@ -1596,8 +1451,7 @@ class _ProCoverHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1623,7 +1477,7 @@ class _ProCoverHeader extends StatelessWidget {
                           Text(
                             '4.9',
                             style: context.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(width: 4),
@@ -1662,7 +1516,7 @@ class _ProCoverHeader extends StatelessWidget {
                         rateText,
                         style: context.textTheme.bodySmall?.copyWith(
                           color: green,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       Row(
@@ -1681,7 +1535,7 @@ class _ProCoverHeader extends StatelessWidget {
                             'Available',
                             style: context.textTheme.bodySmall?.copyWith(
                               color: green,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -1888,8 +1742,7 @@ class _PersonalCard extends StatelessWidget {
           Text(
             'Personal Information',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
@@ -2046,8 +1899,7 @@ class _ProStatsCard extends StatelessWidget {
           Text(
             'Profile Stats',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
@@ -2084,7 +1936,6 @@ class _StatRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodySmall?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 13,
                 ),
               ),
             ),
@@ -2094,8 +1945,7 @@ class _StatRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: context.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -2136,8 +1986,7 @@ class _ProVerificationCard extends StatelessWidget {
           Text(
             'Verification Status',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
@@ -2295,7 +2144,6 @@ class _ReviewCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: context.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -2305,7 +2153,6 @@ class _ReviewCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: context.textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
-                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -2324,7 +2171,6 @@ class _ReviewCard extends StatelessWidget {
           const SizedBox(height: HivorrSpacing.md),
           Text(
             review.body,
-            style: context.textTheme.bodyMedium?.copyWith(fontSize: 15),
           ),
         ],
       ),
@@ -2560,8 +2406,7 @@ class _SettingsCard extends StatelessWidget {
           Text(
             title,
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.sm),
@@ -2598,7 +2443,6 @@ class _ToggleRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: context.textTheme.bodyMedium?.copyWith(fontSize: 15),
               ),
             ),
             const SizedBox(width: HivorrSpacing.md),
@@ -2648,8 +2492,7 @@ class _PayoutCard extends StatelessWidget {
           Text(
             'Payout Account',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
@@ -2749,7 +2592,6 @@ class _PayoutRow extends StatelessWidget {
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodyMedium?.copyWith(fontSize: 14),
             ),
           ),
           if (badge != null) ...<Widget>[
@@ -2798,7 +2640,6 @@ class _SignOutButton extends StatelessWidget {
               style: context.textTheme.titleSmall?.copyWith(
                 color: colors.error,
                 fontWeight: FontWeight.w700,
-                fontSize: 15,
               ),
             ),
           ],
@@ -2835,7 +2676,6 @@ class _DeleteAccountButton extends StatelessWidget {
           style: context.textTheme.titleSmall?.copyWith(
             color: colors.error,
             fontWeight: FontWeight.w700,
-            fontSize: 15,
           ),
         ),
       ),
@@ -2900,7 +2740,6 @@ class _ProjectCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
                   ),
                 ),
                 if (tech.isNotEmpty) ...<Widget>[
@@ -2911,7 +2750,6 @@ class _ProjectCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: context.textTheme.bodySmall?.copyWith(
                       color: context.colorScheme.onSurfaceVariant,
-                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -3046,8 +2884,7 @@ class _ProSkillsCard extends StatelessWidget {
           Text(
             'Skills & Expertise',
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),

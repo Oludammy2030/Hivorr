@@ -13,17 +13,21 @@ import 'package:hivorr/data/entities/job_application.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/messaging_provider.dart';
+import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
+import 'package:hivorr/shared/components/hivorr_stat_card.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:hivorr/shared/layouts/mobile_compact.dart';
+import 'package:hivorr/shared/widgets/hivorr_badge.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:provider/provider.dart';
 
@@ -212,7 +216,7 @@ class _HiresScreenState extends State<HiresScreen> {
           title: Text(
             'My Jobs',
             style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -377,7 +381,6 @@ class _ProMyJobsTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final RoleThemeExtension roles = context.roleTheme;
     bool hasDot = false;
     try {
@@ -390,154 +393,22 @@ class _ProMyJobsTopBar extends StatelessWidget {
       hasDot = false;
     }
     final ({String name, String initials}) identity = _proIdentity(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        children: <Widget>[
-          _ProTopBarTile(
-            tooltip: 'Menu',
-            icon: Icons.menu,
-            onTap: () {
-              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
-              if (scaffold != null && scaffold.hasDrawer) {
-                scaffold.openDrawer();
-              }
-            },
-          ),
-          const SizedBox(width: HivorrSpacing.md),
-          Text(
-            'My Jobs',
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const Spacer(),
-          _ProTopBarTile(
-            tooltip: 'Notifications',
-            icon: Icons.notifications_outlined,
-            showDot: hasDot,
-            onTap: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: roles.professionalContainer.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: roles.professionalPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: HivorrSpacing.xs),
-                Text(
-                  'Professional',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: roles.professionalPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Tooltip(
-            message: identity.name,
-            child: InkWell(
-              onTap: () => context.go(RoutePaths.dashboardAccount),
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: roles.professionalContainer,
-                  border: Border.all(
-                    color: roles.professionalPrimary.withValues(alpha: 0.4),
-                    width: 1.5,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  identity.initials,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: roles.professionalPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProTopBarTile extends StatelessWidget {
-  const _ProTopBarTile({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool showDot;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(icon, size: 22, color: colors.onSurfaceVariant),
-              if (showDot)
-                Positioned(
-                  top: 10,
-                  right: 11,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.surface, width: 1.5),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return HivorrDashboardTopBar(
+      title: 'My Jobs',
+      accentPrimary: roles.professionalPrimary,
+      accentContainer: roles.professionalContainer,
+      modeLabel: 'Professional',
+      initials: identity.initials,
+      avatarTooltip: identity.name,
+      showDot: hasDot,
+      onMenu: () {
+        final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+        if (scaffold != null && scaffold.hasDrawer) {
+          scaffold.openDrawer();
+        }
+      },
+      onNotifications: () => context.go(RoutePaths.dashboardNotifications),
+      onAvatar: () => context.go(RoutePaths.dashboardAccount),
     );
   }
 }
@@ -556,7 +427,6 @@ class _ProfessionalMyJobsBody extends StatelessWidget {
   final Future<void> Function() onRefresh;
 
   static const double _contentMaxWidth = 1120;
-  static const double _gridBreakpoint = 900;
 
   @override
   Widget build(BuildContext context) {
@@ -580,14 +450,8 @@ class _ProfessionalMyJobsBody extends StatelessWidget {
                 const SizedBox(height: HivorrSpacing.lg),
                 switch (phase) {
                   'applied' => _ProAppliedList(onRetry: onRefresh),
-                  'completed' => _ProCompletedGrid(
-                    gridBreakpoint: _gridBreakpoint,
-                    onRetry: onRefresh,
-                  ),
-                  _ => _ProActiveGrid(
-                    gridBreakpoint: _gridBreakpoint,
-                    onRetry: onRefresh,
-                  ),
+                  'completed' => _ProCompletedGrid(onRetry: onRefresh),
+                  _ => _ProActiveGrid(onRetry: onRefresh),
                 },
               ],
             ),
@@ -610,7 +474,7 @@ class _ProMyJobsHeader extends StatelessWidget {
         Text(
           'My Jobs',
           style: context.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: context.colorScheme.onSurface,
           ),
         ),
@@ -660,19 +524,24 @@ class _ProPhaseTabs extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            for (int i = 0; i < _phases.length; i++) ...<Widget>[
-              if (i > 0) const SizedBox(width: 4),
-              _ProPhasePill(
-                label: _phases[i].$2,
-                selected: _phases[i].$1 == activePhase,
-                selectedFill: roles.professionalPrimary,
-                onTap: () => onSelect(_phases[i].$1),
-              ),
+        // Horizontal scroll (same pattern as _TabRow): three pills exceed
+        // 320dp viewports and must swipe, never overflow.
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              for (int i = 0; i < _phases.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(width: 4),
+                _ProPhasePill(
+                  label: _phases[i].$2,
+                  selected: _phases[i].$1 == activePhase,
+                  selectedFill: roles.professionalPrimary,
+                  onTap: () => onSelect(_phases[i].$1),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -700,12 +569,15 @@ class _ProPhasePill extends StatelessWidget {
       selected: selected,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(999),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HivorrSpacing.lg,
+            vertical: HivorrSpacing.smMd,
+          ),
           decoration: BoxDecoration(
             color: selected ? selectedFill : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
             label,
@@ -723,9 +595,8 @@ class _ProPhasePill extends StatelessWidget {
 /// Active grid: professional active hires as reference cards, two columns on
 /// wide layouts, one column below the grid breakpoint.
 class _ProActiveGrid extends StatelessWidget {
-  const _ProActiveGrid({required this.gridBreakpoint, required this.onRetry});
+  const _ProActiveGrid({required this.onRetry});
 
-  final double gridBreakpoint;
   final Future<void> Function() onRetry;
 
   @override
@@ -768,49 +639,16 @@ class _ProActiveGrid extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
-        if (c.maxWidth < gridBreakpoint) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              for (int i = 0; i < active.length; i++) ...<Widget>[
-                if (i > 0) const SizedBox(height: HivorrSpacing.md),
-                _ProActiveJobCard(hire: active[i], job: byId[active[i].jobId]),
-              ],
-            ],
-          );
-        }
-        final List<List<Hire>> rows = <List<Hire>>[];
-        for (int i = 0; i < active.length; i += 2) {
-          rows.add(
-            active.sublist(i, i + 2 > active.length ? active.length : i + 2),
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // Content-card columns (§21a): 1 col <600, 2 cols 600–1023,
+        // 3 cols ≥1024.
+        final double width = c.maxWidth;
+        final int columns = width >= 1024 ? 3 : (width >= 600 ? 2 : 1);
+        return HivorrStatGrid(
+          columns: columns,
+          maxWidth: width,
           children: <Widget>[
-            for (int r = 0; r < rows.length; r++) ...<Widget>[
-              if (r > 0) const SizedBox(height: HivorrSpacing.md),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _ProActiveJobCard(
-                      hire: rows[r][0],
-                      job: byId[rows[r][0].jobId],
-                    ),
-                  ),
-                  const SizedBox(width: HivorrSpacing.md),
-                  Expanded(
-                    child: rows[r].length > 1
-                        ? _ProActiveJobCard(
-                            hire: rows[r][1],
-                            job: byId[rows[r][1].jobId],
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-            ],
+            for (final Hire hire in active)
+              _ProActiveJobCard(hire: hire, job: byId[hire.jobId]),
           ],
         );
       },
@@ -862,7 +700,7 @@ class _ProActiveJobCard extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(HivorrSpacing.lg),
+        padding: const EdgeInsets.all(HivorrSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -926,12 +764,15 @@ class _ProActiveJobCard extends StatelessWidget {
             ),
             const SizedBox(height: HivorrSpacing.md),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text(
-                  'Milestone progress',
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
+                Expanded(
+                  child: Text(
+                    'Milestone progress',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ),
                 Text(
@@ -1016,31 +857,12 @@ class _ProCardAction extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
-      child: InkWell(
+      child: HivorrTableAction(
+        label: label,
+        icon: icon,
+        foreground: foreground,
+        background: fill,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, size: 16, color: foreground),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: context.textTheme.labelLarge?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1152,7 +974,7 @@ class _ProAppliedCard extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(HivorrSpacing.lg),
+        padding: const EdgeInsets.all(HivorrSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -1214,59 +1036,20 @@ class _AppliedStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    final AppThemeExtension ext = context.appExtension;
-    final _AppliedTone tone = switch (status) {
-      'shortlisted' => _AppliedTone(
-        fill: colors.primaryContainer,
-        text: colors.primary,
-        label: 'shortlisted',
-      ),
-      'submitted' => _AppliedTone(
-        fill: ext.warningContainer,
-        text: ext.warning,
-        label: 'pending',
-      ),
-      'accepted' => _AppliedTone(
-        fill: ext.successContainer,
-        text: ext.success,
-        label: 'hired',
-      ),
-      _ => _AppliedTone(
-        fill: colors.surfaceContainerHighest.withValues(
-          alpha: context.isDarkMode ? 1.0 : 0.6,
-        ),
-        text: colors.onSurfaceVariant,
-        label: status,
-      ),
+    final String label = switch (status) {
+      'shortlisted' => 'shortlisted',
+      'submitted' => 'pending',
+      'accepted' => 'hired',
+      _ => status,
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: tone.fill,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        tone.label,
-        style: context.textTheme.labelMedium?.copyWith(
-          color: tone.text,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
+    final HivorrBadgeVariant variant = switch (status) {
+      'shortlisted' => HivorrBadgeVariant.primary,
+      'submitted' => HivorrBadgeVariant.warning,
+      'accepted' => HivorrBadgeVariant.success,
+      _ => HivorrBadgeVariant.neutral,
+    };
+    return HivorrBadge(label: label, variant: variant);
   }
-}
-
-class _AppliedTone {
-  const _AppliedTone({
-    required this.fill,
-    required this.text,
-    required this.label,
-  });
-
-  final Color fill;
-  final Color text;
-  final String label;
 }
 
 /// Contact Employer (hired rows only): opens the existing Messages area on
@@ -1396,12 +1179,8 @@ class _ContactEmployerButtonState extends State<_ContactEmployerButton> {
 /// stars + Paid), newest first. Driven by the shared professional hire
 /// list filtered to `completed`/`closed`, enriched with known [Job] rows.
 class _ProCompletedGrid extends StatelessWidget {
-  const _ProCompletedGrid({
-    required this.gridBreakpoint,
-    required this.onRetry,
-  });
+  const _ProCompletedGrid({required this.onRetry});
 
-  final double gridBreakpoint;
   final Future<void> Function() onRetry;
 
   @override
@@ -1450,55 +1229,16 @@ class _ProCompletedGrid extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
-        if (c.maxWidth < gridBreakpoint) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              for (int i = 0; i < completed.length; i++) ...<Widget>[
-                if (i > 0) const SizedBox(height: HivorrSpacing.md),
-                _ProCompletedCard(
-                  hire: completed[i],
-                  job: byId[completed[i].jobId],
-                ),
-              ],
-            ],
-          );
-        }
-        final List<List<Hire>> rows = <List<Hire>>[];
-        for (int i = 0; i < completed.length; i += 2) {
-          rows.add(
-            completed.sublist(
-              i,
-              i + 2 > completed.length ? completed.length : i + 2,
-            ),
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // Content-card columns (§21a): 1 col <600, 2 cols 600–1023,
+        // 3 cols ≥1024.
+        final double width = c.maxWidth;
+        final int columns = width >= 1024 ? 3 : (width >= 600 ? 2 : 1);
+        return HivorrStatGrid(
+          columns: columns,
+          maxWidth: width,
           children: <Widget>[
-            for (int r = 0; r < rows.length; r++) ...<Widget>[
-              if (r > 0) const SizedBox(height: HivorrSpacing.md),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _ProCompletedCard(
-                      hire: rows[r][0],
-                      job: byId[rows[r][0].jobId],
-                    ),
-                  ),
-                  const SizedBox(width: HivorrSpacing.md),
-                  Expanded(
-                    child: rows[r].length > 1
-                        ? _ProCompletedCard(
-                            hire: rows[r][1],
-                            job: byId[rows[r][1].jobId],
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-            ],
+            for (final Hire hire in completed)
+              _ProCompletedCard(hire: hire, job: byId[hire.jobId]),
           ],
         );
       },
@@ -1548,7 +1288,7 @@ class _ProCompletedCard extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(HivorrSpacing.lg),
+        padding: const EdgeInsets.all(HivorrSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[

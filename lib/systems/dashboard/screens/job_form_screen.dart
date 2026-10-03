@@ -7,6 +7,7 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/entities/job.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
+import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
@@ -339,153 +340,22 @@ class _PostJobTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
     final roleTheme = context.roleTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.lg,
-        vertical: 14,
-      ),
-      child: Row(
-        children: <Widget>[
-          _TopBarTile(
-            tooltip: 'Menu',
-            icon: Icons.menu,
-            onTap: () {
-              final ScaffoldState? scaffold = Scaffold.maybeOf(context);
-              if (scaffold != null && scaffold.hasDrawer) {
-                scaffold.openDrawer();
-              }
-            },
-          ),
-          const SizedBox(width: HivorrSpacing.md),
-          Text(
-            title,
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const Spacer(),
-          _TopBarTile(
-            tooltip: 'Notifications',
-            icon: Icons.notifications_outlined,
-            showDot: true,
-            onTap: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: roleTheme.clientContainer,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: roleTheme.clientPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: HivorrSpacing.xs),
-                Text(
-                  'Client',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: roleTheme.clientPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          InkWell(
-            onTap: () => context.go(RoutePaths.dashboardAccount),
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.primaryContainer,
-                border: Border.all(color: colors.primary, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'TV',
-                style: context.textTheme.titleSmall?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopBarTile extends StatelessWidget {
-  const _TopBarTile({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool showDot;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(icon, size: 22, color: colors.onSurfaceVariant),
-              if (showDot)
-                Positioned(
-                  top: 10,
-                  right: 11,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.surface,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return HivorrDashboardTopBar(
+      title: title,
+      accentPrimary: roleTheme.clientPrimary,
+      accentContainer: roleTheme.clientContainer,
+      modeLabel: 'Client',
+      initials: 'TV',
+      showDot: true,
+      onMenu: () {
+        final ScaffoldState? scaffold = Scaffold.maybeOf(context);
+        if (scaffold != null && scaffold.hasDrawer) {
+          scaffold.openDrawer();
+        }
+      },
+      onNotifications: () => context.go(RoutePaths.dashboardNotifications),
+      onAvatar: () => context.go(RoutePaths.dashboardAccount),
     );
   }
 }
@@ -504,7 +374,7 @@ class _PageHeader extends StatelessWidget {
         Text(
           editing ? 'Edit Job' : 'Post a New Job',
           style: context.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: context.colorScheme.onSurface,
           ),
         ),

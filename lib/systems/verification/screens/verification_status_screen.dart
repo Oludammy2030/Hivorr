@@ -132,13 +132,13 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen>
               onAction: () => context.push(RoutePaths.verificationIdentity),
               onRetry: provider.refreshStatus,
             ),
-            const SizedBox(height: HivorrSpacing.lg),
+            const SizedBox(height: HivorrSpacing.md),
           ] else if (status.identityVerified) ...<Widget>[
             IdentityVerifiedBadge(
               label: 'Identity Verified',
               subtitle: status.kycLevel.tierCode,
             ),
-            const SizedBox(height: HivorrSpacing.lg),
+            const SizedBox(height: HivorrSpacing.md),
           ] else ...<Widget>[
             _Header(colors: context.colorScheme),
             const SizedBox(height: HivorrSpacing.md),
@@ -148,17 +148,17 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen>
               icon: const Icon(Icons.upload_file_outlined),
               onPressed: () => context.push(RoutePaths.verificationIdentity),
             ),
-            const SizedBox(height: HivorrSpacing.lg),
+            const SizedBox(height: HivorrSpacing.md),
           ],
           VerificationTimeline(
             status: timelineStatus,
             decisionNotes: _decisionNotes(provider),
           ),
-          const SizedBox(height: HivorrSpacing.lg),
+          const SizedBox(height: HivorrSpacing.md),
           if (provider.kycLevel != null ||
               status.kycLevel.tierCode != 'tier_0') ...<Widget>[
             KycLevelCard(level: provider.kycLevel ?? status.kycLevel),
-            const SizedBox(height: HivorrSpacing.lg),
+            const SizedBox(height: HivorrSpacing.md),
           ],
           HivorrCard(
             child: Column(

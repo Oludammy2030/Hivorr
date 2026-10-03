@@ -172,7 +172,7 @@ class _DetailBody extends StatelessWidget {
                       child: Text(
                         hire.jobTitle ?? 'Hire',
                         style: context.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -323,7 +323,7 @@ class _QuotationCard extends StatelessWidget {
                 child: Text(
                   '${quote.currencyCode} ${HivorrFormatters.number(quote.proposedAmount, decimals: 0)}',
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

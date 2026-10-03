@@ -11,7 +11,6 @@ import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
-import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/layouts/hivorr_screen_scaffold.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
@@ -55,8 +54,7 @@ class _PendingUpload {
   String? error;
 }
 
-class _ServiceListingMediaScreenState
-    extends State<ServiceListingMediaScreen> {
+class _ServiceListingMediaScreenState extends State<ServiceListingMediaScreen> {
   bool _initialized = false;
   bool _busy = false;
   final List<_PendingUpload> _pending = <_PendingUpload>[];
@@ -69,9 +67,7 @@ class _ServiceListingMediaScreenState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           unawaited(
-            context
-                .read<ServiceListingProvider>()
-                .select(widget.listingId),
+            context.read<ServiceListingProvider>().select(widget.listingId),
           );
         }
       });
@@ -92,18 +88,17 @@ class _ServiceListingMediaScreenState
   }
 
   Future<void> _uploadPending(_PendingUpload pending) async {
-    final ServiceListingProvider provider =
-        context.read<ServiceListingProvider>();
-    final ServiceListingService service =
-        context.read<ServiceListingService>();
+    final ServiceListingProvider provider = context
+        .read<ServiceListingProvider>();
+    final ServiceListingService service = context.read<ServiceListingService>();
     setState(() {
       pending.error = null;
       pending.progress = 0;
       _busy = true;
     });
     try {
-      final int sortOrder = (provider.selected?.media.length ?? 0) +
-          _pending.indexOf(pending);
+      final int sortOrder =
+          (provider.selected?.media.length ?? 0) + _pending.indexOf(pending);
       await service.uploadMedia(
         listingId: widget.listingId,
         bytes: pending.bytes,
@@ -155,10 +150,9 @@ class _ServiceListingMediaScreenState
       ),
     );
     if (confirmed != true || !mounted) return;
-    final ServiceListingService service =
-        context.read<ServiceListingService>();
-    final ServiceListingProvider provider =
-        context.read<ServiceListingProvider>();
+    final ServiceListingService service = context.read<ServiceListingService>();
+    final ServiceListingProvider provider = context
+        .read<ServiceListingProvider>();
     setState(() => _busy = true);
     try {
       await service.deleteMedia(
@@ -184,10 +178,7 @@ class _ServiceListingMediaScreenState
   Widget build(BuildContext context) {
     return HivorrScreenScaffold(
       appBar: AppBar(
-        title: Text(
-          'Listing photos',
-          style: context.textTheme.titleLarge,
-        ),
+        title: Text('Listing photos', style: context.textTheme.titleLarge),
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floatingActionButton: FloatingActionButton(
@@ -195,97 +186,114 @@ class _ServiceListingMediaScreenState
         tooltip: 'Add photo',
         child: const Icon(Icons.add_a_photo_outlined),
       ),
-      body: HivorrContentPane(
-        child: Consumer2<ServiceListingProvider, ServiceListingService>(
-          builder: (
-            BuildContext context,
-            ServiceListingProvider provider,
-            ServiceListingService service,
-            _,
-          ) {
-            if (provider.isLoading && !provider.isLoaded) {
-              return const HivorrLoadingState(
-                message: 'Loading photos…',
-              );
-            }
-            if (provider.lastError != null && !provider.isLoaded) {
-              return HivorrErrorState(
-                message: 'Failed to load photos',
-                detail: provider.lastError!.message,
-                onRetry: () => provider.select(widget.listingId),
-              );
-            }
-            final List<ListingMedia> media =
-                provider.selected?.media ?? const <ListingMedia>[];
-            if (media.isEmpty && _pending.isEmpty) {
-              return HivorrEmptyState(
-                icon: const Icon(Icons.photo_library_outlined),
-                title: 'No photos yet',
-                subtitle: 'Add photos to help buyers trust your service.',
-                actionButton: HivorrButton(
-                  label: 'Add photo',
-                  onPressed: _pickAndUpload,
-                ),
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    HivorrSpacing.sm,
-                    HivorrSpacing.xs,
-                    HivorrSpacing.sm,
-                    0,
-                  ),
-                  child: Text(
-                    media.length == 1
-                        ? '1 photo · the first photo is the cover'
-                        : '${media.length} photos · the first photo is the cover',
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(HivorrSpacing.sm),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: HivorrSpacing.sm,
-                      crossAxisSpacing: HivorrSpacing.sm,
-                      childAspectRatio: 0.85,
-                    ),
-                    itemCount: media.length + _pending.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      if (index < media.length) {
-                        final ListingMedia item = media[index];
-                        return ListingMediaTile(
-                          media: item,
-                          imageUrl: service.mediaPublicUrl(item.storagePath),
-                          onDelete: _busy ? null : () => _confirmDelete(item),
-                        );
-                      }
-                      final _PendingUpload pending =
-                          _pending[index - media.length];
-                      return ListingMediaTile(
-                        imageUrl: null,
-                        fileName: pending.fileName,
-                        progress: pending.error == null
-                            ? pending.progress
-                            : null,
-                        errorMessage: pending.error,
-                        onRetry: () => _uploadPending(pending),
-                        onDelete: () =>
-                            setState(() => _pending.remove(pending)),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
+      // Photo grids are full-width surfaces: a 1120dp cap replaces the
+      // 720dp form pane (VISUAL-IDENTITY.md §7).
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: Consumer2<ServiceListingProvider, ServiceListingService>(
+            builder:
+                (
+                  BuildContext context,
+                  ServiceListingProvider provider,
+                  ServiceListingService service,
+                  _,
+                ) {
+                  if (provider.isLoading && !provider.isLoaded) {
+                    return const HivorrLoadingState(message: 'Loading photos…');
+                  }
+                  if (provider.lastError != null && !provider.isLoaded) {
+                    return HivorrErrorState(
+                      message: 'Failed to load photos',
+                      detail: provider.lastError!.message,
+                      onRetry: () => provider.select(widget.listingId),
+                    );
+                  }
+                  final List<ListingMedia> media =
+                      provider.selected?.media ?? const <ListingMedia>[];
+                  if (media.isEmpty && _pending.isEmpty) {
+                    return HivorrEmptyState(
+                      icon: const Icon(Icons.photo_library_outlined),
+                      title: 'No photos yet',
+                      subtitle: 'Add photos to help buyers trust your service.',
+                      actionButton: HivorrButton(
+                        label: 'Add photo',
+                        onPressed: _pickAndUpload,
+                      ),
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          HivorrSpacing.sm,
+                          HivorrSpacing.xs,
+                          HivorrSpacing.sm,
+                          0,
+                        ),
+                        child: Text(
+                          media.length == 1
+                              ? '1 photo · the first photo is the cover'
+                              : '${media.length} photos · the first photo is the cover',
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (BuildContext context, BoxConstraints c) {
+                            // Media tiles: 1 col <360, 2 cols to 1023, 3 cols
+                            // beyond (§21a). Square tiles stay photo-neutral.
+                            final int columns = c.maxWidth >= 1024
+                                ? 3
+                                : (c.maxWidth >= 360 ? 2 : 1);
+                            return GridView.builder(
+                              padding: const EdgeInsets.all(HivorrSpacing.sm),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columns,
+                                    mainAxisSpacing: HivorrSpacing.sm,
+                                    crossAxisSpacing: HivorrSpacing.sm,
+                                    childAspectRatio: 1,
+                                  ),
+                              itemCount: media.length + _pending.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                if (index < media.length) {
+                                  final ListingMedia item = media[index];
+                                  return ListingMediaTile(
+                                    media: item,
+                                    imageUrl: service.mediaPublicUrl(
+                                      item.storagePath,
+                                    ),
+                                    onDelete: _busy
+                                        ? null
+                                        : () => _confirmDelete(item),
+                                  );
+                                }
+                                final _PendingUpload pending =
+                                    _pending[index - media.length];
+                                return ListingMediaTile(
+                                  imageUrl: null,
+                                  fileName: pending.fileName,
+                                  progress: pending.error == null
+                                      ? pending.progress
+                                      : null,
+                                  errorMessage: pending.error,
+                                  onRetry: () => _uploadPending(pending),
+                                  onDelete: () =>
+                                      setState(() => _pending.remove(pending)),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+          ),
         ),
       ),
     );

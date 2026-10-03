@@ -105,6 +105,7 @@ void main() {
       expect(ext.warning, const Color(0xFFF97316));
       expect(ext.info, const Color(0xFF0891B2));
       expect(ext.radiusSm, 8);
+      expect(ext.radiusXs, 12);
       expect(ext.radiusMd, 16);
       expect(ext.radiusLg, 24);
       expect(ext.spacing, 8);
@@ -114,6 +115,7 @@ void main() {
       final ext = AppTheme.darkTheme.extension<AppThemeExtension>();
       expect(ext, isNotNull);
       expect(ext!.success, const Color(0xFF22C55E));
+      expect(ext.radiusXs, 12);
     });
 
     test('RoleThemeExtension exposes role accents (accent-only)', () {

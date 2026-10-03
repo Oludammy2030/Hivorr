@@ -36,6 +36,7 @@ class HivorrHeroPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppThemeExtension ext = context.appExtension;
+    final ColorScheme colors = context.colorScheme;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -61,9 +62,10 @@ class HivorrHeroPanel extends StatelessWidget {
           ],
           Text(
             title,
+            // White-on-gradient is a deliberate §16 exception: the gradient
+            // is identical in both themes, so literal white is correct here.
             style: context.textTheme.displaySmall?.copyWith(
               color: Colors.white,
-              fontWeight: FontWeight.w700,
             ),
           ),
           if (subtitle != null) ...<Widget>[
@@ -87,7 +89,8 @@ class HivorrHeroPanel extends StatelessWidget {
                     onPressed: onPrimary,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF2D3FE7),
+                      foregroundColor: colors.primary,
+                      minimumSize: const Size(48, 48),
                       padding: const EdgeInsets.symmetric(
                         horizontal: HivorrSpacing.lg,
                         vertical: HivorrSpacing.md,
@@ -104,6 +107,7 @@ class HivorrHeroPanel extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: Colors.white, width: 1.5),
+                      minimumSize: const Size(48, 48),
                       padding: const EdgeInsets.symmetric(
                         horizontal: HivorrSpacing.lg,
                         vertical: HivorrSpacing.md,
@@ -153,7 +157,7 @@ class HivorrHeroStat extends StatelessWidget {
           value,
           style: context.textTheme.headlineSmall?.copyWith(
             color: Colors.white,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: HivorrSpacing.xs),

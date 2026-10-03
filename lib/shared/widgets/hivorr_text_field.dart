@@ -23,6 +23,10 @@ class HivorrTextField extends StatelessWidget {
     this.maxLength,
     this.keyboardType,
     this.onChanged,
+    this.onSubmitted,
+    this.textInputAction,
+    this.autofillHints,
+    this.fillColor,
     this.enabled = true,
   });
 
@@ -38,6 +42,13 @@ class HivorrTextField extends StatelessWidget {
   final int? maxLength;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final TextInputAction? textInputAction;
+  final Iterable<String>? autofillHints;
+
+  /// Fill override (e.g. tinted search fields). Defaults to
+  /// [ColorScheme.surface].
+  final Color? fillColor;
   final bool enabled;
 
   @override
@@ -65,7 +76,10 @@ class HivorrTextField extends StatelessWidget {
         maxLines: maxLines,
         maxLength: maxLength,
         keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        autofillHints: autofillHints,
         onChanged: onChanged,
+        onSubmitted: onSubmitted,
         enabled: enabled,
         style: context.textTheme.bodyLarge,
         decoration: InputDecoration(
@@ -76,7 +90,7 @@ class HivorrTextField extends StatelessWidget {
           prefixIcon: prefix,
           suffixIcon: suffix,
           filled: true,
-          fillColor: colors.surface,
+          fillColor: fillColor ?? colors.surface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: HivorrSpacing.md,
             vertical: HivorrSpacing.sm,

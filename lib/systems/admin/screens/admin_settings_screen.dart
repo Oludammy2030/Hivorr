@@ -7,23 +7,29 @@ import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/locale_provider.dart';
 import 'package:hivorr/data/providers/admin_config_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
+import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/validators/password_policy.dart';
 import 'package:hivorr/shared/widgets/hivorr_avatar.dart';
+import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
+import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/shared/widgets/password_requirements_checklist.dart';
 import 'package:provider/provider.dart';
 
 /// Admin Settings: staged platform configuration (Admin Dashboard).
 ///
 /// Visual source of truth: Admin Dashboard Settings reference screenshot —
-/// `Platform Settings` title, a `Fee Configuration` card (2-column filled
-/// inputs + blue `Save Configuration`), and a `Platform Toggles` card
-/// (label + switch rows). Below the reference cards, two compact cards
-/// preserve existing real settings that the screenshot does not show:
-/// Language ([LocaleProvider]) and Security (password change via
+/// a `Fee Configuration` card (2-column filled inputs + blue
+/// `Save Configuration`) and a `Platform Toggles` card (label + switch
+/// rows) in a 920dp centered pane (the shell top bar already titles the
+/// page, §13a). Below the reference cards, two compact cards preserve
+/// existing real settings that the screenshot does not show: Language
+/// ([LocaleProvider]) and Security (password change via
 /// [AuthProvider.updatePassword]).
 ///
 /// Functional source of truth: existing Hivorr architecture. A codebase +
@@ -122,23 +128,17 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final bool twoCol = constraints.maxWidth >= 700;
+        final double width = constraints.maxWidth;
+        final bool twoCol = width >= 700;
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(HivorrSpacing.lg),
+          padding: MobileCompact.scrollPaddingFor(width),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 920),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  Text(
-                    'Platform Settings',
-                    style: context.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: context.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: HivorrSpacing.lg),
+                  // No in-body H1: the shell top bar already titles this page.
                   _FeeCard(
                     twoCol: twoCol,
                     fee: _fee,
@@ -146,13 +146,13 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                     maxBudget: _maxBudget,
                     minBudget: _minBudget,
                   ),
-                  const SizedBox(height: HivorrSpacing.lg),
+                  const SizedBox(height: HivorrSpacing.md),
                   const _TogglesCard(),
-                  const SizedBox(height: HivorrSpacing.lg),
+                  const SizedBox(height: HivorrSpacing.md),
                   const _PreferencesCard(),
-                  const SizedBox(height: HivorrSpacing.lg),
+                  const SizedBox(height: HivorrSpacing.md),
                   const _SecurityCard(),
-                  const SizedBox(height: HivorrSpacing.lg),
+                  const SizedBox(height: HivorrSpacing.md),
                 ],
               ),
             ),
@@ -176,32 +176,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       return text.substring(0, text.length - 2);
     }
     return text;
-  }
-}
-
-class _Panel extends StatelessWidget {
-  const _Panel({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: child,
-    );
   }
 }
 
@@ -269,41 +243,13 @@ class _FeeCardState extends State<_FeeCard> {
             ),
           ),
           const SizedBox(height: HivorrSpacing.xs),
-          TextField(
+          HivorrTextField(
             controller: controller,
             keyboardType: integer
                 ? TextInputType.number
                 : const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: colors.surfaceContainerHighest.withValues(alpha: 0.35),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.outline),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.error),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.error),
-              ),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
-              ),
-              errorText: error,
-            ),
+            errorText: error,
+            fillColor: colors.surfaceContainerHighest.withValues(alpha: 0.35),
           ),
         ],
       );
@@ -336,16 +282,16 @@ class _FeeCardState extends State<_FeeCard> {
       ),
     ];
 
-    return _Panel(
+    return HivorrCard(
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             'Fee Configuration',
             style: context.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: colors.onSurface,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
@@ -380,32 +326,12 @@ class _FeeCardState extends State<_FeeCard> {
           const SizedBox(height: HivorrSpacing.md),
           Align(
             alignment: Alignment.centerLeft,
-            child: ElevatedButton(
+            child: HivorrButton(
+              label: 'Save Configuration',
+              variant: HivorrButtonVariant.primary,
+              size: HivorrButtonSize.medium,
+              isLoading: config.isSaving,
               onPressed: config.isSaving ? null : () => _save(context, config),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.roleTheme.clientPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 14,
-                ),
-                textStyle: context.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              child: config.isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text('Save Configuration'),
             ),
           ),
           const SizedBox(height: HivorrSpacing.sm),
@@ -493,40 +419,46 @@ class _TogglesCard extends StatelessWidget {
     }) {
       return Column(
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  label,
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface,
+          // Vertical breathing room keeps switch rows on the 48dp floor.
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: HivorrSpacing.sm,
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    label,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurface,
+                    ),
                   ),
                 ),
-              ),
-              Switch(
-                value: value,
-                activeTrackColor: context.roleTheme.clientPrimary,
-                onChanged: config.isSaving
-                    ? null
-                    : (bool next) => _flip(context, config, toggle, next),
-              ),
-            ],
+                Switch(
+                  value: value,
+                  activeTrackColor: context.roleTheme.clientPrimary,
+                  onChanged: config.isSaving
+                      ? null
+                      : (bool next) => _flip(context, config, toggle, next),
+                ),
+              ],
+            ),
           ),
-          if (!last) Divider(height: 1, color: colors.outlineVariant),
+          if (!last) Divider(height: 1, color: colors.outline),
         ],
       );
     }
 
-    return _Panel(
+    return HivorrCard(
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             'Platform Toggles',
             style: context.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: colors.onSurface,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: HivorrSpacing.sm),
@@ -591,16 +523,16 @@ class _PreferencesCard extends StatelessWidget {
       locales = null;
     }
 
-    return _Panel(
+    return HivorrCard(
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             'Preferences',
             style: context.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: colors.onSurface,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: HivorrSpacing.sm),
@@ -639,11 +571,13 @@ class _CheckRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(ext.radiusSm),
+      // 16dp vertical keeps selection rows on the 48dp floor.
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: HivorrSpacing.sm),
+        padding: const EdgeInsets.symmetric(vertical: HivorrSpacing.md),
         child: Row(
           children: <Widget>[
             Expanded(
@@ -691,16 +625,16 @@ class _SecurityCard extends StatelessWidget {
       // Provider absent in isolated tests — keep fallback.
     }
 
-    return _Panel(
+    return HivorrCard(
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             'Security',
             style: context.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: colors.onSurface,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
@@ -738,9 +672,11 @@ class _SecurityCard extends StatelessWidget {
                   ],
                 ),
               ),
-              OutlinedButton(
+              HivorrButton(
+                label: 'Change Password',
+                variant: HivorrButtonVariant.outline,
+                size: HivorrButtonSize.small,
                 onPressed: () => _changePassword(context),
-                child: const Text('Change Password'),
               ),
             ],
           ),
@@ -779,25 +715,22 @@ class _PasswordDialogState extends State<_PasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final PasswordPolicyResult result = _policy.evaluate(_controller.text);
-    return AlertDialog(
-      title: const Text('Change Password'),
+    return HivorrDialog(
+      title: 'Change Password',
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            TextField(
+            HivorrTextField(
               controller: _controller,
               obscureText: true,
               autofillHints: const <String>[AutofillHints.newPassword],
+              label: 'New password',
+              errorText: _error,
               onChanged: (_) => setState(() {
                 _error = null;
               }),
-              decoration: InputDecoration(
-                labelText: 'New password',
-                border: const OutlineInputBorder(),
-                errorText: _error,
-              ),
             ),
             const SizedBox(height: HivorrSpacing.sm),
             PasswordRequirementsChecklist(

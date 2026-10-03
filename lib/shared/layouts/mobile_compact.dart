@@ -13,8 +13,9 @@ import 'package:hivorr/shared/layouts/breakpoints.dart';
 /// 2. Use [MobileCompact.scrollPaddingFor] (or [ResponsiveScrollPadding])
 ///    for scroll roots: 16dp sides on phones, 24dp on tablet/desktop, with
 ///    32dp bottom clearance so the last card clears the bottom bar.
-/// 3. Use [MobileCompact.sectionGapFor] for vertical rhythm: 24dp on phones,
-///    32dp otherwise. Never leave `xl` gaps stacked on a phone.
+/// 3. Use [MobileCompact.sectionGapFor] for vertical rhythm: 16dp on phones,
+///    24dp otherwise (§20a dashboard contract). Never leave `xl` gaps
+///    stacked on a phone.
 /// 4. Never use fixed chip/card widths (e.g. 132dp). Use
 ///    [MobileCompact.twoColumnWidth] (>=360dp) with a single-column fallback
 ///    at 320dp, and clamp chat bubbles with [MobileCompact.bubbleMaxWidth].
@@ -55,9 +56,10 @@ class MobileCompact {
   static EdgeInsets scrollPaddingForBreakpoint(Breakpoint bp) =>
       bp == Breakpoint.mobile ? scrollPadding : desktopScrollPadding;
 
-  /// Major section rhythm: 24dp on phones, 32dp otherwise.
+  /// Major section rhythm: 16dp on phones, 24dp otherwise (§20a dashboard
+  /// contract: 16 standard / 24 major).
   static double sectionGapFor(double maxWidth) =>
-      isCompactWidth(maxWidth) ? HivorrSpacing.lg : HivorrSpacing.xl;
+      isCompactWidth(maxWidth) ? HivorrSpacing.md : HivorrSpacing.lg;
 
   /// Minor section rhythm: 8dp on phones, 16dp otherwise.
   static double minorGapFor(double maxWidth) =>

@@ -12,6 +12,10 @@ class HivorrSpacing {
   /// 8.0 — standard element gaps.
   static const double sm = 8.0;
 
+  /// 12.0 — compact component interiors (compact card padding, pill
+  /// verticals, tile gaps). Sits between [sm] and [md].
+  static const double smMd = 12.0;
+
   /// 16.0 — section padding, card padding.
   static const double md = 16.0;
 

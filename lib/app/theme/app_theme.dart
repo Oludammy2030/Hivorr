@@ -23,6 +23,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.infoContainer,
     required this.onInfoContainer,
     required this.radiusSm,
+    required this.radiusXs,
     required this.radiusMd,
     required this.radiusLg,
     required this.spacing,
@@ -44,9 +45,11 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Color onInfoContainer;
 
   /// Shared shape/spacing primitives (see VISUAL-IDENTITY.md §7–§8).
-  /// radiusSm 8 (buttons/fields/badges), radiusMd 16 (cards/dialogs),
+  /// radiusSm 8 (buttons/fields/badges), radiusXs 12 (icon tiles, inner
+  /// elements, compact pills), radiusMd 16 (cards/dialogs),
   /// radiusLg 24 (bottom-sheet top corners).
   final double radiusSm;
+  final double radiusXs;
   final double radiusMd;
   final double radiusLg;
   final double spacing;
@@ -65,6 +68,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     infoContainer: AppColors.infoContainer,
     onInfoContainer: AppColors.onInfoContainer,
     radiusSm: 8,
+    radiusXs: 12,
     radiusMd: 16,
     radiusLg: 24,
     spacing: 8,
@@ -84,6 +88,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     infoContainer: Color(0xFF0C4A6E),
     onInfoContainer: Color(0xFFBAE6FD),
     radiusSm: 8,
+    radiusXs: 12,
     radiusMd: 16,
     radiusLg: 24,
     spacing: 8,
@@ -104,6 +109,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Color? infoContainer,
     Color? onInfoContainer,
     double? radiusSm,
+    double? radiusXs,
     double? radiusMd,
     double? radiusLg,
     double? spacing,
@@ -122,6 +128,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       infoContainer: infoContainer ?? this.infoContainer,
       onInfoContainer: onInfoContainer ?? this.onInfoContainer,
       radiusSm: radiusSm ?? this.radiusSm,
+      radiusXs: radiusXs ?? this.radiusXs,
       radiusMd: radiusMd ?? this.radiusMd,
       radiusLg: radiusLg ?? this.radiusLg,
       spacing: spacing ?? this.spacing,
@@ -163,6 +170,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       infoContainer: Color.lerp(infoContainer, other.infoContainer, t)!,
       onInfoContainer: Color.lerp(onInfoContainer, other.onInfoContainer, t)!,
       radiusSm: radiusSm,
+      radiusXs: radiusXs,
       radiusMd: radiusMd,
       radiusLg: radiusLg,
       spacing: spacing,
