@@ -29,6 +29,7 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
   int auditCallCount = 0;
   String? lastApprovedId;
   String? lastRejectedId;
+  String? lastStartedId;
   String? lastNotes;
   bool? lastRequiresResubmission;
 
@@ -61,6 +62,7 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
   @override
   Future<void> startReview(String submissionId) async {
     startCallCount++;
+    lastStartedId = submissionId;
     if (nextError != null) throw _consumeError();
   }
 
@@ -122,6 +124,12 @@ AdminReviewQueueEntry adminQueueEntry({
   String submissionType = 'trade_proof',
   String status = 'pending',
   DateTime? submittedAt,
+  String? entityLegalName = 'Test Legal',
+  String? documentPath,
+  String? professionId,
+  String? professionName = 'Plumbing',
+  String? assignedReviewer,
+  String? decisionNotes,
 }) => AdminReviewQueueEntry(
   submissionId: submissionId,
   entityId: entityId,
@@ -132,6 +140,12 @@ AdminReviewQueueEntry adminQueueEntry({
   submissionType: submissionType,
   status: status,
   submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+  entityLegalName: entityLegalName,
+  documentPath: documentPath,
+  professionId: professionId,
+  professionName: professionName,
+  assignedReviewer: assignedReviewer,
+  decisionNotes: decisionNotes,
 );
 
 /// An audit entry fixture.

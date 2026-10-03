@@ -5,6 +5,7 @@ import 'package:hivorr/data/providers/admin_config_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
+import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/systems/admin/screens/admin_dashboard_screen.dart';
@@ -13,6 +14,7 @@ import 'package:hivorr/systems/admin/screens/admin_payments_screen.dart';
 import 'package:hivorr/systems/admin/screens/admin_settings_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
+import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -148,6 +150,60 @@ void main() {
             ],
           ),
         ),
+      );
+      await expectNoOverflow(tester);
+    });
+  });
+
+  group('AdminReviewQueueScreen pilot (Phase 1 applicant grid)', () {
+    Future<List<SingleChildWidget>> queueProviders() async {
+      final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
+        isAdmin: true,
+      );
+      repo.setQueue(<AdminReviewQueueEntry>[
+        adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+        adminQueueEntry(
+          submissionId: 'sub-2',
+          entityName: 'Grace Hopper',
+          status: 'in_review',
+        ),
+        adminQueueEntry(
+          submissionId: 'sub-3',
+          entityName: 'Alan Turing',
+          entityLegalName: 'Alan Mathison Turing',
+          submissionType: 'identity_document',
+        ),
+      ]);
+      return <SingleChildWidget>[
+        ChangeNotifierProvider<AdminReviewProvider>.value(
+          value: AdminReviewProvider(repo: repo),
+        ),
+      ];
+    }
+
+    for (final double width in <double>[320, 390, 800, 1280]) {
+      testWidgets('no overflow at ${width.toInt()}dp', (
+        WidgetTester tester,
+      ) async {
+        await pumpScreen(
+          tester,
+          const AdminReviewQueueScreen(),
+          width: width,
+          providers: await queueProviders(),
+        );
+        await expectNoOverflow(tester);
+      });
+    }
+
+    testWidgets('no overflow at 1280dp in dark theme', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        const AdminReviewQueueScreen(),
+        width: 1280,
+        dark: true,
+        providers: await queueProviders(),
       );
       await expectNoOverflow(tester);
     });

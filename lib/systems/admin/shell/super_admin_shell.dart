@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_paths.dart';
@@ -35,6 +37,25 @@ class SuperAdminShell extends StatefulWidget {
 
 class _SuperAdminShellState extends State<SuperAdminShell> {
   bool _sidebarCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateQueue());
+  }
+
+  /// Keeps the shell bell count honest: loads the review queue once when an
+  /// admin shell mounts with an empty, non-loading queue (screens that own
+  /// their own hydration still drive refreshes themselves).
+  Future<void> _hydrateQueue() async {
+    if (!mounted) return;
+    final AdminReviewProvider admin = context.read<AdminReviewProvider>();
+    await admin.checkAdmin();
+    if (!mounted || !AdminGate.isAdmin(admin)) return;
+    if (admin.queue.isEmpty && !admin.isLoadingQueue) {
+      unawaited(admin.loadQueue());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -247,6 +268,12 @@ class _NotificationButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    int pendingCount = 0;
+    try {
+      pendingCount = context.watch<AdminReviewProvider>().queue.length;
+    } catch (_) {
+      pendingCount = 0;
+    }
     return Material(
       color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
       borderRadius: BorderRadius.circular(12),
@@ -258,7 +285,9 @@ class _NotificationButton extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(12),
         child: Tooltip(
-          message: 'Pending approvals',
+          message: pendingCount == 0
+              ? 'Pending approvals'
+              : '$pendingCount awaiting review',
           child: SizedBox(
             width: 40,
             height: 40,
@@ -270,18 +299,32 @@ class _NotificationButton extends StatelessWidget {
                   size: 20,
                   color: colors.onSurfaceVariant,
                 ),
-                Positioned(
-                  top: 9,
-                  right: 10,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEF4444),
-                      shape: BoxShape.circle,
+                if (pendingCount > 0)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: HivorrSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.error,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        pendingCount > 99 ? '99+' : '$pendingCount',
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: colors.onError,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

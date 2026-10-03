@@ -81,6 +81,12 @@ class AdminReviewRepositoryImpl implements AdminReviewRepository {
       status: dto.status,
       submittedAt: dto.submittedAt,
       entityAvatarPath: dto.entityAvatarPath,
+      entityLegalName: dto.entityLegalName,
+      documentPath: dto.documentPath,
+      professionId: dto.professionId,
+      professionName: dto.professionName,
+      assignedReviewer: dto.assignedReviewer,
+      decisionNotes: dto.decisionNotes,
     );
   }
 

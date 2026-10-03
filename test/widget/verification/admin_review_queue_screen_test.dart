@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
+import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/systems/verification/screens/admin_review_queue_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -38,9 +39,12 @@ void main() {
   }
 
   group('AdminReviewQueueScreen layout', () {
-    testWidgets('renders the app bar title', (WidgetTester tester) async {
+    testWidgets('renders no nested chrome (shell owns the title)', (
+      WidgetTester tester,
+    ) async {
       await pumpScreenWith(tester);
-      expect(find.text('Verification & Approvals'), findsOneWidget);
+      expect(find.text('Verification & Approvals'), findsNothing);
+      expect(find.text('Queue is clear'), findsOneWidget);
       await unmount(tester);
     });
 
@@ -76,7 +80,179 @@ void main() {
         ),
       );
       expect(find.text('Test Entity'), findsOneWidget);
-      expect(find.textContaining('trade_proof'), findsWidgets);
+      // Human labels, never raw codes.
+      expect(find.text('Trade proof'), findsOneWidget);
+      expect(find.textContaining('trade_proof'), findsNothing);
+      expect(find.textContaining('Status:'), findsNothing);
+      await unmount(tester);
+    });
+
+    testWidgets('shows a status badge per submission', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', status: 'pending'),
+            adminQueueEntry(submissionId: 'sub-2', status: 'in_review'),
+          ],
+        ),
+      );
+      // Each label appears twice: once on its filter chip, once on the
+      // submission badge.
+      expect(find.text('Pending'), findsNWidgets(2));
+      expect(find.text('In review'), findsNWidgets(2));
+      await unmount(tester);
+    });
+
+    testWidgets('search filters the loaded queue', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+            adminQueueEntry(submissionId: 'sub-2', entityName: 'Grace Hopper'),
+          ],
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'ada');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+      expect(find.text('Ada Lovelace'), findsOneWidget);
+      expect(find.text('Grace Hopper'), findsNothing);
+      expect(find.text('1 of 2 shown'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('status chips filter the loaded queue', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', status: 'pending'),
+            adminQueueEntry(submissionId: 'sub-2', status: 'in_review'),
+          ],
+        ),
+      );
+      await tester.tap(find.widgetWithText(HivorrChip, 'In review'));
+      await tester.pump();
+      expect(find.text('In review'), findsWidgets);
+      // Only the filter chip keeps the Pending label; its card is gone.
+      expect(find.text('Pending'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('shows a no-matches state for empty filters', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+          ],
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'zzz');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+      expect(find.text('No matches'), findsOneWidget);
+      expect(find.text('Ada Lovelace'), findsNothing);
+      await unmount(tester);
+    });
+  });
+
+  group('Master-detail workspace (wide)', () {
+    Future<void> pumpWide(
+      WidgetTester tester, {
+      FakeAdminReviewRepository? repo,
+    }) async {
+      final FakeAdminReviewRepository resolvedRepo =
+          repo ?? FakeAdminReviewRepository();
+      final AdminReviewProvider provider = AdminReviewProvider(
+        repo: resolvedRepo,
+      );
+      await pumpScreen(
+        tester,
+        const AdminReviewQueueScreen(),
+        width: 1280,
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AdminReviewProvider>.value(value: provider),
+        ],
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('auto-selects the first submission with detail panels', (
+      WidgetTester tester,
+    ) async {
+      await pumpWide(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+          ],
+        ),
+      );
+      // Entity name in list card + detail entity card; decision actions
+      // rendered inline instead of pushing a route.
+      expect(find.text('Ada Lovelace'), findsNWidgets(2));
+      expect(find.text('Approve'), findsOneWidget);
+      expect(find.text('Reject'), findsOneWidget);
+      expect(find.text('Document'), findsOneWidget);
+      expect(find.text('Audit trail'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('tapping a card switches the detail selection', (
+      WidgetTester tester,
+    ) async {
+      await pumpWide(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+            adminQueueEntry(submissionId: 'sub-2', entityName: 'Grace Hopper'),
+          ],
+        ),
+      );
+      expect(find.text('Ada Lovelace'), findsNWidgets(2));
+
+      await tester.tap(find.text('Grace Hopper').first);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Grace Hopper'), findsNWidgets(2));
+      expect(find.text('Ada Lovelace'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('shows the selection prompt when nothing matches', (
+      WidgetTester tester,
+    ) async {
+      await pumpWide(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+          ],
+        ),
+      );
+      // First TextField in layout order is the search box (the notes
+      // field lives in the details pane below it).
+      await tester.enterText(find.byType(TextField).first, 'zzz');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+      await tester.pumpAndSettle();
+      expect(find.text('Select a submission'), findsOneWidget);
+      expect(find.text('Approve'), findsNothing);
       await unmount(tester);
     });
   });
@@ -97,9 +273,11 @@ void main() {
         ],
       );
 
-      // Before the post-frame callback completes, loading shows first.
-      await tester.pump();
-      expect(find.text('Verification & Approvals'), findsOneWidget);
+      // Before the post-frame admin check completes, the fail-closed gate
+      // shows (never the queue behind it). No pump here: pumpApp already
+      // built the first frame, and a pump would let the fake's immediate
+      // checkAdmin resolve into the loading state.
+      expect(find.text('Admin access required'), findsOneWidget);
       await unmount(tester);
     });
 

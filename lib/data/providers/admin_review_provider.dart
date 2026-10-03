@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/logging/hivorr_logger.dart';
-import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
 
 /// Provider exposing admin review state to the widget tree (EP-02-11 §5.5).
@@ -148,9 +147,17 @@ class AdminReviewProvider extends ChangeNotifier {
                 credentialType: e.credentialType,
                 credentialName: e.credentialName,
                 submissionType: e.submissionType,
-                status: VerificationStatusKind.inReview.name,
+                // Server vocabulary (`in_review`), not the enum camelCase:
+                // rows arrive snake_case and UI must compare one language.
+                status: 'in_review',
                 submittedAt: e.submittedAt,
                 entityAvatarPath: e.entityAvatarPath,
+                entityLegalName: e.entityLegalName,
+                documentPath: e.documentPath,
+                professionId: e.professionId,
+                professionName: e.professionName,
+                assignedReviewer: e.assignedReviewer,
+                decisionNotes: e.decisionNotes,
               );
             }
             return e;
