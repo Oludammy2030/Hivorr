@@ -187,10 +187,15 @@ class _MarketplaceSearchScreenState extends State<MarketplaceSearchScreen>
                 ],
               ),
               const SizedBox(height: HivorrSpacing.xs),
-              Row(
+              // Wrap (not Row+Spacer): chip intrinsic widths vary with locale
+              // and text scale — wrapping never overflows on narrow screens.
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: HivorrSpacing.sm,
+                runSpacing: HivorrSpacing.xs,
                 children: <Widget>[
                   const RankingExplainerChip(),
-                  const Spacer(),
                   if (hasActive)
                     HivorrChip(
                       label: 'Clear filters',

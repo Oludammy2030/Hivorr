@@ -8,14 +8,19 @@ import '../../support/harnesses/widget_harness.dart';
 
 void main() {
   group('mobilePrimaryNavItems', () {
-    test('hire-only sees Home + Hiring + Messages', () {
+    test('hire-only sees Home + Hiring + Services + Messages', () {
       final List<DashboardNavItem> items = mobilePrimaryNavItems(
         hire: true,
         offer: false,
       );
       expect(
         items.map((DashboardNavItem e) => e.location).toList(),
-        <String>['/dashboard', '/dashboard/jobs', '/dashboard/messages'],
+        <String>[
+          '/dashboard',
+          '/dashboard/jobs',
+          '/services',
+          '/dashboard/messages',
+        ],
       );
     });
 
@@ -31,6 +36,51 @@ void main() {
           '/dashboard/opportunities',
           '/dashboard/messages',
         ],
+      );
+    });
+
+    test('combined-both keeps four primaries; services lives in More', () {
+      final List<DashboardNavItem> items = mobilePrimaryNavItems(
+        hire: true,
+        offer: true,
+      );
+      expect(
+        items.map((DashboardNavItem e) => e.location).toList(),
+        <String>[
+          '/dashboard',
+          '/dashboard/jobs',
+          '/dashboard/opportunities',
+          '/dashboard/messages',
+        ],
+      );
+      final List<DashboardNavItem> overflow = mobileOverflowNavItems(
+        hire: true,
+        offer: true,
+      );
+      expect(
+        overflow.any(
+          (DashboardNavItem e) => e.location == '/services',
+        ),
+        isTrue,
+      );
+    });
+
+    test('offer never sees the hiring-side services entry', () {
+      final List<DashboardNavItem> items = mobilePrimaryNavItems(
+        hire: false,
+        offer: true,
+      );
+      expect(
+        items.any((DashboardNavItem e) => e.location == '/services'),
+        isFalse,
+      );
+      final List<DashboardNavItem> overflow = mobileOverflowNavItems(
+        hire: false,
+        offer: true,
+      );
+      expect(
+        overflow.any((DashboardNavItem e) => e.location == '/services'),
+        isFalse,
       );
     });
 
@@ -81,10 +131,29 @@ void main() {
       );
       expect(
         isMobilePrimaryLocation(
+          '/services/search',
+          hire: true,
+          offer: false,
+        ),
+        isTrue,
+      );
+      expect(
+        isMobilePrimaryLocation(
           '/dashboard/account',
           hire: true,
           offer: false,
         ),
+        isFalse,
+      );
+    });
+
+    test('hire overflow excludes the services primary tab', () {
+      final List<DashboardNavItem> hireOverflow = mobileOverflowNavItems(
+        hire: true,
+        offer: false,
+      );
+      expect(
+        hireOverflow.any((DashboardNavItem e) => e.location == '/services'),
         isFalse,
       );
     });

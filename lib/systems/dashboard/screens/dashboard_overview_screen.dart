@@ -913,6 +913,8 @@ class _ClientContent extends StatelessWidget {
                   children: <Widget>[
                     quickActions,
                     const SizedBox(height: HivorrSpacing.xl),
+                    const _BrowseServicesBanner(),
+                    const SizedBox(height: HivorrSpacing.xl),
                     activeJobs,
                     const SizedBox(height: HivorrSpacing.xl),
                     recentApplications,
@@ -949,6 +951,8 @@ class _ClientContent extends StatelessWidget {
           )
         else ...<Widget>[
           quickActions,
+          SizedBox(height: sectionGap),
+          const _BrowseServicesBanner(),
           SizedBox(height: sectionGap),
           // Mobile fintech: drop the duplicate standalone metrics
           // (Jobs Posted / Active Hires / Total Spent / Open Apps) — they
@@ -1328,6 +1332,74 @@ class _ClientQuickActions extends StatelessWidget {
 }
 
 enum _QuickTint { lavender, green, peach }
+
+/// Full-width entry into public marketplace discovery (EP-03-09).
+///
+/// Client-side companion to the `Find Services` nav destination: same
+/// `HivorrCard` + client-accent vocabulary as `_QuickTile`, with an explicit
+/// CTA so the entry works even where the tab is one level deep (More sheet).
+class _BrowseServicesBanner extends StatelessWidget {
+  const _BrowseServicesBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
+    final RoleThemeExtension roles = context.roleTheme;
+    final bool compact = context.breakpoint == Breakpoint.mobile;
+    return HivorrCard(
+      onTap: () => context.go(RoutePaths.serviceDiscovery),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: compact ? 44 : 52,
+            height: compact ? 44 : 52,
+            decoration: BoxDecoration(
+              color: roles.clientContainer,
+              borderRadius: BorderRadius.circular(
+                compact ? ext.radiusXs : ext.radiusMd,
+              ),
+            ),
+            child: Icon(
+              Icons.storefront_outlined,
+              size: compact ? 22 : 26,
+              color: roles.clientPrimary,
+            ),
+          ),
+          const SizedBox(width: HivorrSpacing.smMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  'Find services',
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Browse verified professionals and request proposals.',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: HivorrSpacing.sm),
+          Icon(
+            Icons.arrow_forward,
+            color: colors.primary,
+            semanticLabel: 'Browse services',
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _QuickTile extends StatelessWidget {
   const _QuickTile({

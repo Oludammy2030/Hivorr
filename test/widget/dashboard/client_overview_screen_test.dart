@@ -309,5 +309,22 @@ void main() {
       expect(find.text('Jobs Posted'), findsWidgets);
       expect(find.text('Money'), findsOneWidget);
     });
+
+    testWidgets('client overview links into marketplace discovery', (
+      tester,
+    ) async {
+      await pumpOverview(tester, width: 390, height: 844);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Browse-services banner sits below Quick Actions on every width.
+      expect(find.text('Find services'), findsOneWidget);
+      expect(
+        find.text(
+          'Browse verified professionals and request proposals.',
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }

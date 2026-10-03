@@ -65,9 +65,11 @@ class DashboardNavItem {
 /// Mobile primary destinations for the bottom navigation (<600dp).
 ///
 /// Returns at most the mode-relevant primaries in bar order:
-/// hire-only → Overview, My Jobs, Messages;
+/// hire-only → Overview, My Jobs, Find Services, Messages;
 /// offer-only → Overview, Find Jobs, Messages;
-/// both (no active mode) → Overview, My Jobs, Find Jobs, Messages.
+/// both (no active mode) → Overview, My Jobs, Find Jobs, Messages
+/// (Find Services stays one tap away under `More` so the bar never exceeds
+/// five destinations).
 /// The `More` tab itself is rendered by the shell and is not included here.
 List<DashboardNavItem> mobilePrimaryNavItems({
   required bool hire,
@@ -84,6 +86,12 @@ List<DashboardNavItem> mobilePrimaryNavItems({
   ];
   if (hire) {
     primaries.add(byLocation('/dashboard/jobs'));
+  }
+  // Hiring-side marketplace discovery (EP-03-09): a primary tab for
+  // hire-only and client-mode users. Combined-both keeps four primaries
+  // (bar-crowding guard) with Find Services under `More`.
+  if (hire && !offer) {
+    primaries.add(byLocation('/services'));
   }
   if (offer) {
     primaries.add(byLocation('/dashboard/opportunities'));
@@ -197,6 +205,14 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     icon: Icons.business_center_outlined,
     activeIcon: Icons.business_center,
     location: '/dashboard/jobs',
+    section: DashboardNavSection.hiring,
+    showForOffer: false,
+  ),
+  DashboardNavItem(
+    label: 'Find Services',
+    icon: Icons.storefront_outlined,
+    activeIcon: Icons.storefront,
+    location: '/services',
     section: DashboardNavSection.hiring,
     showForOffer: false,
   ),

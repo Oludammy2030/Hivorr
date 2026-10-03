@@ -26,6 +26,7 @@ void main() {
       await pumpSidebar(tester, DashboardCapability.hire);
       expect(find.text('Post a Job'), findsOneWidget);
       expect(find.text('My Jobs'), findsOneWidget);
+      expect(find.text('Find Services'), findsOneWidget);
       expect(find.text('Applications'), findsOneWidget);
       expect(find.text('Payments'), findsOneWidget);
       expect(find.text('MY HIRING'), findsOneWidget);
@@ -66,6 +67,7 @@ void main() {
       expect(find.text('Settings'), findsOneWidget);
       // Hiring-side destinations stay hidden for professional-only.
       expect(find.text('Post a Job'), findsNothing);
+      expect(find.text('Find Services'), findsNothing);
       expect(find.text('Applications'), findsNothing);
       expect(find.text('Payments'), findsNothing);
     });

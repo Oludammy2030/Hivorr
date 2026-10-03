@@ -253,38 +253,74 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
             ],
           ),
           const SizedBox(height: HivorrSpacing.sm),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              'Verified professionals only',
-              style: context.textTheme.bodyMedium,
+          // Plain rows (not ListTile): the sheet body is a DecoratedBox
+          // without a Material ancestor, which ListTile asserts against in
+          // debug builds. Switch/ink both resolve to theme tokens.
+          InkWell(
+            onTap: () => setState(() => _verifiedOnly = !_verifiedOnly),
+            borderRadius: BorderRadius.circular(
+              context.appExtension.radiusSm,
             ),
-            value: _verifiedOnly,
-            onChanged: (bool value) => setState(() => _verifiedOnly = value),
-          ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              'Available on',
-              style: context.textTheme.bodyMedium,
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'Verified professionals only',
+                    style: context.textTheme.bodyMedium,
+                  ),
+                ),
+                Switch(
+                  value: _verifiedOnly,
+                  onChanged: (bool value) =>
+                      setState(() => _verifiedOnly = value),
+                ),
+              ],
             ),
-            subtitle: Text(
-              _availabilityDate == null
-                  ? 'Any date'
-                  : HivorrFormatters.date(_availabilityDate!),
-              style: context.textTheme.bodySmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
+          ),          InkWell(
+            onTap: () => _pickDate(context),
+            borderRadius: BorderRadius.circular(
+              context.appExtension.radiusSm,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: HivorrSpacing.xs,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Available on',
+                          style: context.textTheme.bodyMedium,
+                        ),
+                        Text(
+                          _availabilityDate == null
+                              ? 'Any date'
+                              : HivorrFormatters.date(_availabilityDate!),
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_availabilityDate == null)
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      color: context.colorScheme.onSurfaceVariant,
+                    )
+                  else
+                    IconButton(
+                      tooltip: 'Clear date',
+                      onPressed: () =>
+                          setState(() => _availabilityDate = null),
+                      icon: const Icon(Icons.close),
+                    ),
+                ],
               ),
             ),
-            trailing: _availabilityDate == null
-                ? const Icon(Icons.calendar_today_outlined)
-                : IconButton(
-                    tooltip: 'Clear date',
-                    onPressed: () =>
-                        setState(() => _availabilityDate = null),
-                    icon: const Icon(Icons.close),
-                  ),
-            onTap: () => _pickDate(context),
           ),
           const SizedBox(height: HivorrSpacing.md),
           Row(
