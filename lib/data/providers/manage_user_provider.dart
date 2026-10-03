@@ -164,6 +164,42 @@ class ManageUserProvider extends ChangeNotifier {
     }
   }
 
+  final Map<String, ManageUserDetail> _detailCache = {};
+  final Set<String> _detailFailed = <String>{};
+
+  /// Point-in-time detail for review comparison, cached per entity.
+  ///
+  /// Never touches [_selectedUser], so the verification workspace can
+  /// resolve registered data without disturbing the user-detail flow.
+  /// Returns null when unavailable (callers render an honest fallback).
+  ManageUserDetail? cachedDetail(String userId) => _detailCache[userId];
+
+  /// Whether the last fetch for [userId] failed this session.
+  bool detailFailed(String userId) => _detailFailed.contains(userId);
+
+  /// Fetches and caches the full posture for [userId] unless cached or
+  /// already failed (see [retryUserDetail]). Returns null on failure.
+  Future<ManageUserDetail?> fetchUserDetail(String userId) async {
+    final ManageUserDetail? cached = _detailCache[userId];
+    if (cached != null) return cached;
+    if (_detailFailed.contains(userId)) return null;
+    try {
+      final ManageUserDetail detail = await _repo.getUser(userId);
+      _detailCache[userId] = detail;
+      notifyListeners();
+      return detail;
+    } on ApiException catch (_) {
+      _detailFailed.add(userId);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Clears a remembered failure so the next [fetchUserDetail] retries.
+  void retryUserDetail(String userId) {
+    if (_detailFailed.remove(userId)) notifyListeners();
+  }
+
   /// Sets an entity lifecycle status and mirrors the change into the cached
   /// directory row + selected user.
   Future<void> setUserStatus(String userId, String status) async {

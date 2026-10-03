@@ -127,6 +127,53 @@ void main() {
       },
     );
 
+    test(
+      'loadQueue preserves registered-identity comparison fields',
+      () async {
+        final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(
+              submissionId: 'sub-1',
+              entityName: 'One',
+              entityLegalName: 'One Legal',
+              professionName: 'Plumbing',
+            ),
+          ],
+        );
+        final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
+
+        await provider.loadQueue();
+
+        final AdminReviewQueueEntry entry = provider.queue.single;
+        expect(entry.entityLegalName, 'One Legal');
+        expect(entry.professionName, 'Plumbing');
+      },
+    );
+
+    test(
+      'startReview writes server-vocabulary in_review and keeps fields',
+      () async {
+        final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(
+              submissionId: 'sub-1',
+              entityName: 'One',
+              entityLegalName: 'One Legal',
+            ),
+          ],
+        );
+        final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
+        await provider.loadQueue();
+
+        await provider.startReview('sub-1');
+
+        final AdminReviewQueueEntry entry = provider.queue.single;
+        expect(entry.status, 'in_review');
+        expect(entry.entityLegalName, 'One Legal');
+        expect(provider.activeSubmissionId, 'sub-1');
+      },
+    );
+
     test('loadAuditTrail exposes the audit entries', () async {
       final FakeAdminReviewRepository repo = FakeAdminReviewRepository()
         ..setAuditTrail(<AdminReviewAuditEntry>[

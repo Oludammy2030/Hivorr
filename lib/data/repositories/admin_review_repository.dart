@@ -34,6 +34,12 @@ abstract class AdminReviewRepository {
 }
 
 /// A single entry in the admin review queue.
+///
+/// The registered-vs-submitted comparison (Phase 3 of the Verification &
+/// Approval plan) needs the registered identity alongside the submission:
+/// [entityLegalName], [professionId]/[professionName], [documentPath],
+/// [assignedReviewer], and [decisionNotes] are carried verbatim from the
+/// DTO — never derived client-side.
 class AdminReviewQueueEntry {
   const AdminReviewQueueEntry({
     required this.submissionId,
@@ -46,6 +52,12 @@ class AdminReviewQueueEntry {
     required this.status,
     required this.submittedAt,
     this.entityAvatarPath,
+    this.entityLegalName,
+    this.documentPath,
+    this.professionId,
+    this.professionName,
+    this.assignedReviewer,
+    this.decisionNotes,
   });
 
   final String submissionId;
@@ -58,6 +70,17 @@ class AdminReviewQueueEntry {
   final String status;
   final DateTime submittedAt;
   final String? entityAvatarPath;
+
+  /// Registered legal name for comparison (may legitimately differ from
+  /// [entityName]; a mismatch is a prompt to look, never evidence of fraud).
+  final String? entityLegalName;
+
+  /// Server document path for the credential (signed URLs stay short-lived).
+  final String? documentPath;
+  final String? professionId;
+  final String? professionName;
+  final String? assignedReviewer;
+  final String? decisionNotes;
 }
 
 /// A single entry in the verification audit trail.
