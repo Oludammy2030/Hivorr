@@ -219,9 +219,15 @@ select is(
 -- EP-02-11 (migration 20260916090001) added verification_review_queue_get,
 -- verification_review_start, verification_review_audit_get and the D5 guard
 -- trigger function verification_submissions_guard_review_state.
+-- Verification dashboard phases added verification_review_metrics_get
+-- (migration 20261003090001) and verification_review_profile_get
+-- (migration 20261005090002): both SECURITY INVOKER with an
+-- is_platform_admin() body gate and EXECUTE to authenticated + service_role
+-- only (no anon). The count below is the tripwire — bump it only with an
+-- explicit posture review per the Database Migration Rules (§17, §23).
 select is(
   (select count(*)::int from pg_proc where proname like 'verification_%'),
-  10, 'exactly 10 verification_* functions exist');
+  12, 'exactly 12 verification_* functions exist');
 select is(
   (select count(*)::int from pg_proc where proname like 'verification_%' and prosecdef),
   0, 'no verification_* function is SECURITY DEFINER');
