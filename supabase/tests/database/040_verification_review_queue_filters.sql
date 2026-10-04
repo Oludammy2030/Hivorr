@@ -14,7 +14,9 @@ set role postgres;
 
 insert into auth.users (id, email)
 values ('11111111-1111-1111-1111-111111111111', 'nonadmin-filter@test.local'),
-       ('44444444-4444-4444-4444-444444444444', 'admin-filter@test.local')
+       ('44444444-4444-4444-4444-444444444444', 'admin-filter@test.local'),
+       ('55555555-5555-5555-5555-555555555555', 'entity-filter-b@test.local'),
+       ('66666666-6666-6666-6666-666666666666', 'entity-filter-c@test.local')
 on conflict (id) do nothing;
 
 insert into public.entities (id, status)
