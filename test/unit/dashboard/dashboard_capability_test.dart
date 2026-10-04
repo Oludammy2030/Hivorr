@@ -5,7 +5,7 @@ import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 
 void main() {
   group('DashboardCapability', () {
-    test('maps from the entity capability one-to-one', () {
+    test('maps from the entity focus one-to-one', () {
       expect(
         DashboardCapability.fromEntity(EntityCapability.hire),
         DashboardCapability.hire,
@@ -14,25 +14,18 @@ void main() {
         DashboardCapability.fromEntity(EntityCapability.offer),
         DashboardCapability.offer,
       );
-      expect(
-        DashboardCapability.fromEntity(EntityCapability.both),
-        DashboardCapability.both,
-      );
     });
 
-    test('hire sees hiring, offer sees work, both sees everything', () {
+    test('hire sees hiring only, offer sees work only', () {
       expect(DashboardCapability.hire.showsHiring, isTrue);
       expect(DashboardCapability.hire.showsWork, isFalse);
       expect(DashboardCapability.offer.showsHiring, isFalse);
       expect(DashboardCapability.offer.showsWork, isTrue);
-      expect(DashboardCapability.both.showsHiring, isTrue);
-      expect(DashboardCapability.both.showsWork, isTrue);
     });
 
     test('labels use Hivorr terminology', () {
       expect(DashboardCapability.hire.label, 'Client');
       expect(DashboardCapability.offer.label, 'Professional');
-      expect(DashboardCapability.both.label, 'Both');
     });
   });
 
@@ -85,7 +78,7 @@ void main() {
       expect(labels, isNot(contains('Payments')));
     });
 
-    test('both sees the single combined navigation', () {
+    test('unhydrated fail-open sees the full navigation', () {
       final List<String> labels = visible(hire: true, offer: true);
       expect(labels.length, dashboardNavItems.length);
     });

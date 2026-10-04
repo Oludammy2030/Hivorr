@@ -10,7 +10,7 @@ import 'package:hivorr/shared/widgets/hivorr_card.dart';
 /// Flat surface card (static containment → border, no shadow) with an icon
 /// tile, a card-heading title and supporting body. Tint via [iconBackground]
 /// / [iconColor] — e.g. the role containers from `context.roleTheme` — so
-/// capability grids can carry Client/Professional/Both accents without new
+/// activity grids can carry Client/Professional accents without new
 /// hues. Tappable when [onTap] is provided.
 class HivorrFeatureCard extends StatelessWidget {
   const HivorrFeatureCard({

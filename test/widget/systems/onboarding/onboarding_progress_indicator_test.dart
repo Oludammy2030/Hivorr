@@ -9,7 +9,7 @@ import 'package:hivorr/systems/onboarding/widgets/onboarding_progress_indicator.
 void main() {
   OnboardingProgress progressFor(
     OnboardingStepCode step, {
-    EntityCapability capability = EntityCapability.both,
+    EntityCapability capability = EntityCapability.offer,
     List<OnboardingStepCode> completed = const <OnboardingStepCode>[],
   }) => OnboardingProgress(
     entityId: 'u1',

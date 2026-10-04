@@ -51,9 +51,9 @@ void main() {
   }
 
   Future<void> runCapabilityStep(OnboardingTestStack stack) async {
-    // The capability decision (both → professional wizard) advances past
+    // The focus decision (offer → professional wizard) advances past
     // the capability step into industry in the same RPC.
-    await stack.provider.selectCapability(EntityCapability.both);
+    await stack.provider.selectCapability(EntityCapability.offer);
   }
 
   Future<void> runTaxonomyStep(OnboardingTestStack stack) async {
@@ -152,8 +152,8 @@ void main() {
       await stack.hydrate('u1');
       expect(stack.provider.currentStep, OnboardingStepCode.capability);
 
-      // A fresh entity advances one step at a time — never skipping.
-      await stack.provider.advance();
+      // The offer focus advances one step at a time — never skipping.
+      await runCapabilityStep(stack);
       expect(stack.provider.currentStep, OnboardingStepCode.industry);
       expect(stack.provider.progress!.completedSteps, <OnboardingStepCode>[
         OnboardingStepCode.capability,
@@ -240,6 +240,7 @@ void main() {
           completedSteps: const <OnboardingStepCode>[
             OnboardingStepCode.capability,
           ],
+          capability: EntityCapability.offer,
         ),
       );
 

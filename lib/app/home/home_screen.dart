@@ -24,7 +24,7 @@ import 'package:provider/provider.dart';
 ///
 /// Super Admins no longer see a legacy gateway here. The forward waits for
 /// `AdminReviewProvider.isAdmin` hydration so an admin never flashes the
-/// Both dashboard on entry.
+/// dashboard on entry.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       } else if (admin.isAdmin == null) {
         // Admin hydration pending: hold here so a super-admin never flashes
-        // the Both dashboard. RouteGuard defers '/' the same way.
+        // the dashboard. RouteGuard defers '/' the same way.
       } else {
         final String target = admin.isAdmin == true
             ? RoutePaths.adminDashboard

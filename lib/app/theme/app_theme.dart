@@ -201,13 +201,19 @@ class RoleThemeExtension extends ThemeExtension<RoleThemeExtension> {
   final Color clientContainer;
   final Color professionalPrimary;
   final Color professionalContainer;
+  /// Deprecated for account identity (Both permanently removed).
+  /// Retained only as secondary/combined-surface accent; do not use for new UI.
   final Color bothPrimary;
+  /// Deprecated for account identity (Both permanently removed).
+  /// Retained only as secondary/combined-surface accent; do not use for new UI.
   final Color bothContainer;
   final Color adminPrimary;
   final Color adminAccent;
 
   /// Constrained brand gradient (#1A2AD4 → #2D3FE7 → #4F5FEF).
-  /// Use only for hero accents / Both-admin identity / primary CTA fills.
+  /// Use only for hero accents / admin identity moments / primary CTA fills.
+  /// (`bothPrimary`/`bothContainer` are deprecated for account identity —
+  /// secondary brand surfaces only, never an account identity.)
   List<Color> get brandGradient => AppColors.brandGradient;
 
   static const RoleThemeExtension light = RoleThemeExtension(

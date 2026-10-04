@@ -28,7 +28,6 @@ import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
-import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
@@ -37,12 +36,13 @@ import 'package:hivorr/systems/jobs/models/job_status.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
 
-/// Role-aware dashboard overview: the operational command center (EP-04-03).
+/// Focus-aware dashboard overview: the operational command center (EP-04-03).
 ///
-/// One screen with capability variants: hire sees hiring summary + actions,
-/// offer sees work summary + actions, both sees the combined command center
-/// with My Work / My Hiring sections. Balanced composition — summary cards,
-/// quick actions, pending items, recent jobs — never a card wall.
+/// One screen with focus variants: hire sees hiring summary + actions, offer
+/// sees work summary + actions. Balanced composition — summary cards, quick
+/// actions, pending items, recent jobs — never a card wall. Pre-hydration
+/// shows the combined view (fail-open); switching sides happens in the
+/// Explore/Earn launcher.
 class DashboardOverviewScreen extends StatefulWidget {
   const DashboardOverviewScreen({super.key});
 
@@ -66,35 +66,35 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
   Future<void> _hydrate() async {
     if (!mounted) return;
     final OnboardingProvider onboarding = context.read<OnboardingProvider>();
-    final EntityCapability entity =
-        onboarding.progress?.capability ?? EntityCapability.both;
-    final DashboardCapability capability = DashboardCapability.fromEntity(
-      entity,
-    );
+    // Fail-open pre-hydration: load both sides until the focus is known.
+    final EntityCapability? focus = onboarding.progress?.capability;
+    final bool hire = focus == null || focus == EntityCapability.hire;
+    final bool offer = focus == null || focus == EntityCapability.offer;
     final JobProvider jobs = context.read<JobProvider>();
     final HireProvider hires = context.read<HireProvider>();
-    if (capability.showsHiring) {
+    if (hire) {
       unawaited(
         jobs.loadMine(role: 'posted').then((_) => jobs.loadRecentReceived()),
       );
       unawaited(hires.loadList(role: 'client'));
     }
-    if (capability.showsWork) {
+    if (offer) {
       unawaited(jobs.loadDiscovery(refresh: true));
       unawaited(jobs.loadMine(role: 'applied'));
       unawaited(hires.loadList(role: 'professional'));
     }
   }
 
-  Future<void> _refresh(DashboardCapability capability) async {
+  Future<void> _refresh(DashboardCapability? capability) async {
     final JobProvider jobs = context.read<JobProvider>();
     final HireProvider hires = context.read<HireProvider>();
-    if (capability.showsHiring) {
+    // Null = pre-hydration fail-open: refresh both sides.
+    if (capability == null || capability.showsHiring) {
       await jobs.loadMine(role: 'posted');
       await jobs.loadRecentReceived();
       await hires.loadList(role: 'client');
     }
-    if (capability.showsWork) {
+    if (capability == null || capability.showsWork) {
       await jobs.loadDiscovery(refresh: true);
       await jobs.loadMine(role: 'applied');
       await hires.loadList(role: 'professional');
@@ -194,32 +194,20 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
   @override
   Widget build(BuildContext context) {
     final OnboardingProvider onboarding = context.watch<OnboardingProvider>();
-    final DashboardCapability capability = DashboardCapability.fromEntity(
-      onboarding.progress?.capability ?? EntityCapability.both,
-    );
-    // Operating mode for `both` users (UI-only). Falls back to combined
-    // navigation when the provider is absent (e.g. legacy widget tests).
-    DashboardViewMode? viewMode;
-    try {
-      viewMode = context.watch<DashboardViewModeProvider>().mode;
-    } catch (_) {
-      viewMode = null;
-    }
-    final bool showHiring;
-    final bool showWork;
-    if (capability != DashboardCapability.both || viewMode == null) {
-      showHiring = capability.showsHiring;
-      showWork = capability.showsWork;
-    } else {
-      showHiring = viewMode == DashboardViewMode.client;
-      showWork = viewMode == DashboardViewMode.professional;
-    }
+    // Fail-open pre-hydration: combined view until the focus is known.
+    final EntityCapability? focus = onboarding.progress?.capability;
+    final DashboardCapability? capability = focus == null
+        ? null
+        : DashboardCapability.fromEntity(focus);
+    final bool showHiring =
+        capability == null || capability.showsHiring;
+    final bool showWork = capability == null || capability.showsWork;
     final JobProvider jobs = context.watch<JobProvider>();
     final HireProvider hires = context.watch<HireProvider>();
     // Client-only presentation follows the reference dashboard.
     // Professional-only presentation follows the Professional Dashboard
-    // reference (green identity). Offer and combined views keep the
-    // established layout below.
+    // reference (green identity). The combined view below is the
+    // pre-hydration fail-open only.
     if (showHiring && !showWork) {
       return _clientScaffold(context, capability, jobs, hires);
     }
@@ -292,7 +280,6 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
                         children: <Widget>[
                           _WelcomeHeader(
                             capability: capability,
-                            viewMode: viewMode,
                           ),
                           const SizedBox(height: HivorrSpacing.md),
                           _MetricsGrid(
@@ -347,81 +334,57 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
 }
 
 class _WelcomeHeader extends StatelessWidget {
-  const _WelcomeHeader({required this.capability, this.viewMode});
+  const _WelcomeHeader({required this.capability});
 
-  final DashboardCapability capability;
-
-  /// Current operating mode for `both` users; null keeps the `Both` pill.
-  final DashboardViewMode? viewMode;
+  /// Null pre-hydration (fail-open loading state); otherwise the focus.
+  final DashboardCapability? capability;
 
   @override
   Widget build(BuildContext context) {
-    final bool isBothWithMode =
-        capability == DashboardCapability.both && viewMode != null;
     final String subtitle = switch (capability) {
       DashboardCapability.hire =>
         'Post jobs, review applications, and hire verified professionals.',
       DashboardCapability.offer =>
         'Find jobs, manage applications, and track your work.',
-      DashboardCapability.both when isBothWithMode =>
-        viewMode == DashboardViewMode.professional
-            ? 'Find jobs, manage applications, and track your work.'
-            : 'Post jobs, review applications, and hire verified professionals.',
-      DashboardCapability.both =>
-        'Manage your hiring and your professional work in one place.',
+      null => 'Loading your workspace…',
     };
     final RoleThemeExtension roles = context.roleTheme;
-    final (Color pillBg, Color pillFg, String pillLabel) =
+    final (Color pillBg, Color pillFg, String pillLabel)? pill =
         switch (capability) {
       DashboardCapability.hire => (
         roles.clientContainer,
         roles.clientPrimary,
-        '${capability.label} mode',
+        'Client mode',
       ),
       DashboardCapability.offer => (
         roles.professionalContainer,
         roles.professionalPrimary,
-        '${capability.label} mode',
+        'Professional mode',
       ),
-      DashboardCapability.both when isBothWithMode =>
-        viewMode == DashboardViewMode.professional
-            ? (
-                roles.professionalContainer,
-                roles.professionalPrimary,
-                'Professional mode',
-              )
-            : (
-                roles.clientContainer,
-                roles.clientPrimary,
-                'Client mode',
-              ),
-      DashboardCapability.both => (
-        roles.bothContainer,
-        roles.bothPrimary,
-        '${capability.label} mode',
-      ),
+      null => null,
     };
     final bool compact = context.breakpoint == Breakpoint.mobile;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: HivorrSpacing.sm,
-            vertical: HivorrSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: pillBg,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            pillLabel,
-            style: context.textTheme.labelSmall?.copyWith(
-              color: pillFg,
-              fontWeight: FontWeight.w700,
+        if (pill != null)
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: HivorrSpacing.sm,
+              vertical: HivorrSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: pill.$1,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              pill.$3,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: pill.$2,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
         SizedBox(
           height: compact ? HivorrSpacing.xs : HivorrSpacing.sm,
         ),
@@ -3806,13 +3769,13 @@ class _ProfessionalStatsGrid extends StatelessWidget {
           ),
           _ProRailStat(
             icon: Icons.workspace_premium_outlined,
-            tileBg: roles.bothContainer,
-            iconFg: roles.bothPrimary,
+            tileBg: roles.professionalContainer,
+            iconFg: roles.professionalPrimary,
             label: 'Success Rate',
             // TODO(pro-dashboard-backend): success-rate seam (reviews).
             value: '98%',
             sub: 'all time',
-            subColor: roles.bothPrimary,
+            subColor: roles.professionalPrimary,
             onTap: () => context.go(RoutePaths.dashboardAccount),
           ),
         ];

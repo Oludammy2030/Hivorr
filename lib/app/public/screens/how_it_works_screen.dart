@@ -76,9 +76,8 @@ const List<_Step> _steps = <_Step>[
     number: 2,
     title: 'Complete your Basic Information',
     body:
-        'Add your names, bio and avatar. Then tell us your capability — hire, '
-        'offer professional services, or both. You can adopt the other side '
-        'any time later.',
+        'Add your names, bio and avatar. Then pick your focus — hire, or '
+        'offer professional services. You can switch sides any time later.',
   ),
   _Step(
     number: 3,

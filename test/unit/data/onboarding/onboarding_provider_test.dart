@@ -53,7 +53,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      await stack.provider.advance();
+      await stack.provider.selectCapability(EntityCapability.offer);
       expect(stack.provider.currentStep, OnboardingStepCode.industry);
       final OnboardingStepCode resumed = await stack.service.resume('u1');
       expect(resumed, OnboardingStepCode.industry);
@@ -64,6 +64,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
+      await stack.provider.selectCapability(EntityCapability.offer);
       await stack.provider.advance(); // -> industry (incl. profession)
       await stack.provider.advance(); // -> identityDocument
       await stack.provider.advance(); // -> tradeProof
@@ -78,7 +79,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      await stack.provider.advance();
+      await stack.provider.selectCapability(EntityCapability.offer);
       expect(stack.provider.currentStep, OnboardingStepCode.industry);
       await stack.provider.back();
       expect(stack.provider.currentStep, OnboardingStepCode.capability);
@@ -90,7 +91,7 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.advance();
+        await stack.provider.selectCapability(EntityCapability.offer);
         await stack.provider.saveAndExit();
         expect(stack.provider.currentStep, OnboardingStepCode.industry);
         expect(
@@ -141,7 +142,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      await stack.provider.advance();
+      await stack.provider.selectCapability(EntityCapability.offer);
       await stack.provider.exitWizard();
       expect(stack.provider.exited, isTrue);
       expect(stack.provider.currentStep, OnboardingStepCode.industry);
@@ -154,7 +155,7 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.advance();
+        await stack.provider.selectCapability(EntityCapability.offer);
         await stack.provider.exitWizard();
         await stack.provider.continueRegistration();
         expect(stack.provider.exited, isFalse);
@@ -396,7 +397,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      await stack.provider.advance();
+      await stack.provider.selectCapability(EntityCapability.offer);
       stack.provider.didChangeAppLifecycleState(AppLifecycleState.paused);
       await pumpEventQueue();
       expect(
@@ -409,7 +410,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      await stack.provider.advance();
+      await stack.provider.selectCapability(EntityCapability.offer);
       stack.provider.didChangeAppLifecycleState(AppLifecycleState.inactive);
       await pumpEventQueue();
       expect(
@@ -426,7 +427,7 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         stack.onboardingRemote.status = OnboardingStatusDto(
-          capability: 'both',
+          capability: 'offer',
           completed: true,
           onboardingCompletedAt: DateTime.utc(2026, 9, 17),
           profileExists: true,
@@ -457,7 +458,8 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.advance(); // → industry
+        // selectCapability advances past the decision to industry.
+        await stack.provider.selectCapability(EntityCapability.offer);
         await stack.hydrate('u1'); // re-resume: server still says not completed
         expect(stack.service.serverHydrated, isTrue);
         expect(stack.provider.isCompleteAuthoritative, isFalse);
@@ -475,7 +477,8 @@ void main() {
         final OnboardingTestStack stack = buildOnboardingStack();
         activeProvider = stack.provider;
         await stack.hydrate('u1');
-        await stack.provider.advance(); // → industry
+        // selectCapability advances past the decision to industry.
+        await stack.provider.selectCapability(EntityCapability.offer);
         stack.onboardingRemote.nextGetError = const ApiException(
           kind: ApiExceptionKind.network,
           message: 'No connection',
@@ -534,10 +537,15 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      for (int i = 0; i < 4; i++) {
+      await stack.provider.selectCapability(EntityCapability.offer);
+      for (int i = 0; i < 3; i++) {
         await stack.provider.advance();
       }
-      expect(stack.onboardingRemote.updateStatusCallCount, 1);
+      expect(
+        stack.onboardingRemote.updateStatusCallCount,
+        2,
+        reason: 'focus persist + final completion stamp',
+      );
       expect(stack.onboardingRemote.lastCompleted, isTrue);
       expect(stack.provider.isCompleteAuthoritative, isTrue);
       expect(stack.provider.isComplete, isTrue);
@@ -547,7 +555,8 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack();
       activeProvider = stack.provider;
       await stack.hydrate('u1');
-      for (int i = 0; i < 3; i++) {
+      await stack.provider.selectCapability(EntityCapability.offer);
+      for (int i = 0; i < 2; i++) {
         await stack.provider.advance();
       }
       expect(stack.provider.currentStep, OnboardingStepCode.tradeProof);

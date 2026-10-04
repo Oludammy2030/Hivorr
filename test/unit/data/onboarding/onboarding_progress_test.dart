@@ -17,7 +17,7 @@ void main() {
       expect(progress.entityId, 'u1');
       expect(progress.step, OnboardingStepCode.capability);
       expect(progress.completedSteps, isEmpty);
-      expect(progress.capability, EntityCapability.both);
+      expect(progress.capability, EntityCapability.hire);
       expect(progress.isComplete, isFalse);
       expect(progress.hasIdentitySubmission, isFalse);
       expect(progress.hasTradeProofSubmission, isFalse);
@@ -41,8 +41,11 @@ void main() {
       ], reason: 'completedSteps advances monotonically in frozen order');
     });
 
-    test('nextStep follows the frozen professional order for offer/both', () {
-      final OnboardingProgress progress = OnboardingProgress(entityId: 'u1');
+    test('nextStep follows the frozen professional order for offer', () {
+      final OnboardingProgress progress = OnboardingProgress(
+        entityId: 'u1',
+        capability: EntityCapability.offer,
+      );
       expect(progress.nextStep, OnboardingStepCode.industry);
       expect(
         progress.advanceTo(OnboardingStepCode.capability).nextStep,
@@ -83,6 +86,7 @@ void main() {
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
         ],
+        capability: EntityCapability.offer,
       );
       expect(partial.isComplete, isFalse);
     });
@@ -96,6 +100,7 @@ void main() {
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
         ],
+        capability: EntityCapability.offer,
       ).finish();
       expect(done.isComplete, isTrue);
       expect(done.completedSteps, OnboardingStepCode.values);
@@ -249,7 +254,7 @@ void main() {
     );
 
     test(
-      'legacy rows without capability default to both (safe superset)',
+      'legacy rows without capability default to hire (Explore side)',
       () async {
         final LocalStore local = LocalStore(FakeStorageEngine());
         await local.write(
@@ -270,7 +275,7 @@ void main() {
         );
         final OnboardingProgress? restored = await hive.read('u1');
         expect(restored, isNotNull);
-        expect(restored!.capability, EntityCapability.both);
+        expect(restored!.capability, EntityCapability.hire);
         expect(
           restored.exited,
           isFalse,

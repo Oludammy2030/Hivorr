@@ -2,7 +2,8 @@
 --
 -- Validates the 16 jobs RPCs:
 --   - Authorization: anon cannot call any (42501); capability gates return
---     PLT002 (hire|both to post, offer|both to apply); owner checks return
+--     PLT002 (hire to post, offer to apply — switch focus via the launcher);
+--     owner checks return
 --     PLT002; identical PLT004 for foreign/unavailable ids (no oracle).
 --   - Validation: PLT003 paths for title/description/budget/currency/taxonomy/
 --     cover note/quote/duration/limit/role/status filters.
@@ -48,7 +49,7 @@ update public.entities set capability = 'hire'
  where id = current_setting('test.a')::uuid;
 update public.entities set capability = 'offer'
  where id = current_setting('test.b')::uuid;
-update public.entities set capability = 'both'
+update public.entities set capability = 'offer'
  where id in (current_setting('test.c')::uuid, current_setting('test.e')::uuid);
 select set_config('platform.rpc_invocation', '', true);
 
@@ -186,10 +187,10 @@ select throws_ok($$ select public.application_submit(
   'Trying to apply a second time to the same job here.') $$,
   'P0001', null, 'duplicate application rejected (PLT005)');
 
--- A (now both-capable owner) cannot self-apply.
+-- A (owner, focus switched to offer) cannot self-apply.
 set role postgres;
 select set_config('platform.rpc_invocation', 'on', true);
-update public.entities set capability = 'both'
+update public.entities set capability = 'offer'
  where id = current_setting('test.a')::uuid;
 select set_config('platform.rpc_invocation', '', true);
 set role authenticated;

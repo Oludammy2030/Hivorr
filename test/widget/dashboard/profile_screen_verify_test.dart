@@ -190,12 +190,12 @@ void main() {
     await pumpProfile(
       tester,
       email: '',
-      capability: EntityCapability.both,
+      capability: EntityCapability.hire,
     );
     expect(tester.takeException(), isNull);
     expect(find.text('Email not available'), findsOneWidget);
     expect(find.text('Not available'), findsOneWidget);
-    expect(find.text('Both'), findsWidgets);
+    expect(find.text('Client'), findsWidgets);
   });
 
   testWidgets('no overflow across widths', (tester) async {

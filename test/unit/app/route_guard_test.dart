@@ -11,6 +11,7 @@ import 'package:hivorr/core/authentication/models/auth_session.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/data/models/onboarding_status_dto.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 
 import '../../support/onboarding/onboarding_test_support.dart';
 import '../../test_helpers.dart';
@@ -474,7 +475,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        await stack.provider.advance();
+        await stack.provider.selectCapability(EntityCapability.offer);
         await stack.provider.exitWizard();
         expect(stack.provider.exited, isTrue);
         final RouteGuard guard = RouteGuard(
@@ -501,7 +502,7 @@ void main() {
     test('home is force-resumed once the exit flag is cleared', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
-      await stack.provider.advance();
+      await stack.provider.selectCapability(EntityCapability.offer);
       await stack.provider.continueRegistration();
       expect(stack.provider.exited, isFalse);
       final RouteGuard guard = RouteGuard(
@@ -521,7 +522,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        await stack.provider.advance();
+        await stack.provider.selectCapability(EntityCapability.offer);
         await stack.provider.saveAndExit();
         expect(stack.provider.exited, isFalse);
         final RouteGuard guard = RouteGuard(
@@ -543,7 +544,8 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        for (int i = 0; i < 4; i++) {
+        await stack.provider.selectCapability(EntityCapability.offer);
+        for (int i = 0; i < 3; i++) {
           await stack.provider.advance();
         }
         expect(stack.provider.isComplete, isTrue);
@@ -576,7 +578,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         stack.onboardingRemote.status = OnboardingStatusDto(
-          capability: 'both',
+          capability: 'offer',
           completed: true,
           onboardingCompletedAt: DateTime.utc(2026, 9, 17),
           profileExists: true,
@@ -609,7 +611,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        await stack.provider.advance();
+        await stack.provider.selectCapability(EntityCapability.offer);
         await stack.provider.advance();
         await stack.provider.advance();
         await stack.provider.advance();
@@ -647,7 +649,8 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.hydrate('u1');
-        for (int i = 0; i < 4; i++) {
+        await stack.provider.selectCapability(EntityCapability.offer);
+        for (int i = 0; i < 3; i++) {
           await stack.provider.advance();
         }
         expect(stack.provider.isComplete, isTrue);
