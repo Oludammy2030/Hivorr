@@ -21,7 +21,7 @@
 ## 2. Engineering Objectives
 
 1. **Establish the Database-First Zero-Trust Architecture** — Configure Supabase as the backend platform with PostgreSQL RPC (stored procedures) for all sensitive logic and Row-Level Security (RLS) for all data access, enforcing the principle that the client is an unprivileged presentation layer.
-2. **Build the Universal Entity Data Model** — Design and implement the foundational database schema that supports multi-role, multi-industry, fluid-shift entity operation from day one.
+2. **Build the Universal Entity Data Model with unified account** — Design and implement the foundational database schema that supports one unified account with multiple activities (buy, sell, hire, offer services, logistics), multi-role operation, and dual taxonomies (Profession + Product) from day one. There is no Both account value; Admin is a separate privileged environment.
 3. **Create the Development Infrastructure** — Set up project scaffolding, multi-environment configuration (Dev/Staging/Prod), CI/CD pipelines, and automated testing frameworks.
 4. **Implement the Client-Side Platform Foundation** — Build the core API layer, data access layer, authentication framework, security infrastructure, offline sync engine, and all low-level platform services.
 5. **Establish the Application Shell** — Configure app bootstrap, lifecycle management, GoRouter-based routing with SEO-friendly deep links, design system foundation, and localization engine.
@@ -81,8 +81,8 @@
 | Monitoring & logging | `lib/core/logging/`, `lib/core/monitoring/` | Sentry, telemetry, performance metrics |
 | Notification engine | `lib/core/notifications/` | Local and push notification infrastructure |
 | Localization engine | `lib/core/localization/` | Multi-language support framework |
-| App bootstrap & routing | `lib/app/` | MaterialApp, GoRouter, splash, lifecycle |
-| Design system | `lib/shared/` | Atomic widgets, components, layouts, validators |
+| App bootstrap & routing | `lib/app/` | MaterialApp, GoRouter with Explore (`/explore/*`), Earn (`/earn/*`), Admin (`/admin/*`) shells, splash, lifecycle |
+| Design system | `lib/shared/` + `lib/workspace/product_registry/` | Atomic widgets, components, layouts, validators; Local Market taxonomy lookup parallel to profession registry |
 | Utility layer | `lib/core/utilities/` | Platform-agnostic helpers |
 | Native platform config | `android/`, `ios/`, `web/` | Permissions, build settings, PWA config |
 
@@ -271,7 +271,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 
 | Attribute | Detail |
 |---|---|
-| **Objective** | Design and implement the foundational database schema for the Universal Entity model — core tables for entities, profiles, roles, credentials, two-tier taxonomy (industries, professions), settings, and devices. |
+| **Objective** | Design and implement the foundational database schema for the Universal Entity model with one unified account — core tables for entities, profiles, roles, credentials, dual taxonomy (Profession registry: industries, professions; Local Market product taxonomy placeholder, admin-configurable), settings, and devices. No Both account value; Admin is a separate privileged environment. |
 | **Engineering Purpose** | **Most critical data architecture decision.** Must support multi-role fluid-shift operation and scale across all future phases without redesign. |
 | **Dependencies** | EP-01-05 |
 | **Expected Outcome** | Tables: `entities`, `entity_profiles`, `entity_roles`, `entity_credentials`, `industries`, `professions`, `entity_professions`, `entity_settings`, `entity_devices`. Audit columns on all tables. All RLS-protected. Validated against EP-02 requirements. |
@@ -329,7 +329,7 @@ A fully operational development environment with a secure, scalable, zero-trust 
 | **Objective** | Implement local storage drivers in `lib/core/database/` and transient memory cache in `lib/core/cache/` with LRU eviction, TTL expiration, and typed accessors. |
 | **Engineering Purpose** | Foundation for offline capability, cache-first reads, and the offline sync engine (EP-01-12). |
 | **Dependencies** | EP-01-02 |
-| **Expected Outcome** | Storage driver selected (SQLite/Hive/Isar), configured, and abstracted. Cache manager with LRU, TTL, invalidation API. Both ready for sync engine and data access layer. |
+| **Expected Outcome** | Storage driver selected (SQLite/Hive/Isar), configured, and abstracted. Cache manager with LRU, TTL, invalidation API. All ready for sync engine and data access layer. |
 | **Priority** | High | **Status** | Completed |
 | **Planning Reasoning** | High | **Coding Reasoning** | High |
 
