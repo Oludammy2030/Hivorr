@@ -11,6 +11,9 @@ abstract class AdminReviewRepository {
     String? submissionType,
     int limit = 50,
     int offset = 0,
+    String? search,
+    String? professionId,
+    String? sort,
   });
 
   /// Claims a submission for review (sets status to `in_review`).
@@ -29,8 +32,30 @@ abstract class AdminReviewRepository {
   /// Returns the audit trail for a submission.
   Future<List<AdminReviewAuditEntry>> getAuditTrail(String submissionId);
 
+  /// Returns the applicant profile depth (experience, education, skills)
+  /// for one submission, resolved server-side via its entity.
+  ///
+  /// Backed by `verification_review_profile_get`. Empty lists mean the
+  /// applicant recorded nothing — never an error.
+  Future<AdminReviewProfile> getReviewProfile(String submissionId);
+
   /// Creates a short-lived signed URL for viewing a credential document.
   Future<String> createDocumentSignedUrl(String credentialId, {int expiresIn});
+
+  /// Returns verification throughput metrics for the dashboard metrics row.
+  ///
+  /// Backed by `verification_review_metrics_get`. [periodDays] is the
+  /// trailing window (1–365); [submissionType] optionally scopes every
+  /// aggregate to one submission type.
+  Future<AdminReviewMetrics> getReviewMetrics({
+    int periodDays = 30,
+    String? submissionType,
+  });
+
+  /// The server `total_count` from the most recent queue fetch, or `null`
+  /// before the first successful load. Lets the metrics row show the real
+  /// pending total instead of the loaded-page length.
+  int? get lastTotalCount;
 }
 
 /// A single entry in the admin review queue.
@@ -106,4 +131,99 @@ class AdminReviewAuditEntry {
   final String? actorId;
   final Map<String, dynamic>? detailsJson;
   final DateTime createdAt;
+}
+
+/// Verification throughput metrics for the dashboard metrics row.
+///
+/// Mirrors `AdminReviewMetricsDto` verbatim. `avgVerificationSeconds` and
+/// `rejectionRate` are `null` when the trailing window holds no decided
+/// rows — the UI renders "Unavailable", never zero.
+class AdminReviewMetrics {
+  const AdminReviewMetrics({
+    required this.pendingTotal,
+    required this.inReviewTotal,
+    this.avgVerificationSeconds,
+    required this.approvedToday,
+    required this.decidedTotal,
+    required this.rejectedTotal,
+    this.rejectionRate,
+    required this.periodDays,
+  });
+
+  final int pendingTotal;
+  final int inReviewTotal;
+  final double? avgVerificationSeconds;
+  final int approvedToday;
+  final int decidedTotal;
+  final int rejectedTotal;
+  final double? rejectionRate;
+  final int periodDays;
+}
+
+/// Applicant profile depth for one verification submission.
+class AdminReviewProfile {
+  const AdminReviewProfile({
+    this.experiences = const <ReviewExperience>[],
+    this.educations = const <ReviewEducation>[],
+    this.skills = const <ReviewSkill>[],
+  });
+
+  final List<ReviewExperience> experiences;
+  final List<ReviewEducation> educations;
+  final List<ReviewSkill> skills;
+}
+
+/// One employment record (dates as year/month + current flag).
+class ReviewExperience {
+  const ReviewExperience({
+    required this.id,
+    required this.title,
+    required this.organization,
+    this.startYear,
+    this.startMonth,
+    this.endYear,
+    this.endMonth,
+    required this.isCurrent,
+    this.description,
+  });
+
+  final String id;
+  final String title;
+  final String organization;
+  final int? startYear;
+  final int? startMonth;
+  final int? endYear;
+  final int? endMonth;
+  final bool isCurrent;
+  final String? description;
+}
+
+/// One education record.
+class ReviewEducation {
+  const ReviewEducation({
+    required this.id,
+    required this.school,
+    this.degree,
+    this.fieldOfStudy,
+    this.graduationYear,
+  });
+
+  final String id;
+  final String school;
+  final String? degree;
+  final String? fieldOfStudy;
+  final int? graduationYear;
+}
+
+/// One skill (years only — no proficiency scale is collected).
+class ReviewSkill {
+  const ReviewSkill({
+    required this.id,
+    required this.name,
+    this.yearsExperience,
+  });
+
+  final String id;
+  final String name;
+  final int? yearsExperience;
 }

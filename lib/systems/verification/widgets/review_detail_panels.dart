@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,6 +15,7 @@ import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
+import 'package:pdfx/pdfx.dart';
 import 'package:provider/provider.dart';
 
 /// Shared building blocks for reviewing one verification submission.
@@ -131,11 +132,41 @@ String reviewFormatDay(DateTime date) {
   return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
 
+/// Fetches raw document bytes for the in-app PDF viewer. Injectable so
+/// widget tests stay hermetic (no network); production uses Dio.
+typedef DocumentBytesFetcher = Future<Uint8List> Function(String url);
+
+/// Production bytes fetch over the short-lived signed URL.
+Future<Uint8List> fetchDocumentBytes(String url) async {
+  final Dio dio = Dio();
+  final Response<List<int>> response = await dio.get<List<int>>(
+    url,
+    options: Options(
+      responseType: ResponseType.bytes,
+      sendTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
+    ),
+  );
+  final List<int>? data = response.data;
+  if (data == null || data.isEmpty) throw Exception('Empty document.');
+  return Uint8List.fromList(data);
+}
+
 /// Credential document viewer with lazy signed-URL loading.
+///
+/// Images render inline; PDFs render in-app via [PdfViewPinch] (pinch zoom,
+/// vertical paging) with a copy-link fallback that always stays available.
 class ReviewDocumentPanel extends StatefulWidget {
-  const ReviewDocumentPanel({super.key, required this.entry});
+  const ReviewDocumentPanel({
+    super.key,
+    required this.entry,
+    this.bytesFetcher = fetchDocumentBytes,
+  });
 
   final AdminReviewQueueEntry entry;
+
+  /// Override in tests to avoid network.
+  final DocumentBytesFetcher bytesFetcher;
 
   @override
   State<ReviewDocumentPanel> createState() => _ReviewDocumentPanelState();
@@ -147,30 +178,72 @@ class _ReviewDocumentPanelState extends State<ReviewDocumentPanel> {
   bool _copied = false;
   String? _signedUrl;
   String? _error;
+  PdfControllerPinch? _pdfController;
+  PdfDocument? _pdfDocument;
+  int? _pageCount;
+  int _currentPage = 1;
 
-  /// PDFs have no in-app viewer (no viewer dependency): they render a file
-  /// row with a copyable signed link instead of a broken image.
+  /// PDFs render in-app ([PdfViewPinch]); the copy-link fallback stays for
+  /// load failures and expired URLs.
   bool get _isPdf =>
       (widget.entry.documentPath?.toLowerCase().endsWith('.pdf')) ?? false;
+
+  @override
+  void dispose() {
+    _pdfController?.dispose();
+    unawaited(_closePdfDocument());
+    super.dispose();
+  }
+
+  Future<void> _closePdfDocument() async {
+    try {
+      await _pdfDocument?.close();
+    } catch (_) {
+      // Best-effort native cleanup.
+    }
+  }
 
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
     });
+    String? url;
     try {
-      final String url = await context
+      url = await context
           .read<AdminReviewProvider>()
           .createDocumentSignedUrl(widget.entry.credentialId);
       if (!mounted) return;
-      setState(() {
-        _signedUrl = url;
-        _loaded = true;
-        _loading = false;
-      });
+      if (_isPdf) {
+        final Uint8List bytes = await widget.bytesFetcher(url);
+        if (!mounted) return;
+        _pdfController?.dispose();
+        await _closePdfDocument();
+        _pdfDocument = null;
+        final PdfControllerPinch controller = PdfControllerPinch(
+          document: PdfDocument.openData(bytes),
+        );
+        setState(() {
+          _signedUrl = url;
+          _pdfController = controller;
+          _pageCount = null;
+          _currentPage = 1;
+          _loaded = true;
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _signedUrl = url;
+          _loaded = true;
+          _loading = false;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
+        // Keep the signed URL when the PDF bytes failed so Copy link
+        // still offers a way out.
+        _signedUrl = url ?? _signedUrl;
         _error = 'Failed to load document: $e';
         _loading = false;
       });
@@ -197,51 +270,7 @@ class _ReviewDocumentPanelState extends State<ReviewDocumentPanel> {
               ),
             )
           else if (_loaded && _signedUrl != null)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Icon(
-                      Icons.picture_as_pdf_outlined,
-                      size: 20,
-                      color: context.colorScheme.error,
-                    ),
-                    const SizedBox(width: HivorrSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'PDF document',
-                        style: context.textTheme.titleSmall,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: HivorrSpacing.xs),
-                Text(
-                  'Preview is unavailable for PDFs in-app. Copy the link '
-                  'to open it in a browser.',
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: HivorrSpacing.sm),
-                HivorrButton(
-                  label: _copied ? 'Link copied' : 'Copy link',
-                  variant: HivorrButtonVariant.outline,
-                  size: HivorrButtonSize.small,
-                  icon: const Icon(Icons.content_copy, size: 16),
-                  onPressed: () {
-                    unawaited(
-                      Clipboard.setData(
-                        ClipboardData(text: _signedUrl!),
-                      ),
-                    );
-                    setState(() => _copied = true);
-                  },
-                ),
-              ],
-            )
+            _pdfBody(context)
           else ...<Widget>[
             HivorrButton(
               label: 'Load document',
@@ -257,9 +286,116 @@ class _ReviewDocumentPanelState extends State<ReviewDocumentPanel> {
                 ),
               ),
             ],
+            if (_signedUrl != null) ...<Widget>[
+              const SizedBox(height: HivorrSpacing.sm),
+              _copyLinkButton(),
+            ],
           ],
         ],
       ),
+    );
+  }
+
+  /// In-app PDF viewer: header with page position, pinch-to-zoom paging
+  /// area, and the copy-link fallback.
+  Widget _pdfBody(BuildContext context) {
+    final PdfControllerPinch? controller = _pdfController;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(
+              Icons.picture_as_pdf_outlined,
+              size: 20,
+              color: context.colorScheme.error,
+            ),
+            const SizedBox(width: HivorrSpacing.sm),
+            Expanded(
+              child: Text(
+                'PDF document',
+                style: context.textTheme.titleSmall,
+              ),
+            ),
+            if (_pageCount != null)
+              Text(
+                'Page $_currentPage of $_pageCount',
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: HivorrSpacing.sm),
+        if (controller != null)
+          SizedBox(
+            height: 420,
+            width: double.infinity,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                context.appExtension.radiusSm,
+              ),
+              child: PdfViewPinch(
+                controller: controller,
+                onPageChanged: (int page) {
+                  if (mounted) setState(() => _currentPage = page);
+                },
+                onDocumentLoaded: (PdfDocument document) {
+                  if (mounted) {
+                    setState(() {
+                      _pdfDocument = document;
+                      _pageCount = document.pagesCount;
+                    });
+                  }
+                },
+                onDocumentError: (Object error) {
+                  if (mounted) {
+                    setState(
+                      () => _error = 'Unable to render this PDF: $error',
+                    );
+                  }
+                },
+              ),
+            ),
+          ),
+        if (_error != null) ...<Widget>[
+          const SizedBox(height: HivorrSpacing.sm),
+          Text(
+            _error!,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.error,
+            ),
+          ),
+        ],
+        const SizedBox(height: HivorrSpacing.xs),
+        Text(
+          'Pinch to zoom · scroll to turn pages.',
+          style: context.textTheme.bodySmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: HivorrSpacing.sm),
+        _copyLinkButton(),
+      ],
+    );
+  }
+
+  Widget _copyLinkButton() {
+    final String? url = _signedUrl;
+    return HivorrButton(
+      label: _copied ? 'Link copied' : 'Copy link',
+      variant: HivorrButtonVariant.outline,
+      size: HivorrButtonSize.small,
+      icon: const Icon(Icons.content_copy, size: 16),
+      onPressed: url == null
+          ? null
+          : () {
+              unawaited(
+                Clipboard.setData(ClipboardData(text: url)),
+              );
+              setState(() => _copied = true);
+            },
     );
   }
 }
@@ -285,6 +421,7 @@ class ReviewActionsPanel extends StatefulWidget {
 class _ReviewActionsPanelState extends State<ReviewActionsPanel> {
   final TextEditingController _notesController = TextEditingController();
   String? _feedback;
+  String? _notesError;
 
   /// Explicit resubmission choice for Reject (server flag, Phase 4).
   /// Off = final rejection; on = the applicant must resubmit.
@@ -304,8 +441,13 @@ class _ReviewActionsPanelState extends State<ReviewActionsPanel> {
       children: <Widget>[
         HivorrTextField(
           controller: _notesController,
-          label: 'Decision notes (optional)',
+          label: 'Decision notes',
+          helperText: 'Required to reject; attached to the audit record.',
+          errorText: _notesError,
           maxLines: 3,
+          onChanged: (_) {
+            if (_notesError != null) setState(() => _notesError = null);
+          },
         ),
         const SizedBox(height: HivorrSpacing.md),
         if (_feedback != null && _feedback!.isNotEmpty) ...<Widget>[
@@ -363,6 +505,13 @@ class _ReviewActionsPanelState extends State<ReviewActionsPanel> {
 
   Future<void> _decide(AdminReviewProvider provider, {required bool approved}) async {
     final String notes = _notesController.text.trim();
+    if (!approved && notes.isEmpty) {
+      setState(() {
+        _notesError = 'A reason is required to reject.';
+        _feedback = null;
+      });
+      return;
+    }
     if (approved) {
       await provider.approveSubmission(widget.entry.submissionId, notes: notes);
     } else {
@@ -784,4 +933,258 @@ class _ReviewComparisonCardState extends State<ReviewComparisonCard> {
     null || '' => '—',
     _ => code,
   };
+}
+
+/// Applicant profile depth for the review: work experience, education, and
+/// skills served by `verification_review_profile_get` (resolved per
+/// submission by the provider). Shared by the pushed detail route and the
+/// wide workspace so both stay identical by construction. Empty sections
+/// render explicit empty states — the applicant recorded nothing, which is
+/// valid and never an error. Skills carry years only: the platform collects
+/// no proficiency scale, so none is shown.
+class ReviewProfileSections extends StatelessWidget {
+  const ReviewProfileSections({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final AdminReviewProvider provider = context.watch<AdminReviewProvider>();
+    if (provider.isLoadingProfile) {
+      return HivorrCard(
+        child: Row(
+          children: <Widget>[
+            const HivorrLoader(size: 20),
+            const SizedBox(width: HivorrSpacing.sm),
+            Expanded(
+              child: Text(
+                'Loading profile…',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    final AdminReviewProfile profile = provider.reviewProfile;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _sectionCard(
+          context,
+          title: 'Work Experience',
+          count: profile.experiences.length,
+          emptyText: 'No work history recorded by the applicant.',
+          children: <Widget>[
+            for (final ReviewExperience experience in profile.experiences)
+              _experienceRow(context, experience),
+          ],
+        ),
+        const SizedBox(height: HivorrSpacing.md),
+        _sectionCard(
+          context,
+          title: 'Education',
+          count: profile.educations.length,
+          emptyText: 'No education recorded by the applicant.',
+          children: <Widget>[
+            for (final ReviewEducation education in profile.educations)
+              _educationRow(context, education),
+          ],
+        ),
+        const SizedBox(height: HivorrSpacing.md),
+        _sectionCard(
+          context,
+          title: 'Skills',
+          count: profile.skills.length,
+          emptyText: 'No skills recorded by the applicant.',
+          children: <Widget>[
+            if (profile.skills.isNotEmpty)
+              Wrap(
+                spacing: HivorrSpacing.sm,
+                runSpacing: HivorrSpacing.sm,
+                children: <Widget>[
+                  for (final ReviewSkill skill in profile.skills)
+                    HivorrBadge(
+                      label: skill.yearsExperience == null
+                          ? skill.name
+                          : '${skill.name} · ${skill.yearsExperience} yrs',
+                      variant: HivorrBadgeVariant.primary,
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _sectionCard(
+    BuildContext context, {
+    required String title,
+    required int count,
+    required String emptyText,
+    required List<Widget> children,
+  }) {
+    return HivorrCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  title,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (count > 0) ...<Widget>[
+                const SizedBox(width: HivorrSpacing.sm),
+                HivorrBadge(
+                  label: '$count',
+                  variant: HivorrBadgeVariant.neutral,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          if (children.isEmpty)
+            Text(
+              emptyText,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _experienceRow(BuildContext context, ReviewExperience experience) {
+    final String range = _reviewRange(experience);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: HivorrSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  experience.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (experience.isCurrent) ...<Widget>[
+                const SizedBox(width: HivorrSpacing.sm),
+                const HivorrBadge(
+                  label: 'Current',
+                  variant: HivorrBadgeVariant.info,
+                ),
+              ],
+            ],
+          ),
+          Text(
+            experience.organization,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (range.isNotEmpty)
+            Text(
+              range,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          if ((experience.description ?? '').trim().isNotEmpty)
+            Text(
+              experience.description!.trim(),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodySmall,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _educationRow(BuildContext context, ReviewEducation education) {
+    final List<String> detail = <String>[
+      if ((education.degree ?? '').trim().isNotEmpty)
+        education.degree!.trim(),
+      if ((education.fieldOfStudy ?? '').trim().isNotEmpty)
+        education.fieldOfStudy!.trim(),
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: HivorrSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            education.school,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (detail.isNotEmpty)
+            Text(
+              detail.join(' · '),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          if (education.graduationYear != null)
+            Text(
+              'Class of ${education.graduationYear}',
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+String _reviewRange(ReviewExperience experience) {
+  final String start = _reviewMonthYear(
+    experience.startYear,
+    experience.startMonth,
+  );
+  final String end = experience.isCurrent
+      ? 'Present'
+      : _reviewMonthYear(experience.endYear, experience.endMonth);
+  if (start.isEmpty) return end;
+  if (end.isEmpty) return start;
+  return '$start – $end';
+}
+
+String _reviewMonthYear(int? year, int? month) {
+  if (year == null) return '';
+  const List<String> months = <String>[
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  if (month == null || month < 1 || month > 12) return '$year';
+  return '${months[month - 1]} $year';
 }

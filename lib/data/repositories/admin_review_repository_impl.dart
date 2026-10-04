@@ -27,11 +27,17 @@ class AdminReviewRepositoryImpl implements AdminReviewRepository {
     String? submissionType,
     int limit = 50,
     int offset = 0,
+    String? search,
+    String? professionId,
+    String? sort,
   }) async {
     final List<AdminReviewQueueEntryDto> dtos = await _remote.getReviewQueue(
       submissionType: submissionType,
       limit: limit,
       offset: offset,
+      search: search,
+      professionId: professionId,
+      sort: sort,
     );
     return dtos.map(_queueEntryToEntity).toList(growable: false);
   }
@@ -64,10 +70,78 @@ class AdminReviewRepositoryImpl implements AdminReviewRepository {
   }
 
   @override
+  Future<AdminReviewMetrics> getReviewMetrics({
+    int periodDays = 30,
+    String? submissionType,
+  }) async {
+    final AdminReviewMetricsDto dto = await _remote.getReviewMetrics(
+      periodDays: periodDays,
+      submissionType: submissionType,
+    );
+    return AdminReviewMetrics(
+      pendingTotal: dto.pendingTotal,
+      inReviewTotal: dto.inReviewTotal,
+      avgVerificationSeconds: dto.avgVerificationSeconds,
+      approvedToday: dto.approvedToday,
+      decidedTotal: dto.decidedTotal,
+      rejectedTotal: dto.rejectedTotal,
+      rejectionRate: dto.rejectionRate,
+      periodDays: dto.periodDays,
+    );
+  }
+
+  @override
+  Future<AdminReviewProfile> getReviewProfile(String submissionId) async {
+    final AdminReviewProfileDto dto = await _remote.getReviewProfile(
+      submissionId,
+    );
+    return AdminReviewProfile(
+      experiences: dto.experiences
+          .map(
+            (ReviewExperienceDto d) => ReviewExperience(
+              id: d.id,
+              title: d.title,
+              organization: d.organization,
+              startYear: d.startYear,
+              startMonth: d.startMonth,
+              endYear: d.endYear,
+              endMonth: d.endMonth,
+              isCurrent: d.isCurrent,
+              description: d.description,
+            ),
+          )
+          .toList(growable: false),
+      educations: dto.educations
+          .map(
+            (ReviewEducationDto d) => ReviewEducation(
+              id: d.id,
+              school: d.school,
+              degree: d.degree,
+              fieldOfStudy: d.fieldOfStudy,
+              graduationYear: d.graduationYear,
+            ),
+          )
+          .toList(growable: false),
+      skills: dto.skills
+          .map(
+            (ReviewSkillDto d) => ReviewSkill(
+              id: d.id,
+              name: d.name,
+              yearsExperience: d.yearsExperience,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  @override
   Future<String> createDocumentSignedUrl(
     String credentialId, {
     int expiresIn = 60,
   }) => _remote.createDocumentSignedUrl(credentialId, expiresIn: expiresIn);
+
+  @override
+  int? get lastTotalCount => _remote.lastTotalCount;
 
   AdminReviewQueueEntry _queueEntryToEntity(AdminReviewQueueEntryDto dto) {
     return AdminReviewQueueEntry(

@@ -145,3 +145,193 @@ class AdminCheckResultDto {
 
   final bool isPlatformAdmin;
 }
+
+/// Verification throughput metrics returned by
+/// `verification_review_metrics_get` (Phase 2).
+///
+/// Canonical server data: `{ pending_total, in_review_total,
+/// avg_verification_seconds, approved_today, decided_total, rejected_total,
+/// rejection_rate, period_days }`. Averages and rates are `null` when the
+/// window holds no decided rows — the UI renders "Unavailable", never zero.
+class AdminReviewMetricsDto {
+  const AdminReviewMetricsDto({
+    required this.pendingTotal,
+    required this.inReviewTotal,
+    this.avgVerificationSeconds,
+    required this.approvedToday,
+    required this.decidedTotal,
+    required this.rejectedTotal,
+    this.rejectionRate,
+    required this.periodDays,
+  });
+
+  factory AdminReviewMetricsDto.fromJson(Map<String, dynamic> json) {
+    return AdminReviewMetricsDto(
+      pendingTotal: _asInt(json['pending_total']) ?? 0,
+      inReviewTotal: _asInt(json['in_review_total']) ?? 0,
+      avgVerificationSeconds: _asDouble(json['avg_verification_seconds']),
+      approvedToday: _asInt(json['approved_today']) ?? 0,
+      decidedTotal: _asInt(json['decided_total']) ?? 0,
+      rejectedTotal: _asInt(json['rejected_total']) ?? 0,
+      rejectionRate: _asDouble(json['rejection_rate']),
+      periodDays: _asInt(json['period_days']) ?? 30,
+    );
+  }
+
+  final int pendingTotal;
+  final int inReviewTotal;
+  final double? avgVerificationSeconds;
+  final int approvedToday;
+  final int decidedTotal;
+  final int rejectedTotal;
+  final double? rejectionRate;
+  final int periodDays;
+
+  static int? _asInt(Object? value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static double? _asDouble(Object? value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+}
+
+/// Applicant profile depth from `verification_review_profile_get`.
+///
+/// Canonical server data: `{ experiences[], educations[], skills[] }`.
+/// Missing arrays decode as empty — an applicant with no recorded history
+/// is valid, never an error.
+class AdminReviewProfileDto {
+  const AdminReviewProfileDto({
+    this.experiences = const <ReviewExperienceDto>[],
+    this.educations = const <ReviewEducationDto>[],
+    this.skills = const <ReviewSkillDto>[],
+  });
+
+  factory AdminReviewProfileDto.fromJson(Map<String, dynamic> json) {
+    List<T> listOf<T>(
+      Object? value,
+      T Function(Map<String, dynamic>) fromJson,
+    ) {
+      if (value is! List) return <T>[];
+      return value
+          .whereType<Map<String, dynamic>>()
+          .map(fromJson)
+          .toList(growable: false);
+    }
+
+    return AdminReviewProfileDto(
+      experiences: listOf(json['experiences'], ReviewExperienceDto.fromJson),
+      educations: listOf(json['educations'], ReviewEducationDto.fromJson),
+      skills: listOf(json['skills'], ReviewSkillDto.fromJson),
+    );
+  }
+
+  final List<ReviewExperienceDto> experiences;
+  final List<ReviewEducationDto> educations;
+  final List<ReviewSkillDto> skills;
+}
+
+/// One work-experience row from `verification_review_profile_get`.
+class ReviewExperienceDto {
+  const ReviewExperienceDto({
+    required this.id,
+    required this.title,
+    required this.organization,
+    this.startYear,
+    this.startMonth,
+    this.endYear,
+    this.endMonth,
+    required this.isCurrent,
+    this.description,
+  });
+
+  factory ReviewExperienceDto.fromJson(Map<String, dynamic> json) {
+    return ReviewExperienceDto(
+      id: (json['id'] as String?) ?? '',
+      title: (json['title'] as String?) ?? '',
+      organization: (json['organization'] as String?) ?? '',
+      startYear: _asInt(json['start_year']),
+      startMonth: _asInt(json['start_month']),
+      endYear: _asInt(json['end_year']),
+      endMonth: _asInt(json['end_month']),
+      isCurrent: (json['is_current'] as bool?) ?? false,
+      description: json['description'] as String?,
+    );
+  }
+
+  final String id;
+  final String title;
+  final String organization;
+  final int? startYear;
+  final int? startMonth;
+  final int? endYear;
+  final int? endMonth;
+  final bool isCurrent;
+  final String? description;
+
+  static int? _asInt(Object? value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+}
+
+/// One education row from `verification_review_profile_get`.
+class ReviewEducationDto {
+  const ReviewEducationDto({
+    required this.id,
+    required this.school,
+    this.degree,
+    this.fieldOfStudy,
+    this.graduationYear,
+  });
+
+  factory ReviewEducationDto.fromJson(Map<String, dynamic> json) {
+    return ReviewEducationDto(
+      id: (json['id'] as String?) ?? '',
+      school: (json['school'] as String?) ?? '',
+      degree: json['degree'] as String?,
+      fieldOfStudy: json['field_of_study'] as String?,
+      graduationYear: ReviewExperienceDto._asInt(json['graduation_year']),
+    );
+  }
+
+  final String id;
+  final String school;
+  final String? degree;
+  final String? fieldOfStudy;
+  final int? graduationYear;
+}
+
+/// One skill row from `verification_review_profile_get` (years only —
+/// the platform collects no proficiency scale).
+class ReviewSkillDto {
+  const ReviewSkillDto({
+    required this.id,
+    required this.name,
+    this.yearsExperience,
+  });
+
+  factory ReviewSkillDto.fromJson(Map<String, dynamic> json) {
+    return ReviewSkillDto(
+      id: (json['id'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      yearsExperience: ReviewExperienceDto._asInt(json['years_experience']),
+    );
+  }
+
+  final String id;
+  final String name;
+  final int? yearsExperience;
+}

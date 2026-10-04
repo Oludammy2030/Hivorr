@@ -221,7 +221,7 @@ class _AdminTopBar extends StatelessWidget {
     if (loc.startsWith('/admin/settings')) return 'Settings';
     if (loc.startsWith('/admin/review-queue') ||
         loc.startsWith('/admin/verifications')) {
-      return 'Verification & Approvals';
+      return 'Professional Verification Queue';
     }
     return 'Overview';
   }
@@ -270,7 +270,8 @@ class _NotificationButton extends StatelessWidget {
     final ColorScheme colors = context.colorScheme;
     int pendingCount = 0;
     try {
-      pendingCount = context.watch<AdminReviewProvider>().queue.length;
+      // Server total when metrics have loaded, else the loaded-page length.
+      pendingCount = context.watch<AdminReviewProvider>().pendingTotal;
     } catch (_) {
       pendingCount = 0;
     }
