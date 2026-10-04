@@ -132,8 +132,7 @@ create table public.entity_skills (
   ),
   constraint entity_skills_years_range check (
     years_experience is null or (years_experience between 0 and 100)
-  ),
-  constraint entity_skills_owner_name_key unique (entity_id, (lower(name)))
+  )
 );
 
 create trigger entity_skills_set_updated_at
@@ -143,6 +142,11 @@ create trigger entity_skills_set_updated_at
 
 create index entity_skills_entity_idx
   on public.entity_skills (entity_id, name);
+
+-- Case-insensitive per-owner skill uniqueness. Expressions are not allowed
+-- in UNIQUE table constraints, so this lives in a dedicated unique index.
+create unique index entity_skills_owner_name_idx
+  on public.entity_skills (entity_id, (lower(name)));
 
 comment on table public.entity_skills is
   'Owner-managed professional skills per entity (years only, no proficiency scale). Read by the admin verification review panel (profile RPC); applicant capture UI lands separately.';
