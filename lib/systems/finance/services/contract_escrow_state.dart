@@ -19,7 +19,7 @@ enum ContractEscrowReleasePhase {
   /// Client acceptance RPC in flight (`service_contract_verify_milestone`).
   verifying,
 
-  /// Fund-movement RPC in flight (proxy -> `service_role` release).
+  /// Fund-movement RPC in flight (proxy -> privileged release service).
   releasing,
 
   /// Funds moved; both re-reads confirm the released state.

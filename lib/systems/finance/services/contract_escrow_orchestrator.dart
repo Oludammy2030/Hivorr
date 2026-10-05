@@ -21,7 +21,7 @@ import 'package:uuid/uuid.dart';
 ///  1. Verification half — [ContractService] (`service_contract_get`,
 ///     `service_contract_verify_milestone`; authenticated, participant-gated).
 ///  2. Fund-movement half — [EscrowService] (`financial_escrow_get` read +
-///     proxy-seamed `releaseMilestone`; `service_role` only server-side).
+///     proxy-seamed `releaseMilestone` (privileged release service server-side).
 ///
 /// Rules (mirroring `service_contract_release_gate` fail-closed order):
 /// disputed -> not-funded -> not-verified -> write-unavailable. The
@@ -32,8 +32,8 @@ import 'package:uuid/uuid.dart';
 /// carries an `Idempotency-Key: uuid v4` that the proxy/server dedupes on
 /// `(contract_id, milestone_id, action)`.
 ///
-/// Escrow linkage (`service_contracts.escrow_id` backfill) is a `service_role`
-/// operation performed server-side on fund; [ensureEscrowLinked] is therefore
+/// Escrow linkage (`service_contracts.escrow_id` backfill) is a privileged
+/// platform-side operation performed server-side on fund; [ensureEscrowLinked] is therefore
 /// a read-only check from the client — it reports `not-funded` guidance when
 /// unlinked and never attempts an authenticated link RPC (which correctly
 /// returns `PLT002`).
@@ -70,7 +70,7 @@ class ContractEscrowOrchestrator {
 
   /// Read-only linkage check: linked, or `not-funded` guidance.
   ///
-  /// Never attempts the `service_role`-only link RPC from the client.
+  /// Never attempts the privileged-only link RPC from the client.
   Future<ContractEscrowReleaseState> ensureEscrowLinked(
     String contractId,
   ) => _tracedAndLogged('finance.contract-escrow.link', () async {
