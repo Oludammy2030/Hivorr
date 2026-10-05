@@ -8,6 +8,7 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/contract_milestone.dart';
 import 'package:hivorr/data/entities/service_contract.dart';
+import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
@@ -24,6 +25,8 @@ import 'package:hivorr/systems/documents/widgets/contract_status_badge.dart';
 import 'package:hivorr/systems/documents/widgets/contract_timeline.dart';
 import 'package:hivorr/systems/documents/widgets/contract_write_cta_panel.dart';
 import 'package:hivorr/systems/finance/helpers/balance_formatter.dart';
+import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
+import 'package:hivorr/systems/finance/services/contract_escrow_state.dart';
 import 'package:hivorr/systems/finance/widgets/escrow_dispute_banner.dart';
 import 'package:hivorr/systems/finance/widgets/milestone_list_card.dart';
 import 'package:provider/provider.dart';
@@ -71,6 +74,24 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   String get _viewerId =>
       context.read<AuthProvider>().currentSession?.entityId ?? '';
 
+  /// The EP-03-11 release orchestrator when the bootstrap wired it, else
+  /// `null` (the screen degrades to verify-only actions with guidance).
+  ContractEscrowOrchestrator? get _orchestrator {
+    try {
+      return context.read<ContractEscrowOrchestrator>();
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
+  EscrowProvider? get _escrowProvider {
+    try {
+      return context.read<EscrowProvider>();
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
   Future<void> _run(
     Future<ServiceContract> Function() action, {
     String? milestoneId,
@@ -90,6 +111,70 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           variant: HivorrSnackbarVariant.success,
         ),
       );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        HivorrSnackbar.show(
+          context,
+          message: e.message,
+          variant: HivorrSnackbarVariant.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _busyMilestoneId = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _runRelease(
+    ServiceContract contract,
+    ContractMilestone milestone,
+  ) async {
+    final ContractEscrowOrchestrator? orchestrator = _orchestrator;
+    if (orchestrator == null) return;
+    setState(() {
+      _busy = true;
+      _busyMilestoneId = milestone.id;
+    });
+    try {
+      final ContractEscrowReleaseState state =
+          await orchestrator.verifyAndReleaseMilestone(
+            contractId: contract.id,
+            milestoneId: milestone.id,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        HivorrSnackbar.show(
+          context,
+          message:
+              state.message ??
+              (state.ok ? 'Milestone released.' : 'Release unavailable.'),
+          variant: state.ok
+              ? HivorrSnackbarVariant.success
+              : HivorrSnackbarVariant.error,
+        ),
+      );
+      if (state.ok) {
+        await context.read<ServiceContractProvider>().select(contract.id);
+        await _escrowProvider?.notifyContractMilestoneEvent(
+          eventType: 'milestone_released',
+          contractId: contract.id,
+          milestoneId: milestone.id,
+          escrowId: state.escrowId,
+        );
+      } else if (state.blockReason ==
+          ContractEscrowBlockReason.disputed) {
+        await _escrowProvider?.notifyContractMilestoneEvent(
+          eventType: 'release_blocked_disputed',
+          contractId: contract.id,
+          milestoneId: milestone.id,
+          escrowId: state.escrowId,
+        );
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -195,6 +280,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                       () => provider.close(provider.selected!.id),
                       successMessage: 'Contract closed.',
                     ),
+                    onVerifyAndRelease: _orchestrator == null
+                        ? null
+                        : (ContractMilestone m) => _runRelease(
+                            provider.selected!,
+                            m,
+                          ),
                     onFileDispute: () => context.push(
                       RoutePaths.disputesFile(provider.selected!.id),
                     ),
@@ -254,6 +345,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                             () => provider.close(contract.id),
                             successMessage: 'Contract closed.',
                           ),
+                          onVerifyAndRelease: _orchestrator == null
+                              ? null
+                              : (ContractMilestone m) =>
+                                  _runRelease(contract, m),
                           onFileDispute: () => context.push(
                             RoutePaths.disputesFile(contract.id),
                           ),
@@ -297,6 +392,7 @@ class _DetailBody extends StatelessWidget {
     required this.onRevision,
     required this.onClose,
     required this.onFileDispute,
+    this.onVerifyAndRelease,
   });
 
   final ServiceContract contract;
@@ -311,9 +407,23 @@ class _DetailBody extends StatelessWidget {
   final VoidCallback onClose;
   final VoidCallback onFileDispute;
 
+  /// Combined verify-then-release action (EP-03-11 orchestrator). `null`
+  /// when the orchestrator is absent or the row is not release-eligible —
+  /// the panel then renders verify-only actions plus guidance.
+  final ValueChanged<ContractMilestone>? onVerifyAndRelease;
+
   bool get _isClient => viewerId == contract.clientEntityId;
   bool get _isProfessional => viewerId == contract.professionalEntityId;
   bool get _isParticipant => _isClient || _isProfessional;
+
+  /// Whether the combined Verify & release action applies to [m]:
+  /// client viewer, linked escrow, actionable milestone awaiting acceptance.
+  bool _canVerifyAndRelease(ContractMilestone m) =>
+      onVerifyAndRelease != null &&
+      _isClient &&
+      contract.escrowId != null &&
+      m.escrowMilestoneId != null &&
+      (m.isCompleted || m.isVerified);
 
   @override
   Widget build(BuildContext context) {
@@ -361,8 +471,11 @@ class _DetailBody extends StatelessWidget {
               ),
               if (contract.escrowId != null) ...[
                 const SizedBox(height: 4),
+                _EscrowLinkRow(escrowId: contract.escrowId!),
+              ] else if (contract.isActive || contract.isCompleted) ...[
+                const SizedBox(height: 4),
                 Text(
-                  'Escrow ${contract.escrowId!.length > 8 ? contract.escrowId!.substring(contract.escrowId!.length - 8) : contract.escrowId!}',
+                  'Funding pending',
                   style: context.textTheme.labelSmall?.copyWith(
                     color: context.colorScheme.onSurfaceVariant,
                   ),
@@ -410,6 +523,15 @@ class _DetailBody extends StatelessWidget {
                   actionable.isCompleted
               ? () => onVerify(actionable)
               : null,
+          onVerifyAndRelease:
+              actionable != null && _canVerifyAndRelease(actionable)
+              ? () => onVerifyAndRelease!(actionable)
+              : null,
+          onViewEscrow: contract.escrowId != null
+              ? () => context.push(
+                    RoutePaths.escrowDetailFor(contract.escrowId!),
+                  )
+              : null,
           onRequestRevision:
               actionable != null &&
                   contract.canVerify(viewerId) &&
@@ -436,6 +558,36 @@ class _DetailBody extends StatelessWidget {
   }
 }
 
+class _EscrowLinkRow extends StatelessWidget {
+  const _EscrowLinkRow({required this.escrowId});
+
+  final String escrowId;
+
+  @override
+  Widget build(BuildContext context) {
+    final String suffix = escrowId.length > 8
+        ? escrowId.substring(escrowId.length - 8)
+        : escrowId;
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            'Escrow $suffix',
+            style: context.textTheme.labelSmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () =>
+              context.push(RoutePaths.escrowDetailFor(escrowId)),
+          child: const Text('View escrow'),
+        ),
+      ],
+    );
+  }
+}
+
 class _MilestoneActions extends StatelessWidget {
   const _MilestoneActions({
     required this.milestone,
@@ -459,7 +611,37 @@ class _MilestoneActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isProfessional = viewerId == contract.professionalEntityId;
     final bool isClient = viewerId == contract.clientEntityId;
+    final String? countdown =
+        ContractMilestoneAdapter.reviewCountdownLabel(milestone);
+    // Release-amount caption from the server milestone row (no escrow fetch,
+    // no client math): the held→available delta for this milestone on release.
+    // The live escrow balances render on the escrow detail screen.
+    final bool showReleaseAmount =
+        contract.escrowId != null &&
+        (milestone.isCompleted ||
+            milestone.isVerified ||
+            milestone.isReleased);
     final List<Widget> actions = <Widget>[];
+    if (showReleaseAmount) {
+      actions.add(
+        Text(
+          'Releases ${BalanceFormatter.formatBalance(milestone.amount, contract.currencyCode)}',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+    if (countdown != null) {
+      actions.add(
+        Text(
+          countdown,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
     if (isProfessional && milestone.isPending && contract.isActive) {
       actions.add(
         TextButton(

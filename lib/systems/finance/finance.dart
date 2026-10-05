@@ -20,6 +20,8 @@ export 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 export 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 export 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 export 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
+export 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
+export 'package:hivorr/systems/finance/services/contract_escrow_state.dart';
 export 'package:hivorr/systems/finance/services/conversion_service.dart';
 export 'package:hivorr/systems/finance/services/escrow_service.dart';
 export 'package:hivorr/systems/finance/services/financial_deposit_service.dart';

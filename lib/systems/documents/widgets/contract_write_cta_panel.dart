@@ -22,6 +22,8 @@ class ContractWriteCtaPanel extends StatelessWidget {
     this.onCancel,
     this.onCompleteMilestone,
     this.onVerifyMilestone,
+    this.onVerifyAndRelease,
+    this.onViewEscrow,
     this.onRequestRevision,
     this.onClose,
     this.onFileDispute,
@@ -39,6 +41,16 @@ class ContractWriteCtaPanel extends StatelessWidget {
   final VoidCallback? onCancel;
   final VoidCallback? onCompleteMilestone;
   final VoidCallback? onVerifyMilestone;
+
+  /// Combined client action wired to the EP-03-11 orchestrator
+  /// (`verifyAndReleaseMilestone`): verifies a `completed` milestone then
+  /// releases its funds through the proxy seam. Rendered only when the
+  /// authoritative row is `verified`/`completed` and the caller supplies it;
+  /// enforcement stays server-side (`AGENT.md` Rule 4).
+  final VoidCallback? onVerifyAndRelease;
+
+  /// Read-only navigation to the linked escrow detail (`/finance/escrow/:id`).
+  final VoidCallback? onViewEscrow;
   final VoidCallback? onRequestRevision;
   final VoidCallback? onClose;
   final VoidCallback? onFileDispute;
@@ -79,6 +91,25 @@ class ContractWriteCtaPanel extends StatelessWidget {
             variant: HivorrButtonVariant.primary,
             isExpanded: true,
             isLoading: isBusy,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (onVerifyAndRelease != null) ...[
+          HivorrButton(
+            label: 'Verify & release',
+            onPressed: onVerifyAndRelease,
+            variant: HivorrButtonVariant.primary,
+            isExpanded: true,
+            isLoading: isBusy,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (onViewEscrow != null) ...[
+          HivorrButton(
+            label: 'View escrow',
+            onPressed: onViewEscrow,
+            variant: HivorrButtonVariant.outline,
+            isExpanded: true,
           ),
           const SizedBox(height: 8),
         ],

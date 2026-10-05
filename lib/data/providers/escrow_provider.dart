@@ -279,6 +279,51 @@ class EscrowProvider extends ChangeNotifier with WidgetsBindingObserver {
     };
   }
 
+  /// Emits a contract-milestone lifecycle notification (EP-03-11 S6).
+  ///
+  /// Additive hook for the orchestrator fan-out consumed by EP-03-18:
+  /// `milestone_verified | milestone_released | milestone_auto_released |
+  /// release_blocked_disputed`. Deep-links to the contract detail with the
+  /// escrow id in the payload; no balances or PII in the body. No-op when no
+  /// [NotificationProvider] is attached or when notifications are paused.
+  Future<void> notifyContractMilestoneEvent({
+    required String eventType,
+    required String contractId,
+    required String milestoneId,
+    String? escrowId,
+  }) async {
+    final NotificationProvider? notifications = _notificationProvider;
+    if (notifications == null || _paused) return;
+    const Map<String, String> titles = <String, String>{
+      'milestone_verified': 'Milestone verified',
+      'milestone_released': 'Milestone released',
+      'milestone_auto_released': 'Milestone auto-released',
+      'release_blocked_disputed': 'Release blocked — disputed',
+    };
+    final String title = titles[eventType] ?? 'Contract updated';
+    final int id =
+        '$contractId:$milestoneId:$eventType'.hashCode & 0x7fffffff;
+    await notifications.showLocal(
+      HivorrNotification(
+        id: id,
+        title: title,
+        body: eventType == 'release_blocked_disputed'
+            ? 'Release is frozen pending dispute resolution.'
+            : '$title — tap to view the contract.',
+        channelId: EscrowNotificationChannel.system,
+        priority: NotificationPriority.normal,
+        timestamp: _clock(),
+        actionRoute: '/contracts/$contractId',
+        payload: <String, dynamic>{
+          'contractId': contractId,
+          'milestoneId': milestoneId,
+          'escrowId': escrowId,
+          'eventType': eventType,
+        },
+      ),
+    );
+  }
+
   void _maybeNotifyRelease(EscrowDetail detail, String? milestoneId) {
     final NotificationProvider? notifications = _notificationProvider;
     if (notifications == null) return;

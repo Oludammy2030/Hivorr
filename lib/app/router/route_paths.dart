@@ -120,6 +120,10 @@ abstract final class RoutePaths {
   static const String escrow = '/finance/escrow';
   static const String escrowDetail = '/finance/escrow/:id';
 
+  /// Builds a URL-encoded escrow detail path (EP-03-11 contract linkage).
+  static String escrowDetailFor(String id) =>
+      '/finance/escrow/${Uri.encodeComponent(id)}';
+
   /// Dispute screens (EP-02-17).
   static const String disputes = '/support/disputes';
   static const String disputesNew = '/support/disputes/file/:escrowId';

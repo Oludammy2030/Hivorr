@@ -96,6 +96,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
         serviceContractRepository: _result!.serviceContractRepository,
         serviceContractProvider: _result!.serviceContractProvider,
         serviceContractService: _result!.serviceContractService,
+        contractEscrowOrchestrator: _result!.contractEscrowOrchestrator,
         verificationRepository: _result!.verificationRepository,
         verificationProvider: _result!.verificationProvider,
         escrowRepository: _result!.escrowRepository,

@@ -55,6 +55,7 @@ abstract final class ContractMapper {
         completedAt: dto.completedAt,
         verifiedAt: dto.verifiedAt,
         releasedAt: dto.releasedAt,
+        reviewPeriodExpiresAt: dto.reviewPeriodExpiresAt,
       );
 
   /// Maps a `contract_events` DTO into a domain [ContractEvent].
