@@ -7,9 +7,9 @@
 --     range 0..1, sum 0.999..1.001, priors), indexes, trigger, comments.
 --   - service_listings GIN retained + new ranking partial index exists.
 --   - Exactly 1 SECURITY DEFINER among service_% RPCs (reveal), ranking RPCs
---     remain INVOKER; exactly 21 service_% RPCs (19 prior +2 new: weights_get + ranking_search).
+--     remain INVOKER; exactly 23 service_% RPCs (21 prior +2 EP-03-11: link_escrow + release_gate).
 --   - Realtime excludes platform_config.
---   - EXECUTE posture: anon can execute ranking_search + listing_get + review_get_for_listing (3), authenticated 21.
+--   - EXECUTE posture: anon can execute ranking_search + listing_get + review_get_for_listing (3), authenticated 23.
 
 begin;
 set search_path to extensions, public;
@@ -145,12 +145,12 @@ select is(
   'exactly one service_% function is SECURITY DEFINER'
 );
 
--- ─── 14. Exactly 21 service_% RPCs (19 prior +2 new) ────────────────────────
+-- ─── 14. Exactly 23 service_% RPCs (21 prior +2 escrow-linkage) ──────────────
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname like 'service\_%' and p.prorettype='jsonb'::regtype),
-  21,
-  'exactly 21 service_% RPCs exist (19 prior + weights_get + ranking_search)'
+  23,
+  'exactly 23 service_% RPCs exist (21 prior + link_escrow + release_gate)'
 );
 
 -- ─── 15. Realtime excludes platform_config ──────────────────────────────────

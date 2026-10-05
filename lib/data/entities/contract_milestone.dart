@@ -21,6 +21,7 @@ class ContractMilestone {
     this.completedAt,
     this.verifiedAt,
     this.releasedAt,
+    this.reviewPeriodExpiresAt,
   });
 
   /// The milestone row id.
@@ -62,6 +63,14 @@ class ContractMilestone {
   /// When the milestone's funds were released, if applicable (EP-03-11).
   final DateTime? releasedAt;
 
+  /// Server-clock review deadline (`completed_at + 7 days`, EP-03-11).
+  ///
+  /// Set by the `contract_milestones_set_review_expiry` trigger on
+  /// pending->completed; cleared on revision->pending. `null` means no expiry
+  /// (pending, historical, or already released rows). Countdowns render from
+  /// this value only — the client never computes release timing.
+  final DateTime? reviewPeriodExpiresAt;
+
   /// Whether the milestone is awaiting delivery.
   bool get isPending => status == 'pending';
 
@@ -89,5 +98,6 @@ class ContractMilestone {
     completedAt: completedAt,
     verifiedAt: verifiedAt,
     releasedAt: releasedAt,
+    reviewPeriodExpiresAt: reviewPeriodExpiresAt,
   );
 }

@@ -98,6 +98,7 @@ import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dart';
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
+import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
 import 'package:hivorr/systems/finance/services/conversion_rate_source.dart';
 import 'package:hivorr/systems/finance/services/conversion_service.dart';
 import 'package:hivorr/systems/finance/services/escrow_service.dart';
@@ -815,6 +816,26 @@ registerServiceContractLayer(
     repository: repository,
     provider: ServiceContractProvider(service: service, logger: logger),
     service: service,
+  );
+}
+
+/// Wires the contract escrow release orchestration slice for EP-03-11.
+///
+/// Composes the [ContractService] verification half with the [EscrowService]
+/// fund-movement half into a [ContractEscrowOrchestrator]. Additive only —
+/// existing `registerEscrowLayer` / `registerServiceContractLayer` registrations
+/// are untouched. The orchestrator is a sequencer only: verification and fund
+/// movement stay server-authoritative (`AGENT.md` Rule 4); every release goes
+/// through the `EscrowService` proxy seam and carries an idempotency key.
+ContractEscrowOrchestrator registerContractEscrowLayer({
+  required ContractService contractService,
+  required EscrowService escrowService,
+  HivorrLogger? logger,
+}) {
+  return ContractEscrowOrchestrator(
+    contracts: contractService,
+    escrows: escrowService,
+    logger: logger,
   );
 }
 

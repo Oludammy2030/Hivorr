@@ -229,7 +229,7 @@ select ok(
   'service_review_reveal_if_ready is SECURITY DEFINER'
 );
 
--- ─── 16. Exactly 21 service_% RPCs (7 marketplace + 8 contract + 4 review + 2 ranking) ─────
+-- ─── 16. Exactly 23 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -237,8 +237,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prorettype <> 'trigger'::regtype),
-  21,
-  'exactly 21 service_% RPCs exist (7 listing + 8 contract + 4 review + 2 ranking)'
+  23,
+  'exactly 23 service_% RPCs exist (7 listing + 10 contract + 4 review + 2 ranking)'
 );
 
 -- ─── 17. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -298,26 +298,26 @@ select is(
   'anon can execute exactly four service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get)'
 );
 
--- ─── 22. authenticated EXECUTE on all 21 ──────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 23 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'authenticated'),
-  21,
-  'authenticated can execute all 21 service_% RPCs (7 marketplace + 8 contract + 4 review + 2 ranking)'
+  23,
+  'authenticated can execute all 23 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking)'
 );
 
--- ─── 23. service_role EXECUTE on all 21 ───────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 23 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'service_role'),
-  21,
-  'service_role can execute all 21 service_% RPCs'
+  23,
+  'service_role can execute all 23 service_% RPCs'
 );
 
 -- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing + ranking_search + weights_get ─

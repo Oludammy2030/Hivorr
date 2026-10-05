@@ -7,7 +7,7 @@
 --     SELECT+INSERT on events (append-only, no UPDATE/DELETE).
 --   - CHECK vocabularies (status, no-self, currency, amount, milestone number,
 --     event_type), unique constraints, named indexes, triggers.
---   - No service_contract_% SECURITY DEFINER; exactly 8 RPCs.
+--   - No service_contract_% SECURITY DEFINER; exactly 10 RPCs (8 EP-03-02 + 2 EP-03-11).
 --   - Realtime excludes all 3 tables; comments present.
 --   - EXECUTE posture: anon zero, authenticated 8, service_role 8.
 
@@ -244,7 +244,7 @@ select is(
   'no service_contract_% function is SECURITY DEFINER'
 );
 
--- ─── 18. Exactly 8 service_contract_% RPCs ───────────────────────────────────
+-- ─── 18. Exactly 10 service_contract_% RPCs (8 EP-03-02 + 2 EP-03-11 linkage/gate) ──
 select is(
   (select count(*)::int
      from pg_proc p
@@ -252,8 +252,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_contract\_%'
       and p.prorettype = 'jsonb'::regtype),
-  8,
-  'exactly 8 service_contract_% RPCs exist'
+  10,
+  'exactly 10 service_contract_% RPCs exist'
 );
 
 -- ─── 19. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -291,26 +291,26 @@ select is(
   'anon can execute zero service_contract_% RPCs'
 );
 
--- ─── 22. authenticated EXECUTE on all 8 ───────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 10 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_contract\_%'
       and grantee = 'authenticated'),
-  8,
-  'authenticated can execute all 8 service_contract_% RPCs'
+  10,
+  'authenticated can execute all 10 service_contract_% RPCs'
 );
 
--- ─── 23. service_role EXECUTE on all 8 ────────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 10 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_contract\_%'
       and grantee = 'service_role'),
-  8,
-  'service_role can execute all 8 service_contract_% RPCs'
+  10,
+  'service_role can execute all 10 service_contract_% RPCs'
 );
 
 -- ─── 24. RLS policy surface: 8 policies (3 SELECT + 2+2 INSERT/UPDATE + 1 events INSERT) ─

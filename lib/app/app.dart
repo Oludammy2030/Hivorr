@@ -51,6 +51,7 @@ import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
+import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
@@ -79,6 +80,7 @@ class HivorrApp extends StatefulWidget {
     this.serviceContractRepository,
     this.serviceContractProvider,
     this.serviceContractService,
+    this.contractEscrowOrchestrator,
     this.verificationRepository,
     this.verificationProvider,
     this.escrowRepository,
@@ -153,6 +155,11 @@ class HivorrApp extends StatefulWidget {
   /// Contract facade surfaced to the widget tree (EP-03-10, offer/accept
   /// orchestration + evidence URL resolution).
   final ContractService? serviceContractService;
+
+  /// Verification-gated escrow release orchestrator (EP-03-11). Optional for
+  /// testability; the contract detail screen hides `Verify & release` when
+  /// absent and keeps verify-only actions.
+  final ContractEscrowOrchestrator? contractEscrowOrchestrator;
 
   /// Identity-verification repository (EP-02-10). Optional for testability.
   final VerificationRepository? verificationRepository;
@@ -364,6 +371,8 @@ class _HivorrAppState extends State<HivorrApp> {
         widget.serviceContractProvider;
     final ContractService? serviceContractService =
         widget.serviceContractService;
+    final ContractEscrowOrchestrator? contractEscrowOrchestrator =
+        widget.contractEscrowOrchestrator;
     final VerificationRepository? verificationRepository =
         widget.verificationRepository;
     final VerificationProvider? verificationProvider =
@@ -435,6 +444,10 @@ class _HivorrAppState extends State<HivorrApp> {
           ),
         if (serviceContractService != null)
           Provider<ContractService>.value(value: serviceContractService),
+        if (contractEscrowOrchestrator != null)
+          Provider<ContractEscrowOrchestrator>.value(
+            value: contractEscrowOrchestrator,
+          ),
         if (verificationRepository != null)
           Provider<VerificationRepository>.value(value: verificationRepository),
         if (verificationProvider != null)

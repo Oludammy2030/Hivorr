@@ -20,6 +20,7 @@ class ContractMilestoneDto {
     this.completedAt,
     this.verifiedAt,
     this.releasedAt,
+    this.reviewPeriodExpiresAt,
     this.createdAt,
     this.updatedAt,
   });
@@ -41,6 +42,7 @@ class ContractMilestoneDto {
         completedAt: _parseDate(json['completed_at']),
         verifiedAt: _parseDate(json['verified_at']),
         releasedAt: _parseDate(json['released_at']),
+        reviewPeriodExpiresAt: _parseDate(json['review_period_expires_at']),
         createdAt: _parseDate(json['created_at']),
         updatedAt: _parseDate(json['updated_at']),
       );
@@ -58,6 +60,7 @@ class ContractMilestoneDto {
   final DateTime? completedAt;
   final DateTime? verifiedAt;
   final DateTime? releasedAt;
+  final DateTime? reviewPeriodExpiresAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 

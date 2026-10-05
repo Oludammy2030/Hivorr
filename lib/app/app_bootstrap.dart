@@ -16,6 +16,8 @@ import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
+import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
+import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
@@ -43,6 +45,7 @@ class BootstrapResult {
     this.serviceContractRepository,
     this.serviceContractProvider,
     this.serviceContractService,
+    this.contractEscrowOrchestrator,
     required this.verificationRepository,
     required this.verificationProvider,
     this.escrowRepository,
@@ -122,6 +125,12 @@ class BootstrapResult {
   /// Contract facade surfaced to the widget tree (EP-03-10, offer/accept
   /// orchestration + evidence URL resolution).
   final ContractService? serviceContractService;
+
+  /// Verification-gated escrow release orchestrator (EP-03-11). Composes the
+  /// contract verification half with the escrow proxy-seamed fund-movement
+  /// half; the contract detail screen consumes it for `Verify & release`.
+  /// Optional for testability (screens degrade to verify-only guidance).
+  final ContractEscrowOrchestrator? contractEscrowOrchestrator;
 
   /// Identity-verification repository (EP-02-10).
   final VerificationRepository verificationRepository;
@@ -350,6 +359,14 @@ class AppBootstrap {
         registerHiresLayer(apiLayer);
     final ({MessagingRepository repository, MessagingProvider provider})
     messaging = registerMessagingLayer(apiLayer);
+    // EP-03-11 release orchestration (verify-before-release sequencing over
+    // the contract + escrow services; fund movement stays proxy-seamed).
+    // Built only when both halves are wired; screens degrade gracefully.
+    final ContractEscrowOrchestrator contractEscrowOrchestrator =
+        registerContractEscrowLayer(
+          contractService: serviceContract.service,
+          escrowService: EscrowService(repository: escrow.repository),
+        );
     final ({
       OnboardingService service,
       OnboardingProvider provider,
@@ -394,6 +411,7 @@ class AppBootstrap {
       serviceContractRepository: serviceContract.repository,
       serviceContractProvider: serviceContract.provider,
       serviceContractService: serviceContract.service,
+      contractEscrowOrchestrator: contractEscrowOrchestrator,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,
       escrowRepository: escrow.repository,
