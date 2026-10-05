@@ -12,6 +12,7 @@ class HivorrTextField extends StatelessWidget {
   const HivorrTextField({
     super.key,
     this.controller,
+    this.focusNode,
     this.label,
     this.hint,
     this.errorText,
@@ -19,8 +20,10 @@ class HivorrTextField extends StatelessWidget {
     this.prefix,
     this.suffix,
     this.obscureText = false,
+    this.minLines,
     this.maxLines = 1,
     this.maxLength,
+    this.hideCounter = false,
     this.keyboardType,
     this.onChanged,
     this.onSubmitted,
@@ -31,6 +34,10 @@ class HivorrTextField extends StatelessWidget {
   });
 
   final TextEditingController? controller;
+
+  /// Focus traversal hook (e.g. `FocusScope.nextFocus` chains in forms and
+  /// chat composers). Null lets Flutter manage focus automatically.
+  final FocusNode? focusNode;
   final String? label;
   final String? hint;
   final String? errorText;
@@ -38,8 +45,13 @@ class HivorrTextField extends StatelessWidget {
   final Widget? prefix;
   final Widget? suffix;
   final bool obscureText;
+  final int? minLines;
   final int? maxLines;
   final int? maxLength;
+
+  /// Hides the built-in character counter while still enforcing [maxLength]
+  /// (chat composers, search fields). Defaults to showing the counter.
+  final bool hideCounter;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -72,7 +84,9 @@ class HivorrTextField extends StatelessWidget {
       textField: true,
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
         obscureText: obscureText,
+        minLines: minLines,
         maxLines: maxLines,
         maxLength: maxLength,
         keyboardType: keyboardType,
@@ -91,6 +105,7 @@ class HivorrTextField extends StatelessWidget {
           suffixIcon: suffix,
           filled: true,
           fillColor: fillColor ?? colors.surface,
+          counterText: hideCounter ? '' : null,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: HivorrSpacing.md,
             vertical: HivorrSpacing.sm,

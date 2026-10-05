@@ -44,7 +44,7 @@ void main() {
     ) async {
       await pumpCard(
         tester,
-        ConversionPreviewCard(
+        const ConversionPreviewCard(
           preview: estimate,
           onExecute: null,
           isExecuting: false,
@@ -60,7 +60,7 @@ void main() {
     ) async {
       await pumpCard(
         tester,
-        ConversionPreviewCard(
+        const ConversionPreviewCard(
           preview: estimate,
           onExecute: null,
           isExecuting: false,
@@ -76,7 +76,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpCard(
           tester,
-          ConversionPreviewCard(
+          const ConversionPreviewCard(
             preview: estimate,
             onExecute: null,
             isExecuting: false,
@@ -98,7 +98,7 @@ void main() {
     testWidgets('renders the estimate microcopy', (WidgetTester tester) async {
       await pumpCard(
         tester,
-        ConversionPreviewCard(
+        const ConversionPreviewCard(
           preview: estimate,
           onExecute: null,
           isExecuting: false,
@@ -120,7 +120,7 @@ void main() {
     ) async {
       await pumpCard(
         tester,
-        ConversionPreviewCard(
+        const ConversionPreviewCard(
           preview: estimate,
           onExecute: null,
           isExecuting: false,
@@ -135,7 +135,7 @@ void main() {
     ) async {
       await pumpCard(
         tester,
-        ConversionPreviewCard(
+        const ConversionPreviewCard(
           preview: feeEstimate,
           onExecute: null,
           isExecuting: false,
@@ -192,7 +192,7 @@ void main() {
     ) async {
       await pumpCard(
         tester,
-        ConversionPreviewCard(
+        const ConversionPreviewCard(
           preview: estimate,
           onExecute: null,
           isExecuting: false,

@@ -281,6 +281,7 @@ class _ServiceListingFormScreenState extends State<ServiceListingFormScreen>
       return HivorrSuccessState(
         title: 'Listing published',
         subtitle: 'Buyers can now discover your service.',
+        celebrate: true,
         actionButton: HivorrButton(
           label: 'View my listings',
           onPressed: () => context.go(RoutePaths.serviceListingsMine),

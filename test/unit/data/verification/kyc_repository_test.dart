@@ -298,10 +298,10 @@ void main() {
   group('KycRepository.eligibleUpgradePath', () {
     test('tier0 exposes tier1..tier3', () {
       final repo = build();
-      final level = KycLevel(
+      const level = KycLevel(
         tierCode: 'tier_0',
         status: 'pending',
-        limits: const KycLimits(daily: 0, weekly: 0, monthly: 0, cashout: 0),
+        limits: KycLimits(daily: 0, weekly: 0, monthly: 0, cashout: 0),
       );
       expect(repo.eligibleUpgradePath(level), <KycTier>[
         KycTier.tier1,
@@ -312,10 +312,10 @@ void main() {
 
     test('tier1 exposes tier2 and tier3', () {
       final repo = build();
-      final level = KycLevel(
+      const level = KycLevel(
         tierCode: 'tier_1',
         status: 'active',
-        limits: const KycLimits(
+        limits: KycLimits(
           daily: 50000,
           weekly: 200000,
           monthly: 800000,
@@ -330,10 +330,10 @@ void main() {
 
     test('tier2 exposes only tier3', () {
       final repo = build();
-      final level = KycLevel(
+      const level = KycLevel(
         tierCode: 'tier_2',
         status: 'active',
-        limits: const KycLimits(
+        limits: KycLimits(
           daily: 200000,
           weekly: 800000,
           monthly: 3000000,
@@ -345,10 +345,10 @@ void main() {
 
     test('tier3 exposes none', () {
       final repo = build();
-      final level = KycLevel(
+      const level = KycLevel(
         tierCode: 'tier_3',
         status: 'active',
-        limits: const KycLimits(
+        limits: KycLimits(
           daily: 1000000,
           weekly: 4000000,
           monthly: 15000000,

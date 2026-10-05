@@ -95,7 +95,7 @@ class OnboardingDocumentUploadTile extends StatelessWidget {
                     color: colors.onSurfaceVariant,
                   ),
                 ),
-                SizedBox(width: HivorrSpacing.xs),
+                const SizedBox(width: HivorrSpacing.xs),
                 IconButton(
                   onPressed: submitting ? null : onPick,
                   tooltip: 'Choose a different file',

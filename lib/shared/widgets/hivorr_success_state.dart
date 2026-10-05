@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/widgets/hivorr_celebration.dart';
 
 /// Full-area success placeholder with an icon, title, optional subtitle, and
 /// an optional action button.
@@ -12,6 +13,7 @@ class HivorrSuccessState extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.actionButton,
+    this.celebrate = false,
   });
 
   /// Leading illustration. Defaults to [Icons.check_circle_outline].
@@ -26,19 +28,25 @@ class HivorrSuccessState extends StatelessWidget {
   /// Optional call-to-action (typically a [HivorrButton]).
   final Widget? actionButton;
 
+  /// One-shot celebration (§16a) around the mark: scale/fade + confetti
+  /// burst, once per completed flow. Defaults off — opt in only at genuine
+  /// milestones (registration, publishing, signing, payout).
+  final bool celebrate;
+
   @override
   Widget build(BuildContext context) {
     final AppThemeExtension ext = context.appExtension;
+    final Widget mark = IconTheme.merge(
+      data: IconThemeData(size: 48, color: ext.success),
+      child: icon ?? const Icon(Icons.check_circle_outline),
+    );
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(HivorrSpacing.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            IconTheme.merge(
-              data: IconThemeData(size: 48, color: ext.success),
-              child: icon ?? const Icon(Icons.check_circle_outline),
-            ),
+            if (celebrate) HivorrCelebration(child: mark) else mark,
             const SizedBox(height: HivorrSpacing.md),
             Text(
               title,

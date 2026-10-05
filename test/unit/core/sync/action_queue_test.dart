@@ -126,7 +126,7 @@ void main() {
           status: SyncActionStatus.pending,
           retryCount: 0,
           maxRetries: 3,
-          createdAt: now.subtract(Duration(seconds: 30)),
+          createdAt: now.subtract(const Duration(seconds: 30)),
         ),
       );
       await queue.enqueue(
@@ -139,7 +139,7 @@ void main() {
           status: SyncActionStatus.pending,
           retryCount: 0,
           maxRetries: 3,
-          createdAt: now.subtract(Duration(seconds: 10)),
+          createdAt: now.subtract(const Duration(seconds: 10)),
         ),
       );
       await queue.enqueue(
@@ -152,7 +152,7 @@ void main() {
           status: SyncActionStatus.pending,
           retryCount: 0,
           maxRetries: 3,
-          createdAt: now.subtract(Duration(seconds: 5)),
+          createdAt: now.subtract(const Duration(seconds: 5)),
         ),
       );
 

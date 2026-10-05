@@ -46,7 +46,7 @@ Widget _localizedApp(LocaleProvider provider, Widget home) =>
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final HivorrLocalizationService service = const HivorrLocalizationService();
+  const HivorrLocalizationService service = HivorrLocalizationService();
 
   group('Localization integration — translation loading', () {
     test('loads en.json from assets and translates a real key', () async {
@@ -164,12 +164,12 @@ void main() {
     });
 
     test('widget plural accessor interpolates count into the form', () {
-      final HivorrLocalizations l =
-          HivorrLocalizations(const <String, String>{}, <String, String>{
+      const HivorrLocalizations l =
+          HivorrLocalizations(<String, String>{}, <String, String>{
             'common.itemCount.zero': 'No items',
             'common.itemCount.one': '1 item',
             'common.itemCount.other': '{count} items',
-          }, const Locale('en'));
+          }, Locale('en'));
 
       expect(l.plural(TranslationKeys.commonItemCount, 0), 'No items');
       expect(l.plural(TranslationKeys.commonItemCount, 1), '1 item');
@@ -194,10 +194,10 @@ void main() {
     });
 
     test('falls back to the fallback table when missing in active', () {
-      final HivorrLocalizations l = HivorrLocalizations(
-        const <String, String>{},
+      const HivorrLocalizations l = HivorrLocalizations(
+        <String, String>{},
         <String, String>{'common.ok': 'OK'},
-        const Locale('en'),
+        Locale('en'),
       );
 
       expect(l.translate(TranslationKeys.commonOk), 'OK');

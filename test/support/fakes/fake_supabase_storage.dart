@@ -95,14 +95,14 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
       final mime = fileOptions.contentType!.toLowerCase();
       final allowed = strictAllowedMimeTypes[bucketId];
       if (allowed != null && !allowed.contains(mime)) {
-        throw supabase.StorageException(
+        throw const supabase.StorageException(
           'The MIME type is not allowed for this bucket.',
           statusCode: '400',
         );
       }
     }
     if (data.lengthInBytes > strictLimits[bucketId]!) {
-      throw supabase.StorageException(
+      throw const supabase.StorageException(
         'The object was too large to upload.',
         statusCode: '413',
       );
@@ -124,7 +124,7 @@ class FakeStorageFileApi implements supabase.StorageFileApi {
     _maybeThrow();
     final bytes = _storeFor(bucketId!)[path];
     if (bytes == null) {
-      throw supabase.StorageException('Object not found.', statusCode: '404');
+      throw const supabase.StorageException('Object not found.', statusCode: '404');
     }
     return Uint8List.fromList(bytes);
   }

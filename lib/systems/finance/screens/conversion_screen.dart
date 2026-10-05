@@ -118,8 +118,8 @@ class _ConversionScreenState extends State<ConversionScreen>
         child: Consumer<ConversionProvider>(
           builder: (BuildContext context, ConversionProvider provider, _) {
             if (!provider.isConversionEnabled) {
-              return HivorrEmptyState(
-                icon: const Icon(Icons.currency_exchange),
+              return const HivorrEmptyState(
+                icon: Icon(Icons.currency_exchange),
                 title: 'Currency conversion unavailable',
                 subtitle:
                     'Conversions are not enabled for your account yet. Check back soon.',

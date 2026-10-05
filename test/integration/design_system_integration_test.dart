@@ -165,7 +165,7 @@ void main() {
               const SizedBox(height: 16),
               const HivorrTextField(label: 'Name'),
               const SizedBox(height: 16),
-              HivorrCard(child: const Text('panel')),
+              const HivorrCard(child: Text('panel')),
             ],
           ),
           width: 1280,
@@ -268,7 +268,7 @@ void main() {
             mobileBody: const Text('mobile body'),
             sidebar: NavigationRail(
               selectedIndex: 0,
-              destinations: <NavigationRailDestination>[
+              destinations: const <NavigationRailDestination>[
                 NavigationRailDestination(
                   icon: Icon(Icons.home),
                   label: Text('Home'),
@@ -295,7 +295,7 @@ void main() {
             mobileBody: const Text('web body'),
             sidebar: NavigationRail(
               selectedIndex: 0,
-              destinations: <NavigationRailDestination>[
+              destinations: const <NavigationRailDestination>[
                 NavigationRailDestination(
                   icon: Icon(Icons.home),
                   label: Text('Home'),
@@ -352,7 +352,7 @@ void main() {
                 const SizedBox(height: 16),
                 const HivorrTextField(label: 'Field', errorText: 'err'),
                 const SizedBox(height: 16),
-                HivorrCard(child: const Text('card')),
+                const HivorrCard(child: Text('card')),
               ],
             ),
           ),
@@ -377,7 +377,7 @@ void main() {
               children: <Widget>[
                 HivorrButton(label: 'Ink', onPressed: () {}),
                 const HivorrTextField(label: 'F'),
-                HivorrCard(child: const Text('c')),
+                const HivorrCard(child: Text('c')),
               ],
             ),
           ),

@@ -542,7 +542,7 @@ class _BookingCta extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          HivorrButton(
+          const HivorrButton(
             label: 'Book / Request proposal',
             isExpanded: true,
             onPressed: null,

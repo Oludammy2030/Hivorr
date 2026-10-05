@@ -75,6 +75,8 @@ class HivorrStatCard extends StatelessWidget {
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -87,6 +89,8 @@ class HivorrStatCard extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             color: colors.onSurface,
                           ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (sub != null && sub!.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 2),
@@ -96,6 +100,8 @@ class HivorrStatCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: subColor ?? colors.onSurfaceVariant,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],

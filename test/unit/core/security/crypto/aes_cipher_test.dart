@@ -94,8 +94,8 @@ void main() {
   });
 }
 
-SecurityConfiguration _config() => SecurityConfiguration(
-  const SecurityConfig(
+SecurityConfiguration _config() => const SecurityConfiguration(
+  SecurityConfig(
     pinningEnabled: false,
     pinnedSpkiSha256Hashes: <String>[],
     kdfSalt: 'salt',

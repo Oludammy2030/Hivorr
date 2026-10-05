@@ -251,7 +251,7 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
         'code': e.code,
       });
     } on Object catch (e) {
-      _lastError = ApiException(
+      _lastError = const ApiException(
         kind: ApiExceptionKind.unknown,
         message: 'Something went wrong. Please try again.',
       );

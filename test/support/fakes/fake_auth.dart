@@ -36,19 +36,19 @@ class FakeAuthService implements AuthService {
   @override
   Future<AuthResult> signUp(AuthCredentials credentials) async {
     lastSignUpCredentials = credentials;
-    return AuthResult(status: AuthStatus.unauthenticated);
+    return const AuthResult(status: AuthStatus.unauthenticated);
   }
 
   @override
   Future<AuthResult> signUpWithIdentity(RegistrationIdentity identity) async {
     signUpWithIdentityCallCount++;
     lastSignUpIdentity = identity;
-    return AuthResult(status: AuthStatus.awaitingEmailConfirmation);
+    return const AuthResult(status: AuthStatus.awaitingEmailConfirmation);
   }
 
   @override
   Future<AuthResult> signIn(AuthCredentials credentials) async =>
-      AuthResult(status: AuthStatus.unauthenticated);
+      const AuthResult(status: AuthStatus.unauthenticated);
 
   @override
   Future<void> sendEmailVerificationOtp(

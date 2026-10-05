@@ -96,9 +96,9 @@ class _ContractListScreenState extends State<ContractListScreen>
         onRefresh: _load,
         child: CustomScrollView(
           slivers: <Widget>[
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   vertical: HivorrSpacing.sm,
                 ),
                 child: HivorrSectionHeader(

@@ -518,7 +518,7 @@ void main() {
       final OnboardingTestStack stack = buildOnboardingStack(
         taxonomyRepo: FakeTaxonomyRepository(
           industries: <Industry>[
-            Industry(
+            const Industry(
               id: 'ind-tech',
               slug: 'technology',
               name: 'Technology',
@@ -529,7 +529,7 @@ void main() {
           ],
           professionsByIndustry: <String, List<Profession>>{
             'ind-tech': <Profession>[
-              Profession(
+              const Profession(
                 id: 'jane.doe@example.com',
                 industryId: 'ind-tech',
                 slug: 'email-id-profession',
@@ -548,7 +548,7 @@ void main() {
       await stack.taxonomy.loadProfessions('ind-tech');
       stack.taxonomy.selectIndustry('ind-tech');
       stack.taxonomy.selectProfession(
-        Profession(
+        const Profession(
           id: 'jane.doe@example.com',
           industryId: 'ind-tech',
           slug: 'email-id-profession',

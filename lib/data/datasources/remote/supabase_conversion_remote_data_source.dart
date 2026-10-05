@@ -78,7 +78,7 @@ class SupabaseConversionRemoteDataSource extends BaseApiService
       return const <CurrencyConversionDto>[];
     }
     final String? entityId = supabase.auth.currentUser?.id;
-    final String table = 'financial_conversions';
+    const String table = 'financial_conversions';
     final PostgrestFilterBuilder<PostgrestList> filtered = supabase
         .from(table)
         .select();

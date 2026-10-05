@@ -113,6 +113,11 @@ class _MediaPage extends StatelessWidget {
               Image.network(
                 url,
                 fit: BoxFit.cover,
+                // Hero-width bitmap cap (pane max is 1120dp); neighbors stay
+                // cached by the image cache while paging.
+                cacheWidth: 1200,
+                filterQuality: FilterQuality.medium,
+                gaplessPlayback: true,
                 errorBuilder: (_, _, _) => const _MediaPlaceholder(),
                 loadingBuilder: (context, child, progress) =>
                     progress == null ? child : const _MediaPlaceholder(),

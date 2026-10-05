@@ -133,9 +133,9 @@ void main() {
       setUp(() async {
         CacheManager.dispose();
         await CacheManager.initialize(
-          CacheConfig(
+          const CacheConfig(
             maxEntries: 100,
-            defaultTtl: const Duration(minutes: 5),
+            defaultTtl: Duration(minutes: 5),
           ),
         );
       });

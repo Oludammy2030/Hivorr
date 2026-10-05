@@ -100,6 +100,13 @@ class PortfolioItemCard extends StatelessWidget {
         child: Image.network(
           url,
           fit: BoxFit.cover,
+          cacheWidth: 1200,
+          filterQuality: FilterQuality.medium,
+          gaplessPlayback: true,
+          loadingBuilder:
+              (BuildContext context, Widget child, ImageChunkEvent? progress) {
+                return progress == null ? child : placeholder;
+              },
           errorBuilder:
               (BuildContext context, Object error, StackTrace? stack) {
                 return placeholder;

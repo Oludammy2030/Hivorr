@@ -65,7 +65,7 @@ class IdentityVerificationService {
             fileName: fileName,
             onProgress: onProgress,
           );
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       _logger?.info('Identity document submission completed', <String, Object?>{
         'documentType': documentType.name,
         'submissionId': submission.id,
@@ -73,7 +73,7 @@ class IdentityVerificationService {
       });
       return submission;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Identity document submission failed',
         error: error,

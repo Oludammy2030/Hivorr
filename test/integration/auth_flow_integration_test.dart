@@ -121,7 +121,7 @@ void main() {
         await pumpEventQueue();
 
         final AuthResult result = await service.signUp(
-          AuthCredentials(email: 'user@example.com', password: 'password'),
+          const AuthCredentials(email: 'user@example.com', password: 'password'),
         );
         await pumpEventQueue();
 
@@ -158,7 +158,7 @@ void main() {
         await pumpEventQueue();
 
         final AuthResult result = await service.signIn(
-          AuthCredentials(email: 'user@example.com', password: 'password'),
+          const AuthCredentials(email: 'user@example.com', password: 'password'),
         );
         await pumpEventQueue();
 
@@ -215,7 +215,7 @@ void main() {
         await provider1.initialize();
         await pumpEventQueue();
         await service1.signIn(
-          AuthCredentials(email: 'user@example.com', password: 'password'),
+          const AuthCredentials(email: 'user@example.com', password: 'password'),
         );
         await pumpEventQueue();
         expect(provider1.status, AuthStatus.authenticated);
@@ -257,7 +257,7 @@ void main() {
         await provider.initialize();
         await pumpEventQueue();
         await service.signIn(
-          AuthCredentials(email: 'user@example.com', password: 'password'),
+          const AuthCredentials(email: 'user@example.com', password: 'password'),
         );
         await pumpEventQueue();
 
@@ -298,7 +298,7 @@ void main() {
         expect(routeGuard.redirectResolver('/profile'), '/login?next=/profile');
 
         await service.signIn(
-          AuthCredentials(email: 'user@example.com', password: 'password'),
+          const AuthCredentials(email: 'user@example.com', password: 'password'),
         );
         await pumpEventQueue();
         expect(provider.isSignedIn, isTrue);

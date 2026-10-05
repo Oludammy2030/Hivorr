@@ -33,6 +33,6 @@ class PerformanceTracer {
   /// Finishes [span] with the given [status]. Null spans are ignored.
   Future<void> finishSpan(ISentrySpan? span, {SpanStatus? status}) async {
     if (span == null) return;
-    await span.finish(status: status ?? SpanStatus.ok());
+    await span.finish(status: status ?? const SpanStatus.ok());
   }
 }

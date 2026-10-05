@@ -66,7 +66,7 @@ abstract final class StorageValidators {
   static void validateMime(String bucket, String mimeType) {
     final normalized = normalizeMime(mimeType);
     if (_blockedMimeTypes.contains(normalized)) {
-      throw StorageValidationException(
+      throw const StorageValidationException(
         'This file type is not supported.',
         field: 'mimeType',
       );
@@ -91,7 +91,7 @@ abstract final class StorageValidators {
   /// Throws [StorageValidationException] when [byteLength] exceeds the limit.
   static void validateSize(String bucket, int byteLength) {
     if (byteLength < 0) {
-      throw StorageValidationException(
+      throw const StorageValidationException(
         'File size cannot be negative.',
         field: 'byteLength',
       );

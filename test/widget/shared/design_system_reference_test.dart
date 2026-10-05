@@ -28,7 +28,7 @@ void main() {
 
     testWidgets('disabled state prevents interaction', (tester) async {
       bool tapped = false;
-      await pumpTheme(tester, HivorrButton(label: 'No', onPressed: null));
+      await pumpTheme(tester, const HivorrButton(label: 'No', onPressed: null));
       final ElevatedButton button = tester.widget<ElevatedButton>(
         find.byType(ElevatedButton),
       );
@@ -42,7 +42,7 @@ void main() {
     testWidgets('shows error message', (tester) async {
       await pumpTheme(
         tester,
-        HivorrTextField(label: 'Name', errorText: 'Required'),
+        const HivorrTextField(label: 'Name', errorText: 'Required'),
       );
       expect(find.text('Required'), findsOneWidget);
     });
@@ -62,7 +62,7 @@ void main() {
     testWidgets('renders at mobile width 390', (tester) async {
       await pumpScreen(
         tester,
-        HivorrCard(child: const Text('card')),
+        const HivorrCard(child: Text('card')),
         width: 390,
       );
       expect(find.text('card'), findsOneWidget);
@@ -72,7 +72,7 @@ void main() {
     testWidgets('renders at web width 1280', (tester) async {
       await pumpScreen(
         tester,
-        HivorrCard(child: const Text('card')),
+        const HivorrCard(child: Text('card')),
         width: 1280,
       );
       expect(find.text('card'), findsOneWidget);

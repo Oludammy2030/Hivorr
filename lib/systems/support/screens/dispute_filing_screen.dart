@@ -257,9 +257,9 @@ class _TypeField extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<DisputeType>(
       initialValue: selected,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: 'Dispute type',
-        border: const OutlineInputBorder(),
+        border: OutlineInputBorder(),
       ),
       items: <DropdownMenuItem<DisputeType>>[
         for (final DisputeType type in disputeTypes)

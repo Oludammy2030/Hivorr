@@ -234,7 +234,8 @@ class RoleThemeExtension extends ThemeExtension<RoleThemeExtension> {
     professionalContainer: Color(0xFF14532D),
     bothPrimary: Color(0xFFB7A6FF),
     bothContainer: Color(0xFF4C2FB3),
-    adminPrimary: Color(0xFF8B9DFF),
+    // Distinct from clientPrimary (VISUAL-IDENTITY.md §3): deeper Admin indigo.
+    adminPrimary: Color(0xFF6E7BFF),
     adminAccent: Color(0xFFB7A6FF),
   );
 

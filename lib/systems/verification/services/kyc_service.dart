@@ -58,7 +58,7 @@ class KycService {
         targetTier: targetTier,
         payload: payload,
       );
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       _logger?.info('KYC upgrade resolved', <String, Object?>{
         'targetTier': targetTier.code,
         'resultTier': next.tierCode,
@@ -66,7 +66,7 @@ class KycService {
       });
       return next;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'KYC upgrade failed',
         error: error,
@@ -81,10 +81,10 @@ class KycService {
     final span = _tracer?.startTransaction(name, 'kyc');
     try {
       final T result = await action();
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       return result;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error('$name failed', error: error, stackTrace: stackTrace);
       rethrow;
     }

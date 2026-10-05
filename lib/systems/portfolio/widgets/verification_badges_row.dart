@@ -58,7 +58,7 @@ class VerificationBadgesRow extends StatelessWidget {
               variant: HivorrBadgeVariant.success,
             ),
           if (tradeVerified)
-            HivorrBadge(
+            const HivorrBadge(
               label: 'Trade Verified',
               variant: HivorrBadgeVariant.success,
             ),

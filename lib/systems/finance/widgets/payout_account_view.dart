@@ -105,8 +105,8 @@ class _PayoutAccountViewState extends State<PayoutAccountView> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          HivorrEmptyState(
-            icon: const Icon(Icons.account_balance_outlined),
+          const HivorrEmptyState(
+            icon: Icon(Icons.account_balance_outlined),
             title: 'No payout accounts bound',
             subtitle:
                 'Bind a bank account to receive payouts. Ownership is verified '

@@ -60,7 +60,7 @@ void main() {
   group('VerificationMapper.limitsToEntity', () {
     test('maps all four limit windows', () {
       final KycLimits limits = VerificationMapper.limitsToEntity(
-        KycLimitsDto(daily: 1, weekly: 2, monthly: 3, cashout: 4),
+        const KycLimitsDto(daily: 1, weekly: 2, monthly: 3, cashout: 4),
       );
 
       expect(limits.daily, 1);

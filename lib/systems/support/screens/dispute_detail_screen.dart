@@ -138,7 +138,7 @@ class _DisputeDetailScreenState extends State<DisputeDetailScreen>
 
           final DisputeCase? case_ = provider.selected;
           if (case_ == null) {
-            return HivorrErrorState(
+            return const HivorrErrorState(
               message: 'Dispute not found',
               detail: 'No dispute case matches this reference.',
             );

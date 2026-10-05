@@ -183,6 +183,7 @@ class _ContractOfferScreenState extends State<ContractOfferScreen>
           ? const HivorrSuccessState(
               title: 'Offer sent',
               subtitle: 'The professional will review your request.',
+              celebrate: true,
             )
           : Form(
               key: _formKey,

@@ -199,7 +199,7 @@ class _AdminTopBar extends StatelessWidget {
           Text(
             title,
             style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: colors.onSurface,
             ),
           ),
@@ -241,18 +241,28 @@ class _ChromeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    return Material(
-      color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Tooltip(
-          message: tooltip,
+    // §13a: 40dp visible tile centered in a 48dp hit area.
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
           child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, size: 20, color: colors.onSurfaceVariant),
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 20, color: colors.onSurfaceVariant),
+              ),
+            ),
           ),
         ),
       ),
@@ -275,58 +285,68 @@ class _NotificationButton extends StatelessWidget {
     } catch (_) {
       pendingCount = 0;
     }
-    return Material(
-      color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: () {
-          if (location != RoutePaths.adminVerificationApprovals) {
-            context.go(RoutePaths.adminVerificationApprovals);
-          }
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Tooltip(
-          message: pendingCount == 0
-              ? 'Pending approvals'
-              : '$pendingCount awaiting review',
+    return Tooltip(
+      message: pendingCount == 0
+          ? 'Pending approvals'
+          : '$pendingCount awaiting review',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (location != RoutePaths.adminVerificationApprovals) {
+              context.go(RoutePaths.adminVerificationApprovals);
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          // §13a: 40dp visible tile centered in a 48dp hit area.
           child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.notifications_outlined,
-                  size: 20,
-                  color: colors.onSurfaceVariant,
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                if (pendingCount > 0)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: HivorrSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.error,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        pendingCount > 99 ? '99+' : '$pendingCount',
-                        style: context.textTheme.labelSmall?.copyWith(
-                          color: colors.onError,
-                          fontWeight: FontWeight.w700,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.notifications_outlined,
+                      size: 20,
+                      color: colors.onSurfaceVariant,
+                    ),
+                    if (pendingCount > 0)
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: HivorrSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.error,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            pendingCount > 99 ? '99+' : '$pendingCount',
+                            style: context.textTheme.labelSmall?.copyWith(
+                              color: colors.onError,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -417,6 +437,10 @@ class _Workspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(color: const Color(0xFFF0F2F8), child: child);
+    return ColoredBox(
+      // App background token (§5.3) — never a raw hex.
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: child,
+    );
   }
 }

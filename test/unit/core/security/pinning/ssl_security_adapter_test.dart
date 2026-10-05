@@ -23,7 +23,7 @@ void main() {
     );
 
     test('verifyDer rejects a non-matching pin', () {
-      final CertificatePinner wrong = CertificatePinner(<String>[
+      const CertificatePinner wrong = CertificatePinner(<String>[
         'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
       ]);
       expect(SslSecurityAdapter.verifyDer(wrong, cert), isFalse);

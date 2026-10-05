@@ -4,7 +4,7 @@ import 'package:hivorr/core/notifications/models/notification_priority.dart';
 
 void main() {
   test('constructor exposes declared fields', () {
-    final channel = NotificationChannel(
+    const channel = NotificationChannel(
       id: 'c',
       name: 'C',
       description: 'd',
@@ -21,7 +21,7 @@ void main() {
   });
 
   test('copyWith replaces only provided fields', () {
-    final channel = NotificationChannel(
+    const channel = NotificationChannel(
       id: 'c',
       name: 'C',
       importance: NotificationPriority.normal,

@@ -72,6 +72,8 @@ class HivorrChip extends StatelessWidget {
             child: Text(
               label,
               style: context.textTheme.labelMedium?.copyWith(color: textColor),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           if (onDismissed != null) ...<Widget>[

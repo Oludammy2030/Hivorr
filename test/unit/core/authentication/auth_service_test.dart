@@ -49,7 +49,7 @@ void main() {
       authClient.returnSessionOnSignUp = true;
 
       final AuthResult result = await service.signUp(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
 
       expect(result.status, AuthStatus.authenticated);
@@ -65,7 +65,7 @@ void main() {
       authClient.returnSessionOnSignUp = false;
 
       final AuthResult result = await service.signUp(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
 
       expect(result.status, AuthStatus.awaitingEmailConfirmation);
@@ -188,7 +188,7 @@ void main() {
       late final ApiException error;
       try {
         await service.signUp(
-          AuthCredentials(email: 'a@b.com', password: 'password'),
+          const AuthCredentials(email: 'a@b.com', password: 'password'),
         );
         fail('Expected ApiException');
       } on Object catch (e) {
@@ -211,7 +211,7 @@ void main() {
       late final ApiException error;
       try {
         await service.signIn(
-          AuthCredentials(email: 'a@b.com', password: 'password'),
+          const AuthCredentials(email: 'a@b.com', password: 'password'),
         );
         fail('Expected ApiException');
       } on Object catch (e) {
@@ -234,7 +234,7 @@ void main() {
       late final ApiException error;
       try {
         await service.signIn(
-          AuthCredentials(email: 'a@b.com', password: 'password'),
+          const AuthCredentials(email: 'a@b.com', password: 'password'),
         );
         fail('Expected ApiException');
       } on Object catch (e) {
@@ -257,7 +257,7 @@ void main() {
       late final ApiException error;
       try {
         await service.signIn(
-          AuthCredentials(email: 'a@b.com', password: 'wrong'),
+          const AuthCredentials(email: 'a@b.com', password: 'wrong'),
         );
         fail('Expected ApiException');
       } on Object catch (e) {
@@ -363,7 +363,7 @@ void main() {
       authClient.emailConfirmedInSession = true;
 
       await service.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
 
       expect(service.currentSession?.isEmailConfirmed, isTrue);
@@ -375,7 +375,7 @@ void main() {
       authClient.emailConfirmedInSession = false;
 
       await service.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
 
       expect(service.currentSession?.isEmailConfirmed, isFalse);
@@ -386,7 +386,7 @@ void main() {
       final AuthService service = buildService(authClient: authClient);
 
       final AuthResult result = await service.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
 
       expect(result.status, AuthStatus.authenticated);
@@ -398,7 +398,7 @@ void main() {
     test('signOut transitions to unauthenticated', () async {
       final AuthService service = buildService(authClient: authClient);
       await service.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
       expect(service.isSignedIn, isTrue);
 
@@ -439,7 +439,7 @@ void main() {
 
       expect(
         () => service.signIn(
-          AuthCredentials(email: 'a@b.com', password: 'wrong'),
+          const AuthCredentials(email: 'a@b.com', password: 'wrong'),
         ),
         throwsA(isA<ApiException>()),
       );
@@ -478,11 +478,11 @@ void main() {
               as FakeSupabaseAuthService;
 
       await service.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
       await pumpEventQueue();
       await service.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
       await pumpEventQueue();
 

@@ -61,9 +61,9 @@ class ApiInitializer {
     final supabaseClient = await SupabaseInitializer.initialize(config);
     final apiConfig = ApiConfig.forEnvironment(config.environment);
 
-    final tokenProvider = const SupabaseAccessTokenProvider();
-    final logSink = const DeveloperLogSink('hivorr.api');
-    final exceptionMapper = const ApiExceptionMapper();
+    const tokenProvider = SupabaseAccessTokenProvider();
+    const logSink = DeveloperLogSink('hivorr.api');
+    const exceptionMapper = ApiExceptionMapper();
 
     final auth = AuthInterceptor(tokenProvider: tokenProvider);
     final logging = LoggingInterceptor(logSink: logSink);

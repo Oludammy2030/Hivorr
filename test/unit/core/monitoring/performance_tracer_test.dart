@@ -6,7 +6,7 @@ import 'package:hivorr/core/monitoring/performance_tracer.dart';
 import '../test_sentry_helper.dart';
 
 MonitoringConfig _activeConfig() => MonitoringConfig.fromSource(
-  MapEnvironmentValueSource(<String, String>{
+  const MapEnvironmentValueSource(<String, String>{
     'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
     'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
     'HIVORR_MONITORING_TRACE_SAMPLE_RATE': '1.0',

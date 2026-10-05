@@ -3,12 +3,12 @@ import 'package:hivorr/data/providers/entity_provider.dart';
 
 /// Matches an [EntityProvider] currently in the loading state.
 Matcher hasLoadingState() =>
-    _ProviderStateMatcher(EntityProviderState.loading, 'loading');
+    const _ProviderStateMatcher(EntityProviderState.loading, 'loading');
 
 /// Matches an [EntityProvider] currently in the loaded/success state,
 /// optionally asserting the error message substring.
 Matcher hasLoadedState() =>
-    _ProviderStateMatcher(EntityProviderState.loaded, 'loaded');
+    const _ProviderStateMatcher(EntityProviderState.loaded, 'loaded');
 
 /// Matches an [EntityProvider] currently in the error state, optionally
 /// asserting that its [EntityProvider.error] message contains [messageContains].

@@ -123,7 +123,7 @@ class PaymentGatewayConfig {
   /// Validates that [url] is a valid HTTPS URL with a host.
   static void _validateHttpsUrl(String url) {
     if (_isPlaceholder(url)) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envNibssBaseUrl,
         reason: 'NIBSS base URL must not be a placeholder value.',
       );
@@ -132,19 +132,19 @@ class PaymentGatewayConfig {
     try {
       uri = Uri.parse(url);
     } on FormatException {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envNibssBaseUrl,
         reason: 'NIBSS base URL is not a valid URL.',
       );
     }
     if (uri.scheme != 'https') {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envNibssBaseUrl,
         reason: 'NIBSS base URL must use HTTPS.',
       );
     }
     if (uri.host.isEmpty) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envNibssBaseUrl,
         reason: 'NIBSS base URL must include a valid host.',
       );

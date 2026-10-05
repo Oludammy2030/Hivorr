@@ -50,13 +50,13 @@ void main() {
         await _pumpClean(
           tester,
           _themed(
-            HivorrHeroPanel(
+            const HivorrHeroPanel(
               eyebrow: 'EYEBROW',
               title: 'Title',
               subtitle: 'Subtitle copy for the hero panel.',
               primaryLabel: 'Primary',
               secondaryLabel: 'Secondary',
-              statistics: const <HivorrHeroStat>[
+              statistics: <HivorrHeroStat>[
                 HivorrHeroStat(value: '1', label: 'one'),
                 HivorrHeroStat(value: '2', label: 'two'),
               ],

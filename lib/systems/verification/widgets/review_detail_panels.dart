@@ -265,6 +265,10 @@ class _ReviewDocumentPanelState extends State<ReviewDocumentPanel> {
               child: Image.network(
                 _signedUrl!,
                 fit: BoxFit.contain,
+                // Document legibility needs resolution: cap at 1600px wide.
+                cacheWidth: 1600,
+                filterQuality: FilterQuality.medium,
+                gaplessPlayback: true,
                 errorBuilder: (_, _, _) =>
                     const Center(child: Text('Unable to load document.')),
               ),

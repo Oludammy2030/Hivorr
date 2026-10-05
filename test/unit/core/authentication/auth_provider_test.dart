@@ -46,7 +46,7 @@ void main() {
       provider.addListener(() => notified = true);
 
       await provider.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'password'),
+        const AuthCredentials(email: 'a@b.com', password: 'password'),
       );
 
       expect(provider.isSignedIn, isTrue);
@@ -82,7 +82,7 @@ void main() {
       );
 
       await provider.signIn(
-        AuthCredentials(email: 'a@b.com', password: 'wrong'),
+        const AuthCredentials(email: 'a@b.com', password: 'wrong'),
       );
 
       expect(provider.lastError, isNotNull);

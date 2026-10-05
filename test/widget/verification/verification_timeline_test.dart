@@ -17,7 +17,7 @@ void main() {
     testWidgets('renders all four step titles', (WidgetTester tester) async {
       await pump(
         tester,
-        VerificationTimeline(status: VerificationStatusKind.pending),
+        const VerificationTimeline(status: VerificationStatusKind.pending),
       );
 
       expect(find.text('Submitted'), findsOneWidget);
@@ -31,7 +31,7 @@ void main() {
     ) async {
       await pump(
         tester,
-        VerificationTimeline(status: VerificationStatusKind.pending),
+        const VerificationTimeline(status: VerificationStatusKind.pending),
       );
 
       final Text pendingTitle = tester.widget<Text>(
@@ -45,7 +45,7 @@ void main() {
     ) async {
       await pump(
         tester,
-        VerificationTimeline(status: VerificationStatusKind.inReview),
+        const VerificationTimeline(status: VerificationStatusKind.inReview),
       );
 
       final Text inReviewTitle = tester.widget<Text>(find.text('In review'));
@@ -57,7 +57,7 @@ void main() {
     ) async {
       await pump(
         tester,
-        VerificationTimeline(status: VerificationStatusKind.approved),
+        const VerificationTimeline(status: VerificationStatusKind.approved),
       );
 
       expect(find.text('Approved'), findsOneWidget);
@@ -98,7 +98,7 @@ void main() {
     testWidgets('rejected shows decision notes', (WidgetTester tester) async {
       await pump(
         tester,
-        VerificationTimeline(
+        const VerificationTimeline(
           status: VerificationStatusKind.rejected,
           decisionNotes: 'ID was illegible',
         ),
@@ -113,7 +113,7 @@ void main() {
     ) async {
       await pump(
         tester,
-        VerificationTimeline(
+        const VerificationTimeline(
           status: VerificationStatusKind.requiresResubmission,
           decisionNotes: 'Please sharpen the photo',
         ),
@@ -128,7 +128,7 @@ void main() {
     ) async {
       await pump(
         tester,
-        VerificationTimeline(
+        const VerificationTimeline(
           status: VerificationStatusKind.approved,
           decisionNotes: 'ignored',
         ),
@@ -142,7 +142,7 @@ void main() {
     ) async {
       await pump(
         tester,
-        VerificationTimeline(status: VerificationStatusKind.pending),
+        const VerificationTimeline(status: VerificationStatusKind.pending),
       );
 
       expect(find.textContaining('Mar'), findsNothing);

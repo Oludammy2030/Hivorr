@@ -190,6 +190,10 @@ class _EvidenceThumb extends StatelessWidget {
           ? Image.network(
               url,
               fit: BoxFit.cover,
+              // 56dp thumb: 2x bitmap is plenty.
+              cacheWidth: 112,
+              filterQuality: FilterQuality.medium,
+              gaplessPlayback: true,
               errorBuilder:
                   (
                     BuildContext context,

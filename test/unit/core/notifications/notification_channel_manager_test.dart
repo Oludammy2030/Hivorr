@@ -23,7 +23,7 @@ void main() {
     final backend = FakeLocalNotificationBackend();
     final manager = NotificationChannelManager(backend);
     await manager.createChannel(
-      NotificationChannel(
+      const NotificationChannel(
         id: 'custom',
         name: 'Custom',
         importance: NotificationPriority.high,
@@ -37,7 +37,7 @@ void main() {
     final backend = FakeLocalNotificationBackend();
     final manager = NotificationChannelManager(backend);
     await manager.createChannel(
-      NotificationChannel(
+      const NotificationChannel(
         id: 'bad id!',
         name: 'x',
         importance: NotificationPriority.normal,
@@ -51,7 +51,7 @@ void main() {
     final backend = FakeLocalNotificationBackend();
     final manager = NotificationChannelManager(backend);
     await manager.createChannel(
-      NotificationChannel(
+      const NotificationChannel(
         id: 'c1',
         name: 'C1',
         importance: NotificationPriority.normal,

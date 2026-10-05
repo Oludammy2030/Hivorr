@@ -267,7 +267,7 @@ void main() {
   });
 }
 
-PayoutAccount usableAccount() => PayoutAccount(
+PayoutAccount usableAccount() => const PayoutAccount(
   id: 'acc-1',
   currencyCode: 'NGN',
   bankName: 'Guaranty Trust',

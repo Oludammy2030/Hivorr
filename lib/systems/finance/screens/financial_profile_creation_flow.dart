@@ -54,6 +54,7 @@ class _FinancialProfileCreationFlowState
                 subtitle:
                     'Your default currency is ${_currencyLabel(provider.profile!.defaultCurrency)}. '
                     'You can now start receiving payments.',
+                celebrate: true,
                 actionButton: HivorrButton(
                   label: 'View Profile',
                   onPressed: () => context.go('/finance'),

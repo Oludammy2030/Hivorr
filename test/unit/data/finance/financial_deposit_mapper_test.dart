@@ -36,7 +36,7 @@ void main() {
     });
 
     test('null optional fields map to null without throwing', () {
-      final DepositDto dto = DepositDto(
+      const DepositDto dto = DepositDto(
         id: 'dep-2',
         currencyCode: 'USD',
         amount: 100,
@@ -72,7 +72,7 @@ void main() {
     });
 
     test('unknown persisted status falls back to unverified', () {
-      final DepositDto dto = DepositDto(
+      const DepositDto dto = DepositDto(
         id: 'x',
         currencyCode: 'NGN',
         amount: 1,

@@ -1,10 +1,20 @@
-// EP-02-20 DoD-C3: Design Token Scan Verification (Rule 5).
+// Design Token Scan Verification (AGENT.md Rule 5).
 //
-// Static scan. Walks all Dart files under `lib/systems/{onboarding,
-// verification, finance, support, portfolio}/` and asserts:
-//  1. No `Colors.*` usage (must use Theme.of(context).colorScheme).
-//  2. No `Color(0xFF` hex literals (must use theme/AppThemeExtension).
-//  3. No `fontFamily:` hardcoded strings (must use textTheme).
+// Static scan. Walks ALL Dart files under `lib/` and asserts the token rules
+// from `documents/Context/VISUAL-IDENTITY.md` + `FLUTTER-UI-IMPLEMENTATION-
+// RULES.md` hold outside the documented exceptions below:
+//
+//  1. No `Colors.*` (must use Theme/ColorScheme) — except `Colors.transparent`
+//     (sanctioned unselected/overlay layer, §27) and the per-file allowlist.
+//  2. No `Color(0xFF...)` hex literals (must use theme/AppThemeExtension).
+//  3. No `fontFamily:` hardcoded strings (must use TextTheme).
+//  4. No per-widget `fontSize:` (§6 scale mapping instead).
+//  5. No `FontWeight.w800` in functional UI (§6a landing-display exception).
+//
+// `lib/app/theme/` is excluded throughout: it DEFINES the tokens.
+// Grandfathered files below carry pre-scan violations with a reason; they may
+// only shrink. Any finding outside this allowlist — including any NEW file
+// with a finding — fails the suite.
 //
 // Run: flutter test test/integration/verification/trust_theme_token_scan_verification.dart
 
@@ -85,73 +95,153 @@ String _snippetAt(String content, int index, int length) {
   return content.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
-// Patterns that violate AGENT.md Rule 5 (hardcoded colors / fonts).
+// NOTE: `(?<![A-Za-z])` keeps `AppColors.*` (token definitions/reads) from
+// matching the `Colors.*` rule.
 final List<(RegExp, String)> _tokenPatterns = <(RegExp, String)>[
-  (RegExp(r'Colors\.\w+'), 'Colors.*'),
+  (RegExp(r'(?<![A-Za-z])Colors\.\w+'), 'Colors.*'),
   (RegExp(r'Color\(0xFF[0-9A-Fa-f]{6}\)'), 'Color(0xFF...)'),
   (RegExp(r'''fontFamily:\s*['"]'''), 'fontFamily:'),
+  (RegExp(r'fontSize:'), 'fontSize:'),
+  (RegExp(r'FontWeight\.w800'), 'FontWeight.w800'),
 ];
+
+/// Directories that define tokens (never scanned).
+bool _isExcluded(String relativePath) {
+  final normalized = relativePath.replaceAll('\\', '/');
+  return normalized.startsWith('lib/app/theme/');
+}
+
+/// Globally sanctioned literals (§27): transparent unselected/overlay layers.
+bool _isGloballyAllowed(String snippet) =>
+    snippet.startsWith('Colors.transparent');
+
+/// Grandfathered files: pre-scan violations with a reason. New files must be
+/// clean; entries here may only shrink (shrinkage is verified by review, not
+/// by count — do not add new violations to these files).
+const Map<String, Map<String, String>> _fileAllow = <String, Map<String, String>>{
+  'lib/app/auth/screens/login_screen.dart': <String, String>{
+    'Colors.*': 'pixel-matched log in.png reference, white-on-brand (§2)',
+    'Color(0xFF...)':
+        'reference page/field fills (#F7F7F4, #FFF2F4F7, #E5E7EB)',
+    'fontSize:': 'reference marketing type (shares §6a exception)',
+    'FontWeight.w800': 'marketing display (§6a, documented at call sites)',
+  },
+  'lib/app/auth/screens/auth_scaffold.dart': <String, String>{
+    'Colors.*': 'brand-panel white-on-brand (§2)',
+  },
+  'lib/shared/components/hivorr_hero_panel.dart': <String, String>{
+    'Colors.*': 'white-on-gradient hero actions (§2)',
+  },
+  'lib/systems/dashboard/widgets/overview_display_widgets.dart':
+      <String, String>{
+    'Colors.*': 'white-on-gradient hero tiles (§2)',
+  },
+  'lib/app/widgets/logo_variants.dart': <String, String>{
+    'Colors.*': 'monochrome default (tintable white)',
+  },
+  'lib/systems/dashboard/shell/dashboard_sidebar.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+    'fontSize:': 'grandfathered — migrate per-feature',
+    'FontWeight.w800': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/shell/dashboard_more_sheet.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+    'FontWeight.w800': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/widgets/dashboard_cards.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+    'fontSize:': 'grandfathered — migrate per-feature',
+    'FontWeight.w800': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/screens/opportunities_screen.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+    'Color(0xFF...)': 'grandfathered — migrate per-feature',
+    'fontSize:': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/screens/finance_hubs_screen.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/screens/dashboard_overview_screen.dart':
+      <String, String>{
+    'Colors.*': 'reference rows + white-on-gradient heroes — migrate rows',
+    'Color(0xFF...)': 'reference rows — migrate per-feature',
+  },
+  'lib/systems/dashboard/screens/profile_screen.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+    'Color(0xFF...)':
+        'grandfathered — includes off-palette #DB2777, needs design review',
+  },
+  'lib/systems/dashboard/screens/hires_screen.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/screens/job_form_screen.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/screens/my_jobs_screen.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/screens/messages_screen.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/admin/widgets/super_admin_sidebar.dart': <String, String>{
+    'Colors.*': 'grandfathered — migrate per-feature',
+  },
+};
 
 void main() {
   final scriptPath = Platform.script.toFilePath();
   final projectRoot = _computeProjectRoot(scriptPath);
 
-  // Collect Dart files in the 5 trust-system directories.
-  final trustDirs = <String>[
-    'lib/systems/onboarding',
-    'lib/systems/verification',
-    'lib/systems/finance',
-    'lib/systems/support',
-    'lib/systems/portfolio',
-  ];
-
   final files = <String>[];
-  for (final dirName in trustDirs) {
-    final dir = Directory(_join(projectRoot, dirName));
-    if (dir.existsSync()) {
-      _collectDartFiles(dir, scriptPath, files);
-    }
+  final libDir = Directory(_join(projectRoot, 'lib'));
+  if (libDir.existsSync()) {
+    _collectDartFiles(libDir, scriptPath, files);
   }
 
   // Scan.
   final findings = <_TokenFinding>[];
+  final allowed = <_TokenFinding>[];
   for (final filePath in files) {
     final file = File(filePath);
     if (!file.existsSync()) continue;
+    final relative = _relative(filePath).replaceAll('\\', '/');
+    if (_isExcluded(relative)) continue;
     final content = file.readAsStringSync();
 
     for (final (pattern, label) in _tokenPatterns) {
       for (final m in pattern.allMatches(content)) {
-        findings.add(
-          _TokenFinding(
-            filePath,
-            _lineOf(content, m.start),
-            label,
-            _snippetAt(content, m.start, 60),
-          ),
+        final snippet = _snippetAt(content, m.start, 60);
+        final finding = _TokenFinding(
+          filePath,
+          _lineOf(content, m.start),
+          label,
+          snippet,
         );
+        if (_isGloballyAllowed(snippet)) continue;
+        if ((_fileAllow[relative]?[label]) != null) {
+          allowed.add(finding);
+          continue;
+        }
+        findings.add(finding);
       }
     }
   }
 
-  group('DoD-C3: Design token scan (Rule 5)', () {
-    test(
-      'no Colors.*, Color(0xFF...), fontFamily: in trust system widgets',
-      () {
-        final buffer = StringBuffer();
-        buffer.writeln('Theme token scan found ${findings.length} finding(s):');
-        for (final f in findings) {
-          buffer.writeln('  - $f');
-        }
-        expect(findings, isEmpty, reason: buffer.toString());
-      },
-    );
+  group('Design token scan (Rule 5, all of lib/)', () {
+    test('no token violations outside the documented allowlist', () {
+      final buffer = StringBuffer();
+      buffer.writeln('Theme token scan found ${findings.length} finding(s):');
+      for (final f in findings) {
+        buffer.writeln('  - $f');
+      }
+      expect(findings, isEmpty, reason: buffer.toString());
+    });
 
-    test('scanned a non-trivial set of trust system files', () {
+    test('scanned a non-trivial set of lib files', () {
       expect(
         files.length,
-        greaterThan(0),
-        reason: 'must scan at least one trust-system dart file',
+        greaterThan(100),
+        reason: 'must scan substantially all of lib/',
       );
     });
   });

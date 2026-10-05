@@ -87,7 +87,7 @@ class _TradeVerificationStatusScreenState
     if (status == null) {
       return RefreshIndicator(
         onRefresh: provider.refreshStatus,
-        child: ListView(children: <Widget>[const HivorrLoadingState()]),
+        child: ListView(children: const <Widget>[HivorrLoadingState()]),
       );
     }
     if (status.tradeVerifications.isEmpty) {
@@ -168,7 +168,7 @@ class _ProfessionSection extends StatelessWidget {
                 TradeVerificationTimeline(entry: entry),
                 if (kind == TradeVerificationStatusKind.rejected) ...<Widget>[
                   const SizedBox(height: HivorrSpacing.md),
-                  HivorrErrorState(
+                  const HivorrErrorState(
                     message: 'This trade proof was not approved.',
                     detail: 'Please upload a new, clearer proof to continue.',
                   ),

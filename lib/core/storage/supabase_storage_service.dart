@@ -138,7 +138,7 @@ class SupabaseStorageService implements StorageService {
       await _tracer?.finishSpan(span);
       return storageKey;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       unawaited(_monitoring?.setTag('storage.error.kind', _kindName(error)));
       throw _mapError(error, stackTrace: stackTrace, bucket: bucket);
     }
@@ -243,7 +243,7 @@ class SupabaseStorageService implements StorageService {
       await _tracer?.finishSpan(span);
       return bytes;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       unawaited(_monitoring?.setTag('storage.error.kind', _kindName(error)));
       throw _mapError(error, stackTrace: stackTrace, bucket: bucket);
     }
@@ -267,7 +267,7 @@ class SupabaseStorageService implements StorageService {
   String getPublicUrl({required String bucket, required String path}) {
     _ensureKnownBucket(bucket);
     if (StorageBucketVisibilities.forBucket(bucket) != true) {
-      throw StorageValidationException(
+      throw const StorageValidationException(
         'getPublicUrl is only allowed for public buckets. '
         'Use createSignedUrl for private credential-documents.',
         field: 'bucket',
@@ -377,7 +377,7 @@ class SupabaseStorageService implements StorageService {
       stackTrace: stackTrace,
       context: <String, Object?>{'bucket': bucket},
     );
-    return StorageException(
+    return const StorageException(
       kind: ApiExceptionKind.unknown,
       message: 'An unexpected storage error occurred.',
       code: 'PLT999',

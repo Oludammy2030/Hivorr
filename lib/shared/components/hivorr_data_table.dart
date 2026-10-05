@@ -55,16 +55,19 @@ class HivorrDataTable extends StatelessWidget {
         for (final HivorrDataRow row in rows) ...<Widget>[
           InkWell(
             onTap: row.onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: HivorrSpacing.md,
-                vertical: HivorrSpacing.sm,
-              ),
-              child: Row(
-                children: <Widget>[
-                  for (final HivorrDataCell cell in row.cells)
-                    Expanded(flex: cell.flex, child: cell.child),
-                ],
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 40),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: HivorrSpacing.md,
+                  vertical: HivorrSpacing.sm,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    for (final HivorrDataCell cell in row.cells)
+                      Expanded(flex: cell.flex, child: cell.child),
+                  ],
+                ),
               ),
             ),
           ),

@@ -87,8 +87,8 @@ class _NoDeposits extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HivorrEmptyState(
-      icon: const Icon(Icons.payments_outlined),
+    return const HivorrEmptyState(
+      icon: Icon(Icons.payments_outlined),
       title: 'No deposits recorded yet',
       subtitle:
           'Payer names are verified against your profile legal name. '

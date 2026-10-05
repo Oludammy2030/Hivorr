@@ -93,8 +93,8 @@ class _DisputeListScreenState extends State<DisputeListScreen>
           }
 
           if (provider.disputes.isEmpty) {
-            return HivorrEmptyState(
-              icon: const Icon(Icons.gavel_outlined),
+            return const HivorrEmptyState(
+              icon: Icon(Icons.gavel_outlined),
               title: 'No disputes yet',
               subtitle:
                   'Raise one from an escrow’s dispute action to freeze the '

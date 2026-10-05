@@ -27,7 +27,7 @@ void main() {
     test('maps DTO rows into Deposit entities', () async {
       final remote = FakeDepositRemote(
         seed: <DepositDto>[
-          DepositDto(
+          const DepositDto(
             id: 'dep-1',
             currencyCode: 'NGN',
             amount: 150000,

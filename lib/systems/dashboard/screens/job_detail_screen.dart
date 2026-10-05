@@ -622,9 +622,11 @@ class _ApplySheet extends StatefulWidget {
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
-        builder: (_) => Padding(
+        // Sheet context (not the outer one): keyboard height stays correct
+        // across rotation/fold while the sheet is open.
+        builder: (BuildContext sheetContext) => Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
           ),
           child: _ApplySheet(jobId: jobId),
         ),

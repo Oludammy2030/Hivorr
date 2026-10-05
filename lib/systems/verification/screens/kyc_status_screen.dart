@@ -106,8 +106,8 @@ class _KycStatusScreenState extends State<KycStatusScreen>
               onStartVerification: () => context.push(RoutePaths.kycUpgrade),
             ),
           ] else if (provider.currentTier == KycTier.tier3) ...<Widget>[
-            HivorrEmptyState(
-              icon: const Icon(Icons.verified),
+            const HivorrEmptyState(
+              icon: Icon(Icons.verified),
               title: 'Fully verified',
               subtitle: 'You have the maximum limits available on Hivorr.',
             ),

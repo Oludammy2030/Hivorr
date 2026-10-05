@@ -64,9 +64,9 @@ void main() {
     test('maps entries and the identity flag from the trade DTO', () {
       final TradeVerificationStatus entity =
           VerificationMapper.tradeStatusToEntity(
-            TradeVerificationStatusDto(
+            const TradeVerificationStatusDto(
               identityVerified: true,
-              tradeVerifications: const <TradeVerificationDto>[
+              tradeVerifications: <TradeVerificationDto>[
                 TradeVerificationDto(professionId: 'p1', status: 'approved'),
                 TradeVerificationDto(professionId: 'p2', status: 'pending'),
               ],
@@ -84,8 +84,8 @@ void main() {
     test('derives statusKind across the server vocabulary', () {
       final TradeVerificationStatus entity =
           VerificationMapper.tradeStatusToEntity(
-            TradeVerificationStatusDto(
-              tradeVerifications: const <TradeVerificationDto>[
+            const TradeVerificationStatusDto(
+              tradeVerifications: <TradeVerificationDto>[
                 TradeVerificationDto(professionId: 'a', status: 'approved'),
                 TradeVerificationDto(professionId: 'i', status: 'in_review'),
                 TradeVerificationDto(
@@ -106,8 +106,8 @@ void main() {
     test('produces a fixed-size list (immutable copy)', () {
       final TradeVerificationStatus entity =
           VerificationMapper.tradeStatusToEntity(
-            TradeVerificationStatusDto(
-              tradeVerifications: const <TradeVerificationDto>[
+            const TradeVerificationStatusDto(
+              tradeVerifications: <TradeVerificationDto>[
                 TradeVerificationDto(professionId: 'p1', status: 'approved'),
               ],
             ),

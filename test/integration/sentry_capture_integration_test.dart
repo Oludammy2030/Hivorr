@@ -32,7 +32,7 @@ class _IntegrationError implements Exception {
 
 /// Active (Sentry-on) monitoring config built from test sources.
 MonitoringConfig _activeConfig() => MonitoringConfig.fromSource(
-  MapEnvironmentValueSource(<String, String>{
+  const MapEnvironmentValueSource(<String, String>{
     'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
     'HIVORR_MONITORING_SENTRY_DSN':
         'https://active@o000000.ingest.sentry.io/1000',
@@ -68,7 +68,7 @@ void main() {
       'exception thrown inside a monitored operation is captured by Sentry',
       () async {
         final service = MonitoringService(_activeConfig());
-        final err = const _IntegrationError('capture-explicit');
+        const err = _IntegrationError('capture-explicit');
 
         Object? captured;
         try {
@@ -98,7 +98,7 @@ void main() {
         minimumLevel: LogLevel.debug,
       );
       final logger = HivorrLogger('hivorr.api', router, redactor);
-      final err = const _IntegrationError('capture-logger');
+      const err = _IntegrationError('capture-logger');
 
       logger.error('api call failed', error: err);
 
@@ -206,7 +206,7 @@ void main() {
   group('Validation Point 6.5 — environment-aware Sentry config', () {
     // Dev: Sentry inactive, verbose (debug) logging, placeholder DSN.
     MonitoringConfig devConfig() => MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_ENABLE_SENTRY': 'false',
         'HIVORR_MONITORING_SENTRY_DSN':
             'https://dev-placeholder@o000001.ingest.sentry.io/1',
@@ -217,7 +217,7 @@ void main() {
 
     // Prod: Sentry active, reduced verbosity (warning), different placeholder DSN.
     MonitoringConfig prodConfig() => MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
         'HIVORR_MONITORING_SENTRY_DSN':
             'https://prod-placeholder@o999999.ingest.sentry.io/9',
