@@ -47,8 +47,8 @@ import 'package:provider/provider.dart';
 /// buttons, no duplicate services, no mock data.
 ///
 /// [capability] is the Users submenu filter per the Super Admin spec:
-/// `null` = All Users, `professional` = offer+both, `client` = hire+both.
-/// A user with `both` appears in all three views (single population).
+/// `null` = All Users, `professional` = offer focus, `client` = hire focus
+/// (single population, one switchable focus per account).
 class ManageUserScreen extends StatefulWidget {
   const ManageUserScreen({super.key, this.capability});
 
@@ -993,12 +993,12 @@ String _subtitleOf(ManageUserListItem user) {
 }
 
 /// Screenshot vocabulary for capabilities: `hire` clients are Employers.
+/// The retired `both` value falls through to the raw value.
 String? _roleLabelOf(String? capability) => switch (capability) {
   'hire' => 'Employer',
   'client' => 'Employer',
   'offer' => 'Professional',
   'professional' => 'Professional',
-  'both' => 'Both',
   null => null,
   '' => null,
   _ => capability,
@@ -1034,8 +1034,8 @@ _AvatarTint _tintFor(BuildContext context, String name) {
   final ColorScheme colors = context.colorScheme;
   final List<_AvatarTint> tints = <_AvatarTint>[
     _AvatarTint(
-      background: roles.bothContainer,
-      foreground: roles.bothPrimary,
+      background: ext.infoContainer,
+      foreground: ext.info,
     ),
     _AvatarTint(
       background: ext.successContainer,

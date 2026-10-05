@@ -67,6 +67,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.service.resume('u1');
+        await stack.service.selectCapability(EntityCapability.offer);
         final List<OnboardingStepCode> walked = <OnboardingStepCode>[];
         for (int i = 0; i < OnboardingStepCode.values.length; i++) {
           if (stack.service.progress!.isComplete) {
@@ -76,8 +77,8 @@ void main() {
           await stack.service.advance();
           walked.add(before);
         }
+        // selectCapability already advanced past the capability decision.
         expect(walked, <OnboardingStepCode>[
-          OnboardingStepCode.capability,
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
           OnboardingStepCode.tradeProof,
@@ -95,10 +96,16 @@ void main() {
     test('advance persists after every step (TV-10)', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.service.resume('u1');
-      await stack.service.advance();
+      await stack.service.selectCapability(EntityCapability.offer);
       expect(
         (await stack.store.read('u1'))!.step,
         OnboardingStepCode.industry,
+        reason: 'the focus decision persists the industry resume point',
+      );
+      await stack.service.advance();
+      expect(
+        (await stack.store.read('u1'))!.step,
+        OnboardingStepCode.identityDocument,
       );
     });
 
@@ -319,12 +326,12 @@ void main() {
         logger: makeLogger(sink),
       );
       await stack.service.resume('u1');
-      await stack.service.advance();
+      await stack.service.selectCapability(EntityCapability.offer);
       expect(
         sink.entries.any(
           (LogEntry e) =>
               e.level == LogLevel.info &&
-              e.message == 'Onboarding progress hydrated',
+              e.message == 'Onboarding progress persisted',
         ),
         isTrue,
       );
@@ -639,7 +646,7 @@ void main() {
     test('exitWizard persists the position and marks exited', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.service.resume('u1');
-      await stack.service.advance();
+      await stack.service.selectCapability(EntityCapability.offer);
       await stack.service.exitWizard();
       expect(stack.service.progress!.exited, isTrue);
       expect(stack.service.progress!.step, OnboardingStepCode.industry);
@@ -649,7 +656,7 @@ void main() {
     test('exitAndSave (lifecycle) never marks exited', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.service.resume('u1');
-      await stack.service.advance();
+      await stack.service.selectCapability(EntityCapability.offer);
       await stack.service.exitAndSave();
       expect(stack.service.progress!.exited, isFalse);
       expect((await stack.store.read('u1'))!.exited, isFalse);
@@ -660,7 +667,7 @@ void main() {
       () async {
         final OnboardingTestStack stack = buildOnboardingStack();
         await stack.service.resume('u1');
-        await stack.service.advance();
+        await stack.service.selectCapability(EntityCapability.offer);
         await stack.service.exitWizard();
         await stack.service.continueRegistration();
         expect(stack.service.progress!.exited, isFalse);

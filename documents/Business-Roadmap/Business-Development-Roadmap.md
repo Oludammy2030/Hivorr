@@ -10,6 +10,8 @@
 
 Hivorr is not an app competing in a category. It is an **operating system for modern human existence**—a platform where the Universal Entity Principle eliminates the artificial boundaries between professional identity, commerce participation, and daily living. Every strategic decision in this roadmap flows from one premise: **the platform's value compounds as users operate in more roles, across more contexts, over longer periods of time.**
 
+Hivorr operates through **one unified account**. There are no Client, Professional, or Both account types, and Both is permanently removed. Users progressively activate activities under **Explore with Hivorr** (I want to buy, I want to hire, discover offerings) and **Earn with Hivorr** (I want to sell products, I want to offer services, I want to provide logistics) without creating another account. Admin and Super Admin remain privileged platform roles in a separate environment.
+
 This roadmap defines what Hivorr must become over time, why each stage matters, and how each phase creates the conditions for the next.
 
 ---
@@ -36,7 +38,7 @@ Market entry follows a strict sequence:
 
 ### Product Adoption Strategy
 
-**Progressive role activation through the Universal Entity.** Users do not adopt "Hivorr" as a monolith—they adopt specific capabilities that compound over time. A user might begin by hiring a lawyer, discover they can list their own consulting services, start ordering groceries, and eventually dispatch deliveries—all within the same identity and interface. The lightweight application footprint ensures accessibility, while dynamic capability delivery progressively unlocks features as users explore new roles.
+**Progressive role activation through the Universal Entity and unified account.** Users do not adopt "Hivorr" as a monolith—they adopt specific capabilities that compound over time. A user might begin by hiring a lawyer, discover they can list their own consulting services, start ordering groceries, and eventually dispatch deliveries—all within the same identity and interface, by activating Explore activities (buy, hire, discover) and Earn activities (sell, offer services, provide logistics). The lightweight application footprint ensures accessibility, while dynamic capability delivery progressively unlocks features as users explore new roles.
 
 ### User Acquisition Opportunities
 
@@ -63,8 +65,8 @@ Retention in Hivorr is architectural, not incentive-driven:
 
 Trust is Hivorr's **foundational competitive advantage**, not a feature bolted onto a marketplace. The trust architecture operates across multiple reinforcing layers:
 
-1. **Identity verification:** Two-tier taxonomy (Industry → Profession) ensures clear categorization and credential validation.
-2. **Trade verification gates:** Administrative review of professional credentials before marketplace participation—unverified professionals have dashboard access but cannot bid or accept work.
+1. **Identity verification:** Dual taxonomy ensures clear categorization and credential validation — Profession taxonomy (Industry → Profession) for services and Product taxonomy (vertical → category → subcategory → product type → attributes) for the Local Market.
+2. **Trade and seller verification gates:** Administrative review of professional credentials before services marketplace participation—unverified professionals have dashboard access but cannot bid or accept work. The same gate pattern applies to sellers (product publishing locked until seller verification is approved) and logistics providers (dispatch acceptance locked until rider verification is approved).
 3. **Double-blind reviews:** Neither party sees the other's rating until both have submitted, eliminating retaliatory review dynamics.
 4. **Escrow-backed transactions:** Funds held securely against milestone completion protect both buyers and sellers.
 5. **KYC-driven financial limits:** Cashout limits tied to verification depth create proportional risk containment.
@@ -184,15 +186,18 @@ Establish the trust infrastructure and verified supply base that makes all subse
 - Generates initial brand credibility through association with verified, reputable professionals.
 
 **Key Business Capabilities Required:**
+- Unified account with Explore/Earn activity activation (buy, sell, hire, offer services, logistics); no Both account value
 - Entity registration and identity verification system
-- Two-tier taxonomy classification (Industry → Profession)
-- Trade verification process with administrative review
+- Dual taxonomy classification: Profession taxonomy (Industry → Profession) and Local Market product taxonomy (vertical → category → subcategory → product type → attributes, admin-configurable)
+- Trade verification process with administrative review, plus seller verification and rider verification lanes
+- Merchant/store onboarding with catalog management and rider onboarding
+- Admin review console as a separate privileged environment
   - KYC integration for financial account management
   - Unified multi-currency financial profile with currency-specific receiving accounts and balances
   - Provider-agnostic escrow and milestone payment infrastructure
   - Bound payout account system with cashout limits
 - Dispute resolution framework and governance policies
-- Professional profile, portfolio, and credential display
+- Professional profile, merchant/store profile, rider profile, portfolio, and credential display
 
 **Success Criteria:**
 - Minimum viable supply density achieved in target geography (critical mass of verified professionals across target professions)
@@ -206,7 +211,7 @@ A marketplace without trust infrastructure is a liability. Every failed transact
 
 ---
 
-### Phase 2: Professional Services Marketplace Activation
+### Phase 2: Professional Services Marketplace Activation (Services Marketplace = Explore-hire + Earn-offer subset)
 
 **Business Objective:**
 Launch the 2-party professional services marketplace, connecting verified professionals with consumers seeking expert services. This is the simplest transaction model—direct expert-to-client connections with no logistics dependency—and serves as the proof of concept for the Universal Entity model.
@@ -244,14 +249,14 @@ Launch the 2-party professional services marketplace, connecting verified profes
 - Review volume and quality distribution showing healthy marketplace dynamics
 - Dispute rate within acceptable bounds and resolution time meeting SLA targets
 - User satisfaction scores strong across both supply and demand sides
-- Evidence of cross-role engagement (users operating as both professionals and consumers)
+- Evidence of cross-role engagement (users operating as professionals and consumers on one unified account; Both account value permanently removed)
 
 **Why This Phase Must Occur at This Stage:**
 Professional services represent the lowest-complexity marketplace activation: 2-party transactions with no logistics dependency, no third-party coordination, and no physical fulfillment. This phase validates the trust infrastructure built in Phase 1 under real transaction conditions and proves that the Universal Entity concept works in practice. It also proves the revenue model before more complex operations are attempted. Launching 3-party commerce before validating 2-party services would introduce logistics complexity and three-way financial splits before the core marketplace model is proven—an unacceptable business risk.
 
 ---
 
-### Phase 3: Local Commerce and Marketplace Operations
+### Phase 3: Local Commerce and Marketplace Operations (Local Market)
 
 **Business Objective:**
 Expand into 3-party local commerce operations, connecting buyers with merchants and vendors alongside nearby delivery riders for grocery sourcing, local food coordination, and retail fulfillment. This phase significantly increases the addressable market, transaction frequency, and daily platform relevance.
@@ -270,6 +275,7 @@ Expand into 3-party local commerce operations, connecting buyers with merchants 
 - Geographic density becomes a critical competitive advantage as delivery efficiency scales with local volume.
 
 **Key Business Capabilities Required:**
+- Local Market product taxonomy (vertical → category → subcategory → product type → attributes, admin-configurable), product search/discovery with category and price filters
 - Merchant onboarding, catalog management, and inventory visibility
 - Order processing and fulfillment workflow across buyer, merchant, and rider
 - Three-party financial orchestration (buyer payment → merchant payout + rider payout + platform fee)

@@ -11,19 +11,19 @@
 |---|---|
 | **Phase ID** | EP-03 |
 | **Phase Name** | Two-Party Transaction Engine & Professional Services Platform |
-| **Phase Objective** | Build the universal 2-party transaction engine and launch the professional services marketplace — the simplest transaction model with no logistics dependency. |
+| **Phase Objective** | Build the universal 2-party transaction engine and launch the professional services marketplace (Services Marketplace = Explore-hire + Earn-offer subset) — the simplest transaction model with no logistics dependency. Local Market product taxonomy, store catalog, and 3-party split are explicitly deferred to EP-04. |
 | **Business Capability Enabled** | Business Phase 2 — Professional Services Marketplace Activation. Enables direct expert-to-client connections with contract management, escrow-backed payments, and trust signals. |
 | **Priority** | High — first revenue-generating capability; validates trust infrastructure under real transaction conditions |
-| **Status** | Not Started |
-| **Dependencies** | EP-01 (Universal Entity data model, auth framework, server-side RPC+RLS architecture, core platform services, design system) ; EP-02 (verified entities, two-tier taxonomy, trade verification gate, KYC framework, unified multi-currency financial profile, escrow & milestone infrastructure, bound payouts, dispute framework, portfolio display) |
+| **Status** | In Progress — Services Marketplace (Explore-hire + Earn-offer subset); Local Market and Logistics explicitly deferred to EP-04/EP-05 |
+| **Dependencies** | EP-01 (Universal Entity data model, auth framework, server-side RPC+RLS architecture, core platform services, design system) ; EP-02 (verified entities, Profession taxonomy + mandatory trade proof gate, KYC framework with KYC-gated payouts, unified multi-currency financial profile, escrow & milestone infrastructure, bound payouts, dispute framework, portfolio display; seller/rider lanes and product taxonomy deferred to EP-04) |
 
-Conforms to `documents/Context/AGENT.md:1-18` (Bounded Scope, Separation of Concerns, Server-Side Enforcement Rule 4, Deterministic Core Supremacy, Rule 2 Trade Verification Gate, Rule 3 Financial Guardrails, Rule 5 Visual Identity), `documents/Context/ARCHITECTURE.md:39-173`, and `documents/Engineering-Execution/Engineering-Execution-Principle/Engineering-Execution-Generation-Principle.md` Domain Separation.
+Conforms to `documents/Context/AGENT.md` (Bounded Scope, Separation of Concerns, Server-Side Enforcement Rule 4, Deterministic Core Supremacy, Rule 2 Dual Taxonomy & Verification with mandatory trade proof, Rule 3 Financial Guardrails & KYC-Gated Access, Rule 5 Visual Identity, Rule 6 Unified Account with no Both value), `documents/Context/ARCHITECTURE.md:39-178`, and `documents/Engineering-Execution/Engineering-Execution-Principle/Engineering-Execution-Generation-Principle.md` Domain Separation.
 
 ---
 
 ## 2. Engineering Objectives
 
-1. **Establish the Professional Services Marketplace Database Foundation** — Create server-side tables and RPC+RLS for service listings, service engagements, and marketplace metadata bound to `industries→professions` taxonomy and `trade_verification_status`.
+1. **Establish the Professional Services Marketplace Database Foundation** — Create server-side tables and RPC+RLS for service listings, service engagements, and marketplace metadata bound to `industries→professions` taxonomy and mandatory trade proof (`trade_verification_status`).
 2. **Build the Contract & Milestone Engagement Engine** — Implement the universal 2-party contract lifecycle (draft → offer → active → milestone tracking → completion → closure) with escrow linkage modeled on `financial_escrow:191-228` + `financial_escrow_milestones:232-257`.
 3. **Implement Deterministic Ranking & Matching** — Deliver the server-side ranking/matching algorithm in `lib/engine/recommendation_engine` / `lib/engine/matching_engine` that orders discovery results by verifiable signals (verification tier, rating, completion rate, recency, profession relevance) — never AI-overridden per `AGENT.md:7`.
 4. **Deliver Search & Discovery Infrastructure** — Build full-text search, filtering, pagination, and client-side `lib/engine/search_engine` indexing for profession-aware discovery.
@@ -43,7 +43,7 @@ Conforms to `documents/Context/AGENT.md:1-18` (Bounded Scope, Separation of Conc
 | Goal | Target |
 |---|---|
 | Server-side transaction enforcement | All service, contract, milestone, escrow-release, review aggregation, and earnings calculations execute via PostgreSQL RPC+RLS (`security invoker`, `AGENT.md:13`) — client is unprivileged presentation |
-| Trade verification gate | `trade_verification_status != APPROVED` → `service_listing.create`, `contract.offer/accept` blocked server-side; verified enforcement test covers bypass attempt |
+| Trade verification gate with mandatory trade proof | `trade_verification_status != APPROVED` → `service_listing.create`, `contract.offer/accept` blocked server-side; verified enforcement test covers bypass attempt; earnings payouts require the KYC tier |
 | Deterministic ranking | Ranking formula is auditable SQL/plpgsql in `lib/engine/recommendation_engine`, deterministic, explainable, covers 100% of discovery ordering — AI may *enhance display* only, never override order per `AGENT.md:7` |
 | Double-blind integrity | Reviews stored with `is_revealed=false` until condition met; reveal is single atomic transaction; disclosure-before-condition is impossible per RLS+RPC |
 | Messaging security | Conversation membership RLS, message RLS self-scoped, encryption-at-rest for body, no plaintext exposure to non-participants; Realtime subscription is RLS-filtered |
@@ -103,7 +103,7 @@ Conforms to `documents/Context/AGENT.md:1-18` (Bounded Scope, Separation of Conc
 | Public routes & SEO | `lib/app/router/app_router.dart`, `lib/app/router/route_paths.dart`, `lib/app/router/route_names.dart` + `lib/systems/portfolio/seo/*` | Clean URLs `/s/:slug/:id`, `/contracts/:id`, `/messages/:id`; web-manifest + meta for discoverability |
 | Shared UI compliance | `lib/shared/widgets/*`, `lib/shared/layouts/*`, `lib/app/theme/*` per `VISUAL-IDENTITY.md` | `HivorrButton`/`HivorrCard`/`HivorrEmptyState`/`HivorrLoadingState`/`HivorrErrorState` throughout |
 
-Not expanding beyond EP-03: no `lib/systems/local_commerce`, `lib/systems/logistics_dispatch`, `lib/ai/*` intelligence, `lib/systems/business_management` B2B, or EP-04 3-party orchestration.
+Not expanding beyond EP-03: no `lib/systems/local_commerce` Local Market build, `lib/systems/logistics_dispatch`, `lib/ai/*` intelligence, `lib/systems/business_management` B2B, or EP-04 3-party orchestration. `service_listings.profession_id` is the services pattern that `product_listings.product_id` will mirror in EP-04.
 
 ---
 
@@ -159,7 +159,7 @@ Not expanding beyond EP-03: no `lib/systems/local_commerce`, `lib/systems/logist
 | Supabase projects (Dev/Staging/Prod) with Realtime enabled + RLS on Realtime | Infrastructure | Messaging & contract-status Realtime subscriptions fail without it | EP-03-04, EP-03-13 |
 | Supabase Storage bucket provisioning (`service-listing-media`) with RLS | Infrastructure | Blocks `EP-03-08` media upload & `EP-03-15` proof evidence | EP-03-01 (schema), EP-03-08 |
 | Supabase Edge Functions (optional — webhook/escrow-state side-effects) | Infrastructure | If milestone evidence requires async verification, functions carry it | EP-03-11 (if deferred verification needed) |
-| Admin moderation tooling (existing `EP-02-11` review gate extended) | Tooling | Disputed contracts / reported listings need admin visibility | EP-03-17 |
+| Admin moderation visibility inside the separate Admin shell (existing `EP-02-11` review gate extended) | Tooling | Disputed contracts / reported listings need Admin-shell visibility (never marketplace-embedded admin) | EP-03-17 |
 | `file_picker:12.3.0` + `file_picker_web:3.1.0` | Package | Media/evidence picking on web + mobile | EP-03-08, EP-03-10 |
 | Connectivity telemetry `connectivity_plus:6.1.0` | Library | Offline message queue replay gating | EP-03-13 |
 | No new payment provider credentials — EP-02 `Paystack`/`Flutterwave` abstraction reused | Integration | Escrow funding path already provisioned | EP-03-11 |
@@ -189,7 +189,7 @@ Not expanding beyond EP-03: no `lib/systems/local_commerce`, `lib/systems/logist
 3. Supabase Realtime is available on the provisioned projects (if not, `EP-03-13` degrades to polling with `fake_async:1.3.1` tests but plan still valid — seam is abstracted behind `MessagingRealtimeDataSource` interface).
 4. Currency scope remains `NGN/GHS/USD/GBP` from `financial_supported_currencies:55-62`; EP-03 does not add currency.
 5. Initial marketplace operates on 2-party escrow already proven in EP-02 (`financial_escrow` states `created/funded/partially_released/released/refunded/disputed` at `EP-02-04:203-207`); no 3-party split (EP-04) enters EP-03.
-6. Admin review for listings/disputes reuses `EP-02-11` tooling; a full admin console is not an EP-03 deliverable — a filtered queue screen suffices.
+6. Admin review for listings/disputes reuses `EP-02-11` tooling inside the separate Admin shell; a full admin console expansion is not an EP-03 deliverable — a filtered queue screen inside the Admin shell suffices.
 7. `provider:6.1.5` remains sufficient for `lib/data/providers/*` marketplace state; no new state framework introduced.
 
 ### Engineering Considerations
@@ -208,7 +208,7 @@ Not expanding beyond EP-03: no `lib/systems/local_commerce`, `lib/systems/logist
 
 ## 9. Expected Phase Outcome
 
-A functioning 2-party marketplace where verified professionals (via `EP-02` trade gate) can publish service listings bound to the two-tier taxonomy, be discovered through deterministic, auditable ranking and full-text search, form milestone-backed contracts whose funds are protected in provider-agnostic escrow and released only on verified completion, exchange encrypted, RLS-scoped messages, schedule appointments, accrue double-blind reputation, resolve service disputes with escrow freeze, and view server-derived earnings — validating the core marketplace model under real transaction conditions and unblocking EP-04 without exposing proprietary logic, financial calculations, or ranking coefficients to the client.
+A functioning 2-party Services Marketplace where verified professionals (via `EP-02` trade gate with mandatory trade proof, required KYC tier met for payouts) can publish service listings bound to the Profession taxonomy, be discovered through deterministic, auditable ranking and full-text search, form milestone-backed contracts whose funds are protected in provider-agnostic escrow and released only on verified completion, exchange encrypted, RLS-scoped messages, schedule appointments, accrue double-blind reputation, resolve service disputes with escrow freeze, and view server-derived earnings — validating the core marketplace model under real transaction conditions and unblocking EP-04 without exposing proprietary logic, financial calculations, or ranking coefficients to the client. Product taxonomy, seller verification, and 3-party split are explicitly deferred to EP-04.
 
 ---
 
@@ -236,7 +236,7 @@ A functioning 2-party marketplace where verified professionals (via `EP-02` trad
 | Lifecycle notifications: push+local for contract, milestone, review, message, appointment events | Notification integration test (foreground + background) |
 | Public routes: `/s/:profession_slug/:service_id` + `/contracts/:id` deep-linkable, SEO-friendly; responsive via `HivorrResponsiveScaffold` | Router integration test + SEO meta check |
 | All new tables RLS default-deny; no `authenticated` direct `INSERT` bypass where RPC is canonical | `supabase/tests/database/00*_security_posture_audit.sql` style pgTAP audit |
-| Zero financial/matching logic in client code; no hardcoded colors/fonts | `dart analyze` + static scan + `ColorScheme.primary == #0B6E99` assertion (per `VISUAL-IDENTITY.md:84`) |
+| Zero financial/matching logic in client code; no hardcoded colors/fonts | `dart analyze` + static scan + `ColorScheme.primary == #2D3FE7` assertion (per `VISUAL-IDENTITY.md` §5) |
 | All EP-03 items at `Completed` | Phase plan audit |
 
 ---

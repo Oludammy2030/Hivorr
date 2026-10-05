@@ -182,6 +182,53 @@ void main() {
       expect(seenParams!.containsKey('p_submission_type'), isFalse);
     });
 
+    test('passes p_search/p_profession_id/p_sort when set', () async {
+      Map<String, dynamic>? seenParams;
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_queue_get': (Map<String, dynamic> body) {
+          seenParams = body;
+          return ok(<String, dynamic>{
+            'submissions': <dynamic>[],
+            'total_count': 0,
+          });
+        },
+      });
+
+      await source.getReviewQueue(
+        search: 'ada',
+        professionId: 'ffffffff-0000-0000-0000-000000000071',
+        sort: 'name',
+        limit: 50,
+        offset: 0,
+      );
+
+      expect(seenParams!['p_search'], 'ada');
+      expect(
+        seenParams!['p_profession_id'],
+        'ffffffff-0000-0000-0000-000000000071',
+      );
+      expect(seenParams!['p_sort'], 'name');
+    });
+
+    test('omits filter params when unset or blank', () async {
+      Map<String, dynamic>? seenParams;
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_queue_get': (Map<String, dynamic> body) {
+          seenParams = body;
+          return ok(<String, dynamic>{
+            'submissions': <dynamic>[],
+            'total_count': 0,
+          });
+        },
+      });
+
+      await source.getReviewQueue(search: '   ', limit: 50, offset: 0);
+
+      expect(seenParams!.containsKey('p_search'), isFalse);
+      expect(seenParams!.containsKey('p_profession_id'), isFalse);
+      expect(seenParams!.containsKey('p_sort'), isFalse);
+    });
+
     test('returns empty list when submissions is missing', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'verification_review_queue_get': (_) =>
@@ -281,8 +328,157 @@ void main() {
     });
   });
 
-  group('checkAdmin — canonical envelope', () {
-    test('parses data.is_admin true', () async {
+  group('getReviewMetrics — canonical envelope', () {
+    Map<String, dynamic> metricsData() => <String, dynamic>{
+      'pending_total': 7,
+      'in_review_total': 2,
+      'avg_verification_seconds': 129600.0,
+      'approved_today': 3,
+      'decided_total': 10,
+      'rejected_total': 4,
+      'rejection_rate': 0.4,
+      'period_days': 30,
+    };
+
+    test('parses the data object into a metrics DTO', () async {
+      Map<String, dynamic>? seenParams;
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_metrics_get': (Map<String, dynamic> body) {
+          seenParams = body;
+          return ok(metricsData());
+        },
+      });
+
+      final AdminReviewMetricsDto metrics = await source.getReviewMetrics();
+
+      expect(seenParams!['p_days'], 30);
+      expect(seenParams!.containsKey('p_submission_type'), isFalse);
+      expect(metrics.pendingTotal, 7);
+      expect(metrics.inReviewTotal, 2);
+      expect(metrics.avgVerificationSeconds, 129600.0);
+      expect(metrics.approvedToday, 3);
+      expect(metrics.decidedTotal, 10);
+      expect(metrics.rejectedTotal, 4);
+      expect(metrics.rejectionRate, 0.4);
+      expect(metrics.periodDays, 30);
+    });
+
+    test('passes p_days and p_submission_type when set', () async {
+      Map<String, dynamic>? seenParams;
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_metrics_get': (Map<String, dynamic> body) {
+          seenParams = body;
+          return ok(metricsData());
+        },
+      });
+
+      await source.getReviewMetrics(
+        periodDays: 7,
+        submissionType: 'trade_proof',
+      );
+
+      expect(seenParams!['p_days'], 7);
+      expect(seenParams!['p_submission_type'], 'trade_proof');
+    });
+
+    test('keeps null averages and rates as unavailable (never zero)', () async {
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_metrics_get': (_) => ok(<String, dynamic>{
+          'pending_total': 0,
+          'in_review_total': 0,
+          'avg_verification_seconds': null,
+          'approved_today': 0,
+          'decided_total': 0,
+          'rejected_total': 0,
+          'rejection_rate': null,
+          'period_days': 30,
+        }),
+      });
+
+      final AdminReviewMetricsDto metrics = await source.getReviewMetrics();
+
+      expect(metrics.avgVerificationSeconds, isNull);
+      expect(metrics.rejectionRate, isNull);
+      expect(metrics.decidedTotal, 0);
+    });
+  });
+
+  group('getReviewProfile — canonical envelope', () {
+    Map<String, dynamic> profileData() => <String, dynamic>{
+      'experiences': <dynamic>[
+        <String, dynamic>{
+          'id': 'exp-1',
+          'title': 'Senior Plumber',
+          'organization': 'Flow Masters',
+          'start_year': 2021,
+          'start_month': 4,
+          'end_year': null,
+          'end_month': null,
+          'is_current': true,
+          'description': 'Leads installs.',
+        },
+      ],
+      'educations': <dynamic>[
+        <String, dynamic>{
+          'id': 'edu-1',
+          'school': 'Trade Institute',
+          'degree': 'Diploma',
+          'field_of_study': 'Plumbing',
+          'graduation_year': 2019,
+        },
+      ],
+      'skills': <dynamic>[
+        <String, dynamic>{
+          'id': 'sk-1',
+          'name': 'Pipefitting',
+          'years_experience': 6,
+        },
+      ],
+    };
+
+    test('parses experiences, educations, and skills', () async {
+      Map<String, dynamic>? seenParams;
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_profile_get': (Map<String, dynamic> body) {
+          seenParams = body;
+          return ok(profileData());
+        },
+      });
+
+      final AdminReviewProfileDto profile = await source.getReviewProfile(
+        'ffffffff-0000-0000-0000-000000000073',
+      );
+
+      expect(
+        seenParams!['p_submission_id'],
+        'ffffffff-0000-0000-0000-000000000073',
+      );
+      expect(profile.experiences, hasLength(1));
+      expect(profile.experiences.single.title, 'Senior Plumber');
+      expect(profile.experiences.single.isCurrent, isTrue);
+      expect(profile.experiences.single.startYear, 2021);
+      expect(profile.educations.single.school, 'Trade Institute');
+      expect(profile.educations.single.graduationYear, 2019);
+      expect(profile.skills.single.name, 'Pipefitting');
+      expect(profile.skills.single.yearsExperience, 6);
+    });
+
+    test('decodes missing arrays as empty (no recorded history)', () async {
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_profile_get': (_) => ok(<String, dynamic>{}),
+      });
+
+      final AdminReviewProfileDto profile = await source.getReviewProfile(
+        'ffffffff-0000-0000-0000-000000000073',
+      );
+
+      expect(profile.experiences, isEmpty);
+      expect(profile.educations, isEmpty);
+      expect(profile.skills, isEmpty);
+    });
+  });
+
+  group('checkAdmin — canonical envelope', () {    test('parses data.is_admin true', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'platform_admin_check': (_) => ok(<String, dynamic>{'is_admin': true}),
       });

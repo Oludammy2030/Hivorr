@@ -10,7 +10,7 @@
 
 ## 1. Purpose & Design Philosophy
 
-Hivorr is a modern professional-services ecosystem built on trust and financial integrity. The visual identity must communicate **trust, professionalism, quality, modern technology, simplicity, convenience, confidence, accessibility, African-market relevance, and premium digital-product quality** across every surface — mobile, web, and desktop.
+Hivorr is a unified marketplace ecosystem built on trust and financial integrity, spanning Explore with Hivorr (buy, hire, discover), Earn with Hivorr (sell, offer services, provide logistics), the Local Market, Services Marketplace, Logistics, and a separate Admin environment. The visual identity must communicate **trust, professionalism, quality, modern technology, simplicity, convenience, confidence, accessibility, African-market relevance, and premium digital-product quality** across every surface — mobile, web, and desktop.
 
 The interface must feel **intentionally designed rather than assembled from unrelated components**. Every page has:
 
@@ -29,7 +29,7 @@ Single unified ecosystem. These are the only hues permitted.
 
 | Token | Hex | Used for |
 |---|---|---|
-| Primary brand | `#2D3FE7` | Brand signature, Client primary, key CTAs, active states, links, focus rings, primary navigation |
+| Primary brand | `#2D3FE7` | Brand signature, Explore/hire primary, key CTAs, active states, links, focus rings, primary navigation |
 | Light brand / primaryContainer | `#EEF0FD` | Low-emphasis primary fills (selected chips, banners, role tint backgrounds) |
 | Brand deep (gradient start / admin primary) | `#1A2AD4` | Gradient start, Admin primary, text on `primaryContainer` |
 | Brand bright (gradient end) | `#4F5FEF` | Gradient end only — never as flat text/background |
@@ -39,7 +39,7 @@ Single unified ecosystem. These are the only hues permitted.
 | Light cyan / infoContainer | `#E0F2FE` | Info banners |
 | Red | `#EF4444` | Error / destructive surfaces/controls |
 | Light red / errorContainer | `#FEF2F2` | Error banners/snackbars |
-| Purple (Both / secondary) | `#8B5CF6` | Both-account identity, combined controls, mode indicators, secondary brand surfaces |
+| Purple (secondary) | `#8B5CF6` | Secondary brand surfaces, combined Explore/Earn surfaces, Admin accent. Not an account identity — the Both account value is permanently removed. |
 | Light purple / secondaryContainer | `#F3F0FF` | Low-emphasis purple fills |
 | Background | `#F0F2F8` | App background (light) |
 | Surface | `#FFFFFF` | Cards, sheets, dialogs (light) |
@@ -53,12 +53,13 @@ Single unified ecosystem. These are the only hues permitted.
 #1A2AD4 → #2D3FE7 → #4F5FEF
 ```
 
-Use only for hero accents, Both/admin identity moments, and primary CTA fills where the gradient measurably improves hierarchy. Never as random decoration (§23). Never place small body text directly on the gradient without verified contrast.
+Use only for hero accents, Admin identity moments, and primary CTA fills where the gradient measurably improves hierarchy. Never as random decoration (§23). Never place small body text directly on the gradient without verified contrast.
 
 **Usage rules**
 
-- Primary (`#2D3FE7`) is used for: app bars, key CTAs, active states, links, focus rings, primary navigation, hiring actions, job-management emphasis, Client dashboard accents.
-- Purple (`#8B5CF6`) is used for: unified Both identity, combined controls, secondary brand surfaces. Never as full-screen background.
+- Primary (`#2D3FE7`) is used for: app bars, key CTAs, active states, links, focus rings, primary navigation, hiring actions, job-management emphasis, Explore/hire dashboard accents.
+- Earn/offer green (`#16A34A`) is used for: Earn navigation, service offering, sales, logistics earning actions, Professional dashboard accents.
+- Purple (`#8B5CF6`) is used for: secondary brand surfaces and combined Explore/Earn surfaces. It is not a Both account identity — Both is permanently removed. Never as full-screen background.
 - Never introduce a third brand hue outside this section.
 - Widgets MUST use `Theme.of(context).colorScheme.*` / `AppThemeExtension` / `RoleThemeExtension` — never hardcode `Colors.*` or raw hex.
 
@@ -66,20 +67,19 @@ Use only for hero accents, Both/admin identity moments, and primary CTA fills wh
 
 ## 3. Role-Based Color System (accent-only)
 
-Hivorr remains **one unified visual ecosystem**. Operating contexts use different **accent colors** — not different themes. There is no per-role `ThemeData`. Roles resolve through `RoleThemeExtension` (accent-only) on top of the single `ColorScheme`.
+Hivorr remains **one unified visual ecosystem** with Explore with Hivorr, Earn with Hivorr, and a separate Admin environment. Operating contexts use different **accent colors** — not different themes. There is no per-role `ThemeData` and no Both account type. Contexts resolve through `RoleThemeExtension` (accent-only) on top of the single `ColorScheme`.
 
 | Context | Primary | Light | Use for |
 |---|---|---|---|
-| Client | `#2D3FE7` | `#EEF0FD` | Client navigation, primary/hiring actions, job-management emphasis, Client dashboard accents |
-| Professional | `#16A34A` | `#DCFCE7` | Professional navigation, job discovery, application actions, professional work, earnings, Professional dashboard accents |
-| Both | `#8B5CF6` | `#F3F0FF` | Unified Both identity, combined controls, mode indicators, Both navigation, combined hiring/professional sections |
+| Explore / hire | `#2D3FE7` | `#EEF0FD` | Explore navigation, buying and hiring actions, job-management emphasis, Explore dashboard accents |
+| Earn / offer services | `#16A34A` | `#DCFCE7` | Earn navigation, service offering, sales, logistics earning actions, job discovery, application actions, professional work, earnings, Earn dashboard accents |
 | Admin | `#1A2AD4` + accent `#8B5CF6` | — | Distinct operational environment while recognizably Hivorr (sidebar, operational panels, management controls) |
 
 Rules:
 
 - Role color affects **navigation, primary actions in that context, and dashboard accents** — never body text, never full-bleed backgrounds.
-- A "Both" user sees the purple identity in mode indicators and combined sections; drilling into a Client-only or Professional-only flow uses that flow's accent for its primary action.
-- `DashboardCapability` (hire/offer/both) drives visibility; `RoleThemeExtension` drives color. Never hardcode role hex at call sites — read `context.roleTheme.clientPrimary`, `.professionalPrimary`, `.bothPrimary`, `.adminPrimary`.
+- Explore cards use Explore blue; Earn cards use Earn green. Combined Explore/Earn surfaces use the secondary purple as a surface accent only, never as an account identity. Drilling into an Explore-only or Earn-only flow uses that flow's accent for its primary action.
+- Activity visibility is driven by the active Explore/Earn activities; `RoleThemeExtension` drives color. Never hardcode role hex at call sites — read `context.roleTheme.clientPrimary` (Explore/hire), `.professionalPrimary` (Earn/offer), `.adminPrimary`. `.bothPrimary` is deprecated following permanent Both removal and must not be used for new UI.
 - Status is never communicated through color alone (see §25).
 
 ---
@@ -97,7 +97,7 @@ Semantic colors retain their meaning across the entire platform, in every role c
 
 Notes:
 
-- Professional green (`#16A34A`) doubles as the Professional role accent (§3) and the success token. In a Professional context, pair it with explicit labels/icons so "role" and "status" are never ambiguous.
+- Earn green (`#16A34A`) doubles as the Earn/offer accent (§3) and the success token. In an Earn context, pair it with explicit labels/icons so "activity" and "status" are never ambiguous.
 - `onSuccess #FFFFFF`, `onWarning #1F2937`, `onInfo #FFFFFF`, `onError #FFFFFF` for text/icons on the base fills.
 - Dark-theme semantic values live in `AppThemeExtension.dark` (see §5.2) and MUST be used via the extension — never derived inline.
 
@@ -115,7 +115,7 @@ All tokens are exposed through `ColorScheme` (light/dark) in `lib/app/theme/app_
 | `onPrimary` | `#FFFFFF` | Text/icon on primary |
 | `primaryContainer` | `#EEF0FD` | Low-emphasis primary fills |
 | `onPrimaryContainer` | `#1A2AD4` | Text/icon on primaryContainer |
-| `secondary` | `#8B5CF6` | Both/unified accent surfaces |
+| `secondary` | `#8B5CF6` | Secondary / combined Explore-Earn accent surfaces |
 | `onSecondary` | `#FFFFFF` | Text/icon on secondary |
 | `secondaryContainer` | `#F3F0FF` | Low-emphasis accent fills |
 | `onSecondaryContainer` | `#5B21B6` | Text/icon on secondaryContainer |
@@ -366,7 +366,7 @@ Do not create enormous empty heroes for spaciousness. Use space purposefully wit
 
 ## 17. Homepage Design Principle
 
-The homepage is the entrance to a modern professional-services ecosystem — never a static information page. Compose from purposeful sections such as: hero, service discovery, popular categories, professional/service previews, marketplace activity, trust indicators, platform benefits, how Hivorr works, featured opportunities, calls to action, supporting information, footer.
+The homepage is the entrance to a unified marketplace ecosystem spanning Explore (buy, hire, discover), Earn (sell, offer services, provide logistics), the Local Market, Services Marketplace, Logistics, and Admin — never a static information page. Compose from purposeful sections such as: hero, service and product discovery, popular categories, professional/service previews, store/product previews, marketplace activity, trust indicators, platform benefits, how Hivorr works, featured opportunities, calls to action, supporting information, footer.
 
 Each section has a clear purpose tied to product requirements. Never add sections to inflate length.
 
@@ -417,11 +417,11 @@ Different surfaces need different density. Never apply one density everywhere.
 
 ## 21. Component Consistency
 
-Once established, reuse the visual language. Future job cards, professional cards, metric cards, CTAs, buttons, inputs, modals, and navigation items MUST reuse or extend the existing pattern instead of inventing visually unrelated versions. Hivorr grows through a system, not isolated page designs.
+Once established, reuse the visual language. Future job cards, service cards, product cards, store cards, professional cards, logistics/delivery cards, metric cards, CTAs, buttons, inputs, modals, and navigation items MUST reuse or extend the existing pattern instead of inventing visually unrelated versions. Hivorr grows through a system, not isolated page designs.
 
 Canonical catalog (all token-built, in `lib/shared/` unless noted):
 
-Buttons (`HivorrButton` primary/secondary/outline/text, s/m/l, ≥48dp) · Text fields (`HivorrTextField`, calm filled/outlined, focus ring = primary) · Cards (`HivorrCard`) · Chips (`HivorrChip` primary/secondary/surface) · Badges (`HivorrBadge` success/error/warning/info + domain badges: KYC, trade-verified, escrow, hiring, listing) · Avatar · Divider · Section header · List tile (48dp min) · Dialog / Bottom sheet · Empty / Loading / Error / Success states + `HivorrLoader` (breathing pulse, 1800ms — never a bare spinner or dead-end) · Snackbar (4s) · Hero panel (`HivorrHeroPanel`, gradient + white actions + `HivorrHeroStat`) · Stat band (`HivorrStatBand`/`HivorrStatItem`) · Feature card (`HivorrFeatureCard`, tinted icon tile, role-tintable) · CTA band (`HivorrCtaBand`) · FAQ item (`HivorrFaqItem`) · Pricing tier (`HivorrPricingTier`, honest copy only) · Step card (`HivorrStepCard`) · Data table (`HivorrDataTable` + cells, wide admin views) · Mini bars (`HivorrMiniBars`, real numbers only, no chart dependency) · Layouts (`HivorrScreenScaffold`, `HivorrResponsiveScaffold`, `HivorrContentPane`, `Breakpoints` 600/1024) · Helpers (`HivorrSpacing`, formatters, validators, `BuildContext` extensions).
+Buttons (`HivorrButton` primary/secondary/outline/text, s/m/l, ≥48dp) · Text fields (`HivorrTextField`, calm filled/outlined, focus ring = primary) · Cards (`HivorrCard`; extend to service, product, store, order, and delivery-tracking cards) · Chips (`HivorrChip` primary/secondary/surface) · Badges (`HivorrBadge` success/error/warning/info + domain badges: KYC, trade-verified, seller-verified, rider-verified, escrow, hiring, listing, product, store, delivery) · Avatar · Divider · Section header · List tile (48dp min) · Dialog / Bottom sheet · Empty / Loading / Error / Success states + `HivorrLoader` (breathing pulse, 1800ms — never a bare spinner or dead-end) · Snackbar (4s) · Hero panel (`HivorrHeroPanel`, gradient + white actions + `HivorrHeroStat`) · Stat band (`HivorrStatBand`/`HivorrStatItem`) · Feature card (`HivorrFeatureCard`, tinted icon tile, Explore/Earn-tintable) · CTA band (`HivorrCtaBand`) · FAQ item (`HivorrFaqItem`) · Pricing tier (`HivorrPricingTier`, honest copy only) · Step card (`HivorrStepCard`) · Data table (`HivorrDataTable` + cells, wide admin views) · Mini bars (`HivorrMiniBars`, real numbers only, no chart dependency) · Layouts (`HivorrScreenScaffold`, `HivorrResponsiveScaffold`, `HivorrContentPane`, `Breakpoints` 600/1024) · Helpers (`HivorrSpacing`, formatters, validators, `BuildContext` extensions). Store detail, product detail, order detail, delivery-tracking, and Earn dashboard compositions reuse these primitives with the correct Explore/Earn/Admin accent.
 
 ### 21a. Grid & Breakpoint Policy
 
@@ -431,7 +431,7 @@ Buttons (`HivorrButton` primary/secondary/outline/text, s/m/l, ≥48dp) · Text 
 | Content | <600 | 600–1023 | ≥1024 |
 |---|---|---|---|
 | Stat/metric cards | 2 | 2–3 | 3–4 |
-| Content cards (jobs, listings) | 1 | 2 | 3 |
+| Content cards (jobs, service listings, products, stores) | 1 | 2 | 3 |
 | Media tiles | 2 | 3 | 3 |
 | Operational tables | cards | table | table |
 
@@ -450,7 +450,7 @@ Buttons (`HivorrButton` primary/secondary/outline/text, s/m/l, ≥48dp) · Text 
 - Row heights: 40 dense tables / 44–52 standard rows. The 48dp floor (§25) applies to touch rows (list tiles), not to data rows.
 - Header `labelSmall` uppercase; cell padding horizontal 16, vertical 8.
 - Dense-table row actions (`HivorrTableAction`, compact pill ≈34dp) are permitted inside ≥720dp admin tables, where 48dp buttons would force ≥64dp rows. Narrow-card (touch) layouts, form CTAs, dialog actions, and standalone buttons always stay ≥48dp (`HivorrButton`).
-- Compact card actions in dense dashboard grids (job/hire cards at 2–3 columns) also use `HivorrTableAction`: full 48dp buttons would dominate these cards and break the reference action clusters. The exception covers tables and dense card grids only.
+- Compact card actions in dense dashboard grids (job/hire/service/product/order cards at 2–3 columns) also use `HivorrTableAction`: full 48dp buttons would dominate these cards and break the reference action clusters. The exception covers tables and dense card grids only.
 
 ---
 

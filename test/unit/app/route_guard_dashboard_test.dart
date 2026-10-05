@@ -10,13 +10,15 @@ import '../../test_helpers.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('RouteGuard dashboard capability gates (EP-04-03)', () {
-    Future<RouteGuard> guardFor(EntityCapability capability) async {
+  group('RouteGuard dashboard focus gates (EP-04-03)', () {
+    Future<({RouteGuard guard, OnboardingTestStack stack})> guardFor(
+      EntityCapability capability,
+    ) async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
       await stack.provider.selectCapability(capability);
-      // Walk the capability path to completion (hire finishes at the
-      // capability step; offer/both traverse industry/identity/trade-proof).
+      // Walk the focus path to completion (hire finishes at the
+      // capability step; offer traverses industry/identity/trade-proof).
       for (int i = 0; i < 6 && !stack.provider.isComplete; i++) {
         await stack.provider.advance();
       }
@@ -30,11 +32,11 @@ void main() {
         onboardingProvider: stack.provider,
       );
       addTearDown(stack.provider.dispose);
-      return guard;
+      return (guard: guard, stack: stack);
     }
 
     test('hire cannot reach work-only routes', () async {
-      final RouteGuard guard = await guardFor(EntityCapability.hire);
+      final RouteGuard guard = (await guardFor(EntityCapability.hire)).guard;
       expect(
         guard.redirectResolver(RoutePaths.dashboardOpportunities),
         RoutePaths.dashboard,
@@ -52,7 +54,7 @@ void main() {
     });
 
     test('offer cannot reach hiring-only routes', () async {
-      final RouteGuard guard = await guardFor(EntityCapability.offer);
+      final RouteGuard guard = (await guardFor(EntityCapability.offer)).guard;
       expect(
         guard.redirectResolver(RoutePaths.dashboardJobs),
         RoutePaths.dashboard,
@@ -75,8 +77,15 @@ void main() {
       expect(guard.redirectResolver(RoutePaths.dashboard), isNull);
     });
 
-    test('both reaches every dashboard route', () async {
-      final RouteGuard guard = await guardFor(EntityCapability.both);
+    test('unhydrated focus fails open across dashboard routes', () async {
+      // No loadProgress call: progress is null, so the resume gate stays out
+      // and the focus gate allows navigation (server enforces per row).
+      final OnboardingTestStack stack = buildOnboardingStack();
+      final RouteGuard guard = RouteGuard(
+        authProvider: FakeAuthProvider(initialStatus: AuthStatus.authenticated),
+        onboardingProvider: stack.provider,
+      );
+      addTearDown(stack.provider.dispose);
       for (final String path in <String>[
         RoutePaths.dashboard,
         RoutePaths.dashboardJobs,
@@ -91,16 +100,40 @@ void main() {
         expect(
           guard.redirectResolver(path),
           isNull,
-          reason: '$path should be open for both',
+          reason: '$path should be open before hydration',
         );
       }
     });
 
+    test('switching focus flips the gates', () async {
+      final ({RouteGuard guard, OnboardingTestStack stack}) result =
+          await guardFor(EntityCapability.hire);
+      final RouteGuard guard = result.guard;
+      expect(
+        guard.redirectResolver(RoutePaths.dashboardOpportunities),
+        RoutePaths.dashboard,
+      );
+      // Switch sides in the launcher: work routes stop bouncing to the
+      // dashboard root (the unfinished offer wizard resumes instead).
+      await result.stack.provider.selectCapability(EntityCapability.offer);
+      expect(
+        guard.redirectResolver(RoutePaths.dashboardOpportunities),
+        isNot(RoutePaths.dashboard),
+      );
+      expect(
+        guard.redirectResolver(RoutePaths.dashboardJobs),
+        isNot(isNull),
+        reason: 'hiring routes now resume the offer wizard',
+      );
+    });
+
     test('job detail stays shared (owner and applicant both view)', () async {
-      final RouteGuard hireGuard = await guardFor(EntityCapability.hire);
-      final RouteGuard offerGuard = await guardFor(EntityCapability.offer);
-      expect(hireGuard.redirectResolver('/dashboard/jobs/job-1'), isNull);
-      expect(offerGuard.redirectResolver('/dashboard/jobs/job-1'), isNull);
+      final ({RouteGuard guard, OnboardingTestStack stack}) hireResult =
+          await guardFor(EntityCapability.hire);
+      final ({RouteGuard guard, OnboardingTestStack stack}) offerResult =
+          await guardFor(EntityCapability.offer);
+      expect(hireResult.guard.redirectResolver('/dashboard/jobs/job-1'), isNull);
+      expect(offerResult.guard.redirectResolver('/dashboard/jobs/job-1'), isNull);
     });
   });
 }

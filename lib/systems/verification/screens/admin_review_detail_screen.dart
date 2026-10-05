@@ -36,6 +36,7 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
       if (!mounted) return;
       final provider = context.read<AdminReviewProvider>();
       unawaited(provider.loadAuditTrail(widget.submissionId));
+      unawaited(provider.loadReviewProfile(widget.submissionId));
       // Explicit open claims the item for review (Phase 4); failures are
       // best-effort and never block the screen.
       unawaited(provider.startReview(widget.submissionId));
@@ -95,6 +96,10 @@ class _AdminReviewDetailScreenState extends State<AdminReviewDetailScreen> {
         ReviewComparisonCard(
           key: ValueKey<String>('${entry.submissionId}-compare'),
           entry: entry,
+        ),
+        const SizedBox(height: HivorrSpacing.md),
+        ReviewProfileSections(
+          key: ValueKey<String>('${entry.submissionId}-profile'),
         ),
         const SizedBox(height: HivorrSpacing.md),
         ReviewDocumentPanel(

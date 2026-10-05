@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/systems/verification/screens/admin_review_detail_screen.dart';
+import 'package:hivorr/systems/verification/widgets/review_detail_panels.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -58,6 +59,14 @@ void main() {
     await tester.pump();
   }
 
+  /// Drags the detail ListView down so lazily-built rows (actions panel and
+  /// below) materialize before finders run. ListView only instantiates
+  /// children near the viewport; the profile sections lengthened the page.
+  Future<void> revealBelowFold(WidgetTester tester) async {
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pumpAndSettle();
+  }
+
   group('AdminReviewDetailScreen Phase 4 actions', () {
     testWidgets('opening claims the submission for review', (
       WidgetTester tester,
@@ -72,12 +81,15 @@ void main() {
       WidgetTester tester,
     ) async {
       final FakeAdminReviewRepository repo = await pumpDetail(tester);
+      await revealBelowFold(tester);
       expect(find.text('Require the applicant to resubmit'), findsOneWidget);
 
       await scrollTo(tester, find.byType(Checkbox));
       await tester.tap(find.byType(Checkbox));
       await tester.pump();
       await scrollTo(tester, find.text('Reject'));
+      await tester.enterText(find.byType(TextField).first, 'Blurry scan');
+      await tester.pump();
       await tester.tap(find.text('Reject'));
       await tester.pump();
       await tester.pumpAndSettle();
@@ -93,7 +105,10 @@ void main() {
       WidgetTester tester,
     ) async {
       final FakeAdminReviewRepository repo = await pumpDetail(tester);
+      await revealBelowFold(tester);
       await scrollTo(tester, find.text('Reject'));
+      await tester.enterText(find.byType(TextField).first, 'Expired ID');
+      await tester.pump();
       await tester.tap(find.text('Reject'));
       await tester.pump();
       await tester.pumpAndSettle();
@@ -105,11 +120,43 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('PDF documents render a copy-link row', (
+    testWidgets('reject without notes is blocked with a reason error', (
       WidgetTester tester,
     ) async {
-      await pumpDetail(
-        tester,
+      final FakeAdminReviewRepository repo = await pumpDetail(tester);
+      await revealBelowFold(tester);
+      await scrollTo(tester, find.text('Reject'));
+      await tester.tap(find.text('Reject'));
+      await tester.pump();
+
+      expect(repo.rejectCallCount, 0);
+      expect(
+        find.text('A reason is required to reject.'),
+        findsOneWidget,
+      );
+      await unmount(tester);
+    });
+
+    testWidgets('detail shows profile sections with empty states', (
+      WidgetTester tester,
+    ) async {
+      await pumpDetail(tester);
+      await scrollTo(tester, find.text('Work Experience'));
+      expect(find.text('Work Experience'), findsOneWidget);
+      expect(find.text('Education'), findsOneWidget);
+      expect(find.text('Skills'), findsOneWidget);
+      expect(
+        find.text('No work history recorded by the applicant.'),
+        findsOneWidget,
+      );
+      await unmount(tester);
+    });
+
+    testWidgets('PDF documents fall back to copy-link on load failure', (
+      WidgetTester tester,
+    ) async {
+      final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
+        isAdmin: true,
         queue: <AdminReviewQueueEntry>[
           adminQueueEntry(
             submissionId: 'sub-1',
@@ -117,13 +164,30 @@ void main() {
           ),
         ],
       );
-      await scrollTo(tester, find.text('Load document'));
+      final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
+      await pumpApp(
+        tester,
+        ReviewDocumentPanel(
+          entry: adminQueueEntry(
+            submissionId: 'sub-1',
+            documentPath: 'credentials/sub-1/doc.pdf',
+          ),
+          // Hermetic: fail before any network, like an undecodable PDF.
+          bytesFetcher: (_) async => throw Exception('not a pdf'),
+        ),
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<AdminReviewProvider>.value(value: provider),
+        ],
+      );
+      await tester.pump();
       await tester.tap(find.text('Load document'));
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(find.text('PDF document'), findsOneWidget);
+      // The viewer cannot render: the error shows and the copy-link
+      // fallback (signed URL is known) stays available.
       expect(find.byType(Image), findsNothing);
+      expect(find.textContaining('Failed to load document'), findsOneWidget);
 
       await tester.tap(find.text('Copy link'));
       await tester.pump();

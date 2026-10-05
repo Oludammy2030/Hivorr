@@ -73,6 +73,7 @@ lib/
 │   ├── workspace_engine/     # Logic for building dynamic entity views
 │   ├── dashboard_engine/     # Widget layout rules & priority engines
 │   ├── profession_engine/    # Trade & business capability calculators
+│   ├── catalog_engine/       # Product search/ranking for Local Market (analog to profession_engine)
 │   ├── search_engine/        # Offline & local indexing engine
 │   └── growth_engine/        # SEO metadata & referral loop engine
 │
@@ -86,23 +87,26 @@ lib/
 │
 ├── workspace/                # Dynamic Profession & Business Workspace Rendering
 │   ├── workspace_blueprints/ # UI templates per trade/business (e.g., Pharmacy, Electrician, Private Chef)
-│   ├── profession_registry/  # Two-Tier Industry -> Profession taxonomy lookup
+│   ├── profession_registry/  # Two-Tier Industry -> Profession taxonomy lookup (Services Marketplace)
+│   ├── product_registry/     # Local Market taxonomy lookup: vertical -> category -> subcategory -> product type -> attributes (parallel to profession_registry; admin-configurable, never hardcoded)
+│   ├── store_registry/       # Store/merchant catalog lookup supporting Local Market listings
 │   ├── feature_registry/     # Dynamic feature capabilities lookup
 │   ├── feature_loader/       # Lazy-loading feature engines
 │   ├── dashboard_builder/    # Dynamic grid & tile constructors
 │   └── workspace_initializer/ # Hydration logic on profile switch
 │
 ├── systems/                  # Discrete Business & Lifestyle Systems
-│   ├── marketplace/          # Discovery, sourcing, & hiring logic
-│   ├── local_commerce/       # ⚡ Raw market groceries, local food, & retail catalog engines
-│   ├── logistics_dispatch/   # ⚡ Real-time rider broadcast & multi-stop delivery hub
+│   ├── marketplace/          # Services Marketplace: discovery, sourcing, & hiring logic (hire + offer services)
+│   ├── local_commerce/       # ⚡ Local Market: product catalog, storefronts, orders (buy + sell; physical + digital)
+│   ├── logistics_dispatch/   # ⚡ Earn logistics: real-time rider broadcast & multi-stop delivery hub
 │   ├── business_management/  # Enterprise, store, & team scaling systems
+│   ├── admin/                # Separate privileged Admin / Super Admin shell (never an Explore/Earn activity)
 │   ├── communication/        # Encrypted messaging & voice calls
-│   ├── finance/              # ⚡ Escrow, first-party funding, bound payouts & dual cashout limits
+│   ├── finance/              # ⚡ Escrow, first-party funding, bound payouts & KYC-gated withdrawals/payouts/conversions and earning payouts (tier_1+, tier_0 zero limits)
 │   ├── documents/            # Contracts, invoices, work orders
 │   ├── scheduling/           # Appointments & project calendars
 │   ├── analytics/            # Entity growth & financial tracking
-│   ├── verification/         # ⚡ Trade proof upload & admin review gate system
+│   ├── verification/         # ⚡ Trade + seller + rider proof upload & Admin review gate system (mandatory trade proof for sell/offer, mandatory verification for logistics; dashboard-immediate, writes locked until APPROVED)
 │   ├── waitlist_demand/      # ⚡ Unlisted profession demand capture & vote counter
 │   ├── reviews/              # Double-blind rating & trust engines
 │   ├── portfolio/            # Project showcase & proof-of-work
@@ -141,13 +145,14 @@ lib/
 `
 ## Detailed Architectural & Implementation Rules
 ### Native Platform Modifications (android/, ios/, web/)
-* Permissions: Native platform permissions (e.g., Camera, High-Precision Location for Riders, Notifications) must be explicitly configured in android/app/src/main/AndroidManifest.xml and ios/Runner/Info.plist.
+* Permissions: Native platform permissions (e.g., Camera, High-Precision Location for Riders, Notifications, Merchant/store catalog and inventory access where applicable) must be explicitly configured in android/app/src/main/AndroidManifest.xml and ios/Runner/Info.plist.
 * Build Settings: Modify Gradle scripts (android/app/build.gradle) or Podfiles (ios/Podfile) only when configuring native SDK integrations or minimum target versions.
 * Dart Code Isolation: No Dart code should live in native folders; all cross-platform Dart code must strictly reside within lib/.
 ### Cross-Platform Adaptation (shared/layouts/ & app/router/)
 * UI components inside shared/ must be responsive across Mobile (iOS/Android) and Web.
 * Screens must adapt using layout scaffolds in shared/layouts/ depending on breakpoint width.
-* Routing in app/router/ must generate clean, web-serializable URLs for public entities and listings to ensure SEO discoverability (e.g., /p/:profession_slug/:entity_id or /store/:store_id).
+* Routing in app/router/ must generate clean, web-serializable URLs for public entities and listings to ensure SEO discoverability (e.g., /p/:profession_slug/:entity_id or /store/:store_id). URL conventions: Explore (`/explore/*`: buy / hire / discover), Earn (`/earn/*`: sell / offer services / logistics), Admin (`/admin/*` separate environment).
+* Unified account rule: one account activates multiple activities over time (buy, sell, hire, offer services, logistics). There is no Both account value. Admin is never selectable via registration or activity selection.
 ### Payment Gateway Abstraction (integrations/payment_gateways/)
 * Never hardcode direct calls to Paystack, Flutterwave, or NIBSS inside systems/finance/. Financial workflows must interact with abstract interfaces defined in integrations/payment_gateways/.
 ### On-Demand Dynamic Module Delivery (workspace/feature_loader/)
@@ -159,7 +164,7 @@ lib/
   * The AI assistant layer (`ai/`) acts as a brilliant, proactive operational partner—drafting proposals, automating repetitive tasks, and translating natural language intent into real-world actions without overriding foundational platform rules.
 ## Trust, Security & Financial Integrity
 * Database-First Zero-Trust Architecture: The client application functions purely as an unprivileged presentation layer. All sensitive calculations, pricing rules, cryptographic verification checks, and financial escrow divisions are enforced server-side via PostgreSQL RPC and RLS policies.
-* Controlled Financial Workflows: Built with rigorous first-party funding verifications, bound payout accounts, KYC-driven cashout limits, and trade verification gates to guarantee a secure, trustworthy marketplace for every participant.
+* Controlled Financial Workflows: Built with rigorous first-party funding verifications, bound payout accounts, KYC-driven cashout limits, and trade verification gates to guarantee a secure, trustworthy marketplace for every participant. Access to some areas is subject to KYC (withdrawals, payouts, conversions, higher limits, and earning payouts require a verified tier); selling, offering professional services, and providing logistics each require mandatory document/proof-of-trade verification with gated writes locked until APPROVED. Source of truth: `AGENT.md` Rules 2/3 and `documents/Context/Unified-Account-and-Activity-Permission-Matrix.md`.
 ## Environment Management Rules (ENV-001 to ENV-010)
 * ENV-001 (Environment Separation): Hivorr must maintain separate Development, Staging, and Production environments that operate independently without cross-contamination.
 * ENV-002 (Development Environment): Used for active coding, feature writing, and debugging. Must use isolated databases, storage, authentication configs, and variables.

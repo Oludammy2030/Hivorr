@@ -13,8 +13,8 @@ abstract class ManageUserRemoteDataSource {
   /// Backed by `manage_user_list`. [search] filters case-insensitively on
   /// display/legal name; [status] filters on the entity lifecycle status
   /// (`active | suspended | deactivated | deleted`). [capability] is the
-  /// Super Admin Users submenu filter (`professional` = offer+both,
-  /// `client` = hire+both, or `hire|offer|both` exact). Pagination via
+  /// Super Admin Users submenu filter (`professional` = offer focus,
+  /// `client` = hire focus, or `hire|offer` exact). Pagination via
   /// [offset]/[limit] (1..100). Throws [ApiException] `PLT002` for non-admin
   /// callers.
   Future<ManageUserListEnvelopeDto> listUsers({

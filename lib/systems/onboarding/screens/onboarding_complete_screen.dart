@@ -38,13 +38,12 @@ class OnboardingCompleteScreen extends StatelessWidget {
     final OnboardingProvider provider = context.watch<OnboardingProvider>();
     final OnboardingProgress? progress = provider.progress;
     final EntityCapability capability =
-        progress?.capability ?? EntityCapability.both;
+        progress?.capability ?? EntityCapability.hire;
     final List<OnboardingStep> pathSteps = _stepsFor(capability);
     final RoleThemeExtension roles = context.roleTheme;
     final Color capabilityAccent = switch (capability) {
       EntityCapability.hire => roles.clientPrimary,
       EntityCapability.offer => roles.professionalPrimary,
-      EntityCapability.both => roles.bothPrimary,
     };
     controller.hidePrimary();
 

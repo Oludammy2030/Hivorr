@@ -18,11 +18,16 @@ abstract class AdminReviewRemoteDataSource {
   ///
   /// Backed by `verification_review_queue_get`. Filters optional
   /// [submissionType] and applies cursor-based pagination with [limit] and
-  /// [offset].
+  /// [offset]. [search] matches display/legal/credential text server-side,
+  /// [professionId] restricts to one profession, and [sort] is one of
+  /// `newest`/`oldest`/`name`.
   Future<List<AdminReviewQueueEntryDto>> getReviewQueue({
     String? submissionType,
     int limit = 50,
     int offset = 0,
+    String? search,
+    String? professionId,
+    String? sort,
   });
 
   /// Claims a submission for review (sets status to `in_review`).
@@ -49,6 +54,19 @@ abstract class AdminReviewRemoteDataSource {
   /// Backed by `verification_review_audit_get`.
   Future<List<AdminReviewAuditEntryDto>> getAuditTrail(String submissionId);
 
+  /// Returns verification throughput metrics for the dashboard metrics row.
+  ///
+  /// Backed by `verification_review_metrics_get`.
+  Future<AdminReviewMetricsDto> getReviewMetrics({
+    int periodDays = 30,
+    String? submissionType,
+  });
+
+  /// Returns the applicant profile depth for one submission.
+  ///
+  /// Backed by `verification_review_profile_get`.
+  Future<AdminReviewProfileDto> getReviewProfile(String submissionId);
+
   /// Creates a short-lived signed URL for viewing a credential document.
   ///
   /// The client calls `storage.from('credential-documents').createSignedUrl()`
@@ -58,4 +76,9 @@ abstract class AdminReviewRemoteDataSource {
     String credentialId, {
     int expiresIn = 60,
   });
+
+  /// The `total_count` from the most recent `getReviewQueue` envelope, or
+  /// `null` before the first successful load. Throughput metrics come from
+  /// [getReviewMetrics]; this stays as the queue-depth fallback.
+  int? get lastTotalCount;
 }

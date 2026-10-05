@@ -7,9 +7,8 @@ abstract class ManageUserRepository {
   /// Returns a paginated directory page of users.
   ///
   /// [capability] is the Super Admin Users submenu filter: `null` = All Users,
-  /// `professional` = offer+both, `client` = hire+both, or a raw capability
-  /// `hire|offer|both` for exact matches. `both` appears in both filtered views
-  /// per the one-population principle.
+  /// `professional` = offer focus, `client` = hire focus, or a raw capability
+  /// `hire|offer` for exact matches.
   Future<ManageUserDirectoryPage> listUsers({
     String? search,
     String? status,

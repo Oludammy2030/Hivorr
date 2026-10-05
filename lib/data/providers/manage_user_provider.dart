@@ -71,7 +71,7 @@ class ManageUserProvider extends ChangeNotifier {
   String? get statusFilter => _status;
 
   /// The active capability filter applied to the last [loadUsers] call.
-  /// `null` = All Users, `professional` = offer+both, `client` = hire+both.
+  /// `null` = All Users, `professional` = offer focus, `client` = hire focus.
   String? get capabilityFilter => _capability;
 
   /// Whether the directory has been fetched at least once.
@@ -80,7 +80,7 @@ class ManageUserProvider extends ChangeNotifier {
   /// Fetches the first page of the directory (resets pagination).
   ///
   /// [search]/[status]/[capability] change the active filter; pass `null` to
-  /// clear. `capability` values: `hire|offer|both|professional|client`.
+  /// clear. `capability` values: `hire|offer|professional|client`.
   Future<void> loadUsers({
     String? search,
     String? status,

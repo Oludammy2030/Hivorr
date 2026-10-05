@@ -29,7 +29,7 @@ class OnboardingProgress {
     required this.entityId,
     this.step = OnboardingStepCode.capability,
     this.completedSteps = const <OnboardingStepCode>[],
-    this.capability = EntityCapability.both,
+    this.capability = EntityCapability.hire,
     this.hasIdentitySubmission = false,
     this.hasTradeProofSubmission = false,
     this.exited = false,
@@ -45,9 +45,10 @@ class OnboardingProgress {
   /// Completed steps in definition order (monotonically advancing).
   final List<OnboardingStepCode> completedSteps;
 
-  /// The declared capability, defaulting to [EntityCapability.both] so saved
-  /// positions written before capabilities existed resume on the professional
-  /// path (safe superset) instead of stranding the user.
+  /// The declared focus, defaulting to [EntityCapability.hire] (Explore) so
+  /// saved positions written before capabilities existed — or carrying the
+  /// retired `both` value — resume on the hiring path instead of stranding
+  /// the user. The launcher offers the Earn side one tap away.
   final EntityCapability capability;
 
   /// Whether an identity document was submitted (UX mirror only).

@@ -168,13 +168,14 @@ class _TrustStrip extends StatelessWidget {
 }
 
 /// Capability grid — hire, offer, and local commerce in one account,
-/// role-tinted (Client / Professional / Both).
+/// tinted with the Client / Professional accents plus info for commerce.
 class _CapabilityGrid extends StatelessWidget {
   const _CapabilityGrid();
 
   @override
   Widget build(BuildContext context) {
     final RoleThemeExtension roles = context.roleTheme;
+    final AppThemeExtension ext = context.appExtension;
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
         final bool isWide = c.maxWidth >= 720;
@@ -213,8 +214,8 @@ class _CapabilityGrid extends StatelessWidget {
               width: cardWidth,
               child: HivorrFeatureCard(
                 icon: Icons.storefront_outlined,
-                iconBackground: roles.bothContainer,
-                iconColor: roles.bothPrimary,
+                iconBackground: ext.infoContainer,
+                iconColor: ext.info,
                 title: 'Buy & sell locally',
                 body:
                     'Local commerce and delivery join the same account as your '
@@ -267,8 +268,9 @@ class _HowItWorks extends StatelessWidget {
                   width: cardWidth,
                   child: const HivorrStepCard(
                     step: 2,
-                    title: 'Tell us your capability',
-                    body: 'Hire, offer services, or both — add roles any time.',
+                    title: 'Pick what you want to do',
+                    body:
+                        'Hire or offer services — switch sides any time.',
                   ),
                 ),
                 SizedBox(

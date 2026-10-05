@@ -29,6 +29,11 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
     }
   }
 
+  int? _lastTotalCount;
+
+  @override
+  int? get lastTotalCount => _lastTotalCount;
+
   @override
   Future<AdminCheckResultDto> checkAdmin() => _guard(() async {
     final Map<String, dynamic> response = await supabase
@@ -44,6 +49,9 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
     String? submissionType,
     int limit = 50,
     int offset = 0,
+    String? search,
+    String? professionId,
+    String? sort,
   }) => _guard(() async {
     final Map<String, dynamic> params = <String, dynamic>{
       'p_limit': limit,
@@ -51,6 +59,15 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
     };
     if (submissionType != null && submissionType.isNotEmpty) {
       params['p_submission_type'] = submissionType;
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      params['p_search'] = search.trim();
+    }
+    if (professionId != null && professionId.isNotEmpty) {
+      params['p_profession_id'] = professionId;
+    }
+    if (sort != null && sort.isNotEmpty) {
+      params['p_sort'] = sort;
     }
     final Map<String, dynamic> envelope = await supabase
         .rpc<Map<String, dynamic>>(
@@ -60,6 +77,7 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
     final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
       envelope,
     );
+    _lastTotalCount = _parseTotalCount(data['total_count']);
     final Object? items = data['submissions'];
     if (items is List) {
       return items
@@ -69,6 +87,42 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
     }
     return const <AdminReviewQueueEntryDto>[];
   });
+
+  @override
+  Future<AdminReviewMetricsDto> getReviewMetrics({
+    int periodDays = 30,
+    String? submissionType,
+  }) => _guard(() async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'p_days': periodDays,
+    };
+    if (submissionType != null && submissionType.isNotEmpty) {
+      params['p_submission_type'] = submissionType;
+    }
+    final Map<String, dynamic> envelope = await supabase
+        .rpc<Map<String, dynamic>>(
+          'verification_review_metrics_get',
+          params: params,
+        );
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      envelope,
+    );
+    return AdminReviewMetricsDto.fromJson(data);
+  });
+
+  @override
+  Future<AdminReviewProfileDto> getReviewProfile(String submissionId) =>
+      _guard(() async {
+        final Map<String, dynamic> envelope = await supabase
+            .rpc<Map<String, dynamic>>(
+              'verification_review_profile_get',
+              params: <String, dynamic>{'p_submission_id': submissionId},
+            );
+        final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+          envelope,
+        );
+        return AdminReviewProfileDto.fromJson(data);
+      });
 
   @override
   Future<void> startReview(String submissionId) => _guard(() async {
@@ -157,4 +211,12 @@ class SupabaseAdminReviewRemoteDataSource extends BaseApiService
         .createSignedUrl(documentPath, expiresIn);
     return signedUrl;
   });
+
+  static int? _parseTotalCount(Object? value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
 }

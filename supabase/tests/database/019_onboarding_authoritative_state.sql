@@ -3,7 +3,7 @@
 -- Verifies the onboarding-authority migration (20260915090001): anon has no
 -- execute grants, unauthenticated calls return PLT001, capability vocabulary is
 -- validated, completion is gated on server-side step verification (hire = profile
--- only; offer/both = professional role + profession + identity + trade proof),
+-- only; offer = professional role + profession + identity + trade proof),
 -- direct PostgREST writes to capability / onboarding_completed_at are blocked by
 -- the D5 guard trigger (PLT002), reset is service_role-only and trails to the
 -- append-only audit table with zero client grants, and platform_audit_log
@@ -11,7 +11,7 @@
 
 begin;
 set search_path to extensions, public;
-select plan(31);
+select plan(32);
 
 -- ─── Seed callers + taxonomy + profiles ─────────────────────────────────────
 insert into auth.users (id, email) values ('11111111-1111-1111-1111-111111111111', 'a@example.com') on conflict (id) do nothing;
@@ -55,7 +55,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select set_config('platform.rpc_invocation', '', true);
 select throws_ok(
-  $$ update public.entities set capability = 'both' where id = '11111111-1111-1111-1111-111111111111' $$,
+  $$ update public.entities set capability = 'hire' where id = '11111111-1111-1111-1111-111111111111' $$,
   'P0001', 'PLT002: Onboarding state may only be changed through the entity_onboarding_status_update RPC.',
   'direct PATCH of capability blocked by D5 guard (PLT002)');
 
@@ -91,14 +91,17 @@ select is(
     ::jsonb ->> 'completed',
   'true', 'status_get reports completed = true');
 
--- ─── D. As authenticated user B (offer/both path) ───────────────────────────
+-- ─── D. As authenticated user B (offer path) ──────────────────────────────────
 set role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select is(
-  (select (public.entity_onboarding_status_update('both', null))->>'code'),
-  'PLT000', 'both capability persisted (PLT000)');
+  (select (public.entity_onboarding_status_update('offer', null))->>'code'),
+  'PLT000', 'offer capability persisted (PLT000)');
+select throws_ok(
+  $$ select public.entity_onboarding_status_update('both', null) $$,
+  'P0001', 'PLT003: Invalid capability value.', 'retired both value rejected (PLT003)');
 select is(
   (select (public.entity_roles_activate('professional'))->>'code'),
   'PLT000', 'professional role activated (PLT000)');
@@ -132,7 +135,7 @@ select is(
 
 select is(
   (select (public.entity_onboarding_status_update(null, true))->>'code'),
-  'PLT000', 'offer/both completes once all steps present (PLT000)');
+  'PLT000', 'offer completes once all steps present (PLT000)');
 select is(
   (select onboarding_completed_at is not null from public.entities where id = '22222222-2222-2222-2222-222222222222'),
   true, 'completion stamp persisted for offer path');
@@ -168,7 +171,7 @@ select is(
   (select count(*)::int from public.platform_audit_log
     where actor_id = '22222222-2222-2222-2222-222222222222'
       and entity = 'entities' and action = 'entity_onboarding_status_update'),
-  2, 'authenticated onboarding mutations audit-logged (both: capability + completion)');
+  2, 'authenticated onboarding mutations audit-logged (offer: capability + completion)');
 
 select is(
   (select count(*)::int

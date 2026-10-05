@@ -7,9 +7,9 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 /// Path-aware linear wizard tracker (EP-02-18 FV-35, registration
 /// restructured).
 ///
-/// Segment count equals the number of steps on the current capability's path
-/// ([OnboardingProgress.requiredSteps]) — one for a hire-only entity (the
-/// capability decision finishes the wizard), four for professional/`both`.
+/// Segment count equals the number of steps on the current focus path
+/// ([OnboardingProgress.requiredSteps]) — one for a hire-focus entity (the
+/// focus decision finishes the wizard), four for offer focus.
 /// Filled segments equal the position of the current step on that path. Done
 /// segments use `ColorScheme.primary`; pending use `surfaceVariant`. No
 /// hardcoded hex values.

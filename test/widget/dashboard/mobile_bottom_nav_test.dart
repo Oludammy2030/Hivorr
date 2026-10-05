@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
 import 'package:hivorr/systems/dashboard/shell/dashboard_more_sheet.dart';
 
@@ -39,7 +38,8 @@ void main() {
       );
     });
 
-    test('combined-both keeps four primaries; services lives in More', () {
+    test('unhydrated fail-open keeps four primaries; services lives in More',
+        () {
       final List<DashboardNavItem> items = mobilePrimaryNavItems(
         hire: true,
         offer: true,
@@ -168,7 +168,8 @@ void main() {
           tester,
           const DashboardMoreSheet(
             location: '/dashboard/account',
-            capability: DashboardCapability.hire,
+            hire: true,
+            offer: false,
           ),
           width: width,
         );
@@ -191,7 +192,8 @@ void main() {
           ),
           child: DashboardMoreSheet(
             location: '/dashboard',
-            capability: DashboardCapability.offer,
+            hire: false,
+            offer: true,
           ),
         ),
         width: 390,

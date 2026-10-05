@@ -26,11 +26,11 @@ import 'package:provider/provider.dart';
 ///
 /// Identity (first/middle/last, displayName, phone, email) is captured at
 /// account creation and hydrated into `entity_profiles` before onboarding
-/// starts — onboarding therefore begins at the capability decision
-/// (hire / offer / both) and never re-asks for basic identity information.
+/// starts — onboarding therefore begins at the focus decision
+/// (hire / offer) and never re-asks for basic identity information.
 /// Bio and avatar are profile concerns handled later via Profile → Edit
-/// Profile, never in-wizard. Consumer-only entities finish after capability,
-/// professional/`both` continue through industry & profession selection →
+/// Profile, never in-wizard. Hire-focus entities finish after capability,
+/// offer-focus entities continue through industry & profession selection →
 /// identity → trade proof. Progress is stored by [OnboardingProgress] and the
 /// shell renders the tracker, the active step body (kept alive in an
 /// [IndexedStack]), and the standard CTA bar (`Back` / `Continue`/`Submit`).

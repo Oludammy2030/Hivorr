@@ -19,6 +19,9 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
   bool isAdminResult;
   List<AdminReviewQueueEntry> _queue;
   List<AdminReviewAuditEntry> _auditTrail = const <AdminReviewAuditEntry>[];
+  int? lastTotalCountOverride;
+  AdminReviewMetrics? metricsResult;
+  int metricsCallCount = 0;
 
   ApiException? nextError;
   int checkAdminCallCount = 0;
@@ -31,6 +34,9 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
   String? lastRejectedId;
   String? lastStartedId;
   String? lastNotes;
+  String? lastSearch;
+  String? lastProfessionId;
+  String? lastSort;
   bool? lastRequiresResubmission;
 
   /// Mutates the queue the fake serves (e.g. after an admin decision).
@@ -38,6 +44,27 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
 
   /// Mutates the audit trail the fake serves.
   void setAuditTrail(List<AdminReviewAuditEntry> trail) => _auditTrail = trail;
+
+  @override
+  int? get lastTotalCount => lastTotalCountOverride ?? _queue.length;
+
+  @override
+  Future<AdminReviewMetrics> getReviewMetrics({
+    int periodDays = 30,
+    String? submissionType,
+  }) async {
+    metricsCallCount++;
+    if (nextError != null) throw _consumeError();
+    return metricsResult ??
+        AdminReviewMetrics(
+          pendingTotal: _queue.length,
+          inReviewTotal: 0,
+          approvedToday: 0,
+          decidedTotal: 0,
+          rejectedTotal: 0,
+          periodDays: periodDays,
+        );
+  }
 
   @override
   Future<bool> checkAdmin() async {
@@ -51,8 +78,14 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
     String? submissionType,
     int limit = 50,
     int offset = 0,
+    String? search,
+    String? professionId,
+    String? sort,
   }) async {
     queueCallCount++;
+    lastSearch = search;
+    lastProfessionId = professionId;
+    lastSort = sort;
     if (nextError != null) throw _consumeError();
     if (offset >= _queue.length) return const <AdminReviewQueueEntry>[];
     final int end = (offset + limit).clamp(0, _queue.length);
@@ -95,6 +128,21 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
     auditCallCount++;
     if (nextError != null) throw _consumeError();
     return _auditTrail;
+  }
+
+  AdminReviewProfile _profile = const AdminReviewProfile();
+  int profileCallCount = 0;
+  String? lastProfileId;
+
+  /// Scripts the profile the fake serves.
+  void setReviewProfile(AdminReviewProfile profile) => _profile = profile;
+
+  @override
+  Future<AdminReviewProfile> getReviewProfile(String submissionId) async {
+    profileCallCount++;
+    lastProfileId = submissionId;
+    if (nextError != null) throw _consumeError();
+    return _profile;
   }
 
   @override
@@ -163,4 +211,30 @@ AdminReviewAuditEntry adminAuditEntry({
   toState: toState,
   actorId: actorId,
   createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+);
+
+/// A profile fixture with one experience, one education, and one skill.
+AdminReviewProfile adminReviewProfile() => const AdminReviewProfile(
+  experiences: <ReviewExperience>[
+    ReviewExperience(
+      id: 'exp-1',
+      title: 'Senior Plumber',
+      organization: 'Flow Masters',
+      startYear: 2021,
+      startMonth: 4,
+      isCurrent: true,
+    ),
+  ],
+  educations: <ReviewEducation>[
+    ReviewEducation(
+      id: 'edu-1',
+      school: 'Trade Institute',
+      degree: 'Diploma',
+      fieldOfStudy: 'Plumbing',
+      graduationYear: 2019,
+    ),
+  ],
+  skills: <ReviewSkill>[
+    ReviewSkill(id: 'sk-1', name: 'Pipefitting', yearsExperience: 6),
+  ],
 );

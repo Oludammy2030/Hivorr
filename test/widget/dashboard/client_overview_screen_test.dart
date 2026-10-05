@@ -9,7 +9,6 @@ import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/repositories/hire_repository.dart';
 import 'package:hivorr/data/repositories/job_repository.dart';
-import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
 import 'package:hivorr/systems/jobs/services/hire_service.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
@@ -130,7 +129,6 @@ void main() {
     late HireProvider hires;
     late OnboardingProvider onboarding;
     late AuthProvider auth;
-    late DashboardViewModeProvider viewMode;
 
     setUp(() async {
       final DateTime now = DateTime.now();
@@ -191,13 +189,11 @@ void main() {
       onboarding = OnboardingProvider(service: _StubOnboardingService());
       await onboarding.loadProgress('entity-1');
       auth = AuthProvider(service: FakeAuthService());
-      viewMode = DashboardViewModeProvider();
       addTearDown(() {
         jobs.dispose();
         hires.dispose();
         onboarding.dispose();
         auth.dispose();
-        viewMode.dispose();
       });
     });
 
@@ -216,9 +212,6 @@ void main() {
           ChangeNotifierProvider<HireProvider>.value(value: hires),
           ChangeNotifierProvider<OnboardingProvider>.value(value: onboarding),
           ChangeNotifierProvider<AuthProvider>.value(value: auth),
-          ChangeNotifierProvider<DashboardViewModeProvider>.value(
-            value: viewMode,
-          ),
         ],
       );
     }

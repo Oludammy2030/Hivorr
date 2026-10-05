@@ -12,16 +12,16 @@ import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:provider/provider.dart';
 
-/// Step 2 — capability selection (EP-02-18 capability correction).
+/// Step 2 — focus selection (EP-02-18 capability correction).
 ///
-/// One account, fluid roles: after Basic Information the entity picks how it
-/// will use Hivorr — [EntityCapability.hire] (consumer-only, finishes the
-/// wizard), [EntityCapability.offer] (professional), or [EntityCapability.both].
-/// Selection is one tap and auto-advances; professional choices continue into
-/// industry selection (mirrors the industry step), a hire choice finishes.
-/// Roles are activated server-side on the professional bind for the
-/// professional paths; [EntityCapability.hire] keeps the consumer role
-/// provisioned at sign-in.
+/// One account, switchable focus: after Basic Information the entity picks
+/// how it will use Hivorr — [EntityCapability.hire] (Explore, finishes the
+/// wizard) or [EntityCapability.offer] (Earn, professional). Selection is one
+/// tap and auto-advances; the offer choice continues into industry selection
+/// (mirrors the industry step), a hire choice finishes. The professional role
+/// is activated server-side on the profession bind; [EntityCapability.hire]
+/// keeps the consumer role provisioned at sign-in. Switching sides later
+/// happens in the Explore/Earn launcher.
 class CapabilitySelectionScreen extends StatefulWidget {
   const CapabilitySelectionScreen({
     super.key,
@@ -60,8 +60,8 @@ class _CapabilitySelectionScreenState extends State<CapabilitySelectionScreen> {
           ),
           const SizedBox(height: HivorrSpacing.xs),
           Text(
-            'One account — pick the experience you need now. You can add the '
-            'other side any time later.',
+            'One account — pick the experience you need now. You can switch '
+            'sides any time later.',
             style: context.textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
             ),
@@ -98,8 +98,8 @@ class _CapabilitySelectionScreenState extends State<CapabilitySelectionScreen> {
       return;
     }
     if (provider.submitState == SubmitState.success) {
-      // Hire-only entities finish after the capability step; professional/
-      // `both` entities continue into industry selection.
+      // Hire-focus entities finish after the capability step; offer-focus
+      // entities continue into industry selection.
       context.go(
         provider.isComplete
             ? RoutePaths.onboardingComplete
@@ -128,7 +128,6 @@ class _CapabilityCard extends StatelessWidget {
         roles.professionalContainer,
         roles.professionalPrimary,
       ),
-      EntityCapability.both => (roles.bothContainer, roles.bothPrimary),
     };
     return HivorrCard(
       onTap: onTap,
@@ -170,6 +169,5 @@ class _CapabilityCard extends StatelessWidget {
   static IconData _iconFor(EntityCapability capability) => switch (capability) {
     EntityCapability.hire => Icons.search_rounded,
     EntityCapability.offer => Icons.work_outline,
-    EntityCapability.both => Icons.swap_horiz_rounded,
   };
 }

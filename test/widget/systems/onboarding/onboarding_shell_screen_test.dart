@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_progress_indicator.dart';
 
@@ -20,8 +21,13 @@ void main() {
   }) async {
     final OnboardingTestStack s = stack ?? buildOnboardingStack();
     await s.hydrate('u1');
-    for (int i = 0; i < advances; i++) {
-      await s.provider.advance();
+    if (advances > 0) {
+      // Professional-path tests: the focus decision itself advances past
+      // the capability step to industry, counting as the first step.
+      await s.provider.selectCapability(EntityCapability.offer);
+      for (int i = 1; i < advances; i++) {
+        await s.provider.advance();
+      }
     }
     // The single `/onboarding/:step` route means the URL stays aligned with the
     // provider step; pump at the canonical location unless a test explicitly
@@ -60,14 +66,14 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('capability step renders the usage decision cards', (
+    testWidgets('capability step renders the two focus cards', (
       WidgetTester tester,
     ) async {
       final OnboardingTestStack stack = await pumpShell(tester);
       expect(find.text('What will you do on Hivorr?'), findsOneWidget);
       expect(find.text('Hire Professionals'), findsOneWidget);
       expect(find.text('Offer Professional Services'), findsOneWidget);
-      expect(find.text('Do both'), findsOneWidget);
+      expect(find.text('Do both'), findsNothing);
       stack.provider.dispose();
     });
 

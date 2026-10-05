@@ -183,12 +183,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   HivorrStatCard(
                     compact: true,
                     icon: Icons.lock_outline,
-                    iconBackground: context.roleTheme.bothContainer,
-                    iconForeground: context.roleTheme.bothPrimary,
+                    iconBackground: context.appExtension.infoContainer,
+                    iconForeground: context.appExtension.info,
                     label: 'Escrow Held',
                     value: '\$84K',
                     sub: 'across 62 jobs',
-                    subColor: context.roleTheme.bothPrimary,
+                    subColor: context.appExtension.info,
                   ),
                   HivorrStatCard(
                     compact: true,

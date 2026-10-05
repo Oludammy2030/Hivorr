@@ -30,7 +30,7 @@ class HelpScreen extends StatelessWidget {
             question: 'Getting started',
             answer:
                 'Create an account, complete your Basic Information and '
-                'choose your capability — hire, offer, or both.',
+                'pick your focus — hire, or offer your services.',
           ),
           const SizedBox(height: HivorrSpacing.sm),
           TextButton(

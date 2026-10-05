@@ -99,6 +99,7 @@ dependencies:
   # Web file-pick options (cancelUploadOnWindowBlur opt-out) without pulling
   # the transitive `file_picker_web` package through `file_picker`'s API.
   file_picker_web: 3.1.0
+  pdfx: 2.11.0
 
 dev_dependencies:
   flutter_test:

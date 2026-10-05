@@ -106,6 +106,75 @@ void main() {
       await unmount(tester);
     });
 
+    testWidgets('renders the enterprise metrics row from real data', (
+      WidgetTester tester,
+    ) async {
+      final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
+        queue: <AdminReviewQueueEntry>[
+          adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+        ],
+      )..metricsResult = const AdminReviewMetrics(
+        pendingTotal: 7,
+        inReviewTotal: 2,
+        avgVerificationSeconds: 259200,
+        approvedToday: 3,
+        decidedTotal: 10,
+        rejectedTotal: 4,
+        rejectionRate: 0.4,
+        periodDays: 30,
+      );
+      await pumpScreenWith(tester, repo: repo);
+      expect(find.text('Total Pending Reviews'), findsOneWidget);
+      expect(find.text('Avg. Verification Time'), findsOneWidget);
+      expect(find.text('Approved Today'), findsOneWidget);
+      expect(find.text('Rejection Rate'), findsOneWidget);
+      // Real RPC values, formatted — never invented.
+      expect(find.text('7'), findsWidgets);
+      expect(find.text('3d'), findsOneWidget);
+      expect(find.text('3'), findsWidgets);
+      expect(find.text('40.0%'), findsOneWidget);
+      expect(find.text('Trailing 30 days'), findsOneWidget);
+      expect(find.text('Since UTC midnight'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('renders unavailable metrics when the window is empty', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+          ],
+        ),
+      );
+      // Fake serves zeroed metrics: empty-window states, never fake numbers.
+      expect(find.text('No decisions in window'), findsNWidgets(2));
+      await unmount(tester);
+    });
+
+    testWidgets('renders the submissions table with review actions', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+          ],
+        ),
+      );
+      expect(find.text('Pending Professional Submissions'), findsOneWidget);
+      expect(find.text('PROFESSIONAL'), findsOneWidget);
+      expect(find.text('ACTIONS'), findsOneWidget);
+      expect(find.text('Review'), findsOneWidget);
+      // No fabricated risk column.
+      expect(find.text('RISK'), findsNothing);
+      expect(find.textContaining('Risk'), findsNothing);
+      await unmount(tester);
+    });
+
     testWidgets('search filters the loaded queue', (
       WidgetTester tester,
     ) async {
@@ -231,6 +300,53 @@ void main() {
 
       expect(find.text('Grace Hopper'), findsNWidgets(2));
       expect(find.text('Ada Lovelace'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('shows empty profile states when nothing is recorded', (
+      WidgetTester tester,
+    ) async {
+      await pumpWide(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+          ],
+        ),
+      );
+      expect(find.text('Work Experience'), findsOneWidget);
+      expect(find.text('Education'), findsOneWidget);
+      expect(find.text('Skills'), findsOneWidget);
+      expect(
+        find.text('No work history recorded by the applicant.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('No education recorded by the applicant.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('No skills recorded by the applicant.'),
+        findsOneWidget,
+      );
+      await unmount(tester);
+    });
+
+    testWidgets('renders recorded experience, education, and skills', (
+      WidgetTester tester,
+    ) async {
+      await pumpWide(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+          ],
+        )..setReviewProfile(adminReviewProfile()),
+      );
+      expect(find.text('Senior Plumber'), findsOneWidget);
+      expect(find.text('Flow Masters'), findsOneWidget);
+      expect(find.text('Trade Institute'), findsOneWidget);
+      expect(find.text('Pipefitting · 6 yrs'), findsOneWidget);
       await unmount(tester);
     });
 

@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/shell/dashboard_sidebar.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
 
 import '../../support/harnesses/widget_harness.dart';
 
 void main() {
-  group('DashboardSidebar capability filtering', () {
+  group('DashboardSidebar focus filtering', () {
     Future<void> pumpSidebar(
-      WidgetTester tester,
-      DashboardCapability capability,
-    ) => pumpApp(
+      WidgetTester tester, {
+      required bool hire,
+      required bool offer,
+    }) => pumpApp(
       tester,
       SizedBox(
         width: 300,
         height: 1600,
-        child: DashboardSidebar(location: '/dashboard', capability: capability),
+        child: DashboardSidebar(
+          location: '/dashboard',
+          hire: hire,
+          offer: offer,
+        ),
       ),
     );
 
     testWidgets('hire sees hiring + shared sections', (
       WidgetTester tester,
     ) async {
-      await pumpSidebar(tester, DashboardCapability.hire);
+      await pumpSidebar(tester, hire: true, offer: false);
       expect(find.text('Post a Job'), findsOneWidget);
       expect(find.text('My Jobs'), findsOneWidget);
       expect(find.text('Find Services'), findsOneWidget);
@@ -49,7 +53,7 @@ void main() {
         tester.view.physicalSize = previousPhysical;
         tester.view.devicePixelRatio = previousDpr;
       });
-      await pumpSidebar(tester, DashboardCapability.offer);
+      await pumpSidebar(tester, hire: false, offer: true);
       // Reference primaries (green Professional identity).
       expect(find.text('Professional Dashboard'), findsOneWidget);
       expect(find.text('Dashboard'), findsOneWidget);
@@ -72,7 +76,7 @@ void main() {
       expect(find.text('Payments'), findsNothing);
     });
 
-    testWidgets('both sees the combined navigation with headers', (
+    testWidgets('unhydrated fail-open sees all sections, no focus label', (
       WidgetTester tester,
     ) async {
       // Tall viewport: the sidebar ListView lazily builds only visible
@@ -85,14 +89,15 @@ void main() {
         tester.view.physicalSize = previousPhysical;
         tester.view.devicePixelRatio = previousDpr;
       });
-      await pumpSidebar(tester, DashboardCapability.both);
+      await pumpSidebar(tester, hire: true, offer: true);
       expect(find.text('Find Jobs'), findsOneWidget);
       expect(find.text('Post a Job'), findsOneWidget);
       expect(find.text('MY WORK'), findsOneWidget);
       expect(find.text('MY HIRING'), findsOneWidget);
       expect(find.text('SHARED'), findsOneWidget);
+      // No combined identity: neither focus label renders pre-hydration.
       expect(find.text('CLIENT'), findsNothing);
-      expect(find.text('BOTH'), findsOneWidget);
+      expect(find.text('PROFESSIONAL'), findsNothing);
     });
   });
 
