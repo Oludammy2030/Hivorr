@@ -40,7 +40,7 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('renders the three capability cards + helper copy', (
+    testWidgets('renders the two focus cards + helper copy', (
       WidgetTester tester,
     ) async {
       final (OnboardingTestStack stack, _) = await pumpCapability(tester);
@@ -48,7 +48,6 @@ void main() {
       for (final String label in <String>[
         'Hire Professionals',
         'Offer Professional Services',
-        'Do both',
       ]) {
         expect(
           find.text(label),
@@ -91,7 +90,7 @@ void main() {
       },
     );
 
-    testWidgets('tapping Offer and Both persist their decision', (
+    testWidgets('tapping Offer persists and continues to industry', (
       WidgetTester tester,
     ) async {
       final (OnboardingTestStack offerStack, _) = await pumpCapability(tester);
@@ -104,13 +103,7 @@ void main() {
         reason: 'offer continues into industry selection',
       );
       expect(find.text('ONBOARDING-INDUSTRY'), findsOneWidget);
-      final (OnboardingTestStack bothStack, _) = await pumpCapability(tester);
-      await tester.tap(find.text('Do both'));
-      await tester.pumpAndSettle();
-      expect(bothStack.provider.progress!.capability, EntityCapability.both);
-      expect(bothStack.provider.progress!.step, OnboardingStepCode.industry);
       offerStack.provider.dispose();
-      bothStack.provider.dispose();
     });
 
     testWidgets('a failed persist surfaces the error inline and stays', (

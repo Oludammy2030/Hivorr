@@ -7,28 +7,36 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
-import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/dashboard/shell/dashboard_more_sheet.dart';
 import 'package:hivorr/systems/dashboard/shell/dashboard_sidebar.dart';
-import 'package:hivorr/systems/dashboard/widgets/dashboard_mode_toggle.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
+
+/// Capability visibility flags for the dashboard shell.
+///
+/// Derived from [OnboardingProvider.progress]: a hydrated focus filters to its
+/// side; unhydrated (null) shows everything (fail-open) so the shell never
+/// strands the user before hydration. There is no combined mode — switching
+/// sides happens in the Explore/Earn launcher.
+({bool hire, bool offer}) dashboardVisibility(OnboardingProvider onboarding) {
+  final EntityCapability? focus = onboarding.progress?.capability;
+  if (focus == null) {
+    return (hire: true, offer: true);
+  }
+  final DashboardCapability capability = DashboardCapability.fromEntity(focus);
+  return (hire: capability.showsHiring, offer: capability.showsWork);
+}
 
 /// Persistent role-aware dashboard shell: sidebar + workspace (EP-04-03).
 ///
 /// Desktop/tablet (>=600dp): fixed 264dp sidebar + expanded child.
-/// Mobile (<600dp): slim AppBar + bottom navigation bar (Home + mode-relevant
+/// Mobile (<600dp): slim AppBar + bottom navigation bar (Home + focus-relevant
 /// primary + Messages + More). The drawer is intentionally absent on mobile;
 /// overflow destinations live in [DashboardMoreSheet].
 ///
-/// Navigation items are capability-filtered: hire sees My Hiring + Shared,
-/// offer sees My Work + Shared, both sees the current operating mode
-/// ([DashboardViewModeProvider]: Professional → work + shared, Client →
-/// hiring + shared) via the Professional | Client toggle. The toggle is
-/// UI-only — the account role stays `both` and permissions are unchanged.
-/// Capability resolves from [OnboardingProvider.progress] (defaults to both,
-/// matching `EntityCapability.fromName`), so the shell never strands the
-/// user before hydration.
+/// Navigation items are focus-filtered: hire sees My Hiring + Shared, offer
+/// sees My Work + Shared. Switching sides happens in the Explore/Earn
+/// launcher (`/activities`), never via an in-shell toggle.
 class HivorrDashboardShell extends StatelessWidget {
   const HivorrDashboardShell({super.key, required this.child});
 
@@ -38,25 +46,17 @@ class HivorrDashboardShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final String location = GoRouterState.of(context).matchedLocation;
     final OnboardingProvider onboarding = context.watch<OnboardingProvider>();
-    final EntityCapability entityCapability =
-        onboarding.progress?.capability ?? EntityCapability.both;
-    final DashboardCapability capability = DashboardCapability.fromEntity(
-      entityCapability,
+    final ({bool hire, bool offer}) visibility = dashboardVisibility(
+      onboarding,
     );
-    final Breakpoint bp = context.breakpoint;
-    final bool isDesktop = bp != Breakpoint.mobile;
-    final DashboardViewMode viewMode = context
-        .watch<DashboardViewModeProvider>()
-        .mode;
-    final bool showModeToggle = capability == DashboardCapability.both;
 
     final Widget sidebar = DashboardSidebar(
       location: location,
-      capability: capability,
-      viewMode: viewMode,
+      hire: visibility.hire,
+      offer: visibility.offer,
     );
 
-    if (isDesktop) {
+    if (context.breakpoint != Breakpoint.mobile) {
       return Scaffold(
         body: SafeArea(
           child: Row(
@@ -82,18 +82,7 @@ class HivorrDashboardShell extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hivorr'),
-        bottom: showModeToggle
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(56),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: DashboardModeToggle(),
-                ),
-              )
-            : null,
-      ),
+      appBar: AppBar(title: const Text('Hivorr')),
       body: SafeArea(
         top: true,
         bottom: false,
@@ -101,8 +90,8 @@ class HivorrDashboardShell extends StatelessWidget {
       ),
       bottomNavigationBar: _DashboardBottomNav(
         location: location,
-        capability: capability,
-        viewMode: viewMode,
+        hire: visibility.hire,
+        offer: visibility.offer,
       ),
     );
   }
@@ -122,39 +111,28 @@ class _Workspace extends StatelessWidget {
   }
 }
 
-/// Mobile bottom navigation (<600dp): mode-relevant primaries + `More`.
+/// Mobile bottom navigation (<600dp): focus-relevant primaries + `More`.
 ///
-/// Primaries come from [mobilePrimaryNavItems] so `both` users see the active
-/// mode (Client → Hiring, Professional → Jobs) instead of a mixed bar. The
-/// bar auto-hides while the keyboard is open so inputs and chat composers
-/// keep full height, and respects the bottom safe area (home indicator).
+/// Primaries come from [mobilePrimaryNavItems] so the bar matches the current
+/// focus (hire → Hiring, offer → Jobs). The bar auto-hides while the keyboard
+/// is open so inputs and chat composers keep full height, and respects the
+/// bottom safe area (home indicator).
 class _DashboardBottomNav extends StatelessWidget {
   const _DashboardBottomNav({
     required this.location,
-    required this.capability,
-    this.viewMode,
+    required this.hire,
+    required this.offer,
   });
 
   final String location;
-  final DashboardCapability capability;
-
-  /// Current operating mode for `both` users; null preserves combined nav.
-  final DashboardViewMode? viewMode;
+  final bool hire;
+  final bool offer;
 
   @override
   Widget build(BuildContext context) {
     // Give chat inputs and forms full height while typing.
     if (MediaQuery.viewInsetsOf(context).bottom > 0) {
       return const SizedBox.shrink();
-    }
-    final bool hire;
-    final bool offer;
-    if (capability != DashboardCapability.both || viewMode == null) {
-      hire = capability.showsHiring;
-      offer = capability.showsWork;
-    } else {
-      hire = viewMode == DashboardViewMode.client;
-      offer = viewMode == DashboardViewMode.professional;
     }
     final List<DashboardNavItem> primaries = mobilePrimaryNavItems(
       hire: hire,
@@ -187,8 +165,8 @@ class _DashboardBottomNav extends StatelessWidget {
               DashboardMoreSheet.show(
                 context,
                 location: location,
-                capability: capability,
-                viewMode: viewMode,
+                hire: hire,
+                offer: offer,
               ),
             );
             return;

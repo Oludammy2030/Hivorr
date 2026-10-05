@@ -96,6 +96,13 @@ abstract final class RoutePaths {
   static const String onboardingTradeProof = '/onboarding/trade-proof';
   static const String onboardingComplete = '/onboarding/complete';
 
+  /// Unified-account activity launcher (Explore / Earn).
+  ///
+  /// Private authenticated route (no SEO): "Welcome to Hivorr — How would you
+  /// like to use Hivorr?" One account, multiple activities; the screen stays
+  /// reachable after onboarding so entities can add capabilities over time.
+  static const String activities = '/activities';
+
   /// Maps a wizard step code to its bookmarkable location
   /// (EP-02-18 §5.7). `completed` maps to the completion screen.
   static String onboardingRouteFor(OnboardingStepCode step) => switch (step) {
@@ -200,7 +207,7 @@ abstract final class RoutePaths {
   /// Role-aware dashboard shell root (EP-04-03).
   static const String dashboard = '/dashboard';
 
-  /// Client hiring routes (capability hire|both).
+  /// Client hiring routes (hire focus).
   static const String dashboardJobs = '/dashboard/jobs';
   static const String dashboardJobNew = '/dashboard/jobs/new';
   static const String dashboardJobDetailRoute = '/dashboard/jobs/:id';
@@ -214,11 +221,11 @@ abstract final class RoutePaths {
   static String dashboardJobEdit(String id) =>
       '/dashboard/jobs/${Uri.encodeComponent(id)}/edit';
 
-  /// Professional work routes (capability offer|both).
+  /// Professional work routes (offer focus).
   static const String dashboardOpportunities = '/dashboard/opportunities';
   static const String dashboardApplications = '/dashboard/applications';
 
-  /// Hires routes (both sides; `?role=client|professional` scopes the list).
+  /// Hires routes (either side; `?role=client|professional` scopes the list).
   static const String dashboardHires = '/dashboard/hires';
   static const String dashboardHireDetailRoute = '/dashboard/hires/:id';
 

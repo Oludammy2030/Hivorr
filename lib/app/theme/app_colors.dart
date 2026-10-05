@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 /// [ColorScheme] (which has no such slots); they live in [AppThemeExtension]
 /// so widgets can read them via `Theme.of(context).extension<AppThemeExtension>()`.
 ///
-/// Role accents (client/professional/both/admin) live in [RoleThemeExtension]
-/// (see `app_theme.dart`) — accent-only on top of the single unified
-/// [ColorScheme], per VISUAL-IDENTITY.md §3.
+/// Role accents (client/professional/admin + unified accent) live in
+/// [RoleThemeExtension] (see `app_theme.dart`) — accent-only on top of the
+/// single unified [ColorScheme], per VISUAL-IDENTITY.md §3.
 class AppColors {
   AppColors._();
 
@@ -22,7 +22,7 @@ class AppColors {
   ); // Brand / Client signature
   static const Color brandSecondary = Color(
     0xFF8B5CF6,
-  ); // Both / unified accent
+  ); // Unified accent (secondary brand surfaces)
   static const Color brandDeep = Color(
     0xFF1A2AD4,
   ); // Gradient start / Admin primary
@@ -39,6 +39,8 @@ class AppColors {
   static const Color professionalPrimary = Color(0xFF16A34A);
   static const Color professionalLight = Color(0xFFDCFCE7);
   static const Color bothPrimary = Color(0xFF8B5CF6);
+  // Deprecated for account identity (Both account value permanently removed).
+  // Retained only as secondary/combined-surface accent; do not use for new account-identity UI.
   static const Color bothLight = Color(0xFFF3F0FF);
   static const Color adminPrimary = Color(0xFF1A2AD4);
   static const Color adminAccent = Color(0xFF8B5CF6);

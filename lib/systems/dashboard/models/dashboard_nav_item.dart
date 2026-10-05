@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Navigation sections for the single combined dashboard nav (EP-04-03).
+/// Navigation sections for the focus-filtered dashboard nav (EP-04-03).
 ///
-/// Both accounts see all sections with headers (My Work / My Hiring /
-/// Shared); hire sees hiring + shared; offer sees work + shared. No mode
-/// state — visibility is pure capability filtering.
+/// Pre-hydration (focus unknown) shows all sections with headers (My Work /
+/// My Hiring / Shared); hire focus sees hiring + shared; offer focus sees
+/// work + shared. No mode state — visibility is pure focus filtering.
 enum DashboardNavSection {
   /// Professional-work side.
   work('My Work'),
@@ -48,13 +48,14 @@ class DashboardNavItem {
   /// Section grouping.
   final DashboardNavSection section;
 
-  /// Visible for hire/both capabilities.
+  /// Visible for the hire focus.
   final bool showForHire;
 
-  /// Visible for offer/both capabilities.
+  /// Visible for the offer focus.
   final bool showForOffer;
 
-  /// Whether [capability] (as hire/offer flags) may see this item.
+  /// Whether the current focus (as hire/offer flags) may see this item.
+  /// Both flags true (pre-hydration fail-open) sees everything.
   bool visibleFor({required bool hire, required bool offer}) {
     if (hire && offer) return true;
     if (hire) return showForHire;
@@ -64,10 +65,10 @@ class DashboardNavItem {
 
 /// Mobile primary destinations for the bottom navigation (<600dp).
 ///
-/// Returns at most the mode-relevant primaries in bar order:
-/// hire-only → Overview, My Jobs, Find Services, Messages;
-/// offer-only → Overview, Find Jobs, Messages;
-/// both (no active mode) → Overview, My Jobs, Find Jobs, Messages
+/// Returns at most the focus-relevant primaries in bar order:
+/// hire → Overview, My Jobs, Find Services, Messages;
+/// offer → Overview, Find Jobs, Messages;
+/// unhydrated (both flags) → Overview, My Jobs, Find Jobs, Messages
 /// (Find Services stays one tap away under `More` so the bar never exceeds
 /// five destinations).
 /// The `More` tab itself is rendered by the shell and is not included here.
@@ -87,9 +88,9 @@ List<DashboardNavItem> mobilePrimaryNavItems({
   if (hire) {
     primaries.add(byLocation('/dashboard/jobs'));
   }
-  // Hiring-side marketplace discovery (EP-03-09): a primary tab for
-  // hire-only and client-mode users. Combined-both keeps four primaries
-  // (bar-crowding guard) with Find Services under `More`.
+  // Hiring-side marketplace discovery (EP-03-09): a primary tab for hire
+  // focus. The unhydrated set keeps four primaries (bar-crowding guard)
+  // with Find Services under `More`.
   if (hire && !offer) {
     primaries.add(byLocation('/services'));
   }
@@ -149,7 +150,7 @@ bool isMobilePrimaryLocation(
   return false;
 }
 
-/// The full dashboard navigation, ordered for the combined Both experience.
+/// The full dashboard navigation, in canonical section order.
 const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
   DashboardNavItem(
     label: 'Overview',

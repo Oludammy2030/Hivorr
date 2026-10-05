@@ -7,6 +7,7 @@ import 'package:hivorr/app/home/home_screen.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -32,7 +33,8 @@ void main() {
     ) async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
-      await stack.provider.advance();
+      // Offer focus: the decision advances to industry, still incomplete.
+      await stack.provider.selectCapability(EntityCapability.offer);
       await stack.provider.exitWizard();
       await pumpOnboardingScreen(
         tester,
@@ -233,7 +235,7 @@ void main() {
       expect(find.text('ADMIN-DASHBOARD'), findsNothing);
     });
 
-    testWidgets('pending admin check holds on loading, never Both flash', (
+    testWidgets('pending admin check holds on loading, never flashes dashboard', (
       WidgetTester tester,
     ) async {
       final OnboardingTestStack stack = await completedStack();

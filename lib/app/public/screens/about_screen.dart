@@ -88,8 +88,8 @@ class AboutScreen extends StatelessWidget {
                     width: cardWidth,
                     child: HivorrFeatureCard(
                       icon: Icons.auto_awesome_outlined,
-                      iconBackground: context.roleTheme.bothContainer,
-                      iconColor: context.roleTheme.bothPrimary,
+                      iconBackground: context.appExtension.infoContainer,
+                      iconColor: context.appExtension.info,
                       title: 'AI-assisted',
                       body:
                           'An operational partner that drafts, automates and '

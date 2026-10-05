@@ -26,8 +26,6 @@ import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_tint_badge.dart';
-import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
-import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
@@ -1594,21 +1592,8 @@ class MyApplicationsScreen extends StatelessWidget {
     bool hiring = false;
     try {
       final OnboardingProvider onboarding = context.watch<OnboardingProvider>();
-      final DashboardCapability capability = DashboardCapability.fromEntity(
-        onboarding.progress?.capability ?? EntityCapability.both,
-      );
-      DashboardViewMode? mode;
-      try {
-        mode = context.watch<DashboardViewModeProvider>().mode;
-      } catch (_) {
-        mode = null;
-      }
-      if (capability == DashboardCapability.hire) {
-        hiring = true;
-      } else if (capability == DashboardCapability.both &&
-          mode == DashboardViewMode.client) {
-        hiring = true;
-      }
+      final EntityCapability? focus = onboarding.progress?.capability;
+      hiring = focus == EntityCapability.hire;
     } catch (_) {
       hiring = false;
     }

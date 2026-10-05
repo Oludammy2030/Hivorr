@@ -20,16 +20,16 @@
 
 ## 2. Engineering Objectives
 
-1. **Populate and operationalize the Two-Tier Taxonomy Framework** — Seed the `industries` → `professions` registry with initial data and build the server-side management RPCs and client-side taxonomy engine that all future industries plug into.
-2. **Build the Entity Registration & Onboarding System** — Create the end-to-end onboarding flow from post-auth registration through profession selection, profile completion, and credential submission.
-3. **Implement the Trade Verification Workflow** — Build the complete credential submission, admin review gate, and status propagation system that locks/unlocks marketplace participation per AGENT.md Rule 2.
+1. **Populate and operationalize the Dual Taxonomy Framework** — Seed the Profession registry (`industries` → `professions`) and establish the Local Market product taxonomy placeholder (vertical → category → subcategory → product type → attributes, admin-configurable) with server-side management RPCs and client-side taxonomy engines that all future industries and product verticals plug into.
+2. **Build the Entity Registration & Unified-Account Onboarding System** — Create the end-to-end onboarding flow from post-auth registration through Explore/Earn activity selection, profession selection, profile completion, and credential submission. One account, no Both value, Admin never selectable.
+3. **Implement the Trade, Seller, and Rider Verification Workflows** — Build the complete credential submission, Admin review gate (separate privileged environment), and status propagation system that locks/unlocks marketplace participation per AGENT.md Rule 2: services (trade gate), Local Market selling (seller gate), logistics (rider gate).
 4. **Establish the KYC Integration Framework** — Design verification levels, KYC data models, and the extensible integration seam for future identity verification providers.
 5. **Build the Provider-Agnostic Financial Infrastructure** — Design and implement the server-side financial schema (accounts, balances, transactions, escrow, payouts) with full RLS + RPC enforcement, and the client-side payment gateway abstraction layer.
 6. **Implement the Unified Multi-Currency Financial Profile** — Build currency-specific receiving accounts, multi-currency balances, and user-controlled currency conversion within a single entity profile.
 7. **Build the Escrow & Milestone Payment Infrastructure** — Implement provider-agnostic escrow lifecycle management (fund, hold, release, refund) with milestone-based release conditions.
 8. **Implement Bound Payout Accounts & Deposit Verification** — Build the payout account binding system with KYC-driven cashout limits and the payer-name-matching deposit verification engine per AGENT.md Rule 3.
 9. **Establish the Dispute Resolution Framework** — Build the structured dispute filing, evidence submission, and resolution workflow integrated with escrow holds.
-10. **Build the Professional Profile & Credential Display System** — Create the public-facing professional profile with verification badges, credential display, and portfolio showcase.
+10. **Build the Professional, Merchant/Store, and Rider Profile & Credential Display System** — Create the public-facing profiles with verification badges, credential display, store/product context, and portfolio showcase.
 
 ---
 
@@ -38,8 +38,8 @@
 | Goal | Target |
 |---|---|
 | Server-side financial enforcement | All financial calculations, escrow splits, balance mutations, and cashout limit enforcement execute via PostgreSQL RPC + RLS — zero financial logic in client code |
-| Taxonomy operational | Industries → Professions registry seeded, browsable, and extensible without schema changes |
-| Trade verification gate enforced | Unverified professionals have dashboard access but cannot bid/accept work (Rule 2) |
+| Taxonomy operational | Profession registry seeded plus Local Market product taxonomy placeholder; both browsable and extensible without schema changes |
+| Trade / seller / rider verification gates enforced | Unverified participants have dashboard access but gated writes stay locked (services bidding, product publishing, dispatch acceptance) per Rule 2 |
 | KYC-driven financial limits | Cashout limits, feature access, and verification depth are proportional and server-enforced |
 | Provider-agnostic payments | Payment gateway abstraction supports multiple providers; no direct provider calls in business logic |
 | Multi-currency profile | Single entity holds multiple currency-specific receiving accounts and balances |
@@ -207,7 +207,7 @@
 
 ## 9. Expected Phase Outcome
 
-A fully operational trust and identity engine where entities can register through a structured onboarding flow, select professions from a seeded two-tier taxonomy, submit credentials for verification, pass trade verification with admin review, and operate within a secure, provider-agnostic, multi-currency financial infrastructure — including unified financial profiles, escrow-protected transactions, bound payout accounts with KYC-driven limits, name-matching deposit verification, and structured dispute resolution — all before any marketplace transactions are enabled.
+A fully operational trust and identity engine where entities can register through a structured unified-account onboarding flow (one account, no Both value, Admin never selectable), select professions from a seeded Profession registry plus the Local Market product taxonomy placeholder, submit mandatory identity plus document/proof of trade (trade proof for services, proof-of-trade/store document for sellers, identity + KYC + vehicle/logistics proof for logistics), pass the applicable verification gate with admin review, meet the required KYC tier (tier_0 carries zero limits; withdrawals, payouts, conversions, higher limits, and earning payouts require a verified tier), and operate within a secure, provider-agnostic, multi-currency financial infrastructure — including unified financial profiles, escrow-protected transactions, bound payout accounts with KYC-gated limits, name-matching deposit verification, and structured dispute resolution — all before any marketplace transactions are enabled.
 
 ---
 
@@ -215,9 +215,9 @@ A fully operational trust and identity engine where entities can register throug
 
 | Criterion | Verification |
 |---|---|
-| Taxonomy registry seeded with initial industries + professions | Database query verification |
+| Taxonomy registry seeded with initial industries + professions plus Local Market product taxonomy placeholder | Database query verification |
 | Taxonomy management RPCs functional (CRUD + activate/deactivate) | RPC integration tests |
-| Client-side taxonomy engine browses industries → professions | Widget + integration test |
+| Client-side taxonomy engine browses industries → professions plus product verticals | Widget + integration test |
 | Verification schema extended with KYC levels + admin review queue | Schema review + migration verification |
 | Financial schema with accounts, balances, transactions, escrow, payouts | Schema review + pgTAP financial test suite |
 | All financial RPCs enforce server-side logic (zero client-side financial math) | RLS + RPC enforcement tests |
@@ -225,8 +225,10 @@ A fully operational trust and identity engine where entities can register throug
 | Supabase Storage buckets configured with RLS | Storage policy tests |
 | Payment gateway abstraction supports Paystack + Flutterwave adapters | Adapter integration tests |
 | Identity verification flow: submit → pending → reviewed → status update | End-to-end integration test |
-| Trade verification gate: unverified → pending → approved; bid-lock enforced | Integration test confirming bid-lock |
-| KYC level management with server-enforced cashout limits | RPC + limit enforcement tests |
+| Trade verification gate with mandatory trade proof: unverified → pending → approved; bid-lock enforced | Integration test confirming bid-lock |
+| Seller verification gate with mandatory proof-of-trade/store document: product-publish locked until APPROVED | Integration test confirming publish-lock |
+| Rider verification gate with mandatory logistics proof + KYC: dispatch locked until APPROVED | Integration test confirming dispatch-lock |
+| KYC level management with server-enforced KYC-gated access (tier_0 zero limits; withdrawals/payouts/conversions/higher limits/earning payouts require verified tier) | RPC + limit enforcement tests |
 | Multi-currency financial profile: create accounts, view balances | Integration test |
 | Escrow lifecycle: fund → hold → release/refund with audit trail | End-to-end escrow test |
 | Currency conversion between supported balances (infrastructure) | RPC test |
@@ -315,7 +317,7 @@ A fully operational trust and identity engine where entities can register throug
 | Attribute | Detail |
 |---|---|
 | **Objective** | Build the client-side taxonomy engine in `lib/workspace/profession_registry/` — industry browsing, profession listing by industry, hierarchical navigation, search/filter, and caching. Build the data layer (entities, DTOs, repositories, providers) for taxonomy data. |
-| **Engineering Purpose** | Entities must browse and select industries/professions during onboarding. The taxonomy engine is also used by the professional profile display and future marketplace discovery. Must be efficient (cached) and support the two-tier hierarchy. |
+| **Engineering Purpose** | Entities must browse and select industries/professions during onboarding. The taxonomy engine is also used by the professional profile display, merchant/store display, and Services Marketplace plus Local Market discovery. Must be efficient (cached) and support the Profession hierarchy plus the admin-configurable Local Market product taxonomy placeholder (vertical → category → subcategory → product type → attributes). |
 | **Dependencies** | EP-02-02 |
 | **Expected Outcome** | Taxonomy service with industry list, profession list (by industry), search, caching. Data layer: `Industry` entity, `Profession` entity, DTOs, mappers, repository, provider. Profession registry widget for browsing/selecting. Integration test verifying data flow from RPC → cache → UI. |
 | **Priority** | High | **Status** | Completed |
@@ -442,11 +444,11 @@ A fully operational trust and identity engine where entities can register throug
 | **Priority** | High | **Status** | Not Started |
 | **Planning Reasoning** | High | **Coding Reasoning** | High |
 
-### EP-02-19: Professional Profile & Credential Display System
+### EP-02-19: Professional, Merchant/Store, and Rider Profile & Credential Display System
 
 | Attribute | Detail |
 |---|---|
-| **Objective** | Build the professional profile display system in `lib/systems/portfolio/` — public-facing professional profile page with verification badges (identity verified, trade verified), credential display, profession information, portfolio showcase (work samples, project descriptions), and trust signals (KYC level indicator, verification status). Build the data layer for portfolio items. |
+| **Objective** | Build the profile display system in `lib/systems/portfolio/` — public-facing professional, merchant/store, and rider profiles with verification badges (identity verified, trade verified, seller verified, rider verified), credential display, profession / product-category information, portfolio and store showcase (work samples, project descriptions, product listings), and trust signals (KYC level indicator, verification status). Build the data layer for portfolio items. |
 | **Engineering Purpose** | The professional profile is the trust-visible output of the entire verification system. It signals credibility to potential clients and is the foundation for EP-03 marketplace discovery. Must be SEO-friendly (public URL per ARCHITECTURE.md routing rules) and responsive across mobile/web. |
 | **Dependencies** | EP-02-10 (identity verification), EP-02-11 (trade verification), EP-02-07 (taxonomy) |
 | **Expected Outcome** | Professional profile screen with: entity display info, profession + industry badges, verification status badges (identity verified, trade approved), credential display, portfolio grid. Public route (`/p/:profession_slug/:entity_id`). SEO-friendly URL. Responsive layout (mobile + web). Data layer: `PortfolioItem` entity, DTO, repository, provider. Widget tests verifying badge rendering and theme compliance. |
@@ -460,7 +462,7 @@ A fully operational trust and identity engine where entities can register throug
 | **Objective** | End-to-end validation of all EP-02 systems: complete onboarding flow through full stack, taxonomy browsing, verification submission through admin review, financial profile creation, escrow lifecycle, payout with name verification, deposit name-matching, currency conversion, dispute filing and resolution, professional profile display, EP-03 readiness verification. |
 | **Engineering Purpose** | Individual systems may work in isolation but fail when integrated. This is the final gate before EP-02 is marked complete and EP-03 is unblocked. Must validate that all trust, identity, and financial systems work together under realistic conditions. |
 | **Dependencies** | All EP-02 items |
-| **Expected Outcome** | 12-point validation: (1) Full onboarding flow end-to-end, (2) Taxonomy browse → select → bind, (3) Identity verification submit → review → approve, (4) Trade verification submit → admin review → bid-lock released, (5) KYC level upgrade → limit increase, (6) Financial profile creation → currency account → balance display, (7) Escrow create → fund → milestone → release, (8) Currency conversion preview → execute → balances updated, (9) Payout account bind → name verify → withdraw within limit, (10) Deposit name-match → accept/flag, (11) Dispute file → evidence → resolve → escrow action, (12) Professional profile renders with badges on mobile + web. All financial operations verified server-side only. No hardcoded colors/fonts. EP-02 complete, EP-03 unblocked. |
+| **Expected Outcome** | 12-point validation: (1) Full unified-account onboarding flow end-to-end (no Both value), (2) Taxonomy browse → select → bind (Profession + product placeholder), (3) Identity verification submit → review → approve, (4) Trade verification with mandatory trade proof submit → admin review → bid-lock released, (5) Seller-document submit → review → product-publish gate released, (6) Rider verification with mandatory logistics proof → review → dispatch gate released, (7) KYC level upgrade → limit increase (tier_0 zero; withdrawals/payouts/conversions/earnings require verified tier), (8) Financial profile creation → currency account → balance display, (9) Escrow create → fund → milestone → release, (10) Currency conversion preview → execute → balances updated, (11) Payout account bind → name verify → withdraw within KYC limit, (12) Deposit name-match → accept/flag, (13) Dispute file → evidence → resolve → escrow action, (14) Professional + merchant/store profiles render with badges on mobile + web. All financial operations verified server-side only. No hardcoded colors/fonts. EP-02 complete, EP-03 unblocked. |
 | **Priority** | Critical | **Status** | Not Started |
 | **Planning Reasoning** | High | **Coding Reasoning** | High |
 

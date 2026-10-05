@@ -180,7 +180,7 @@ class OnboardingService {
         return null;
       }
       final EntityCapability capability =
-          status.capability ?? EntityCapability.both;
+          status.capability ?? EntityCapability.hire;
       final OnboardingProgress complete = OnboardingProgress(
         entityId: entityId,
         capability: capability,
@@ -219,7 +219,7 @@ class OnboardingService {
   /// Advances one step along the capability path and persists (plan §5.4).
   ///
   /// `capability → industry (incl. profession) → identityDocument →
-  /// tradeProof` for professional/`both` entities; a hire-only entity finishes
+  /// tradeProof` for offer-focus entities; a hire-focus entity finishes
   /// right after the capability step (industry/profession/verification are
   /// never on its path). Reaching the end first stamps completion
   /// **server-side** via `entity_onboarding_status_update` (the
@@ -244,12 +244,12 @@ class OnboardingService {
     await _persist(updated, 'onboarding.step.${p.step.ordinal + 1}.duration');
   }
 
-  /// Records the entity's capability choice and advances past the decision.
+  /// Records the entity's focus choice and advances past the decision.
   ///
-  /// The capability is persisted **server-side first**
+  /// The focus is persisted **server-side first**
   /// (`entity_onboarding_status_update`) as soon as the decision is reached;
   /// a hire choice finishes the wizard in the same RPC (capability-only path,
-  /// validated server-side), while professional/`both` choices continue into
+  /// validated server-side), while the offer choice continues into
   /// industry selection. Only after the server accepts is the local position
   /// advanced/persisted, so the local cache never lies about the authority.
   Future<void> selectCapability(EntityCapability capability) async {
@@ -288,7 +288,7 @@ class OnboardingService {
   ///
   /// No-op when no repository is wired (legacy local-only seam). The server
   /// re-verifies every required step (the registration-hydrated profile row,
-  /// `capability`, and for offer/both: professional role, profession bind,
+  /// `capability`, and for offer: professional role, profession bind,
   /// identity document, trade proof) and raises `PLT003` when incomplete —
   /// that propagates unchanged.
   Future<void> _completeOnServer(EntityCapability capability) async {

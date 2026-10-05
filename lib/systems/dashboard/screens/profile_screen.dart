@@ -30,7 +30,6 @@ import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
-import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/models/picked_avatar.dart';
 import 'package:provider/provider.dart';
@@ -77,23 +76,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _hydrate() async {
     if (!mounted) return;
-    DashboardCapability capability = DashboardCapability.both;
+    // Fail-open pre-hydration: load both sides until the focus is known.
+    EntityCapability? focus;
     try {
-      capability = DashboardCapability.fromEntity(
-        context.read<OnboardingProvider>().progress?.capability ??
-            EntityCapability.both,
-      );
+      focus = context.read<OnboardingProvider>().progress?.capability;
     } catch (_) {
       return;
     }
+    final bool hire = focus == null || focus == EntityCapability.hire;
+    final bool offer = focus == null || focus == EntityCapability.offer;
     try {
       final JobProvider jobs = context.read<JobProvider>();
       final HireProvider hires = context.read<HireProvider>();
-      if (capability.showsHiring) {
+      if (hire) {
         unawaited(jobs.loadMine(role: 'posted'));
         unawaited(hires.loadList(role: 'client'));
       }
-      if (capability.showsWork) {
+      if (offer) {
         unawaited(jobs.loadDiscovery(refresh: true));
         unawaited(hires.loadList(role: 'professional'));
       }
@@ -124,28 +123,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final OnboardingProvider onboarding = context.watch<OnboardingProvider>();
     final AuthProvider auth = context.watch<AuthProvider>();
+    // Fail-open pre-hydration: hiring hub until the focus is known.
+    final EntityCapability? focus = onboarding.progress?.capability;
     final DashboardCapability capability = DashboardCapability.fromEntity(
-      onboarding.progress?.capability ?? EntityCapability.both,
+      focus ?? EntityCapability.hire,
     );
     final String email = auth.currentSession?.email ?? '';
     final bool isMobile = context.breakpoint == Breakpoint.mobile;
 
     // Professional Dashboard → Profile renders the reference long-form page
     // (cover header, Profile | Portfolio | Reviews | Settings tabs, editable
-    // Profile tab). Other capabilities keep the established hub below.
-    bool showProReference = false;
+    // Profile tab). Other focuses keep the established hub below.
     if (capability == DashboardCapability.offer) {
-      showProReference = true;
-    } else if (capability == DashboardCapability.both) {
-      try {
-        showProReference =
-            context.watch<DashboardViewModeProvider>().mode ==
-            DashboardViewMode.professional;
-      } catch (_) {
-        showProReference = false;
-      }
-    }
-    if (showProReference) {
       return _proScaffold(context, capability, email, isMobile);
     }
 
@@ -287,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 /// Reference top bar: menu tile, `Profile` title, notification bell with
-/// attention dot, Client/Professional/Both role pill and account avatar
+/// attention dot, Client/Professional focus pill and account avatar
 /// (mirrors the overview top bar; Hivorr terminology — never `Employer`).
 class _ProfileTopBar extends StatelessWidget {
   const _ProfileTopBar({required this.capability, required this.email});
@@ -730,7 +719,6 @@ class _RoleChip extends StatelessWidget {
         roles.professionalContainer,
         roles.professionalPrimary,
       ),
-      DashboardCapability.both => (roles.bothContainer, roles.bothPrimary),
     };
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -792,7 +780,6 @@ Color _pillContainer(RoleThemeExtension roles, DashboardCapability capability) {
   return switch (capability) {
     DashboardCapability.hire => roles.clientContainer,
     DashboardCapability.offer => roles.professionalContainer,
-    DashboardCapability.both => roles.bothContainer,
   };
 }
 
@@ -803,7 +790,6 @@ Color _pillForeground(
   return switch (capability) {
     DashboardCapability.hire => roles.clientPrimary,
     DashboardCapability.offer => roles.professionalPrimary,
-    DashboardCapability.both => roles.bothPrimary,
   };
 }
 

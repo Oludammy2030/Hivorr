@@ -26,6 +26,7 @@ import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/service_listing.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/systems/activities/screens/activities_screen.dart';
 import 'package:hivorr/systems/admin/screens/admin_dashboard_screen.dart';
 import 'package:hivorr/systems/admin/screens/admin_jobs_screen.dart';
 import 'package:hivorr/systems/admin/screens/admin_payments_screen.dart';
@@ -627,6 +628,12 @@ class AppRouter {
               initialListing: extra is ServiceListing ? extra : null,
             );
           },
+        ),
+        GoRoute(
+          path: RoutePaths.activities,
+          name: RouteNames.activities,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ActivitiesScreen(),
         ),
         GoRoute(
           path: RoutePaths.onboarding,

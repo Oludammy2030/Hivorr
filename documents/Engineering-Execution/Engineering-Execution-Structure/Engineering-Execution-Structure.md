@@ -28,13 +28,13 @@ EP-01 (Foundation)
 | **Phase Name** | Core Platform Foundation & Infrastructure |
 | **Engineering Objective** | Establish the foundational architecture, development infrastructure, server-side enforcement layer, and core platform services that all subsequent phases depend on. |
 | **Business Capability Enabled** | Creates the engineering bedrock — without this phase, no business capability can be built, tested, or deployed. |
-| **Major Systems / Functional Areas** | Project scaffolding & CI/CD pipelines; environment management (Dev/Staging/Prod); PostgreSQL server-side architecture (RPC + RLS); Universal Entity data model; authentication & authorization framework; core API layer; offline sync engine; security infrastructure (encryption, SSL pinning, token rotation); monitoring & logging; design system & shared UI foundation. |
+| **Major Systems / Functional Areas** | Project scaffolding & CI/CD pipelines; environment management (Dev/Staging/Prod); PostgreSQL server-side architecture (RPC + RLS); Universal Entity data model with unified account (buy, sell, hire, offer services, logistics; no Both value); authentication & authorization framework; Explore/Earn/Admin routing shells; core API layer; offline sync engine; security infrastructure (encryption, SSL pinning, token rotation); monitoring & logging; design system & shared UI foundation. |
 | **Dependencies** | None — this is the origin phase. |
 | **Expected Outcome** | A fully operational development environment with a secure, scalable, zero-trust architecture where the client is an unprivileged presentation layer and all sensitive logic executes server-side. |
 | **Priority** | Critical — blocks all other phases |
-| **Status** | Not Started |
+| **Status** | In Progress — scaffolding, environments, Universal Entity model, auth, router, design system landed; see EP-01 phase plan |
 
-**Why this phase must occur first:** Every subsequent phase requires a functioning architecture, database schema, authentication system, and deployment pipeline. The Universal Entity data model must be designed to support multi-role, multi-industry operation from day one. The server-side enforcement architecture (RLS, stored procedures) must be established before any financial or trust logic is built. Building features without this foundation creates technical debt that compounds with every subsequent phase.
+**Why this phase must occur first:** Every subsequent phase requires a functioning architecture, database schema, authentication system, and deployment pipeline. The Universal Entity data model must be designed to support one unified account with multiple activities, multi-role operation, and dual taxonomies (Profession + Product) from day one. The server-side enforcement architecture (RLS, stored procedures) must be established before any financial or trust logic is built. Building features without this foundation creates technical debt that compounds with every subsequent phase.
 
 ---
 
@@ -46,13 +46,13 @@ EP-01 (Foundation)
 | **Phase Name** | Trust, Identity & Financial Integrity Engine |
 | **Engineering Objective** | Build the universal trust, identity verification, and provider-agnostic, multi-currency financial infrastructure that makes safe marketplace transactions possible. |
 | **Business Capability Enabled** | Business Phase 1 — Trust Foundation and Supply Seeding. Enables entity registration, credential verification, KYC compliance, a unified multi-currency financial profile with currency-specific receiving accounts and balances, provider-agnostic escrow protection, and bound payout channels. |
-| **Major Systems / Functional Areas** | Entity registration & onboarding system; two-tier taxonomy framework (Industry → Profession registry); trade verification workflow with admin review gate; KYC integration framework; unified multi-currency financial profile with currency-specific receiving accounts and balances; provider-agnostic, multi-currency escrow & milestone payment infrastructure; currency conversion between supported balances; bound payout account system with KYC-driven cashout limits; name-matching deposit verification; dispute resolution framework; professional profile & credential display system. |
+| **Major Systems / Functional Areas** | Entity registration & unified-account onboarding system; dual taxonomy framework (Profession registry: Industry → Profession; Local Market product taxonomy placeholder: vertical → category → subcategory → product type → attributes, admin-configurable); trade + seller + rider verification workflows with Admin review gate (mandatory document/proof of trade for sell/offer, mandatory verification for logistics; dashboard-immediate, writes locked until APPROVED); KYC integration framework with KYC-gated access (withdrawals, payouts, conversions, higher limits, and earning payouts require verified tier; tier_0 carries zero limits); unified multi-currency financial profile with currency-specific receiving accounts and balances; provider-agnostic, multi-currency escrow & milestone payment infrastructure; currency conversion between supported balances; bound payout account system with KYC-driven cashout limits; name-matching deposit verification; dispute resolution framework; professional + merchant/store + rider profile & credential display system. |
 | **Dependencies** | EP-01 (requires Universal Entity data model, authentication framework, server-side architecture, database infrastructure) |
-| **Expected Outcome** | A fully operational trust and identity engine where entities can register, verify credentials, pass trade verification, and operate within a secure financial infrastructure — all before any marketplace transactions are enabled. |
+| **Expected Outcome** | A fully operational trust and identity engine where entities can register, verify credentials (trade, seller, rider), pass the applicable verification gate, meet the required KYC tier, and operate within a secure financial infrastructure — all before any marketplace transactions are enabled. |
 | **Priority** | Critical — blocks all marketplace phases |
-| **Status** | Not Started |
+| **Status** | In Progress — taxonomy, verification, financial integrity, onboarding, Admin review landed; seller/rider lanes pending |
 
-**Why this phase must occur at this stage:** Trust infrastructure must exist before any transaction occurs. The two-tier taxonomy framework is the universal classification system that all future industries plug into. Financial integrity systems (escrow, bound payouts, name-matching) must be proven before real money flows. Building marketplace features without trust infrastructure creates brand-damaging risk that is nearly impossible to recover from.
+**Why this phase must occur at this stage:** Trust infrastructure must exist before any transaction occurs. The dual taxonomy framework is the universal classification system that all future industries and product verticals plug into. Financial integrity systems (escrow, bound payouts, name-matching, KYC-gated limits) must be proven before real money flows. Building marketplace features without trust infrastructure creates brand-damaging risk that is nearly impossible to recover from.
 
 ---
 
@@ -64,11 +64,11 @@ EP-01 (Foundation)
 | **Phase Name** | Two-Party Transaction Engine & Professional Services Platform |
 | **Engineering Objective** | Build the universal 2-party transaction engine and launch the professional services marketplace — the simplest transaction model with no logistics dependency. |
 | **Business Capability Enabled** | Business Phase 2 — Professional Services Marketplace Activation. Enables direct expert-to-client connections with contract management, escrow-backed payments, and trust signals. |
-| **Major Systems / Functional Areas** | Deterministic ranking & matching engine; service listing, discovery, and search system; contract creation & milestone management engine; escrow release on verified milestone completion; double-blind review & rating system; encrypted messaging & communication system; scheduling & appointment management; portfolio & proof-of-work showcase; financial reporting & earnings visibility; structured dispute resolution for service engagements. |
+| **Major Systems / Functional Areas** | Deterministic ranking & matching engine; service listing, discovery, and search system (mandatory trade proof for service publishing/bidding); contract creation & milestone management engine; escrow release on verified milestone completion (KYC tier enforced for payouts); double-blind review & rating system; encrypted messaging & communication system; scheduling & appointment management; portfolio & proof-of-work showcase; financial reporting & earnings visibility (KYC-gated withdrawals/payouts); structured dispute resolution for service engagements. |
 | **Dependencies** | EP-02 (requires verified entities, trust signals, escrow infrastructure, taxonomy framework); EP-01 (requires core platform services) |
-| **Expected Outcome** | A functioning 2-party marketplace where verified professionals can be discovered, hired, contracted with, paid securely through escrow, and reviewed — validating the core marketplace model under real transaction conditions. |
+| **Expected Outcome** | A functioning 2-party marketplace where verified professionals (trade proof APPROVED, required KYC tier met) can be discovered, hired, contracted with, paid securely through escrow, and reviewed — validating the core marketplace model under real transaction conditions. |
 | **Priority** | High — first revenue-generating capability |
-| **Status** | Not Started |
+| **Status** | In Progress — Services Marketplace (Explore-hire + Earn-offer subset); Local Market and Logistics explicitly deferred to EP-04/EP-05 |
 
 **Why this phase must occur at this stage:** The 2-party transaction model is the lowest-complexity marketplace activation — no logistics, no third-party coordination, no physical fulfillment. It validates the trust infrastructure from EP-02 under real conditions and proves the revenue model before more complex operations are attempted. The deterministic engines (ranking, matching, escrow release) must be proven here before 3-party orchestration is attempted.
 
@@ -82,7 +82,7 @@ EP-01 (Foundation)
 | **Phase Name** | Three-Party Commerce Orchestration Engine |
 | **Engineering Objective** | Build the universal 3-party transaction orchestration engine that coordinates buyer, merchant, and rider in a single transaction flow. |
 | **Business Capability Enabled** | Business Phase 3 — Local Commerce and Marketplace Operations. Enables grocery sourcing, local food coordination, retail fulfillment, and integrated delivery. |
-| **Major Systems / Functional Areas** | Three-party transaction orchestration engine; merchant onboarding & catalog management system; order processing & fulfillment workflow; multi-party financial split engine (buyer payment → merchant payout + rider payout + platform fee); geo-radius broadcast dispatch system; real-time delivery tracking & status communication; multi-stop delivery management; merchant analytics & sales reporting; merchant review & rating system; rider performance tracking. |
+| **Major Systems / Functional Areas** | Three-party transaction orchestration engine; merchant onboarding with mandatory seller-document verification & catalog management system; order processing & fulfillment workflow; multi-party financial split engine (buyer payment → merchant payout + rider payout + platform fee; merchant/rider payouts KYC-gated); geo-radius broadcast dispatch system (mandatory logistics verification: identity + KYC + vehicle/logistics proof, no dispatch until APPROVED); real-time delivery tracking & status communication; multi-stop delivery management; merchant analytics & sales reporting; merchant review & rating system; rider performance tracking. |
 | **Dependencies** | EP-03 (requires proven 2-party transaction engine, escrow system, review framework); EP-02 (requires verified entities, financial infrastructure); EP-01 (requires core platform services) |
 | **Expected Outcome** | A functioning 3-party commerce system where buyers can order from merchants and nearby riders are dispatched for delivery — with accurate financial splits, real-time tracking, and marketplace trust across all three participant types. |
 | **Priority** | High — dramatically increases transaction frequency and addressable market |
@@ -100,7 +100,7 @@ EP-01 (Foundation)
 | **Phase Name** | Logistics & Delivery Network Engine |
 | **Engineering Objective** | Scale and optimize the hyper-local logistics network into a high-efficiency engine that serves both internal commerce and external logistics demand. |
 | **Business Capability Enabled** | Business Phase 4 — Logistics and Delivery Network Scaling. Transforms logistics from a cost center into a strategic asset and standalone revenue capability. |
-| **Major Systems / Functional Areas** | Advanced multi-stop routing & delivery optimization engine; real-time fleet management & capacity planning; geo-radius broadcast optimization algorithms; delivery analytics, SLA monitoring & performance benchmarking; external logistics API & partner integration framework; demand forecasting & surge handling; fleet incentive & earnings optimization; delivery quality assurance & loss prevention; cross-platform logistics visibility for external partners. |
+| **Major Systems / Functional Areas** | Advanced multi-stop routing & delivery optimization engine; real-time fleet management & capacity planning (mandatory rider verification + required KYC tier remain prerequisites); geo-radius broadcast optimization algorithms; delivery analytics, SLA monitoring & performance benchmarking; external logistics API & partner integration framework; demand forecasting & surge handling; fleet incentive & earnings optimization (earnings payouts KYC-gated); delivery quality assurance & loss prevention; cross-platform logistics visibility for external partners. |
 | **Dependencies** | EP-04 (requires 3-party commerce volume to generate sufficient order density for optimization); EP-01 (requires core platform services, spatial infrastructure) |
 | **Expected Outcome** | An optimized logistics engine that reduces delivery time and cost per delivery, supports external logistics-as-a-service partnerships, and provides measurable efficiency gains across all commerce transactions. |
 | **Priority** | Medium-High — transforms logistics into a revenue generator |
@@ -168,9 +168,9 @@ EP-01 (Foundation)
 
 | Phase ID | Phase Name | Maps to Business Phase | Priority | Dependencies | Status |
 |---|---|---|---|---|---|
-| EP-01 | Core Platform Foundation & Infrastructure | Pre-business foundation | Critical | None | Not Started |
-| EP-02 | Trust, Identity & Financial Integrity Engine | Phase 1 | Critical | EP-01 | Not Started |
-| EP-03 | Two-Party Transaction Engine & Professional Services Platform | Phase 2 | High | EP-01, EP-02 | Not Started |
+| EP-01 | Core Platform Foundation & Infrastructure | Pre-business foundation | Critical | None | In Progress — scaffolding, environments, Universal Entity model, auth, router, design system landed; see EP-01 phase plan |
+| EP-02 | Trust, Identity & Financial Integrity Engine | Phase 1 | Critical | EP-01 | In Progress — taxonomy, verification, financial integrity, onboarding, Admin review landed; seller/rider lanes pending |
+| EP-03 | Two-Party Transaction Engine & Professional Services Platform | Phase 2 | High | EP-01, EP-02 | In Progress — Services Marketplace (Explore-hire + Earn-offer subset); Local Market and Logistics explicitly deferred to EP-04/EP-05 |
 | EP-04 | Three-Party Commerce Orchestration Engine | Phase 3 | High | EP-01, EP-02, EP-03 | Not Started |
 | EP-05 | Logistics & Delivery Network Engine | Phase 4 | Medium-High | EP-01, EP-04 | Not Started |
 | EP-06 | AI Intelligence & Automation Framework | Phase 5 | Medium | EP-01, EP-03, EP-04, EP-05 | Not Started |
@@ -181,9 +181,9 @@ EP-01 (Foundation)
 
 ## Key Engineering Principles Applied
 
-1. **Core Platform Before Industry Expansion:** All 8 phases build universal platform capabilities. No industry-specific or profession-specific modules are included. Industries will be added as independent expansion modules after the core platform is established.
+1. **Core Platform Before Industry Expansion:** All 8 phases build universal platform capabilities: identity, unified-account activities (buy, sell, hire, offer services, logistics), dual taxonomies (Profession + Product), transactions, messaging, payments, reviews, Admin governance. No industry-specific or profession-specific modules are included. Industries will be added as independent expansion modules after the core platform is established. There is no Both account value.
 
-2. **Domain Separation:** Every system built is universal platform logic (identity, trust, transactions, messaging, payments, reviews, AI framework). Industry/profession logic remains explicitly excluded.
+2. **Domain Separation:** Every system built is universal platform logic (identity, trust, transactions, messaging, payments, reviews, AI framework, Explore/Earn/Admin shells). Industry/profession logic remains explicitly excluded. Product taxonomy and store catalog are universal commerce infrastructure, not industry logic.
 
 3. **Sequential Dependency Chain:** Each phase validates assumptions the next phase depends on. Skipping or reordering creates compounding engineering risk.
 
@@ -191,7 +191,7 @@ EP-01 (Foundation)
 
 5. **Deterministic Core Supremacy:** Deterministic engines (matching, ranking, routing, financial splits) are built and proven before the AI layer is introduced. AI enhances but never overrides.
 
-6. **Scalability Without Redesign:** The Universal Entity data model, two-tier taxonomy framework, and modular architecture are designed to absorb new industries, geographies, and capabilities without structural reinvention — including the provider-agnostic financial infrastructure that adds new countries, currencies, providers, and rails without redesign.
+6. **Scalability Without Redesign:** The Universal Entity data model, dual taxonomy framework (Profession + Product), unified-account activity model, and modular architecture are designed to absorb new industries, geographies, and capabilities without structural reinvention — including the provider-agnostic financial infrastructure that adds new countries, currencies, providers, and rails without redesign.
 
 ---
 

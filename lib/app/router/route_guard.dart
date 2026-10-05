@@ -120,7 +120,7 @@ class RouteGuard {
       // Hydration is async: isAdmin is null before first checkAdmin(), so
       // the home redirect is deferred until the flag hydrates (via
       // refreshListenable on adminReviewProvider) to avoid flashing the
-      // Both dashboard. Onboarding takes precedence above so an incomplete
+      // dashboard. Onboarding takes precedence above so an incomplete
       // wizard still resumes. HomeScreen mirrors this and waits as well.
       if (location == RoutePaths.home) {
         if (AdminGate.isAdmin(adminReviewProvider)) {
@@ -138,17 +138,18 @@ class RouteGuard {
 
       // Super-admin landing on the role-aware dashboard root goes to the
       // control panel. Sub-routes (/dashboard/...) stay manually reachable
-      // so an admin can still verify the Both experience when needed.
+      // so an admin can still verify dashboard experiences when needed.
       if (location == RoutePaths.dashboard &&
           AdminGate.isAdmin(adminReviewProvider)) {
         return RoutePaths.adminDashboard;
       }
 
-      // Capability gate for dashboard sub-routes (EP-04-03): hiring-only
-      // destinations require hire|both, work-only destinations require
-      // offer|both. Shared destinations (overview, job detail, hires,
-      // messages, notifications, account, settings) stay open — the server
-      // remains authoritative per row (PLT002/PLT004 on misuse).
+      // Focus gate for dashboard sub-routes (EP-04-03): hiring-only
+      // destinations require hire focus, work-only destinations require offer
+      // focus. Switch sides in the Explore/Earn launcher. Shared destinations
+      // (overview, job detail, hires, messages, notifications, account,
+      // settings) stay open — the server remains authoritative per row
+      // (PLT002/PLT004 on misuse).
       final String? dashboardRedirect = _dashboardCapabilityRedirect(location);
       if (dashboardRedirect != null) {
         return dashboardRedirect;
@@ -223,14 +224,19 @@ class RouteGuard {
       '${Uri.encodeQueryComponent(email)}'
       '&mode=${RoutePaths.authVerificationResumeMode}';
 
-  /// Entry gate for incomplete entities (EP-02-18 §5.5, FV-44):
+  /// Entry gate for incomplete entities (EP-02-18 §5.5, FV-44 + unified
+  /// account launcher):
   ///
   /// * placeholder home or any dashboard route + hydrated incomplete wizard
   ///   → the resume step — unless the wizard was deliberately exited
   ///   ([OnboardingProvider.exited]), in which case home stays reachable so
   ///   its "Continue registration" action can drive the return (clearing the
   ///   flag re-engages this redirect);
-  /// * any onboarding route + completed wizard → dashboard.
+  /// * a wizard still at the capability decision resumes into the Explore/Earn
+  ///   launcher (`/activities`) instead of the raw capability step, so the
+  ///   first decision is activity-framed (one account, multiple activities);
+  /// * any onboarding route + completed wizard → dashboard. The launcher
+  ///   itself stays reachable when complete (persistent "Explore more" entry).
   ///
   /// `null` when the provider is absent or not hydrated yet (no redirect beats
   /// a wrong redirect; the merged `refreshListenable` re-runs this once
@@ -251,11 +257,23 @@ class RouteGuard {
     // offline hydration failure).
     final bool complete =
         onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
+    if (location == RoutePaths.activities) {
+      // The launcher is the persistent activity entry: reachable both while
+      // the wizard is incomplete (first decision) and after completion
+      // ("Explore more" / "Change activity"). Never bounce it.
+      return null;
+    }
     if ((location == RoutePaths.home ||
             location.startsWith('${RoutePaths.dashboard}/') ||
             location == RoutePaths.dashboard) &&
         !complete &&
         !onboarding.exited) {
+      // Capability decision is activity-framed: first-time entities meet the
+      // Explore/Earn launcher, not the raw wizard step. Deeper steps resume
+      // in place; the launcher's live cards deep-link into them.
+      if (step == OnboardingStepCode.capability) {
+        return RoutePaths.activities;
+      }
       return RoutePaths.onboardingRouteFor(step);
     }
     if (location.startsWith(RoutePaths.onboarding) && complete) {
@@ -264,24 +282,24 @@ class RouteGuard {
     return null;
   }
 
-  /// Capability gate for dashboard sub-routes (EP-04-03).
+  /// Focus gate for dashboard sub-routes (EP-04-03).
   ///
   /// Hiring-only destinations (`/dashboard/jobs` except detail, payments)
-  /// require capability hire|both; work-only destinations (opportunities,
-  /// earnings) require offer|both. `/dashboard/applications` is shared:
-  /// professionals see their own applications, clients see the Jobs +
-  /// Applicants inbox. Pre-hydration (null capability) allows navigation —
-  /// the default `both` keeps the user unstranded and the server enforces
-  /// per-row authority.
+  /// require hire focus; work-only destinations (opportunities, earnings)
+  /// require offer focus. `/dashboard/applications` is shared: professionals
+  /// see their own applications, clients see the Jobs + Applicants inbox.
+  /// Pre-hydration (null capability) allows navigation — fail-open keeps the
+  /// user unstranded and the server enforces per-row authority.
   String? _dashboardCapabilityRedirect(String location) {
     if (!location.startsWith('${RoutePaths.dashboard}/') &&
         location != RoutePaths.dashboard) {
       return null;
     }
-    final EntityCapability capability =
-        onboardingProvider?.progress?.capability ?? EntityCapability.both;
-    final bool hire = capability != EntityCapability.offer;
-    final bool offer = capability != EntityCapability.hire;
+    final EntityCapability? capability =
+        onboardingProvider?.progress?.capability;
+    final bool hire = capability == null || capability == EntityCapability.hire;
+    final bool offer =
+        capability == null || capability == EntityCapability.offer;
     if (!hire && _isHiringRoute(location)) {
       return RoutePaths.dashboard;
     }
@@ -327,10 +345,12 @@ class RouteGuard {
     return true;
   }
 
-  /// Whether [location] is any EP-02-18 onboarding route (base or sub-step).
+  /// Whether [location] is any EP-02-18 onboarding route (base or sub-step)
+  /// or the unified-account launcher (same UAT family, same auth posture).
   static bool _isOnboardingRoute(String location) =>
       location == RoutePaths.onboarding ||
-      location.startsWith('${RoutePaths.onboarding}/');
+      location.startsWith('${RoutePaths.onboarding}/') ||
+      location == RoutePaths.activities;
 
   /// Captures an onboarding deep link present in the initial web URL.
   ///

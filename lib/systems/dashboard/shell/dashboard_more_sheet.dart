@@ -1,67 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
-import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
-import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
-import 'package:hivorr/systems/dashboard/widgets/dashboard_mode_toggle.dart';
 
 /// Mobile `More` overflow sheet for the dashboard bottom navigation (<600dp).
 ///
-/// Lists every capability/mode-visible destination that is not already a
-/// primary bottom tab, in canonical nav order. Tapping a row navigates via
-/// `go_router` and closes the sheet. Shows the Professional | Client toggle
-/// on top for `both` users so the sheet always reflects the active mode.
+/// Lists every focus-visible destination that is not already a primary bottom
+/// tab, in canonical nav order. Tapping a row navigates via `go_router` and
+/// closes the sheet.
 class DashboardMoreSheet extends StatelessWidget {
   const DashboardMoreSheet({
     super.key,
     required this.location,
-    required this.capability,
-    this.viewMode,
+    required this.hire,
+    required this.offer,
   });
 
   final String location;
-  final DashboardCapability capability;
-  final DashboardViewMode? viewMode;
+  final bool hire;
+  final bool offer;
 
   static Future<void> show(
     BuildContext context, {
     required String location,
-    required DashboardCapability capability,
-    DashboardViewMode? viewMode,
+    required bool hire,
+    required bool offer,
   }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (BuildContext context) => DashboardMoreSheet(
-        location: location,
-        capability: capability,
-        viewMode: viewMode,
-      ),
+      builder: (BuildContext context) =>
+          DashboardMoreSheet(location: location, hire: hire, offer: offer),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool hire;
-    final bool offer;
-    if (capability != DashboardCapability.both || viewMode == null) {
-      hire = capability.showsHiring;
-      offer = capability.showsWork;
-    } else {
-      hire = viewMode == DashboardViewMode.client;
-      offer = viewMode == DashboardViewMode.professional;
-    }
     final List<DashboardNavItem> overflow = mobileOverflowNavItems(
       hire: hire,
       offer: offer,
     );
-    final bool showModeToggle =
-        capability == DashboardCapability.both && viewMode != null;
 
     return SafeArea(
       top: false,
@@ -97,10 +80,6 @@ class DashboardMoreSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              if (showModeToggle) ...<Widget>[
-                const DashboardModeToggle(),
-                const SizedBox(height: HivorrSpacing.md),
-              ],
               for (final DashboardNavItem item in overflow)
                 _MoreRow(
                   item: item,
@@ -116,6 +95,22 @@ class DashboardMoreSheet extends StatelessWidget {
                     }
                   },
                 ),
+              _MoreRow(
+                item: const DashboardNavItem(
+                  label: 'Explore more ways to use Hivorr',
+                  icon: Icons.explore_outlined,
+                  activeIcon: Icons.explore,
+                  location: RoutePaths.activities,
+                  section: DashboardNavSection.shared,
+                ),
+                selected: _isSelected(location, RoutePaths.activities),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  if (location != RoutePaths.activities) {
+                    context.go(RoutePaths.activities);
+                  }
+                },
+              ),
             ],
           ),
         ),

@@ -30,11 +30,11 @@ The purpose of the initial development stages is to create the infrastructure th
 
 ---
 
-# Industry and Profession Expansion Strategy
+# Industry, Profession, and Product Vertical Expansion Strategy
 
-Industries and professions shall be introduced as independent expansion modules after the core Hivorr platform has been established.
+Industries, professions, and Local Market product verticals shall be introduced as independent expansion modules after the core Hivorr platform has been established.
 
-Each industry expansion must be analyzed separately based on its unique operational requirements.
+Each industry, profession, or product vertical expansion must be analyzed separately based on its unique operational requirements.
 
 Examples:
 
@@ -52,9 +52,11 @@ Each profession must have its own analysis covering:
 - Required tools and resources.
 - Industry-specific data.
 - Professional challenges.
-- Trust and verification requirements.
+- Trust and verification requirements (mandatory document/proof of trade plus required KYC tier; gated writes locked until APPROVED).
  Unique business rules.
 - AI assistance requirements.
+
+Each product vertical must have its own analysis covering the same points, with seller verification (mandatory proof-of-trade/store document plus required KYC tier) in place of trade proof.
 
 ---
 
@@ -66,15 +68,17 @@ The AI must separate:
 
 Capabilities shared across the entire ecosystem:
 
-- Identity.
+- Identity and unified-account activities (buy, sell, hire, offer services, logistics; no Both value).
 - Authentication.
 - Messaging.
 - Notifications.
-- Payments.
+- Payments with KYC-gated access (withdrawals, payouts, conversions, higher limits, and earning payouts require a verified tier; tier_0 carries zero limits).
 - Reviews.
 - Search.
 - Contracts.
-- Trust systems.
+- Trust systems with mandatory verification lanes (trade proof for services, proof-of-trade/store document for sellers, identity + KYC + vehicle/logistics proof for logistics; dashboard-immediate, gated writes locked until APPROVED).
+- Profession taxonomy and Local Market product taxonomy registries.
+- Explore / Earn shells plus separate Admin environment.
 - AI assistance framework.
 - Two-party and three-party transaction infrastructure.
 

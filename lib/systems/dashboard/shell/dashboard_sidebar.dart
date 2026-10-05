@@ -5,68 +5,42 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
-import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
-import 'package:hivorr/systems/dashboard/providers/dashboard_view_mode_provider.dart';
-import 'package:hivorr/systems/dashboard/widgets/dashboard_mode_toggle.dart';
 import 'package:provider/provider.dart';
 
-/// Capability-filtered left navigation for the dashboard shell (EP-04-03).
+/// Focus-filtered left navigation for the dashboard shell (EP-04-03).
 ///
-/// Professional (offer) mode renders the Professional Dashboard reference
-/// (green identity, `Dashboard / Find Work / My Jobs / Messages / Earnings /
-/// Profile` primaries + a `More` overflow for the remaining capability
-/// items so nothing is removed). Hire / Both modes keep the established
-/// grouped navigation (My Work / My Hiring / Shared).
+/// Offer focus renders the Professional Dashboard reference (green identity,
+/// `Dashboard / Find Work / My Jobs / Messages / Earnings / Profile`
+/// primaries + a `More` overflow for the remaining focus-visible items so
+/// nothing is removed). Hire focus (or unhydrated fail-open) keeps the
+/// established grouped navigation (My Work / My Hiring / Shared). Switching
+/// sides happens in the Explore/Earn launcher — there is no in-shell toggle.
 class DashboardSidebar extends StatelessWidget {
   const DashboardSidebar({
     super.key,
     required this.location,
-    required this.capability,
-    this.viewMode,
+    required this.hire,
+    required this.offer,
     this.onNavigate,
   });
 
   final String location;
-  final DashboardCapability capability;
-
-  /// Current operating mode for `both` users. Null preserves the combined
-  /// navigation (used by legacy callers/tests); the shell always supplies it.
-  final DashboardViewMode? viewMode;
+  final bool hire;
+  final bool offer;
   final VoidCallback? onNavigate;
-
-  bool get _isProfessional {
-    if (capability == DashboardCapability.offer) return true;
-    if (capability == DashboardCapability.both &&
-        viewMode == DashboardViewMode.professional) {
-      return true;
-    }
-    return false;
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (_isProfessional) {
+    if (offer && !hire) {
       return _ProfessionalSidebar(
         location: location,
-        capability: capability,
         onNavigate: onNavigate,
       );
     }
 
     final ColorScheme colors = context.colorScheme;
     final TextTheme text = context.textTheme;
-    final bool hire;
-    final bool offer;
-    if (capability != DashboardCapability.both || viewMode == null) {
-      hire = capability.showsHiring;
-      offer = capability.showsWork;
-    } else {
-      hire = viewMode == DashboardViewMode.client;
-      offer = viewMode == DashboardViewMode.professional;
-    }
-    final bool showModeToggle =
-        capability == DashboardCapability.both && viewMode != null;
     final List<DashboardNavItem> visible = dashboardNavItems
         .where(
           (DashboardNavItem item) => item.visibleFor(hire: hire, offer: offer),
@@ -134,17 +108,16 @@ class DashboardSidebar extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  capability.label.toUpperCase(),
-                  style: text.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    letterSpacing: 0.8,
+                // Unhydrated fail-open (both flags) shows no focus label —
+                // there is no combined identity to name.
+                if (hire != offer)
+                  Text(
+                    (offer ? 'Professional' : 'Client').toUpperCase(),
+                    style: text.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      letterSpacing: 0.8,
+                    ),
                   ),
-                ),
-                if (showModeToggle) ...<Widget>[
-                  const SizedBox(height: HivorrSpacing.sm),
-                  const DashboardModeToggle(),
-                ],
               ],
             ),
           ),
@@ -158,31 +131,67 @@ class DashboardSidebar extends StatelessWidget {
           Divider(height: 1, color: colors.outlineVariant),
           Padding(
             padding: const EdgeInsets.all(HivorrSpacing.md),
-            child: InkWell(
-              onTap: () => context.go(RoutePaths.home),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: HivorrSpacing.xs,
-                  horizontal: HivorrSpacing.sm,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Icon(
-                      Icons.arrow_back,
-                      size: 16,
-                      color: colors.onSurfaceVariant,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                InkWell(
+                  onTap: () => _go(context, RoutePaths.activities),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: HivorrSpacing.xs,
+                      horizontal: HivorrSpacing.sm,
                     ),
-                    const SizedBox(width: HivorrSpacing.sm),
-                    Text(
-                      'Back to app',
-                      style: text.labelSmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.explore_outlined,
+                          size: 16,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: HivorrSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'Explore more ways to use Hivorr',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.labelSmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                InkWell(
+                  onTap: () => context.go(RoutePaths.home),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: HivorrSpacing.xs,
+                      horizontal: HivorrSpacing.sm,
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.arrow_back,
+                          size: 16,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: HivorrSpacing.sm),
+                        Text(
+                          'Back to app',
+                          style: text.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -218,14 +227,9 @@ class DashboardSidebar extends StatelessWidget {
 /// profile (AuthSession first/last names from `user_metadata` /
 /// `entity_profiles`) — never hardcoded.
 class _ProfessionalSidebar extends StatelessWidget {
-  const _ProfessionalSidebar({
-    required this.location,
-    required this.capability,
-    this.onNavigate,
-  });
+  const _ProfessionalSidebar({required this.location, this.onNavigate});
 
   final String location;
-  final DashboardCapability capability;
   final VoidCallback? onNavigate;
 
   static const List<_ProNavDef> _primary = <_ProNavDef>[
@@ -366,14 +370,6 @@ class _ProfessionalSidebar extends StatelessWidget {
               ],
             ),
           ),
-          // Both accounts keep the UI-only Professional | Client toggle so
-          // the operating mode can switch back without losing the account.
-          if (capability == DashboardCapability.both) ...<Widget>[
-            const Padding(
-              padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: DashboardModeToggle(),
-            ),
-          ],
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -413,6 +409,16 @@ class _ProfessionalSidebar extends StatelessWidget {
                       onTap: () => _go(context, item.location),
                     ),
                 ],
+                const SizedBox(height: 4),
+                _ProNavRow(
+                  label: 'Explore more',
+                  icon: Icons.explore_outlined,
+                  activeIcon: Icons.explore,
+                  selected: _isSelected(RoutePaths.activities),
+                  accent: accent,
+                  accentContainer: accentContainer,
+                  onTap: () => _go(context, RoutePaths.activities),
+                ),
               ],
             ),
           ),

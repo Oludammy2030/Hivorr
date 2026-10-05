@@ -3,6 +3,7 @@ import 'package:hivorr/app/router/route_guard.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 
 import '../../support/fakes/fake_admin_review.dart';
 import '../../support/onboarding/onboarding_test_support.dart';
@@ -57,7 +58,9 @@ void main() {
   test('super admin with incomplete onboarding still goes to onboarding first', () async {
     final OnboardingTestStack stack = buildOnboardingStack();
     await stack.hydrate('u1');
-    await stack.provider.advance(); // now at industry, incomplete, not exited
+    // selectCapability advances past the decision: now at industry,
+    // incomplete, not exited.
+    await stack.provider.selectCapability(EntityCapability.offer);
     final adminProvider = AdminReviewProvider(
       repo: FakeAdminReviewRepository(isAdmin: true),
     );
@@ -93,7 +96,7 @@ void main() {
     );
     expect(guard.redirectResolver(RoutePaths.adminDashboard), isNull);
     expect(guard.redirectResolver(RoutePaths.adminManageUsers), isNull);
-    // Sub-routes stay manually reachable for Both verification.
+    // Sub-routes stay manually reachable for dashboard verification.
     expect(
       guard.redirectResolver(RoutePaths.dashboardJobs),
       isNull,

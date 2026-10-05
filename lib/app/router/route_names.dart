@@ -92,6 +92,9 @@ abstract final class RouteNames {
   static const String kycStatus = 'kyc-status';
   static const String kycUpgrade = 'kyc-upgrade';
 
+  /// Unified-account activity launcher (Explore / Earn).
+  static const String activities = 'activities';
+
   /// Onboarding wizard routes (EP-02-18) — capability-first, no profile step.
   static const String onboarding = 'onboarding';
   static const String onboardingCapability = 'onboarding-capability';

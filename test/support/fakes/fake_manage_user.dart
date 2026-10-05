@@ -53,10 +53,10 @@ class FakeManageUserRepository implements ManageUserRepository {
     if (capability != null) {
       filtered = filtered.where((ManageUserListItem u) {
         if (capability == 'professional') {
-          return u.capability == 'offer' || u.capability == 'both';
+          return u.capability == 'offer';
         }
         if (capability == 'client') {
-          return u.capability == 'hire' || u.capability == 'both';
+          return u.capability == 'hire';
         }
         return u.capability == capability;
       });

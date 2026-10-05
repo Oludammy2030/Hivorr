@@ -40,11 +40,11 @@ values (current_setting('test.a')::uuid, 'active'),
 on conflict (id) do nothing;
 
 select set_config('platform.rpc_invocation', 'on', true);
-update public.entities set capability = 'both'
+update public.entities set capability = 'hire'
  where id = current_setting('test.a')::uuid;
 update public.entities set capability = 'offer'
  where id = current_setting('test.b')::uuid;
-update public.entities set capability = 'both'
+update public.entities set capability = 'offer'
  where id = current_setting('test.c')::uuid;
 select set_config('platform.rpc_invocation', '', true);
 

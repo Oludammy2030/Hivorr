@@ -4,13 +4,12 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_badge.dart';
 
-/// Role-accent badge for `hire` / `offer` / `both` capabilities
-/// (VISUAL-IDENTITY.md §§3, 21b).
+/// Focus badge for `hire` / `offer` capabilities (VISUAL-IDENTITY.md §§3, 21b).
 ///
 /// Same metrics as [HivorrBadge]; colors come from [RoleThemeExtension]
-/// (role identity, never status semantics). Unknown capabilities render the
-/// raw value in a neutral badge so real data is never hidden; null/empty
-/// renders an em dash.
+/// (role identity, never status semantics). Unknown capabilities (including
+/// the retired `both`) render the raw value in a neutral badge so real data
+/// is never hidden; null/empty renders an em dash.
 class HivorrCapabilityBadge extends StatelessWidget {
   const HivorrCapabilityBadge({super.key, required this.capability});
 
@@ -37,9 +36,6 @@ class HivorrCapabilityBadge extends StatelessWidget {
       case 'Employer':
         foreground = roles.clientPrimary;
         background = roles.clientContainer;
-      case 'Both':
-        foreground = roles.bothPrimary;
-        background = roles.bothContainer;
       default:
         return HivorrBadge(label: label, variant: HivorrBadgeVariant.neutral);
     }
@@ -65,10 +61,10 @@ class HivorrCapabilityBadge extends StatelessWidget {
 }
 
 /// Screenshot vocabulary for capabilities: `hire` clients are Employers.
+/// The retired `both` value falls through to the raw-value neutral badge.
 String? _labelOf(String? capability) => switch (capability) {
   'hire' || 'client' => 'Employer',
   'offer' || 'professional' => 'Professional',
-  'both' => 'Both',
   null || '' => null,
   _ => capability,
 };

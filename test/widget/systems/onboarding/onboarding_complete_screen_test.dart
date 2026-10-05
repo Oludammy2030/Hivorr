@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hivorr/app/router/route_names.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/shared/widgets/hivorr_success_state.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_complete_screen.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 
@@ -22,6 +23,8 @@ void main() {
   }) async {
     final OnboardingTestStack s = stack ?? buildOnboardingStack();
     await s.hydrate('u1');
+    // The success + trust-loop copy belongs to the professional path.
+    await s.provider.selectCapability(EntityCapability.offer);
     if (approvedGate) {
       await selectTechnologyProfession(s.taxonomy);
       await s.provider.refreshGateStatus();

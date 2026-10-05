@@ -108,7 +108,7 @@ void main() {
   });
 
   group('HivorrCapabilityBadge', () {
-    testWidgets('maps hire/offer/both vocabularies', (
+    testWidgets('maps hire/offer vocabularies; retired both is neutral', (
       WidgetTester tester,
     ) async {
       await pumpTheme(
@@ -123,7 +123,9 @@ void main() {
       );
       expect(find.text('Employer'), findsOneWidget);
       expect(find.text('Professional'), findsOneWidget);
-      expect(find.text('Both'), findsOneWidget);
+      // The retired value renders raw in a neutral badge — never hidden.
+      expect(find.text('both'), findsOneWidget);
+      expect(find.text('Both'), findsNothing);
     });
 
     testWidgets('falls back to dash and raw labels', (
