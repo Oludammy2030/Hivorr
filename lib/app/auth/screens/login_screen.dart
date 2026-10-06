@@ -545,7 +545,7 @@ class _FormPanel extends StatelessWidget {
           'Sign in to your account',
           style: TextStyle(color: _muted, fontSize: 15),
         ),
-        SizedBox(height: titleGap),
+        const SizedBox(height: titleGap),
         const Text(
           'Email',
           style: TextStyle(
@@ -577,7 +577,7 @@ class _FormPanel extends StatelessWidget {
             disabledBorder: emailBorder,
           ),
         ),
-        SizedBox(height: fieldGap),
+        const SizedBox(height: fieldGap),
         const Text(
           'Password',
           style: TextStyle(
@@ -625,7 +625,7 @@ class _FormPanel extends StatelessWidget {
             ),
           ),
         ],
-        SizedBox(height: forgotGap),
+        const SizedBox(height: forgotGap),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
@@ -648,7 +648,7 @@ class _FormPanel extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: buttonGap),
+        const SizedBox(height: buttonGap),
         SizedBox(
           height: 52,
           child: ElevatedButton(
