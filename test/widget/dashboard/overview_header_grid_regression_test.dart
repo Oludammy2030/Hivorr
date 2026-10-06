@@ -27,7 +27,7 @@ class _StubJobService implements JobService {
     String? status,
     int limit = 20,
     String? cursor,
-  }) async => JobPage(jobs: const <Job>[], hasMore: false, nextCursor: null);
+  }) async => const JobPage(jobs: <Job>[], hasMore: false, nextCursor: null);
 
   @override
   Future<ApplicationPage> listApplicationsForJob(
@@ -35,8 +35,8 @@ class _StubJobService implements JobService {
     String? status,
     int limit = 20,
     String? cursor,
-  }) async => ApplicationPage(
-    applications: const <JobApplication>[],
+  }) async => const ApplicationPage(
+    applications: <JobApplication>[],
     hasMore: false,
     nextCursor: null,
   );
@@ -53,7 +53,7 @@ class _StubHireService implements HireService {
     String? status,
     int limit = 20,
     String? cursor,
-  }) async => HirePage(hires: const <Hire>[], hasMore: false, nextCursor: null);
+  }) async => const HirePage(hires: <Hire>[], hasMore: false, nextCursor: null);
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>

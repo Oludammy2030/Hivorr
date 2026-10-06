@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
@@ -21,6 +20,7 @@ import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/reviews/widgets/double_blind_status_card.dart';
 import 'package:hivorr/systems/reviews/widgets/review_list_tile.dart';
+import 'package:provider/provider.dart';
 
 /// Review reveal screen at `/contracts/:id/reviews` (EP-03-12).
 ///

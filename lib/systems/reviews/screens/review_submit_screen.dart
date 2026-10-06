@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
@@ -28,6 +27,7 @@ import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/systems/documents/widgets/contract_status_badge.dart';
 import 'package:hivorr/systems/reviews/services/service_review_service.dart';
 import 'package:hivorr/systems/reviews/widgets/star_rating_input.dart';
+import 'package:provider/provider.dart';
 
 /// Review submission screen at `/contracts/:id/review` (EP-03-12).
 ///
@@ -308,7 +308,7 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen> {
                           contractStatus,
                         );
                     if (notReviewable) {
-                      return HivorrErrorState(
+                      return const HivorrErrorState(
                         message: 'Contract not in reviewable state',
                         detail:
                             'Reviews open once the contract is active, completed, or closed.',

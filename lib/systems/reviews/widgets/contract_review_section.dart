@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/service_contract.dart';
@@ -12,6 +11,7 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/systems/reviews/services/service_review_service.dart';
 import 'package:hivorr/systems/reviews/widgets/double_blind_status_card.dart';
+import 'package:provider/provider.dart';
 
 /// Composition-only review section for `contract_detail_screen` (EP-03-12).
 ///

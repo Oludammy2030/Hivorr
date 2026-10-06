@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import 'package:hivorr/data/entities/service_review.dart';
 import 'package:hivorr/data/providers/service_review_provider.dart';
@@ -14,6 +13,7 @@ import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/reviews/widgets/rating_distribution_bar.dart';
 import 'package:hivorr/systems/reviews/widgets/review_list_tile.dart';
 import 'package:hivorr/systems/reviews/widgets/star_rating_display.dart';
+import 'package:provider/provider.dart';
 
 /// Read-only revealed-reviews section for `service_detail_screen` (EP-03-12).
 ///

@@ -30,10 +30,10 @@ MyReviewStatus awaitingYours() => const MyReviewStatus(
   reviewCount: 0,
 );
 
-MyReviewStatus awaitingCounterparty() => MyReviewStatus(
+MyReviewStatus awaitingCounterparty() => const MyReviewStatus(
   contractId: 'c1',
   youHaveSubmitted: true,
-  yourReview: const ServiceReview(
+  yourReview: ServiceReview(
     id: 'r1',
     contractId: 'c1',
     serviceListingId: 'listing-1',

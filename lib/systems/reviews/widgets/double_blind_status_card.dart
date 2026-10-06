@@ -87,9 +87,9 @@ class _AwaitingYoursCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Row(
+          const Row(
             children: <Widget>[
-              const HivorrBadge(
+              HivorrBadge(
                 label: 'Awaiting your review',
                 variant: HivorrBadgeVariant.info,
               ),
@@ -135,8 +135,8 @@ class _AwaitingCounterpartyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Row(
-              children: const <Widget>[
+            const Row(
+              children: <Widget>[
                 HivorrBadge(
                   label: 'Submitted',
                   variant: HivorrBadgeVariant.neutral,
@@ -199,8 +199,8 @@ class _RevealedCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Row(
-            children: const <Widget>[
+          const Row(
+            children: <Widget>[
               HivorrBadge(
                 label: 'Revealed',
                 variant: HivorrBadgeVariant.success,
