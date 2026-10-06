@@ -184,6 +184,52 @@ class ServiceSearchFilters {
       isTradeVerifiedOnly == null &&
       availabilityDate == null;
 
+  /// Sentinel distinguishing "field not passed" from an explicit `null`
+  /// (clear) in [copyWith].
+  static const Object _unset = Object();
+
+  /// Returns a copy with the given fields replaced.
+  ///
+  /// Explicit `null` clears that dimension (e.g. chip dismissal); omitted
+  /// fields keep their current value.
+  ServiceSearchFilters copyWith({
+    Object? professionId = _unset,
+    Object? industryId = _unset,
+    Object? priceMin = _unset,
+    Object? priceMax = _unset,
+    Object? currencyCode = _unset,
+    Object? ratingMin = _unset,
+    Object? isTradeVerifiedOnly = _unset,
+    Object? availabilityDate = _unset,
+  }) {
+    return ServiceSearchFilters(
+      professionId: professionId == _unset
+          ? this.professionId
+          : professionId as String?,
+      industryId: industryId == _unset
+          ? this.industryId
+          : industryId as String?,
+      priceMin: priceMin == _unset
+          ? this.priceMin
+          : (priceMin as num?)?.toDouble(),
+      priceMax: priceMax == _unset
+          ? this.priceMax
+          : (priceMax as num?)?.toDouble(),
+      currencyCode: currencyCode == _unset
+          ? this.currencyCode
+          : currencyCode as String?,
+      ratingMin: ratingMin == _unset
+          ? this.ratingMin
+          : (ratingMin as num?)?.toDouble(),
+      isTradeVerifiedOnly: isTradeVerifiedOnly == _unset
+          ? this.isTradeVerifiedOnly
+          : isTradeVerifiedOnly as bool?,
+      availabilityDate: availabilityDate == _unset
+          ? this.availabilityDate
+          : availabilityDate as DateTime?,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> m = <String, dynamic>{};
     if (professionId != null) m['profession_id'] = professionId;
