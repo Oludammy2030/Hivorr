@@ -34,6 +34,7 @@ import 'package:hivorr/systems/admin/screens/admin_settings_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
+import 'package:hivorr/systems/dashboard/screens/client_find_service_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/conversation_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_settings_screen.dart';
@@ -386,6 +387,12 @@ class AppRouter {
               name: RouteNames.dashboardJobEdit,
               builder: (BuildContext context, GoRouterState state) =>
                   JobFormScreen(jobId: state.pathParameters['id']),
+            ),
+            GoRoute(
+              path: RoutePaths.dashboardServices,
+              name: RouteNames.dashboardServices,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const ClientFindServiceScreen(),
             ),
             GoRoute(
               path: RoutePaths.dashboardOpportunities,

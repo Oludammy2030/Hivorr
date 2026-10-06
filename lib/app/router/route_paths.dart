@@ -225,6 +225,14 @@ abstract final class RoutePaths {
   static String dashboardJobEdit(String id) =>
       '/dashboard/jobs/${Uri.encodeComponent(id)}/edit';
 
+  /// Client service discovery inside the dashboard shell (hire focus).
+  ///
+  /// Shell-persistent companion to the public [serviceDiscovery] browse: same
+  /// ranked search/filter/results stack, but rendered as dashboard content so
+  /// the sidebar and shell survive navigation. The public `/services` family
+  /// stays untouched for anonymous/SEO entry.
+  static const String dashboardServices = '/dashboard/services';
+
   /// Professional work routes (offer focus).
   static const String dashboardOpportunities = '/dashboard/opportunities';
   static const String dashboardApplications = '/dashboard/applications';

@@ -115,6 +115,7 @@ abstract final class RouteNames {
   static const String dashboardJobNew = 'dashboard-job-new';
   static const String dashboardJobDetail = 'dashboard-job-detail';
   static const String dashboardJobEdit = 'dashboard-job-edit';
+  static const String dashboardServices = 'dashboard-services';
   static const String dashboardOpportunities = 'dashboard-opportunities';
   static const String dashboardApplications = 'dashboard-applications';
   static const String dashboardHires = 'dashboard-hires';

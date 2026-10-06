@@ -21,6 +21,8 @@ void main() {
     expect(RoutePaths.serviceSearch, '/services/search');
     expect(RoutePaths.serviceDetailRoute, '/services/:id');
     expect(RoutePaths.serviceSeoDetailRoute, '/s/:slug/:id');
+    // Client discovery inside the dashboard shell (sidebar persists).
+    expect(RoutePaths.dashboardServices, '/dashboard/services');
   });
 
   test('typed service detail builders produce URL-encoded paths', () {
@@ -60,5 +62,6 @@ void main() {
     expect(RouteNames.settings, 'settings');
     expect(RouteNames.publicProfile, 'public-profile');
     expect(RouteNames.publicStore, 'public-store');
+    expect(RouteNames.dashboardServices, 'dashboard-services');
   });
 }
