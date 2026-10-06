@@ -14,6 +14,7 @@ export 'components/hivorr_mini_bars.dart';
 export 'components/hivorr_month_bars.dart';
 export 'components/hivorr_pricing_tier.dart';
 export 'components/hivorr_section_header.dart';
+export 'components/hivorr_select_field.dart';
 export 'components/hivorr_skeleton.dart';
 export 'components/hivorr_stat_band.dart';
 export 'components/hivorr_stat_card.dart';
