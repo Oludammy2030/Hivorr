@@ -21,6 +21,7 @@ import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/marketplace/widgets/favorite_toggle_button.dart';
 import 'package:hivorr/systems/marketplace/widgets/service_media_carousel.dart';
+import 'package:hivorr/systems/reviews/widgets/listing_reviews_section.dart';
 import 'package:hivorr/systems/verification/widgets/trade_verified_badge.dart';
 import 'package:provider/provider.dart';
 
@@ -104,6 +105,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         _model = _DetailModel.fromOwner(
           id: listing.id,
           entityId: listing.entityId,
+          professionId: listing.professionId,
           title: listing.title,
           description: listing.description,
           pricingType: listing.pricingType,
@@ -248,6 +250,7 @@ class _DetailModel {
   const _DetailModel({
     required this.id,
     required this.entityId,
+    required this.professionId,
     required this.title,
     required this.description,
     required this.pricingType,
@@ -265,6 +268,7 @@ class _DetailModel {
   factory _DetailModel.fromRanked(ServiceListing listing) => _DetailModel(
     id: listing.id,
     entityId: listing.entityId,
+    professionId: listing.professionId,
     title: listing.title,
     description: listing.description,
     pricingType: listing.pricingType,
@@ -282,6 +286,7 @@ class _DetailModel {
   factory _DetailModel.fromOwner({
     required String id,
     required String entityId,
+    required String professionId,
     required String title,
     required String description,
     required String pricingType,
@@ -297,6 +302,7 @@ class _DetailModel {
   }) => _DetailModel(
     id: id,
     entityId: entityId,
+    professionId: professionId,
     title: title,
     description: description,
     pricingType: pricingType,
@@ -313,6 +319,7 @@ class _DetailModel {
 
   final String id;
   final String entityId;
+  final String professionId;
   final String title;
   final String description;
   final String pricingType;
@@ -418,6 +425,14 @@ class _DetailBody extends StatelessWidget {
         Text('About this service', style: context.textTheme.titleMedium),
         const SizedBox(height: HivorrSpacing.xs),
         Text(model.description, style: context.textTheme.bodyMedium),
+        const SizedBox(height: HivorrSpacing.md),
+        ListingReviewsSection(
+          listingId: model.id,
+          professionalEntityId: model.entityId,
+          professionId: model.professionId,
+          cachedAvgRating: model.avgRating,
+          cachedReviewCount: model.reviewCount,
+        ),
         const SizedBox(height: HivorrSpacing.md),
         _ProofSlot(isOwner: isOwner),
         const SizedBox(height: HivorrSpacing.md),

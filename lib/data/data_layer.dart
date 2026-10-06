@@ -13,6 +13,8 @@ import 'package:hivorr/data/datasources/local/service_search_local_data_source.d
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_contract_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/service_review_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_service_review_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_search_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
@@ -52,6 +54,7 @@ import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
+import 'package:hivorr/data/providers/service_review_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
@@ -84,6 +87,8 @@ import 'package:hivorr/data/repositories/onboarding_repository.dart';
 import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 import 'package:hivorr/data/repositories/service_contract_repository.dart';
 import 'package:hivorr/data/repositories/service_contract_repository_impl.dart';
+import 'package:hivorr/data/repositories/service_review_repository.dart';
+import 'package:hivorr/data/repositories/service_review_repository_impl.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
 import 'package:hivorr/data/repositories/service_listing_repository_impl.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
@@ -99,6 +104,7 @@ import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dar
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
+import 'package:hivorr/systems/reviews/services/service_review_service.dart';
 import 'package:hivorr/systems/finance/services/conversion_rate_source.dart';
 import 'package:hivorr/systems/finance/services/conversion_service.dart';
 import 'package:hivorr/systems/finance/services/escrow_service.dart';
@@ -815,6 +821,45 @@ registerServiceContractLayer(
   return (
     repository: repository,
     provider: ServiceContractProvider(service: service, logger: logger),
+    service: service,
+  );
+}
+
+/// Wires the double-blind review slice for EP-03-12.
+///
+/// Builds the [ServiceReviewRepository] and [ServiceReviewService] over the
+/// [ApiLayer] and returns a ready [ServiceReviewProvider]. Mirrors
+/// `registerServiceContractLayer`: all three client-callable review RPCs are
+/// live, reads are RLS participant-scoped (`get_mine`) or revealed-only
+/// (`get_for_listing`), and reveal stays server-side — the client never
+/// writes review tables and never calls `service_review_reveal_if_ready`.
+({
+  ServiceReviewRepository repository,
+  ServiceReviewProvider provider,
+  ServiceReviewService service,
+})
+registerServiceReviewLayer(
+  ApiLayer apiLayer, {
+  ServiceReviewRemoteDataSource? dataSource,
+  HivorrLogger? logger,
+}) {
+  final ServiceReviewRemoteDataSource resolvedDataSource =
+      dataSource ??
+      SupabaseServiceReviewRemoteDataSource(
+        dio: apiLayer.dio,
+        supabase: apiLayer.supabaseClient,
+        exceptionMapper: apiLayer.exceptionMapper,
+      );
+  final ServiceReviewRepository repository = ServiceReviewRepositoryImpl(
+    remote: resolvedDataSource,
+  );
+  final ServiceReviewService service = ServiceReviewService(
+    repository: repository,
+    logger: logger,
+  );
+  return (
+    repository: repository,
+    provider: ServiceReviewProvider(service: service, logger: logger),
     service: service,
   );
 }

@@ -109,6 +109,10 @@ abstract final class RouteNames {
   static const String contractDetail = 'contract-detail';
   static const String contractMilestonesEdit = 'contract-milestones-edit';
 
+  /// Double-blind review routes (EP-03-12).
+  static const String contractReview = 'contract-review';
+  static const String contractReviews = 'contract-reviews';
+
   /// Role-aware dashboard routes (EP-04-03).
   static const String dashboard = 'dashboard';
   static const String dashboardJobs = 'dashboard-jobs';

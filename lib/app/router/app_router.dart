@@ -53,6 +53,8 @@ import 'package:hivorr/systems/documents/screens/contract_detail_screen.dart';
 import 'package:hivorr/systems/documents/screens/contract_list_screen.dart';
 import 'package:hivorr/systems/documents/screens/contract_offer_screen.dart';
 import 'package:hivorr/systems/documents/screens/milestone_editor_screen.dart';
+import 'package:hivorr/systems/reviews/screens/review_reveal_screen.dart';
+import 'package:hivorr/systems/reviews/screens/review_submit_screen.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
@@ -590,6 +592,25 @@ class AppRouter {
           name: RouteNames.contractDetail,
           builder: (BuildContext context, GoRouterState state) =>
               ContractDetailScreen(
+                contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        // Double-blind reviews (EP-03-12, protected — guard keeps login
+        // gate with `?next=` resume; participant check is affordance only,
+        // enforcement stays server-side with identical `PLT004`).
+        GoRoute(
+          path: RoutePaths.contractReviewRoute,
+          name: RouteNames.contractReview,
+          builder: (BuildContext context, GoRouterState state) =>
+              ReviewSubmitScreen(
+                contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.contractReviewsRoute,
+          name: RouteNames.contractReviews,
+          builder: (BuildContext context, GoRouterState state) =>
+              ReviewRevealScreen(
                 contractId: state.pathParameters['id'] ?? '',
               ),
         ),
