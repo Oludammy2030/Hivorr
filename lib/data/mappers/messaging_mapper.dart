@@ -10,6 +10,9 @@ import 'package:hivorr/data/models/messaging_envelopes_dto.dart';
 /// Ciphertext is never inspected here; decryption is a systems-layer concern.
 abstract final class MessagingMapper {
   /// Maps a `conversation_list` item into a domain [Conversation].
+  ///
+  /// `peerOnline` has no transport source yet (see the entity TODO) and
+  /// keeps its default until a presence seam exists.
   static Conversation conversationToEntity(ConversationDto dto) => Conversation(
     id: dto.id,
     contractId: dto.contractId,
@@ -17,6 +20,7 @@ abstract final class MessagingMapper {
     updatedAt: dto.updatedAt,
     lastMessagePreview: dto.lastMessagePreview,
     lastMessageAt: dto.lastMessageAt,
+    unreadCount: dto.unreadCount,
   );
 
   /// Maps a `messages` DTO into a domain [ConversationMessage].

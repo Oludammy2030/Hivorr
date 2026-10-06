@@ -184,9 +184,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           _open(context, conversation, true),
                     );
                   }
+                  // Narrow keeps the last-selected highlight so returning
+                  // from a thread still marks the active row (reference).
                   return _ConversationList(
                     conversations: _filtered(messaging.conversations, hires),
-                    selectedId: null,
+                    selectedId: _selectedId,
                     search: _search,
                     showSearch: true,
                     onQuery: (String v) => setState(() => _query = v),
@@ -395,6 +397,7 @@ class _ConversationRow extends StatelessWidget {
     final String initials = MessagingThreadMeta.peerInitials(peer);
     final (Color avatarBg, Color avatarFg) = _avatarTint(context, peer);
     final ColorScheme colors = context.colorScheme;
+    final AppThemeExtension ext = context.appExtension;
 
     return InkWell(
       onTap: onTap,
@@ -407,47 +410,58 @@ class _ConversationRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: avatarBg,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                initials,
-                style: context.textTheme.titleSmall?.copyWith(
-                  color: avatarFg,
-                  fontWeight: FontWeight.w600,
+            Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: avatarBg,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: context.textTheme.titleSmall?.copyWith(
+                      color: avatarFg,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
+                // TODO(messaging-backend): presence dot — hidden until
+                // `peerOnline` has a real source (see the entity note).
+                if (conversation.peerOnline)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: ext.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: colors.surface,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: HivorrSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          peer,
-                          style: context.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      if (conversation.lastMessageAt != null)
-                        Text(
-                          HivorrFormatters.relative(
-                            conversation.lastMessageAt!,
-                          ),
-                          style: context.textTheme.labelSmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
+                  Text(
+                    peer,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -473,6 +487,28 @@ class _ConversationRow extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(width: HivorrSpacing.sm),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                if (conversation.lastMessageAt != null)
+                  Text(
+                    HivorrFormatters.relative(
+                      conversation.lastMessageAt!,
+                    ),
+                    style: context.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                // TODO(messaging-backend): unread badge — renders only when
+                // the thread actually has unread mail (see the entity note).
+                if (conversation.hasUnread) ...<Widget>[
+                  const SizedBox(height: 4),
+                  _UnreadBadge(count: conversation.unreadCount),
+                ],
+              ],
+            ),
           ],
         ),
       ),
@@ -496,6 +532,42 @@ class _ConversationRow extends StatelessWidget {
       1 => (ext.successContainer, ext.success),
       _ => (ext.warningContainer, ext.warning),
     };
+  }
+}
+
+/// Unread-count badge from the reference: primary dot with a white count.
+///
+/// Shown only for threads with real unread mail ([Conversation.hasUnread]);
+/// the count itself arrives via the TODO(messaging-backend) seam on the
+/// entity, so nothing here is ever hardcoded.
+class _UnreadBadge extends StatelessWidget {
+  const _UnreadBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final String label = count > 99 ? '99+' : '$count';
+    return Semantics(
+      label: '$label unread messages',
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: colors.primary,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: context.textTheme.labelSmall?.copyWith(
+            color: colors.onPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
   }
 }
 

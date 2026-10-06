@@ -257,8 +257,9 @@ class _PaymentsTopBar extends StatelessWidget {
 
 /// Payments content column: summary cards, escrow banner, history, then the
 /// preserved money-movement and hires sections. Wide layouts (≥1000dp) render
-/// the reference three-column summary row; narrower widths stack the same
-/// cards so phones never squeeze or overflow.
+/// the reference three-column summary row; tablets stack the same cards, and
+/// phones (<600dp) show the balance hero only per the mobile reference — so
+/// phones never squeeze or overflow.
 class _PaymentsContent extends StatelessWidget {
   const _PaymentsContent({
     required this.maxWidth,
@@ -338,6 +339,14 @@ class _SummaryCards extends StatelessWidget {
         maxWidth >= _PaymentsContent.summaryRowStart;
     final double gap = MobileCompact.minorGapFor(maxWidth);
     if (!wide) {
+      // Phones (<600dp) show the reference balance hero only — the mobile
+      // reference flows straight into the escrow banner, and both hidden
+      // cards are mock placeholders (their live counterparts: the escrow
+      // banner, history list and money-movement section below). Tablets keep
+      // the stacked trio untouched.
+      if (MobileCompact.isCompactWidth(maxWidth)) {
+        return const _CompanyBalanceCard();
+      }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[

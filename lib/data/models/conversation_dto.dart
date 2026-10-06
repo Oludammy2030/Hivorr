@@ -11,6 +11,7 @@ class ConversationDto {
     required this.updatedAt,
     this.lastMessagePreview,
     this.lastMessageAt,
+    this.unreadCount = 0,
   });
 
   factory ConversationDto.fromJson(Map<String, dynamic> json) =>
@@ -21,6 +22,10 @@ class ConversationDto {
         updatedAt: _parseDateTime(json['updated_at']),
         lastMessagePreview: json['last_message_preview'] as String?,
         lastMessageAt: _parseNullableDateTime(json['last_message_at']),
+        // TODO(messaging-backend): `conversation_list` does not return a
+        // per-thread unread count yet (nothing to read against
+        // `last_read_at`), so this stays 0 until the RPC exposes it.
+        unreadCount: _parseCount(json['unread_count']),
       );
 
   final String id;
@@ -29,6 +34,17 @@ class ConversationDto {
   final DateTime updatedAt;
   final String? lastMessagePreview;
   final DateTime? lastMessageAt;
+
+  /// Messages newer than the caller's `last_read_at` (0 until the backend
+  /// seam above lands).
+  final int unreadCount;
+
+  static int _parseCount(dynamic value) {
+    if (value is int) return value < 0 ? 0 : value;
+    if (value is num) return value.toInt() < 0 ? 0 : value.toInt();
+    if (value is String) return int.tryParse(value)?.clamp(0, 1 << 31) ?? 0;
+    return 0;
+  }
 
   static DateTime _parseDateTime(dynamic value) {
     if (value == null) return DateTime.fromMillisecondsSinceEpoch(0);

@@ -144,6 +144,11 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
           );
     if (isMobile) {
       return Scaffold(
+        // Mobile hamburger (upper-left): the Scaffold supplies the standard
+        // menu leading automatically; the drawer below follows the
+        // `mob cl handb.png` reference. Bottom navigation lives in the
+        // dashboard shell and is intentionally untouched here.
+        drawer: const _ClientDrawer(),
         appBar: AppBar(
           toolbarHeight: 48,
           title: Text(
@@ -804,8 +809,383 @@ class _ClientTopBar extends StatelessWidget {
   }
 }
 
-/// Client content column: hero, quick actions + active jobs beside the
-/// right-rail metric grid on wide layouts, stacked otherwise, then Money.
+/// Mobile hamburger drawer for the client dashboard (`mob cl handb.png`).
+///
+/// Client-only (<600dp, hire focus): logo header, `Employer Dashboard`
+/// context strip, reference-ordered destinations (Dashboard active pill,
+/// Post a Job primary CTA, My Jobs, Applications, Messages, Payments,
+/// Profile) and an account footer with log-out. A standard [Drawer] supplies
+/// the modal scrim plus scrim/back-to-close with no layout shift; the shell
+/// bottom navigation is untouched. Item language mirrors
+/// `DashboardSidebar` (selected = primary wash, 20dp icons).
+class _ClientDrawer extends StatelessWidget {
+  const _ClientDrawer();
+
+  /// Reference drawer width: ~70% of a 390dp phone, safe at 320dp.
+  static const double _width = 280;
+
+  static const List<_ClientDrawerDef> _items = <_ClientDrawerDef>[
+    _ClientDrawerDef(
+      label: 'Dashboard',
+      location: '/dashboard',
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+    ),
+    _ClientDrawerDef(
+      label: 'My Jobs',
+      location: RoutePaths.dashboardJobs,
+      icon: Icons.business_center_outlined,
+      activeIcon: Icons.business_center,
+    ),
+    _ClientDrawerDef(
+      label: 'Applications',
+      location: RoutePaths.dashboardApplications,
+      icon: Icons.group_outlined,
+      activeIcon: Icons.group,
+    ),
+    _ClientDrawerDef(
+      label: 'Messages',
+      location: RoutePaths.dashboardMessages,
+      icon: Icons.mail_outline,
+      activeIcon: Icons.mail,
+    ),
+    _ClientDrawerDef(
+      label: 'Payments',
+      location: RoutePaths.dashboardPayments,
+      icon: Icons.payments_outlined,
+      activeIcon: Icons.payments,
+    ),
+    _ClientDrawerDef(
+      label: 'Profile',
+      location: RoutePaths.dashboardAccount,
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final RoleThemeExtension roles = context.roleTheme;
+    // `/dashboard` fallback keeps router-less harnesses (isolated widget
+    // tests) rendering the Dashboard-active reference state.
+    String location = '/dashboard';
+    try {
+      location = GoRouterState.of(context).matchedLocation;
+    } catch (_) {
+      location = '/dashboard';
+    }
+    String displayName = DashboardCapability.hire.label;
+    try {
+      final String? email =
+          context.watch<AuthProvider>().currentSession?.email;
+      if (email != null && email.isNotEmpty) {
+        displayName = _prettifyEmailPrefix(email);
+      }
+    } catch (_) {
+      displayName = DashboardCapability.hire.label;
+    }
+    return Drawer(
+      width: _width,
+      backgroundColor: colors.surface,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                HivorrSpacing.md,
+                HivorrSpacing.md,
+                HivorrSpacing.md,
+                HivorrSpacing.smMd,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.flash_on_rounded,
+                      color: colors.onPrimary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: HivorrSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Hivorr',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              color: roles.clientContainer,
+              padding: const EdgeInsets.symmetric(
+                horizontal: HivorrSpacing.md,
+                vertical: HivorrSpacing.sm,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: HivorrSpacing.sm,
+                    height: HivorrSpacing.sm,
+                    decoration: BoxDecoration(
+                      color: roles.clientPrimary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: HivorrSpacing.sm),
+                  Text(
+                    'Employer Dashboard',
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: roles.clientPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  vertical: HivorrSpacing.sm,
+                ),
+                children: <Widget>[
+                  _ClientDrawerItem(
+                    label: _items[0].label,
+                    icon: _items[0].icon,
+                    activeIcon: _items[0].activeIcon,
+                    selected: _isSelected(location, _items[0].location),
+                    onTap: () => _go(context, location, _items[0].location),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: HivorrSpacing.smMd,
+                      vertical: HivorrSpacing.xs,
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          _go(context, location, RoutePaths.dashboardJobNew),
+                      icon: const Icon(Icons.add, size: 20),
+                      label: const Text('Post a Job'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: HivorrSpacing.smMd,
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  for (int i = 1; i < _items.length; i++)
+                    _ClientDrawerItem(
+                      label: _items[i].label,
+                      icon: _items[i].icon,
+                      activeIcon: _items[i].activeIcon,
+                      selected: _isSelected(location, _items[i].location),
+                      onTap: () => _go(context, location, _items[i].location),
+                    ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: colors.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.all(HivorrSpacing.md),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: roles.clientContainer,
+                      border: Border.all(
+                        color: roles.clientPrimary,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      _initials(displayName),
+                      style: context.textTheme.titleSmall?.copyWith(
+                        color: roles.clientPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: HivorrSpacing.smMd),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Employer',
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Log out',
+                    iconSize: 20,
+                    padding: const EdgeInsets.all(HivorrSpacing.sm),
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    icon: const Icon(Icons.logout_outlined),
+                    color: colors.onSurfaceVariant,
+                    onPressed: () => _signOut(context),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static bool _isSelected(String location, String itemLocation) {
+    final String base = itemLocation.split('?').first;
+    if (base == '/dashboard') {
+      return location == '/dashboard';
+    }
+    return location == base || location.startsWith('$base/');
+  }
+
+  /// Closes the drawer first (mirroring `DashboardSidebar._go`), then routes
+  /// only when the destination actually changes.
+  static void _go(BuildContext context, String location, String path) {
+    Navigator.of(context).pop();
+    final String base = path.split('?').first;
+    final String currentBase = location.split('?').first;
+    if (currentBase != base) {
+      context.go(path);
+    }
+  }
+
+  static Future<void> _signOut(BuildContext context) async {
+    final GoRouter router = GoRouter.of(context);
+    final AuthProvider auth = context.read<AuthProvider>();
+    Navigator.of(context).pop();
+    await auth.signOut();
+    router.go(RoutePaths.login);
+  }
+}
+
+class _ClientDrawerDef {
+  const _ClientDrawerDef({
+    required this.label,
+    required this.location,
+    required this.icon,
+    required this.activeIcon,
+  });
+
+  final String label;
+  final String location;
+  final IconData icon;
+  final IconData activeIcon;
+}
+
+class _ClientDrawerItem extends StatelessWidget {
+  const _ClientDrawerItem({
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final IconData activeIcon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.smMd,
+        vertical: 2,
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primary.withValues(alpha: 0.08)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: HivorrSpacing.md,
+            vertical: HivorrSpacing.smMd,
+          ),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                selected ? activeIcon : icon,
+                size: 20,
+                color: selected ? colors.primary : colors.onSurfaceVariant,
+              ),
+              const SizedBox(width: HivorrSpacing.md),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.labelMedium?.copyWith(
+                    fontWeight:
+                        selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? colors.primary : colors.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Client content column: hero, then quick actions + active jobs beside the
+/// right-rail metric grid on wide layouts. Below the rail breakpoint the
+/// sections stack as one page — mobile (<600dp) follows the reference
+/// `mob cl dah.png` → `mob cl das 2.png` order (stats, quick actions,
+/// active jobs, recent applications, rail cards), then Money.
 class _ClientContent extends StatelessWidget {
   const _ClientContent({required this.maxWidth, required this.hiresEmpty});
 
@@ -818,9 +1198,9 @@ class _ClientContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool wide = maxWidth >= railStart;
-    // Mobile (<600dp) hides the standalone metric rail — those stats already
-    // live inside the blue hero carousel. Desktop/tablet keep the reference
-    // rail 100% unchanged.
+    // Mobile (<600dp) stacks the metric grid below the hero per the
+    // reference; the hero itself carries no stat chips there.
+    // Desktop/tablet keep the reference rail 100% unchanged.
     final bool isMobileWidth = MobileCompact.isCompactWidth(maxWidth);
     // Compact vertical rhythm on phones (<600dp); desktop keeps the airy
     // reference spacing (see MobileCompact contract).
@@ -914,18 +1294,38 @@ class _ClientContent extends StatelessWidget {
               ),
             ],
           )
-        else ...<Widget>[
+        else if (isMobileWidth) ...<Widget>[
+          // Mobile (<600dp) follows `mob cl dah.png` → `mob cl das 2.png`
+          // as one continuous page: hero, 2x2 stats, quick actions, active
+          // jobs, recent applications, then the rail cards stacked below.
+          const _ClientStatsGrid(),
+          SizedBox(height: sectionGap),
+          quickActions,
+          SizedBox(height: sectionGap),
+          activeJobs,
+          SizedBox(height: sectionGap),
+          recentApplications,
+          SizedBox(height: sectionGap),
+          const _CurrentHiresCard(),
+          SizedBox(height: sectionGap),
+          // TODO(client-dashboard-backend): mock rail cards — connect live
+          // spending/payments when the seams exist (see above).
+          const _SpendingOverviewCard(
+            summary: ClientSpendingMock.reference,
+          ),
+          SizedBox(height: sectionGap),
+          const _RecentPaymentsCard(
+            payments: ClientPaymentMock.reference,
+          ),
+          SizedBox(height: sectionGap),
+          const _BrowseServicesBanner(),
+        ] else ...<Widget>[
           quickActions,
           SizedBox(height: sectionGap),
           const _BrowseServicesBanner(),
           SizedBox(height: sectionGap),
-          // Mobile fintech: drop the duplicate standalone metrics
-          // (Jobs Posted / Active Hires / Total Spent / Open Apps) — they
-          // already slide inside the blue hero. Tablet (600-999) keeps them.
-          if (!isMobileWidth) ...<Widget>[
-            const _ClientStatsGrid(),
-            SizedBox(height: sectionGap),
-          ],
+          const _ClientStatsGrid(),
+          SizedBox(height: sectionGap),
           // TODO(client-dashboard-backend): mock rail cards — connect live
           // spending/payments when the seams exist (see above).
           const _SpendingOverviewCard(
@@ -984,8 +1384,9 @@ class _ClientSection extends StatelessWidget {
   }
 }
 
-/// Blue hero card: time-aware greeting, account name, new-application line
-/// and four glass stat chips (reference, left column).
+/// Blue hero card: time-aware greeting, account name and new-application
+/// line. Wider layouts add the four glass stat chips; mobile (<600dp) omits
+/// them — the reference stats live in the 2x2 grid below the hero.
 class _ClientHero extends StatelessWidget {
   const _ClientHero();
 
@@ -1100,67 +1501,11 @@ class _ClientHero extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.9),
               ),
             ),
-          SizedBox(
-            height: compact ? HivorrSpacing.sm : HivorrSpacing.lg,
-          ),
-          if (compact)
-            Semantics(
-              label: 'Hiring statistics',
-              explicitChildNodes: true,
-              child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  // Mobile fintech carousel: exactly 2 full cards + a
-                  // half-peeking 3rd card to affordance scrollability.
-                  // 2.5 * card + 2 * gap == viewport (hero inner width).
-                  const double gap = HivorrSpacing.sm;
-                  final double viewport = constraints.maxWidth;
-                  final double cardWidth = viewport <= 0
-                      ? 120
-                      : (viewport - gap * 2) / 2.5;
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    // Hard-edge clip keeps the slide strictly within the blue
-                    // header — zero overflow past container / screen edges.
-                    clipBehavior: Clip.hardEdge,
-                    physics: const ClampingScrollPhysics(),
-                    child: Row(
-                      children: <Widget>[
-                        OverviewHeroStat(
-                          value: loading ? '…' : '$postedCount',
-                          label: 'Jobs Posted',
-                          width: cardWidth,
-                          compact: true,
-                        ),
-                        const SizedBox(width: gap),
-                        OverviewHeroStat(
-                          value: loading ? '…' : '$activeHires',
-                          label: 'Active Hires',
-                          width: cardWidth,
-                          compact: true,
-                        ),
-                        const SizedBox(width: gap),
-                        OverviewHeroStat(
-                          value: loading
-                              ? '…'
-                              : '${spent.symbol}${_grouped(spent.total)}',
-                          label: 'Total Spent',
-                          width: cardWidth,
-                          compact: true,
-                        ),
-                        const SizedBox(width: gap),
-                        OverviewHeroStat(
-                          value: loading ? '…' : '$totalApps',
-                          label: 'Applications',
-                          width: cardWidth,
-                          compact: true,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            )
-          else
+          // Mobile (<600dp) keeps the hero to greeting + application line —
+          // the `mob cl dah.png` stats live in the 2x2 grid below the hero.
+          // Wider layouts keep the reference glass-chip wrap unchanged.
+          if (!compact) ...<Widget>[
+            const SizedBox(height: HivorrSpacing.lg),
             Wrap(
               spacing: HivorrSpacing.md,
               runSpacing: HivorrSpacing.md,
@@ -1189,6 +1534,7 @@ class _ClientHero extends StatelessWidget {
                 ),
               ],
             ),
+          ],
         ],
       ),
     );

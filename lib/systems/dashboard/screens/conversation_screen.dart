@@ -72,23 +72,20 @@ class _ConversationScreenState extends State<ConversationScreen>
   Future<void> _load() =>
       context.read<MessagingProvider>().select(widget.conversationId);
 
+  /// Thread title: the person, never the job — the work banner below
+  /// already carries the per-conversation job reference, so showing it twice
+  /// would hide who the client is talking to.
   String _title() {
     final MessagingProvider messaging = context.read<MessagingProvider>();
     final Conversation? selected = messaging.selected;
     if (selected == null) return 'Conversation';
-    HireProvider? hires;
+    List<Hire> hires = const <Hire>[];
     try {
-      hires = context.read<HireProvider>();
+      hires = context.read<HireProvider>().hires;
     } on ProviderNotFoundException {
-      hires = null;
+      hires = const <Hire>[];
     }
-    for (final Hire hire in hires?.hires ?? const <Hire>[]) {
-      if (hire.contractId == selected.contractId &&
-          (hire.jobTitle ?? '').isNotEmpty) {
-        return hire.jobTitle!;
-      }
-    }
-    return 'Conversation';
+    return MessagingThreadMeta.peerLabelFor(hires, selected);
   }
 
   Future<void> _send() async {
@@ -142,6 +139,20 @@ class _ConversationScreenState extends State<ConversationScreen>
 
     return Scaffold(
       appBar: AppBar(
+        // Threads arrive via `go` (no back stack), so an explicit back
+        // control returns to the conversation list on mobile; anywhere a
+        // pop is possible it pops instead.
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(RoutePaths.dashboardMessages);
+            }
+          },
+        ),
         title: Text(_title(), style: context.textTheme.titleLarge),
         actions: <Widget>[
           IconButton(

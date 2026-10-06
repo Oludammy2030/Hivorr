@@ -319,5 +319,44 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('mobile hamburger opens the reference client drawer', (
+      tester,
+    ) async {
+      await pumpOverview(tester, width: 390, height: 844);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Upper-left hamburger trigger on the mobile app bar.
+      expect(find.byTooltip('Open navigation menu'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Reference drawer chrome.
+      expect(find.text('Hivorr'), findsOneWidget);
+      expect(find.text('Employer Dashboard'), findsOneWidget);
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.text('Post a Job'), findsWidgets);
+      expect(find.text('My Jobs'), findsOneWidget);
+      expect(find.text('Applications'), findsOneWidget);
+      expect(find.text('Messages'), findsOneWidget);
+      expect(find.text('Payments'), findsWidgets);
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.byTooltip('Log out'), findsOneWidget);
+
+      // Client-only: the drawer adds no professional navigation. `Find
+      // Work` appears nowhere; `Earnings` stays exactly the pre-existing
+      // Money-section shortcut (no drawer duplicate).
+      expect(find.text('Find Work'), findsNothing);
+      expect(find.text('Earnings'), findsOneWidget);
+
+      // Tapping the already-active destination closes without navigating.
+      await tester.tap(find.text('Dashboard'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byTooltip('Open navigation menu'), findsOneWidget);
+    });
   });
 }
