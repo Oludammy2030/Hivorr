@@ -24,7 +24,7 @@ void main() {
 
   test('parses supplied values', () {
     final cfg = MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
         'HIVORR_MONITORING_ENVIRONMENT': 'staging',
         'HIVORR_MONITORING_RELEASE': 'v1.2.3',
@@ -51,7 +51,7 @@ void main() {
 
   test('empty DSN keeps Sentry disabled even when enabled flag is true', () {
     final cfg = MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
       }),
     );
@@ -60,7 +60,7 @@ void main() {
 
   test('sample rates are clamped to 0.0-1.0', () {
     final cfg = MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_TRACE_SAMPLE_RATE': '5',
       }),
     );
@@ -70,7 +70,7 @@ void main() {
   test('malformed boolean throws EnvironmentConfigException', () {
     expect(
       () => MonitoringConfig.fromSource(
-        MapEnvironmentValueSource(<String, String>{
+        const MapEnvironmentValueSource(<String, String>{
           'HIVORR_MONITORING_ENABLE_SENTRY': 'yes',
         }),
       ),

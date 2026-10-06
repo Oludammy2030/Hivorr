@@ -95,20 +95,36 @@ class HivorrButton extends StatelessWidget {
         (context.textTheme.labelLarge ?? const TextStyle()).copyWith(
           color: enabled ? labelColor : null,
         );
-    final Widget labelChild = Text(label, style: labelStyle);
+    final Widget labelChild = Text(
+      label,
+      key: const ValueKey<String>('label'),
+      style: labelStyle,
+    );
 
-    final Widget child = isLoading
-        ? HivorrLoader(size: 20, color: loaderColor)
-        : (icon != null
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    icon!,
-                    const SizedBox(width: HivorrSpacing.xs),
-                    labelChild,
-                  ],
-                )
-              : labelChild);
+    // Loading cross-fades in over HivorrMotion.short (fade only — the
+    // breathing HivorrLoader itself carries the motion language).
+    final Widget child = AnimatedSwitcher(
+      duration: HivorrMotion.short,
+      switchInCurve: HivorrMotion.standard,
+      switchOutCurve: HivorrMotion.standard,
+      child: isLoading
+          ? HivorrLoader(
+              key: const ValueKey<String>('loader'),
+              size: 20,
+              color: loaderColor,
+            )
+          : (icon != null
+                ? Row(
+                    key: const ValueKey<String>('label-row'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      icon!,
+                      const SizedBox(width: HivorrSpacing.xs),
+                      labelChild,
+                    ],
+                  )
+                : labelChild),
+    );
 
     final ButtonStyle style;
     switch (variant) {

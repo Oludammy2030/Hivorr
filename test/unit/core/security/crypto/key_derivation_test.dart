@@ -9,8 +9,8 @@ import 'package:hivorr/core/security/security_config.dart';
 
 void main() {
   group('KeyDerivation', () {
-    final SecurityConfiguration config = SecurityConfiguration(
-      const SecurityConfig(
+    const SecurityConfiguration config = SecurityConfiguration(
+      SecurityConfig(
         pinningEnabled: false,
         pinnedSpkiSha256Hashes: <String>[],
         kdfSalt: 'static-salt',
@@ -39,8 +39,8 @@ void main() {
     test('deriveKey differs when the salt differs', () async {
       final KeyDerivation kdf = KeyDerivation.fromConfiguration(config);
       final KeyDerivation other = KeyDerivation.fromConfiguration(
-        SecurityConfiguration(
-          const SecurityConfig(
+        const SecurityConfiguration(
+          SecurityConfig(
             pinningEnabled: false,
             pinnedSpkiSha256Hashes: <String>[],
             kdfSalt: 'different-salt',
@@ -57,8 +57,8 @@ void main() {
 
     test('respects the configured key length', () async {
       final KeyDerivation kdf = KeyDerivation.fromConfiguration(
-        SecurityConfiguration(
-          const SecurityConfig(
+        const SecurityConfiguration(
+          SecurityConfig(
             pinningEnabled: false,
             pinnedSpkiSha256Hashes: <String>[],
             kdfSalt: 'salt',

@@ -24,7 +24,7 @@ void main() {
     WidgetTester tester,
   ) async {
     final HivorrLocalizations l = await HivorrLocalizations.delegate.load(
-      Locale('en'),
+      const Locale('en'),
     );
     expect(l.translate(TranslationKeys.commonOk), 'OK');
   });
@@ -32,7 +32,7 @@ void main() {
   testWidgets('HivorrLocalizations(...) builds a usable instance', (
     WidgetTester tester,
   ) async {
-    final HivorrLocalizations l = HivorrLocalizations(
+    const HivorrLocalizations l = HivorrLocalizations(
       <String, String>{'common.cancel': 'Cancel'},
       <String, String>{'common.ok': 'OK'},
       Locale('fr'),
@@ -42,7 +42,7 @@ void main() {
   });
 
   testWidgets('translate interpolates params', (WidgetTester tester) async {
-    final HivorrLocalizations l = HivorrLocalizations(
+    const HivorrLocalizations l = HivorrLocalizations(
       <String, String>{},
       <String, String>{'validation.required': '{field} is required'},
       Locale('en'),
@@ -59,7 +59,7 @@ void main() {
   testWidgets('resolve returns the key when the lookup misses', (
     WidgetTester tester,
   ) async {
-    final HivorrLocalizations l = HivorrLocalizations(
+    const HivorrLocalizations l = HivorrLocalizations(
       <String, String>{},
       <String, String>{},
       Locale('en'),
@@ -68,7 +68,7 @@ void main() {
   });
 
   testWidgets('plural selects the correct form', (WidgetTester tester) async {
-    final HivorrLocalizations l =
+    const HivorrLocalizations l =
         HivorrLocalizations(<String, String>{}, <String, String>{
           'common.itemCount.zero': 'No items',
           'common.itemCount.one': '1 item',

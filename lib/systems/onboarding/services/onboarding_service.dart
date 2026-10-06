@@ -143,10 +143,10 @@ class OnboardingService {
         'isComplete': _progress!.isComplete,
         'isCompleteAuthoritative': _serverCompleted,
       });
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       return step;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Onboarding progress hydration failed',
         error: error,
@@ -445,14 +445,14 @@ class OnboardingService {
         withAvatar = profile;
       }
 
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       _logger?.info('Profile submission completed', <String, Object?>{
         'entityId': _redactor.redact(entityId),
         'hasAvatar': avatarPath != null,
       });
       return withAvatar;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Profile submission failed',
         error: error,
@@ -499,13 +499,13 @@ class OnboardingService {
         entityId: _progress?.entityId ?? '',
         role: 'professional',
       );
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       _logger?.info('Profession binding completed', <String, Object?>{
         'professionId': _redactor.redact(professionId),
         'professionalRoleActive': true,
       });
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Profession binding failed',
         error: error,
@@ -549,10 +549,10 @@ class OnboardingService {
         _progress = marked;
         await _persist(marked, 'onboarding.submit.identity');
       }
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       return submission;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Identity submission failed',
         error: error,
@@ -592,10 +592,10 @@ class OnboardingService {
         _progress = marked;
         await _persist(marked, 'onboarding.submit.trade.proof');
       }
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       return submission;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Trade proof submission failed',
         error: error,
@@ -637,9 +637,9 @@ class OnboardingService {
         'step': progress.step.name,
         'isComplete': progress.isComplete,
       });
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Onboarding progress persistence failed',
         error: error,

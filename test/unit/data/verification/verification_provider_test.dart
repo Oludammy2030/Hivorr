@@ -17,7 +17,7 @@ void main() {
   final Uint8List bytes = Uint8List.fromList(<int>[1, 2, 3]);
   const String mimeType = 'image/png';
   const String fileName = 'id.png';
-  final ApiException boom = const ApiException(
+  const ApiException boom = ApiException(
     kind: ApiExceptionKind.server,
     message: 'boom',
     code: 'X9',

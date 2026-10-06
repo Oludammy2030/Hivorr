@@ -68,7 +68,7 @@ class VerificationEnvelopeParser {
           code: 'PLT004',
         );
       case 'PLT005':
-        return ApiException(
+        return const ApiException(
           kind: ApiExceptionKind.conflict,
           message: activeConflictMessage,
           code: 'PLT005',

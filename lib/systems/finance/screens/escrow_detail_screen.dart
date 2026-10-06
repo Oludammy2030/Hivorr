@@ -96,7 +96,7 @@ class _EscrowDetailScreenState extends State<EscrowDetailScreen>
 
           final Escrow? escrow = provider.selected;
           if (escrow == null) {
-            return HivorrErrorState(
+            return const HivorrErrorState(
               message: 'Escrow not found',
               detail: 'No escrow matches this reference.',
             );

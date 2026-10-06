@@ -19,7 +19,7 @@ void main() {
   const String mimeType = 'application/pdf';
   const String fileName = 'proof.pdf';
   const String professionId = 'p1';
-  final ApiException boom = const ApiException(
+  const ApiException boom = ApiException(
     kind: ApiExceptionKind.server,
     message: 'boom',
     code: 'X9',

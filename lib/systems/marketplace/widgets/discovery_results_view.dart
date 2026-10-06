@@ -7,6 +7,7 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/entities/service_listing.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
+import 'package:hivorr/shared/components/hivorr_entrance.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
@@ -163,12 +164,18 @@ class _ResultsList extends StatelessWidget {
       return _LoadMore(provider: provider);
     }
     final ServiceListing listing = items[index];
-    return DiscoveryServiceCard(
-      key: ValueKey<String>(listing.id),
-      listing: listing,
-      onTap: () => context.push(
-        RoutePaths.serviceDetail(listing.id),
-        extra: listing,
+    // One-shot entrance per card key: first paint settles, scrolling back
+    // never replays (state persists per ValueKey).
+    return HivorrEntrance(
+      key: ValueKey<String>('entrance-${listing.id}'),
+      index: index,
+      child: DiscoveryServiceCard(
+        key: ValueKey<String>(listing.id),
+        listing: listing,
+        onTap: () => context.push(
+          RoutePaths.serviceDetail(listing.id),
+          extra: listing,
+        ),
       ),
     );
   }

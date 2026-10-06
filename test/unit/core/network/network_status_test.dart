@@ -55,11 +55,11 @@ void main() {
       // Timestamp should be between `before` and `after` (allowing for
       // clock resolution — verify it's recent, not exact ordering).
       expect(
-        status.timestamp.isAfter(before.subtract(Duration(seconds: 1))),
+        status.timestamp.isAfter(before.subtract(const Duration(seconds: 1))),
         isTrue,
       );
       expect(
-        status.timestamp.isBefore(after.add(Duration(seconds: 1))),
+        status.timestamp.isBefore(after.add(const Duration(seconds: 1))),
         isTrue,
       );
     });
@@ -84,7 +84,7 @@ void main() {
       final b = NetworkStatus(
         isConnected: true,
         networkType: NetworkType.wifi,
-        timestamp: now.add(Duration(seconds: 5)),
+        timestamp: now.add(const Duration(seconds: 5)),
       );
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);

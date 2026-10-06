@@ -56,6 +56,7 @@ class OnboardingCompleteScreen extends StatelessWidget {
             HivorrSuccessState(
               title: 'You\u2019re registered',
               subtitle: _subtitleFor(capability),
+              celebrate: true,
               actionButton: HivorrButton(
                 label: 'Go to home',
                 size: HivorrButtonSize.large,

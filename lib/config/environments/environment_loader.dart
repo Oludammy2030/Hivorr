@@ -126,7 +126,7 @@ class EnvironmentLoader {
   /// remain HTTPS-only.
   static void _validateUrl(String url, AppEnvironment environment) {
     if (_isPlaceholder(url)) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envSupabaseUrl,
         reason: 'Placeholder value is not allowed.',
       );
@@ -136,7 +136,7 @@ class EnvironmentLoader {
     try {
       uri = Uri.parse(url);
     } catch (_) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envSupabaseUrl,
         reason: 'Invalid URL format.',
       );
@@ -146,7 +146,7 @@ class EnvironmentLoader {
       final isLoopbackHttp =
           uri.scheme == 'http' && _loopbackHosts.contains(uri.host);
       if (!(environment.isDevelopment && isLoopbackHttp)) {
-        throw EnvironmentConfigException(
+        throw const EnvironmentConfigException(
           variableName: AppConstants.envSupabaseUrl,
           reason: 'Supabase URL must use HTTPS.',
         );
@@ -154,7 +154,7 @@ class EnvironmentLoader {
     }
 
     if (uri.host.isEmpty) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envSupabaseUrl,
         reason: 'Supabase URL must include a valid host.',
       );
@@ -166,14 +166,14 @@ class EnvironmentLoader {
   /// Validates that [key] is not a placeholder and not a service-role key.
   static void _validateAnonKey(String key) {
     if (_isPlaceholder(key)) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envSupabaseAnonKey,
         reason: 'Placeholder value is not allowed.',
       );
     }
 
     if (_isServiceRoleKey(key)) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envSupabaseAnonKey,
         reason:
             'Service-role keys are not accepted by the client '
@@ -188,13 +188,13 @@ class EnvironmentLoader {
   static int _validateSchemaVersion(String value) {
     final parsed = int.tryParse(value);
     if (parsed == null) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envConfigSchemaVersion,
         reason: 'Configuration schema version must be an integer.',
       );
     }
     if (parsed != AppConstants.supportedConfigSchemaVersion) {
-      throw EnvironmentConfigException(
+      throw const EnvironmentConfigException(
         variableName: AppConstants.envConfigSchemaVersion,
         reason:
             'Unsupported configuration schema version. '

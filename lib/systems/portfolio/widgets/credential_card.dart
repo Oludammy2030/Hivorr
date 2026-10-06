@@ -62,7 +62,7 @@ class CredentialCard extends StatelessWidget {
                       label: _displayKind(credential.kind),
                       variant: HivorrChipVariant.surface,
                     ),
-                    HivorrBadge(
+                    const HivorrBadge(
                       label: 'Approved',
                       variant: HivorrBadgeVariant.success,
                     ),

@@ -240,16 +240,16 @@ class _IndustryProfessionSelectionScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        AbsorbPointer(
+        const AbsorbPointer(
           child: Opacity(
             opacity: 0.6,
             child: DropdownMenu<Profession>(
               expandedInsets: EdgeInsets.zero,
-              label: const Text('Profession'),
+              label: Text('Profession'),
               hintText: 'Search or choose a profession',
               enableFilter: true,
               requestFocusOnTap: true,
-              dropdownMenuEntries: const <DropdownMenuEntry<Profession>>[],
+              dropdownMenuEntries: <DropdownMenuEntry<Profession>>[],
             ),
           ),
         ),

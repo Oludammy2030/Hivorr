@@ -198,7 +198,7 @@ class ProfessionalProfileService {
     });
     try {
       final PublicProfile? result = await _provider.load(entityId);
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       _logger?.info('Public profile load completed', <String, Object?>{
         'entityIdSuffix': _redactor.redact(entityId),
         'found': result != null,
@@ -208,7 +208,7 @@ class ProfessionalProfileService {
       });
       return result;
     } on Object catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Public profile load failed',
         error: error,

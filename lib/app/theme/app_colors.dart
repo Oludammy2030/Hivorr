@@ -123,6 +123,10 @@ class AppColors {
     surfaceContainerHighest: lightSurfaceVariant,
     onSurfaceVariant: lightOnSurfaceVariant,
     outline: lightOutline,
+    // ignore: deprecated_member_use
+    background: lightBackground,
+    // ignore: deprecated_member_use
+    onBackground: lightOnBackground,
     error: lightError,
     onError: lightOnError,
     errorContainer: lightErrorContainer,
@@ -144,6 +148,10 @@ class AppColors {
     surfaceContainerHighest: darkSurfaceVariant,
     onSurfaceVariant: darkOnSurfaceVariant,
     outline: darkOutline,
+    // ignore: deprecated_member_use
+    background: darkBackground,
+    // ignore: deprecated_member_use
+    onBackground: darkOnBackground,
     error: darkError,
     onError: darkOnError,
     errorContainer: darkErrorContainer,

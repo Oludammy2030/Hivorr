@@ -45,7 +45,7 @@ void main() {
 
   group('PayoutAccount.isUsable', () {
     test('is true only when verified AND active', () {
-      PayoutAccount account = PayoutAccount(
+      PayoutAccount account = const PayoutAccount(
         id: 'a',
         currencyCode: 'NGN',
         bankName: 'B',
@@ -56,7 +56,7 @@ void main() {
       );
       expect(account.isUsable, isTrue);
 
-      account = PayoutAccount(
+      account = const PayoutAccount(
         id: 'a',
         currencyCode: 'NGN',
         bankName: 'B',
@@ -67,7 +67,7 @@ void main() {
       );
       expect(account.isUsable, isFalse);
 
-      account = PayoutAccount(
+      account = const PayoutAccount(
         id: 'a',
         currencyCode: 'NGN',
         bankName: 'B',
@@ -78,7 +78,7 @@ void main() {
       );
       expect(account.isUsable, isFalse);
 
-      account = PayoutAccount(
+      account = const PayoutAccount(
         id: 'a',
         currencyCode: 'NGN',
         bankName: 'B',

@@ -7,7 +7,7 @@ import 'package:hivorr/core/localization/supported_locales.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final HivorrLocalizationService service = const HivorrLocalizationService();
+  const HivorrLocalizationService service = HivorrLocalizationService();
 
   group('HivorrLocalizationService.loadTranslations', () {
     test('loads en.json into a non-empty flat map', () async {

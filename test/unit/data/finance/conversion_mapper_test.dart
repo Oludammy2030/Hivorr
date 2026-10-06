@@ -211,7 +211,7 @@ void main() {
 
   group('ConversionMapper.previewToEntity', () {
     test('maps the local estimate fields', () {
-      final dto = ConversionPreviewDto(
+      const dto = ConversionPreviewDto(
         fromCurrency: 'NGN',
         toCurrency: 'USD',
         fromAmount: 50000,

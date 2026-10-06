@@ -228,7 +228,7 @@ void main() {
         // raised `PLT005` to a typed conflict ApiException. This validates that
         // normalization contract, which `SupabaseEntityRemoteDataSource._guard`
         // applies to every RPC failure.
-        final PostgrestException raised = PostgrestException(
+        const PostgrestException raised = PostgrestException(
           message: 'sqlstate detail',
           code: 'P0001',
           details: 'PLT005',

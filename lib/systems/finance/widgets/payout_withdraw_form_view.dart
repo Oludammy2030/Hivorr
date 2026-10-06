@@ -95,8 +95,8 @@ class _PayoutWithdrawFormViewState extends State<PayoutWithdrawFormView> {
     final List<PayoutAccount> verified = _verifiedAccounts(provider);
 
     if (verified.isEmpty) {
-      return HivorrEmptyState(
-        icon: const Icon(Icons.verified_outlined),
+      return const HivorrEmptyState(
+        icon: Icon(Icons.verified_outlined),
         title: 'No verified payout accounts',
         subtitle:
             'Withdrawals are enabled after a payout account passes ownership '

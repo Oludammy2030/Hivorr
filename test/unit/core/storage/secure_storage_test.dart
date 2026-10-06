@@ -136,8 +136,8 @@ void main() {
 
     // Key derived from a device secret held in the same store (EP-01-10 §5.6).
     Future<SecretKey> deriveKey() => KeyDerivation.fromConfiguration(
-      SecurityConfiguration(
-        const SecurityConfig(
+      const SecurityConfiguration(
+        SecurityConfig(
           pinningEnabled: false,
           pinnedSpkiSha256Hashes: <String>[],
           kdfSalt: 'salt',

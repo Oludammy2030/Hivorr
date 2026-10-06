@@ -201,7 +201,7 @@ void main() {
     // ── Scenario 5: environment-aware endpoints ──
     test('dev and staging configs load distinct, isolated Supabase URLs', () {
       final EnvironmentConfig devConfig = EnvironmentLoader.load(
-        source: MapEnvironmentValueSource(<String, String>{
+        source: const MapEnvironmentValueSource(<String, String>{
           AppConstants.envEnvironment: 'development',
           AppConstants.envSupabaseUrl: 'https://dev.hivorr.app',
           AppConstants.envSupabaseAnonKey:
@@ -211,7 +211,7 @@ void main() {
       );
 
       final EnvironmentConfig stagingConfig = EnvironmentLoader.load(
-        source: MapEnvironmentValueSource(<String, String>{
+        source: const MapEnvironmentValueSource(<String, String>{
           AppConstants.envEnvironment: 'staging',
           AppConstants.envSupabaseUrl: 'https://staging.hivorr.app',
           AppConstants.envSupabaseAnonKey:

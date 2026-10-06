@@ -1290,9 +1290,9 @@ class _ProStatsRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: const <Widget>[
+      children: <Widget>[
         _ProStatsCard(),
         SizedBox(height: HivorrSpacing.lg),
         _ProVerificationCard(),
@@ -1890,11 +1890,11 @@ class _ProStatsCard extends StatelessWidget {
           ),
           const SizedBox(height: HivorrSpacing.md),
           _StatRow(label: 'Profile Completeness', value: '$percent%'),
-          _StatRow(label: 'Total Reviews', value: '142'),
-          _StatRow(label: 'Avg Rating', value: '4.9 / 5.0'),
-          _StatRow(label: 'Jobs Completed', value: '89'),
-          _StatRow(label: 'Response Time', value: '< 2 hours'),
-          _StatRow(label: 'Availability', value: 'From Jul 8', last: true),
+          const _StatRow(label: 'Total Reviews', value: '142'),
+          const _StatRow(label: 'Avg Rating', value: '4.9 / 5.0'),
+          const _StatRow(label: 'Jobs Completed', value: '89'),
+          const _StatRow(label: 'Response Time', value: '< 2 hours'),
+          const _StatRow(label: 'Availability', value: 'From Jul 8', last: true),
         ],
       ),
     );
@@ -1976,9 +1976,9 @@ class _ProVerificationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
-          _VerifyRow(label: 'Identity', verified: true),
+          const _VerifyRow(label: 'Identity', verified: true),
           _VerifyRow(label: 'Email', verified: emailVerified),
-          _VerifyRow(label: 'Phone', verified: true),
+          const _VerifyRow(label: 'Phone', verified: true),
           _VerifyRow(
             label: 'Bank Account',
             verified: false,

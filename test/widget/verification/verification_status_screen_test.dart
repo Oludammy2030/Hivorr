@@ -176,15 +176,15 @@ void main() {
       WidgetTester tester,
     ) async {
       // A pending submission that has already been submitted maps to in-review.
-      final VerificationStatus pendingWithSubmissions = VerificationStatus(
+      const VerificationStatus pendingWithSubmissions = VerificationStatus(
         entityId: 'u1',
-        kycLevel: const KycLevel(
+        kycLevel: KycLevel(
           tierCode: 'tier_0',
           status: 'pending',
           limits: KycLimits(daily: 0, weekly: 0, monthly: 0, cashout: 0),
         ),
         identityVerified: false,
-        tradeVerifications: const <TradeVerification>[],
+        tradeVerifications: <TradeVerification>[],
         pendingSubmissions: 1,
         totalSubmissions: 1,
       );

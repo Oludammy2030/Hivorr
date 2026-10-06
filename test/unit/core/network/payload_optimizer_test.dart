@@ -15,7 +15,7 @@ void main() {
     maxUploadSizeMbWifi: 25.0,
   );
 
-  final optimizer = PayloadOptimizer(config);
+  const optimizer = PayloadOptimizer(config);
 
   group('recommendedImageQuality', () {
     test('mobile → low', () {
@@ -201,7 +201,7 @@ void main() {
         maxUploadSizeMbWifi: 25.0,
       );
 
-      final customOptimizer = PayloadOptimizer(customConfig);
+      const customOptimizer = PayloadOptimizer(customConfig);
 
       expect(
         customOptimizer.recommendedImageQuality(NetworkType.wifi),
@@ -221,7 +221,7 @@ void main() {
         maxUploadSizeMbWifi: 25.0,
       );
 
-      final customOptimizer = PayloadOptimizer(customConfig);
+      const customOptimizer = PayloadOptimizer(customConfig);
 
       expect(customOptimizer.recommendedPageSize(NetworkType.mobile), 10);
       expect(customOptimizer.recommendedPageSize(NetworkType.wifi), 50);
@@ -239,7 +239,7 @@ void main() {
         maxUploadSizeMbWifi: 100.0,
       );
 
-      final customOptimizer = PayloadOptimizer(customConfig);
+      const customOptimizer = PayloadOptimizer(customConfig);
 
       expect(
         customOptimizer.recommendedMaxUploadSizeMb(NetworkType.mobile),

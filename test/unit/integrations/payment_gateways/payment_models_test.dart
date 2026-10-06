@@ -25,7 +25,7 @@ void main() {
       expect(a == same, isTrue);
       expect(a == diffUnits, isFalse);
       expect(a == diffCurrency, isFalse);
-      final Object nonAmount = 'not-an-amount';
+      const Object nonAmount = 'not-an-amount';
       expect(a == nonAmount, isFalse);
       expect(a.hashCode, same.hashCode);
     });

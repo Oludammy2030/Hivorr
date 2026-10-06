@@ -39,7 +39,7 @@ void main() {
       ),
     );
     addTearDown(escrowProvider.dispose);
-    final Widget child = const DisputeFilingScreen(escrowId: 'escrow-abc');
+    const Widget child = DisputeFilingScreen(escrowId: 'escrow-abc');
     if (router == null) {
       await pumpApp(
         tester,

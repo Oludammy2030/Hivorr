@@ -345,7 +345,7 @@ void main() {
 
       // Go online — triggers drain.
       connectivity.setOnline();
-      await Future<void>.delayed(Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       expect(adapter.captured.length, 1);
       expect(statusProvider.pendingCount, 0);

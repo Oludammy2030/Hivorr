@@ -2,7 +2,7 @@
 
 **Status:** Active — binding across the entire project (EP-01 → EP-08).
 **Owner:** Design System (EP-01-16) is the first implementer; every later UI task and agent MUST conform.
-**Authority:** This document is the canonical specification for Hivorr's visual identity, UI design language, layout principles and beautification standards. The runtime values in `lib/app/theme/app_colors.dart`, `lib/app/theme/app_text_theme.dart` and `lib/app/theme/app_theme.dart` (`AppThemeExtension` + `RoleThemeExtension`) MUST equal the hex/weights/durations defined here. If code and this document disagree, this document wins and the code is fixed. Do not create a duplicate visual document.
+**Authority:** This document is the canonical specification for Hivorr's visual identity, UI design language, layout principles and beautification standards — it defines **what Hivorr looks like**. The companion `documents/Context/FLUTTER-UI-IMPLEMENTATION-RULES.md` defines **how Flutter/Dart implements it** (widgets, constraints, state, lists, animation, images, responsive). If the two disagree on a *value* (hex/weight/duration), this document wins. If they disagree on *how to write Dart*, the companion wins. The runtime values in `lib/app/theme/app_colors.dart`, `lib/app/theme/app_text_theme.dart` and `lib/app/theme/app_theme.dart` (`AppThemeExtension` + `RoleThemeExtension`) MUST equal the hex/weights/durations defined here. If code and this document disagree, this document wins and the code is fixed. Do not create a duplicate visual document.
 
 > How to use this document: when a developer or AI agent creates a completely new Hivorr page, follow this file top to bottom — §1 purpose → §13 composition → §14 hierarchy → §15 surfaces → §22 workflow → §31 checklist. No separate "make it beautiful" instruction is needed. The system itself teaches how to make Hivorr beautiful.
 
@@ -62,12 +62,16 @@ Use only for hero accents, Admin identity moments, and primary CTA fills where t
 - Purple (`#8B5CF6`) is used for: secondary brand surfaces and combined Explore/Earn surfaces. It is not a Both account identity — Both is permanently removed. Never as full-screen background.
 - Never introduce a third brand hue outside this section.
 - Widgets MUST use `Theme.of(context).colorScheme.*` / `AppThemeExtension` / `RoleThemeExtension` — never hardcode `Colors.*` or raw hex.
+- White-on-brand exception (only one): `onPrimary #FFFFFF` text/icons on brand `#2D3FE7` fills and on the constrained brand gradient is permitted where contrast is verified. All other white/color literals at call sites remain banned — read the token instead.
+- Focus rings always resolve to `primary` in light AND dark; never a local blue/grey.
 
 ---
 
 ## 3. Role-Based Color System (accent-only)
 
 Hivorr remains **one unified visual ecosystem** with Explore with Hivorr, Earn with Hivorr, and a separate Admin environment. Operating contexts use different **accent colors** — not different themes. There is no per-role `ThemeData` and no Both account type. Contexts resolve through `RoleThemeExtension` (accent-only) on top of the single `ColorScheme`.
+
+Activity vocabulary (capabilities, not account types): Explore = `buy` (order products) / `hire` (post jobs, hire) / `discover` (browse, no gate); Earn = `sell` (store + listings) / `offer` (services) / `logistics` (dispatch). Admin / Super Admin are privileged roles, never activities.
 
 | Context | Primary | Light | Use for |
 |---|---|---|---|
@@ -81,6 +85,7 @@ Rules:
 - Explore cards use Explore blue; Earn cards use Earn green. Combined Explore/Earn surfaces use the secondary purple as a surface accent only, never as an account identity. Drilling into an Explore-only or Earn-only flow uses that flow's accent for its primary action.
 - Activity visibility is driven by the active Explore/Earn activities; `RoleThemeExtension` drives color. Never hardcode role hex at call sites — read `context.roleTheme.clientPrimary` (Explore/hire), `.professionalPrimary` (Earn/offer), `.adminPrimary`. `.bothPrimary` is deprecated following permanent Both removal and must not be used for new UI.
 - Status is never communicated through color alone (see §25).
+- Known dark-theme risk (founder approval pending): `dark.clientPrimary` and `dark.adminPrimary` currently collide at `#8B9DFF`. Admin MUST remain visually distinct from Explore in dark — either darken Admin or shift its accent — before Admin dark is signed off. Light is distinct (`#1A2AD4` vs `#2D3FE7`) and binding.
 
 ---
 
@@ -132,6 +137,21 @@ All tokens are exposed through `ColorScheme` (light/dark) in `lib/app/theme/app_
 | `onErrorContainer` | `#7F1D1D` | Text on errorContainer |
 
 Muted text `#9CA3AF` is used for captions/placeholders via `TextStyle.color` from the extension — never as a surface fill.
+
+### 5.3 Extended surface tokens (binding; wire via `AppThemeExtension` + `ColorScheme`)
+
+`background`/`onBackground` consts MUST be wired into `ColorScheme.background`/`onBackground` (not only `scaffoldBackgroundColor`) so `outlineVariant` and `shadow` do not fall back to Flutter defaults.
+
+| Token | Light | Dark | Used for |
+|---|---|---|---|
+| `outlineVariant` | `#E6EAF3` | `#232C47` | Hairline dividers inside cards, pressed-track borders, drag handles |
+| `shadow` | `rgba(15,22,38,0.07–0.16)` per §9 | `rgba(0,0,0,0.45–0.60)` per §9 | All `BoxShadow` color slots — never `Colors.blackXX` literals |
+| `disabledFill` | `surfaceContainerHighest` | `surfaceContainerHighest` | Disabled button/input fills |
+| `disabledOnFill` | `onSurfaceVariant` at 50% | `onSurfaceVariant` at 50% | Text/icon on disabled fills (ad-hoc alpha banned elsewhere) |
+| `focusRing` | `primary #2D3FE7` | `primary #8B9DFF` | Focus outlines, text-field focus border (2px) |
+| `muted` | `#9CA3AF` | `#6B7A90` | Captions/placeholders only — never body, never fills |
+
+`HivorrScreenScaffold` defaults to `background` (`#F0F2F8` light / `#0F1626` dark) so white `HivorrCard` surfaces stay visible. Defaulting a scaffold to `surface` is banned.
 
 ### 5.2 Dark theme
 
@@ -186,9 +206,9 @@ Derived for contrast on dark surfaces (AA). Light hexes MUST NOT be reused on da
 | Hivorr role | TextTheme | Weight | Use |
 |---|---|---|---|
 | Display / hero heading | `displaySmall` (36) / `displayMedium` (45) | 700 | Landing heroes, major public headers only |
-| Page heading | `headlineMedium` (28) / `headlineSmall` (24) | 600 | Dashboard / detail page titles, auth titles |
-| Section heading | `titleLarge` (22) | 600 | `HivorrSectionHeader`, content sections |
-| Card heading | `titleMedium` (16) / `titleSmall` (14) | 500 | `HivorrCard` titles, list-tile titles |
+| Page heading | `headlineSmall` (24) | 700 | Dashboard / detail page titles, auth titles (binding — §6a wins over any w600 default) |
+| Section heading | `titleLarge` (22) / `titleMedium` (16) | 600 | `HivorrSectionHeader`, content sections |
+| Card heading | `titleSmall` (14) | 600 | `HivorrCard` titles, list-tile titles (binding — w500 base is superseded) |
 | Body text | `bodyLarge` (16) / `bodyMedium` (14) | 400 | Paragraphs, descriptions |
 | Supporting text | `bodySmall` (12) | 400 | Hints, secondary explanations |
 | Metadata / labels | `labelLarge` (14) / `labelMedium` (12) | 500 | Buttons, chips, badges, form labels |
@@ -196,7 +216,7 @@ Derived for contrast on dark surfaces (AA). Light hexes MUST NOT be reused on da
 
 Avoid excessive size variation. One hero size per page; section headings share one style; card headings share one style. Line-heights and letter-spacing come from the theme — never ad-hoc.
 
-### 6a. Font-Weight Usage Rules
+### 6a. Font-Weight Usage Rules (binding — wins over §6 base weights where they differ)
 
 Weights are hierarchy tools with exactly four jobs: (1) page/section/card titles, (2) key numeric values, (3) the primary action label in a group, (4) status words inside badges. Weight by role (binding):
 
@@ -212,9 +232,10 @@ Weights are hierarchy tools with exactly four jobs: (1) page/section/card titles
 
 Rules:
 
-- `FontWeight.w800` is retired from functional UI. It may appear only in landing/marketing display text, explicitly documented at the call site.
+- `FontWeight.w800` is retired from functional UI. It may appear only in landing/marketing display text, explicitly documented at the call site. Current `w800` hits in `HivorrStatBand`, `HivorrPricingTier`, login, and sidebars are violations to unwind to `w700` in code — the doc rule stands.
 - Never set `fontSize` per-widget; map to the nearest §6 scale step (11→`labelSmall` 11, 11.5/12→`bodySmall` 12, 12.5/13/13.5→`bodyMedium` 14, 15→`titleSmall` 14 semibold or `titleMedium` 16, 18→`titleMedium` 16, 20→`titleLarge` 22).
 - If more than ~15% of visible words on a screen are semibold-or-up, the screen fails review — weight escalation flattens hierarchy.
+- Base `TextTheme` weights stay as shipped (`titleMedium/titleSmall w500`); call sites promote to the §6a binding weight via theme roles — never via per-widget `fontWeight:` literals outside the canonical headers/cards.
 
 ---
 
@@ -236,8 +257,9 @@ Rules:
 
 - Never ad-hoc `EdgeInsets`. Related elements sit closer; unrelated elements get more separation.
 - Screen padding: 16dp mobile / 24dp web content panes; section gaps follow the scale.
-- Content width: focused content (forms, fields, auth) lives in a centered pane (`HivorrContentPane`, max ≈ 720dp) with symmetric gutters — never full-bleed just because the parent is wide. Genuinely full-width surfaces (dashboards, data views) remain allowed.
+- Content width: focused content (forms, fields, auth) lives in a centered pane (`HivorrContentPane`, max ≈ 720dp) with symmetric gutters — never full-bleed just because the parent is wide. Genuinely full-width surfaces (dashboards, data views) remain allowed. List panes cap at ≈1120dp; auth split form caps at ≈480dp.
 - Related: headings → paragraphs → controls tighten; cards → headings → sections loosen.
+- Table→card flip width is a token: `Breakpoints.tableCardFlip = 720`. Raw `700/900/1000/1100` thresholds are banned (the documented 900dp wide-action-table exception lives in §21a).
 
 ### 7a. Interior-Spacing Rules
 
@@ -251,6 +273,8 @@ Rules:
 ## 8. Border Radius
 
 Token source: `AppThemeExtension` (`radiusSm/Md/Lg`). One radius language across cards, buttons, inputs, modals.
+
+> Historical naming (preserved by founder decision — do not rename): `radiusSm = 8dp` is SMALLER than `radiusXs = 12dp`. The names are backwards by convention but frozen to avoid breaking all call sites. Always read the dp value, never the name, when choosing. New code uses the dp-matched token below.
 
 | Token | Value | Use |
 |---|---|---|
@@ -354,6 +378,20 @@ Do not turn everything into a card. Avoid card-inside-card-inside-card and exces
 - Fixed-height content blocks are banned, except media/document viewers, which carry a documented exception plus a collapsed mobile variant.
 - Card height is content-driven; long text is clamped with `maxLines`, never accommodated with fixed extents.
 
+### 15b. Card Hierarchy (binding — Local Market vs Services must never look alike)
+
+All cards extend `HivorrCard` (flat = hairline border, raised = Level-1 shadow, never both). Choose by domain:
+
+| Card | Accent | Anatomy (top→bottom) | Notes |
+|---|---|---|---|
+| Product card (Local Market) | Explore blue strip/tint | Media 1:1 → title `titleSmall w600 maxLines:2` → price `titleMedium w700` + unit → store row (avatar + name + rating) → stock/fulfilment chip | Price is the hero; never hide behind a tap. Physical shows fulfilment (`pickup/delivery`); digital shows entitlement (`instant download`). |
+| Service card | Earn green strip/tint | Title → professional row → rating + completed count → starting-price + duration → CTA | Trust is the hero (verification badge + aggregates first). No product-style media grid. |
+| Profile / professional card | Role of the viewed flow | Avatar → name + verification → skills `Wrap` → stats → CTA | Portfolio previews live below the fold, never in the card. |
+| Store card | Explore blue | Logo → store name + seller-verified → categories → rating + location → Visit CTA | Never reuse product-card media treatment. |
+| Order / contract card | Neutral + status badge | ID + date → parties → amount + escrow state → progress → primary next action (one only) | Exactly one primary action; the rest are text links. |
+| Delivery / tracking card | Earn green + status badge | Status timeline (3–5 steps max) → rider row → ETA → map/tracking CTA | Timeline is vertical on mobile, horizontal ≥720dp. Live state polls; never a static screenshot. |
+| Metric card | Role of the dashboard | Label `labelMedium` → value `headlineSmall w700` → delta/sub `bodySmall maxLines:2 ellipsis` | `HivorrStatCard` metrics; `w800` banned; sub-text clamps to 2 lines. |
+
 ---
 
 ## 16. Hero Sections
@@ -361,6 +399,32 @@ Do not turn everything into a card. Avoid card-inside-card-inside-card and exces
 Major landing and important public pages may use a strong hero containing: clear headline (`displaySmall`), supporting message (`bodyLarge`), primary CTA, secondary CTA where appropriate, and a supporting visual/content element.
 
 Do not create enormous empty heroes for spaciousness. Use space purposefully with subtle background shapes, cards, floating info panels, service/category previews, statistics, illustrations, or contextual UI previews. The hero must communicate page value within seconds.
+
+### 16a. Brand Expression & Decoration (binding — where beauty may spend)
+
+Restraint is the default (§23); this section budgets the exceptions. Decoration is permitted **only** in the slots below, and every item must pass the guardrails. Anywhere else, it fails review.
+
+**Sanctioned slots:**
+
+| Slot | Allowed expression | Examples |
+|---|---|---|
+| Heroes & marketing (§§16–17) | Gradient accents, supporting visuals, floating info panels, stats, category/service previews | Landing hero, `HivorrHeroPanel`, how-it-works, pricing |
+| Brand moments | Constrained gradient (`#1A2AD4→#2D3FE7→#4F5FEF`), logo lockups, breathing `HivorrLoader` | Auth brand panel, admin identity, splash, empty-state marks |
+| Success & celebration | One restrained celebratory moment per completed flow, brand hues only | Order placed, contract signed, payout received, verification approved |
+| Empty-state illustration | One consistent illustration style (line-based, brand-tinted) across all `HivorrEmptyState`s | No results, no messages, no orders — illustration + guidance + next action |
+| Campaign bands | Contained promo surfaces reusing `HivorrCtaBand` structure with honest copy | Local Market promos, seasonal headers, feature launches |
+| Ambient texture | Subtle background shapes or dot-grids confined to heroes | ≤8% opacity, static, removed below 600dp if clarity suffers |
+
+**Guardrails (all binding):**
+
+- Palette-locked: brand + semantic hues from §2 only. Never a decorative hue, never stock-art colors.
+- One decorative element per viewport. Two competing decorations fail review.
+- Static by default: no continuous animation. Celebration motion runs once (≤600ms), honors reduced motion (§25a) by rendering its end state statically.
+- Zero cost to usability: contrast, ≥48dp targets, text-scale, and screen-reader order verified with the decoration present — and with it removed (layout must not collapse without it).
+- Removable: campaign/seasonal surfaces delete cleanly; no screen depends on a decoration for structure.
+- Never on errors, never on financial amounts, never as a substitute for missing content or hierarchy.
+
+**How to request new decoration:** name the slot above it belongs to (or propose a new slot with the same guardrails), show the without-decoration baseline, and state what the decoration communicates (hierarchy, trust, celebration, orientation). "It looks empty" is never sufficient justification — §19 whitespace rules apply first.
 
 ---
 
@@ -447,10 +511,43 @@ Buttons (`HivorrButton` primary/secondary/outline/text, s/m/l, ≥48dp) · Text 
 ### 21c. Table Standard
 
 - Operational lists use `HivorrDataTable`. Hand-rolled flex tables are banned.
-- Row heights: 40 dense tables / 44–52 standard rows. The 48dp floor (§25) applies to touch rows (list tiles), not to data rows.
+- Row heights: 40 dense tables / 44–52 standard rows. The 48dp floor (§25) applies to touch rows (list tiles), not to data rows. Table vertical cell padding `sm (8dp)` yields ≈40dp rows with `bodyMedium` — never compress below 40dp.
 - Header `labelSmall` uppercase; cell padding horizontal 16, vertical 8.
 - Dense-table row actions (`HivorrTableAction`, compact pill ≈34dp) are permitted inside ≥720dp admin tables, where 48dp buttons would force ≥64dp rows. Narrow-card (touch) layouts, form CTAs, dialog actions, and standalone buttons always stay ≥48dp (`HivorrButton`).
 - Compact card actions in dense dashboard grids (job/hire/service/product/order cards at 2–3 columns) also use `HivorrTableAction`: full 48dp buttons would dominate these cards and break the reference action clusters. The exception covers tables and dense card grids only.
+- `HivorrDialog` uses the Level-2 overlay shadow token (`HivorrElevation.overlay`) — never a raw Material `elevation: 3`.
+
+### 21d. Button Hierarchy (binding)
+
+`HivorrButton` variants: primary (Explore/Earn/Admin accent fill) → secondary (purple fill, combined flows only) → outline → text. Exactly one primary per view. Destructive uses `error` fill with `onError` label — never orange/red text-link hacks. Small size keeps the 48dp floor; dense grids use `HivorrTableAction`, never a shrunken `HivorrButton`. Loading swaps the label for `HivorrLoader (20dp)` in the button's `onPrimary` color — never a bare spinner.
+
+### 21e. Form Hierarchy (binding)
+
+Label `labelMedium` → field (`HivorrTextField`, `radiusSm 8`, `outline` idle / `primary 2px` focus / `error` error, `surface` fill, `md/sm` padding) → helper `bodySmall` → error `bodySmall onError` + red border. `HivorrFormField` (`label + field + error + helper`) is the only composed form unit; raw `DropdownButtonFormField`/`DropdownMenu` with default `InputDecoration` is banned — dropdowns, search, date pickers MUST reuse the `HivorrTextField` border/fill/radius/focus tokens and the 48dp floor.
+
+### 21f. Tabs, Search & Filters (binding)
+
+No bespoke tab bars. Tabs/segments: pill row of `HivorrChip` (true pills, `minHeight 48`, selected = role fill) OR underline `TabBar` styled from tokens — one construct per screen, never both. Search: `HivorrTextField` + leading search icon + clear affordance, debounced at `HivorrMotion.medium (250ms)`. Filter bar: search field → `Wrap(HivorrChip)` groups → result count `bodySmall onSurfaceVariant`. Active-filter count badge is mandatory where 2+ groups exist. Sort (`Newest/Oldest/Name A–Z`) is a chip group, never a second dropdown.
+
+### 21g. Overlays: Dialog vs Sheet vs Drawer vs Menu (binding)
+
+Dialog (`HivorrDialog`, `radiusMd 16`, overlay shadow): confirmations, destructive confirmations (error primary action + explicit noun, e.g. "Delete listing"), small forms. Bottom sheet (`HivorrBottomSheet`, `radiusLg 24` top, drag handle `40×4 outlineVariant`, `isScrollControlled + viewInsets.bottom`): filters, pickers, long option lists, mobile-first actions. Drawer: admin/shell navigation only — dashboard mobile uses bottom nav + `MoreSheet`, never a drawer. Menu (`PopupMenuButton`): public-nav overflow and `⋯` row overflow only. Raw `AlertDialog`/`showModalBottomSheet`/`showDatePicker` with unthemed chrome is banned — wrap or extend the canonical.
+
+### 21h. Feedback: Snackbar, Progress, Skeleton, Tooltip, Pagination, Breadcrumbs (binding)
+
+Snackbar (`HivorrSnackbar`, floating, 4s = `HivorrMotion.snackbar`, semantic fill + icon + label): success/error/warning/info; optional single action; caller presents via `ScaffoldMessenger` (the widget returns the `SnackBar`, it does not show it). Progress: linear/bar uses role/semantic fill on `surfaceContainerHighest` track; circular progress is banned — use breathing `HivorrLoader`. Skeleton: shimmer/block rows matching the target layout (table rows, card grids) for first paint; never blank space, never spinner-only. Tooltip: every icon-only button carries a `tooltip` + `Semantics.label`. Pagination: cursor/keyset with `_loadMoreFooter` (loading → skeleton footer; error → retry footer; end → "You've reached the end" caption); page-numbered pagination only for admin audit tables. Breadcrumbs: `labelMedium` links + `labelSmall` separators with ellipsis on the middle crumb; admin deep views (`review-queue/:id`, `users/:id`) always show them.
+
+### 21i. Local Market Visual Language (binding — EP-04 scope guard)
+
+Discovery (`/market`, `/market/search`, `/market/:id`, `/store/:storeId`) reuses profession-registry picker patterns for vertical → category → product-type selection with per-type attributes — taxonomy is admin-configured, never hardcoded. Product grids follow §21a; filters are category / price / radius / rating / availability; ranking badge (verified → rating → completion → recency) is a `HivorrBadge`, never a score dump. Cart → order → fulfilment → tracking reuses §15b order/delivery cards with the 3-party split (buyer → merchant + rider + fee). Digital goods show entitlement state before download; no public URLs. `/store/:storeId` unknown IDs render the holding state without echoing the ID (SEO-404 rule).
+
+### 21j. Services vs Commerce Disambiguation (binding)
+
+Hiring flows (post job → applications → contract → milestones → escrow → review) use Earn/Explore accents per actor and service cards (§15b); commerce flows (browse → cart → order → fulfilment → review) use product/store/order cards. Never render a product with a "Bid" CTA or a service with a "stock" chip. Messaging threads show an order/contract context header; logistics threads show the delivery card header.
+
+### 21k. Logistics & Tracking Language (binding)
+
+Logistics is an Earn activity (`logistics` + rider `APPROVED` + KYC tier) — never a separate app. States: `assigned → picked_up → in_transit → delivered | failed`, each an extension of `HivorrBadge` with icon + label. Multi-stop shows stop count + current-stop emphasis. Location precision, rider identity masking, and retry/evidence actions follow the same sheet/dialog rules as §§21g–21h.
 
 ---
 
@@ -473,7 +570,7 @@ Do not ship generic Header + Three Cards + Table layouts for every page. Choose 
 
 Do not add random gradients, excessive animations, unnecessary shadows, excessive rounding, random illustrations, excessive icons, decorative cards, or unnecessary badges. Every visual element must contribute to hierarchy, usability, comprehension, navigation, trust, branding, or interaction.
 
-Motion: token durations 150–300ms, standard easing, fade + slide; animate only to communicate (press, list feedback, state change). Loader is the breathing `HivorrLoader`, not a spin.
+Motion: token durations 150–300ms (`HivorrMotion.short/medium/long`), standard easing, fade + slide; animate only to communicate (press, list feedback, state change). Tokens MUST be consumed at call sites — defining them in `AppTheme` while screens swap statically is a violation. Loader is the breathing `HivorrLoader`, not a spin.
 
 ---
 
@@ -487,6 +584,8 @@ Cards reorganize (`Wrap` / `LayoutBuilder` 1→2→3 cols); sections stack intel
 
 - 600–1023dp is a first-class layout: 2-column content grids, rail/sidebar navigation, 16dp gutters, full-width forms in panes.
 - Verify every migrated screen at 320 / 360 / 600 / 1024 / 1920dp in light AND dark before sign-off.
+- Very-small screens (320–360dp): header `Row`s become `Wrap`; stat grids stay 2-col; tables are already cards below 720dp; no horizontal scroll except intentional carousels.
+- Imagery degrades gracefully: `AspectRatio`-boxed, `loadingBuilder` placeholder, `errorBuilder` fallback, offline-safe. Layout never jumps while images load (see companion implementation doc §15).
 
 ---
 
@@ -497,9 +596,10 @@ Beauty never costs usability. WCAG AA contrast floor **plus**: comfortable targe
 ### 25a. Readability Floors (binding minima)
 
 - Body text ≥12 (11 for captions only). Buttons/inputs ≥48dp total height.
-- Table data-rows ≥40dp; pills/badges use `HivorrBadge` metrics or larger.
-- 1.3× text-scale must produce no overflow on any functional screen.
+- Table data-rows ≥40dp; pills/badges use `HivorrBadge` metrics or larger. `HivorrChip` dismiss `×` and bell dots are the only sub-48dp touch elements, each with an expanded `48dp` hit area.
+- 1.3× text-scale must produce no overflow on any functional screen. Fixed `mainAxisExtent` extents are banned for text-bearing cards — use `childAspectRatio` or auto-height.
 - Any proposal below these floors fails review on accessibility grounds — density never comes from sub-floor targets.
+- Reduced motion: honor `MediaQuery.disableAnimations` — breathing loader becomes static mark; list/filter transitions become instant. No continuous animation without a pause path.
 
 ---
 
@@ -523,31 +623,38 @@ Clear space ≥ 25% of mark height; minimum 24dp mark / 14sp wordmark. On colore
 
 ## 27. Anti-Patterns (forbidden)
 
-- Hardcoding `Colors.*` or raw hex in widgets instead of `Theme`/`AppThemeExtension`/`RoleThemeExtension`.
+- Hardcoding `Colors.*` or raw hex in widgets instead of `Theme`/`AppThemeExtension`/`RoleThemeExtension` (sole exceptions: `Colors.transparent` for unselected/overlay layers; white `onPrimary` on verified brand fills per §2).
+- Reading `AppColors.*` directly at call sites instead of `context.colorScheme/appExtension/roleTheme` (breaks dark mode).
 - Setting `fontFamily` per-widget instead of `TextTheme`.
-- Introducing a hue outside §2.
+- Setting `fontSize`/`fontWeight` per-widget instead of the §6/§6a roles; `w800` anywhere in functional UI.
+- Introducing a hue outside §2 (including stray pinks/oranges in auth/profile gradients).
 - Using accent/gradient as full-bleed background or small text without contrast.
 - Fetching fonts from network at runtime.
 - Card-inside-card-inside-card; every card heavily shadowed; outlining every element.
-- Non-token spacing, radius, elevation/shadow, or motion.
-- Bare spinners / dead-end empty states (always branded state widgets with guidance + next action).
+- Non-token spacing, radius, elevation/shadow, or motion. Raw `BorderRadius.circular(8/10/12/20)`, raw `700/900/1000/1100` breakpoints, raw `MediaQuery.sizeOf` screen-math where `LayoutBuilder`/`context.breakpoint` applies.
+- `HivorrScreenScaffold` defaulting to `surface`; `HivorrDialog` on raw Material elevation; tables below the 40dp row floor.
+- Bare spinners / dead-end empty states (always branded state widgets with guidance + next action). No skeleton-less first paint for tables/grids.
 - Static heading-paragraph-button pages where grouping (§14–§15) applies.
 - Generic Header + Three Cards + Table on every page; decoration without purpose.
+- Duplicated chrome: second sidebar lockup instead of `LogoHorizontal`, `_ClientSection` instead of `HivorrSectionHeader`, private metric/hero/stat cards instead of `HivorrStatCard`/`HivorrHeroPanel`, raw `AlertDialog`/`showModalBottomSheet`/`showDatePicker` instead of §§21g–21h canonicals, private `_Composer`/`_Bubble` instead of shared chat primitives.
+- Product rendered as service (or vice versa): "Bid" on a product, "stock" on a service (§21j).
 
 ### 27a. AI Implementation Rules
 
 - Reuse-before-creation: before building any visual element, search `lib/shared/`. If a canonical exists, reuse or extend it. A new private visual duplicate of an existing canonical fails Definition of Done.
 - Spacing ≥6dp MUST be a token; `fontSize`/`fontFamily` per-widget is banned; `Colors.*`/raw hex at call sites is banned; `w800` in functional UI is banned; non-600/1024/720 breakpoints are banned.
 - Token changes follow §29: document first, then `lib/app/theme/*`, then tests.
+- How-to-Flutter questions (constraints, rebuilds, lazy/slivers, images, keyboard, `const`, `RepaintBoundary`) are answered by the companion `documents/Context/FLUTTER-UI-IMPLEMENTATION-RULES.md` — read it alongside this file before UI work. Value questions are answered here.
 
 ---
 
 ## 28. Enforcement
 
-- `documents/Context/AGENT.md` Rule: *"All UI MUST use `AppTheme` tokens defined in `VISUAL-IDENTITY.md`; never hardcode colors or fonts."*
+- `documents/Context/AGENT.md` Rule: *"All UI MUST use `AppTheme` tokens defined in `VISUAL-IDENTITY.md`; never hardcode colors or fonts. How-to-Flutter conformance follows `FLUTTER-UI-IMPLEMENTATION-RULES.md`."*
 - Tests assert `ColorScheme.primary == #2D3FE7`, `background == #F0F2F8`, `TextTheme.bodyMedium.fontFamily == 'Plus Jakarta Sans'`, and `RoleThemeExtension` role hexes.
 - Any UI task (EP-02+) that hardcodes a color/font fails its Definition of Done.
 - Any UI task (EP-02+) that uses **non-token** spacing, radius, elevation/shadow, or motion — or ships an unmindful/off-brand empty, loading, error, or success state — fails its Definition of Done under §21 (the finish & experience standard).
+- Token-scan coverage expands from onboarding/verification/finance/support/portfolio to all of `lib/` plus scans for `BorderRadius.circular(8|10|12|20)`, `fontSize:`, `w800`, `MediaQuery.sizeOf` screen-math, and raw `<600|900|1000|1100` breakpoints.
 - Quality gate: §31 checklist must pass before a page is considered complete.
 
 ---
@@ -586,3 +693,8 @@ Before considering any page complete, verify:
 - Columns reach the §21a counts at width? No fixed-height content blocks?
 - Touch targets ≥48? Data-rows ≥40? No w800, no `fontSize:` literals, no raw hex?
 - Verified at 320/600/1024/1920 in light AND dark?
+- Correct card hierarchy (§15b): product vs service vs store vs order vs delivery never confused?
+- Correct overlay (§21g): dialog vs sheet vs drawer vs menu? Skeleton on first paint (§21h)?
+- Search/filter/sort follow §21f (debounced search + chip groups + count)?
+- Reduced-motion path verified? 1.3× text-scale overflow-free?
+- Decoration (if any) sits in a §16a slot, palette-locked, single per viewport, removable without layout collapse?

@@ -143,7 +143,7 @@ void main() {
     ) async {
       await pumpTheme(
         tester,
-        VerificationBadgesRow(
+        const VerificationBadgesRow(
           identityVerified: true,
           tradeVerified: true,
           credentialCount: 2,
@@ -162,7 +162,7 @@ void main() {
     ) async {
       await pumpTheme(
         tester,
-        VerificationBadgesRow(
+        const VerificationBadgesRow(
           identityVerified: false,
           tradeVerified: true,
           credentialCount: 1,
@@ -177,7 +177,7 @@ void main() {
     ) async {
       await pumpTheme(
         tester,
-        VerificationBadgesRow(
+        const VerificationBadgesRow(
           identityVerified: false,
           tradeVerified: true,
           credentialCount: 0,

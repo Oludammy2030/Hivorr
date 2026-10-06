@@ -22,7 +22,7 @@ enum AppEnvironment {
       'development' => AppEnvironment.development,
       'staging' => AppEnvironment.staging,
       'production' => AppEnvironment.production,
-      _ => throw EnvironmentConfigException(
+      _ => throw const EnvironmentConfigException(
         variableName: AppConstants.envEnvironment,
         reason:
             'Unknown environment identifier. '

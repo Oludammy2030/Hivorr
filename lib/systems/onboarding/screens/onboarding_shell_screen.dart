@@ -308,7 +308,7 @@ class _BottomBar extends StatelessWidget {
                 top: BorderSide(color: colors.outlineVariant),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
+            padding: const EdgeInsets.fromLTRB(
               HivorrSpacing.lg,
               HivorrSpacing.sm,
               HivorrSpacing.lg,

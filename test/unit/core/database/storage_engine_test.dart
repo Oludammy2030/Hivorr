@@ -110,7 +110,7 @@ void main() {
       // A value containing a closure is not storable by Hive and forces a
       // mid-batch failure, exercising the rollback path.
       final List<WriteOp> ops = <WriteOp>[
-        PutOp('protected', <String, dynamic>{'v': 999}),
+        const PutOp('protected', <String, dynamic>{'v': 999}),
         PutOp('bad', <String, dynamic>{'fn': () {}}),
       ];
       await expectLater(

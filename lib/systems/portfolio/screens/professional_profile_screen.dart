@@ -217,8 +217,8 @@ class _ProfileNotFoundView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HivorrEmptyState(
-      icon: const Icon(Icons.person_search_outlined),
+    return const HivorrEmptyState(
+      icon: Icon(Icons.person_search_outlined),
       title: 'Profile not found',
       subtitle:
           'This professional profile could not be found or is not currently '

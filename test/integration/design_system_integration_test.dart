@@ -165,7 +165,7 @@ void main() {
               const SizedBox(height: 16),
               const HivorrTextField(label: 'Name'),
               const SizedBox(height: 16),
-              HivorrCard(child: const Text('panel')),
+              const HivorrCard(child: Text('panel')),
             ],
           ),
           width: 1280,
@@ -268,7 +268,7 @@ void main() {
             mobileBody: const Text('mobile body'),
             sidebar: NavigationRail(
               selectedIndex: 0,
-              destinations: <NavigationRailDestination>[
+              destinations: const <NavigationRailDestination>[
                 NavigationRailDestination(
                   icon: Icon(Icons.home),
                   label: Text('Home'),
@@ -295,7 +295,7 @@ void main() {
             mobileBody: const Text('web body'),
             sidebar: NavigationRail(
               selectedIndex: 0,
-              destinations: <NavigationRailDestination>[
+              destinations: const <NavigationRailDestination>[
                 NavigationRailDestination(
                   icon: Icon(Icons.home),
                   label: Text('Home'),
@@ -313,7 +313,7 @@ void main() {
         expect(find.byType(NavigationRail), findsOneWidget);
       });
 
-      testWidgets('HivorrScreenScaffold uses surface background token', (
+      testWidgets('HivorrScreenScaffold uses app background token', (
         WidgetTester tester,
       ) async {
         await _pumpScreenAt(
@@ -331,9 +331,11 @@ void main() {
             matching: find.byType(Scaffold),
           ),
         );
+        // VISUAL-IDENTITY.md §5.3: scaffold defaults to the app background
+        // (#F0F2F8) so white HivorrCard surfaces stay visible.
         expect(
           scaffold.backgroundColor,
-          AppTheme.lightTheme.colorScheme.surface,
+          AppTheme.lightTheme.scaffoldBackgroundColor,
         );
       });
     });
@@ -352,7 +354,7 @@ void main() {
                 const SizedBox(height: 16),
                 const HivorrTextField(label: 'Field', errorText: 'err'),
                 const SizedBox(height: 16),
-                HivorrCard(child: const Text('card')),
+                const HivorrCard(child: Text('card')),
               ],
             ),
           ),
@@ -377,7 +379,7 @@ void main() {
               children: <Widget>[
                 HivorrButton(label: 'Ink', onPressed: () {}),
                 const HivorrTextField(label: 'F'),
-                HivorrCard(child: const Text('c')),
+                const HivorrCard(child: Text('c')),
               ],
             ),
           ),

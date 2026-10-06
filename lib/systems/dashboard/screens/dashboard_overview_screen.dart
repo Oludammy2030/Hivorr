@@ -13,6 +13,7 @@ import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
+import 'package:hivorr/shared/components/hivorr_month_bars.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
@@ -31,6 +32,7 @@ import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
+import 'package:hivorr/systems/dashboard/widgets/overview_display_widgets.dart';
 import 'package:hivorr/systems/dashboard/widgets/quick_actions.dart';
 import 'package:hivorr/systems/jobs/models/job_status.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
@@ -823,9 +825,9 @@ class _ClientContent extends StatelessWidget {
     // Compact vertical rhythm on phones (<600dp); desktop keeps the airy
     // reference spacing (see MobileCompact contract).
     final double sectionGap = MobileCompact.sectionGapFor(maxWidth);
-    final Widget quickActions = _ClientSection(
+    const Widget quickActions = _ClientSection(
       title: 'Quick Actions',
-      child: const _ClientQuickActions(),
+      child: _ClientQuickActions(),
     );
     final Widget activeJobs = _ClientSection(
       title: 'Active Jobs',
@@ -1123,21 +1125,21 @@ class _ClientHero extends StatelessWidget {
                     physics: const ClampingScrollPhysics(),
                     child: Row(
                       children: <Widget>[
-                        _HeroStat(
+                        OverviewHeroStat(
                           value: loading ? '…' : '$postedCount',
                           label: 'Jobs Posted',
                           width: cardWidth,
                           compact: true,
                         ),
                         const SizedBox(width: gap),
-                        _HeroStat(
+                        OverviewHeroStat(
                           value: loading ? '…' : '$activeHires',
                           label: 'Active Hires',
                           width: cardWidth,
                           compact: true,
                         ),
                         const SizedBox(width: gap),
-                        _HeroStat(
+                        OverviewHeroStat(
                           value: loading
                               ? '…'
                               : '${spent.symbol}${_grouped(spent.total)}',
@@ -1146,7 +1148,7 @@ class _ClientHero extends StatelessWidget {
                           compact: true,
                         ),
                         const SizedBox(width: gap),
-                        _HeroStat(
+                        OverviewHeroStat(
                           value: loading ? '…' : '$totalApps',
                           label: 'Applications',
                           width: cardWidth,
@@ -1163,88 +1165,30 @@ class _ClientHero extends StatelessWidget {
               spacing: HivorrSpacing.md,
               runSpacing: HivorrSpacing.md,
               children: <Widget>[
-                _HeroStat(
+                OverviewHeroStat(
                   value: loading ? '…' : '$postedCount',
                   label: 'Jobs Posted',
                   compact: false,
                 ),
-                _HeroStat(
+                OverviewHeroStat(
                   value: loading ? '…' : '$activeHires',
                   label: 'Active Hires',
                   compact: false,
                 ),
-                _HeroStat(
+                OverviewHeroStat(
                   value: loading
                       ? '…'
                       : '${spent.symbol}${_grouped(spent.total)}',
                   label: 'Total Spent',
                   compact: false,
                 ),
-                _HeroStat(
+                OverviewHeroStat(
                   value: loading ? '…' : '$totalApps',
                   label: 'Applications',
                   compact: false,
                 ),
               ],
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({
-    required this.value,
-    required this.label,
-    this.width = 132,
-    this.compact = false,
-  });
-
-  final String value;
-  final String label;
-  final double? width;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? HivorrSpacing.smMd : HivorrSpacing.md,
-        vertical: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: (compact
-                    ? context.textTheme.titleMedium
-                    : context.textTheme.titleLarge)
-                ?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withValues(alpha: 0.78),
-            ),
-            textAlign: TextAlign.center,
-          ),
         ],
       ),
     );
@@ -1296,11 +1240,12 @@ class _ClientQuickActions extends StatelessWidget {
 
 enum _QuickTint { lavender, green, peach }
 
-/// Full-width entry into public marketplace discovery (EP-03-09).
+/// Full-width entry into in-dashboard service discovery.
 ///
 /// Client-side companion to the `Find Services` nav destination: same
 /// `HivorrCard` + client-accent vocabulary as `_QuickTile`, with an explicit
 /// CTA so the entry works even where the tab is one level deep (More sheet).
+/// Routes inside the shell so the sidebar persists.
 class _BrowseServicesBanner extends StatelessWidget {
   const _BrowseServicesBanner();
 
@@ -1859,7 +1804,7 @@ class _ClientJobCard extends StatelessWidget {
                         HiringStatusBadge(code: job.status),
                         if (job.location != null &&
                             job.location!.isNotEmpty)
-                          _SoftChip(
+                          OverviewSoftChip(
                             label: job.location!,
                             background: colors.surfaceContainerHighest,
                             foreground: colors.onSurfaceVariant,
@@ -1950,7 +1895,7 @@ class _ClientJobCard extends StatelessWidget {
                     horizontal: compact ? HivorrSpacing.smMd : HivorrSpacing.md,
                     vertical: compact ? HivorrSpacing.xs : HivorrSpacing.sm,
                   ),
-                  textStyle: TextStyle(
+                  textStyle: const TextStyle(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1973,7 +1918,7 @@ class _ClientJobCard extends StatelessWidget {
                     horizontal: compact ? HivorrSpacing.smMd : HivorrSpacing.md,
                     vertical: compact ? HivorrSpacing.xs : HivorrSpacing.sm,
                   ),
-                  textStyle: TextStyle(
+                  textStyle: const TextStyle(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2164,39 +2109,6 @@ class _RailStatCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SoftChip extends StatelessWidget {
-  const _SoftChip({
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.sm,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: foreground,
-        ),
       ),
     );
   }
@@ -2828,9 +2740,9 @@ class _ProfessionalContent extends StatelessWidget {
     final bool wide = maxWidth >= railStart;
     final bool isMobileWidth = MobileCompact.isCompactWidth(maxWidth);
     final double sectionGap = MobileCompact.sectionGapFor(maxWidth);
-    final Widget quickActions = _ProfessionalSection(
+    const Widget quickActions = _ProfessionalSection(
       title: 'Quick Actions',
-      child: const _ProfessionalQuickActions(),
+      child: _ProfessionalQuickActions(),
     );
     final Widget activeJobs = _ProfessionalSection(
       title: 'Active Jobs',
@@ -3114,28 +3026,28 @@ class _ProfessionalHero extends StatelessWidget {
                   physics: const ClampingScrollPhysics(),
                   child: Row(
                     children: <Widget>[
-                      _ProHeroStat(
+                      OverviewHeroStat(
                         value: loading ? '…' : earnedText,
                         label: 'Earned (MTD)',
                         width: cardWidth,
                         compact: true,
                       ),
                       const SizedBox(width: gap),
-                      _ProHeroStat(
+                      OverviewHeroStat(
                         value: loading ? '…' : '$activeCount',
                         label: 'Active Jobs',
                         width: cardWidth,
                         compact: true,
                       ),
                       const SizedBox(width: gap),
-                      _ProHeroStat(
+                      OverviewHeroStat(
                         value: loading ? '…' : rating,
                         label: 'Rating',
                         width: cardWidth,
                         compact: true,
                       ),
                       const SizedBox(width: gap),
-                      _ProHeroStat(
+                      OverviewHeroStat(
                         value: loading ? '…' : jobsDone,
                         label: 'Jobs Done',
                         width: cardWidth,
@@ -3151,86 +3063,28 @@ class _ProfessionalHero extends StatelessWidget {
               spacing: HivorrSpacing.md,
               runSpacing: HivorrSpacing.md,
               children: <Widget>[
-                _ProHeroStat(
+                OverviewHeroStat(
                   value: loading ? '…' : earnedText,
                   label: 'Earned (MTD)',
                   compact: false,
                 ),
-                _ProHeroStat(
+                OverviewHeroStat(
                   value: loading ? '…' : '$activeCount',
                   label: 'Active Jobs',
                   compact: false,
                 ),
-                _ProHeroStat(
+                OverviewHeroStat(
                   value: loading ? '…' : rating,
                   label: 'Rating',
                   compact: false,
                 ),
-                _ProHeroStat(
+                OverviewHeroStat(
                   value: loading ? '…' : jobsDone,
                   label: 'Jobs Done',
                   compact: false,
                 ),
               ],
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProHeroStat extends StatelessWidget {
-  const _ProHeroStat({
-    required this.value,
-    required this.label,
-    this.width = 132,
-    this.compact = false,
-  });
-
-  final String value;
-  final String label;
-  final double? width;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? HivorrSpacing.smMd : HivorrSpacing.md,
-        vertical: compact ? HivorrSpacing.sm : HivorrSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: (compact
-                    ? context.textTheme.titleMedium
-                    : context.textTheme.titleLarge)
-                ?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withValues(alpha: 0.78),
-            ),
-            textAlign: TextAlign.center,
-          ),
         ],
       ),
     );
@@ -3434,12 +3288,12 @@ class _ProActiveJobCard extends StatelessWidget {
                       runSpacing: HivorrSpacing.xs,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: <Widget>[
-                        _ProSoftChip(
+                        OverviewSoftChip(
                           label: category,
                           background: colors.primaryContainer,
                           foreground: colors.primary,
                         ),
-                        _ProSoftChip(
+                        OverviewSoftChip(
                           label: _proStatusLabel(hire.liveStatus),
                           background: ext.warningContainer,
                           foreground: ext.warning,
@@ -3622,13 +3476,13 @@ class _ProRecommendCard extends StatelessWidget {
                   runSpacing: HivorrSpacing.xs,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: <Widget>[
-                    _ProSoftChip(
+                    OverviewSoftChip(
                       label: category,
                       background: colors.primaryContainer,
                       foreground: colors.primary,
                     ),
                     if (urgent)
-                      _ProSoftChip(
+                      OverviewSoftChip(
                         label: 'Urgent',
                         background: colors.errorContainer,
                         foreground: colors.error,
@@ -3884,19 +3738,56 @@ class _ProRailStat extends StatelessWidget {
 class _ProEarningsChartCard extends StatelessWidget {
   const _ProEarningsChartCard();
 
-  static const List<double> _bars = <double>[
-    0.35, 0.55, 0.45, 0.7, 0.6, 0.75, 0.65, 0.85, 0.7, 0.8, 0.6, 1.0,
+  static const List<String> _months = <String>[
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
+
+  /// Real monthly series: hires won per month over the last 6 months.
+  /// Hire rows carry no amounts, so counts — never invented earnings — drive
+  /// the chart (no mock-data rule). Zero everywhere renders the honest empty
+  /// state inside [HivorrMonthBars].
+  List<HivorrMonthDatum> _series(List<Hire> hires) {
+    final DateTime now = DateTime.now();
+    final List<DateTime> buckets = <DateTime>[
+      for (int i = 5; i >= 0; i--) DateTime(now.year, now.month - i),
+    ];
+    return <HivorrMonthDatum>[
+      for (final DateTime b in buckets)
+        HivorrMonthDatum(
+          label: _months[b.month - 1],
+          value: hires
+              .where(
+                (Hire h) => h.hiredAt.year == b.year && h.hiredAt.month == b.month,
+              )
+              .length,
+        ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final bool compact = context.breakpoint == Breakpoint.mobile;
     final RoleThemeExtension roles = context.roleTheme;
-    final Color barLight =
-        roles.professionalPrimary.withValues(alpha: 0.18);
-    final Color barDark = roles.professionalPrimary;
+    List<Hire> hires = const <Hire>[];
+    try {
+      hires = context.watch<HireProvider>().hires;
+    } catch (_) {
+      hires = const <Hire>[];
+    }
+    final List<HivorrMonthDatum> series = _series(hires);
+    final int total = series.fold<int>(0, (int t, HivorrMonthDatum d) => t + d.value);
     return HivorrCard(
-      borderRadius: compact ? 14 : 16,
       padding: EdgeInsets.all(
         compact ? HivorrSpacing.smMd : HivorrSpacing.lg,
       ),
@@ -3904,7 +3795,7 @@ class _ProEarningsChartCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'Earnings Chart',
+            'Hires per Month',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.titleMedium?.copyWith(
@@ -3912,33 +3803,14 @@ class _ProEarningsChartCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
-          SizedBox(
-            height: 120,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: <Widget>[
-                for (int i = 0; i < _bars.length; i++)
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: i == 0 ? 0 : 3,
-                        right: i == _bars.length - 1 ? 0 : 3,
-                      ),
-                      child: Container(
-                        height: 120 * _bars[i],
-                        decoration: BoxDecoration(
-                          color: i == _bars.length - 1 ? barDark : barLight,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          HivorrMonthBars(
+            items: series,
+            emptyLabel: 'No hires yet — accepted work will chart here.',
+            accent: roles.professionalPrimary,
           ),
           const SizedBox(height: HivorrSpacing.sm),
           Text(
-            'Last 12 months · +23% this month',
+            'Last 6 months · $total total',
             style: context.textTheme.bodySmall?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
             ),
@@ -4249,39 +4121,6 @@ class _ProProfileCompletenessCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProSoftChip extends StatelessWidget {
-  const _ProSoftChip({
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.sm,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: foreground,
-        ),
       ),
     );
   }

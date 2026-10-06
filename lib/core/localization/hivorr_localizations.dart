@@ -61,7 +61,7 @@ class HivorrLocalizations extends LocalizationsDelegate<HivorrLocalizations> {
       HivorrLocalizations,
     );
     return result ??
-        (throw LocalizationException(
+        (throw const LocalizationException(
           'No HivorrLocalizations found in widget context',
         ));
   }

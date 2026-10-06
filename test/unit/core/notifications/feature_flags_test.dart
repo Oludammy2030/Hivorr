@@ -5,13 +5,13 @@ import 'package:hivorr/config/feature_flags/feature_flags.dart';
 
 void main() {
   test('enablePushNotifications defaults to false', () {
-    final flags = FeatureFlags.fromSource(MapEnvironmentValueSource({}));
+    final flags = FeatureFlags.fromSource(const MapEnvironmentValueSource({}));
     expect(flags.enablePushNotifications, isFalse);
   });
 
   test('enablePushNotifications true', () {
     final flags = FeatureFlags.fromSource(
-      MapEnvironmentValueSource({
+      const MapEnvironmentValueSource({
         'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'true',
       }),
     );
@@ -20,7 +20,7 @@ void main() {
 
   test('enablePushNotifications false', () {
     final flags = FeatureFlags.fromSource(
-      MapEnvironmentValueSource({
+      const MapEnvironmentValueSource({
         'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'false',
       }),
     );
@@ -30,7 +30,7 @@ void main() {
   test('malformed value throws', () {
     expect(
       () => FeatureFlags.fromSource(
-        MapEnvironmentValueSource({
+        const MapEnvironmentValueSource({
           'HIVORR_FEATURE_ENABLE_PUSH_NOTIFICATIONS': 'maybe',
         }),
       ),

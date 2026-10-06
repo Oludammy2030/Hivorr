@@ -5,7 +5,7 @@ import 'package:hivorr/config/environments/environment_value_source.dart';
 void main() {
   test('step 11 wires NotificationConfig with documented defaults', () {
     final config = EnvironmentLoader.load(
-      source: MapEnvironmentValueSource({
+      source: const MapEnvironmentValueSource({
         'HIVORR_ENV': 'development',
         'HIVORR_SUPABASE_URL': 'https://example.supabase.co',
         'HIVORR_SUPABASE_ANON_KEY': 'public-anon-key',
@@ -20,7 +20,7 @@ void main() {
 
   test('step 11 honors push enabled value', () {
     final config = EnvironmentLoader.load(
-      source: MapEnvironmentValueSource({
+      source: const MapEnvironmentValueSource({
         'HIVORR_ENV': 'development',
         'HIVORR_SUPABASE_URL': 'https://example.supabase.co',
         'HIVORR_SUPABASE_ANON_KEY': 'public-anon-key',

@@ -69,7 +69,7 @@ class TradeVerificationService {
         fileName: fileName,
         onProgress: onProgress,
       );
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       _logger?.info('Trade proof submission completed', <String, Object?>{
         'tradeType': type.name,
         'submissionId': submission.id,
@@ -77,7 +77,7 @@ class TradeVerificationService {
       });
       return submission;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         'Trade proof submission failed',
         error: error,

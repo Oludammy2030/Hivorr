@@ -13,7 +13,7 @@ void main() {
   test('disabled config does not invoke the init callback', () async {
     var called = false;
     final cfg = MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_ENABLE_SENTRY': 'false',
       }),
     );
@@ -29,7 +29,7 @@ void main() {
   test('enabled config invokes init and applies options', () async {
     SentryFlutterOptions? captured;
     final cfg = MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
         'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
         'HIVORR_MONITORING_ENVIRONMENT': 'staging',

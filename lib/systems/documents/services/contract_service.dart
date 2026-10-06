@@ -368,10 +368,10 @@ class ContractService {
     final span = _tracer?.startTransaction(name, 'contracts');
     try {
       final T result = await action();
-      await _tracer?.finishSpan(span, status: SpanStatus.ok());
+      await _tracer?.finishSpan(span, status: const SpanStatus.ok());
       return result;
     } catch (error, stackTrace) {
-      await _tracer?.finishSpan(span, status: SpanStatus.internalError());
+      await _tracer?.finishSpan(span, status: const SpanStatus.internalError());
       _logger?.error(
         '$name failed',
         error: error,

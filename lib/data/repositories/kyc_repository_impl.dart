@@ -58,7 +58,7 @@ class KycRepositoryImpl implements KycRepository {
     // 1. Validate before any provider call (PLT003 fail-fast).
     final KycTier currentTier = KycTier.fromCode(current.tierCode);
     if (!targetTier.isAtLeast(currentTier) || targetTier == currentTier) {
-      throw ApiException(
+      throw const ApiException(
         kind: ApiExceptionKind.validation,
         message: 'Upgrade target must be a higher tier than the current one.',
         code: 'PLT003',

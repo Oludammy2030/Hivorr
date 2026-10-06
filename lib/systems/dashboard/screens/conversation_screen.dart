@@ -10,8 +10,8 @@ import 'package:hivorr/data/entities/conversation.dart';
 import 'package:hivorr/data/entities/hire.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/messaging_provider.dart';
+import 'package:hivorr/shared/components/hivorr_chat_bubble.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
-import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -19,6 +19,7 @@ import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/systems/communication/services/message_crypto.dart';
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
 import 'package:hivorr/systems/dashboard/widgets/messaging_thread_meta.dart';
@@ -212,7 +213,12 @@ class _ConversationScreenState extends State<ConversationScreen>
                               final bool mine =
                                   entityId != null &&
                                   entityId == message.senderEntityId;
-                              return _Bubble(message: message, mine: mine);
+                              return HivorrChatBubble(
+                                text: message.decryptedBody,
+                                timestamp: message.createdAt,
+                                mine: mine,
+                                elevated: false,
+                              );
                             },
                           ),
                   ),
@@ -290,62 +296,6 @@ class _ThreadWorkBanner extends StatelessWidget {
   }
 }
 
-class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, required this.mine});
-
-  final ConversationMessage message;
-  final bool mine;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    final String? text = message.decryptedBody;
-    final Alignment alignment = mine
-        ? Alignment.centerRight
-        : Alignment.centerLeft;
-    final Color fill = mine ? colors.primary : colors.surface;
-    final Color foreground = mine ? colors.onPrimary : colors.onSurface;
-    final double screenWidth = MediaQuery.sizeOf(context).width;
-    final double maxBubble = MobileCompact.bubbleMaxWidth(screenWidth);
-    return Align(
-      alignment: alignment,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: maxBubble),
-        margin: const EdgeInsets.symmetric(vertical: HivorrSpacing.xs),
-        padding: const EdgeInsets.symmetric(
-          horizontal: HivorrSpacing.md,
-          vertical: HivorrSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(16),
-          border: mine ? null : Border.all(color: colors.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              text ?? 'This message couldn’t be decrypted.',
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: foreground,
-                fontStyle: text == null ? FontStyle.italic : null,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              HivorrFormatters.time(message.createdAt),
-              style: context.textTheme.labelSmall?.copyWith(
-                color: foreground.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _Composer extends StatelessWidget {
   const _Composer({
     required this.controller,
@@ -381,16 +331,15 @@ class _Composer extends StatelessWidget {
         child: Row(
           children: <Widget>[
             Expanded(
-              child: TextField(
+              // Token borders/focus-ring via HivorrTextField (§21e); counter
+              // stays hidden as before (hideCounter), length still enforced.
+              child: HivorrTextField(
                 controller: controller,
+                hint: 'Write a message…',
                 minLines: 1,
                 maxLines: 4,
                 maxLength: MessageCrypto.maxPlaintextLength,
-                decoration: const InputDecoration(
-                  hintText: 'Write a message…',
-                  border: OutlineInputBorder(),
-                  counterText: '',
-                ),
+                hideCounter: true,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => onSend(),
               ),

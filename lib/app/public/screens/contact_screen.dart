@@ -33,7 +33,7 @@ class ContactScreen extends StatelessWidget {
                 children: <Widget>[
                   SizedBox(
                     width: cardWidth,
-                    child: HivorrFeatureCard(
+                    child: const HivorrFeatureCard(
                       icon: Icons.help_outline,
                       title: 'Help center',
                       body:
@@ -42,7 +42,7 @@ class ContactScreen extends StatelessWidget {
                   ),
                   SizedBox(
                     width: cardWidth,
-                    child: HivorrFeatureCard(
+                    child: const HivorrFeatureCard(
                       icon: Icons.shield_outlined,
                       title: 'Security & trust',
                       body:
@@ -51,7 +51,7 @@ class ContactScreen extends StatelessWidget {
                   ),
                   SizedBox(
                     width: cardWidth,
-                    child: HivorrFeatureCard(
+                    child: const HivorrFeatureCard(
                       icon: Icons.person_add_alt_outlined,
                       title: 'Talk to us as a professional',
                       body:

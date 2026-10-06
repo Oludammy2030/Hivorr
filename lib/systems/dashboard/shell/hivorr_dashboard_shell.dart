@@ -182,9 +182,9 @@ class _DashboardBottomNav extends StatelessWidget {
               selectedIcon: Icon(item.activeIcon),
               label: _shortLabel(item),
             ),
-          NavigationDestination(
-            icon: const Icon(Icons.more_horiz_outlined),
-            selectedIcon: const Icon(Icons.more_horiz),
+          const NavigationDestination(
+            icon: Icon(Icons.more_horiz_outlined),
+            selectedIcon: Icon(Icons.more_horiz),
             label: 'More',
           ),
         ],

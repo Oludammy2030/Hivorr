@@ -192,25 +192,25 @@ void main() {
     test('maps each kind to the correct active step', () {
       expect(
         TradeVerificationTimeline.stepIndexFor(
-          TradeVerification(professionId: 'p', status: 'unverified').statusKind,
+          const TradeVerification(professionId: 'p', status: 'unverified').statusKind,
         ),
         0,
       );
       expect(
         TradeVerificationTimeline.stepIndexFor(
-          TradeVerification(professionId: 'p', status: 'pending').statusKind,
+          const TradeVerification(professionId: 'p', status: 'pending').statusKind,
         ),
         2,
       );
       expect(
         TradeVerificationTimeline.stepIndexFor(
-          TradeVerification(professionId: 'p', status: 'approved').statusKind,
+          const TradeVerification(professionId: 'p', status: 'approved').statusKind,
         ),
         3,
       );
       expect(
         TradeVerificationTimeline.stepIndexFor(
-          TradeVerification(professionId: 'p', status: 'rejected').statusKind,
+          const TradeVerification(professionId: 'p', status: 'rejected').statusKind,
         ),
         3,
       );

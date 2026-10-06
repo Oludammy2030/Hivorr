@@ -30,9 +30,9 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
-          home: HivorrResponsiveScaffold(
-            mobileBody: const Text('body'),
-            sidebar: const Text('side'),
+          home: const HivorrResponsiveScaffold(
+            mobileBody: Text('body'),
+            sidebar: Text('side'),
           ),
         ),
       );
@@ -82,7 +82,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
-          home: HivorrResponsiveScaffold(mobileBody: const Text('body')),
+          home: const HivorrResponsiveScaffold(mobileBody: Text('body')),
         ),
       );
       expect(find.text('body'), findsOneWidget);

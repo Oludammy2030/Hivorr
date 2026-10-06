@@ -169,7 +169,7 @@ void main() {
 
   group('Api matchers (reference pattern)', () {
     test('isApiException matches kind and message', () {
-      final ApiException e = ApiException(
+      const ApiException e = ApiException(
         kind: ApiExceptionKind.network,
         message: 'connection timeout',
       );
@@ -183,7 +183,7 @@ void main() {
     });
 
     test('hasStatusCode on ApiException', () {
-      final ApiException e = ApiException(
+      const ApiException e = ApiException(
         kind: ApiExceptionKind.auth,
         message: 'x',
         statusCode: 401,

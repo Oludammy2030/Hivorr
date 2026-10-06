@@ -51,7 +51,7 @@ void main() {
 
   PerformanceTracer disabledTracer() => PerformanceTracer(
     MonitoringConfig.fromSource(
-      MapEnvironmentValueSource(<String, String>{
+      const MapEnvironmentValueSource(<String, String>{
         'HIVORR_MONITORING_ENABLE_SENTRY': 'true',
         'HIVORR_MONITORING_SENTRY_DSN': 'https://x@y/1',
       }),

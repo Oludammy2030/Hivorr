@@ -102,8 +102,8 @@ class _EscrowListScreenState extends State<EscrowListScreen>
           }
 
           if (provider.escrows.isEmpty) {
-            return HivorrEmptyState(
-              icon: const Icon(Icons.lock_outline),
+            return const HivorrEmptyState(
+              icon: Icon(Icons.lock_outline),
               title: 'No active escrows',
               subtitle:
                   'Escrows appear here once a project contract is funded. '

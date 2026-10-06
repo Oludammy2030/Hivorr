@@ -371,7 +371,7 @@ void main() {
 
   group('error mapping', () {
     test('SDK 403 maps to forbidden PLT002', () async {
-      storage.nextError = supabase.StorageException(
+      storage.nextError = const supabase.StorageException(
         'rls prefix violation',
         statusCode: '403',
       );
@@ -387,7 +387,7 @@ void main() {
     });
 
     test('SDK 401 maps to auth PLT001', () async {
-      storage.nextError = supabase.StorageException(
+      storage.nextError = const supabase.StorageException(
         'no auth',
         statusCode: '401',
       );
@@ -402,7 +402,7 @@ void main() {
     });
 
     test('SDK 413 maps to validation PLT003', () async {
-      storage.nextError = supabase.StorageException(
+      storage.nextError = const supabase.StorageException(
         'too large',
         statusCode: '413',
       );
@@ -419,7 +419,7 @@ void main() {
     });
 
     test('SDK 500 maps to server PLT999', () async {
-      storage.nextError = supabase.StorageException(
+      storage.nextError = const supabase.StorageException(
         'server exploded',
         statusCode: '500',
       );
@@ -434,7 +434,7 @@ void main() {
     });
 
     test('unknown SDK status maps to unknown PLT999', () async {
-      storage.nextError = supabase.StorageException(
+      storage.nextError = const supabase.StorageException(
         'teapot',
         statusCode: '418',
       );
@@ -533,7 +533,7 @@ void main() {
     });
 
     test('instrumented upload error traces span and maps SDK error', () async {
-      storage.nextError = supabase.StorageException('boom', statusCode: '400');
+      storage.nextError = const supabase.StorageException('boom', statusCode: '400');
       await expectLater(
         instrumented.upload(
           bucket: credential,
@@ -568,7 +568,7 @@ void main() {
     test(
       'instrumented download error traces span and maps SDK error',
       () async {
-        storage.nextError = supabase.StorageException(
+        storage.nextError = const supabase.StorageException(
           'boom',
           statusCode: '500',
         );
@@ -586,7 +586,7 @@ void main() {
     );
 
     test('instrumented remove error maps SDK error', () async {
-      storage.nextError = supabase.StorageException('boom', statusCode: '403');
+      storage.nextError = const supabase.StorageException('boom', statusCode: '403');
       await expectLater(
         instrumented.remove(bucket: credential, paths: <String>['x']),
         throwsA(
@@ -600,7 +600,7 @@ void main() {
     });
 
     test('instrumented createSignedUrl error maps SDK error', () async {
-      storage.nextError = supabase.StorageException('boom', statusCode: '404');
+      storage.nextError = const supabase.StorageException('boom', statusCode: '404');
       await expectLater(
         instrumented.createSignedUrl(
           bucket: credential,
@@ -618,7 +618,7 @@ void main() {
     });
 
     test('instrumented list error maps SDK error', () async {
-      storage.nextError = supabase.StorageException('boom', statusCode: '401');
+      storage.nextError = const supabase.StorageException('boom', statusCode: '401');
       await expectLater(
         instrumented.list(bucket: credential, path: 'x'),
         throwsA(
@@ -718,7 +718,7 @@ SupabaseStorageService _instrumentedService(
   FakeAccessTokenProvider tokens,
   Dio dio,
 ) {
-  final monConfig = MonitoringConfig(
+  const monConfig = MonitoringConfig(
     sentryDsn: '',
     environment: 'test',
     release: '0.0.0',
@@ -729,7 +729,7 @@ SupabaseStorageService _instrumentedService(
     enablePiiRedaction: false,
     maxBreadcrumbCount: 100,
   );
-  final flags = FeatureFlags(
+  const flags = FeatureFlags(
     enableVerboseLogging: true,
     enableOfflineSync: false,
     enableAnalyticsTracking: false,

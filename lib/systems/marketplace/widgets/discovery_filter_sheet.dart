@@ -188,20 +188,20 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _SectionLabel('Industry'),
+          const _SectionLabel('Industry'),
           _IndustryRow(
             selected: _industryId,
             onSelected: _selectIndustry,
           ),
           const SizedBox(height: HivorrSpacing.sm),
-          _SectionLabel('Profession'),
+          const _SectionLabel('Profession'),
           _ProfessionRow(
             industryId: _industryId,
             selected: _professionId,
             onSelected: (String? id) => setState(() => _professionId = id),
           ),
           const SizedBox(height: HivorrSpacing.sm),
-          _SectionLabel('Price range'),
+          const _SectionLabel('Price range'),
           Row(
             children: <Widget>[
               Expanded(
@@ -240,7 +240,7 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
             ],
           ),
           const SizedBox(height: HivorrSpacing.sm),
-          _SectionLabel('Minimum rating'),
+          const _SectionLabel('Minimum rating'),
           Wrap(
             spacing: HivorrSpacing.xs,
             children: <Widget>[

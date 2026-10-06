@@ -141,7 +141,7 @@ void main() {
     });
 
     test('transitions idle → error with lastError on ApiException', () async {
-      final ApiException failure = const ApiException(
+      const ApiException failure = ApiException(
         kind: ApiExceptionKind.server,
         message: 'boom',
         code: 'PLT999',

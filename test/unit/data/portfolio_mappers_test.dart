@@ -151,7 +151,7 @@ void main() {
     });
 
     test('defaults sub-lists to empty when lists are absent from DTO', () {
-      final PublicProfileDto dto = PublicProfileDto(
+      const PublicProfileDto dto = PublicProfileDto(
         entityId: 'e1',
         displayName: 'Empty List Test',
       );

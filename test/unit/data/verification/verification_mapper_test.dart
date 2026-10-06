@@ -94,7 +94,7 @@ void main() {
 
   group('VerificationMapper KYC/limits', () {
     test('kycToEntity maps tier, status and limits', () {
-      final KycLevelDto dto = KycLevelDto(
+      const KycLevelDto dto = KycLevelDto(
         tierCode: 'tier_1',
         status: 'active',
         limits: KycLimitsDto(daily: 1, weekly: 2, monthly: 3, cashout: 4),
@@ -112,7 +112,7 @@ void main() {
 
     test('limitsToEntity copies each numeric limit', () {
       final KycLimits limits = VerificationMapper.limitsToEntity(
-        KycLimitsDto(daily: 10, weekly: 20, monthly: 30, cashout: 40),
+        const KycLimitsDto(daily: 10, weekly: 20, monthly: 30, cashout: 40),
       );
       expect(limits.daily, 10);
       expect(limits.weekly, 20);
@@ -125,7 +125,7 @@ void main() {
     test(
       'statusToEntity maps the full aggregate incl. trade verifications',
       () {
-        final VerificationStatusDto dto = VerificationStatusDto(
+        const VerificationStatusDto dto = VerificationStatusDto(
           entityId: 'u1',
           kyc: KycLevelDto(
             tierCode: 'tier_1',
@@ -133,7 +133,7 @@ void main() {
             limits: KycLimitsDto(daily: 1, weekly: 2, monthly: 3, cashout: 4),
           ),
           identityVerified: true,
-          tradeVerifications: const <TradeVerificationDto>[
+          tradeVerifications: <TradeVerificationDto>[
             TradeVerificationDto(professionId: 'p1', status: 'verified'),
           ],
           pendingSubmissions: 0,

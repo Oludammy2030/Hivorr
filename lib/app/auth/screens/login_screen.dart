@@ -5,6 +5,8 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/app/theme/app_colors.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/shared/extensions/build_context_extensions.dart';
+import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:provider/provider.dart';
 
 /// Email + password sign-in (auth flows §7 of the correction plan).
@@ -48,9 +50,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final AuthProvider auth = context.watch<AuthProvider>();
     final String? error = _localError ?? auth.lastError?.message;
-    // Mobile-only light page (<600px) matching the reference; desktop keeps
-    // the royal-blue page 100% untouched.
-    final bool isMobileScaffold = MediaQuery.sizeOf(context).width < 600;
+    // Mobile-only light page (phone breakpoint) matching the reference;
+    // desktop keeps the royal-blue page 100% untouched. Resolved via the
+    // shared Breakpoint so split-view widths behave like real phones.
+    final bool isMobileScaffold = context.breakpoint == Breakpoint.mobile;
 
     return Scaffold(
       backgroundColor:
@@ -247,6 +250,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
 /// Left-hand brand panel from the reference: logo lockup, headline,
 /// supporting copy and the three proof stats.
+///
+/// VISUAL-IDENTITY.md §6a exception (documented): marketing display type uses
+/// w800 + white-on-brand + reference radii to stay pixel-matched to the
+/// approved `log in.png`. Functional UI inside the form panel follows tokens.
 class _BrandPanel extends StatelessWidget {
   const _BrandPanel({this.compact = false});
 
@@ -327,6 +334,7 @@ class _BrandPanel extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
+  // Marketing display value — shares the _BrandPanel §6a w800 exception.
   const _Stat({required this.value, required this.label});
 
   final String value;
@@ -361,6 +369,7 @@ class _Stat extends StatelessWidget {
 }
 
 /// Centered Hivorr lockup for the mobile reference (<600px only).
+/// Marketing display — shares the _BrandPanel §6a w800 exception.
 class _MobileLogo extends StatelessWidget {
   const _MobileLogo();
 
@@ -400,6 +409,7 @@ class _MobileLogo extends StatelessWidget {
 
 /// Slim light-theme marketing block below the mobile form (reference order:
 /// form first above the fold, marketplace + stats below, footer last).
+/// Marketing display — shares the _BrandPanel §6a w800 exception.
 class _MobileMarketing extends StatelessWidget {
   const _MobileMarketing();
 

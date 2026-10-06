@@ -15,7 +15,7 @@ import '../../support/fakes/fake_service_listing.dart';
 import '../../support/harnesses/widget_harness.dart';
 
 void main() {
-  MyServiceListing listingRow() => MyServiceListing(
+  MyServiceListing listingRow() => const MyServiceListing(
     id: 'listing-1',
     entityId: 'pro-1',
     professionId: 'prof-1',

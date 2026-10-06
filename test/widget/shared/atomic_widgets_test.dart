@@ -34,7 +34,7 @@ void main() {
     testWidgets('is disabled when onPressed is null', (
       WidgetTester tester,
     ) async {
-      await pumpTheme(tester, HivorrButton(label: 'D', onPressed: null));
+      await pumpTheme(tester, const HivorrButton(label: 'D', onPressed: null));
       final ElevatedButton button = tester.widget<ElevatedButton>(
         find.byType(ElevatedButton),
       );

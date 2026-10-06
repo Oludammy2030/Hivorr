@@ -62,7 +62,7 @@ class HivorrPricingTier extends StatelessWidget {
               price,
               style: context.textTheme.headlineSmall?.copyWith(
                 color: colors.onSurface,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: HivorrSpacing.xs),

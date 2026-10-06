@@ -30,6 +30,11 @@ linter:
   rules:
     # Explicit return types where appropriate.
     always_declare_return_types: true
+    # Const correctness: canonicalize compile-time-constant widgets/values
+    # (Hivorr rebuild discipline, FLUTTER-UI-IMPLEMENTATION-RULES.md §7).
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_const_declarations: true
     # Directive consistency: keep import/export directives ordered.
     directives_ordering: true
     # Override consistency is already enforced by annotate_overrides, inherited

@@ -100,6 +100,13 @@ class ListingMediaTile extends StatelessWidget {
         child: Image.network(
           url,
           fit: BoxFit.cover,
+          // Grid tiles decode a bounded bitmap (memory win on scroll);
+          // full-res fetch stays server-side for the detail viewer.
+          cacheWidth: 600,
+          filterQuality: FilterQuality.medium,
+          gaplessPlayback: true,
+          loadingBuilder: (_, child, progress) =>
+              progress == null ? child : _placeholder(context),
           errorBuilder: (_, _, _) => _placeholder(context),
         ),
       );

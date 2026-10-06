@@ -135,7 +135,7 @@ void main() {
 
   group('ConfigConversionRateSource', () {
     test('returns the configured rate when enabled and supported', () async {
-      final ConfigConversionRateSource source = ConfigConversionRateSource(
+      const ConfigConversionRateSource source = ConfigConversionRateSource(
         enabledConfig,
       );
       expect(
@@ -147,7 +147,7 @@ void main() {
     test(
       'fails closed with ConversionRateUnavailableException when disabled',
       () async {
-        final ConfigConversionRateSource source = ConfigConversionRateSource(
+        const ConfigConversionRateSource source = ConfigConversionRateSource(
           disabledConfig,
         );
         await expectLater(
@@ -158,7 +158,7 @@ void main() {
     );
 
     test('fails closed for unsupported/self/missing pairs', () async {
-      final ConfigConversionRateSource source = ConfigConversionRateSource(
+      const ConfigConversionRateSource source = ConfigConversionRateSource(
         enabledConfig,
       );
       await expectLater(

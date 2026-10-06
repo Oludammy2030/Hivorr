@@ -22,7 +22,7 @@ void main() {
     });
 
     test('verifyDer is fail-closed for an empty certificate', () {
-      final CertificatePinner pinner = CertificatePinner(<String>['abc']);
+      const CertificatePinner pinner = CertificatePinner(<String>['abc']);
       expect(pinner.verifyDer(Uint8List(0)), isFalse);
     });
 
@@ -33,7 +33,7 @@ void main() {
     });
 
     test('verifyDer rejects a non-matching pin', () {
-      final CertificatePinner pinner = CertificatePinner(<String>[
+      const CertificatePinner pinner = CertificatePinner(<String>[
         'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
       ]);
       expect(pinner.verifyDer(cert), isFalse);

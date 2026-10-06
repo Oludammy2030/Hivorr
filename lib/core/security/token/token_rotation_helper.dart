@@ -68,17 +68,17 @@ class TokenRotationHelper {
     } catch (error) {
       // Surface a typed, non-sensitive failure. No token is persisted, so there
       // is no partial/corrupt token state (EP-01-10 DoD: refresh failure).
-      throw ApiException(
+      throw const ApiException(
         kind: ApiExceptionKind.auth,
         message: 'Token rotation failed during refresh.',
-        data: const <String, dynamic>{'reason': 'refresh_error'},
+        data: <String, dynamic>{'reason': 'refresh_error'},
       );
     }
     if (newToken == null) {
-      throw ApiException(
+      throw const ApiException(
         kind: ApiExceptionKind.auth,
         message: 'Token rotation failed: refresh returned no token.',
-        data: const <String, dynamic>{'reason': 'no_token'},
+        data: <String, dynamic>{'reason': 'no_token'},
       );
     }
     // Avoid a redundant write when the session was already fresh.

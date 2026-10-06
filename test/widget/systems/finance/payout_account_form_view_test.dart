@@ -235,7 +235,9 @@ void main() {
       await enterValidForm(tester);
       await tester.tap(find.text('Bind payout account'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      // The label cross-fades out over HivorrMotion.short (150ms); settle
+      // past the transition, still mid-bind, then assert the loading UI.
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.byType(HivorrLoader), findsOneWidget);
       expect(find.text('Bind payout account'), findsNothing);
