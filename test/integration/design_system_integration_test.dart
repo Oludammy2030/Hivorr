@@ -313,7 +313,7 @@ void main() {
         expect(find.byType(NavigationRail), findsOneWidget);
       });
 
-      testWidgets('HivorrScreenScaffold uses surface background token', (
+      testWidgets('HivorrScreenScaffold uses app background token', (
         WidgetTester tester,
       ) async {
         await _pumpScreenAt(
@@ -331,9 +331,11 @@ void main() {
             matching: find.byType(Scaffold),
           ),
         );
+        // VISUAL-IDENTITY.md §5.3: scaffold defaults to the app background
+        // (#F0F2F8) so white HivorrCard surfaces stay visible.
         expect(
           scaffold.backgroundColor,
-          AppTheme.lightTheme.colorScheme.surface,
+          AppTheme.lightTheme.scaffoldBackgroundColor,
         );
       });
     });
