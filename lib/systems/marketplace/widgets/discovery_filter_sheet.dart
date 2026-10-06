@@ -7,16 +7,19 @@ import 'package:hivorr/data/entities/profession.dart';
 import 'package:hivorr/data/entities/service_listing.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/shared/components/hivorr_bottom_sheet.dart';
+import 'package:hivorr/shared/components/hivorr_dialog.dart';
+import 'package:hivorr/shared/components/hivorr_select_field.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
-import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
+import 'package:hivorr/systems/finance/models/supported_currency.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:provider/provider.dart';
 
-/// Discovery filter bottom-sheet (EP-03-09).
+/// Discovery filter overlay (EP-03-09).
 ///
 /// Edits a draft [ServiceSearchFilters] value object and reports it via
 /// [onApply]; the caller owns composing `p_filters` through
@@ -25,6 +28,18 @@ import 'package:provider/provider.dart';
 /// (its loads are reused read-only for industry/profession options).
 /// Server-side validation stays authoritative; client checks (price range
 /// order, numeric parsing) are fail-fast UX mirrors only.
+///
+/// The panel is a compact control surface: Industry, Profession, Currency
+/// and Minimum Rating are single [HivorrSelectField] rows whose option lists
+/// open in their own scrollable/searchable surface, so the card keeps a
+/// constant height at any dataset size. Profession options stay scoped to
+/// the selected industry via the data-driven `Profession.industryId` link.
+///
+/// Presentation is adaptive: [show] renders a keyboard-aware
+/// [HivorrBottomSheet] on phones and a dimmed-background [HivorrDialog] card
+/// on tablet/desktop, so the underlying Find Service workspace stays visible
+/// behind the filter. Dismissing without applying (backdrop, ESC/back, or
+/// Cancel) returns `null` and leaves the caller's filters untouched.
 ///
 /// All styling resolves to [AppTheme] tokens (AGENT.md Rule 5).
 class DiscoveryFilterSheet extends StatefulWidget {
@@ -40,11 +55,38 @@ class DiscoveryFilterSheet extends StatefulWidget {
   /// Called with the edited filters when the user applies.
   final ValueChanged<ServiceSearchFilters> onApply;
 
-  /// Presents the sheet and returns the applied filters, if any.
+  /// Presents the filter and returns the applied filters, if any.
+  ///
+  /// Returns `null` when the user dismisses without applying (backdrop tap,
+  /// ESC/back navigation, swipe, or Cancel) — the caller must leave its
+  /// filters and search state untouched in that case.
   static Future<ServiceSearchFilters?> show({
     required BuildContext context,
     required ServiceSearchFilters initial,
   }) {
+    // Desktop/tablet: bright focused card over the dimmed workspace. The
+    // dialog is barrier-dismissible with ESC support; the 480–560dp cap
+    // keeps it a contextual card, never a full page.
+    if (context.breakpoint != Breakpoint.mobile) {
+      return showDialog<ServiceSearchFilters>(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext dialogContext) => ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: HivorrDialog(
+            title: 'Filter services',
+            content: SizedBox(
+              width: 480,
+              child: DiscoveryFilterSheet(
+                initial: initial,
+                onApply: (ServiceSearchFilters filters) =>
+                    Navigator.of(dialogContext).pop(filters),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return HivorrBottomSheet.show<ServiceSearchFilters>(
       context: context,
       title: 'Filter services',
@@ -61,7 +103,14 @@ class DiscoveryFilterSheet extends StatefulWidget {
 }
 
 class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
-  static const List<double?> _ratingOptions = <double?>[null, 3.0, 4.0, 4.5];
+  /// Fixed rating scale (subset of the server-validated 0..5 continuum).
+  static const List<SelectOption<double?>> _ratingOptions =
+      <SelectOption<double?>>[
+    SelectOption<double?>(value: null, label: 'Any rating'),
+    SelectOption<double?>(value: 3.0, label: '3.0+'),
+    SelectOption<double?>(value: 4.0, label: '4.0+'),
+    SelectOption<double?>(value: 4.5, label: '4.5+'),
+  ];
 
   String? _industryId;
   String? _professionId;
@@ -153,9 +202,30 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
       return;
     }
     setState(() => _priceError = null);
+    // Guard: never submit an industry/profession combination that no longer
+    // belongs together (e.g. the taxonomy reloaded mid-edit). The dependent
+    // selectors already reset the profession on industry change; this covers
+    // the residual stale-draft case without failing the whole submission.
+    String? professionId = _professionId;
+    if (_industryId != null && professionId != null) {
+      try {
+        final TaxonomyProvider taxonomy = context.read<TaxonomyProvider>();
+        final List<Profession> scoped =
+            taxonomy.professionsByIndustry[_industryId] ??
+                const <Profession>[];
+        if (scoped.isNotEmpty &&
+            !scoped.any(
+              (Profession profession) => profession.id == professionId,
+            )) {
+          professionId = null;
+        }
+      } catch (_) {
+        // Provider absent (isolated widget test) — keep the draft as-is.
+      }
+    }
     widget.onApply(
       ServiceSearchFilters(
-        professionId: _professionId,
+        professionId: professionId,
         industryId: _industryId,
         priceMin: min,
         priceMax: max,
@@ -181,23 +251,122 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
     });
   }
 
+  /// Industry options from the data-driven taxonomy (sortOrder → name),
+  /// shared read-only — the provider selection is never mutated here.
+  List<SelectOption<String>> _industryOptions(BuildContext context) {
+    final List<Industry> industries = List<Industry>.of(
+      context.watch<TaxonomyProvider>().industries,
+    );
+    industries.sort((Industry a, Industry b) {
+      final int byOrder = a.sortOrder.compareTo(b.sortOrder);
+      return byOrder != 0 ? byOrder : a.name.compareTo(b.name);
+    });
+    return <SelectOption<String>>[
+      for (final Industry industry in industries)
+        SelectOption<String>(value: industry.id, label: industry.name),
+    ];
+  }
+
+  /// Profession options scoped to the selected industry — the dependent
+  /// relationship stays data-driven via `Profession.industryId`.
+  List<SelectOption<String>> _professionOptions(BuildContext context) {
+    final String? industryId = _industryId;
+    if (industryId == null) return const <SelectOption<String>>[];
+    final List<Profession> professions = List<Profession>.of(
+      context.watch<TaxonomyProvider>().professionsByIndustry[industryId] ??
+          const <Profession>[],
+    );
+    professions.sort((Profession a, Profession b) {
+      final int byOrder = a.sortOrder.compareTo(b.sortOrder);
+      return byOrder != 0 ? byOrder : a.name.compareTo(b.name);
+    });
+    return <SelectOption<String>>[
+      for (final Profession profession in professions)
+        SelectOption<String>(value: profession.id, label: profession.name),
+    ];
+  }
+
+  bool _industriesLoading(BuildContext context) {
+    try {
+      return context.watch<TaxonomyProvider>().industries.isEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _professionsLoading(BuildContext context) {
+    final String? industryId = _industryId;
+    if (industryId == null) return false;
+    try {
+      return (context
+                  .watch<TaxonomyProvider>()
+                  .professionsByIndustry[industryId] ??
+              const <Profession>[])
+          .isEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Currency options from the existing marketplace vocabulary with display
+  /// symbols (e.g. `NGN ₦ — Nigerian Naira`); never hardcoded in the UI.
+  List<SelectOption<String>> _currencyOptions() {
+    return <SelectOption<String>>[
+      for (final String code in DiscoveryCurrencies.active)
+        SelectOption<String>(
+          value: code,
+          label: '$code ${SupportedCurrency.fromCode(code)?.symbol ?? ''}'
+              .trim(),
+          subtitle: SupportedCurrency.fromCode(code)?.name,
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Currency symbol prefixes the price hints so the selected currency
+    // updates the price presentation (e.g. `Min ₦`).
+    final SupportedCurrency? currency = _currencyCode == null
+        ? null
+        : SupportedCurrency.fromCode(_currencyCode!);
+    final String symbol = currency == null ? '' : '${currency.symbol} ';
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const _SectionLabel('Industry'),
-          _IndustryRow(
+          // Compact control panel: each dimension is a single select row.
+          // Option lists live in their own scrollable/searchable surface,
+          // so this card keeps a constant height at any dataset size.
+          HivorrSelectField<String>(
+            label: 'Industry',
+            hint: 'Select industry',
+            options: _industryOptions(context),
             selected: _industryId,
-            onSelected: _selectIndustry,
+            clearLabel: 'All industries',
+            searchHint: 'Search industries…',
+            optionsTitle: 'Industry',
+            loading: _industriesLoading(context),
+            onSelected: (String? id) {
+              if (id != _industryId) unawaited(_selectIndustry(id));
+            },
           ),
           const SizedBox(height: HivorrSpacing.sm),
-          const _SectionLabel('Profession'),
-          _ProfessionRow(
-            industryId: _industryId,
+          HivorrSelectField<String>(
+            label: 'Profession',
+            hint: _industryId == null
+                ? 'Select industry first'
+                : 'Select profession',
+            helperText: _industryId == null
+                ? 'Choose an industry to narrow by profession.'
+                : null,
+            enabled: _industryId != null,
+            options: _professionOptions(context),
             selected: _professionId,
+            clearLabel: 'All professions',
+            searchHint: 'Search professions…',
+            optionsTitle: 'Profession',
+            loading: _industryId != null && _professionsLoading(context),
             onSelected: (String? id) => setState(() => _professionId = id),
           ),
           const SizedBox(height: HivorrSpacing.sm),
@@ -207,7 +376,7 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
               Expanded(
                 child: HivorrTextField(
                   controller: _minController,
-                  hint: 'Min',
+                  hint: symbol.isEmpty ? 'Min' : 'Min $symbol',
                   keyboardType: TextInputType.number,
                   errorText: _priceError,
                 ),
@@ -216,41 +385,32 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
               Expanded(
                 child: HivorrTextField(
                   controller: _maxController,
-                  hint: 'Max',
+                  hint: symbol.isEmpty ? 'Max' : 'Max $symbol',
                   keyboardType: TextInputType.number,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: HivorrSpacing.xs),
-          Wrap(
-            spacing: HivorrSpacing.xs,
-            children: <Widget>[
-              HivorrChip(
-                label: 'Any currency',
-                isSelected: _currencyCode == null,
-                onSelected: (_) => setState(() => _currencyCode = null),
-              ),
-              for (final String code in DiscoveryCurrencies.active)
-                HivorrChip(
-                  label: code,
-                  isSelected: _currencyCode == code,
-                  onSelected: (_) => setState(() => _currencyCode = code),
-                ),
-            ],
+          const SizedBox(height: HivorrSpacing.sm),
+          HivorrSelectField<String>(
+            label: 'Currency',
+            hint: 'Any currency',
+            options: _currencyOptions(),
+            selected: _currencyCode,
+            clearLabel: 'Any currency',
+            optionsTitle: 'Currency',
+            onSelected: (String? code) =>
+                setState(() => _currencyCode = code),
           ),
           const SizedBox(height: HivorrSpacing.sm),
-          const _SectionLabel('Minimum rating'),
-          Wrap(
-            spacing: HivorrSpacing.xs,
-            children: <Widget>[
-              for (final double? option in _ratingOptions)
-                HivorrChip(
-                  label: option == null ? 'Any' : '${option.toStringAsFixed(1)}+',
-                  isSelected: _ratingMin == option,
-                  onSelected: (_) => setState(() => _ratingMin = option),
-                ),
-            ],
+          HivorrSelectField<double?>(
+            label: 'Minimum rating',
+            hint: 'Any rating',
+            options: _ratingOptions,
+            selected: _ratingMin,
+            optionsTitle: 'Minimum rating',
+            onSelected: (double? value) =>
+                setState(() => _ratingMin = value),
           ),
           const SizedBox(height: HivorrSpacing.sm),
           // Plain rows (not ListTile): the sheet body is a DecoratedBox
@@ -340,6 +500,15 @@ class _DiscoveryFilterSheetState extends State<DiscoveryFilterSheet> {
               ),
             ],
           ),
+          // Explicit dismiss without applying (backdrop/ESC/back also
+          // return null). Full-width text keeps the 320dp footer free of
+          // a cramped three-button row.
+          HivorrButton(
+            label: 'Cancel',
+            variant: HivorrButtonVariant.text,
+            isExpanded: true,
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
           const SizedBox(height: HivorrSpacing.sm),
         ],
       ),
@@ -375,101 +544,6 @@ class _SectionLabel extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
-    );
-  }
-}
-
-class _IndustryRow extends StatelessWidget {
-  const _IndustryRow({required this.selected, required this.onSelected});
-
-  final String? selected;
-  final ValueChanged<String?> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final TaxonomyProvider taxonomy = context.watch<TaxonomyProvider>();
-    final List<Industry> industries = taxonomy.industries;
-    if (industries.isEmpty) {
-      return Text(
-        'Loading industries…',
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-    return Wrap(
-      spacing: HivorrSpacing.xs,
-      runSpacing: HivorrSpacing.xs,
-      children: <Widget>[
-        HivorrChip(
-          label: 'All',
-          isSelected: selected == null,
-          onSelected: (_) => onSelected(null),
-        ),
-        for (final Industry industry in industries)
-          HivorrChip(
-            label: industry.name,
-            isSelected: selected == industry.id,
-            onSelected: (_) => onSelected(
-              selected == industry.id ? null : industry.id,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ProfessionRow extends StatelessWidget {
-  const _ProfessionRow({
-    required this.industryId,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final String? industryId;
-  final String? selected;
-  final ValueChanged<String?> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final String? industry = industryId;
-    if (industry == null) {
-      return Text(
-        'Choose an industry to narrow by profession.',
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-    final TaxonomyProvider taxonomy = context.watch<TaxonomyProvider>();
-    final List<Profession> professions =
-        taxonomy.professionsByIndustry[industry] ?? const <Profession>[];
-    if (professions.isEmpty) {
-      return Text(
-        'Loading professions…',
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-    return Wrap(
-      spacing: HivorrSpacing.xs,
-      runSpacing: HivorrSpacing.xs,
-      children: <Widget>[
-        HivorrChip(
-          label: 'All',
-          isSelected: selected == null,
-          onSelected: (_) => onSelected(null),
-        ),
-        for (final Profession profession in professions)
-          HivorrChip(
-            label: profession.name,
-            isSelected: selected == profession.id,
-            onSelected: (_) => onSelected(
-              selected == profession.id ? null : profession.id,
-            ),
-          ),
-      ],
     );
   }
 }

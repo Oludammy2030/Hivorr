@@ -17,7 +17,7 @@ void main() {
         <String>[
           '/dashboard',
           '/dashboard/jobs',
-          '/services',
+          '/dashboard/services',
           '/dashboard/messages',
         ],
       );
@@ -59,7 +59,7 @@ void main() {
       );
       expect(
         overflow.any(
-          (DashboardNavItem e) => e.location == '/services',
+          (DashboardNavItem e) => e.location == '/dashboard/services',
         ),
         isTrue,
       );
@@ -71,7 +71,9 @@ void main() {
         offer: true,
       );
       expect(
-        items.any((DashboardNavItem e) => e.location == '/services'),
+        items.any(
+          (DashboardNavItem e) => e.location == '/dashboard/services',
+        ),
         isFalse,
       );
       final List<DashboardNavItem> overflow = mobileOverflowNavItems(
@@ -79,7 +81,9 @@ void main() {
         offer: true,
       );
       expect(
-        overflow.any((DashboardNavItem e) => e.location == '/services'),
+        overflow.any(
+          (DashboardNavItem e) => e.location == '/dashboard/services',
+        ),
         isFalse,
       );
     });
@@ -131,7 +135,7 @@ void main() {
       );
       expect(
         isMobilePrimaryLocation(
-          '/services/search',
+          '/dashboard/services',
           hire: true,
           offer: false,
         ),
@@ -153,7 +157,9 @@ void main() {
         offer: false,
       );
       expect(
-        hireOverflow.any((DashboardNavItem e) => e.location == '/services'),
+        hireOverflow.any(
+          (DashboardNavItem e) => e.location == '/dashboard/services',
+        ),
         isFalse,
       );
     });
