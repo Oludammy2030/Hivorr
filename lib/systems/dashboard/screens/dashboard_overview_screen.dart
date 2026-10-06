@@ -1256,7 +1256,7 @@ class _BrowseServicesBanner extends StatelessWidget {
     final RoleThemeExtension roles = context.roleTheme;
     final bool compact = context.breakpoint == Breakpoint.mobile;
     return HivorrCard(
-      onTap: () => context.go(RoutePaths.dashboardServices),
+      onTap: () => context.go(RoutePaths.serviceDiscovery),
       child: Row(
         children: <Widget>[
           Container(
