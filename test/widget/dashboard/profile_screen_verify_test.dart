@@ -151,8 +151,15 @@ void main() {
     expect(find.text('amara.diallo@example.com'), findsWidgets);
     expect(find.text('Client'), findsWidgets);
     expect(find.text('Not provided'), findsOneWidget);
-    expect(find.text('Sign out'), findsOneWidget);
+    // Reference destructive casing shared with the professional tab.
+    expect(find.text('Sign Out'), findsOneWidget);
     expect(find.text('Jobs Posted'), findsOneWidget);
+    // Client preferences card (local-state toggles, reference defaults).
+    expect(find.text('Preferences'), findsOneWidget);
+    expect(find.text('Email notifications'), findsOneWidget);
+    expect(find.text('Job application alerts'), findsOneWidget);
+    expect(find.text('SMS updates'), findsOneWidget);
+    expect(find.text('Weekly digest'), findsOneWidget);
     // Forbidden reference / legacy terms.
     expect(find.text('TechVentures Africa'), findsNothing);
     expect(find.text('TV'), findsNothing);
@@ -198,7 +205,28 @@ void main() {
     expect(find.text('Client'), findsWidgets);
   });
 
-  testWidgets('no overflow across widths', (tester) async {
+    testWidgets('preference toggles flip local state without errors',
+        (tester) async {
+      await pumpProfile(
+        tester,
+        email: 'amara.diallo@example.com',
+        capability: EntityCapability.hire,
+        width: 390,
+        height: 844,
+      );
+      expect(tester.takeException(), isNull);
+      final Finder switches = find.byType(Switch);
+      expect(switches, findsNWidgets(4));
+      expect(tester.widget<Switch>(switches.at(2)).value, isFalse);
+      await tester.ensureVisible(switches.at(2));
+      await tester.pumpAndSettle();
+      await tester.tap(switches.at(2));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(tester.widget<Switch>(switches.at(2)).value, isTrue);
+    });
+
+    testWidgets('no overflow across widths', (tester) async {
     for (final double w in <double>[
       320,
       360,
@@ -229,7 +257,7 @@ void main() {
         reason: 'heading missing at ${w.toInt()}px',
       );
       expect(
-        find.text('Sign out'),
+        find.text('Sign Out'),
         findsOneWidget,
         reason: 'sign out missing at ${w.toInt()}px',
       );

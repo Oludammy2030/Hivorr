@@ -15,6 +15,8 @@ class Conversation {
     required this.updatedAt,
     this.lastMessagePreview,
     this.lastMessageAt,
+    this.unreadCount = 0,
+    this.peerOnline = false,
   });
 
   /// The conversation row id.
@@ -35,8 +37,24 @@ class Conversation {
   /// When the latest message arrived, when any.
   final DateTime? lastMessageAt;
 
+  /// Messages newer than the caller's `last_read_at`.
+  ///
+  /// TODO(messaging-backend): `conversation_list` does not return this yet,
+  /// so it stays 0 (badge hidden) until the RPC exposes a per-thread count.
+  final int unreadCount;
+
+  /// Whether the other party is currently online.
+  ///
+  /// TODO(messaging-backend): no presence seam exists today (realtime is
+  /// excluded for messaging tables), so this stays false (dot hidden) until
+  /// a heartbeat/presence source lands.
+  final bool peerOnline;
+
   /// Whether any message exists yet.
   bool get hasMessages => lastMessageAt != null;
+
+  /// Whether the unread badge renders.
+  bool get hasUnread => unreadCount > 0;
 }
 
 /// A single immutable message (EP-04-04).

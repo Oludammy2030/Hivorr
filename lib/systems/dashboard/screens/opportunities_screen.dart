@@ -2006,6 +2006,46 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
                               final bool wide =
                                   c.maxWidth >= _twoPaneBreakpoint;
                               if (!wide) {
+                                // Phones (<600dp) use the reference Select Job
+                                // dropdown; larger narrow layouts keep the
+                                // horizontal jobs strip untouched.
+                                if (isMobile) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: <Widget>[
+                                      _SelectJobDropdown(
+                                        jobs: jobs,
+                                        posted: posted,
+                                        selectedId: _selectedJobId,
+                                        onSelect: _selectJob,
+                                        onRetry: _loadJobs,
+                                      ),
+                                      const SizedBox(
+                                        height: HivorrSpacing.md,
+                                      ),
+                                      Expanded(
+                                        child: _ApplicantsPanel(
+                                          job: selected,
+                                          apps: _apps,
+                                          loading: _appsLoading,
+                                          error: _appsError,
+                                          acting: _acting,
+                                          scrollController: _appsScroll,
+                                          onRetry: selected == null
+                                              ? null
+                                              : () => _loadApps(
+                                                  selected.id,
+                                                  refresh: true,
+                                                ),
+                                          onShortlist: _shortlist,
+                                          onHire: _hire,
+                                          onReject: _reject,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
                                 return Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -2157,6 +2197,160 @@ class _PanelCard extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+/// Mobile (<600dp) job picker matching the `mob cl app` reference: a
+/// `Select Job` label over a filled dropdown field. Opening it lists every
+/// posted job (native menu — scrollable and viewport-constrained, so long
+/// lists and long titles stay usable); picking one reuses [_selectJob], so
+/// the applicants panel below reloads per job exactly like desktop.
+class _SelectJobDropdown extends StatelessWidget {
+  const _SelectJobDropdown({
+    required this.jobs,
+    required this.posted,
+    required this.selectedId,
+    required this.onSelect,
+    required this.onRetry,
+  });
+
+  final JobProvider jobs;
+  final List<Job> posted;
+  final String? selectedId;
+  final ValueChanged<String> onSelect;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    if (jobs.isLoading && posted.isEmpty) {
+      final Color fill = colors.surfaceContainerHighest.withValues(
+        alpha: context.isDarkMode ? 1.0 : 0.45,
+      );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            'Select Job',
+            style: context.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: HivorrSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: HivorrSpacing.md,
+              vertical: 15,
+            ),
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: <Widget>[
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: HivorrSpacing.sm),
+                Text(
+                  'Loading jobs…',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    if (jobs.lastError != null && posted.isEmpty) {
+      return HivorrErrorState(
+        message: 'Could not load jobs',
+        detail: jobs.lastError!.message,
+        onRetry: () => unawaited(onRetry()),
+      );
+    }
+    final Color fill = colors.surfaceContainerHighest.withValues(
+      alpha: context.isDarkMode ? 1.0 : 0.45,
+    );
+    final bool enabled = posted.isNotEmpty;
+    final String? value =
+        selectedId != null && posted.any((Job job) => job.id == selectedId)
+        ? selectedId
+        : null;
+    OutlineInputBorder border(Color? side, [double width = 1]) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: side == null
+              ? BorderSide.none
+              : BorderSide(color: side, width: width),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          'Select Job',
+          style: context.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: HivorrSpacing.sm),
+        DropdownButtonFormField<String>(
+          // Rebuild per selection so `initialValue` always reflects the
+          // selected job; expanded so long titles ellipsize in place.
+          key: ValueKey<String?>('select-job-$value'),
+          isExpanded: true,
+          initialValue: value,
+          hint: Text(
+            'Select a job',
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant.withValues(alpha: 0.8),
+            ),
+          ),
+          items: <DropdownMenuItem<String>>[
+            for (final Job job in posted)
+              DropdownMenuItem<String>(
+                value: job.id,
+                child: Text(
+                  job.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          onChanged: enabled
+              ? (String? id) {
+                  if (id != null) onSelect(id);
+                }
+              : null,
+          style: context.textTheme.bodyLarge?.copyWith(
+            color: colors.onSurface,
+          ),
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            color: colors.onSurface,
+          ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: fill,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: HivorrSpacing.md,
+              vertical: 15,
+            ),
+            border: border(null),
+            enabledBorder: border(null),
+            focusedBorder: border(colors.primary, 1.5),
+            errorBorder: border(colors.error),
+            focusedErrorBorder: border(colors.error, 1.5),
+          ),
+        ),
+      ],
     );
   }
 }

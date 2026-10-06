@@ -5,16 +5,15 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/app/theme/app_colors.dart';
 import 'package:hivorr/core/authentication/models/auth_credentials.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
-import 'package:hivorr/shared/extensions/build_context_extensions.dart';
-import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:provider/provider.dart';
 
 /// Email + password sign-in (auth flows §7 of the correction plan).
 ///
 /// Pixel-matched to the `log in.png` reference: a royal-blue page with a
 /// centered split card — brand panel (logo, headline, sub-copy, stats) on the
-/// left, white sign-in form (`Welcome back 👋`) on the right. Narrow screens
-/// stack the same two sections vertically inside the same rounded card.
+/// left, white sign-in form (`Welcome back 👋`) on the right. Screens below
+/// 600px reproduce `mob log.png`: the same blue hero stacked above the same
+/// white sign-in sheet, constrained to 480dp with blue gutters.
 ///
 /// Thin UI over [AuthProvider.signIn]: validates locally, calls the service
 /// once, and routes to the preserved `?next=` destination (or home — the
@@ -50,71 +49,75 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final AuthProvider auth = context.watch<AuthProvider>();
     final String? error = _localError ?? auth.lastError?.message;
-    // Mobile-only light page (phone breakpoint) matching the reference;
-    // desktop keeps the royal-blue page 100% untouched. Resolved via the
-    // shared Breakpoint so split-view widths behave like real phones.
-    final bool isMobileScaffold = context.breakpoint == Breakpoint.mobile;
 
+    // Royal-blue page for every width (desktop already blue — untouched).
+    // The <600px branch below reproduces `mob log.png`: blue hero on top,
+    // white sign-in sheet below. Wider layouts are unchanged.
     return Scaffold(
-      backgroundColor:
-          isMobileScaffold ? const Color(0xFFF7F7F4) : _pageBlue,
+      backgroundColor: _pageBlue,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(isMobileScaffold ? 16 : 24),
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final bool wide = constraints.maxWidth >= 900;
-                // Mobile reference (<600px): form first above the fold, slim
-                // marketing below, footer at the bottom. Tablet (600-899)
-                // and desktop (>=900) keep their existing layouts untouched.
-                if (constraints.maxWidth < 600) {
-                  return ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 480),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 24,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const _MobileLogo(),
-                          const SizedBox(height: 20),
-                          _FormPanel(
-                            email: _email,
-                            password: _password,
-                            submitting: _submitting,
-                            error: error,
-                            compact: true,
-                            isMobile: true,
-                            onChanged: () =>
-                                setState(() => _localError = null),
-                            onSubmit: _submit,
-                            onForgotPassword: () => context.go(
-                              _target(RoutePaths.forgotPassword),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final bool isNarrow = constraints.maxWidth < 600;
+            final double bottomInset = MediaQuery.of(
+              context,
+            ).viewInsets.bottom;
+            return Center(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(
+                  isNarrow ? 16 : 24,
+                  isNarrow ? 12 : 24,
+                  isNarrow ? 16 : 24,
+                  (isNarrow ? 16 : 24) + bottomInset,
+                ),
+                child: LayoutBuilder(
+                  builder:
+                      (BuildContext context, BoxConstraints inner) {
+                    final bool wide = inner.maxWidth >= 900;
+                    // Mobile reference (<600px): blue hero (logo, headline,
+                    // sub-copy, stats) then white form sheet. Tablet
+                    // (600-899) and desktop (>=900) keep existing layouts.
+                    if (inner.maxWidth < 600) {
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 480),
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.stretch,
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            const _MobileHero(),
+                            const SizedBox(height: 20),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: _FormPanel(
+                                email: _email,
+                                password: _password,
+                                submitting: _submitting,
+                                error: error,
+                                compact: true,
+                                onChanged: () => setState(
+                                  () => _localError = null,
+                                ),
+                                onSubmit: _submit,
+                                onForgotPassword: () => context.go(
+                                  _target(RoutePaths.forgotPassword),
+                                ),
+                                onCreateAccount: () => context.go(
+                                  _target(RoutePaths.signup),
+                                ),
+                              ),
                             ),
-                            onCreateAccount: () =>
-                                context.go(_target(RoutePaths.signup)),
-                          ),
-                          const SizedBox(height: 28),
-                          const _MobileMarketing(),
-                          const SizedBox(height: 24),
-                          _MobileFooter(
-                            submitting: _submitting,
-                            onCreateAccount: () =>
-                                context.go(_target(RoutePaths.signup)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      );
+                    }
                 return ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1020),
                   child: Container(
@@ -181,12 +184,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                   ),
                 );
-              },
-            ),
+                    },
+                  ),
+                ),
+              );
+            },
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _submit() async {
@@ -368,163 +373,96 @@ class _Stat extends StatelessWidget {
   }
 }
 
-/// Centered Hivorr lockup for the mobile reference (<600px only).
+/// Blue-page hero for <600px, matched to `mob log.png`: left-aligned logo
+/// lockup, headline, sub-copy and proof stats on brand blue.
 /// Marketing display — shares the _BrandPanel §6a w800 exception.
-class _MobileLogo extends StatelessWidget {
-  const _MobileLogo();
+class _MobileHero extends StatelessWidget {
+  const _MobileHero();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: AppColors.brandPrimary,
-            borderRadius: BorderRadius.circular(10),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _MobileHeroLogoBox(),
+              SizedBox(width: 10),
+              Text(
+                'Hivorr',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
           ),
-          child: const Icon(
-            Icons.flash_on_rounded,
-            color: Colors.white,
-            size: 22,
+          SizedBox(height: 20),
+          Text(
+            "Africa's #1 Workforce Marketplace",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              height: 1.15,
+              letterSpacing: -0.5,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        const Text(
-          'Hivorr',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
+          SizedBox(height: 12),
+          Text(
+            "Join 50,000+ professionals and employers building Africa's future together.",
+            style: TextStyle(
+              color: Color(0xD6FFFFFF),
+              fontSize: 14.5,
+              height: 1.55,
+            ),
           ),
-        ),
-      ],
+          SizedBox(height: 20),
+          Row(
+            children: <Widget>[
+              Expanded(child: _Stat(value: '52K+', label: 'Professionals')),
+              Expanded(child: _Stat(value: '1.2K', label: 'Companies')),
+              Expanded(child: _Stat(value: r'$12M+', label: 'Earned')),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Slim light-theme marketing block below the mobile form (reference order:
-/// form first above the fold, marketplace + stats below, footer last).
-/// Marketing display — shares the _BrandPanel §6a w800 exception.
-class _MobileMarketing extends StatelessWidget {
-  const _MobileMarketing();
+class _MobileHeroLogoBox extends StatelessWidget {
+  const _MobileHeroLogoBox();
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(
-          "Africa's #1 Workforce Marketplace",
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            height: 1.2,
-            letterSpacing: -0.4,
-          ),
-        ),
-        SizedBox(height: 10),
-        Text(
-          "Join 50,000+ professionals and employers building Africa's future together.",
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-            height: 1.55,
-          ),
-        ),
-        SizedBox(height: 20),
-        Row(
-          children: <Widget>[
-            Expanded(child: _MobileStat(value: '52K+', label: 'Professionals')),
-            Expanded(child: _MobileStat(value: '1.2K', label: 'Companies')),
-            Expanded(child: _MobileStat(value: r'$12M+', label: 'Earned')),
-          ],
-        ),
-      ],
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(
+        Icons.flash_on_rounded,
+        color: Colors.white,
+        size: 22,
+      ),
     );
   }
 }
 
-class _MobileStat extends StatelessWidget {
-  const _MobileStat({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12.5,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Clean footer below the mobile marketing block (reference position).
-class _MobileFooter extends StatelessWidget {
-  const _MobileFooter({
-    required this.submitting,
-    required this.onCreateAccount,
-  });
-
-  final bool submitting;
-  final VoidCallback onCreateAccount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: <Widget>[
-        const Text(
-          'New to Hivorr? ',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14.5),
-        ),
-        TextButton(
-          onPressed: submitting ? null : onCreateAccount,
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            foregroundColor: AppColors.brandPrimary,
-          ),
-          child: const Text(
-            'Create account',
-            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Right-hand white sign-in form from the reference.
-class _FormPanel extends StatefulWidget {
+/// White sign-in form from the reference (`Welcome back 👋`).
+/// Shared by desktop and the <600px `mob log.png` sheet so both stay
+/// pixel-matched: borderless filled inputs, blue primary action, inline
+/// footer. Desktop/tablet appearance is unchanged.
+class _FormPanel extends StatelessWidget {
   const _FormPanel({
     required this.email,
     required this.password,
@@ -535,7 +473,6 @@ class _FormPanel extends StatefulWidget {
     required this.onForgotPassword,
     required this.onCreateAccount,
     this.compact = false,
-    this.isMobile = false,
   });
 
   final TextEditingController email;
@@ -548,42 +485,18 @@ class _FormPanel extends StatefulWidget {
   final VoidCallback onCreateAccount;
   final bool compact;
 
-  /// When true (<600px reference), renders the tight above-the-fold mobile
-  /// variant: zero outer padding (parent owns it), bordered white inputs,
-  /// password visibility toggle, underlined forgot link, no inner footer
-  /// (footer lives below the marketing block). Desktop/tablet untouched.
-  final bool isMobile;
-
-  @override
-  State<_FormPanel> createState() => _FormPanelState();
-}
-
-class _FormPanelState extends State<_FormPanel> {
-  bool _obscure = true;
-
   static const Color _ink = AppColors.textPrimary;
   static const Color _muted = AppColors.textSecondary;
   static const Color _fieldFill = Color(0xFFF2F4F7);
   static const Color _hint = AppColors.textMuted;
 
-  InputBorder get _border => OutlineInputBorder(
+  static final InputBorder _border = OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
     borderSide: BorderSide.none,
   );
 
-  InputBorder get _mobileBorder => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-  );
-
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = widget.isMobile;
-    final bool compact = widget.compact;
-    // Parent owns padding on mobile so the whole form fits above the fold.
-    if (isMobile) {
-      return _buildBody(context);
-    }
     final double horizontalPad = compact ? 24 : 48;
     final double verticalPad = compact ? 32 : 52;
     return Container(
@@ -597,39 +510,23 @@ class _FormPanelState extends State<_FormPanel> {
   }
 
   Widget _buildBody(BuildContext context) {
-    final bool isMobile = widget.isMobile;
-    final bool compact = widget.compact;
-    final TextEditingController email = widget.email;
-    final TextEditingController password = widget.password;
-    final bool submitting = widget.submitting;
-    final String? error = widget.error;
-    final VoidCallback onChanged = widget.onChanged;
-    final VoidCallback onSubmit = widget.onSubmit;
-    final VoidCallback onForgotPassword = widget.onForgotPassword;
-    final VoidCallback onCreateAccount = widget.onCreateAccount;
-    // Tight mobile rhythm so logo + full form fits above the fold.
-    final double titleGap = isMobile ? 24 : 30;
-    final double fieldGap = isMobile ? 16 : 20;
-    final double forgotGap = isMobile ? 8 : 10;
-    final double buttonGap = isMobile ? 12 : 14;
-    final InputBorder emailBorder = isMobile ? _mobileBorder : _border;
-    final InputBorder emailFocused = isMobile
-        ? _mobileBorder.copyWith(
-            borderSide: const BorderSide(
-              color: AppColors.brandPrimary,
-              width: 1.5,
-            ),
-          )
-        : _border;
-    final InputBorder passBorder = isMobile ? _mobileBorder : _border;
-    final InputBorder passFocused = isMobile
-        ? _mobileBorder.copyWith(
-            borderSide: const BorderSide(
-              color: AppColors.brandPrimary,
-              width: 1.5,
-            ),
-          )
-        : _border;
+    final bool compact = this.compact;
+    final TextEditingController email = this.email;
+    final TextEditingController password = this.password;
+    final bool submitting = this.submitting;
+    final String? error = this.error;
+    final VoidCallback onChanged = this.onChanged;
+    final VoidCallback onSubmit = this.onSubmit;
+    final VoidCallback onForgotPassword = this.onForgotPassword;
+    final VoidCallback onCreateAccount = this.onCreateAccount;
+    const double titleGap = 30;
+    const double fieldGap = 20;
+    const double forgotGap = 10;
+    const double buttonGap = 14;
+    final InputBorder emailBorder = _border;
+    final InputBorder emailFocused = _border;
+    final InputBorder passBorder = _border;
+    final InputBorder passFocused = _border;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -648,7 +545,7 @@ class _FormPanelState extends State<_FormPanel> {
           'Sign in to your account',
           style: TextStyle(color: _muted, fontSize: 15),
         ),
-        SizedBox(height: titleGap),
+        const SizedBox(height: titleGap),
         const Text(
           'Email',
           style: TextStyle(
@@ -669,7 +566,7 @@ class _FormPanelState extends State<_FormPanel> {
             hintText: 'you@example.com',
             hintStyle: const TextStyle(color: _hint, fontSize: 15),
             filled: true,
-            fillColor: isMobile ? Colors.white : _fieldFill,
+            fillColor: _fieldFill,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 15,
@@ -680,7 +577,7 @@ class _FormPanelState extends State<_FormPanel> {
             disabledBorder: emailBorder,
           ),
         ),
-        SizedBox(height: fieldGap),
+        const SizedBox(height: fieldGap),
         const Text(
           'Password',
           style: TextStyle(
@@ -692,7 +589,7 @@ class _FormPanelState extends State<_FormPanel> {
         const SizedBox(height: 8),
         TextField(
           controller: password,
-          obscureText: isMobile ? _obscure : true,
+          obscureText: true,
           textInputAction: TextInputAction.done,
           enabled: !submitting,
           onChanged: (_) => onChanged(),
@@ -706,7 +603,7 @@ class _FormPanelState extends State<_FormPanel> {
             hintText: '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022',
             hintStyle: const TextStyle(color: _hint, fontSize: 15),
             filled: true,
-            fillColor: isMobile ? Colors.white : _fieldFill,
+            fillColor: _fieldFill,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 15,
@@ -715,23 +612,6 @@ class _FormPanelState extends State<_FormPanel> {
             enabledBorder: passBorder,
             focusedBorder: passFocused,
             disabledBorder: passBorder,
-            // Reference visibility toggle — mobile only, desktop untouched.
-            suffixIcon: isMobile
-                ? IconButton(
-                    tooltip:
-                        _obscure ? 'Show password' : 'Hide password',
-                    onPressed: submitting
-                        ? null
-                        : () => setState(() => _obscure = !_obscure),
-                    icon: Icon(
-                      _obscure
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 20,
-                      color: _muted,
-                    ),
-                  )
-                : null,
           ),
         ),
         if (error != null) ...<Widget>[
@@ -745,7 +625,7 @@ class _FormPanelState extends State<_FormPanel> {
             ),
           ),
         ],
-        SizedBox(height: forgotGap),
+        const SizedBox(height: forgotGap),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
@@ -759,18 +639,16 @@ class _FormPanelState extends State<_FormPanel> {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               foregroundColor: AppColors.brandPrimary,
             ),
-            child: Text(
+            child: const Text(
               'Forgot password?',
               style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
-                decoration:
-                    isMobile ? TextDecoration.underline : TextDecoration.none,
               ),
             ),
           ),
         ),
-        SizedBox(height: buttonGap),
+        const SizedBox(height: buttonGap),
         SizedBox(
           height: 52,
           child: ElevatedButton(
@@ -803,37 +681,33 @@ class _FormPanelState extends State<_FormPanel> {
                 : const Text('Sign In'),
           ),
         ),
-        // Mobile footer lives below the marketing block (reference order),
-        // so omit it inside the form. Tablet/desktop keep it inline.
-        if (!isMobile) ...<Widget>[
-          const SizedBox(height: 26),
-          Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: <Widget>[
-              const Text(
-                'New to Hivorr? ',
-                style: TextStyle(color: _muted, fontSize: 14.5),
+        const SizedBox(height: 26),
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            const Text(
+              'New to Hivorr? ',
+              style: TextStyle(color: _muted, fontSize: 14.5),
+            ),
+            TextButton(
+              onPressed: submitting ? null : onCreateAccount,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                foregroundColor: AppColors.brandPrimary,
               ),
-              TextButton(
-                onPressed: submitting ? null : onCreateAccount,
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: AppColors.brandPrimary,
-                ),
-                child: const Text(
-                  'Create account',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
-                  ),
+              child: const Text(
+                'Create account',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ],
     );
   }

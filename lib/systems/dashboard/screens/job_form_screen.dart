@@ -470,29 +470,30 @@ class _JobDetailsCard extends StatelessWidget {
           const SizedBox(height: HivorrSpacing.md),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints c) {
-              final bool stack = c.maxWidth < 420;
-              final Widget skills = Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    const _FieldLabel(text: 'Required Skills'),
-                    const SizedBox(height: HivorrSpacing.sm),
-                    _ReferenceField(
-                      controller: state._skills,
-                      hint: 'React, TypeScript...',
-                    ),
-                  ],
-                ),
+              // Reference keeps Required Skills + Experience Level side by
+              // side on phones: at 360dp+ the card fits two usable fields.
+              // Stack only when genuinely too narrow (covers 320dp screens).
+              final bool stack = c.maxWidth < 280;
+              // Plain (unflexed) field columns: the stacked layout lives in
+              // the unbounded scrollable, where Expanded is illegal.
+              final Widget skills = Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const _FieldLabel(text: 'Required Skills'),
+                  const SizedBox(height: HivorrSpacing.sm),
+                  _ReferenceField(
+                    controller: state._skills,
+                    hint: 'React, TypeScript...',
+                  ),
+                ],
               );
-              final Widget level = Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    const _FieldLabel(text: 'Experience Level'),
-                    const SizedBox(height: HivorrSpacing.sm),
-                    _ExperienceDropdown(state: state),
-                  ],
-                ),
+              final Widget level = Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const _FieldLabel(text: 'Experience Level'),
+                  const SizedBox(height: HivorrSpacing.sm),
+                  _ExperienceDropdown(state: state),
+                ],
               );
               if (stack) {
                 return Column(
@@ -507,9 +508,9 @@ class _JobDetailsCard extends StatelessWidget {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  skills,
+                  Expanded(child: skills),
                   const SizedBox(width: HivorrSpacing.sm),
-                  level,
+                  Expanded(child: level),
                 ],
               );
             },
@@ -723,11 +724,17 @@ class _ServiceTypeOption extends StatelessWidget {
                 color: selected ? colors.primary : colors.onSurfaceVariant,
               ),
               const SizedBox(width: HivorrSpacing.sm),
-              Text(
-                label,
-                style: context.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: selected ? colors.primary : colors.onSurfaceVariant,
+              // Shrink in narrow tiles (320dp) instead of overflowing;
+              // wider layouts render the full label unchanged.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: selected ? colors.primary : colors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -793,6 +800,9 @@ class _ExperienceDropdown extends StatelessWidget {
       alpha: context.isDarkMode ? 1.0 : 0.45,
     );
     return DropdownButtonFormField<String>(
+      // Fill the column so the internal value row never overflows narrow
+      // mobile columns (reference keeps skills + level side by side).
+      isExpanded: true,
       initialValue: state._experienceLevel,
       items: <DropdownMenuItem<String>>[
         for (final String level in _JobFormScreenState._experienceLevels)

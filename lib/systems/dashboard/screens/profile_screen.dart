@@ -384,11 +384,9 @@ class _ProfileContent extends StatelessWidget {
       children: <Widget>[
         _StatsCard(capability: capability),
         SizedBox(height: compact ? HivorrSpacing.md : HivorrSpacing.lg),
-        HivorrButton(
-          label: 'Sign out',
-          variant: HivorrButtonVariant.outline,
-          onPressed: onSignOut,
-        ),
+        const _ClientPreferencesCard(),
+        SizedBox(height: compact ? HivorrSpacing.md : HivorrSpacing.lg),
+        _SignOutButton(onTap: onSignOut),
       ],
     );
     return Column(
@@ -701,6 +699,60 @@ class _StatsCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Client notification preferences (reference `Preferences` card).
+///
+/// MOCK: no notification-preference seam exists, so the switches stay local
+/// with the reference defaults until one lands — same convention as the
+/// professional Settings tab toggles.
+class _ClientPreferencesCard extends StatefulWidget {
+  const _ClientPreferencesCard();
+
+  @override
+  State<_ClientPreferencesCard> createState() => _ClientPreferencesCardState();
+}
+
+class _ClientPreferencesCardState extends State<_ClientPreferencesCard> {
+  bool _email = true;
+  bool _jobAlerts = true;
+  bool _sms = false;
+  bool _weekly = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color active = context.roleTheme.clientPrimary;
+    return _SettingsCard(
+      title: 'Preferences',
+      children: <Widget>[
+        _ToggleRow(
+          label: 'Email notifications',
+          value: _email,
+          activeColor: active,
+          onChanged: (bool v) => setState(() => _email = v),
+        ),
+        _ToggleRow(
+          label: 'Job application alerts',
+          value: _jobAlerts,
+          activeColor: active,
+          onChanged: (bool v) => setState(() => _jobAlerts = v),
+        ),
+        _ToggleRow(
+          label: 'SMS updates',
+          value: _sms,
+          activeColor: active,
+          onChanged: (bool v) => setState(() => _sms = v),
+        ),
+        _ToggleRow(
+          label: 'Weekly digest',
+          value: _weekly,
+          last: true,
+          activeColor: active,
+          onChanged: (bool v) => setState(() => _weekly = v),
+        ),
+      ],
     );
   }
 }
@@ -2410,12 +2462,17 @@ class _ToggleRow extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.last = false,
+    this.activeColor,
   });
 
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
   final bool last;
+
+  /// Active track override (client surfaces pass the client primary);
+  /// defaults to the professional primary for the existing call sites.
+  final Color? activeColor;
 
   @override
   Widget build(BuildContext context) {
@@ -2436,7 +2493,8 @@ class _ToggleRow extends StatelessWidget {
               value: value,
               onChanged: onChanged,
               activeThumbColor: Colors.white,
-              activeTrackColor: roles.professionalPrimary,
+              activeTrackColor:
+                  activeColor ?? roles.professionalPrimary,
               inactiveThumbColor: Colors.white,
               inactiveTrackColor: colors.outlineVariant,
             ),
