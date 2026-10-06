@@ -293,7 +293,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      expect(find.text('Overview'), findsOneWidget);
+      expect(find.text('My Hivorr'), findsOneWidget);
       expect(find.text('Dashboard'), findsNothing);
       expect(find.text('Quick Actions'), findsOneWidget);
       expect(find.text('Senior React Developer'), findsWidgets);

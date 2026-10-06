@@ -81,8 +81,11 @@ class HivorrDashboardShell extends StatelessWidget {
       );
     }
 
+    // Mobile (<600dp) carries no shell app bar: each dashboard screen owns
+    // its single page title (Overview shows `My Hivorr`, every other page
+    // shows its own title), so a static shell title would duplicate the
+    // header hierarchy. Bottom navigation lives here and is untouched.
     return Scaffold(
-      appBar: AppBar(title: const Text('Hivorr')),
       body: SafeArea(
         top: true,
         bottom: false,

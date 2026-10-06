@@ -85,6 +85,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     );
 
     if (isMobile) {
+      // Single page title (`Payments`); no refresh action — the content
+      // RefreshIndicator below covers reloads.
       return Scaffold(
         appBar: AppBar(
           toolbarHeight: 48,
@@ -105,17 +107,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               ),
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-            IconButton(
-              tooltip: 'Refresh',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
-              icon: const Icon(Icons.refresh),
-              onPressed: () => unawaited(_load()),
             ),
           ],
         ),
@@ -1147,6 +1138,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
     );
 
     if (isMobile) {
+      // Single page title (`Earnings`); no refresh action — the content
+      // RefreshIndicator below covers reloads.
       return Scaffold(
         appBar: AppBar(
           toolbarHeight: 48,
@@ -1167,17 +1160,6 @@ class _EarningsScreenState extends State<EarningsScreen> {
               ),
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-            IconButton(
-              tooltip: 'Refresh',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
-              icon: const Icon(Icons.refresh),
-              onPressed: () => unawaited(_load()),
             ),
           ],
         ),

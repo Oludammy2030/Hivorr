@@ -149,10 +149,14 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
         // `mob cl handb.png` reference. Bottom navigation lives in the
         // dashboard shell and is intentionally untouched here.
         drawer: const _ClientDrawer(),
+        // Client Overview/Home is the only page titled `My Hivorr`; every
+        // other dashboard page shows its own title (shell owns no app bar
+        // on mobile, so there is exactly one header). No refresh action —
+        // pull-to-refresh on the content covers reloads.
         appBar: AppBar(
           toolbarHeight: 48,
           title: Text(
-            'Overview',
+            'My Hivorr',
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -168,17 +172,6 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
               ),
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-            IconButton(
-              tooltip: 'Refresh',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
-              icon: const Icon(Icons.refresh),
-              onPressed: () => unawaited(_refresh(capability)),
             ),
           ],
         ),
@@ -225,10 +218,14 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     final bool isMobileScaffold =
         context.breakpoint == Breakpoint.mobile;
     return Scaffold(
+      // Pre-hydration fail-open shares the client Overview title (`My
+      // Hivorr`) — the shell owns no app bar on mobile, so this is the
+      // single header. No refresh action; the content RefreshIndicator
+      // below covers reloads.
       appBar: AppBar(
         toolbarHeight: isMobileScaffold ? 48 : null,
         title: Text(
-          'Overview',
+          'My Hivorr',
           style: isMobileScaffold
               ? context.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
@@ -247,18 +244,6 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
                 : null,
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          IconButton(
-            tooltip: 'Refresh',
-            iconSize: isMobileScaffold ? 20 : null,
-            padding: isMobileScaffold
-                ? const EdgeInsets.all(HivorrSpacing.sm)
-                : null,
-            constraints: isMobileScaffold
-                ? const BoxConstraints(minWidth: 40, minHeight: 40)
-                : null,
-            icon: const Icon(Icons.refresh),
-            onPressed: () => unawaited(_refresh(capability)),
           ),
         ],
       ),
@@ -2306,9 +2291,11 @@ class _ClientStatsGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
         final bool compact = MobileCompact.isCompactWidth(c.maxWidth);
-        // At 320px two columns would squeeze to ~136dp and clip; fall back
-        // to a single column there so cards stay readable and compact.
-        final bool twoCol = MobileCompact.fitsTwoColumns(c.maxWidth);
+        // Client overview mobile (<600dp) always pairs the four cards 2×2 —
+        // Row 1: Jobs Posted | Active Hires, Row 2: Total Spent | Open Apps.
+        // Wider layouts keep the two-column-when-room behaviour.
+        final bool twoCol =
+            compact || MobileCompact.fitsTwoColumns(c.maxWidth);
         final double cardWidth = twoCol
             ? (c.maxWidth - (compact ? HivorrSpacing.sm : HivorrSpacing.md)) / 2
             : c.maxWidth;
