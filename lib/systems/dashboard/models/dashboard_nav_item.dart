@@ -88,11 +88,12 @@ List<DashboardNavItem> mobilePrimaryNavItems({
   if (hire) {
     primaries.add(byLocation('/dashboard/jobs'));
   }
-  // Hiring-side marketplace discovery (EP-03-09): a primary tab for hire
-  // focus. The unhydrated set keeps four primaries (bar-crowding guard)
-  // with Find Services under `More`.
+  // Hiring-side marketplace discovery: a primary tab for hire
+  // focus, rendered inside the dashboard shell (`/dashboard/services`) so
+  // the sidebar persists. The unhydrated set keeps four primaries
+  // (bar-crowding guard) with Find Services under `More`.
   if (hire && !offer) {
-    primaries.add(byLocation('/services'));
+    primaries.add(byLocation('/dashboard/services'));
   }
   if (offer) {
     primaries.add(byLocation('/dashboard/opportunities'));
@@ -213,7 +214,7 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     label: 'Find Services',
     icon: Icons.storefront_outlined,
     activeIcon: Icons.storefront,
-    location: '/services',
+    location: '/dashboard/services',
     section: DashboardNavSection.hiring,
     showForOffer: false,
   ),
