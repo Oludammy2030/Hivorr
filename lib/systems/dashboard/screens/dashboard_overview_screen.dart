@@ -552,7 +552,7 @@ class _HiringSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         HivorrSectionHeader(
-          title: 'My Hiring',
+          title: 'My Jobs',
           action: HivorrButton(
             label: 'View all',
             variant: HivorrButtonVariant.text,

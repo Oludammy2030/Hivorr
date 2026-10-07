@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/layouts/breakpoints.dart';
@@ -30,11 +31,13 @@ import 'package:provider/provider.dart';
 /// Persistent role-aware dashboard shell: sidebar + workspace (EP-04-03).
 ///
 /// Desktop/tablet (>=600dp): fixed 264dp sidebar + expanded child.
-/// Mobile (<600dp): slim AppBar + bottom navigation bar (Home + focus-relevant
-/// primary + Messages + More). The drawer is intentionally absent on mobile;
-/// overflow destinations live in [DashboardMoreSheet].
+/// Mobile (<600dp): bottom navigation bar with the focus-relevant primaries.
+/// Hire focus reaches every destination through the client hamburger drawer,
+/// so no `More` tab is rendered there; professional focus (which has no
+/// drawer) keeps `More` for its overflow destinations in
+/// [DashboardMoreSheet].
 ///
-/// Navigation items are focus-filtered: hire sees My Hiring + Shared, offer
+/// Navigation items are focus-filtered: hire sees My Jobs + Shared, offer
 /// sees My Work + Shared. Switching sides happens in the Explore/Earn
 /// launcher (`/activities`), never via an in-shell toggle.
 class HivorrDashboardShell extends StatelessWidget {
@@ -114,12 +117,14 @@ class _Workspace extends StatelessWidget {
   }
 }
 
-/// Mobile bottom navigation (<600dp): focus-relevant primaries + `More`.
+/// Mobile bottom navigation (<600dp): focus-relevant primaries.
 ///
 /// Primaries come from [mobilePrimaryNavItems] so the bar matches the current
-/// focus (hire → Hiring, offer → Jobs). The bar auto-hides while the keyboard
-/// is open so inputs and chat composers keep full height, and respects the
-/// bottom safe area (home indicator).
+/// focus (hire → My Jobs, offer → Jobs). Hire focus omits `More` — the client
+/// hamburger drawer already covers every destination. Professional focus
+/// keeps `More` for its overflow destinations in [DashboardMoreSheet]. The
+/// bar auto-hides while the keyboard is open so inputs and chat composers
+/// keep full height, and respects the bottom safe area (home indicator).
 class _DashboardBottomNav extends StatelessWidget {
   const _DashboardBottomNav({
     required this.location,
@@ -131,6 +136,10 @@ class _DashboardBottomNav extends StatelessWidget {
   final bool hire;
   final bool offer;
 
+  /// `More` survives only where no drawer covers the overflow destinations
+  /// (professional focus, including fail-open).
+  bool get _showMore => offer;
+
   @override
   Widget build(BuildContext context) {
     // Give chat inputs and forms full height while typing.
@@ -141,66 +150,132 @@ class _DashboardBottomNav extends StatelessWidget {
       hire: hire,
       offer: offer,
     );
-    final bool moreSelected = !isMobilePrimaryLocation(
-      location,
-      hire: hire,
-      offer: offer,
-    );
-    int index = 0;
-    for (int i = 0; i < primaries.length; i++) {
-      final String base = primaries[i].location.split('?').first;
-      if (base == '/dashboard') {
-        if (location == '/dashboard') index = i;
-      } else if (location == base || location.startsWith('$base/')) {
-        index = i;
-      }
-    }
+    final bool moreSelected =
+        _showMore &&
+        !isMobilePrimaryLocation(location, hire: hire, offer: offer);
+    final int index = _sectionIndex(location, primaries);
     final int selectedIndex = moreSelected ? primaries.length : index;
     return SafeArea(
       top: false,
       bottom: true,
       minimum: const EdgeInsets.only(bottom: 4),
-      child: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (int i) {
-          if (i >= primaries.length) {
-            unawaited(
-              DashboardMoreSheet.show(
-                context,
-                location: location,
-                hire: hire,
-                offer: offer,
-              ),
-            );
-            return;
-          }
-          if (location != primaries[i].location) {
-            context.go(primaries[i].location);
-          }
-        },
-        destinations: <Widget>[
-          for (final DashboardNavItem item in primaries)
-            NavigationDestination(
-              icon: Icon(item.icon),
-              selectedIcon: Icon(item.activeIcon),
-              label: _shortLabel(item),
+      // Compact label sizing keeps every label on one line down to 320dp
+      // (five destinations share 64dp each); icon sizing is set per
+      // destination below. Scoped to this bar only.
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          navigationBarTheme: NavigationBarThemeData(
+            labelTextStyle: WidgetStatePropertyAll<TextStyle>(
+              (Theme.of(context).textTheme.labelSmall ??
+                      const TextStyle())
+                  .copyWith(fontSize: 11),
             ),
-          const NavigationDestination(
-            icon: Icon(Icons.more_horiz_outlined),
-            selectedIcon: Icon(Icons.more_horiz),
-            label: 'More',
           ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: (int i) {
+            if (_showMore && i >= primaries.length) {
+              unawaited(
+                DashboardMoreSheet.show(
+                  context,
+                  location: location,
+                  hire: hire,
+                  offer: offer,
+                ),
+              );
+              return;
+            }
+            if (i < primaries.length && location != primaries[i].location) {
+              context.go(primaries[i].location);
+            }
+          },
+          destinations: <Widget>[
+            for (final DashboardNavItem item in primaries)
+              NavigationDestination(
+                icon: _destinationIcon(context, item, selected: false),
+                selectedIcon: _destinationIcon(context, item, selected: true),
+                label: _shortLabel(item),
+              ),
+            if (_showMore)
+              const NavigationDestination(
+                icon: Icon(Icons.more_horiz_outlined, size: _iconSize),
+                selectedIcon: Icon(Icons.more_horiz, size: _iconSize),
+                label: 'More',
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  /// Short bar labels that fit 320px wide (4–5 destinations).
+  /// Compact destination icon (22dp keeps five tabs balanced at 320px while
+  /// the 48dp+ destination keeps a comfortable touch target). The Post Job
+  /// action stays brand-blue in both states per the reference.
+  static const double _iconSize = 22;
+
+  static Widget _destinationIcon(
+    BuildContext context,
+    DashboardNavItem item, {
+    required bool selected,
+  }) {
+    if (item.location == RoutePaths.dashboardJobNew) {
+      return Icon(
+        Icons.add_circle,
+        size: _iconSize + 2,
+        color: Theme.of(context).colorScheme.primary,
+      );
+    }
+    return Icon(
+      selected ? item.activeIcon : item.icon,
+      size: _iconSize,
+    );
+  }
+
+  /// Resolves [location] to its primary tab, mapping consolidated sections
+  /// to the primary that owns them (client hires live under My Jobs).
+  /// Exact matches win over prefix matches (so `/dashboard/jobs/new`
+  /// highlights Post Job, not My Jobs). Unmatched locations fall back to
+  /// the first tab.
+  static int _sectionIndex(
+    String location,
+    List<DashboardNavItem> primaries,
+  ) {
+    String base = location.split('?').first;
+    if (base == '/dashboard/hires' || base.startsWith('/dashboard/hires/')) {
+      base = '/dashboard/jobs';
+    }
+    if (base == '/dashboard/applications' ||
+        base.startsWith('/dashboard/applications/')) {
+      base = '/dashboard/jobs';
+    }
+    for (int i = 0; i < primaries.length; i++) {
+      if (primaries[i].location.split('?').first == base) {
+        return i;
+      }
+    }
+    for (int i = 0; i < primaries.length; i++) {
+      final String itemBase = primaries[i].location.split('?').first;
+      if (itemBase == '/dashboard') {
+        if (base == '/dashboard') return i;
+      } else if (base.startsWith('$itemBase/')) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  /// Short bar labels that fit 320px wide (up to five destinations at the
+  /// compact label size). The jobs list uses the approved `My Jobs`
+  /// product terminology; discovery shortens to `Services` on the bar only
+  /// (drawer and sidebar keep `Find Services`).
   String _shortLabel(DashboardNavItem item) {
     return switch (item.location) {
       '/dashboard' => 'Home',
       '/dashboard/opportunities' => 'Jobs',
-      '/dashboard/jobs' => 'Hiring',
+      '/dashboard/jobs' => 'My Jobs',
+      '/dashboard/jobs/new' => 'Post Job',
+      '/dashboard/services' => 'Services',
       '/dashboard/messages' => 'Messages',
       _ => item.label,
     };
