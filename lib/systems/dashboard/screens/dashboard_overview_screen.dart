@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +29,7 @@ import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
@@ -144,37 +145,13 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
           );
     if (isMobile) {
       return Scaffold(
-        // Mobile hamburger (upper-left): the Scaffold supplies the standard
-        // menu leading automatically; the drawer below follows the
-        // `mob cl handb.png` reference. Bottom navigation lives in the
-        // dashboard shell and is intentionally untouched here.
-        drawer: const _ClientDrawer(),
-        // Client Overview/Home is the only page titled `My Hivorr`; every
-        // other dashboard page shows its own title (shell owns no app bar
-        // on mobile, so there is exactly one header). No refresh action —
-        // pull-to-refresh on the content covers reloads.
-        appBar: AppBar(
-          toolbarHeight: 48,
-          title: Text(
-            'My Hivorr',
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: <Widget>[
-            IconButton(
-              tooltip: 'Notifications',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-          ],
-        ),
+        // Shared client chrome: hamburger + `My Hivorr` on one compact row
+        // with the reference drawer. Bottom navigation lives in the
+        // dashboard shell and is intentionally untouched here. No refresh
+        // action — pull-to-refresh on the content covers reloads.
+        drawer: const ClientDashboardDrawer(),
+        // Overview/Home is the only page titled `Hivorr` (brand as home).
+        appBar: const ClientMobileAppBar(title: 'Hivorr'),
         body: MobileSafeBody(child: content),
       );
     }
@@ -218,35 +195,27 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     final bool isMobileScaffold =
         context.breakpoint == Breakpoint.mobile;
     return Scaffold(
-      // Pre-hydration fail-open shares the client Overview title (`My
-      // Hivorr`) — the shell owns no app bar on mobile, so this is the
-      // single header. No refresh action; the content RefreshIndicator
-      // below covers reloads.
-      appBar: AppBar(
-        toolbarHeight: isMobileScaffold ? 48 : null,
-        title: Text(
-          'My Hivorr',
-          style: isMobileScaffold
-              ? context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                )
-              : context.textTheme.titleLarge,
-        ),
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Notifications',
-            iconSize: isMobileScaffold ? 20 : null,
-            padding: isMobileScaffold
-                ? const EdgeInsets.all(HivorrSpacing.sm)
-                : null,
-            constraints: isMobileScaffold
-                ? const BoxConstraints(minWidth: 40, minHeight: 40)
-                : null,
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-        ],
-      ),
+      // Pre-hydration fail-open shares the Overview title (`Hivorr`) with
+      // the shared chrome and drawer — the shell owns no app bar on mobile,
+      // so this is the single header. No refresh action; the content
+      // RefreshIndicator below covers reloads.
+      drawer: isMobileScaffold ? const ClientDashboardDrawer() : null,
+      appBar: isMobileScaffold
+          ? const ClientMobileAppBar(title: 'Hivorr')
+          : AppBar(
+              title: Text(
+                'Hivorr',
+                style: context.textTheme.titleLarge,
+              ),
+              actions: <Widget>[
+                IconButton(
+                  tooltip: 'Notifications',
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () =>
+                      context.go(RoutePaths.dashboardNotifications),
+                ),
+              ],
+            ),
       body: MobileSafeBody(
         child:
             jobs.lastError != null &&
@@ -794,378 +763,6 @@ class _ClientTopBar extends StatelessWidget {
   }
 }
 
-/// Mobile hamburger drawer for the client dashboard (`mob cl handb.png`).
-///
-/// Client-only (<600dp, hire focus): logo header, `Employer Dashboard`
-/// context strip, reference-ordered destinations (Dashboard active pill,
-/// Post a Job primary CTA, My Jobs, Applications, Messages, Payments,
-/// Profile) and an account footer with log-out. A standard [Drawer] supplies
-/// the modal scrim plus scrim/back-to-close with no layout shift; the shell
-/// bottom navigation is untouched. Item language mirrors
-/// `DashboardSidebar` (selected = primary wash, 20dp icons).
-class _ClientDrawer extends StatelessWidget {
-  const _ClientDrawer();
-
-  /// Reference drawer width: ~70% of a 390dp phone, safe at 320dp.
-  static const double _width = 280;
-
-  static const List<_ClientDrawerDef> _items = <_ClientDrawerDef>[
-    _ClientDrawerDef(
-      label: 'Dashboard',
-      location: '/dashboard',
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-    ),
-    _ClientDrawerDef(
-      label: 'My Jobs',
-      location: RoutePaths.dashboardJobs,
-      icon: Icons.business_center_outlined,
-      activeIcon: Icons.business_center,
-    ),
-    _ClientDrawerDef(
-      label: 'Applications',
-      location: RoutePaths.dashboardApplications,
-      icon: Icons.group_outlined,
-      activeIcon: Icons.group,
-    ),
-    _ClientDrawerDef(
-      label: 'Messages',
-      location: RoutePaths.dashboardMessages,
-      icon: Icons.mail_outline,
-      activeIcon: Icons.mail,
-    ),
-    _ClientDrawerDef(
-      label: 'Payments',
-      location: RoutePaths.dashboardPayments,
-      icon: Icons.payments_outlined,
-      activeIcon: Icons.payments,
-    ),
-    _ClientDrawerDef(
-      label: 'Profile',
-      location: RoutePaths.dashboardAccount,
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    final RoleThemeExtension roles = context.roleTheme;
-    // `/dashboard` fallback keeps router-less harnesses (isolated widget
-    // tests) rendering the Dashboard-active reference state.
-    String location = '/dashboard';
-    try {
-      location = GoRouterState.of(context).matchedLocation;
-    } catch (_) {
-      location = '/dashboard';
-    }
-    String displayName = DashboardCapability.hire.label;
-    try {
-      final String? email =
-          context.watch<AuthProvider>().currentSession?.email;
-      if (email != null && email.isNotEmpty) {
-        displayName = _prettifyEmailPrefix(email);
-      }
-    } catch (_) {
-      displayName = DashboardCapability.hire.label;
-    }
-    return Drawer(
-      width: _width,
-      backgroundColor: colors.surface,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                HivorrSpacing.md,
-                HivorrSpacing.md,
-                HivorrSpacing.md,
-                HivorrSpacing.smMd,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.flash_on_rounded,
-                      color: colors.onPrimary,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: HivorrSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Hivorr',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              color: roles.clientContainer,
-              padding: const EdgeInsets.symmetric(
-                horizontal: HivorrSpacing.md,
-                vertical: HivorrSpacing.sm,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: HivorrSpacing.sm,
-                    height: HivorrSpacing.sm,
-                    decoration: BoxDecoration(
-                      color: roles.clientPrimary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: HivorrSpacing.sm),
-                  Text(
-                    'Employer Dashboard',
-                    style: context.textTheme.labelMedium?.copyWith(
-                      color: roles.clientPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  vertical: HivorrSpacing.sm,
-                ),
-                children: <Widget>[
-                  _ClientDrawerItem(
-                    label: _items[0].label,
-                    icon: _items[0].icon,
-                    activeIcon: _items[0].activeIcon,
-                    selected: _isSelected(location, _items[0].location),
-                    onTap: () => _go(context, location, _items[0].location),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: HivorrSpacing.smMd,
-                      vertical: HivorrSpacing.xs,
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () =>
-                          _go(context, location, RoutePaths.dashboardJobNew),
-                      icon: const Icon(Icons.add, size: 20),
-                      label: const Text('Post a Job'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: colors.onPrimary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: HivorrSpacing.smMd,
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  for (int i = 1; i < _items.length; i++)
-                    _ClientDrawerItem(
-                      label: _items[i].label,
-                      icon: _items[i].icon,
-                      activeIcon: _items[i].activeIcon,
-                      selected: _isSelected(location, _items[i].location),
-                      onTap: () => _go(context, location, _items[i].location),
-                    ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: colors.outlineVariant),
-            Padding(
-              padding: const EdgeInsets.all(HivorrSpacing.md),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: roles.clientContainer,
-                      border: Border.all(
-                        color: roles.clientPrimary,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Text(
-                      _initials(displayName),
-                      style: context.textTheme.titleSmall?.copyWith(
-                        color: roles.clientPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: HivorrSpacing.smMd),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          'Employer',
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Log out',
-                    iconSize: 20,
-                    padding: const EdgeInsets.all(HivorrSpacing.sm),
-                    constraints: const BoxConstraints(
-                      minWidth: 40,
-                      minHeight: 40,
-                    ),
-                    icon: const Icon(Icons.logout_outlined),
-                    color: colors.onSurfaceVariant,
-                    onPressed: () => _signOut(context),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static bool _isSelected(String location, String itemLocation) {
-    final String base = itemLocation.split('?').first;
-    if (base == '/dashboard') {
-      return location == '/dashboard';
-    }
-    return location == base || location.startsWith('$base/');
-  }
-
-  /// Closes the drawer first (mirroring `DashboardSidebar._go`), then routes
-  /// only when the destination actually changes.
-  static void _go(BuildContext context, String location, String path) {
-    Navigator.of(context).pop();
-    final String base = path.split('?').first;
-    final String currentBase = location.split('?').first;
-    if (currentBase != base) {
-      context.go(path);
-    }
-  }
-
-  static Future<void> _signOut(BuildContext context) async {
-    final GoRouter router = GoRouter.of(context);
-    final AuthProvider auth = context.read<AuthProvider>();
-    Navigator.of(context).pop();
-    await auth.signOut();
-    router.go(RoutePaths.login);
-  }
-}
-
-class _ClientDrawerDef {
-  const _ClientDrawerDef({
-    required this.label,
-    required this.location,
-    required this.icon,
-    required this.activeIcon,
-  });
-
-  final String label;
-  final String location;
-  final IconData icon;
-  final IconData activeIcon;
-}
-
-class _ClientDrawerItem extends StatelessWidget {
-  const _ClientDrawerItem({
-    required this.label,
-    required this.icon,
-    required this.activeIcon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final IconData activeIcon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: HivorrSpacing.smMd,
-        vertical: 2,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: selected
-                ? colors.primary.withValues(alpha: 0.08)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: HivorrSpacing.md,
-            vertical: HivorrSpacing.smMd,
-          ),
-          child: Row(
-            children: <Widget>[
-              Icon(
-                selected ? activeIcon : icon,
-                size: 20,
-                color: selected ? colors.primary : colors.onSurfaceVariant,
-              ),
-              const SizedBox(width: HivorrSpacing.md),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.labelMedium?.copyWith(
-                    fontWeight:
-                        selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? colors.primary : colors.onSurface,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Client content column: hero, then quick actions + active jobs beside the
 /// right-rail metric grid on wide layouts. Below the rail breakpoint the
 /// sections stack as one page — mobile (<600dp) follows the reference
@@ -1285,7 +882,7 @@ class _ClientContent extends StatelessWidget {
           // jobs, recent applications, then the rail cards stacked below.
           const _ClientStatsGrid(),
           SizedBox(height: sectionGap),
-          quickActions,
+          const _ClientQuickActionsSection(),
           SizedBox(height: sectionGap),
           activeJobs,
           SizedBox(height: sectionGap),
@@ -1527,6 +1124,146 @@ class _ClientHero extends StatelessWidget {
 }
 
 /// Three quick-action tiles: Post a Job, View Applications, Message Hires.
+/// Mobile (<600dp) Quick Actions section: heading with a scroll-affordance
+/// arrow plus a 2.5-card horizontal carousel (two full cards + a peeking
+/// third). Destinations, icons, labels and tints reuse [_QuickTile]
+/// unchanged — only the presentation scrolls. Tablet/desktop keep the
+/// reference 3-across row via [_ClientQuickActions] untouched.
+class _ClientQuickActionsSection extends StatefulWidget {
+  const _ClientQuickActionsSection();
+
+  @override
+  State<_ClientQuickActionsSection> createState() =>
+      _ClientQuickActionsSectionState();
+}
+
+class _ClientQuickActionsSectionState
+    extends State<_ClientQuickActionsSection> {
+  final ScrollController _scroll = ScrollController();
+  bool _showArrow = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_syncArrow);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncArrow());
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_syncArrow);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Hides the arrow once the carousel reaches its end (or when everything
+  /// already fits and there is nothing to reveal).
+  void _syncArrow() {
+    if (!mounted || !_scroll.hasClients) {
+      return;
+    }
+    final bool show =
+        _scroll.position.maxScrollExtent > 0 &&
+        _scroll.position.pixels < _scroll.position.maxScrollExtent - 4;
+    if (show != _showArrow && mounted) {
+      setState(() => _showArrow = show);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Quick Actions',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            AnimatedOpacity(
+              opacity: _showArrow ? 1 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Tooltip(
+                message: 'More quick actions',
+                child: Icon(
+                  Icons.arrow_forward,
+                  size: 20,
+                  color: context.colorScheme.primary,
+                  semanticLabel: 'More quick actions',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: HivorrSpacing.xs),
+        LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            // Exactly 2 full cards + a half-peeking 3rd card to affordance
+            // horizontal scrolling: 2.5 * card + 2 * gap == viewport.
+            const double gap = HivorrSpacing.sm;
+            final double viewport = constraints.maxWidth;
+            final double cardWidth = viewport <= 0
+                ? 120
+                : (viewport - gap * 2) / 2.5;
+            return SingleChildScrollView(
+              controller: _scroll,
+              scrollDirection: Axis.horizontal,
+              // Hard-edge clip keeps the slide strictly within the section —
+              // the page itself never scrolls horizontally.
+              clipBehavior: Clip.hardEdge,
+              physics: const ClampingScrollPhysics(),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    SizedBox(
+                      width: cardWidth,
+                      child: _QuickTile(
+                        label: 'Post a Job',
+                        icon: Icons.add,
+                        onTap: () =>
+                            context.go(RoutePaths.dashboardJobNew),
+                      ),
+                    ),
+                    const SizedBox(width: gap),
+                    SizedBox(
+                      width: cardWidth,
+                      child: _QuickTile(
+                        label: 'View Applications',
+                        icon: Icons.people_outline,
+                        tint: _QuickTint.green,
+                        onTap: () => context.go(RoutePaths.dashboardJobs),
+                      ),
+                    ),
+                    const SizedBox(width: gap),
+                    SizedBox(
+                      width: cardWidth,
+                      child: _QuickTile(
+                        label: 'Message Hires',
+                        icon: Icons.chat_bubble_outline,
+                        tint: _QuickTint.peach,
+                        onTap: () =>
+                            context.go(RoutePaths.dashboardMessages),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 class _ClientQuickActions extends StatelessWidget {
   const _ClientQuickActions();
 

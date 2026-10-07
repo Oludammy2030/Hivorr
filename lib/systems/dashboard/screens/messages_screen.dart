@@ -21,6 +21,7 @@ import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/communication/services/message_crypto.dart';
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/messaging_thread_meta.dart';
 import 'package:provider/provider.dart';
 
@@ -141,13 +142,17 @@ class _MessagesScreenState extends State<MessagesScreen> {
   Widget build(BuildContext context) {
     final MessagingProvider messaging = context.watch<MessagingProvider>();
     final List<Hire> hires = _hiresOf(context);
+    // Hire focus shares the client chrome (hamburger + drawer); professional
+    // focus keeps its existing bar untouched. Single page title (`Messages`).
+    final bool menu = showClientMenu(context);
 
-    // Single page title (`Messages`); no refresh action — the content
-    // RefreshIndicator below covers reloads.
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Messages', style: context.textTheme.titleLarge),
-      ),
+      drawer: menu ? const ClientDashboardDrawer() : null,
+      appBar: menu
+          ? const ClientMobileAppBar(title: 'Messages')
+          : AppBar(
+              title: Text('Messages', style: context.textTheme.titleLarge),
+            ),
       body: MobileSafeBody(
         child: messaging.isLoading && messaging.conversations.isEmpty
             ? const HivorrLoadingState()
@@ -181,11 +186,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   }
                   // Narrow keeps the last-selected highlight so returning
                   // from a thread still marks the active row (reference).
+                  // The app bar titles this page, so the narrow list drops
+                  // its own header row (the desktop pane keeps it).
                   return _ConversationList(
                     conversations: _filtered(messaging.conversations, hires),
                     selectedId: _selectedId,
                     search: _search,
                     showSearch: true,
+                    showHeader: false,
                     onQuery: (String v) => setState(() => _query = v),
                     onSelect: (Conversation conversation) =>
                         _open(context, conversation, false),
@@ -259,6 +267,7 @@ class _ConversationList extends StatelessWidget {
     required this.showSearch,
     required this.onQuery,
     required this.onSelect,
+    this.showHeader = true,
   });
 
   final List<Conversation> conversations;
@@ -268,51 +277,56 @@ class _ConversationList extends StatelessWidget {
   final ValueChanged<String> onQuery;
   final ValueChanged<Conversation> onSelect;
 
+  /// Title + compose row. Hidden where an app bar already titles the page
+  /// (narrow body); the desktop split pane keeps it.
+  final bool showHeader;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            HivorrSpacing.md,
-            HivorrSpacing.md,
-            HivorrSpacing.md,
-            HivorrSpacing.sm,
-          ),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Messages',
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Tooltip(
-                message: 'New message',
-                child: InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: context.colorScheme.onSurfaceVariant,
+        if (showHeader)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              HivorrSpacing.md,
+              HivorrSpacing.md,
+              HivorrSpacing.md,
+              HivorrSpacing.sm,
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'Messages',
+                    style: context.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              ),
-            ],
+                Tooltip(
+                  message: 'New message',
+                  child: InkWell(
+                    onTap: () {},
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
         if (showSearch)
           Padding(
             padding: const EdgeInsets.fromLTRB(

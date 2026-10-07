@@ -116,13 +116,13 @@ void main() {
 
   for (final double width in <double>[320, 360, 390, 414]) {
     testWidgets(
-      'overview ${width.toInt()}px: single My Hivorr header + 2x2 stats, no overflow',
+      'overview ${width.toInt()}px: single Hivorr header + 2x2 stats, no overflow',
       (WidgetTester tester) async {
         await pumpOverview(tester, width: width);
         expect(tester.takeException(), isNull);
 
-        // Single header: My Hivorr once, no refresh action.
-        expect(find.text('My Hivorr'), findsOneWidget);
+        // Single header: Hivorr once, no refresh action.
+        expect(find.text('Hivorr'), findsOneWidget);
         expect(find.byTooltip('Refresh'), findsNothing);
 
         // 2x2 arrangement: row pairs share the same vertical center.

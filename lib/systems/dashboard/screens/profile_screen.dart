@@ -30,6 +30,7 @@ import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/models/picked_avatar.dart';
 import 'package:provider/provider.dart';
@@ -157,34 +158,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (isMobile) {
+      // Shared chrome carries bell + pill + avatar; pull-to-refresh on the
+      // content covers reloads.
       return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 48,
-          title: Text(
-            'Profile',
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: <Widget>[
-            IconButton(
-              tooltip: 'Notifications',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-            IconButton(
-              tooltip: 'Refresh',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: const Icon(Icons.refresh),
-              onPressed: () => unawaited(_refresh(capability)),
-            ),
-          ],
-        ),
+        drawer: const ClientDashboardDrawer(),
+        appBar: const ClientMobileAppBar(title: 'Profile'),
         body: MobileSafeBody(child: content),
       );
     }
@@ -392,13 +370,17 @@ class _ProfileContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
-          'Profile',
-          style: context.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
+        // The shared mobile bar already titles this page on phones, so the
+        // in-body heading shows on wider layouts only.
+        if (!compact) ...<Widget>[
+          Text(
+            'Profile',
+            style: context.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-        SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+          SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+        ],
         if (wide)
           Row(
             // NOTE: `start`, not `stretch` — this row lives inside a

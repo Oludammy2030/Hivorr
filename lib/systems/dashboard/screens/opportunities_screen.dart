@@ -26,6 +26,7 @@ import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_tint_badge.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
@@ -1959,13 +1960,9 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: isMobile ? const ClientDashboardDrawer() : null,
       appBar: isMobile
-          ? AppBar(
-              title: Text(
-                'Applications',
-                style: context.textTheme.titleLarge,
-              ),
-            )
+          ? const ClientMobileAppBar(title: 'Applications')
           : null,
       body: SafeArea(
         child: Column(
@@ -1982,14 +1979,18 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        Text(
-                          'Applications',
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                            color: context.colorScheme.onSurface,
+                        // The shared mobile bar already titles this page, so
+                        // the in-body heading shows on wider layouts only.
+                        if (!isMobile) ...<Widget>[
+                          Text(
+                            'Applications',
+                            style: context.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: context.colorScheme.onSurface,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: HivorrSpacing.xs),
+                          const SizedBox(height: HivorrSpacing.xs),
+                        ],
                         Text(
                           'Review and manage applicants for your jobs',
                           style: context.textTheme.bodyMedium?.copyWith(
