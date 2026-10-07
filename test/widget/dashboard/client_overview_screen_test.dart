@@ -348,10 +348,14 @@ void main() {
       expect(find.text('Dashboard'), findsOneWidget);
       expect(find.text('Post a Job'), findsWidgets);
       expect(find.text('My Jobs'), findsOneWidget);
+      expect(find.text('Find Services'), findsOneWidget);
       expect(find.text('Applications'), findsOneWidget);
       expect(find.text('Messages'), findsOneWidget);
       expect(find.text('Payments'), findsWidgets);
+      expect(find.text('Notifications'), findsOneWidget);
       expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Explore more ways to use Hivorr'), findsOneWidget);
       expect(find.byTooltip('Log out'), findsOneWidget);
 
       // Client-only: the drawer adds no professional navigation. `Find

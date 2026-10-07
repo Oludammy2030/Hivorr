@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 /// `Dashboard / Find Work / My Jobs / Messages / Earnings / Profile`
 /// primaries + a `More` overflow for the remaining focus-visible items so
 /// nothing is removed). Hire focus (or unhydrated fail-open) keeps the
-/// established grouped navigation (My Work / My Hiring / Shared). Switching
+/// established grouped navigation (My Work / My Jobs / Shared). Switching
 /// sides happens in the Explore/Earn launcher — there is no in-shell toggle.
 class DashboardSidebar extends StatelessWidget {
   const DashboardSidebar({

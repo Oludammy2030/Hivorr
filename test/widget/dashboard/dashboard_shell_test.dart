@@ -33,7 +33,7 @@ void main() {
       expect(find.text('Find Services'), findsOneWidget);
       expect(find.text('Applications'), findsOneWidget);
       expect(find.text('Payments'), findsOneWidget);
-      expect(find.text('MY HIRING'), findsOneWidget);
+      expect(find.text('MY JOBS'), findsOneWidget);
       expect(find.text('Find Jobs'), findsNothing);
       expect(find.text('My Applications'), findsNothing);
       expect(find.text('Earnings'), findsNothing);
@@ -93,7 +93,7 @@ void main() {
       expect(find.text('Find Jobs'), findsOneWidget);
       expect(find.text('Post a Job'), findsOneWidget);
       expect(find.text('MY WORK'), findsOneWidget);
-      expect(find.text('MY HIRING'), findsOneWidget);
+      expect(find.text('MY JOBS'), findsOneWidget);
       expect(find.text('SHARED'), findsOneWidget);
       // No combined identity: neither focus label renders pre-hydration.
       expect(find.text('CLIENT'), findsNothing);

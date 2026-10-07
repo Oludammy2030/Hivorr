@@ -33,7 +33,7 @@ import 'package:provider/provider.dart';
 
 /// Hires list for one side of the engagement (EP-04-03).
 ///
-/// [role] is `client` (My Hiring → professionals hired) or `professional`
+/// [role] is `client` (My Jobs → professionals hired) or `professional`
 /// (Professional Dashboard → My Jobs → Active | Applied | Completed).
 ///
 /// Client keeps the established status-chip list. Professional renders the

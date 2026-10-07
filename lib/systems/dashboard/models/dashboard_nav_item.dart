@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 /// Navigation sections for the focus-filtered dashboard nav (EP-04-03).
 ///
 /// Pre-hydration (focus unknown) shows all sections with headers (My Work /
-/// My Hiring / Shared); hire focus sees hiring + shared; offer focus sees
+/// My Jobs / Shared); hire focus sees hiring + shared; offer focus sees
 /// work + shared. No mode state — visibility is pure focus filtering.
 enum DashboardNavSection {
   /// Professional-work side.
   work('My Work'),
 
-  /// Hiring side.
-  hiring('My Hiring'),
+  /// Client jobs side (approved product term, not `Hiring`).
+  hiring('My Jobs'),
 
   /// Shared across both sides.
   shared('Shared');
@@ -66,12 +66,13 @@ class DashboardNavItem {
 /// Mobile primary destinations for the bottom navigation (<600dp).
 ///
 /// Returns at most the focus-relevant primaries in bar order:
-/// hire → Overview, My Jobs, Find Services, Messages;
+/// hire → Overview, My Jobs, Post Job, Find Services, Messages;
 /// offer → Overview, Find Jobs, Messages;
 /// unhydrated (both flags) → Overview, My Jobs, Find Jobs, Messages
 /// (Find Services stays one tap away under `More` so the bar never exceeds
 /// five destinations).
-/// The `More` tab itself is rendered by the shell and is not included here.
+/// The `More` tab itself is rendered by the shell — only when professional
+/// focus is visible — and is not included here.
 List<DashboardNavItem> mobilePrimaryNavItems({
   required bool hire,
   required bool offer,
@@ -87,6 +88,11 @@ List<DashboardNavItem> mobilePrimaryNavItems({
   ];
   if (hire) {
     primaries.add(byLocation('/dashboard/jobs'));
+  }
+  // Direct Post Job action: the existing flow, one tap from the bar. Kept
+  // out of the unhydrated set (bar-crowding guard) like Find Services.
+  if (hire && !offer) {
+    primaries.add(byLocation('/dashboard/jobs/new'));
   }
   // Hiring-side marketplace discovery: a primary tab for hire
   // focus, rendered inside the dashboard shell (`/dashboard/services`) so
@@ -193,7 +199,7 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     section: DashboardNavSection.work,
     showForHire: false,
   ),
-  // My Hiring (client side).
+  // My Jobs (client side).
   DashboardNavItem(
     label: 'Post a Job',
     icon: Icons.add_circle_outline,
