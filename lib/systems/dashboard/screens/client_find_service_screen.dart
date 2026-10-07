@@ -137,12 +137,6 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
     await provider?.search();
   }
 
-  Future<void> _refresh() async {
-    final MarketplaceSearchProvider? provider =
-        context.read<MarketplaceSearchProvider?>();
-    if (provider != null) await provider.search();
-  }
-
   Future<void> _selectIndustry(String? id) async {
     setState(() => _industryId = id);
     if (id != null) {
@@ -256,6 +250,8 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
   Widget build(BuildContext context) {
     final bool isMobile = context.breakpoint == Breakpoint.mobile;
     if (isMobile) {
+      // Single page title (`Find Services`); no refresh action —
+      // pull-to-refresh on the content covers reloads.
       return Scaffold(
         appBar: AppBar(
           toolbarHeight: 48,
@@ -273,14 +269,6 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-            IconButton(
-              tooltip: 'Refresh',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: const Icon(Icons.refresh),
-              onPressed: () => unawaited(_refresh()),
             ),
           ],
         ),

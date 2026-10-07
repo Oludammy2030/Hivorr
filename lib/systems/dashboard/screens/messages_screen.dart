@@ -142,16 +142,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final MessagingProvider messaging = context.watch<MessagingProvider>();
     final List<Hire> hires = _hiresOf(context);
 
+    // Single page title (`Messages`); no refresh action — the content
+    // RefreshIndicator below covers reloads.
     return Scaffold(
       appBar: AppBar(
         title: Text('Messages', style: context.textTheme.titleLarge),
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh),
-            onPressed: () => unawaited(_load()),
-          ),
-        ],
       ),
       body: MobileSafeBody(
         child: messaging.isLoading && messaging.conversations.isEmpty

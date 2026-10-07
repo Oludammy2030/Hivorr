@@ -29,6 +29,7 @@ import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dar
 import 'package:hivorr/systems/finance/services/contract_escrow_state.dart';
 import 'package:hivorr/systems/finance/widgets/escrow_dispute_banner.dart';
 import 'package:hivorr/systems/finance/widgets/milestone_list_card.dart';
+import 'package:hivorr/systems/reviews/widgets/contract_review_section.dart';
 import 'package:provider/provider.dart';
 
 /// Contract detail screen (EP-03-10 §8 D8).
@@ -508,6 +509,7 @@ class _DetailBody extends StatelessWidget {
         const SizedBox(height: HivorrSpacing.md),
         ContractTimeline(events: contract.events),
         const SizedBox(height: HivorrSpacing.md),
+        ContractReviewSection(contract: contract, viewerId: viewerId),
         ContractWriteCtaPanel(
           writeAvailable: writeAvailable,
           isBusy: busy,

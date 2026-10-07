@@ -208,6 +208,22 @@ abstract final class RoutePaths {
   static String contractMilestonesEdit(String id) =>
       '/contracts/${Uri.encodeComponent(id)}/milestones/edit';
 
+  /// Review submission route for a contract (EP-03-12, protected).
+  /// Parameter: `id` (authoritative `service_contracts.id`).
+  static const String contractReviewRoute = '/contracts/:id/review';
+
+  /// Review reveal route for a contract (EP-03-12, protected).
+  /// Parameter: `id` (authoritative `service_contracts.id`).
+  static const String contractReviewsRoute = '/contracts/:id/reviews';
+
+  /// Builds a URL-encoded contract review submission path.
+  static String contractReviewFor(String id) =>
+      '/contracts/${Uri.encodeComponent(id)}/review';
+
+  /// Builds a URL-encoded contract review reveal path.
+  static String contractReviewsFor(String id) =>
+      '/contracts/${Uri.encodeComponent(id)}/reviews';
+
   /// Role-aware dashboard shell root (EP-04-03).
   static const String dashboard = '/dashboard';
 
