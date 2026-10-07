@@ -12,6 +12,7 @@ import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
+import 'package:hivorr/core/sync/action_queue.dart';
 import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
@@ -358,7 +359,14 @@ class AppBootstrap {
     final ({HireRepository repository, HireProvider provider}) hires =
         registerHiresLayer(apiLayer);
     final ({MessagingRepository repository, MessagingProvider provider})
-    messaging = registerMessagingLayer(apiLayer);
+    messaging = registerMessagingLayer(
+      apiLayer,
+      storageEngine: storage,
+      outbox: ActionQueue(
+        engine: storage,
+        config: appConfig.environmentConfig.syncConfig,
+      ),
+    );
     // EP-03-11 release orchestration (verify-before-release sequencing over
     // the contract + escrow services; fund movement stays proxy-seamed).
     // Built only when both halves are wired; screens degrade gracefully.

@@ -30,6 +30,12 @@ class AppBoxes {
   /// completion state is server-authoritative (entities.onboarding_completed_at).
   static const String onboarding = 'onboarding';
 
+  /// Cached messaging thread windows + composer drafts (EP-03-13).
+  /// Cache-only — `message_list` keyset is authoritative; verified plaintext
+  /// is never persisted here, only transport DTO JSON + draft input text.
+  /// Evict on logout.
+  static const String messages = 'messages';
+
   /// All pre-registered box names.
   static const List<String> all = <String>[
     cache,
@@ -38,5 +44,6 @@ class AppBoxes {
     misc,
     entry,
     onboarding,
+    messages,
   ];
 }

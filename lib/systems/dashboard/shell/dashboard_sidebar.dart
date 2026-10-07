@@ -5,6 +5,7 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/systems/dashboard/dashboard_sign_out.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
 import 'package:provider/provider.dart';
 
@@ -510,7 +511,7 @@ class _ProfessionalSidebar extends StatelessWidget {
   Future<void> _signOut(BuildContext context) async {
     onNavigate?.call();
     try {
-      await context.read<AuthProvider>().signOut();
+      await signOutAndEvictMessagingCache(context);
     } catch (_) {
       // Auth provider absent (e.g. isolated widget test) — fall back home.
       if (context.mounted) context.go(RoutePaths.home);
