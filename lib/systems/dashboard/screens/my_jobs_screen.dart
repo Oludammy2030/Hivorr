@@ -26,6 +26,7 @@ import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
 import 'package:provider/provider.dart';
 
@@ -261,10 +262,9 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: isMobile ? const ClientDashboardDrawer() : null,
       appBar: isMobile
-          ? AppBar(
-              title: Text('My Jobs', style: context.textTheme.titleLarge),
-            )
+          ? const ClientMobileAppBar(title: 'My Jobs')
           : null,
       body: MobileSafeBody(
         child: Column(
@@ -387,16 +387,27 @@ class _PageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Phones keep the title on one line next to a compact CTA: the smaller
+    // title style + small button fit 320dp side by side, centered so neither
+    // side drifts. Wider layouts keep the reference arrangement untouched.
+    final bool compact = context.breakpoint == Breakpoint.mobile;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          compact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: <Widget>[
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
                 'My Posted Jobs',
-                style: context.textTheme.headlineSmall?.copyWith(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: (compact
+                        ? context.textTheme.titleSmall
+                        : context.textTheme.headlineSmall)
+                    ?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: context.colorScheme.onSurface,
                 ),
@@ -404,6 +415,8 @@ class _PageHeader extends StatelessWidget {
               const SizedBox(height: HivorrSpacing.xs),
               Text(
                 '$total jobs · $openCount open',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: context.textTheme.bodyMedium?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
                 ),
@@ -411,10 +424,11 @@ class _PageHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: HivorrSpacing.md),
+        SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
         HivorrButton(
           label: 'Post New Job',
           icon: const Icon(Icons.add, size: 20),
+          size: compact ? HivorrButtonSize.small : HivorrButtonSize.medium,
           onPressed: () => context.go(RoutePaths.dashboardJobNew),
         ),
       ],

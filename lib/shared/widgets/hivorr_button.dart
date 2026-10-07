@@ -98,6 +98,8 @@ class HivorrButton extends StatelessWidget {
     final Widget labelChild = Text(
       label,
       key: const ValueKey<String>('label'),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: labelStyle,
     );
 
@@ -120,7 +122,10 @@ class HivorrButton extends StatelessWidget {
                     children: <Widget>[
                       icon!,
                       const SizedBox(width: HivorrSpacing.xs),
-                      labelChild,
+                      // Shrink-safe label: identical rendering when space
+                      // suffices, ellipsis instead of overflow when tight
+                      // (e.g. compact headers at 320dp).
+                      Flexible(child: labelChild),
                     ],
                   )
                 : labelChild),

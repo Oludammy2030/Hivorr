@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/hire.dart';
@@ -293,7 +294,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      expect(find.text('My Hivorr'), findsOneWidget);
+      expect(find.text('Hivorr'), findsOneWidget);
       expect(find.text('Dashboard'), findsNothing);
       expect(find.text('Quick Actions'), findsOneWidget);
       expect(find.text('Senior React Developer'), findsWidgets);
@@ -327,15 +328,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Upper-left hamburger trigger on the mobile app bar.
-      expect(find.byTooltip('Open navigation menu'), findsOneWidget);
+      // Upper-left hamburger trigger on the shared mobile app bar.
+      expect(find.byTooltip('Menu'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.tap(find.byTooltip('Menu'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Reference drawer chrome.
-      expect(find.text('Hivorr'), findsOneWidget);
+      // Reference drawer chrome (logo scoped to the open drawer: the app
+      // bar carries the same `Hivorr` title).
+      expect(
+        find.descendant(
+          of: find.byType(Drawer),
+          matching: find.text('Hivorr'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Employer Dashboard'), findsOneWidget);
       expect(find.text('Dashboard'), findsOneWidget);
       expect(find.text('Post a Job'), findsWidgets);
@@ -356,7 +364,7 @@ void main() {
       await tester.tap(find.text('Dashboard'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.byTooltip('Open navigation menu'), findsOneWidget);
+      expect(find.byTooltip('Menu'), findsOneWidget);
     });
   });
 }

@@ -14,6 +14,7 @@ import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
 import 'package:provider/provider.dart';
 
@@ -225,10 +226,9 @@ class _JobFormScreenState extends State<JobFormScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: isMobile ? const ClientDashboardDrawer() : null,
       appBar: isMobile
-          ? AppBar(
-              title: Text(appBarTitle, style: context.textTheme.titleLarge),
-            )
+          ? ClientMobileAppBar(title: appBarTitle)
           : null,
       body: MobileSafeBody(
         child: Column(

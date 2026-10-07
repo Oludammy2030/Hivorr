@@ -23,6 +23,7 @@ import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/quick_actions.dart';
 import 'package:provider/provider.dart';
@@ -85,31 +86,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     );
 
     if (isMobile) {
-      // Single page title (`Payments`); no refresh action — the content
-      // RefreshIndicator below covers reloads.
+      // Single page title (`Payments`) on the shared client chrome; no
+      // refresh action — the content RefreshIndicator below covers reloads.
       return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 48,
-          title: Text(
-            'Payments',
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: <Widget>[
-            IconButton(
-              tooltip: 'Notifications',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-          ],
-        ),
+        drawer: const ClientDashboardDrawer(),
+        appBar: const ClientMobileAppBar(title: 'Payments'),
         body: MobileSafeBody(child: content),
       );
     }
