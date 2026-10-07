@@ -29,6 +29,7 @@ import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/systems/dashboard/dashboard_sign_out.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
@@ -150,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               maxWidth: c.maxWidth,
               capability: capability,
               email: email,
-              onSignOut: () => auth.signOut(),
+              onSignOut: () => signOutAndEvictMessagingCache(context),
             ),
           );
         },
@@ -2258,7 +2259,7 @@ class _ProSettingsTabState extends State<_ProSettingsTab> {
 
   Future<void> _signOut() async {
     try {
-      await context.read<AuthProvider>().signOut();
+      await signOutAndEvictMessagingCache(context);
     } catch (_) {
       if (!mounted) return;
       _snack('Sign out is not available here.', HivorrSnackbarVariant.error);

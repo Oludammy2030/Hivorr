@@ -43,20 +43,55 @@ class _ConversationScreenState extends State<ConversationScreen>
     with WidgetsBindingObserver {
   final TextEditingController _composer = TextEditingController();
   final ScrollController _scroll = ScrollController();
+  Timer? _draftTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _composer.addListener(_scheduleDraftSave);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
+    try {
+      // Best-effort draft persist; the debounced saver usually already ran.
+      unawaited(
+        _readMessaging()?.saveDraft(
+          widget.conversationId,
+          _composer.text,
+        ) ?? Future<void>.value(),
+      );
+    } on Object {
+      // Context unavailable during teardown — draft already debounced.
+    }
     WidgetsBinding.instance.removeObserver(this);
-    _composer.dispose();
+    _composer
+      ..removeListener(_scheduleDraftSave)
+      ..dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  MessagingProvider? _readMessaging() {
+    try {
+      return context.read<MessagingProvider>();
+    } on Object {
+      return null;
+    }
+  }
+
+  void _scheduleDraftSave() {
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      unawaited(
+        _readMessaging()?.saveDraft(widget.conversationId, _composer.text) ??
+            Future<void>.value(),
+      );
+    });
   }
 
   @override
@@ -69,8 +104,22 @@ class _ConversationScreenState extends State<ConversationScreen>
     }
   }
 
-  Future<void> _load() =>
-      context.read<MessagingProvider>().select(widget.conversationId);
+  Future<void> _load() async {
+    await context.read<MessagingProvider>().select(widget.conversationId);
+    if (!mounted) return;
+    // Restore the unsent composer draft (Hive, device-local).
+    try {
+      final String? draft = await context
+          .read<MessagingProvider>()
+          .readDraft(widget.conversationId);
+      if (!mounted) return;
+      if (draft != null && draft.isNotEmpty && _composer.text.isEmpty) {
+        _composer.text = draft;
+      }
+    } on Object {
+      // Draft restore is best-effort; the server thread already loaded.
+    }
+  }
 
   /// Thread title: the person, never the job — the work banner below
   /// already carries the per-conversation job reference, so showing it twice
@@ -219,20 +268,33 @@ class _ConversationScreenState extends State<ConversationScreen>
                             controller: _scroll,
                             padding: const EdgeInsets.all(HivorrSpacing.md),
                             itemCount: messaging.messages.length,
-                            itemBuilder: (BuildContext context, int i) {
+                          itemBuilder: (BuildContext context, int i) {
                               final message = messaging.messages[i];
                               final bool mine =
                                   entityId != null &&
                                   entityId == message.senderEntityId;
-                              return HivorrChatBubble(
+                              // Optimistic offline echoes render dimmed until
+                              // the server acknowledges them (pending tick).
+                              final bool pending = messaging.isPending(
+                                message.clientMessageId,
+                              );
+                              final Widget bubble = HivorrChatBubble(
                                 text: message.decryptedBody,
                                 timestamp: message.createdAt,
                                 mine: mine,
                                 elevated: false,
                               );
+                              if (!pending) return bubble;
+                              return Opacity(opacity: 0.6, child: bubble);
                             },
                           ),
-                  ),
+                    ),
+                  if (messaging.hasFailedSends)
+                    _FailedSendBanner(
+                      onRetry: () => unawaited(
+                        context.read<MessagingProvider>().retryFailed(),
+                      ),
+                    ),
                   _Composer(
                     controller: _composer,
                     sending: messaging.isSending,
@@ -369,6 +431,45 @@ class _Composer extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Retry banner for durable offline sends that failed replay (EP-03-13).
+///
+/// Shown above the composer while [MessagingProvider.hasFailedSends] holds.
+/// Retrying calls [MessagingProvider.retryFailed], which replays the
+/// `ActionQueue` through `supabase.rpc('message_send')` — deduplicated by
+/// `client_message_id`, so double-taps never duplicate rows.
+class _FailedSendBanner extends StatelessWidget {
+  const _FailedSendBanner({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Container(
+      color: colors.errorContainer,
+      padding: const EdgeInsets.symmetric(
+        horizontal: HivorrSpacing.md,
+        vertical: HivorrSpacing.sm,
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.cloud_off_outlined, size: 18, color: colors.error),
+          const SizedBox(width: HivorrSpacing.sm),
+          Expanded(
+            child: Text(
+              'Some messages could not be sent. They are saved on this device.',
+              style: context.textTheme.bodySmall?.copyWith(
+                color: colors.onErrorContainer,
+              ),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
       ),
     );
   }

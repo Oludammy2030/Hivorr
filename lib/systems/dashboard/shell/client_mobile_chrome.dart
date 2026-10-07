@@ -8,7 +8,9 @@ import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/systems/dashboard/dashboard_sign_out.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
+import 'package:hivorr/systems/dashboard/models/dashboard_nav_item.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
 
@@ -248,55 +250,33 @@ bool showClientMenu(BuildContext context) {
 
 /// Mobile hamburger drawer for the client dashboard (`mob cl handb.png`).
 ///
-/// Logo header, `Employer Dashboard` context strip, reference-ordered
-/// destinations (Dashboard active pill, Post a Job primary CTA, My Jobs,
-/// Applications, Messages, Payments, Profile) and an account footer with
-/// log-out. Standard [Drawer] behavior: modal scrim plus scrim/back to
-/// close, no layout shift; the shell bottom navigation is untouched.
+/// Logo header, `Employer Dashboard` context strip, the full hire-visible
+/// destination set derived from the shared [dashboardNavItems] config (so
+/// mobile can never drift behind desktop: Dashboard active pill, Post a Job
+/// primary CTA, then every hiring + shared entry in canonical order, plus
+/// the Explore launcher the `More` sheet used to carry) and an account
+/// footer with log-out. Standard [Drawer] behavior: modal scrim plus
+/// scrim/back to close, no layout shift; the shell bottom navigation is
+/// untouched.
 class ClientDashboardDrawer extends StatelessWidget {
   const ClientDashboardDrawer({super.key});
 
   /// Reference drawer width: ~70% of a 390dp phone, safe at 320dp.
   static const double width = 280;
 
-  static const List<_ClientDrawerDef> _items = <_ClientDrawerDef>[
-    _ClientDrawerDef(
-      label: 'Dashboard',
-      location: '/dashboard',
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-    ),
-    _ClientDrawerDef(
-      label: 'My Jobs',
-      location: RoutePaths.dashboardJobs,
-      icon: Icons.business_center_outlined,
-      activeIcon: Icons.business_center,
-    ),
-    _ClientDrawerDef(
-      label: 'Applications',
-      location: RoutePaths.dashboardApplications,
-      icon: Icons.group_outlined,
-      activeIcon: Icons.group,
-    ),
-    _ClientDrawerDef(
-      label: 'Messages',
-      location: RoutePaths.dashboardMessages,
-      icon: Icons.mail_outline,
-      activeIcon: Icons.mail,
-    ),
-    _ClientDrawerDef(
-      label: 'Payments',
-      location: RoutePaths.dashboardPayments,
-      icon: Icons.payments_outlined,
-      activeIcon: Icons.payments,
-    ),
-    _ClientDrawerDef(
-      label: 'Profile',
-      location: RoutePaths.dashboardAccount,
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
-    ),
-  ];
+  /// Hire-visible destinations from the shared config, in canonical desktop
+  /// order. Post a Job renders as the reference CTA (not a row); the
+  /// Overview entry is labeled `Dashboard` per the reference.
+  static List<DashboardNavItem> get _items => dashboardNavItems
+      .where(
+        (DashboardNavItem item) =>
+            item.visibleFor(hire: true, offer: false) &&
+            item.location != RoutePaths.dashboardJobNew,
+      )
+      .toList(growable: false);
+
+  static String _label(DashboardNavItem item) =>
+      item.location == '/dashboard' ? 'Dashboard' : item.label;
 
   @override
   Widget build(BuildContext context) {
@@ -320,6 +300,7 @@ class ClientDashboardDrawer extends StatelessWidget {
     } catch (_) {
       displayName = DashboardCapability.hire.label;
     }
+    final List<DashboardNavItem> items = _items;
     return Drawer(
       width: width,
       backgroundColor: colors.surface,
@@ -397,11 +378,11 @@ class ClientDashboardDrawer extends StatelessWidget {
                 ),
                 children: <Widget>[
                   _ClientDrawerItem(
-                    label: _items[0].label,
-                    icon: _items[0].icon,
-                    activeIcon: _items[0].activeIcon,
-                    selected: _isSelected(location, _items[0].location),
-                    onTap: () => _go(context, location, _items[0].location),
+                    label: _label(items[0]),
+                    icon: items[0].icon,
+                    activeIcon: items[0].activeIcon,
+                    selected: _isSelected(location, items[0].location),
+                    onTap: () => _go(context, location, items[0].location),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -429,14 +410,27 @@ class ClientDashboardDrawer extends StatelessWidget {
                       ),
                     ),
                   ),
-                  for (int i = 1; i < _items.length; i++)
+                  for (int i = 1; i < items.length; i++)
                     _ClientDrawerItem(
-                      label: _items[i].label,
-                      icon: _items[i].icon,
-                      activeIcon: _items[i].activeIcon,
-                      selected: _isSelected(location, _items[i].location),
-                      onTap: () => _go(context, location, _items[i].location),
+                      label: _label(items[i]),
+                      icon: items[i].icon,
+                      activeIcon: items[i].activeIcon,
+                      selected: _isSelected(location, items[i].location),
+                      onTap: () => _go(context, location, items[i].location),
                     ),
+                  // Explore launcher the `More` sheet used to carry, kept so
+                  // no desktop destination loses mobile access.
+                  _ClientDrawerItem(
+                    label: 'Explore more ways to use Hivorr',
+                    icon: Icons.explore_outlined,
+                    activeIcon: Icons.explore,
+                    selected: _isSelected(
+                      location,
+                      RoutePaths.activities,
+                    ),
+                    onTap: () =>
+                        _go(context, location, RoutePaths.activities),
+                  ),
                 ],
               ),
             ),
@@ -530,25 +524,10 @@ class ClientDashboardDrawer extends StatelessWidget {
 
   static Future<void> _signOut(BuildContext context) async {
     final GoRouter router = GoRouter.of(context);
-    final AuthProvider auth = context.read<AuthProvider>();
     Navigator.of(context).pop();
-    await auth.signOut();
+    await signOutAndEvictMessagingCache(context);
     router.go(RoutePaths.login);
   }
-}
-
-class _ClientDrawerDef {
-  const _ClientDrawerDef({
-    required this.label,
-    required this.location,
-    required this.icon,
-    required this.activeIcon,
-  });
-
-  final String label;
-  final String location;
-  final IconData icon;
-  final IconData activeIcon;
 }
 
 class _ClientDrawerItem extends StatelessWidget {

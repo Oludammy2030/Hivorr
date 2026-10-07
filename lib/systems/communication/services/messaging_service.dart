@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_initializing_formals
 
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/logging/hivorr_logger.dart';
 import 'package:hivorr/core/logging/pii_redactor.dart';
 import 'package:hivorr/core/monitoring/performance_tracer.dart';
@@ -40,6 +41,73 @@ class MessagingService {
   static bool validateText(String text) {
     final int length = text.trim().length;
     return length >= 1 && length <= MessageCrypto.maxPlaintextLength;
+  }
+
+  /// Durable outbox endpoint for offline `message_send` replay (EP-03-13).
+  ///
+  /// The generic `ActionQueue` persists the payload; replay is provider-driven
+  /// through `supabase.rpc('message_send')` (deduplicated by
+  /// `client_message_id`), not through the Dio-based `SyncEngine.drain`.
+  static const String offlineEndpoint = '/rpc/message_send';
+
+  /// HTTP method recorded on offline `message_send` actions.
+  static const String offlineMethod = 'POST';
+
+  /// Queue priority for offline messages (2 = interactive, above background).
+  static const int offlinePriority = 2;
+
+  /// Builds the durable payload for an offline send (no transport here).
+  static Map<String, dynamic> offlinePayload({
+    required String conversationId,
+    required String bodyEncrypted,
+    String? bodyPreview,
+    required String clientMessageId,
+  }) => <String, dynamic>{
+    'conversation_id': conversationId,
+    'body_encrypted': bodyEncrypted,
+    'body_preview': bodyPreview,
+    'client_message_id': clientMessageId,
+  };
+
+  /// Whether a failed send is worth queueing for replay (EP-03-13).
+  ///
+  /// Transient transport failures (`network`, `timeout`, `server`, `unknown`)
+  /// are queued; authoritative rejections (`validation`, `notFound`,
+  /// `forbidden`, `conflict`, `auth`) are surfaced immediately and never
+  /// queued — replaying them cannot succeed.
+  static bool isRetryable(ApiException error) => switch (error.kind) {
+    ApiExceptionKind.network ||
+    ApiExceptionKind.timeout ||
+    ApiExceptionKind.server ||
+    ApiExceptionKind.unknown => true,
+    ApiExceptionKind.auth ||
+    ApiExceptionKind.forbidden ||
+    ApiExceptionKind.validation ||
+    ApiExceptionKind.notFound ||
+    ApiExceptionKind.conflict => false,
+  };
+
+  /// Encrypts [text] for the [contractId] thread without sending it.
+  ///
+  /// Used by the offline path: the ciphertext + preview are persisted to the
+  /// durable outbox first, then sent when connectivity returns. Throws
+  /// [ArgumentError] when [text] is blank or exceeds
+  /// [MessageCrypto.maxPlaintextLength].
+  Future<OutgoingMessage> prepareOutgoing({
+    required String contractId,
+    required String text,
+  }) async {
+    final String trimmed = text.trim();
+    final String bodyEncrypted = await MessageCrypto.encryptText(
+      contractId: contractId,
+      text: trimmed,
+    );
+    return OutgoingMessage(
+      bodyEncrypted: bodyEncrypted,
+      bodyPreview: MessageCrypto.previewOf(trimmed),
+      clientMessageId: _uuid.v4(),
+      plainText: trimmed,
+    );
   }
 
   /// Ensures (idempotently) the thread for [contractId].
@@ -114,22 +182,37 @@ class MessagingService {
     required String contractId,
     required String text,
   }) => _tracedAndLogged('communication.send', () async {
-    final String trimmed = text.trim();
-    final String bodyEncrypted = await MessageCrypto.encryptText(
+    final OutgoingMessage outgoing = await prepareOutgoing(
       contractId: contractId,
-      text: trimmed,
+      text: text,
     );
+    return sendPrepared(
+      conversationId: conversationId,
+      outgoing: outgoing,
+    );
+  });
+
+  /// Sends a pre-encrypted [outgoing] payload (EP-03-13 replay path).
+  ///
+  /// Used when the ciphertext was prepared before connectivity returned
+  /// (offline queue): encrypt-once, send-once, with the same
+  /// `client_message_id` deduplicating double-taps server-side
+  /// (`ON CONFLICT DO NOTHING`).
+  Future<ConversationMessage> sendPrepared({
+    required String conversationId,
+    required OutgoingMessage outgoing,
+  }) => _tracedAndLogged('communication.send', () async {
     final ConversationMessage sent = await _repository.sendMessage(
       conversationId: conversationId,
-      bodyEncrypted: bodyEncrypted,
-      bodyPreview: MessageCrypto.previewOf(trimmed),
-      clientMessageId: _uuid.v4(),
+      bodyEncrypted: outgoing.bodyEncrypted,
+      bodyPreview: outgoing.bodyPreview,
+      clientMessageId: outgoing.clientMessageId,
     );
     _logger?.info('Message sent', <String, Object?>{
       'conversationId': _redactor.redact(conversationId),
       'messageId': _redactor.redact(sent.id),
     });
-    return sent.decrypted(trimmed);
+    return sent.decrypted(outgoing.plainText);
   });
 
   /// Wraps [action] in a `communication.*` [PerformanceTracer] span and
@@ -154,4 +237,23 @@ class MessagingService {
       rethrow;
     }
   }
+}
+
+/// An encrypted-but-unsent message (EP-03-13 offline path).
+///
+/// Ciphertext is opaque AES-GCM output; [plainText] lives only in memory
+/// for the optimistic echo and is never persisted by the outbox (the queue
+/// stores [bodyEncrypted] + preview + `client_message_id` only).
+class OutgoingMessage {
+  const OutgoingMessage({
+    required this.bodyEncrypted,
+    required this.bodyPreview,
+    required this.clientMessageId,
+    required this.plainText,
+  });
+
+  final String bodyEncrypted;
+  final String bodyPreview;
+  final String clientMessageId;
+  final String plainText;
 }
