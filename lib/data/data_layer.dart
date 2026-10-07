@@ -7,10 +7,13 @@ import 'package:hivorr/core/database/storage_engine.dart';
 import 'package:hivorr/core/logging/hivorr_logger.dart';
 import 'package:hivorr/core/storage/storage_service.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
+import 'package:hivorr/core/sync/action_queue.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/hive_service_search_local_data_source.dart';
+import 'package:hivorr/data/datasources/local/messaging_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+import 'package:hivorr/data/datasources/remote/messaging_realtime_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_contract_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_review_remote_data_source.dart';
@@ -27,6 +30,7 @@ import 'package:hivorr/data/datasources/remote/supabase_hires_remote_data_source
 import 'package:hivorr/data/datasources/remote/supabase_jobs_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_kyc_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_messaging_realtime_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_messaging_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_service_contract_remote_data_source.dart';
@@ -930,18 +934,45 @@ ContractEscrowOrchestrator registerContractEscrowLayer({
 /// `registerHiresLayer`: all four authenticated RPCs are live, reads are
 /// RLS participant-scoped, payloads stay opaque — the client never writes
 /// messaging tables and never handles plaintext outside `MessageCrypto`.
+///
+/// EP-03-13 collaborators are optional and backward-compatible: pass a
+/// [Realtime] + [cache] + [outbox] + [isOnline] gate to enable live inserts,
+/// warm-then-refresh windows, and durable offline sends. When absent the
+/// provider keeps direct-send, poll-on-resume behavior.
 ({MessagingRepository repository, MessagingProvider provider})
-registerMessagingLayer(ApiLayer apiLayer) {
+registerMessagingLayer(
+  ApiLayer apiLayer, {
+  MessagingRealtimeDataSource? realtime,
+  MessagingLocalDataSource? cache,
+  StorageEngine? storageEngine,
+  ActionQueue? outbox,
+  bool Function()? isOnline,
+  HivorrLogger? logger,
+}) {
   final remote = SupabaseMessagingRemoteDataSource(
     dio: apiLayer.dio,
     supabase: apiLayer.supabaseClient,
     exceptionMapper: apiLayer.exceptionMapper,
   );
+  final MessagingRealtimeDataSource resolvedRealtime =
+      realtime ?? SupabaseMessagingRealtimeDataSource(apiLayer.supabaseClient);
+  final MessagingLocalDataSource? resolvedCache =
+      cache ??
+      (storageEngine == null
+          ? null
+          : MessagingLocalDataSource(store: LocalStore(storageEngine)));
   final repository = MessagingRepositoryImpl(remote: remote);
-  final service = MessagingService(repository: repository);
+  final service = MessagingService(repository: repository, logger: logger);
   return (
     repository: repository,
-    provider: MessagingProvider(service: service),
+    provider: MessagingProvider(
+      service: service,
+      logger: logger,
+      realtime: resolvedRealtime,
+      cache: resolvedCache,
+      outbox: outbox,
+      isOnline: isOnline,
+    ),
   );
 }
 

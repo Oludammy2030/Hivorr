@@ -4,6 +4,7 @@ import 'package:hivorr/app/auth/screens/auth_scaffold.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/validators/password_policy.dart';
@@ -227,9 +228,22 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       });
       return;
     }
-    // The recovery session is single-purpose: sign out before returning to the
+    // The recovery session is single-purpose: evict the device-local
+    // messaging cache (EP-03-13) and sign out before returning to the
     // login door so the just-updated password is proven from a fresh sign-in.
+    // Providers are captured before any await — the tree may unmount.
+    MessagingProvider? messaging;
     try {
+      messaging = context.read<MessagingProvider>();
+    } catch (_) {
+      messaging = null;
+    }
+    try {
+      try {
+        await messaging?.clearCache();
+      } catch (_) {
+        // Cache cleanup is best-effort.
+      }
       await auth.signOut();
     } on ApiException {
       // A failed sign-out must not hide the successful password update.

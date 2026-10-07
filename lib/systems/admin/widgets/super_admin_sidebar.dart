@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/app/widgets/logo_variants.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_avatar.dart';
@@ -454,8 +455,24 @@ class _AdminIdentityRow extends StatelessWidget {
 
   Future<void> _signOut(BuildContext context) async {
     onNavigate?.call();
+    // Capture providers before any await — the tree may unmount mid-sign-out.
+    // Evict the device-local messaging cache before sign-out so thread
+    // windows + drafts never survive into the next session on a shared
+    // device (EP-03-13). Absent slice tolerated — sign-out still proceeds.
+    final AuthProvider auth = context.read<AuthProvider>();
+    MessagingProvider? messaging;
     try {
-      await context.read<AuthProvider>().signOut();
+      messaging = context.read<MessagingProvider>();
+    } catch (_) {
+      messaging = null;
+    }
+    try {
+      try {
+        await messaging?.clearCache();
+      } catch (_) {
+        // Cache cleanup is best-effort.
+      }
+      await auth.signOut();
     } catch (_) {
       if (context.mounted) context.go(RoutePaths.home);
     }
