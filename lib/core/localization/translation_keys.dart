@@ -61,4 +61,17 @@ class TranslationKeys {
   // App ---------------------------------------------------------------------
   static const String appTitle = 'app.title';
   static const String appTagline = 'app.tagline';
+
+  // Scheduling (EP-03-14) ----------------------------------------------------
+  static const String schedulingTitle = 'scheduling.title';
+  static const String schedulingManageAvailability =
+      'scheduling.manageAvailability';
+  static const String schedulingBookAppointment = 'scheduling.bookAppointment';
+  static const String schedulingPickAnotherTime = 'scheduling.pickAnotherTime';
+  static const String schedulingSlotTaken = 'scheduling.slotTaken';
+  static const String appointmentReschedule = 'appointment.reschedule';
+  static const String appointmentCancel = 'appointment.cancel';
+  static const String appointmentCancelReason = 'appointment.cancelReason';
+  static const String appointmentViewContract = 'appointment.viewContract';
+  static const String appointmentEmpty = 'appointment.empty';
 }

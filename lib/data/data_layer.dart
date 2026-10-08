@@ -14,6 +14,7 @@ import 'package:hivorr/data/datasources/local/messaging_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
 import 'package:hivorr/data/datasources/remote/messaging_realtime_data_source.dart';
+import 'package:hivorr/data/datasources/remote/scheduling_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_contract_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_review_remote_data_source.dart';
@@ -33,6 +34,7 @@ import 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_
 import 'package:hivorr/data/datasources/remote/supabase_messaging_realtime_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_messaging_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_scheduling_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_service_contract_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_service_listing_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_service_review_remote_data_source.dart';
@@ -56,6 +58,7 @@ import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/providers/scheduling_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/service_review_provider.dart';
@@ -89,6 +92,8 @@ import 'package:hivorr/data/repositories/messaging_repository.dart';
 import 'package:hivorr/data/repositories/messaging_repository_impl.dart';
 import 'package:hivorr/data/repositories/onboarding_repository.dart';
 import 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
+import 'package:hivorr/data/repositories/scheduling_repository.dart';
+import 'package:hivorr/data/repositories/scheduling_repository_impl.dart';
 import 'package:hivorr/data/repositories/service_contract_repository.dart';
 import 'package:hivorr/data/repositories/service_contract_repository_impl.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
@@ -119,6 +124,7 @@ import 'package:hivorr/systems/jobs/services/job_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/reviews/services/service_review_service.dart';
+import 'package:hivorr/systems/scheduling/services/scheduling_service.dart';
 import 'package:hivorr/systems/support/services/dispute_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
@@ -149,6 +155,8 @@ export 'package:hivorr/data/datasources/remote/messaging_remote_data_source.dart
 export 'package:hivorr/data/datasources/remote/onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/portfolio_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/scheduling_envelope_parser.dart';
+export 'package:hivorr/data/datasources/remote/scheduling_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/service_contract_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/service_contract_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/service_listing_envelope_parser.dart';
@@ -170,6 +178,7 @@ export 'package:hivorr/data/datasources/remote/supabase_manage_user_remote_data_
 export 'package:hivorr/data/datasources/remote/supabase_messaging_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_onboarding_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_portfolio_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_scheduling_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_service_contract_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_service_listing_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_taxonomy_remote_data_source.dart';
@@ -180,6 +189,9 @@ export 'package:hivorr/data/datasources/remote/taxonomy_remote_data_source.dart'
 export 'package:hivorr/data/datasources/remote/trade_verification_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/verification_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/verification_remote_data_source.dart';
+export 'package:hivorr/data/entities/appointment.dart';
+export 'package:hivorr/data/entities/appointment_event.dart';
+export 'package:hivorr/data/entities/availability_slot.dart';
 export 'package:hivorr/data/entities/balance.dart';
 export 'package:hivorr/data/entities/contract_event.dart';
 export 'package:hivorr/data/entities/contract_milestone.dart';
@@ -240,6 +252,7 @@ export 'package:hivorr/data/mappers/messaging_mapper.dart';
 export 'package:hivorr/data/mappers/onboarding_status_mapper.dart';
 export 'package:hivorr/data/mappers/portfolio_mappers.dart';
 export 'package:hivorr/data/mappers/profession_mapper.dart';
+export 'package:hivorr/data/mappers/scheduling_mapper.dart';
 export 'package:hivorr/data/mappers/service_listing_mapper.dart';
 export 'package:hivorr/data/mappers/verification_mapper.dart';
 export 'package:hivorr/data/models/balance_dto.dart';
@@ -284,6 +297,8 @@ export 'package:hivorr/data/models/profession_dto.dart';
 export 'package:hivorr/data/models/public_credential_dto.dart';
 export 'package:hivorr/data/models/public_profession_dto.dart';
 export 'package:hivorr/data/models/public_profile_dto.dart';
+export 'package:hivorr/data/models/scheduling_dto.dart';
+export 'package:hivorr/data/models/scheduling_envelopes_dto.dart';
 export 'package:hivorr/data/models/service_contract_dto.dart';
 export 'package:hivorr/data/models/service_listing_dto.dart';
 export 'package:hivorr/data/models/trade_verification_dto.dart';
@@ -307,6 +322,7 @@ export 'package:hivorr/data/providers/marketplace_search_provider.dart';
 export 'package:hivorr/data/providers/messaging_provider.dart';
 export 'package:hivorr/data/providers/onboarding_provider.dart';
 export 'package:hivorr/data/providers/portfolio_provider.dart';
+export 'package:hivorr/data/providers/scheduling_provider.dart';
 export 'package:hivorr/data/providers/service_contract_provider.dart';
 export 'package:hivorr/data/providers/service_listing_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
@@ -343,6 +359,8 @@ export 'package:hivorr/data/repositories/onboarding_repository.dart';
 export 'package:hivorr/data/repositories/onboarding_repository_impl.dart';
 export 'package:hivorr/data/repositories/portfolio_repository.dart';
 export 'package:hivorr/data/repositories/portfolio_repository_impl.dart';
+export 'package:hivorr/data/repositories/scheduling_repository.dart';
+export 'package:hivorr/data/repositories/scheduling_repository_impl.dart';
 export 'package:hivorr/data/repositories/service_contract_repository.dart';
 export 'package:hivorr/data/repositories/service_contract_repository_impl.dart';
 export 'package:hivorr/data/repositories/service_listing_repository.dart';
@@ -825,6 +843,44 @@ registerServiceContractLayer(
   return (
     repository: repository,
     provider: ServiceContractProvider(service: service, logger: logger),
+    service: service,
+  );
+}
+
+/// Wires the scheduling (availability + appointments) slice for EP-03-14.
+///
+/// Builds the [SchedulingRepository] and [SchedulingService] over the
+/// [ApiLayer] and returns a ready [SchedulingProvider]. Mirrors
+/// `registerServiceContractLayer`: all five scheduling RPCs are live, reads
+/// are RLS participant-scoped (plan §7.1 Option B, zero new SQL) — the client
+/// never writes scheduling tables.
+({
+  SchedulingRepository repository,
+  SchedulingProvider provider,
+  SchedulingService service,
+})
+registerSchedulingLayer(
+  ApiLayer apiLayer, {
+  SchedulingRemoteDataSource? dataSource,
+  HivorrLogger? logger,
+}) {
+  final SchedulingRemoteDataSource resolvedDataSource =
+      dataSource ??
+      SupabaseSchedulingRemoteDataSource(
+        dio: apiLayer.dio,
+        supabase: apiLayer.supabaseClient,
+        exceptionMapper: apiLayer.exceptionMapper,
+      );
+  final SchedulingRepository repository = SchedulingRepositoryImpl(
+    remote: resolvedDataSource,
+  );
+  final SchedulingService service = SchedulingService(
+    repository: repository,
+    logger: logger,
+  );
+  return (
+    repository: repository,
+    provider: SchedulingProvider(service: service, logger: logger),
     service: service,
   );
 }

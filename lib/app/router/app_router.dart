@@ -69,6 +69,9 @@ import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
 import 'package:hivorr/systems/portfolio/screens/professional_profile_screen.dart';
 import 'package:hivorr/systems/reviews/screens/review_reveal_screen.dart';
 import 'package:hivorr/systems/reviews/screens/review_submit_screen.dart';
+import 'package:hivorr/systems/scheduling/screens/appointment_book_screen.dart';
+import 'package:hivorr/systems/scheduling/screens/appointment_detail_screen.dart';
+import 'package:hivorr/systems/scheduling/screens/availability_editor_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_evidence_form_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_filing_screen.dart';
@@ -593,6 +596,33 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) =>
               ContractDetailScreen(
                 contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        // Scheduling (EP-03-14, protected — guard keeps login gate with
+        // `?next=` resume; participant check is affordance only,
+        // enforcement stays server-side with identical `PLT004`).
+        GoRoute(
+          path: RoutePaths.availability,
+          name: RouteNames.availability,
+          builder: (BuildContext context, GoRouterState state) =>
+              AvailabilityEditorScreen(
+                professionId: state.uri.queryParameters['professionId'],
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.appointmentBookRoute,
+          name: RouteNames.appointmentBook,
+          builder: (BuildContext context, GoRouterState state) =>
+              AppointmentBookScreen(
+                contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.appointmentDetailRoute,
+          name: RouteNames.appointmentDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              AppointmentDetailScreen(
+                appointmentId: state.pathParameters['id'] ?? '',
               ),
         ),
         // Double-blind reviews (EP-03-12, protected — guard keeps login
