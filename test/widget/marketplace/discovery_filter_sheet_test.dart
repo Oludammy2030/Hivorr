@@ -275,5 +275,53 @@ void main() {
       expect(find.text('Filter services'), findsNothing);
       expect(result, isNull);
     });
+
+    testWidgets('mobile sheet scrolls far enough to apply', (
+      WidgetTester tester,
+    ) async {
+      // The sheet content is taller than small viewports, so the Apply
+      // button must be reachable by scrolling within the sheet.
+      for (final Size viewport in <Size>[
+        const Size(390, 844),
+        const Size(360, 640),
+        const Size(320, 568),
+      ]) {
+        await pumpScreen(
+          tester,
+          const SizedBox.shrink(key: ValueKey<String>('sheet-host')),
+          width: viewport.width,
+          height: viewport.height,
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<TaxonomyProvider>.value(
+              value: taxonomy(),
+            ),
+          ],
+        );
+        await tester.pumpAndSettle();
+
+        final BuildContext context = tester.element(
+          find.byKey(const ValueKey<String>('sheet-host')),
+        );
+        ServiceSearchFilters? result;
+        unawaited(
+          DiscoveryFilterSheet.show(
+            context: context,
+            initial: const ServiceSearchFilters(),
+          ).then((ServiceSearchFilters? value) => result = value),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        final Finder apply = find.text('Apply filters');
+        await tester.ensureVisible(apply);
+        await tester.pumpAndSettle();
+        final Rect box = tester.getRect(apply);
+        expect(box.top, greaterThanOrEqualTo(0));
+        expect(box.bottom, lessThanOrEqualTo(viewport.height));
+        await tester.tap(apply);
+        await tester.pumpAndSettle();
+        expect(result, isNotNull);
+      }
+    });
   });
 }

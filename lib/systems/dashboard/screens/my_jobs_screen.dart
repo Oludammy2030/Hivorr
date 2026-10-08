@@ -652,9 +652,14 @@ class _PostedJobCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: HivorrSpacing.md),
+            // Equal-height cluster: the primary button enforces the 48dp
+            // touch floor, so each ghost pill sits in a fixed-height wrapper
+            // (Center with widthFactor keeps widths content-based while
+            // centering vertically). The wrap still flows on narrow screens.
             Wrap(
               spacing: HivorrSpacing.sm,
               runSpacing: HivorrSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
               HivorrButton(
                 label: '${job.applicationsCount} Applications',
@@ -662,24 +667,38 @@ class _PostedJobCard extends StatelessWidget {
                 size: HivorrButtonSize.small,
                 icon: const Icon(Icons.group_outlined, size: 18),
                 onPressed: () =>
-                    context.go(RoutePaths.dashboardJobDetail(job.id)),
+                    context.go(RoutePaths.dashboardApplicationsFor(job.id)),
               ),
-              _GhostButton(
-                  label: 'Chat',
-                  icon: Icons.chat_bubble_outline,
-                  fill: colors.surfaceContainerHighest.withValues(
-                    alpha: context.isDarkMode ? 1.0 : 0.45,
+              // Fixed 48dp height matches the primary button; widthFactor
+              // keeps the width content-based while centering vertically.
+              SizedBox(
+                height: 48,
+                child: Center(
+                  widthFactor: 1.0,
+                  child: _GhostButton(
+                    label: 'Chat',
+                    icon: Icons.chat_bubble_outline,
+                    fill: colors.surfaceContainerHighest.withValues(
+                      alpha: context.isDarkMode ? 1.0 : 0.45,
+                    ),
+                    foreground: colors.onSurfaceVariant,
+                    onTap: () => context.go(RoutePaths.dashboardMessages),
                   ),
-                  foreground: colors.onSurfaceVariant,
-                  onTap: () => context.go(RoutePaths.dashboardMessages),
                 ),
+              ),
                 if (_closable)
-                  _GhostButton(
-                    label: closing ? 'Closing…' : 'Close',
-                    icon: Icons.close,
-                    fill: colors.errorContainer,
-                    foreground: colors.error,
-                    onTap: closing ? null : onClose,
+                  SizedBox(
+                    height: 48,
+                    child: Center(
+                      widthFactor: 1.0,
+                      child: _GhostButton(
+                        label: closing ? 'Closing…' : 'Close',
+                        icon: Icons.close,
+                        fill: colors.errorContainer,
+                        foreground: colors.error,
+                        onTap: closing ? null : onClose,
+                      ),
+                    ),
                   ),
               ],
             ),

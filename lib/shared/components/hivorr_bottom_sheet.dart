@@ -56,7 +56,12 @@ class HivorrBottomSheet extends StatelessWidget {
             const HivorrDivider(),
             const SizedBox(height: HivorrSpacing.sm),
           ],
-          child,
+          // Flexible (not bare): a scrollable child sizes to its max
+          // constraints, which would stack the full content height on top of
+          // the handle + title and overflow the sheet. Flexible gives it the
+          // remaining space instead, so tall content scrolls inside the
+          // sheet and short content still wraps with no visual change.
+          Flexible(child: child),
         ],
       ),
     );
