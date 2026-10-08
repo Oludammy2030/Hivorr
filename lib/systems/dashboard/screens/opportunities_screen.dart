@@ -1586,7 +1586,12 @@ String _fwInitials(String name) {
 /// the Jobs panel lists posted jobs, the Applications panel shows applicants
 /// for the selected job, and each panel scrolls independently.
 class MyApplicationsScreen extends StatelessWidget {
-  const MyApplicationsScreen({super.key});
+  const MyApplicationsScreen({super.key, this.initialJobId});
+
+  /// Optional preselected job for the client inbox (e.g. `?job=` deep link
+  /// from a My Jobs card). Ignored when unknown; the professional list does
+  /// not take a job context.
+  final String? initialJobId;
 
   @override
   Widget build(BuildContext context) {
@@ -1598,7 +1603,7 @@ class MyApplicationsScreen extends StatelessWidget {
     } catch (_) {
       hiring = false;
     }
-    if (hiring) return const _ClientApplicationsScreen();
+    if (hiring) return _ClientApplicationsScreen(initialJobId: initialJobId);
     return const _ProfessionalApplicationsScreen();
   }
 }
@@ -1757,7 +1762,10 @@ class _ProfessionalApplicationsScreenState
 /// View Profile → public profile, Message → messages, Hire → `hire_accept`
 /// via [HireProvider], Reject/Shortlist → [JobProvider].
 class _ClientApplicationsScreen extends StatefulWidget {
-  const _ClientApplicationsScreen();
+  const _ClientApplicationsScreen({this.initialJobId});
+
+  /// Preselected job (see [MyApplicationsScreen.initialJobId]).
+  final String? initialJobId;
 
   @override
   State<_ClientApplicationsScreen> createState() =>
@@ -1836,12 +1844,19 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
 
   void _ensureSelection(List<Job> posted) {
     if (posted.isEmpty) return;
+    // Prefer an explicitly requested job (e.g. `?job=` deep link) until the
+    // client picks another one; otherwise keep the current selection, else
+    // fall back to the first job. Invalid ids degrade to the default.
+    final String? preferred = _selectedJobId ?? widget.initialJobId;
     final bool stillValid =
-        _selectedJobId != null &&
-        posted.any((Job j) => j.id == _selectedJobId);
+        preferred != null && posted.any((Job j) => j.id == preferred);
     if (!stillValid) {
       _selectedJobId = posted.first.id;
       unawaited(_loadApps(_selectedJobId!));
+    } else if (_selectedJobId == null) {
+      // Reached only when `preferred` validated above.
+      _selectedJobId = preferred;
+      unawaited(_loadApps(preferred));
     }
   }
 

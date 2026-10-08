@@ -1850,6 +1850,7 @@ class _ClientJobCard extends StatelessWidget {
     final String applied = '${job.applicationsCount} applied';
     final String applicants =
         '${job.applicationsCount} Applicant${job.applicationsCount == 1 ? '' : 's'}';
+    final String? preview = _jobPreview(job);
     return HivorrCard(
       onTap: () => context.go(RoutePaths.dashboardJobDetail(job.id)),
       borderRadius: compact ? 14 : 16,
@@ -1891,24 +1892,41 @@ class _ClientJobCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _jobSubtitle(job),
-                      style: (compact
-                              ? context.textTheme.bodySmall
-                              : context.textTheme.bodyMedium)
-                          ?.copyWith(
-                        color: colors.onSurfaceVariant,
+                    if (preview != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        preview,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      GestureDetector(
+                        onTap: () => context.go(
+                          RoutePaths.dashboardJobDetail(job.id),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(
+                            'Read more',
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: colors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
-              Flexible(
+              // Tight flex (not loose) so amount + count pin to the extreme
+              // right edge instead of floating mid-card; children stay
+              // end-aligned within their half.
+              Expanded(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
                     if (budget != null)
@@ -1930,6 +1948,7 @@ class _ClientJobCard extends StatelessWidget {
                       applied,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
                       style: context.textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                       ),
@@ -2601,12 +2620,12 @@ String? _budgetText(Job job) {
   return fmt(single);
 }
 
-/// Job subtitle: location when known, else the leading description line.
-String _jobSubtitle(Job job) {
-  if (job.location != null && job.location!.isNotEmpty) {
-    return job.location!;
-  }
-  return job.description.split('\n').first.trim();
+/// Two-line job preview for the client job card: the full description
+/// (cleanly truncated by the caller), so the location chip above stays the
+/// single location display. Null when there is nothing to preview.
+String? _jobPreview(Job job) {
+  final String description = job.description.trim();
+  return description.isEmpty ? null : description;
 }
 
 // ── Professional overview — reference dashboard presentation ─────────

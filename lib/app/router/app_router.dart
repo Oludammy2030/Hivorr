@@ -409,7 +409,9 @@ class AppRouter {
               path: RoutePaths.dashboardApplications,
               name: RouteNames.dashboardApplications,
               builder: (BuildContext context, GoRouterState state) =>
-                  const MyApplicationsScreen(),
+                  MyApplicationsScreen(
+                initialJobId: state.uri.queryParameters['job'],
+              ),
             ),
             GoRoute(
               path: RoutePaths.dashboardHires,

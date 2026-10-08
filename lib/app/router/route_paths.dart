@@ -280,6 +280,11 @@ abstract final class RoutePaths {
   static const String dashboardOpportunities = '/dashboard/opportunities';
   static const String dashboardApplications = '/dashboard/applications';
 
+  /// Builds the applications inbox path preselecting [jobId] (the inbox
+  /// falls back to its first-job default when the id is unknown).
+  static String dashboardApplicationsFor(String jobId) =>
+      '$dashboardApplications?job=${Uri.encodeComponent(jobId)}';
+
   /// Hires routes (either side; `?role=client|professional` scopes the list).
   static const String dashboardHires = '/dashboard/hires';
   static const String dashboardHireDetailRoute = '/dashboard/hires/:id';
