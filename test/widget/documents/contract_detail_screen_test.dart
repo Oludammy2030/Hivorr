@@ -187,4 +187,75 @@ void main() {
       expect(find.text('Contract not found'), findsOneWidget);
     });
   });
+
+  group('ContractDetailScreen scheduling entry (EP-03-14)', () {
+    Future<void> pumpContract(
+      WidgetTester tester, {
+      required String status,
+      required String viewerId,
+    }) async {
+      final provider = providerWith(
+        FakeServiceContractRepository(
+          seed: [
+            FakeServiceContractRepository.contract(
+              id: 'c1',
+              status: status,
+              clientId: 'client-1',
+              professionalId: 'pro-1',
+            ),
+          ],
+        ),
+      );
+      addTearDown(provider.dispose);
+      final auth = authedAs(viewerId);
+      addTearDown(auth.dispose);
+      await pumpApp(
+        tester,
+        const ContractDetailScreen(contractId: 'c1'),
+        providers: providers(provider, auth: auth),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('participant on active contract sees booking entry', (
+      WidgetTester tester,
+    ) async {
+      await pumpContract(tester, status: 'active', viewerId: 'client-1');
+      expect(find.text('Book appointment'), findsOneWidget);
+    });
+
+    testWidgets('professional sees availability entry', (
+      WidgetTester tester,
+    ) async {
+      await pumpContract(tester, status: 'active', viewerId: 'pro-1');
+      expect(find.text('Manage availability'), findsOneWidget);
+    });
+
+    testWidgets('stranger sees participant guidance, never booking', (
+      WidgetTester tester,
+    ) async {
+      await pumpContract(tester, status: 'active', viewerId: 'stranger-9');
+      expect(
+        find.text(
+          'Scheduling is available to contract participants. '
+          'You are not a participant on this contract.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Book appointment'), findsNothing);
+    });
+
+    testWidgets('participant on offered contract sees inactive guidance', (
+      WidgetTester tester,
+    ) async {
+      await pumpContract(tester, status: 'offered', viewerId: 'client-1');
+      expect(
+        find.textContaining(
+          'Appointments open once the contract is active.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Book appointment'), findsNothing);
+    });
+  });
 }

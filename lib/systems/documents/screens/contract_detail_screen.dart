@@ -510,6 +510,12 @@ class _DetailBody extends StatelessWidget {
         ContractTimeline(events: contract.events),
         const SizedBox(height: HivorrSpacing.md),
         ContractReviewSection(contract: contract, viewerId: viewerId),
+        const SizedBox(height: HivorrSpacing.md),
+        _SchedulingEntry(
+          contract: contract,
+          viewerId: viewerId,
+        ),
+        const SizedBox(height: HivorrSpacing.md),
         ContractWriteCtaPanel(
           writeAvailable: writeAvailable,
           isBusy: busy,
@@ -557,6 +563,71 @@ class _DetailBody extends StatelessWidget {
       if (m.isPending || m.isCompleted) return m;
     }
     return null;
+  }
+}
+
+/// Scheduling entry section for a contract detail (EP-03-14 §8 D13).
+///
+/// CTA-only wiring: `Book appointment` navigates to the booking flow for
+/// either participant while the contract is `active`; `Manage availability`
+/// navigates to the template editor for the professional. Non-active,
+/// disputed, and stranger states render guidance cards — gating is affordance
+/// only and enforcement stays server-side (`PLT004`/`PLT005`).
+class _SchedulingEntry extends StatelessWidget {
+  const _SchedulingEntry({required this.contract, required this.viewerId});
+
+  final ServiceContract contract;
+  final String viewerId;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isParticipant =
+        viewerId == contract.clientEntityId ||
+        viewerId == contract.professionalEntityId;
+    if (!isParticipant) {
+      return const HivorrCard(
+        child: Text(
+          'Scheduling is available to contract participants. '
+          'You are not a participant on this contract.',
+        ),
+      );
+    }
+    if (!contract.isActive) {
+      return HivorrCard(
+        child: Text(
+          'Appointments open once the contract is active. '
+          'Current status: ${contract.status}.',
+        ),
+      );
+    }
+    final bool isProfessional =
+        viewerId == contract.professionalEntityId;
+    return HivorrCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text('Schedule', style: context.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          HivorrButton(
+            label: 'Book appointment',
+            onPressed: () => context.push(
+              RoutePaths.appointmentBook(contract.id),
+            ),
+            variant: HivorrButtonVariant.primary,
+            isExpanded: true,
+          ),
+          if (isProfessional) ...[
+            const SizedBox(height: 8),
+            HivorrButton(
+              label: 'Manage availability',
+              onPressed: () => context.push(RoutePaths.availability),
+              variant: HivorrButtonVariant.outline,
+              isExpanded: true,
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

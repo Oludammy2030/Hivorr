@@ -47,5 +47,16 @@
   "validation.passwordStrength": "Password must be at least 8 characters with uppercase, lowercase, and number",
 
   "app.title": "Hivorr",
-  "app.tagline": "Your world. Your way."
+  "app.tagline": "Your world. Your way.",
+
+  "scheduling.title": "Schedule",
+  "scheduling.manageAvailability": "Manage availability",
+  "scheduling.bookAppointment": "Book appointment",
+  "scheduling.pickAnotherTime": "Pick another time",
+  "scheduling.slotTaken": "Slot taken. Pick another time.",
+  "appointment.reschedule": "Reschedule",
+  "appointment.cancel": "Cancel appointment",
+  "appointment.cancelReason": "Reason (optional)",
+  "appointment.viewContract": "View contract",
+  "appointment.empty": "No appointments yet"
 }

@@ -208,6 +208,33 @@ abstract final class RoutePaths {
   static String contractMilestonesEdit(String id) =>
       '/contracts/${Uri.encodeComponent(id)}/milestones/edit';
 
+  /// Availability template editor (EP-03-14, protected, professional).
+  /// Optional query param: `professionId`.
+  static const String availability = '/availability';
+
+  /// Builds the availability editor path for a profession.
+  static String availabilityEditor({String? professionId}) => professionId ==
+          null
+      ? availability
+      : '$availability?professionId=${Uri.encodeComponent(professionId)}';
+
+  /// Appointment booking route for a contract (EP-03-14, protected).
+  /// Parameter: `id` (authoritative `service_contracts.id`).
+  static const String appointmentBookRoute =
+      '/contracts/:id/appointments/new';
+
+  /// Builds a URL-encoded appointment booking path for a contract.
+  static String appointmentBook(String contractId) =>
+      '/contracts/${Uri.encodeComponent(contractId)}/appointments/new';
+
+  /// Appointment detail route (EP-03-14, protected).
+  /// Parameter: `id` (authoritative `appointments.id`).
+  static const String appointmentDetailRoute = '/appointments/:id';
+
+  /// Builds a URL-encoded appointment detail path.
+  static String appointmentDetail(String id) =>
+      '/appointments/${Uri.encodeComponent(id)}';
+
   /// Review submission route for a contract (EP-03-12, protected).
   /// Parameter: `id` (authoritative `service_contracts.id`).
   static const String contractReviewRoute = '/contracts/:id/review';

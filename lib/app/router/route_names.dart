@@ -109,6 +109,11 @@ abstract final class RouteNames {
   static const String contractDetail = 'contract-detail';
   static const String contractMilestonesEdit = 'contract-milestones-edit';
 
+  /// Scheduling routes (EP-03-14).
+  static const String availability = 'availability';
+  static const String appointmentBook = 'appointment-book';
+  static const String appointmentDetail = 'appointment-detail';
+
   /// Double-blind review routes (EP-03-12).
   static const String contractReview = 'contract-review';
   static const String contractReviews = 'contract-reviews';
