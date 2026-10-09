@@ -596,6 +596,7 @@ class _PostedJobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final String? preview = _jobPreview(job);
     final double radius = context.appExtension.radiusMd + 4;
     return InkWell(
       onTap: () => context.go(RoutePaths.dashboardJobDetail(job.id)),
@@ -626,6 +627,7 @@ class _PostedJobCard extends StatelessWidget {
                     children: <Widget>[
                       _CategoryPill(job: job),
                       _StatusPill(status: job.status),
+                      _LocationPill(job: job),
                     ],
                   ),
                 ),
@@ -642,16 +644,33 @@ class _PostedJobCard extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: HivorrSpacing.xs),
-            Text(
-              _subtitle(job),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
+            if (preview != null) ...<Widget>[
+              const SizedBox(height: HivorrSpacing.xs),
+              Text(
+                preview,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: HivorrSpacing.md),
+              GestureDetector(
+                onTap: () =>
+                    context.go(RoutePaths.dashboardJobDetail(job.id)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    'Read more',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: HivorrSpacing.sm),
+            ] else ...<Widget>[
+              const SizedBox(height: HivorrSpacing.md),
+            ],
             // Equal-height cluster: the primary button enforces the 48dp
             // touch floor, so each ghost pill sits in a fixed-height wrapper
             // (Center with widthFactor keeps widths content-based while
@@ -662,7 +681,7 @@ class _PostedJobCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
               HivorrButton(
-                label: '${job.applicationsCount} Applications',
+                label: '${job.applicationsCount} Applicants',
                 variant: HivorrButtonVariant.primary,
                 size: HivorrButtonSize.small,
                 icon: const Icon(Icons.group_outlined, size: 18),
@@ -676,7 +695,7 @@ class _PostedJobCard extends StatelessWidget {
                 child: Center(
                   widthFactor: 1.0,
                   child: _GhostButton(
-                    label: 'Chat',
+                    label: 'Message',
                     icon: Icons.chat_bubble_outline,
                     fill: colors.surfaceContainerHighest.withValues(
                       alpha: context.isDarkMode ? 1.0 : 0.45,
@@ -718,9 +737,28 @@ class _PostedJobCard extends StatelessWidget {
     );
   }
 
-  String _subtitle(Job job) {
+  /// Two-line description preview for the card body (the location chip
+  /// above stays the single location display). Null when empty.
+  String? _jobPreview(Job job) {
+    final String description = job.description.trim();
+    return description.isEmpty ? null : description;
+  }
+}
+
+/// Location pill for the top chips row (falls back to `Remote`,
+/// matching the previous subtitle convention).
+class _LocationPill extends StatelessWidget {
+  const _LocationPill({required this.job});
+
+  final Job job;
+
+  @override
+  Widget build(BuildContext context) {
     final String location = (job.location ?? '').trim();
-    return location.isEmpty ? 'Remote' : location;
+    return HivorrBadge(
+      label: location.isEmpty ? 'Remote' : location,
+      variant: HivorrBadgeVariant.neutral,
+    );
   }
 }
 
