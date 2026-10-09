@@ -10,6 +10,7 @@ import 'package:hivorr/core/storage/storage_config.dart';
 import 'package:hivorr/core/storage/storage_paths.dart';
 import 'package:hivorr/core/storage/storage_service.dart';
 import 'package:hivorr/data/entities/listing_media.dart';
+import 'package:hivorr/data/entities/service_listing_proof.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
 import 'package:sentry_flutter/sentry_flutter.dart' show SpanStatus;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -118,6 +119,25 @@ class ServiceListingService {
   /// `true` when [currencyCode] is in the active subset.
   static bool validateCurrency(String currencyCode) =>
       currencies.contains(currencyCode);
+
+  /// Maximum linked proof pieces per listing (mirrors the
+  /// `service_listing_link_portfolio_items` cap and
+  /// `ServiceListingRepositoryImpl.maxLinkedProofs`).
+  static const int maxLinkedProofs = 8;
+
+  /// `true` when [portfolioItemIds] is a well-formed proof selection:
+  /// non-empty, at most [maxLinkedProofs], no blanks, no duplicates.
+  /// Ownership and published-visibility stay server-side.
+  static bool validateProofSelection(List<String> portfolioItemIds) {
+    if (portfolioItemIds.isEmpty || portfolioItemIds.length > maxLinkedProofs) {
+      return false;
+    }
+    final Set<String> seen = <String>{};
+    for (final String id in portfolioItemIds) {
+      if (id.trim().isEmpty || !seen.add(id)) return false;
+    }
+    return true;
+  }
 
   // ─── Data operations (delegate to repository, traced + logged) ─────────
 
@@ -378,6 +398,62 @@ class ServiceListingService {
       return null;
     }
   }
+
+  /// Replaces the listing's linked proof set with [portfolioItemIds] in order
+  /// (`service_listing_link_portfolio_items` full-replace, owner-only).
+  ///
+  /// Returns the authoritative linked set in server order. Double-tap/retry
+  /// with the same selection is duplicate-free server-side (`UNIQUE` +
+  /// full-replace). Ownership and published-visibility stay server-side
+  /// (`PLT001`/`PLT004`/`PLT005`).
+  Future<List<LinkedPortfolioItem>> linkProofs({
+    required String listingId,
+    required List<String> portfolioItemIds,
+  }) =>
+      _tracedAndLogged('marketplace.listing.proof.link', () async {
+        final proofs = await _repository.linkPortfolioItems(
+          listingId: listingId,
+          portfolioItemIds: portfolioItemIds,
+        );
+        _logger?.info('Listing proof linked', <String, Object?>{
+          'listingId': _redactor.redact(listingId),
+          'proofCount': proofs.length,
+        });
+        return proofs;
+      });
+
+  /// Removes a single proof link, idempotently
+  /// (`service_listing_unlink_portfolio_item`, owner-only).
+  ///
+  /// Returns the authoritative remaining set in server order.
+  Future<List<LinkedPortfolioItem>> unlinkProof({
+    required String listingId,
+    required String portfolioItemId,
+  }) =>
+      _tracedAndLogged('marketplace.listing.proof.unlink', () async {
+        final proofs = await _repository.unlinkPortfolioItem(
+          listingId: listingId,
+          portfolioItemId: portfolioItemId,
+        );
+        _logger?.info('Listing proof unlinked', <String, Object?>{
+          'listingId': _redactor.redact(listingId),
+          'remainingCount': proofs.length,
+        });
+        return proofs;
+      });
+
+  /// Fetches the listing's linked proof in server order
+  /// (`service_listing_portfolio_list`; public read of `published`, owner
+  /// read of private states; unknown or non-visible listings `PLT004`).
+  Future<List<LinkedPortfolioItem>> fetchProofs(String listingId) =>
+      _tracedAndLogged('marketplace.listing.proof.list', () async {
+        final proofs = await _repository.listPortfolioProofs(listingId);
+        _logger?.info('Listing proof fetched', <String, Object?>{
+          'listingId': _redactor.redact(listingId),
+          'proofCount': proofs.length,
+        });
+        return proofs;
+      });
 
   /// Wraps [action] in a `marketplace.listing.*` [PerformanceTracer] span and
   /// surfaces failures via the logger with redacted context.

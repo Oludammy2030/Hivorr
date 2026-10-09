@@ -13,14 +13,13 @@ import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_badge.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
-import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
-import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/marketplace/widgets/favorite_toggle_button.dart';
 import 'package:hivorr/systems/marketplace/widgets/service_media_carousel.dart';
+import 'package:hivorr/systems/marketplace/widgets/service_proof_section.dart';
 import 'package:hivorr/systems/reviews/widgets/listing_reviews_section.dart';
 import 'package:hivorr/systems/verification/widgets/trade_verified_badge.dart';
 import 'package:provider/provider.dart';
@@ -118,6 +117,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           professionName: listing.professionName,
           industryName: listing.industryName,
           publishedAt: listing.publishedAt,
+          professionSlug: listing.professionSlug,
         );
         // Server order is preserved verbatim (never re-sorted).
         _media = List<ListingMedia>.unmodifiable(listing.media);
@@ -263,6 +263,7 @@ class _DetailModel {
     required this.professionName,
     required this.industryName,
     required this.publishedAt,
+    required this.professionSlug,
   });
 
   factory _DetailModel.fromRanked(ServiceListing listing) => _DetailModel(
@@ -281,6 +282,7 @@ class _DetailModel {
     professionName: listing.professionName,
     industryName: listing.industryName,
     publishedAt: listing.publishedAt,
+    professionSlug: listing.professionSlug,
   );
 
   factory _DetailModel.fromOwner({
@@ -299,6 +301,7 @@ class _DetailModel {
     required String? professionName,
     required String? industryName,
     required DateTime? publishedAt,
+    required String? professionSlug,
   }) => _DetailModel(
     id: id,
     entityId: entityId,
@@ -315,6 +318,7 @@ class _DetailModel {
     professionName: professionName,
     industryName: industryName,
     publishedAt: publishedAt,
+    professionSlug: professionSlug,
   );
 
   final String id;
@@ -332,6 +336,7 @@ class _DetailModel {
   final String? professionName;
   final String? industryName;
   final DateTime? publishedAt;
+  final String? professionSlug;
 }
 
 class _DetailBody extends StatelessWidget {
@@ -434,7 +439,12 @@ class _DetailBody extends StatelessWidget {
           cachedReviewCount: model.reviewCount,
         ),
         const SizedBox(height: HivorrSpacing.md),
-        _ProofSlot(isOwner: isOwner),
+        ServiceProofSection(
+          listingId: model.id,
+          ownerEntityId: model.entityId,
+          isOwner: isOwner,
+          profileSlug: model.professionSlug,
+        ),
         const SizedBox(height: HivorrSpacing.md),
         _BookingCta(
           model: model,
@@ -488,48 +498,6 @@ class _RatingLine extends StatelessWidget {
             style: context.textTheme.bodyMedium?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Portfolio proof placeholder (EP-03-09 read-only hook; linking ships in
-/// EP-03-15 — no link-write is attempted here).
-class _ProofSlot extends StatelessWidget {
-  const _ProofSlot({required this.isOwner});
-
-  final bool isOwner;
-
-  @override
-  Widget build(BuildContext context) {
-    return HivorrCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text('Proof of work', style: context.textTheme.titleMedium),
-          const SizedBox(height: HivorrSpacing.xs),
-          HivorrEmptyState(
-            compact: true,
-            title: 'No proof linked yet',
-            subtitle: isOwner
-                ? 'Link portfolio pieces to this service to convert more views.'
-                : 'Proof of work will appear here once the professional links it.',
-            actionButton: isOwner
-                ? HivorrButton(
-                    label: 'Add portfolio',
-                    variant: HivorrButtonVariant.outline,
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      HivorrSnackbar.show(
-                        context,
-                        message:
-                            'Portfolio linking for services arrives next (EP-03-15).',
-                        variant: HivorrSnackbarVariant.info,
-                      ),
-                    ),
-                  )
-                : null,
           ),
         ],
       ),

@@ -6,8 +6,9 @@
 --   - CHECK vocabularies (key format, value is object, required weight keys,
 --     range 0..1, sum 0.999..1.001, priors), indexes, trigger, comments.
 --   - service_listings GIN retained + new ranking partial index exists.
---   - Exactly 1 SECURITY DEFINER among service_% RPCs (reveal), ranking RPCs
---     remain INVOKER; exactly 23 service_% RPCs (21 prior +2 EP-03-11: link_escrow + release_gate).
+--   - Exactly 2 SECURITY DEFINER among service_% RPCs (reveal + portfolio_list),
+--     ranking RPCs remain INVOKER; exactly 26 service_% RPCs
+--     (21 prior +2 EP-03-11: link_escrow + release_gate +3 EP-03-15 proof).
 --   - Realtime excludes platform_config.
 --   - EXECUTE posture: anon can execute ranking_search + listing_get + review_get_for_listing (3), authenticated 23.
 
@@ -141,16 +142,16 @@ select is(
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname like 'service\_%' and p.prosecdef),
-  1,
-  'exactly one service_% function is SECURITY DEFINER'
+  2,
+  'exactly two service_% functions are SECURITY DEFINER'
 );
 
 -- ─── 14. Exactly 23 service_% RPCs (21 prior +2 escrow-linkage) ──────────────
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname like 'service\_%' and p.prorettype='jsonb'::regtype),
-  23,
-  'exactly 23 service_% RPCs exist (21 prior + link_escrow + release_gate)'
+  26,
+  'exactly 26 service_% RPCs exist (21 prior + link_escrow + release_gate + 3 proof)'
 );
 
 -- ─── 15. Realtime excludes platform_config ──────────────────────────────────
@@ -160,11 +161,11 @@ select is(
   'Realtime excludes platform_config'
 );
 
--- ─── 16. Anon EXECUTE: 4 functions (listing_get + review_get_for_listing + ranking_search + weights_get) ──
+-- ─── 16. Anon EXECUTE: 5 functions (listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list) ──
 select is(
   (select count(*)::int from information_schema.routine_privileges where routine_schema='public' and routine_name like 'service\_%' and grantee='anon'),
-  4,
-  'anon can execute exactly four service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get)'
+  5,
+  'anon can execute exactly five service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list)'
 );
 select ok(
   has_function_privilege('anon', 'public.service_ranking_search(uuid, text, jsonb, jsonb, integer)', 'EXECUTE'),

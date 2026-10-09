@@ -1,7 +1,10 @@
 import 'package:hivorr/data/entities/listing_media.dart';
 import 'package:hivorr/data/entities/service_listing.dart';
+import 'package:hivorr/data/entities/service_listing_proof.dart';
+import 'package:hivorr/data/mappers/portfolio_mappers.dart';
 import 'package:hivorr/data/models/listing_media_dto.dart';
 import 'package:hivorr/data/models/service_listing_dto.dart';
+import 'package:hivorr/data/models/service_listing_proof_dto.dart';
 
 /// Transforms [ServiceListingDto] ↔ [ServiceListing].
 ///
@@ -157,6 +160,32 @@ class ServiceListingMapper {
       hasMore: hasMore,
       nextCursor: nextCursor,
     );
+  }
+
+  /// Maps a `service_listing_portfolio_list` item row into [LinkedPortfolioItem].
+  ///
+  /// Item columns reuse [PortfolioMappers.toPortfolioItem] (no duplicated
+  /// parsing); the row order is preserved verbatim by the caller — this
+  /// mapper never re-sorts.
+  static LinkedPortfolioItem toProofEntity(ServiceListingProofDto dto) =>
+      LinkedPortfolioItem(
+        item: PortfolioMappers.toPortfolioItem(dto.item),
+        linkSortOrder: dto.linkSortOrder,
+      );
+
+  /// Maps a `service_listing_portfolio_list` items array into linked proof
+  /// entities (RPC order verbatim).
+  static List<LinkedPortfolioItem> toProofEntities(
+    List<Map<String, dynamic>> items,
+  ) {
+    final List<LinkedPortfolioItem> entities = items
+        .map(
+          (Map<String, dynamic> e) => toProofEntity(
+            ServiceListingProofDto.fromJson(e),
+          ),
+        )
+        .toList(growable: false);
+    return List<LinkedPortfolioItem>.unmodifiable(entities);
   }
 
   /// Maps a page DTO into the domain page (preserves RPC order verbatim).
