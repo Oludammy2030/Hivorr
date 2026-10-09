@@ -3,6 +3,7 @@
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 import 'package:hivorr/data/entities/listing_media.dart';
+import 'package:hivorr/data/entities/service_listing_proof.dart';
 import 'package:hivorr/data/mappers/service_listing_mapper.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
 
@@ -46,6 +47,10 @@ class ServiceListingRepositoryImpl implements ServiceListingRepository {
     'archived',
     'reported',
   };
+
+  /// Maximum linked proof pieces per listing (mirrors the
+  /// `service_listing_link_portfolio_items` cap).
+  static const int maxLinkedProofs = 8;
 
   @override
   Future<MyServiceListing> createListing({
@@ -174,6 +179,62 @@ class ServiceListingRepositoryImpl implements ServiceListingRepository {
   }
 
   @override
+  Future<List<LinkedPortfolioItem>> linkPortfolioItems({
+    required String listingId,
+    required List<String> portfolioItemIds,
+  }) async {
+    _requireNonEmpty(listingId, 'listingId');
+    _requireProofSelection(portfolioItemIds);
+    await _remote.linkPortfolioItems(
+      listingId: listingId,
+      portfolioItemIds: portfolioItemIds,
+    );
+    return listPortfolioProofs(listingId);
+  }
+
+  @override
+  Future<List<LinkedPortfolioItem>> unlinkPortfolioItem({
+    required String listingId,
+    required String portfolioItemId,
+  }) async {
+    _requireNonEmpty(listingId, 'listingId');
+    _requireNonEmpty(portfolioItemId, 'portfolioItemId');
+    await _remote.unlinkPortfolioItem(
+      listingId: listingId,
+      portfolioItemId: portfolioItemId,
+    );
+    return listPortfolioProofs(listingId);
+  }
+
+  @override
+  Future<List<LinkedPortfolioItem>> listPortfolioProofs(
+    String listingId,
+  ) async {
+    _requireNonEmpty(listingId, 'listingId');
+    final Map<String, dynamic> data = await _remote.listPortfolioProofs(
+      listingId,
+    );
+    final Object? rawItems = data['items'];
+    if (rawItems is! List) {
+      throw const ApiException(
+        kind: ApiExceptionKind.server,
+        message: 'Proof list could not be read.',
+        code: 'PLT999',
+      );
+    }
+    final List<Map<String, dynamic>> items = <Map<String, dynamic>>[];
+    for (final Object? e in rawItems) {
+      if (e is Map<String, dynamic>) {
+        items.add(e);
+      } else if (e is Map) {
+        items.add(Map<String, dynamic>.from(e));
+      }
+    }
+    // Server order is preserved verbatim (link sort_order, then created_at).
+    return ServiceListingMapper.toProofEntities(items);
+  }
+
+  @override
   Future<MyListingPage> listMine({
     String? status,
     int limit = 20,
@@ -243,6 +304,33 @@ class ServiceListingRepositoryImpl implements ServiceListingRepository {
         message: '$field is required.',
         code: 'PLT003',
       );
+    }
+  }
+
+  void _requireProofSelection(List<String> portfolioItemIds) {
+    if (portfolioItemIds.isEmpty) {
+      throw const ApiException(
+        kind: ApiExceptionKind.validation,
+        message: 'Select at least one portfolio item.',
+        code: 'PLT003',
+      );
+    }
+    if (portfolioItemIds.length > maxLinkedProofs) {
+      throw const ApiException(
+        kind: ApiExceptionKind.validation,
+        message: 'Link at most 8 portfolio items per service.',
+        code: 'PLT003',
+      );
+    }
+    final Set<String> seen = <String>{};
+    for (final String id in portfolioItemIds) {
+      if (id.trim().isEmpty || !seen.add(id)) {
+        throw const ApiException(
+          kind: ApiExceptionKind.validation,
+          message: 'Portfolio selection contains an invalid or duplicate item.',
+          code: 'PLT003',
+        );
+      }
     }
   }
 

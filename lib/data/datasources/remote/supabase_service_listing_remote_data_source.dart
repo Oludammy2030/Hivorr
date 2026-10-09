@@ -5,12 +5,14 @@ import 'package:hivorr/data/datasources/remote/service_listing_remote_data_sourc
 import 'package:hivorr/data/models/listing_media_dto.dart';
 
 /// Supabase-backed implementation of [ServiceListingRemoteDataSource]
-/// (EP-03-08 §11).
+/// (EP-03-08 §11, EP-03-15 §7).
 ///
 /// Wraps the six owner listing RPCs plus the `service_favorite_toggle`
 /// read-through via `supabase.rpc(...)` and unwraps the standard
 /// `{success, code, message, data}` envelope with
-/// [ServiceListingEnvelopeParser]. Mirrors
+/// [ServiceListingEnvelopeParser]. Proof linkage adds the three
+/// `service_listing_portfolio_*` junction RPCs through the same `_guard` +
+/// envelope seam. Mirrors
 /// `SupabaseDisputeRemoteDataSource` (`_guard(mapDataException)` + `p_*`
 /// params). This class never writes `service_listings` tables directly and
 /// never references service-role-only transitions (`reported`).
@@ -156,4 +158,49 @@ class SupabaseServiceListingRemoteDataSource extends BaseApiService
           return ServiceListingEnvelopeParser.unwrap(response);
         },
       );
+
+  @override
+  Future<Map<String, dynamic>> linkPortfolioItems({
+    required String listingId,
+    required List<String> portfolioItemIds,
+  }) =>
+      _guard(() async {
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+          'service_listing_link_portfolio_items',
+          params: <String, dynamic>{
+            'p_listing_id': listingId,
+            'p_portfolio_ids': portfolioItemIds,
+          },
+        );
+        return ServiceListingEnvelopeParser.unwrap(response);
+      });
+
+  @override
+  Future<Map<String, dynamic>> unlinkPortfolioItem({
+    required String listingId,
+    required String portfolioItemId,
+  }) =>
+      _guard(() async {
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+          'service_listing_unlink_portfolio_item',
+          params: <String, dynamic>{
+            'p_listing_id': listingId,
+            'p_portfolio_item_id': portfolioItemId,
+          },
+        );
+        return ServiceListingEnvelopeParser.unwrap(response);
+      });
+
+  @override
+  Future<Map<String, dynamic>> listPortfolioProofs(String listingId) =>
+      _guard(() async {
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+          'service_listing_portfolio_list',
+          params: <String, dynamic>{'p_listing_id': listingId},
+        );
+        return ServiceListingEnvelopeParser.unwrap(response);
+      });
 }

@@ -1,4 +1,5 @@
 import 'package:hivorr/data/entities/listing_media.dart';
+import 'package:hivorr/data/entities/service_listing_proof.dart';
 
 /// Abstract contract for service listing data operations (EP-03-08 §8 D4).
 ///
@@ -66,4 +67,30 @@ abstract class ServiceListingRepository {
   /// non-`published` targets surface `PLT005`; unknown listings `PLT004`.
   /// Read-through for detail preview only — no favorites list is owned here.
   Future<bool> toggleFavorite(String listingId);
+
+  /// Replaces the listing's linked proof set with [portfolioItemIds] in order,
+  /// then re-reads the authoritative linked set
+  /// (`service_listing_link_portfolio_items` full-replace, VOLATILE;
+  /// owner-only).
+  ///
+  /// Pre-validates the selection shape (non-empty, ≤ max, no duplicates)
+  /// before the RPC (fail-fast `PLT003`). Ownership and published-visibility
+  /// stay server-side (`PLT001`/`PLT004`/`PLT005`).
+  Future<List<LinkedPortfolioItem>> linkPortfolioItems({
+    required String listingId,
+    required List<String> portfolioItemIds,
+  });
+
+  /// Removes a single proof link, then re-reads the authoritative linked set
+  /// (`service_listing_unlink_portfolio_item`, VOLATILE, idempotent).
+  Future<List<LinkedPortfolioItem>> unlinkPortfolioItem({
+    required String listingId,
+    required String portfolioItemId,
+  });
+
+  /// Lists the listing's linked proof in server order
+  /// (`service_listing_portfolio_list`, STABLE; public read of `published`,
+  /// owner read of private states). Unknown or non-visible listings surface
+  /// `PLT004` (identical message, no oracle).
+  Future<List<LinkedPortfolioItem>> listPortfolioProofs(String listingId);
 }

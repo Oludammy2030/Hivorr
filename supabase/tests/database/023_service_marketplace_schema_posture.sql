@@ -14,10 +14,13 @@
 --     D5 trigger instead (direct writes raise PLT002 — behavioral proof in 024).
 --   - CHECK vocabularies (slug, published_at semantics, media path parity,
 --     mime allowlist), unique constraints, named indexes incl. GIN, triggers.
---   - No service_% SECURITY DEFINER; exactly 7 service_% RPCs.
+--   - Exactly 2 service_% SECURITY DEFINER (service_review_reveal_if_ready +
+--     service_listing_portfolio_list, each an approved deviation);
+--     exactly 26 service_% RPCs (23 pre-EP-03-15 + 3 proof-linkage RPCs).
 --   - Realtime excludes all 3 tables; comments present.
 --   - service-listing-media bucket provisioned with 4 storage.objects policies.
---   - EXECUTE posture: anon receives only service_listing_get.
+--   - EXECUTE posture: anon receives only service_listing_get +
+--     service_listing_portfolio_list (both published-only reads).
 
 begin;
 set search_path to extensions, public;
@@ -213,7 +216,7 @@ select is(
   'the 4 named marketplace triggers exist (2 updated_at + search_vector + D5 guard)'
 );
 
--- ─── 15. Exactly 1 service_% SECURITY DEFINER (service_review_reveal_if_ready) ─────
+-- ─── 15. Exactly 2 service_% SECURITY DEFINER (reveal_if_ready + portfolio_list) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -221,15 +224,16 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prosecdef),
-  1,
-  'exactly one service_% function is SECURITY DEFINER (service_review_reveal_if_ready, approved deviation for double-blind count)'
+  2,
+  'exactly two service_% functions are SECURITY DEFINER (service_review_reveal_if_ready, approved deviation for double-blind count; service_listing_portfolio_list, approved deviation for anon proof reads per EP-03-15)'
 );
 select ok(
-  (select p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname='public' and p.proname='service_review_reveal_if_ready'),
-  'service_review_reveal_if_ready is SECURITY DEFINER'
+  (select p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname='public' and p.proname='service_review_reveal_if_ready')
+  and (select p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname='public' and p.proname='service_listing_portfolio_list'),
+  'service_review_reveal_if_ready and service_listing_portfolio_list are SECURITY DEFINER'
 );
 
--- ─── 16. Exactly 23 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking) ─────
+-- ─── 16. Exactly 26 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -237,8 +241,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prorettype <> 'trigger'::regtype),
-  23,
-  'exactly 23 service_% RPCs exist (7 listing + 10 contract + 4 review + 2 ranking)'
+  26,
+  'exactly 26 service_% RPCs exist (7 listing + 10 contract + 4 review + 2 ranking + 3 proof)'
 );
 
 -- ─── 17. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -287,46 +291,47 @@ select is(
   '4 storage.objects policies exist for service-listing-media'
 );
 
--- ─── 21. anon EXECUTE: service_listing_get + service_review_get_for_listing + ranking_search + weights_get ──────
+-- ─── 21. anon EXECUTE: service_listing_get + service_review_get_for_listing + ranking_search + weights_get + portfolio_list ──────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'anon'),
-  4,
-  'anon can execute exactly four service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get)'
+  5,
+  'anon can execute exactly five service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list)'
 );
 
--- ─── 22. authenticated EXECUTE on all 23 ──────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 26 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'authenticated'),
-  23,
-  'authenticated can execute all 23 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking)'
+  26,
+  'authenticated can execute all 26 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof)'
 );
 
--- ─── 23. service_role EXECUTE on all 23 ───────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 26 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'service_role'),
-  23,
-  'service_role can execute all 23 service_% RPCs'
+  26,
+  'service_role can execute all 26 service_% RPCs'
 );
 
--- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing + ranking_search + weights_get ─
+-- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list ─
 select ok(
   has_function_privilege('anon', 'public.service_listing_get(uuid)', 'EXECUTE')
   and has_function_privilege('anon', 'public.service_review_get_for_listing(uuid, integer, uuid)', 'EXECUTE')
   and has_function_privilege('anon', 'public.service_ranking_search(uuid, text, jsonb, jsonb, integer)', 'EXECUTE')
-  and has_function_privilege('anon', 'public.service_ranking_weights_get()', 'EXECUTE'),
-  'the anon-executable service_% functions are service_listing_get + review_get_for_listing + ranking_search + weights_get'
+  and has_function_privilege('anon', 'public.service_ranking_weights_get()', 'EXECUTE')
+  and has_function_privilege('anon', 'public.service_listing_portfolio_list(uuid)', 'EXECUTE'),
+  'the anon-executable service_% functions are service_listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list'
 );
 
 -- ─── 25. RLS policy surface: 4 + 4 + 3 ────────────────────────────────────────
