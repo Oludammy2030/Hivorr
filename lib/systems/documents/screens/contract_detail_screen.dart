@@ -616,6 +616,15 @@ class _SchedulingEntry extends StatelessWidget {
             variant: HivorrButtonVariant.primary,
             isExpanded: true,
           ),
+          const SizedBox(height: 8),
+          HivorrButton(
+            label: 'View appointments',
+            onPressed: () => context.push(
+              RoutePaths.appointmentList(contract.id),
+            ),
+            variant: HivorrButtonVariant.secondary,
+            isExpanded: true,
+          ),
           if (isProfessional) ...[
             const SizedBox(height: 8),
             HivorrButton(

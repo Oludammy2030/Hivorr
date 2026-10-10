@@ -22,6 +22,7 @@ import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
+import 'package:hivorr/systems/scheduling/services/scheduling_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -46,6 +47,9 @@ class BootstrapResult {
     this.serviceContractRepository,
     this.serviceContractProvider,
     this.serviceContractService,
+    this.schedulingRepository,
+    this.schedulingProvider,
+    this.schedulingService,
     this.contractEscrowOrchestrator,
     required this.verificationRepository,
     required this.verificationProvider,
@@ -126,6 +130,17 @@ class BootstrapResult {
   /// Contract facade surfaced to the widget tree (EP-03-10, offer/accept
   /// orchestration + evidence URL resolution).
   final ContractService? serviceContractService;
+
+  /// Scheduling repository (EP-03-14 availability + appointments). Optional
+  /// for testability.
+  final SchedulingRepository? schedulingRepository;
+
+  /// Scheduling provider surfaced to the widget tree (EP-03-14).
+  final SchedulingProvider? schedulingProvider;
+
+  /// Scheduling facade surfaced to the widget tree (EP-03-14 validators +
+  /// idempotency orchestration; server stays authoritative).
+  final SchedulingService? schedulingService;
 
   /// Verification-gated escrow release orchestrator (EP-03-11). Composes the
   /// contract verification half with the escrow proxy-seamed fund-movement
@@ -354,6 +369,16 @@ class AppBootstrap {
         tokenProvider: apiLayer.tokenProvider,
       ),
     );
+    // EP-03-14 scheduling slice (availability + appointments over the
+    // EP-03-05 RPCs; reads are RLS participant-scoped). Screens resolve the
+    // provider/service from the tree; without this the scheduling routes
+    // throw ProviderNotFoundException.
+    final ({
+      SchedulingRepository repository,
+      SchedulingProvider provider,
+      SchedulingService service,
+    })
+    scheduling = registerSchedulingLayer(apiLayer);
     final ({JobRepository repository, JobProvider provider}) jobs =
         registerJobsLayer(apiLayer);
     final ({HireRepository repository, HireProvider provider}) hires =
@@ -419,6 +444,9 @@ class AppBootstrap {
       serviceContractRepository: serviceContract.repository,
       serviceContractProvider: serviceContract.provider,
       serviceContractService: serviceContract.service,
+      schedulingRepository: scheduling.repository,
+      schedulingProvider: scheduling.provider,
+      schedulingService: scheduling.service,
       contractEscrowOrchestrator: contractEscrowOrchestrator,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,

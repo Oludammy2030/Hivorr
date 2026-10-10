@@ -2322,8 +2322,40 @@ class _ProSettingsTabState extends State<_ProSettingsTab> {
         _ToggleRow(
           label: 'Remote only',
           value: _remoteOnly,
-          last: true,
           onChanged: (bool v) => setState(() => _remoteOnly = v),
+        ),
+        const SizedBox(height: HivorrSpacing.sm),
+        InkWell(
+          onTap: () => context.go(RoutePaths.availability),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: context.colorScheme.outlineVariant,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  Icons.calendar_month_outlined,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: HivorrSpacing.xs),
+                Text(
+                  'Manage schedule',
+                  style: context.textTheme.labelLarge?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

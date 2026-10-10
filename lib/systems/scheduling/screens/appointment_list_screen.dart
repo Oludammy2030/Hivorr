@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:hivorr/app/router/route_paths.dart';import 'package:hivorr/core/api/exceptions/api_exception.dart';
+import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/entities/appointment.dart';
 import 'package:hivorr/data/providers/scheduling_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';

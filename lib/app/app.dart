@@ -28,6 +28,7 @@ import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/messaging_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
+import 'package:hivorr/data/providers/scheduling_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
@@ -44,6 +45,7 @@ import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/data/repositories/messaging_repository.dart';
 import 'package:hivorr/data/repositories/portfolio_repository.dart';
+import 'package:hivorr/data/repositories/scheduling_repository.dart';
 import 'package:hivorr/data/repositories/service_contract_repository.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
@@ -55,6 +57,7 @@ import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dar
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
+import 'package:hivorr/systems/scheduling/services/scheduling_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -80,6 +83,9 @@ class HivorrApp extends StatefulWidget {
     this.serviceContractRepository,
     this.serviceContractProvider,
     this.serviceContractService,
+    this.schedulingRepository,
+    this.schedulingProvider,
+    this.schedulingService,
     this.contractEscrowOrchestrator,
     this.verificationRepository,
     this.verificationProvider,
@@ -155,6 +161,15 @@ class HivorrApp extends StatefulWidget {
   /// Contract facade surfaced to the widget tree (EP-03-10, offer/accept
   /// orchestration + evidence URL resolution).
   final ContractService? serviceContractService;
+
+  /// Scheduling repository (EP-03-14). Optional for testability.
+  final SchedulingRepository? schedulingRepository;
+
+  /// Scheduling provider surfaced to the widget tree (EP-03-14).
+  final SchedulingProvider? schedulingProvider;
+
+  /// Scheduling facade surfaced to the widget tree (EP-03-14).
+  final SchedulingService? schedulingService;
 
   /// Verification-gated escrow release orchestrator (EP-03-11). Optional for
   /// testability; the contract detail screen hides `Verify & release` when
@@ -371,6 +386,10 @@ class _HivorrAppState extends State<HivorrApp> {
         widget.serviceContractProvider;
     final ContractService? serviceContractService =
         widget.serviceContractService;
+    final SchedulingRepository? schedulingRepository =
+        widget.schedulingRepository;
+    final SchedulingProvider? schedulingProvider = widget.schedulingProvider;
+    final SchedulingService? schedulingService = widget.schedulingService;
     final ContractEscrowOrchestrator? contractEscrowOrchestrator =
         widget.contractEscrowOrchestrator;
     final VerificationRepository? verificationRepository =
@@ -444,6 +463,14 @@ class _HivorrAppState extends State<HivorrApp> {
           ),
         if (serviceContractService != null)
           Provider<ContractService>.value(value: serviceContractService),
+        if (schedulingRepository != null)
+          Provider<SchedulingRepository>.value(value: schedulingRepository),
+        if (schedulingProvider != null)
+          ChangeNotifierProvider<SchedulingProvider>.value(
+            value: schedulingProvider,
+          ),
+        if (schedulingService != null)
+          Provider<SchedulingService>.value(value: schedulingService),
         if (contractEscrowOrchestrator != null)
           Provider<ContractEscrowOrchestrator>.value(
             value: contractEscrowOrchestrator,

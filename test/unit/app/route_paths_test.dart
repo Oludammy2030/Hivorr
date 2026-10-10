@@ -50,6 +50,19 @@ void main() {
     expect(RoutePaths.publicStore(storeId: 'a b'), '/store/a%20b');
   });
 
+  test('EP-03-14 scheduling list route uses the contract URL family', () {
+    expect(RoutePaths.appointmentListRoute, '/contracts/:id/appointments');
+    expect(
+      RoutePaths.appointmentList('abc-123'),
+      '/contracts/abc-123/appointments',
+    );
+    expect(
+      RoutePaths.appointmentList('a b/c'),
+      '/contracts/a%20b%2Fc/appointments',
+    );
+    expect(RouteNames.appointmentList, 'appointment-list');
+  });
+
   test('named route constants match the GoRouter route names', () {
     expect(RouteNames.home, 'home');
     expect(RouteNames.login, 'login');
