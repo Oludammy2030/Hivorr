@@ -290,7 +290,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('1 Applications'));
+      await tester.tap(find.text('1 Applicants'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
@@ -345,7 +345,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('1 Applications'));
+      await tester.tap(find.text('1 Applicants'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
@@ -413,7 +413,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('1 Applications'));
+      await tester.tap(find.text('1 Applicants'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
@@ -471,7 +471,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('1 Applications'));
+      await tester.tap(find.text('1 Applicants'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
