@@ -19,6 +19,7 @@ import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
+import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -29,9 +30,12 @@ import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
+import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/systems/dashboard/dashboard_sign_out.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/models/picked_avatar.dart';
 import 'package:provider/provider.dart';
@@ -208,34 +212,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (isMobile) {
+      // Shared professional chrome: single `Profile` title with the bell +
+      // Professional pill + avatar on one compact row. Bottom navigation
+      // lives in the dashboard shell. No refresh action — the content
+      // RefreshIndicator below covers reloads (same contract as client).
       return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 48,
-          title: Text(
-            'Profile',
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: <Widget>[
-            IconButton(
-              tooltip: 'Notifications',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-            IconButton(
-              tooltip: 'Refresh',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: const Icon(Icons.refresh),
-              onPressed: () => unawaited(_refresh(capability)),
-            ),
-          ],
-        ),
+        appBar: const ProfessionalMobileAppBar(title: 'Profile'),
         body: MobileSafeBody(child: content),
       );
     }
@@ -1591,30 +1573,14 @@ class _SmallPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    // Canonical compact card action: the shared pill carries the same label,
+    // icon, and colors with token radius/padding and ellipsis guard.
+    return HivorrTableAction(
+      label: label,
+      icon: icon,
+      foreground: foreground,
+      background: fill,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, size: 16, color: foreground),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: context.textTheme.labelLarge?.copyWith(
-                color: foreground,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -2269,15 +2235,16 @@ class _ProSettingsTabState extends State<_ProSettingsTab> {
   Future<void> _deleteAccount() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Delete Account?'),
+      builder: (BuildContext ctx) => HivorrDialog(
+        title: 'Delete Account?',
         content: const Text(
           'This permanently removes your Hivorr account and all of its data.',
         ),
         actions: <Widget>[
-          TextButton(
+          HivorrButton(
+            label: 'Keep Account',
+            variant: HivorrButtonVariant.text,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep Account'),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -2322,8 +2289,47 @@ class _ProSettingsTabState extends State<_ProSettingsTab> {
         _ToggleRow(
           label: 'Remote only',
           value: _remoteOnly,
-          last: true,
           onChanged: (bool v) => setState(() => _remoteOnly = v),
+        ),
+        const SizedBox(height: HivorrSpacing.sm),
+        InkWell(
+          onTap: () => context.go(RoutePaths.availability),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: context.colorScheme.outlineVariant,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  Icons.calendar_month_outlined,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: HivorrSpacing.xs),
+                // Flexible bound so the label shares narrow buttons with the
+                // icon instead of overflowing (ellipsis engages only where
+                // the row is actually tight).
+                Flexible(
+                  child: Text(
+                    'Manage schedule',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.labelLarge?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -2801,11 +2807,21 @@ class _AddProjectDialog extends StatefulWidget {
 class _AddProjectDialogState extends State<_AddProjectDialog> {
   final TextEditingController _title = TextEditingController();
   final TextEditingController _tech = TextEditingController();
+  final FocusNode _titleFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _titleFocus.requestFocus();
+    });
+  }
 
   @override
   void dispose() {
     _title.dispose();
     _tech.dispose();
+    _titleFocus.dispose();
     super.dispose();
   }
 
@@ -2814,31 +2830,36 @@ class _AddProjectDialogState extends State<_AddProjectDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Add Project'),
+    return HivorrDialog(
+      title: 'Add Project',
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          TextField(
+          HivorrTextField(
             controller: _title,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'Project title'),
+            focusNode: _titleFocus,
+            hint: 'Project title',
             onSubmitted: (_) => _submit(),
           ),
           const SizedBox(height: HivorrSpacing.md),
-          TextField(
+          HivorrTextField(
             controller: _tech,
-            decoration: const InputDecoration(hintText: 'e.g. React / Node.js'),
+            hint: 'e.g. React / Node.js',
             onSubmitted: (_) => _submit(),
           ),
         ],
       ),
       actions: <Widget>[
-        TextButton(
+        HivorrButton(
+          label: 'Cancel',
+          variant: HivorrButtonVariant.text,
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
         ),
-        TextButton(onPressed: _submit, child: const Text('Add')),
+        HivorrButton(
+          label: 'Add',
+          variant: HivorrButtonVariant.text,
+          onPressed: _submit,
+        ),
       ],
     );
   }
@@ -2854,31 +2875,43 @@ class _AddSkillDialog extends StatefulWidget {
 
 class _AddSkillDialogState extends State<_AddSkillDialog> {
   final TextEditingController _skill = TextEditingController();
+  final FocusNode _skillFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _skillFocus.requestFocus();
+    });
+  }
 
   @override
   void dispose() {
     _skill.dispose();
+    _skillFocus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Add Skill'),
-      content: TextField(
+    return HivorrDialog(
+      title: 'Add Skill',
+      content: HivorrTextField(
         controller: _skill,
-        autofocus: true,
-        decoration: const InputDecoration(hintText: 'e.g. Figma'),
+        focusNode: _skillFocus,
+        hint: 'e.g. Figma',
         onSubmitted: (String v) => Navigator.of(context).pop(v),
       ),
       actions: <Widget>[
-        TextButton(
+        HivorrButton(
+          label: 'Cancel',
+          variant: HivorrButtonVariant.text,
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
         ),
-        TextButton(
+        HivorrButton(
+          label: 'Add',
+          variant: HivorrButtonVariant.text,
           onPressed: () => Navigator.of(context).pop(_skill.text),
-          child: const Text('Add'),
         ),
       ],
     );

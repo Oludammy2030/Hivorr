@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/app/widgets/hivorr_loader.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/job.dart';
@@ -12,6 +13,7 @@ import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
+import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/components/hivorr_stat_card.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
@@ -25,8 +27,10 @@ import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
+import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/shared/widgets/hivorr_tint_badge.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
@@ -220,34 +224,11 @@ class _OpportunitiesScreenState extends State<OpportunitiesScreen> {
     final bool isMobile = context.breakpoint == Breakpoint.mobile;
     if (isMobile) {
       return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 48,
-          title: Text(
-            'Find Work',
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-            ),
-          ),
-          actions: <Widget>[
-            IconButton(
-              tooltip: 'Notifications',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-            IconButton(
-              tooltip: 'Refresh',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: const Icon(Icons.refresh),
-              onPressed: () => unawaited(_load(refresh: true)),
-            ),
-          ],
-        ),
+        // Shared professional chrome: single `Find Work` title with the
+        // bell + Professional pill + avatar on one compact row. Bottom
+        // navigation lives in the dashboard shell. No refresh action — the
+        // grid below owns pull-to-refresh (same contract as client chrome).
+        appBar: const ProfessionalMobileAppBar(title: 'Find Work'),
         body: MobileSafeBody(
           child: _FindWorkContent(
             search: _search,
@@ -444,46 +425,20 @@ class _FindWorkSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    return Semantics(
-      textField: true,
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        style: context.textTheme.bodyMedium,
-        decoration: InputDecoration(
-          hintText: 'Search jobs by title, company, or skill…',
-          hintStyle: context.textTheme.bodyMedium?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
-          prefixIcon: Icon(
-            Icons.search_outlined,
-            size: 20,
-            color: colors.onSurfaceVariant,
-          ),
-          filled: true,
-          fillColor: colors.surfaceContainerHighest.withValues(
-            alpha: context.isDarkMode ? 1.0 : 0.55,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: HivorrSpacing.md,
-            vertical: 14,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: context.roleTheme.professionalPrimary,
-              width: 1.5,
-            ),
-          ),
-        ),
+    // Canonical search field (§21f): tint preserved via fillColor, focus
+    // resolves to primary per the design system (focus rings are never
+    // role-colored).
+    return HivorrTextField(
+      controller: controller,
+      onChanged: onChanged,
+      hint: 'Search jobs by title, company, or skill…',
+      prefix: Icon(
+        Icons.search_outlined,
+        size: 20,
+        color: colors.onSurfaceVariant,
+      ),
+      fillColor: colors.surfaceContainerHighest.withValues(
+        alpha: context.isDarkMode ? 1.0 : 0.55,
       ),
     );
   }
@@ -1067,12 +1022,13 @@ class _FwFilterSheetState extends State<_FwFilterSheet> {
                       ),
                     ),
                   ),
-                  TextButton(
+                  HivorrButton(
+                    label: 'Reset',
+                    variant: HivorrButtonVariant.text,
                     onPressed: () => setState(() {
                       _sort = _FwSort.recommended;
                       _urgentOnly = false;
                     }),
-                    child: const Text('Reset'),
                   ),
                   IconButton(
                     tooltip: 'Close',
@@ -1286,15 +1242,14 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    return Dialog(
-      insetPadding: const EdgeInsets.all(HivorrSpacing.md),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: ConstrainedBox(
+    final RoleThemeExtension roles = context.roleTheme;
+    // Canonical dialog chrome (radius + overlay shadow); the form, fields
+    // (validators live on the TextFormFields below — HivorrTextField carries
+    // no validator, so the fields stay), and the role-green submit stay.
+    return HivorrDialog(
+      content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(HivorrSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
@@ -1315,7 +1270,9 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
                       onTap: _sending
                           ? null
                           : () => Navigator.of(context).pop(),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(
+                        context.appExtension.radiusSm,
+                      ),
                       child: Container(
                         width: 40,
                         height: 40,
@@ -1323,7 +1280,9 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
                           color: colors.surfaceContainerHighest.withValues(
                             alpha: context.isDarkMode ? 1.0 : 0.55,
                           ),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(
+                            context.appExtension.radiusSm,
+                          ),
                         ),
                         child: Icon(
                           Icons.close,
@@ -1382,42 +1341,35 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
                 const SizedBox(height: HivorrSpacing.lg),
                 InkWell(
                   onTap: _sending ? null : _submit,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(
+                    context.appExtension.radiusSm,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: <Color>[
-                          Color(0xFF22C55E),
-                          Color(0xFF16A34A),
-                        ],
+                    // Flat role fill: the bespoke green gradient carried raw
+                    // hex outside the design system; the flat accent keeps
+                    // the green identity in the canonical flat-fill language.
+                    decoration: BoxDecoration(
+                      color: _sending
+                          ? roles.professionalPrimary.withValues(alpha: 0.6)
+                          : roles.professionalPrimary,
+                      borderRadius: BorderRadius.circular(
+                        context.appExtension.radiusSm,
                       ),
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         if (_sending)
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                colors.onPrimary,
-                              ),
-                            ),
-                          )
+                          HivorrLoader(size: 20, color: colors.onPrimary)
                         else
                           Icon(
                             Icons.description_outlined,
                             size: 20,
                             color: colors.onPrimary,
                           ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: HivorrSpacing.sm),
                         Text(
                           _sending ? 'Submitting…' : 'Submit Application',
                 style: context.textTheme.titleMedium?.copyWith(
@@ -1674,10 +1626,15 @@ class _ProfessionalApplicationsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('My Applications', style: context.textTheme.titleLarge),
-      ),
-      body: SafeArea(
+      // Shared professional chrome: single `My Applications` title with the
+      // bell + Professional pill + avatar on one compact row. Bottom
+      // navigation lives in the dashboard shell. Reloads stay on the
+      // in-body filter chips + retry states (same contract as client).
+      appBar: const ProfessionalMobileAppBar(title: 'My Applications'),
+      // Bottom-navigation safe-area contract: the shell owns the bottom
+      // inset, so MobileSafeBody (not a bottom-padding SafeArea) wraps the
+      // body; the list keeps the 32dp bottom clearance token.
+      body: MobileSafeBody(
         child: Column(
           children: <Widget>[
             SizedBox(
@@ -1727,7 +1684,7 @@ class _ProfessionalApplicationsScreenState
                   : RefreshIndicator(
                       onRefresh: _load,
                       child: ListView.separated(
-                        padding: const EdgeInsets.all(HivorrSpacing.md),
+                        padding: MobileCompact.scrollPadding,
                         itemCount: _items.length,
                         separatorBuilder: (_, _) =>
                             const SizedBox(height: HivorrSpacing.sm),

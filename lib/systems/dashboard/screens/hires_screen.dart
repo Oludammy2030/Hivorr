@@ -22,12 +22,14 @@ import 'package:hivorr/shared/layouts/breakpoints.dart';
 import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_badge.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:provider/provider.dart';
 
@@ -212,14 +214,11 @@ class _HiresScreenState extends State<HiresScreen> {
     final bool isMobile = context.breakpoint == Breakpoint.mobile;
     if (isMobile) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'My Jobs',
-            style: context.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
+        // Shared professional chrome: single `My Jobs` title with the bell +
+        // Professional pill + avatar on one compact row. Bottom navigation
+        // lives in the dashboard shell. No refresh action — the phase body
+        // below owns pull-to-refresh (same contract as client chrome).
+        appBar: const ProfessionalMobileAppBar(title: 'My Jobs'),
         body: MobileSafeBody(
           child: _ProfessionalMyJobsBody(
             phase: _proPhase,
@@ -441,8 +440,13 @@ class _ProfessionalMyJobsBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const _ProMyJobsHeader(),
-                const SizedBox(height: HivorrSpacing.lg),
+                // The shared mobile bar already titles this page, so the
+                // in-body heading shows on wider layouts only (same contract
+                // as the client Applications inbox).
+                if (context.breakpoint != Breakpoint.mobile)
+                  const _ProMyJobsHeader(),
+                if (context.breakpoint != Breakpoint.mobile)
+                  const SizedBox(height: HivorrSpacing.lg),
                 _ProPhaseTabs(
                   activePhase: phase,
                   onSelect: onPhaseSelected,
@@ -685,26 +689,18 @@ class _ProActiveJobCard extends StatelessWidget {
     final String subtitle = _proSubtitle(hire, job);
     final String category = _proCategory(job) ?? 'General';
 
-    return InkWell(
+    // Canonical card shell: HivorrCard reproduces the reference surface,
+    // radius (20, preserved from the reference), Level-1 shadow, and padding
+    // exactly, adding the shared splash + button semantics.
+    return HivorrCard(
       onTap: () => context.go(RoutePaths.dashboardHireDetail(hire.id)),
-      borderRadius: BorderRadius.circular(radius),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(radius),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(HivorrSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Wrap(
+      borderRadius: radius,
+      elevation: 1,
+      padding: const EdgeInsets.all(HivorrSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Wrap(
               spacing: HivorrSpacing.sm,
               runSpacing: HivorrSpacing.xs,
               children: <Widget>[
@@ -832,7 +828,6 @@ class _ProActiveJobCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -958,24 +953,15 @@ class _ProAppliedCard extends StatelessWidget {
             : (job?.title ?? 'Job');
     final String? proposed = _appliedProposed(application);
 
-    return InkWell(
+    // Canonical card shell (see _ProActiveJobCard): identical surface,
+    // radius, shadow, and padding with shared splash + button semantics.
+    return HivorrCard(
       onTap: () =>
           context.go(RoutePaths.dashboardJobDetail(application.jobId)),
-      borderRadius: BorderRadius.circular(radius),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(radius),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(HivorrSpacing.md),
-        child: Column(
+      borderRadius: radius,
+      elevation: 1,
+      padding: const EdgeInsets.all(HivorrSpacing.md),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Row(
@@ -1021,7 +1007,6 @@ class _ProAppliedCard extends StatelessWidget {
             ],
           ],
         ),
-      ),
     );
   }
 }
@@ -1130,44 +1115,16 @@ class _ContactEmployerButtonState extends State<_ContactEmployerButton> {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    final Widget body = Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: _busy
-            ? colors.primary.withValues(alpha: 0.6)
-            : colors.primary,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 16,
-            color: colors.onPrimary,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            _busy ? 'Opening…' : 'Contact Employer',
-            style: context.textTheme.labelLarge?.copyWith(
-              color: colors.onPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-    if (_busy) return body;
-    return Semantics(
-      button: true,
-      label: 'Contact Employer',
-      child: InkWell(
-        onTap: _open,
-        borderRadius: BorderRadius.circular(10),
-        child: body,
-      ),
+    // Canonical compact primary action (blue like the reference): the shared
+    // button carries the loading state via the branded loader instead of the
+    // bespoke faded container.
+    return HivorrButton(
+      label: _busy ? 'Opening…' : 'Contact Employer',
+      icon: const Icon(Icons.chat_bubble_outline, size: 20),
+      size: HivorrButtonSize.small,
+      variant: HivorrButtonVariant.primary,
+      isLoading: _busy,
+      onPressed: _busy ? null : _open,
     );
   }
 }
@@ -1273,26 +1230,17 @@ class _ProCompletedCard extends StatelessWidget {
     final String category = _proCategory(job) ?? 'General';
     final int rating = _completedRating(hire);
 
-    return InkWell(
+    // Canonical card shell (see _ProActiveJobCard): identical surface,
+    // radius, shadow, and padding with shared splash + button semantics.
+    return HivorrCard(
       onTap: () => context.go(RoutePaths.dashboardHireDetail(hire.id)),
-      borderRadius: BorderRadius.circular(radius),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(radius),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(HivorrSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
+      borderRadius: radius,
+      elevation: 1,
+      padding: const EdgeInsets.all(HivorrSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Expanded(
@@ -1338,12 +1286,17 @@ class _ProCompletedCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: HivorrSpacing.sm),
-                Text(
-                  _completedWhen(_completedDate(hire)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
+                // Flexible bound so the ellipsis can engage on 320dp
+                // viewports where pills + timestamp exceed the row.
+                Flexible(
+                  child: Text(
+                    _completedWhen(_completedDate(hire)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
@@ -1363,23 +1316,32 @@ class _ProCompletedCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    for (int s = 1; s <= 5; s++)
-                      Icon(
-                        Icons.star,
-                        size: 14,
-                        color: s <= rating ? ext.warning : colors.outline,
+                // Flexible bound so long ratings + the Paid pill share 320dp
+                // viewports instead of overflowing (ellipsis engages only
+                // where the row is actually tight).
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      for (int s = 1; s <= 5; s++)
+                        Icon(
+                          Icons.star,
+                          size: 14,
+                          color: s <= rating ? ext.warning : colors.outline,
+                        ),
+                      const SizedBox(width: HivorrSpacing.xs),
+                      Flexible(
+                        child: Text(
+                          'Rated $rating/5',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
                       ),
-                    const SizedBox(width: HivorrSpacing.xs),
-                    Text(
-                      'Rated $rating/5',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -1402,7 +1364,6 @@ class _ProCompletedCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

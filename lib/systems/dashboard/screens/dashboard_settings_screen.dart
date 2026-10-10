@@ -6,7 +6,10 @@ import 'package:hivorr/core/localization/locale_provider.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:provider/provider.dart';
 
 /// Settings hub (EP-04-03).
@@ -27,14 +30,23 @@ class _DashboardSettingsScreenState extends State<DashboardSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Hire focus shares the client chrome (hamburger + drawer); professional
+    // focus uses the shared professional chrome (same contract as Messages).
+    // Single page title (`Settings`).
+    final bool menu = showClientMenu(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Settings', style: context.textTheme.titleLarge),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(HivorrSpacing.lg),
-          child: Column(
+      drawer: menu ? const ClientDashboardDrawer() : null,
+      appBar: menu
+          ? const ClientMobileAppBar(title: 'Settings')
+          : const ProfessionalMobileAppBar(title: 'Settings'),
+      // Bottom-navigation safe-area contract + responsive gutters: 16dp on
+      // phones, 24dp preserved on wider layouts.
+      body: MobileSafeBody(
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints c) {
+            return SingleChildScrollView(
+              padding: MobileCompact.scrollPaddingFor(c.maxWidth),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const HivorrSectionHeader(title: 'Appearance'),
@@ -65,7 +77,9 @@ class _DashboardSettingsScreenState extends State<DashboardSettingsScreen> {
               ),
             ],
           ),
-        ),
+        );
+      },
+      ),
       ),
     );
   }

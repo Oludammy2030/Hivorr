@@ -22,6 +22,7 @@ import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/communication/services/message_crypto.dart';
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/messaging_thread_meta.dart';
 import 'package:provider/provider.dart';
 
@@ -143,16 +144,15 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final MessagingProvider messaging = context.watch<MessagingProvider>();
     final List<Hire> hires = _hiresOf(context);
     // Hire focus shares the client chrome (hamburger + drawer); professional
-    // focus keeps its existing bar untouched. Single page title (`Messages`).
+    // focus uses the shared professional chrome (bell + Professional pill +
+    // avatar, no drawer). Single page title (`Messages`).
     final bool menu = showClientMenu(context);
 
     return Scaffold(
       drawer: menu ? const ClientDashboardDrawer() : null,
       appBar: menu
           ? const ClientMobileAppBar(title: 'Messages')
-          : AppBar(
-              title: Text('Messages', style: context.textTheme.titleLarge),
-            ),
+          : const ProfessionalMobileAppBar(title: 'Messages'),
       body: MobileSafeBody(
         child: messaging.isLoading && messaging.conversations.isEmpty
             ? const HivorrLoadingState()
