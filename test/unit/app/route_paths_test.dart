@@ -50,6 +50,37 @@ void main() {
     expect(RoutePaths.publicStore(storeId: 'a b'), '/store/a%20b');
   });
 
+  test('EP-03-16 earnings routes use the finance/contract URL families', () {
+    expect(RoutePaths.earningsDetail, '/finance/earnings');
+    expect(RoutePaths.earningsHistory, '/finance/earnings/history');
+    expect(
+      RoutePaths.contractEarningsDetailRoute,
+      '/contracts/:id/earnings',
+    );
+    expect(
+      RoutePaths.contractEarningsDetail('abc-123'),
+      '/contracts/abc-123/earnings',
+    );
+    expect(
+      RoutePaths.contractEarningsDetail('a b/c'),
+      '/contracts/a%20b%2Fc/earnings',
+    );
+    expect(
+      RoutePaths.earningsHistoryFor(),
+      '/finance/earnings/history',
+    );
+    expect(
+      RoutePaths.earningsHistoryFor(contractId: 'c1'),
+      '/finance/earnings/history?contractId=c1',
+    );
+  });
+
+  test('EP-03-16 route names match the GoRouter route names', () {
+    expect(RouteNames.earningsDetail, 'earnings-detail');
+    expect(RouteNames.earningsHistory, 'earnings-history');
+    expect(RouteNames.contractEarningsDetail, 'contract-earnings-detail');
+  });
+
   test('named route constants match the GoRouter route names', () {
     expect(RouteNames.home, 'home');
     expect(RouteNames.login, 'login');

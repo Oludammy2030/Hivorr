@@ -16,7 +16,7 @@
 --     mime allowlist), unique constraints, named indexes incl. GIN, triggers.
 --   - Exactly 2 service_% SECURITY DEFINER (service_review_reveal_if_ready +
 --     service_listing_portfolio_list, each an approved deviation);
---     exactly 26 service_% RPCs (23 pre-EP-03-15 + 3 proof-linkage RPCs).
+--     exactly 28 service_% RPCs (23 pre-EP-03-15 + 3 proof-linkage RPCs + 2 EP-03-16 earnings RPCs).
 --   - Realtime excludes all 3 tables; comments present.
 --   - service-listing-media bucket provisioned with 4 storage.objects policies.
 --   - EXECUTE posture: anon receives only service_listing_get +
@@ -233,7 +233,7 @@ select ok(
   'service_review_reveal_if_ready and service_listing_portfolio_list are SECURITY DEFINER'
 );
 
--- ─── 16. Exactly 26 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof) ─────
+-- ─── 16. Exactly 28 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -241,8 +241,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prorettype <> 'trigger'::regtype),
-  26,
-  'exactly 26 service_% RPCs exist (7 listing + 10 contract + 4 review + 2 ranking + 3 proof)'
+  28,
+  'exactly 28 service_% RPCs exist (7 listing + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings)'
 );
 
 -- ─── 17. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -302,26 +302,26 @@ select is(
   'anon can execute exactly five service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list)'
 );
 
--- ─── 22. authenticated EXECUTE on all 26 ──────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 28 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'authenticated'),
-  26,
-  'authenticated can execute all 26 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof)'
+  28,
+  'authenticated can execute all 28 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings)'
 );
 
--- ─── 23. service_role EXECUTE on all 26 ───────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 28 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'service_role'),
-  26,
-  'service_role can execute all 26 service_% RPCs'
+  28,
+  'service_role can execute all 28 service_% RPCs'
 );
 
 -- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list ─

@@ -6,16 +6,19 @@ import 'package:hivorr/data/entities/hire.dart';
 import 'package:hivorr/data/entities/job.dart';
 import 'package:hivorr/data/entities/listing_media.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
+import 'package:hivorr/data/providers/earnings_provider.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/manage_user_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
+import 'package:hivorr/data/providers/transaction_history_provider.dart';
 import 'package:hivorr/data/repositories/hire_repository.dart';
 import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/data/repositories/manage_user_repository.dart';
 import 'package:hivorr/systems/dashboard/screens/finance_hubs_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/hires_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/my_jobs_screen.dart';
+import 'package:hivorr/systems/finance/services/service_earnings_service.dart';
 import 'package:hivorr/systems/jobs/services/hire_service.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
 import 'package:hivorr/systems/marketplace/screens/my_listings_screen.dart';
@@ -26,6 +29,7 @@ import 'package:provider/single_child_widget.dart';
 import '../../support/fakes/fake_admin_review.dart';
 import '../../support/fakes/fake_manage_user.dart';
 import '../../support/fakes/fake_service_listing.dart';
+import '../../support/fakes/finance/fake_earnings_repository.dart';
 import '../../test_helpers.dart';
 
 /// Responsive verification matrix (Phase 6): every migrated dashboard
@@ -275,14 +279,28 @@ void main() {
       final FakeAuthProvider auth = FakeAuthProvider(
         initialStatus: AuthStatus.authenticated,
       );
+      // EP-03-16 live earnings windows (empty fakes → honest empty states).
+      final FakeEarningsRepository earningsRepo = FakeEarningsRepository();
+      final EarningsProvider earnings = EarningsProvider(
+        service: ServiceEarningsService(repository: earningsRepo),
+      );
+      final TransactionHistoryProvider history = TransactionHistoryProvider(
+        service: ServiceEarningsService(repository: earningsRepo),
+      );
       addTearDown(() {
         users.dispose();
         auth.dispose();
+        earnings.dispose();
+        history.dispose();
       });
       return <SingleChildWidget>[
         ...hiringProviders(),
         ChangeNotifierProvider<ManageUserProvider>.value(value: users),
         ChangeNotifierProvider<AuthProvider>.value(value: auth),
+        ChangeNotifierProvider<EarningsProvider>.value(value: earnings),
+        ChangeNotifierProvider<TransactionHistoryProvider>.value(
+          value: history,
+        ),
       ];
     }
 

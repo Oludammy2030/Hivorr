@@ -53,11 +53,14 @@ import 'package:hivorr/systems/documents/screens/contract_detail_screen.dart';
 import 'package:hivorr/systems/documents/screens/contract_list_screen.dart';
 import 'package:hivorr/systems/documents/screens/contract_offer_screen.dart';
 import 'package:hivorr/systems/documents/screens/milestone_editor_screen.dart';
+import 'package:hivorr/systems/finance/screens/contract_earnings_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/conversion_screen.dart';
+import 'package:hivorr/systems/finance/screens/earnings_dashboard_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_detail_screen.dart';
 import 'package:hivorr/systems/finance/screens/escrow_list_screen.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_creation_flow.dart';
 import 'package:hivorr/systems/finance/screens/financial_profile_screen.dart';
+import 'package:hivorr/systems/finance/screens/transaction_history_screen.dart';
 import 'package:hivorr/systems/local_commerce/screens/store_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/marketplace_discovery_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/marketplace_search_screen.dart';
@@ -515,6 +518,21 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) =>
               const ConversionScreen(),
         ),
+        // Earnings visibility (EP-03-16, protected — read-only ledger views).
+        GoRoute(
+          path: RoutePaths.earningsDetail,
+          name: RouteNames.earningsDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              const EarningsDashboardScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.earningsHistory,
+          name: RouteNames.earningsHistory,
+          builder: (BuildContext context, GoRouterState state) =>
+              TransactionHistoryScreen(
+                contractId: state.uri.queryParameters['contractId'],
+              ),
+        ),
         GoRoute(
           path: RoutePaths.disputes,
           name: RouteNames.disputes,
@@ -597,6 +615,16 @@ class AppRouter {
           name: RouteNames.contractDetail,
           builder: (BuildContext context, GoRouterState state) =>
               ContractDetailScreen(
+                contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        // Contract earnings drill-down (EP-03-16, protected — deep-links
+        // only; filing and releasing stay in their owning systems).
+        GoRoute(
+          path: RoutePaths.contractEarningsDetailRoute,
+          name: RouteNames.contractEarningsDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              ContractEarningsDetailScreen(
                 contractId: state.pathParameters['id'] ?? '',
               ),
         ),

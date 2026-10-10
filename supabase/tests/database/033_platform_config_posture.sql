@@ -7,8 +7,8 @@
 --     range 0..1, sum 0.999..1.001, priors), indexes, trigger, comments.
 --   - service_listings GIN retained + new ranking partial index exists.
 --   - Exactly 2 SECURITY DEFINER among service_% RPCs (reveal + portfolio_list),
---     ranking RPCs remain INVOKER; exactly 26 service_% RPCs
---     (21 prior +2 EP-03-11: link_escrow + release_gate +3 EP-03-15 proof).
+--     ranking RPCs remain INVOKER; exactly 28 service_% RPCs
+--     (21 prior +2 EP-03-11: link_escrow + release_gate +3 EP-03-15 proof +2 EP-03-16 earnings).
 --   - Realtime excludes platform_config.
 --   - EXECUTE posture: anon can execute ranking_search + listing_get + review_get_for_listing (3), authenticated 23.
 
@@ -150,8 +150,8 @@ select is(
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname like 'service\_%' and p.prorettype='jsonb'::regtype),
-  26,
-  'exactly 26 service_% RPCs exist (21 prior + link_escrow + release_gate + 3 proof)'
+  28,
+  'exactly 28 service_% RPCs exist (21 prior + link_escrow + release_gate + 3 proof + 2 earnings)'
 );
 
 -- ─── 15. Realtime excludes platform_config ──────────────────────────────────
