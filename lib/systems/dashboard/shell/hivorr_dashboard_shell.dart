@@ -155,6 +155,20 @@ class _DashboardBottomNav extends StatelessWidget {
         !isMobilePrimaryLocation(location, hire: hire, offer: offer);
     final int index = _sectionIndex(location, primaries);
     final int selectedIndex = moreSelected ? primaries.length : index;
+    // Professional-only focus carries the green identity into the selected
+    // tab indicator/icon/label; hire and fail-open focuses keep the
+    // brand-blue default (client unaffected). Scoped to this bar only.
+    final bool isProfessional = offer && !hire;
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme barScheme = isProfessional
+        ? theme.colorScheme.copyWith(
+            primary: context.roleTheme.professionalPrimary,
+            secondaryContainer:
+                context.roleTheme.professionalContainer,
+            onSecondaryContainer:
+                context.roleTheme.professionalPrimary,
+          )
+        : theme.colorScheme;
     return SafeArea(
       top: false,
       bottom: true,
@@ -163,12 +177,13 @@ class _DashboardBottomNav extends StatelessWidget {
       // (five destinations share 64dp each); icon sizing is set per
       // destination below. Scoped to this bar only.
       child: Theme(
-        data: Theme.of(context).copyWith(
+        data: theme.copyWith(
+          colorScheme: barScheme,
           navigationBarTheme: NavigationBarThemeData(
             labelTextStyle: WidgetStatePropertyAll<TextStyle>(
-              (Theme.of(context).textTheme.labelSmall ??
-                      const TextStyle())
-                  .copyWith(fontSize: 11),
+              (theme.textTheme.labelSmall ?? const TextStyle()).copyWith(
+                fontSize: 11,
+              ),
             ),
           ),
         ),

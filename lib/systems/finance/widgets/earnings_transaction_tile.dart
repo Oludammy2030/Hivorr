@@ -92,21 +92,32 @@ class EarningsTransactionTile extends StatelessWidget {
         ),
         title: earningsTransactionTitle(transaction.type),
         subtitle: meta,
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(signedValue, style: context.textTheme.titleSmall),
-            if (transaction.isDisputed)
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: HivorrBadge(
-                  label: 'Frozen',
-                  variant: HivorrBadgeVariant.warning,
-                ),
+        // Flexible bound at the row level so large signed amounts share
+        // narrow rows with the title instead of overflowing (the ellipsis
+        // engages only where the row is actually tight).
+        trailing: Flexible(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                signedValue,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: context.textTheme.titleSmall,
               ),
-          ],
+              if (transaction.isDisputed)
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: HivorrBadge(
+                    label: 'Frozen',
+                    variant: HivorrBadgeVariant.warning,
+                  ),
+                ),
+            ],
+          ),
         ),
         onTap: transaction.contractId == null ? null : onTap,
       ),
