@@ -51,6 +51,10 @@ abstract final class JobMapper {
         updatedAt: dto.updatedAt,
         jobTitle: dto.jobTitle,
         jobStatus: dto.jobStatus,
+        applicantDisplayName: dto.applicantDisplayName,
+        applicantAvatarPath: dto.applicantAvatarPath,
+        applicantProfessionName: dto.applicantProfessionName,
+        applicantProfessionSlug: dto.applicantProfessionSlug,
       );
 
   /// Maps a `job_list` / `job_list_mine` envelope into domain [Job]s.

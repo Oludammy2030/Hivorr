@@ -81,6 +81,7 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
   List<JobApplication> _myApplications = const <JobApplication>[];
   List<JobApplication> _recentReceived = const <JobApplication>[];
   bool _recentReceivedLoading = false;
+  bool _postedRefreshing = false;
   Job? _selected;
   List<JobApplication> _applications = const <JobApplication>[];
   JobApplication? _myApplication;
@@ -201,9 +202,14 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Loads the detail (job + applications + events) for [jobId] in one RPC.
-  Future<void> select(String jobId) async {
+  ///
+  /// When [force] is true the memoized selection is bypassed so post-action
+  /// refreshes (apply / shortlist / reject / hire) re-read the authoritative
+  /// `job_get` envelope instead of no-op'ing on the same id. The shared
+  /// [isLoading] gate is preserved to avoid overlapping transitions.
+  Future<void> select(String jobId, {bool force = false}) async {
     if (isLoading) return;
-    if (_selected?.id == jobId && isLoaded) return;
+    if (!force && _selected?.id == jobId && isLoaded) return;
     _loadState = JobLoadState.loading;
     _error = null;
     notifyListeners();
@@ -220,6 +226,49 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
         'code': e.code,
       });
     } finally {
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  /// Re-reads the client's posted jobs without disturbing the shared
+  /// [isLoading]/[_loadState] gate (Phase 2 applicant-count consistency).
+  ///
+  /// Badges read trigger-maintained `Job.applicationsCount` from
+  /// `job_list_mine(posted)`. That envelope goes stale when a professional
+  /// submits on another device/account and when inbox actions complete.
+  /// This seam re-fetches `posted` (authoritative counts) while keeping the
+  /// previous list on failure — mirroring [loadRecentReceived] — so callers
+  /// (`_ClientApplicationsScreen._runAction`, My Jobs hire actions) can
+  /// refresh counts without blanking screens or being dropped by an in-flight
+  /// discovery/detail load. Never synthesizes counts client-side; status
+  /// transitions (withdraw/shortlist/reject/accept) intentionally leave the
+  /// trigger count unchanged.
+  Future<void> refreshPosted() async {
+    if (_postedRefreshing || _disposed || _paused) return;
+    _postedRefreshing = true;
+    try {
+      final JobPage page = await _service.listMyJobs(role: 'posted');
+      _posted = page.jobs;
+      // Keep the selected job row in sync so detail headers show the same
+      // authoritative count as the My Jobs badges (applications/events/my
+      // application state is preserved — only the job row is swapped).
+      final Job? current = _selected;
+      if (current != null) {
+        for (final Job fresh in page.jobs) {
+          if (fresh.id == current.id) {
+            _selected = fresh;
+            break;
+          }
+        }
+      }
+      if (!_disposed) notifyListeners();
+    } on ApiException catch (e) {
+      _logger?.warning('Posted jobs refresh failed', <String, Object?>{
+        'kind': e.kind.name,
+        'code': e.code,
+      });
+    } finally {
+      _postedRefreshing = false;
       if (!_disposed) notifyListeners();
     }
   }
@@ -425,6 +474,12 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
       _transition(() => _service.completeJob(jobId));
 
   /// Submits an application and records it as the own application.
+  ///
+  /// The server trigger increments `jobs.applications_count`; the client
+  /// never bumps counts locally (no duplicate counting). The professional
+  /// side records [_myApplication] plus the memoized [_myApplications] entry
+  /// so Applied feeds stay consistent; the hiring client picks up the new
+  /// count via [refreshPosted]/[loadMine] (pull-to-refresh / inbox reload).
   Future<JobApplication> apply({
     required String jobId,
     required String coverNote,
@@ -440,6 +495,9 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
       durationDays: durationDays,
     );
     _myApplication = application;
+    if (!_myApplications.any((JobApplication a) => a.id == application.id)) {
+      _myApplications = <JobApplication>[application, ..._myApplications];
+    }
     _maybeNotifyApplication(application);
     if (!_disposed) notifyListeners();
     return application;
@@ -487,6 +545,14 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
     _applications = _applications
         .map((JobApplication a) => a.id == updated.id ? updated : a)
         .toList(growable: false);
+    // Keep the professional's memoized feed in sync without refetching;
+    // status transitions never touch `applications_count` (trigger is
+    // INSERT/DELETE only), so no count adjustment happens here.
+    if (_myApplications.any((JobApplication a) => a.id == updated.id)) {
+      _myApplications = _myApplications
+          .map((JobApplication a) => a.id == updated.id ? updated : a)
+          .toList(growable: false);
+    }
   }
 
   void _upsertMine(Job job) {

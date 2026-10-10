@@ -9,9 +9,11 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/job.dart';
 import 'package:hivorr/data/entities/job_application.dart';
+import 'package:hivorr/data/entities/public_profile.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/repositories/portfolio_repository.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
 import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/components/hivorr_stat_card.dart';
@@ -1741,6 +1743,21 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
   List<JobApplication> _apps = const <JobApplication>[];
   final Map<String, List<JobApplication>> _appsCache =
       <String, List<JobApplication>>{};
+  final Map<String, bool> _appsHasMoreCache = <String, bool>{};
+  // Phase 4: applicant identities resolved from the existing public-profile
+  // read path (`PortfolioRepository.getPublicProfile`, approved-gate
+  // respected), keyed by professional entity id. `null` value = gated or
+  // missing profile → graceful generic fallback (never raw ids, never
+  // fabricated names). Absent key = not yet resolved or transient failure
+  // (retried on the next load).
+  final Map<String, PublicProfile?> _identities = <String, PublicProfile?>{};
+  final Set<String> _identityPending = <String>{};
+  // Phase 5: review selection. The right pane shows the applicant list until
+  // the client taps a card, then the dedicated detail view for that
+  // application (same pane on desktop, full-width on mobile — one
+  // experience, no competing routes). Cleared whenever the job changes.
+  String? _selectedApplicationId;
+  bool _appsHasMore = false;
   bool _appsLoading = false;
   String? _appsError;
   bool _jobsRequested = false;
@@ -1756,14 +1773,62 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
   Future<void> _loadJobs() =>
       context.read<JobProvider>().loadMine(role: 'posted');
 
+  /// Non-blocking count refresh (Phase 2): re-reads `job_list_mine(posted)`
+  /// for authoritative `applications_count` without tripping the shared
+  /// loading gate or blanking the jobs panel on failure.
+  Future<void> _refreshCounts() =>
+      context.read<JobProvider>().refreshPosted();
+
+  /// Resolves display identities for [apps] via the existing
+  /// [PortfolioRepository] read path (single RPC per applicant, cached by
+  /// entity id). Rows carrying the submit-time identity snapshot
+  /// (`hasIdentitySnapshot`) need no RPC and are skipped — the snapshot is
+  /// authoritative. Runs in the background without blocking the list: each
+  /// resolution rebuilds once on completion. Never throws — failures leave
+  /// the generic fallback in place.
+  void _resolveIdentities(List<JobApplication> apps) {
+    PortfolioRepository? portfolios;
+    try {
+      portfolios = context.read<PortfolioRepository>();
+    } catch (_) {
+      return;
+    }
+    final PortfolioRepository repo = portfolios;
+    final Set<String> seen = <String>{};
+    for (final JobApplication app in apps) {
+      if (app.hasIdentitySnapshot) continue;
+      final String entityId = app.professionalEntityId.trim();
+      if (entityId.isEmpty || !seen.add(entityId)) continue;
+      if (_identities.containsKey(entityId) ||
+          _identityPending.contains(entityId)) {
+        continue;
+      }
+      _identityPending.add(entityId);
+      unawaited(
+        repo.getPublicProfile(entityId).then((PublicProfile? profile) {
+          _identityPending.remove(entityId);
+          if (!mounted) return;
+          // Only the gated/missing case caches `null`; transient errors
+          // throw and stay uncached so the next load retries.
+          setState(() => _identities[entityId] = profile);
+        }).catchError((Object _) {
+          _identityPending.remove(entityId);
+          return null;
+        }),
+      );
+    }
+  }
+
   Future<void> _loadApps(String jobId, {bool refresh = false}) async {
     if (!refresh && _appsCache.containsKey(jobId)) {
       if (mounted) {
         setState(() {
           _apps = _appsCache[jobId]!;
+          _appsHasMore = _appsHasMoreCache[jobId] ?? false;
           _appsLoading = false;
           _appsError = null;
         });
+        _resolveIdentities(_appsCache[jobId]!);
       }
       return;
     }
@@ -1782,8 +1847,11 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
       setState(() {
         _apps = page.applications;
         _appsCache[jobId] = page.applications;
+        _appsHasMore = page.hasMore;
+        _appsHasMoreCache[jobId] = page.hasMore;
         _appsLoading = false;
       });
+      _resolveIdentities(page.applications);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -1809,10 +1877,12 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
         preferred != null && posted.any((Job j) => j.id == preferred);
     if (!stillValid) {
       _selectedJobId = posted.first.id;
+      _selectedApplicationId = null;
       unawaited(_loadApps(_selectedJobId!));
     } else if (_selectedJobId == null) {
       // Reached only when `preferred` validated above.
       _selectedJobId = preferred;
+      _selectedApplicationId = null;
       unawaited(_loadApps(preferred));
     }
   }
@@ -1821,13 +1891,28 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
     if (_selectedJobId == jobId) return;
     setState(() {
       _selectedJobId = jobId;
+      _selectedApplicationId = null;
       _apps = _appsCache[jobId] ?? const <JobApplication>[];
+      _appsHasMore = _appsHasMoreCache[jobId] ?? false;
       _appsError = null;
       _appsLoading = !_appsCache.containsKey(jobId);
     });
     if (!_appsCache.containsKey(jobId)) {
       unawaited(_loadApps(jobId));
+    } else {
+      _resolveIdentities(_appsCache[jobId]!);
     }
+  }
+
+  /// Opens the dedicated review view for [application] (Phase 5: review
+  /// before deciding — decision actions live in the detail, not the list).
+  void _selectApplication(JobApplication application) {
+    setState(() => _selectedApplicationId = application.id);
+  }
+
+  /// Returns from the detail view to the applicant list.
+  void _clearApplicationSelection() {
+    setState(() => _selectedApplicationId = null);
   }
 
   void _snack(String message, HivorrSnackbarVariant variant) {
@@ -1856,7 +1941,10 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
       } else if (_selectedJobId != null) {
         unawaited(_loadApps(_selectedJobId!, refresh: true));
       }
-      unawaited(_loadJobs());
+      // Status transitions leave the trigger count unchanged, but a hire
+      // rewrites many rows (winner accepted, rest rejected) and flips the job
+      // to awarded — refresh both the list and the authoritative counts.
+      unawaited(_refreshCounts());
       _snack(success, HivorrSnackbarVariant.success);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -2001,6 +2089,11 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
                                         child: _ApplicantsPanel(
                                           job: selected,
                                           apps: _apps,
+                                          identities: _identities,
+                                          selectedId: _selectedApplicationId,
+                                          onSelect: _selectApplication,
+                                          onBack: _clearApplicationSelection,
+                                          hasMore: _appsHasMore,
                                           loading: _appsLoading,
                                           error: _appsError,
                                           acting: _acting,
@@ -2039,6 +2132,11 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
                                       child: _ApplicantsPanel(
                                         job: selected,
                                         apps: _apps,
+                                        identities: _identities,
+                                        selectedId: _selectedApplicationId,
+                                        onSelect: _selectApplication,
+                                        onBack: _clearApplicationSelection,
+                                        hasMore: _appsHasMore,
                                         loading: _appsLoading,
                                         error: _appsError,
                                         acting: _acting,
@@ -2077,6 +2175,11 @@ class _ClientApplicationsScreenState extends State<_ClientApplicationsScreen> {
                                     child: _ApplicantsPanel(
                                       job: selected,
                                       apps: _apps,
+                                      identities: _identities,
+                                      selectedId: _selectedApplicationId,
+                                      onSelect: _selectApplication,
+                                      onBack: _clearApplicationSelection,
+                                      hasMore: _appsHasMore,
                                       loading: _appsLoading,
                                       error: _appsError,
                                       acting: _acting,
@@ -2590,11 +2693,67 @@ class _PillTone {
   final String label;
 }
 
+/// Merged applicant identity for inbox surfaces (Phase 5).
+///
+/// Snapshot-first: the submit-time snapshot on the application row needs no
+/// RPC; the resolved public profile fills snapshot-less rows only.
+/// Whitelisted public fields throughout — never private account data, never
+/// raw ids, never fabricated names. `displayName`/`headline` are null when
+/// neither source has them (caller renders the generic fallback); the slug
+/// always resolves (cosmetic route segment, `:id` is authoritative).
+({String? displayName, String? headline, String profileSlug})
+    _applicantIdentity(
+  JobApplication application,
+  Map<String, PublicProfile?> identities,
+) {
+  final PublicProfile? resolved =
+      identities[application.professionalEntityId.trim()];
+  final String? snapshotName = application.applicantDisplayName?.trim();
+  final String? displayName = (snapshotName != null && snapshotName.isNotEmpty)
+      ? snapshotName
+      : resolved?.displayName.trim().isNotEmpty == true
+          ? resolved!.displayName.trim()
+          : null;
+  final String? snapshotProfession =
+      application.applicantProfessionName?.trim();
+  final String? headline =
+      (snapshotProfession != null && snapshotProfession.isNotEmpty)
+          ? snapshotProfession
+          : resolved?.professionName?.trim().isNotEmpty == true
+              ? resolved!.professionName!.trim()
+              : resolved?.industryName?.trim().isNotEmpty == true
+                  ? resolved!.industryName!.trim()
+                  : null;
+  final String? snapshotSlug = application.applicantProfessionSlug?.trim();
+  final String profileSlug = (snapshotSlug != null && snapshotSlug.isNotEmpty)
+      ? snapshotSlug
+      : resolved?.professionSlug?.trim().isNotEmpty == true
+          ? resolved!.professionSlug!.trim()
+          : 'professional';
+  return (
+    displayName: displayName,
+    headline: headline,
+    profileSlug: profileSlug,
+  );
+}
+
 /// Right pane: applicants for the selected job with its own scroll.
+///
+/// The header total is the authoritative trigger-maintained
+/// `job.applicationsCount` (same source as the My Jobs badges) so the two
+/// surfaces stay consistent. The loaded list (`application_list_for_job`,
+/// capped at 50) may be a subset — truncation is surfaced explicitly as
+/// "Showing X of N" instead of silently showing a divergent length.
+///
+/// Phase 5 review flow: the pane shows the concise applicant list until
+/// [selectedId] names an application, then the dedicated detail view for a
+/// focused proposal review (one experience across mobile and desktop).
 class _ApplicantsPanel extends StatelessWidget {
   const _ApplicantsPanel({
     required this.job,
     required this.apps,
+    this.identities = const <String, PublicProfile?>{},
+    this.hasMore = false,
     required this.loading,
     required this.error,
     required this.acting,
@@ -2603,10 +2762,15 @@ class _ApplicantsPanel extends StatelessWidget {
     required this.onShortlist,
     required this.onHire,
     required this.onReject,
+    this.selectedId,
+    this.onSelect,
+    this.onBack,
   });
 
   final Job? job;
   final List<JobApplication> apps;
+  final Map<String, PublicProfile?> identities;
+  final bool hasMore;
   final bool loading;
   final String? error;
   final Set<String> acting;
@@ -2615,17 +2779,39 @@ class _ApplicantsPanel extends StatelessWidget {
   final ValueChanged<JobApplication> onShortlist;
   final ValueChanged<JobApplication> onHire;
   final ValueChanged<JobApplication> onReject;
+  final String? selectedId;
+  final ValueChanged<JobApplication>? onSelect;
+  final VoidCallback? onBack;
+
+  JobApplication? get _selected {
+    final String? id = selectedId;
+    if (id == null) return null;
+    for (final JobApplication app in apps) {
+      if (app.id == id) return app;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final Job? selectedJob = job;
+    final JobApplication? selected = _selected;
     return _PanelCard(
       child: Padding(
         padding: const EdgeInsets.all(HivorrSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            if (selectedJob == null)
+            if (selected != null && selectedJob != null) ...<Widget>[
+              _DetailBackRow(onBack: onBack),
+              const SizedBox(height: HivorrSpacing.sm),
+              _ApplicantsHeader(
+                job: selectedJob,
+                loadedCount: apps.length,
+                hasMore: hasMore,
+                loading: loading && apps.isEmpty,
+              ),
+            ] else if (selectedJob == null)
               Text(
                 'Select a job',
                 style: context.textTheme.titleMedium?.copyWith(
@@ -2633,18 +2819,23 @@ class _ApplicantsPanel extends StatelessWidget {
                 ),
               )
             else
-              _ApplicantsHeader(job: selectedJob, count: apps.length),
+              _ApplicantsHeader(
+                job: selectedJob,
+                loadedCount: apps.length,
+                hasMore: hasMore,
+                loading: loading && apps.isEmpty,
+              ),
             const SizedBox(height: HivorrSpacing.sm),
             Divider(height: 1, color: context.colorScheme.outlineVariant),
             const SizedBox(height: HivorrSpacing.md),
-            Expanded(child: _applicantsContent(context)),
+            Expanded(child: _applicantsContent(context, selected)),
           ],
         ),
       ),
     );
   }
 
-  Widget _applicantsContent(BuildContext context) {
+  Widget _applicantsContent(BuildContext context, JobApplication? selected) {
     if (job == null) {
       return const HivorrEmptyState(
         title: 'No job selected',
@@ -2659,6 +2850,54 @@ class _ApplicantsPanel extends StatelessWidget {
         message: 'Could not load applicants',
         detail: error!,
         onRetry: onRetry == null ? null : () => unawaited(onRetry!()),
+      );
+    }
+    // Dedicated review view: the selected application opens here so the
+    // client reads the full proposal before deciding. The row is looked up
+    // live so post-action status updates converge without a refetch.
+    if (selected != null) {
+      final ({String? displayName, String? headline, String profileSlug})
+          identity = _applicantIdentity(selected, identities);
+      final Widget detail = _ApplicationDetail(
+        application: selected,
+        displayName: identity.displayName,
+        headline: identity.headline,
+        profileSlug: identity.profileSlug,
+        busy: acting.contains(selected.id),
+        onShortlist: () => onShortlist(selected),
+        onHire: () => onHire(selected),
+        onReject: () => onReject(selected),
+      );
+      if (onRetry == null) {
+        return SingleChildScrollView(
+          controller: scrollController,
+          child: detail,
+        );
+      }
+      return RefreshIndicator(
+        onRefresh: onRetry!,
+        child: SingleChildScrollView(
+          controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: detail,
+        ),
+      );
+    }
+    // The selection names an application that is no longer in the loaded
+    // list (e.g. withdrawn elsewhere and refreshed): offer the way back
+    // instead of a dead end.
+    if (selectedId != null) {
+      return HivorrEmptyState(
+        title: 'Application unavailable',
+        subtitle:
+            'This application is no longer in the loaded list. Pull to refresh or pick another applicant.',
+        actionButton: onBack == null
+            ? null
+            : HivorrButton(
+                label: 'Back to applicants',
+                variant: HivorrButtonVariant.secondary,
+                onPressed: onBack!,
+              ),
       );
     }
     if (apps.isEmpty) {
@@ -2680,12 +2919,14 @@ class _ApplicantsPanel extends StatelessWidget {
       ),
       itemBuilder: (BuildContext context, int i) {
         final JobApplication application = apps[i];
+        final ({String? displayName, String? headline, String profileSlug})
+            identity = _applicantIdentity(application, identities);
         return _ApplicantCard(
           application: application,
-          busy: acting.contains(application.id),
-          onShortlist: () => onShortlist(application),
-          onHire: () => onHire(application),
-          onReject: () => onReject(application),
+          displayName: identity.displayName,
+          headline: identity.headline,
+          profileSlug: identity.profileSlug,
+          onTap: onSelect == null ? null : () => onSelect!(application),
         );
       },
     );
@@ -2697,20 +2938,68 @@ class _ApplicantsPanel extends StatelessWidget {
   }
 }
 
+/// Back row rendered above the job header while a review is open.
+class _DetailBackRow extends StatelessWidget {
+  const _DetailBackRow({required this.onBack});
+
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: _TintedAction(
+        label: 'Applicants',
+        icon: Icons.arrow_back,
+        fill: context.colorScheme.surfaceContainerHighest.withValues(
+          alpha: context.isDarkMode ? 1.0 : 0.45,
+        ),
+        foreground: context.colorScheme.onSurfaceVariant,
+        onTap: onBack,
+      ),
+    );
+  }
+}
+
 class _ApplicantsHeader extends StatelessWidget {
-  const _ApplicantsHeader({required this.job, required this.count});
+  const _ApplicantsHeader({
+    required this.job,
+    required this.loadedCount,
+    this.hasMore = false,
+    this.loading = false,
+  });
 
   final Job job;
-  final int count;
+  final int loadedCount;
+  final bool hasMore;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
     final ext = context.appExtension;
     final double? budget = job.budgetMax ?? job.budgetMin;
+    // Authoritative total shares the My Jobs badge source
+    // (`jobs.applications_count`, INSERT/DELETE trigger). The loaded list is
+    // paged (limit 50), so truncation is stated explicitly. When the trigger
+    // lags behind a freshly loaded list, the fresher list length wins to
+    // avoid showing "Showing 2 of 1".
+    final int total = job.applicationsCount;
+    final String countText;
+    if (loading) {
+      countText = total > 0 ? '$total applications' : 'Loading applications…';
+    } else if (hasMore || loadedCount < total) {
+      countText = total > 0
+          ? '$total applications · Showing $loadedCount'
+          : 'No applications yet';
+    } else if (loadedCount > total) {
+      countText = '$loadedCount applications';
+    } else {
+      countText = '$total applications';
+    }
     final String subtitle = budget == null
-        ? '$count applications'
-        : '$count applications · \$${HivorrFormatters.number(budget, decimals: 0)} budget';
+        ? countText
+        : '$countText · \$${HivorrFormatters.number(budget, decimals: 0)} budget';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -2758,85 +3047,82 @@ class _ApplicantsHeader extends StatelessWidget {
   }
 }
 
-/// Applicant card from the reference: avatar, status pill, cover note,
-/// quote/duration chips and View Profile / Message / Hire / Reject actions.
+/// Concise applicant row (Phase 5): identity, status, and a clamped proposal
+/// preview. The whole card is the select target that opens the dedicated
+/// review view — decision actions deliberately live in the detail, never on
+/// the list, so the client reviews before deciding.
 ///
-/// Identity fields beyond the application row are not exposed by the
-/// jobs RPC, so the header falls back to an `Applicant · <id>` label with
-/// deterministic initials rather than inventing names, roles or ratings.
+/// [displayName]/[headline] arrive pre-merged from the caller (snapshot
+/// first, public-profile fallback); when absent the header falls back to a
+/// generic `Applicant` label with `AP` initials — never a raw database
+/// identifier, never a fabricated name.
 class _ApplicantCard extends StatelessWidget {
   const _ApplicantCard({
     required this.application,
-    required this.busy,
-    required this.onShortlist,
-    required this.onHire,
-    required this.onReject,
+    this.displayName,
+    this.headline,
+    this.profileSlug = 'professional',
+    this.onTap,
   });
 
   final JobApplication application;
-  final bool busy;
-  final VoidCallback onShortlist;
-  final VoidCallback onHire;
-  final VoidCallback onReject;
-
-  String get _shortId {
-    final String id = application.professionalEntityId.trim();
-    if (id.isEmpty) return '—';
-    return id.length <= 6 ? id : id.substring(0, 6);
-  }
+  final String? displayName;
+  final String? headline;
+  final String profileSlug;
+  final VoidCallback? onTap;
 
   String get _initials {
-    final String alnum = application.professionalEntityId.replaceAll(
-      RegExp('[^A-Za-z0-9]'),
-      '',
-    );
-    if (alnum.isEmpty) return 'AP';
-    if (alnum.length == 1) return alnum.toUpperCase();
-    return alnum.substring(0, 2).toUpperCase();
+    final String? name = displayName;
+    if (name == null) return 'AP';
+    final List<String> parts = name
+        .split(RegExp(r'\s+'))
+        .where((String p) => p.isNotEmpty)
+        .toList(growable: false);
+    if (parts.isEmpty) return 'AP';
+    if (parts.length == 1) {
+      final String word = parts.first;
+      return word.length == 1
+          ? word.toUpperCase()
+          : word.substring(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
+
+  String get _title => displayName ?? 'Applicant';
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final bool active =
-        application.status == 'submitted' ||
-        application.status == 'shortlisted';
-    return Column(
+    final Widget body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.primaryContainer.withValues(
-                  alpha: context.isDarkMode ? 0.5 : 0.7,
-                ),
-                border: Border.all(color: colors.primary, width: 1.2),
-              ),
-              alignment: Alignment.center,
-                child: Text(
-                  _initials,
-                  style: context.textTheme.titleMedium?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ),
+            _ApplicantAvatar(initials: _initials),
             const SizedBox(width: HivorrSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Applicant · $_shortId',
-                style: context.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+                    _title,
+                    style: context.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (headline != null) ...<Widget>[
+                    const SizedBox(height: 2),
+                    Text(
+                      headline!,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: 2),
                   Text(
                     _metaLine(),
@@ -2852,53 +3138,275 @@ class _ApplicantCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: HivorrSpacing.sm),
+        // Clamped preview: the full proposal lives in the review view.
+        Text(
+          application.coverNote,
+          style: context.textTheme.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: HivorrSpacing.xs),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Tap to review the full proposal',
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: colors.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ],
+    );
+    final VoidCallback? tap = onTap;
+    if (tap == null) return body;
+    return Semantics(
+      button: true,
+      label: 'Review application from $_title',
+      child: InkWell(
+        onTap: tap,
+        borderRadius: BorderRadius.circular(12),
+        child: body,
+      ),
+    );
+  }
+
+  String _metaLine() {
+    final List<String> parts = <String>[];
+    if (application.quotedAmount != null) {
+      parts.add(
+        '${application.currencyCode} ${HivorrFormatters.number(application.quotedAmount!, decimals: 0)}',
+      );
+    }
+    if (application.durationDays != null) {
+      parts.add('${application.durationDays}d');
+    }
+    parts.add(HivorrFormatters.relative(application.submittedAt));
+    return parts.join(' · ');
+  }
+}
+
+/// Circular initials avatar shared by the list rows and the review view.
+class _ApplicantAvatar extends StatelessWidget {
+  const _ApplicantAvatar({required this.initials, this.size = 52});
+
+  final String initials;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.primaryContainer.withValues(
+          alpha: context.isDarkMode ? 0.5 : 0.7,
+        ),
+        border: Border.all(color: colors.primary, width: 1.2),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: context.textTheme.titleMedium?.copyWith(
+          color: colors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+/// Dedicated application-review view (Phase 5).
+///
+/// Opened by tapping an applicant row so the client reads the full proposal
+/// and all submitted details before deciding. Decision actions reuse the
+/// existing status seams with identical rules (Shortlist iff `submitted`,
+/// Hire iff `shortlisted`, Reject iff active with confirmation, hired pill
+/// once accepted). Pre-hire messaging keeps the existing messages-list seam
+/// — no hire is forced and no parallel thread system is introduced. Success
+/// is only reported after the underlying RPC succeeds (via the shared
+/// `_runAction`); failures surface as error snackbars.
+class _ApplicationDetail extends StatelessWidget {
+  const _ApplicationDetail({
+    required this.application,
+    this.displayName,
+    this.headline,
+    this.profileSlug = 'professional',
+    required this.busy,
+    required this.onShortlist,
+    required this.onHire,
+    required this.onReject,
+  });
+
+  final JobApplication application;
+  final String? displayName;
+  final String? headline;
+  final String profileSlug;
+  final bool busy;
+  final VoidCallback onShortlist;
+  final VoidCallback onHire;
+  final VoidCallback onReject;
+
+  String get _title => displayName ?? 'Applicant';
+
+  String get _initials {
+    final String? name = displayName;
+    if (name == null) return 'AP';
+    final List<String> parts = name
+        .split(RegExp(r'\s+'))
+        .where((String p) => p.isNotEmpty)
+        .toList(growable: false);
+    if (parts.isEmpty) return 'AP';
+    if (parts.length == 1) {
+      final String word = parts.first;
+      return word.length == 1
+          ? word.toUpperCase()
+          : word.substring(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  Future<void> _confirmReject(BuildContext context) async {
+    if (busy) return;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Reject application?'),
+        content: Text(
+          'This will reject the application from "$_title". '
+          'This cannot be undone.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onReject();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final bool active =
+        application.status == 'submitted' ||
+        application.status == 'shortlisted';
+    final String price = application.quotedAmount == null
+        ? '—'
+        : '${application.currencyCode} '
+            '${HivorrFormatters.number(application.quotedAmount!, decimals: 0)}';
+    final String duration = application.durationDays == null
+        ? '—'
+        : '${application.durationDays} days';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _ApplicantAvatar(initials: _initials, size: 64),
+            const SizedBox(width: HivorrSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _title,
+                    style: context.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (headline != null) ...<Widget>[
+                    const SizedBox(height: 2),
+                    Text(
+                      headline!,
+                      style: context.textTheme.bodyMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  _ApplicationStatusPill(status: application.status),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: HivorrSpacing.md),
         Container(
-          padding: const EdgeInsets.all(HivorrSpacing.sm),
+          padding: const EdgeInsets.all(HivorrSpacing.md),
           decoration: BoxDecoration(
             color: colors.surfaceContainerHighest.withValues(
               alpha: context.isDarkMode ? 1.0 : 0.45,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            application.coverNote,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: colors.onSurface,
-            ),
-          ),
-        ),
-        if (application.quotedAmount != null ||
-            application.durationDays != null) ...<Widget>[
-          const SizedBox(height: HivorrSpacing.sm),
-          Wrap(
-            spacing: HivorrSpacing.xs,
-            runSpacing: HivorrSpacing.xs,
+          child: Column(
             children: <Widget>[
-              if (application.quotedAmount != null)
-                _MetaChip(
-                  text:
-                      '${application.currencyCode} ${HivorrFormatters.number(application.quotedAmount!, decimals: 0)}',
-                ),
-              if (application.durationDays != null)
-                _MetaChip(text: '${application.durationDays} days'),
+              _DetailInfoRow(label: 'Proposed price', value: price),
+              const SizedBox(height: HivorrSpacing.xs),
+              _DetailInfoRow(label: 'Duration', value: duration),
+              const SizedBox(height: HivorrSpacing.xs),
+              _DetailInfoRow(
+                label: 'Submitted',
+                value: HivorrFormatters.relative(application.submittedAt),
+              ),
             ],
           ),
-        ],
-        const SizedBox(height: HivorrSpacing.sm),
+        ),
+        const SizedBox(height: HivorrSpacing.md),
+        Text(
+          'Proposal',
+          style: context.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: HivorrSpacing.xs),
+        // Full write-up: soft-wraps in the pane width, so long proposals
+        // stay readable on narrow screens with vertical scroll only.
+        Text(
+          application.coverNote,
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: colors.onSurface,
+          ),
+        ),
+        const SizedBox(height: HivorrSpacing.lg),
         Wrap(
           spacing: HivorrSpacing.sm,
           runSpacing: HivorrSpacing.sm,
           children: <Widget>[
             if (application.status == 'submitted')
               _PrimaryAction(
-                label: 'Shortlist',
+                label: busy ? 'Working…' : 'Shortlist',
                 icon: Icons.check,
                 enabled: !busy,
                 onTap: onShortlist,
               ),
             if (application.status == 'shortlisted')
               _PrimaryAction(
-                label: 'Hire',
+                label: busy ? 'Working…' : 'Hire',
                 icon: Icons.check,
                 enabled: !busy,
                 onTap: onHire,
@@ -2928,7 +3436,7 @@ class _ApplicantCard extends StatelessWidget {
               foreground: colors.onSurfaceVariant,
               onTap: () => context.go(
                 RoutePaths.publicProfile(
-                  slug: 'professional',
+                  slug: profileSlug,
                   id: application.professionalEntityId,
                 ),
               ),
@@ -2939,26 +3447,49 @@ class _ApplicantCard extends StatelessWidget {
                 icon: Icons.close,
                 fill: colors.errorContainer,
                 foreground: colors.error,
-                onTap: busy ? null : onReject,
+                onTap: busy ? null : () => _confirmReject(context),
               ),
           ],
         ),
       ],
     );
   }
+}
 
-  String _metaLine() {
-    final List<String> parts = <String>[];
-    if (application.quotedAmount != null) {
-      parts.add(
-        '${application.currencyCode} ${HivorrFormatters.number(application.quotedAmount!, decimals: 0)}',
-      );
-    }
-    if (application.durationDays != null) {
-      parts.add('${application.durationDays}d');
-    }
-    parts.add(HivorrFormatters.relative(application.submittedAt));
-    return parts.join(' · ');
+/// Label/value row inside the review info panel.
+class _DetailInfoRow extends StatelessWidget {
+  const _DetailInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            label,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ),
+        const SizedBox(width: HivorrSpacing.md),
+        Expanded(
+          flex: 2,
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: context.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -3008,31 +3539,6 @@ class _ApplicationStatusPill extends StatelessWidget {
         style: context.textTheme.labelMedium?.copyWith(
           color: tone.text,
           fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest.withValues(
-          alpha: context.isDarkMode ? 1.0 : 0.45,
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: context.textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
