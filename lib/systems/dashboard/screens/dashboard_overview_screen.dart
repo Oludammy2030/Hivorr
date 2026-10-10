@@ -1451,7 +1451,9 @@ class _QuickTile extends StatelessWidget {
   }
 }
 
-/// Recent posted jobs rendered as reference job cards (open first).
+/// Active posted jobs (open + awarded/in-progress only) rendered as
+/// reference job cards (open first). Cancelled, completed, draft and paused
+/// jobs are excluded here and remain accessible via My Jobs tabs.
 class _ClientActiveJobs extends StatelessWidget {
   const _ClientActiveJobs();
 
@@ -1460,7 +1462,7 @@ class _ClientActiveJobs extends StatelessWidget {
     final JobProvider jobs = context.watch<JobProvider>();
     final List<Job> ordered = <Job>[
       ...jobs.posted.where((Job job) => job.isOpen),
-      ...jobs.posted.where((Job job) => !job.isOpen),
+      ...jobs.posted.where((Job job) => job.isAwarded),
     ];
     if (jobs.isLoading && jobs.posted.isEmpty) {
       return const HivorrLoadingState();
