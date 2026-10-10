@@ -211,6 +211,13 @@ class _DetailBody extends StatelessWidget {
                 HivorrButton(
                   label: 'View Contract',
                   variant: HivorrButtonVariant.outline,
+                  onPressed: () =>
+                      context.go(RoutePaths.contractDetail(contractId)),
+                ),
+              if (contractId != null)
+                HivorrButton(
+                  label: 'Escrow',
+                  variant: HivorrButtonVariant.outline,
                   onPressed: () => context.go('/finance/escrow/$contractId'),
                 ),
               if (contractId != null)

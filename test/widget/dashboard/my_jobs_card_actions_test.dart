@@ -155,11 +155,11 @@ void main() {
         // Same height across the trio…
         final double primaryHeight = tester.getSize(
           find.ancestor(
-            of: find.text('12 Applications'),
+            of: find.text('12 Applicants'),
             matching: find.byType(ElevatedButton),
           ),
         ).height;
-        for (final String label in <String>['Chat', 'Close']) {
+        for (final String label in <String>['Message', 'Close']) {
           final Finder wrapper = find.ancestor(
             of: find.text(label),
             matching: find.byWidgetPredicate(
@@ -173,14 +173,14 @@ void main() {
         // …content-based widths (longer label wins)…
         final double appsWidth = tester.getSize(
           find.ancestor(
-            of: find.text('12 Applications'),
+            of: find.text('12 Applicants'),
             matching: find.byType(ElevatedButton),
           ),
         ).width;
         final double chatWidth = tester.getSize(
           find
               .ancestor(
-                of: find.text('Chat'),
+                of: find.text('Message'),
                 matching: find.byWidgetPredicate(
                   (Widget w) => w is SizedBox && w.height == 48,
                 ),
@@ -194,13 +194,26 @@ void main() {
         // design, keeping equal heights per run).
         if (width == 599) {
           final double appsTop = tester.getTopLeft(
-            find.text('12 Applications'),
+            find.text('12 Applicants'),
           ).dy;
-          final double chatTop = tester.getTopLeft(find.text('Chat')).dy;
+          final double chatTop = tester.getTopLeft(find.text('Message')).dy;
           final double closeTop = tester.getTopLeft(find.text('Close')).dy;
           expect((appsTop - chatTop).abs(), lessThanOrEqualTo(8));
           expect((appsTop - closeTop).abs(), lessThanOrEqualTo(8));
         }
+
+        // Location lives in the top chips only; the body shows the
+        // two-line description plus a Read more link per card.
+        expect(find.text('Remote'), findsOneWidget);
+        expect(
+          find.text('Build and ship Hivorr web experiences for our team.'),
+          findsOneWidget,
+        );
+        expect(find.text('Read more'), findsOneWidget);
+        final Finder description = find.text(
+          'Build and ship Hivorr web experiences for our team.',
+        );
+        expect(tester.widget<Text>(description).maxLines, 2);
         jobs.dispose();
         hires.dispose();
       }
@@ -243,7 +256,7 @@ void main() {
       }
     });
 
-    testWidgets('Applications opens the inbox preselected to the job', (
+    testWidgets('Applicants opens the inbox preselected to the job', (
       tester,
     ) async {
       final JobProvider jobs = JobProvider(
@@ -322,7 +335,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // Second job's applicants button → inbox preselected to that job.
-      await tester.tap(find.text('1 Applications').last);
+      await tester.tap(find.text('1 Applicants').last);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('Select Job'), findsOneWidget);
@@ -331,7 +344,64 @@ void main() {
       expect(find.textContaining('React note.'), findsNothing);
     });
 
-    testWidgets('Chat still routes to Messages', (tester) async {
+    testWidgets('Read more opens the job detail for that job', (
+      tester,
+    ) async {
+      final JobProvider jobs = JobProvider(
+        service: _StubJobService(
+          <Job>[_job('job-1', 'Senior React Developer')],
+        ),
+      );
+      final HireProvider hires = HireProvider(service: _StubHireService());
+      final Size previousPhysical = tester.view.physicalSize;
+      final double previousDpr = tester.view.devicePixelRatio;
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      final GoRouter router = GoRouter(
+        initialLocation: '/dashboard/jobs',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/dashboard/jobs',
+            builder: (BuildContext context, GoRouterState state) =>
+                const MyJobsScreen(),
+          ),
+          GoRoute(
+            path: '/dashboard/jobs/:id',
+            builder: (BuildContext context, GoRouterState state) =>
+                Text('detail-${state.pathParameters['id']}'),
+          ),
+        ],
+      );
+      addTearDown(() {
+        tester.view.physicalSize = previousPhysical;
+        tester.view.devicePixelRatio = previousDpr;
+        router.dispose();
+        jobs.dispose();
+        hires.dispose();
+      });
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<JobProvider>.value(value: jobs),
+            ChangeNotifierProvider<HireProvider>.value(value: hires),
+          ],
+          child: MaterialApp.router(
+            theme: AppTheme.lightTheme,
+            debugShowCheckedModeBanner: false,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Read more'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('detail-job-1'), findsOneWidget);
+    });
+
+    testWidgets('Message still routes to Messages', (tester) async {
       final JobProvider jobs = JobProvider(
         service: _StubJobService(
           <Job>[_job('job-1', 'Senior React Developer')],
@@ -389,7 +459,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('Chat'));
+      await tester.tap(find.text('Message'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('messages'), findsOneWidget);

@@ -50,6 +50,19 @@ void main() {
     expect(RoutePaths.publicStore(storeId: 'a b'), '/store/a%20b');
   });
 
+  test('EP-03-14 scheduling list route uses the contract URL family', () {
+    expect(RoutePaths.appointmentListRoute, '/contracts/:id/appointments');
+    expect(
+      RoutePaths.appointmentList('abc-123'),
+      '/contracts/abc-123/appointments',
+    );
+    expect(
+      RoutePaths.appointmentList('a b/c'),
+      '/contracts/a%20b%2Fc/appointments',
+    );
+    expect(RouteNames.appointmentList, 'appointment-list');
+  });
+
   test('EP-03-16 earnings routes use the finance/contract URL families', () {
     expect(RoutePaths.earningsDetail, '/finance/earnings');
     expect(RoutePaths.earningsHistory, '/finance/earnings/history');

@@ -74,6 +74,7 @@ import 'package:hivorr/systems/reviews/screens/review_reveal_screen.dart';
 import 'package:hivorr/systems/reviews/screens/review_submit_screen.dart';
 import 'package:hivorr/systems/scheduling/screens/appointment_book_screen.dart';
 import 'package:hivorr/systems/scheduling/screens/appointment_detail_screen.dart';
+import 'package:hivorr/systems/scheduling/screens/appointment_list_screen.dart';
 import 'package:hivorr/systems/scheduling/screens/availability_editor_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_evidence_form_screen.dart';
@@ -644,6 +645,14 @@ class AppRouter {
           name: RouteNames.appointmentBook,
           builder: (BuildContext context, GoRouterState state) =>
               AppointmentBookScreen(
+                contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.appointmentListRoute,
+          name: RouteNames.appointmentList,
+          builder: (BuildContext context, GoRouterState state) =>
+              AppointmentListScreen(
                 contractId: state.pathParameters['id'] ?? '',
               ),
         ),
