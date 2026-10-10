@@ -53,7 +53,7 @@ update public.job_applications a
     select p.name as profession_name, p.slug as profession_slug
       from public.entity_professions epr
       join public.professions p on p.id = epr.profession_id
-     where epr.entity_id = a.professional_entity_id
+     where epr.entity_id = ep.entity_id
        and epr.trade_verification_status = 'approved'
      order by epr.is_primary desc, epr.created_at
      limit 1
