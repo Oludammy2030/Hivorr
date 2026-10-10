@@ -8,6 +8,7 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/contract_milestone.dart';
 import 'package:hivorr/data/entities/service_contract.dart';
+import 'package:hivorr/data/providers/earnings_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dialog.dart';
@@ -93,6 +94,17 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     }
   }
 
+  /// The EP-03-16 earnings provider when the bootstrap wired it, else `null`
+  /// (release still settles server-side; only the earnings refresh +
+  /// notification hook is skipped).
+  EarningsProvider? get _earningsProvider {
+    try {
+      return context.read<EarningsProvider>();
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
   Future<void> _run(
     Future<ServiceContract> Function() action, {
     String? milestoneId,
@@ -166,6 +178,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           contractId: contract.id,
           milestoneId: milestone.id,
           escrowId: state.escrowId,
+        );
+        // EP-03-16: refresh the earnings windows and surface the one-shot
+        // `Payment received` notification on the same verified release.
+        await _earningsProvider?.notifyEarningsReleased(
+          contractId: contract.id,
+          milestoneId: milestone.id,
         );
       } else if (state.blockReason ==
           ContractEscrowBlockReason.disputed) {
@@ -614,6 +632,15 @@ class _SchedulingEntry extends StatelessWidget {
               RoutePaths.appointmentBook(contract.id),
             ),
             variant: HivorrButtonVariant.primary,
+            isExpanded: true,
+          ),
+          const SizedBox(height: 8),
+          HivorrButton(
+            label: 'View appointments',
+            onPressed: () => context.push(
+              RoutePaths.appointmentList(contract.id),
+            ),
+            variant: HivorrButtonVariant.secondary,
             isExpanded: true,
           ),
           if (isProfessional) ...[

@@ -70,6 +70,11 @@ abstract final class RouteNames {
   /// Currency-conversion route (EP-02-15).
   static const String convert = 'convert';
 
+  /// Earnings visibility routes (EP-03-16).
+  static const String earningsDetail = 'earnings-detail';
+  static const String earningsHistory = 'earnings-history';
+  static const String contractEarningsDetail = 'contract-earnings-detail';
+
   /// Service listing owner-management routes (EP-03-08).
   static const String serviceListingsMine = 'service-listings-mine';
   static const String serviceListingNew = 'service-listing-new';
@@ -112,6 +117,7 @@ abstract final class RouteNames {
   /// Scheduling routes (EP-03-14).
   static const String availability = 'availability';
   static const String appointmentBook = 'appointment-book';
+  static const String appointmentList = 'appointment-list';
   static const String appointmentDetail = 'appointment-detail';
 
   /// Double-blind review routes (EP-03-12).

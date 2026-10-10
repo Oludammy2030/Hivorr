@@ -6,12 +6,16 @@ import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/app/theme/app_colors.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/entities/earnings_summary.dart';
+import 'package:hivorr/data/entities/earnings_transaction.dart';
 import 'package:hivorr/data/entities/hire.dart';
 import 'package:hivorr/data/entities/job.dart';
 import 'package:hivorr/data/entities/job_application.dart';
+import 'package:hivorr/data/providers/earnings_provider.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/providers/transaction_history_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
 import 'package:hivorr/shared/components/hivorr_month_bars.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
@@ -27,6 +31,7 @@ import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_table_action.dart';
+import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
@@ -35,6 +40,7 @@ import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
 import 'package:hivorr/systems/dashboard/widgets/overview_display_widgets.dart';
 import 'package:hivorr/systems/dashboard/widgets/quick_actions.dart';
+import 'package:hivorr/systems/finance/widgets/earnings_transaction_tile.dart';
 import 'package:hivorr/systems/jobs/models/job_status.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:provider/provider.dart';
@@ -3822,10 +3828,15 @@ class _ProRailStat extends StatelessWidget {
 
 /// Earnings bar chart (reference).
 ///
-/// TODO(pro-dashboard-backend): monthly-earnings seam — bars are the
-/// reference shape until live series exist.
+/// Live server month buckets from [EarningsProvider] take precedence (EP-03-16
+/// resolved the monthly-earnings seam); the hire-count series below renders
+/// only when the earnings providers are absent (isolated harnesses), and the
+/// honest [HivorrMonthBars] empty state covers zero activity — never invented
+/// bars.
 class _ProEarningsChartCard extends StatelessWidget {
   const _ProEarningsChartCard();
+
+  static const ServiceAnalyticsService _analytics = ServiceAnalyticsService();
 
   static const List<String> _months = <String>[
     'Jan',
@@ -3868,6 +3879,49 @@ class _ProEarningsChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool compact = context.breakpoint == Breakpoint.mobile;
     final RoleThemeExtension roles = context.roleTheme;
+    // Live server-verified buckets (EP-03-16) win over the hire-count series.
+    EarningsSummary? live;
+    try {
+      live = context.watch<EarningsProvider>().summary;
+    } catch (_) {
+      live = null;
+    }
+    if (live != null) {
+      return HivorrCard(
+        padding: EdgeInsets.all(
+          compact ? HivorrSpacing.smMd : HivorrSpacing.lg,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'Monthly Earnings',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+            HivorrMonthBars(
+              items: _analytics.monthBucketsToChartData(live.monthly),
+              emptyLabel: 'No earnings yet.',
+              accent: roles.professionalPrimary,
+            ),
+            const SizedBox(height: HivorrSpacing.sm),
+            Text(
+              live.releaseCount == 1
+                  ? 'Across 1 release'
+                  : 'Across ${live.releaseCount} releases',
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     List<Hire> hires = const <Hire>[];
     try {
       hires = context.watch<HireProvider>().hires;
@@ -3912,10 +3966,10 @@ class _ProEarningsChartCard extends StatelessWidget {
 
 /// Recent earnings list.
 ///
-/// Live hires render first (job title + hired date + joined budget); when no
-/// hires exist the reference rows preserve the visual hierarchy.
-/// TODO(pro-dashboard-backend): professional payment-history + withdrawal
-/// seams — withdrawals have no source today.
+/// Live server ledger rows render first (EP-03-16 resolved the
+/// payment-history seam — withdrawals included), then live hires (job title +
+/// hired date + joined budget); when neither exists the honest empty state
+/// renders — never invented rows.
 class _ProRecentEarningsCard extends StatelessWidget {
   const _ProRecentEarningsCard();
 
@@ -3928,6 +3982,17 @@ class _ProRecentEarningsCard extends StatelessWidget {
       for (final Job job in _allKnownJobs(jobs)) job.id: job,
     };
     final List<Hire> recent = hires.hires.take(3).toList(growable: false);
+    // Live server-verified ledger preview (EP-03-16); absent in isolated
+    // harnesses, where the hire/empty branches below apply.
+    List<EarningsTransaction> ledger = const <EarningsTransaction>[];
+    try {
+      ledger = context.watch<TransactionHistoryProvider>().items;
+    } catch (_) {
+      ledger = const <EarningsTransaction>[];
+    }
+    final List<EarningsTransaction> ledgerRecent = ledger
+        .take(3)
+        .toList(growable: false);
     return HivorrCard(
       borderRadius: compact ? 14 : 16,
       padding: EdgeInsets.all(
@@ -3945,10 +4010,33 @@ class _ProRecentEarningsCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.xs : HivorrSpacing.sm),
-          if (hires.isLoading && hires.hires.isEmpty)
+          if (ledgerRecent.isNotEmpty)
+            for (int i = 0; i < ledgerRecent.length; i++) ...<Widget>[
+              if (i > 0)
+                Divider(
+                  height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
+                  color: context.colorScheme.outlineVariant,
+                ),
+              EarningsTransactionTile(
+                transaction: ledgerRecent[i],
+                onTap: ledgerRecent[i].contractId == null
+                    ? null
+                    : () => context.push(
+                        RoutePaths.contractEarningsDetail(
+                          ledgerRecent[i].contractId!,
+                        ),
+                      ),
+              ),
+            ]
+          else if (hires.isLoading && hires.hires.isEmpty)
             const HivorrLoadingState()
           else if (recent.isEmpty)
-            ..._referenceEarnings(context, compact)
+            const HivorrEmptyState(
+              title: 'No earnings yet',
+              subtitle:
+                  'Released payments and withdrawals will appear here.',
+              compact: true,
+            )
           else
             for (int i = 0; i < recent.length; i++) ...<Widget>[
               if (i > 0)
@@ -3961,46 +4049,6 @@ class _ProRecentEarningsCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  List<Widget> _referenceEarnings(BuildContext context, bool compact) {
-    return <Widget>[
-      const _ProEarningRow(
-        icon: Icons.arrow_downward,
-        tileBg: Color(0xFFDCFCE7),
-        iconFg: Color(0xFF16A34A),
-        title: 'Payment: TechVentures Africa',
-        subtitle: 'Today, 09:14',
-        amount: '+ \$3,500',
-        amountColor: Color(0xFF16A34A),
-      ),
-      Divider(
-        height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
-        color: context.colorScheme.outlineVariant,
-      ),
-      _ProEarningRow(
-        icon: Icons.arrow_upward,
-        tileBg: const Color(0xFFFEF2F2),
-        iconFg: context.colorScheme.error,
-        title: 'Withdrawal to GTBank',
-        subtitle: 'Yesterday',
-        amount: '- \$2,000',
-        amountColor: context.colorScheme.error,
-      ),
-      Divider(
-        height: compact ? HivorrSpacing.md : HivorrSpacing.lg,
-        color: context.colorScheme.outlineVariant,
-      ),
-      const _ProEarningRow(
-        icon: Icons.arrow_downward,
-        tileBg: Color(0xFFDCFCE7),
-        iconFg: Color(0xFF16A34A),
-        title: 'Payment: StartupHub GH',
-        subtitle: 'Jun 25',
-        amount: '+ \$800',
-        amountColor: Color(0xFF16A34A),
-      ),
-    ];
   }
 }
 

@@ -16,12 +16,15 @@ import 'package:hivorr/core/sync/action_queue.dart';
 import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
+import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
 import 'package:hivorr/systems/finance/services/escrow_service.dart';
+import 'package:hivorr/systems/finance/services/service_earnings_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
+import 'package:hivorr/systems/scheduling/services/scheduling_service.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -46,6 +49,9 @@ class BootstrapResult {
     this.serviceContractRepository,
     this.serviceContractProvider,
     this.serviceContractService,
+    this.schedulingRepository,
+    this.schedulingProvider,
+    this.schedulingService,
     this.contractEscrowOrchestrator,
     required this.verificationRepository,
     required this.verificationProvider,
@@ -59,6 +65,11 @@ class BootstrapResult {
     this.payoutProvider,
     this.depositRepository,
     this.depositProvider,
+    this.earningsRepository,
+    this.earningsProvider,
+    this.earningsHistoryProvider,
+    this.earningsService,
+    this.earningsAnalytics,
     this.disputeRepository,
     this.disputeProvider,
     this.jobRepository,
@@ -127,6 +138,17 @@ class BootstrapResult {
   /// orchestration + evidence URL resolution).
   final ContractService? serviceContractService;
 
+  /// Scheduling repository (EP-03-14 availability + appointments). Optional
+  /// for testability.
+  final SchedulingRepository? schedulingRepository;
+
+  /// Scheduling provider surfaced to the widget tree (EP-03-14).
+  final SchedulingProvider? schedulingProvider;
+
+  /// Scheduling facade surfaced to the widget tree (EP-03-14 validators +
+  /// idempotency orchestration; server stays authoritative).
+  final SchedulingService? schedulingService;
+
   /// Verification-gated escrow release orchestrator (EP-03-11). Composes the
   /// contract verification half with the escrow proxy-seamed fund-movement
   /// half; the contract detail screen consumes it for `Verify & release`.
@@ -168,6 +190,21 @@ class BootstrapResult {
 
   /// Deposit provider surfaced to the widget tree (EP-02-16).
   final FinancialDepositProvider? depositProvider;
+
+  /// Earnings repository (EP-03-16). Optional for testability.
+  final EarningsRepository? earningsRepository;
+
+  /// Earnings summary provider surfaced to the widget tree (EP-03-16).
+  final EarningsProvider? earningsProvider;
+
+  /// Transaction history provider surfaced to the widget tree (EP-03-16).
+  final TransactionHistoryProvider? earningsHistoryProvider;
+
+  /// Earnings facade surfaced to the widget tree (EP-03-16, read-only).
+  final ServiceEarningsService? earningsService;
+
+  /// Earnings display-formatting seam (EP-03-16, first analytics service).
+  final ServiceAnalyticsService? earningsAnalytics;
 
   /// Dispute-resolution repository (EP-02-17). Optional for testability.
   final DisputeRepository? disputeRepository;
@@ -326,6 +363,17 @@ class AppBootstrap {
       FinancialDepositProvider provider,
     })
     deposit = registerDepositLayer(apiLayer);
+    // EP-03-16 earnings visibility slice (read-only summaries + history over
+    // the EP-02-04 ledger; screens resolve the providers/service from the
+    // tree, degrading to existing finance screens when absent).
+    final ({
+      EarningsRepository repository,
+      EarningsProvider provider,
+      TransactionHistoryProvider historyProvider,
+      ServiceEarningsService service,
+      ServiceAnalyticsService analytics,
+    })
+    earnings = registerEarningsLayer(apiLayer);
     final ({ConversionRepository repository, ConversionProvider provider})
     conversion = registerConversionLayer(
       apiLayer,
@@ -354,6 +402,16 @@ class AppBootstrap {
         tokenProvider: apiLayer.tokenProvider,
       ),
     );
+    // EP-03-14 scheduling slice (availability + appointments over the
+    // EP-03-05 RPCs; reads are RLS participant-scoped). Screens resolve the
+    // provider/service from the tree; without this the scheduling routes
+    // throw ProviderNotFoundException.
+    final ({
+      SchedulingRepository repository,
+      SchedulingProvider provider,
+      SchedulingService service,
+    })
+    scheduling = registerSchedulingLayer(apiLayer);
     final ({JobRepository repository, JobProvider provider}) jobs =
         registerJobsLayer(apiLayer);
     final ({HireRepository repository, HireProvider provider}) hires =
@@ -419,6 +477,9 @@ class AppBootstrap {
       serviceContractRepository: serviceContract.repository,
       serviceContractProvider: serviceContract.provider,
       serviceContractService: serviceContract.service,
+      schedulingRepository: scheduling.repository,
+      schedulingProvider: scheduling.provider,
+      schedulingService: scheduling.service,
       contractEscrowOrchestrator: contractEscrowOrchestrator,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,
@@ -432,6 +493,11 @@ class AppBootstrap {
       payoutProvider: payout.provider,
       depositRepository: deposit.repository,
       depositProvider: deposit.provider,
+      earningsRepository: earnings.repository,
+      earningsProvider: earnings.provider,
+      earningsHistoryProvider: earnings.historyProvider,
+      earningsService: earnings.service,
+      earningsAnalytics: earnings.analytics,
       disputeRepository: dispute.repository,
       disputeProvider: dispute.provider,
       jobRepository: jobs.repository,
