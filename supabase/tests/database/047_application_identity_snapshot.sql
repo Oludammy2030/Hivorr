@@ -76,7 +76,7 @@ select set_config('request.jwt.claim.sub', current_setting('test.b'), true);
 select set_config('test.sub_b', (select public.application_submit(
   current_setting('test.j1')::uuid,
   'Certified snapshot plumber with own tools, available this week.',
-  15000, 'NGN', 3)::text), true);
+  15000, 'NGN', 3))::text, true);
 select is(
   (select current_setting('test.sub_b')::jsonb->'data'->>'applicant_display_name'),
   'Chidi Eze', 'submit response snapshots display name');
@@ -95,7 +95,7 @@ select set_config('request.jwt.claim.sub', current_setting('test.c'), true);
 select set_config('test.sub_c', (select public.application_submit(
   current_setting('test.j1')::uuid,
   'Eager newcomer without a profile row yet, ready to start now.',
-  12000)::text), true);
+  12000))::text, true);
 select is(
   (select current_setting('test.sub_c')::jsonb->'data'->>'applicant_display_name'),
   null, 'submit without profile row snapshots NULL display name');
