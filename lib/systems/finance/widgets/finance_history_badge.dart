@@ -10,10 +10,19 @@ import 'package:provider/provider.dart';
 /// and recorded deposits (EP-02-16 §5.6 — the "history badge").
 ///
 /// Derived entirely from RLS-readable, self-scoped data (the local payout
-/// mirror + the `financial_deposits` select grant). Uses only [AppTheme]
-/// tokens (AGENT.md Rule 5).
+/// mirror + the `financial_deposits` select grant). When [ledgerCount] is
+/// provided (EP-03-16), a third chip surfaces the loaded server-ledger row
+/// count alongside — display-only, never a settlement figure. Uses only
+/// [AppTheme] tokens (AGENT.md Rule 5).
 class FinanceHistoryBadge extends StatelessWidget {
-  const FinanceHistoryBadge({super.key});
+  const FinanceHistoryBadge({super.key, this.ledgerCount, this.ledgerLabel});
+
+  /// Loaded server-ledger rows to surface (`null` hides the ledger chip,
+  /// preserving the EP-02-16 two-chip layout at existing call sites).
+  final int? ledgerCount;
+
+  /// Ledger chip label override (defaults to `ledger entries`).
+  final String? ledgerLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +46,33 @@ class FinanceHistoryBadge extends StatelessWidget {
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(context.appExtension.radiusMd),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(Icons.history, size: 18, color: colors.onSurfaceVariant),
-          const SizedBox(width: HivorrSpacing.sm),
-          Text('Activity', style: context.textTheme.labelMedium),
-          const Spacer(),
-          _CountChip(label: 'payout accounts', count: payoutCount),
-          const SizedBox(width: HivorrSpacing.sm),
-          _CountChip(label: 'deposits', count: depositCount),
+          Row(
+            children: <Widget>[
+              Icon(Icons.history, size: 18, color: colors.onSurfaceVariant),
+              const SizedBox(width: HivorrSpacing.sm),
+              Text('Activity', style: context.textTheme.labelMedium),
+            ],
+          ),
+          const SizedBox(height: HivorrSpacing.xs),
+          // Wrap (not Row): the EP-03-16 ledger chip joins the payout and
+          // deposit chips, and narrow phones must flow instead of overflow.
+          Wrap(
+            spacing: HivorrSpacing.sm,
+            runSpacing: HivorrSpacing.xs,
+            children: <Widget>[
+              _CountChip(label: 'payout accounts', count: payoutCount),
+              _CountChip(label: 'deposits', count: depositCount),
+              if (ledgerCount != null)
+                _CountChip(
+                  label: ledgerLabel ?? 'ledger entries',
+                  count: ledgerCount!,
+                ),
+            ],
+          ),
         ],
       ),
     );

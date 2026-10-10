@@ -8,11 +8,13 @@ import 'package:hivorr/core/logging/hivorr_logger.dart';
 import 'package:hivorr/core/storage/storage_service.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/core/sync/action_queue.dart';
+import 'package:hivorr/data/datasources/local/earnings_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/hive_service_search_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/messaging_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
 import 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+import 'package:hivorr/data/datasources/remote/earnings_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/messaging_realtime_data_source.dart';
 import 'package:hivorr/data/datasources/remote/scheduling_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_contract_remote_data_source.dart';
@@ -22,6 +24,7 @@ import 'package:hivorr/data/datasources/remote/service_search_remote_data_source
 import 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_earnings_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
@@ -46,6 +49,7 @@ import 'package:hivorr/data/local/payout_account_local_store.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
+import 'package:hivorr/data/providers/earnings_provider.dart';
 import 'package:hivorr/data/providers/entity_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
@@ -64,6 +68,7 @@ import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/service_review_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
+import 'package:hivorr/data/providers/transaction_history_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/data/repositories/admin_review_repository_impl.dart';
@@ -71,6 +76,8 @@ import 'package:hivorr/data/repositories/conversion_repository.dart';
 import 'package:hivorr/data/repositories/conversion_repository_impl.dart';
 import 'package:hivorr/data/repositories/dispute_repository.dart';
 import 'package:hivorr/data/repositories/dispute_repository_impl.dart';
+import 'package:hivorr/data/repositories/earnings_repository.dart';
+import 'package:hivorr/data/repositories/earnings_repository_impl.dart';
 import 'package:hivorr/data/repositories/entity_repository_impl.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository_impl.dart';
@@ -110,6 +117,7 @@ import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository_impl.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/integrations/payment_gateways/payment_gateway_factory.dart';
+import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
@@ -119,6 +127,7 @@ import 'package:hivorr/systems/finance/services/escrow_service.dart';
 import 'package:hivorr/systems/finance/services/financial_deposit_service.dart';
 import 'package:hivorr/systems/finance/services/financial_payout_service.dart';
 import 'package:hivorr/systems/finance/services/financial_service.dart';
+import 'package:hivorr/systems/finance/services/service_earnings_service.dart';
 import 'package:hivorr/systems/jobs/services/hire_service.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
@@ -130,6 +139,7 @@ import 'package:hivorr/systems/verification/services/identity_verification_servi
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:hivorr/workspace/profession_registry/taxonomy_engine.dart';
 
+export 'package:hivorr/data/datasources/local/earnings_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/hive_service_search_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
@@ -138,6 +148,7 @@ export 'package:hivorr/data/datasources/remote/conversion_remote_data_source.dar
 export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
 export 'package:hivorr/data/datasources/remote/dispute_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/dispute_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/earnings_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/escrow_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/escrow_write_unavailable_exception.dart';
@@ -166,6 +177,7 @@ export 'package:hivorr/data/datasources/remote/service_search_remote_data_source
 export 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_earnings_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_entity_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_escrow_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_financial_deposit_remote_data_source.dart';
@@ -203,6 +215,8 @@ export 'package:hivorr/data/entities/deposit.dart';
 export 'package:hivorr/data/entities/dispute_case.dart';
 export 'package:hivorr/data/entities/dispute_evidence.dart';
 export 'package:hivorr/data/entities/dispute_resolution.dart';
+export 'package:hivorr/data/entities/earnings_summary.dart';
+export 'package:hivorr/data/entities/earnings_transaction.dart';
 export 'package:hivorr/data/entities/entity.dart';
 export 'package:hivorr/data/entities/entity_profile.dart';
 export 'package:hivorr/data/entities/entity_role.dart';
@@ -239,6 +253,7 @@ export 'package:hivorr/data/local/payout_account_local_store.dart';
 export 'package:hivorr/data/mappers/contract_mapper.dart';
 export 'package:hivorr/data/mappers/conversion_mapper.dart';
 export 'package:hivorr/data/mappers/dispute_mapper.dart';
+export 'package:hivorr/data/mappers/earnings_mapper.dart';
 export 'package:hivorr/data/mappers/entity_mapper.dart';
 export 'package:hivorr/data/mappers/entity_profile_mapper.dart';
 export 'package:hivorr/data/mappers/entity_role_mapper.dart';
@@ -270,6 +285,8 @@ export 'package:hivorr/data/models/dispute_case_dto.dart';
 export 'package:hivorr/data/models/dispute_evidence_dto.dart';
 export 'package:hivorr/data/models/dispute_list_envelope_dto.dart';
 export 'package:hivorr/data/models/dispute_resolution_dto.dart';
+export 'package:hivorr/data/models/earnings_summary_dto.dart';
+export 'package:hivorr/data/models/earnings_transaction_dto.dart';
 export 'package:hivorr/data/models/entity_dto.dart';
 export 'package:hivorr/data/models/entity_profile_dto.dart';
 export 'package:hivorr/data/models/entity_role_dto.dart';
@@ -311,6 +328,7 @@ export 'package:hivorr/data/providers/admin_config_provider.dart';
 export 'package:hivorr/data/providers/admin_review_provider.dart';
 export 'package:hivorr/data/providers/conversion_provider.dart';
 export 'package:hivorr/data/providers/dispute_provider.dart';
+export 'package:hivorr/data/providers/earnings_provider.dart';
 export 'package:hivorr/data/providers/entity_provider.dart';
 export 'package:hivorr/data/providers/escrow_provider.dart';
 export 'package:hivorr/data/providers/financial_deposit_provider.dart';
@@ -331,6 +349,7 @@ export 'package:hivorr/data/providers/service_proof_provider.dart';
 export 'package:hivorr/data/providers/submit_state.dart';
 export 'package:hivorr/data/providers/taxonomy_provider.dart';
 export 'package:hivorr/data/providers/trade_verification_provider.dart';
+export 'package:hivorr/data/providers/transaction_history_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
 export 'package:hivorr/data/repositories/admin_review_repository.dart';
 export 'package:hivorr/data/repositories/admin_review_repository_impl.dart';
@@ -338,6 +357,8 @@ export 'package:hivorr/data/repositories/conversion_repository.dart';
 export 'package:hivorr/data/repositories/conversion_repository_impl.dart';
 export 'package:hivorr/data/repositories/dispute_repository.dart';
 export 'package:hivorr/data/repositories/dispute_repository_impl.dart';
+export 'package:hivorr/data/repositories/earnings_repository.dart';
+export 'package:hivorr/data/repositories/earnings_repository_impl.dart';
 export 'package:hivorr/data/repositories/entity_repository.dart';
 export 'package:hivorr/data/repositories/entity_repository_impl.dart';
 export 'package:hivorr/data/repositories/escrow_repository.dart';
@@ -628,6 +649,55 @@ registerFinancialLayer(
   return (
     repository: repository,
     provider: FinancialProvider(service: service),
+  );
+}
+
+/// Wires the earnings visibility data slice for EP-03-16.
+///
+/// Builds the [EarningsRepository] (network-first with a transient
+/// `finance:earnings:` window) and returns ready [EarningsProvider] +
+/// [TransactionHistoryProvider] bound to a [ServiceEarningsService] facade
+/// plus the [ServiceAnalyticsService] display seam. Mirrors
+/// `registerFinancialLayer`: both RPCs are read-only and self-scoped — the
+/// client never writes ledger, balance, escrow, or contract state.
+({
+  EarningsRepository repository,
+  EarningsProvider provider,
+  TransactionHistoryProvider historyProvider,
+  ServiceEarningsService service,
+  ServiceAnalyticsService analytics,
+})
+registerEarningsLayer(
+  ApiLayer apiLayer, {
+  EarningsRemoteDataSource? dataSource,
+  EarningsLocalDataSource? local,
+  HivorrLogger? logger,
+}) {
+  final EarningsRemoteDataSource resolvedDataSource =
+      dataSource ??
+      SupabaseEarningsRemoteDataSource(
+        dio: apiLayer.dio,
+        supabase: apiLayer.supabaseClient,
+        exceptionMapper: apiLayer.exceptionMapper,
+      );
+  final EarningsRepository repository = EarningsRepositoryImpl(
+    remote: resolvedDataSource,
+    local: local,
+  );
+  final ServiceEarningsService service = ServiceEarningsService(
+    repository: repository,
+    logger: logger,
+  );
+  const ServiceAnalyticsService analytics = ServiceAnalyticsService();
+  return (
+    repository: repository,
+    provider: EarningsProvider(service: service, logger: logger),
+    historyProvider: TransactionHistoryProvider(
+      service: service,
+      logger: logger,
+    ),
+    service: service,
+    analytics: analytics,
   );
 }
 

@@ -17,6 +17,7 @@ import 'package:hivorr/data/providers/admin_config_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
 import 'package:hivorr/data/providers/dispute_provider.dart';
+import 'package:hivorr/data/providers/earnings_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/financial_deposit_provider.dart';
 import 'package:hivorr/data/providers/financial_payout_provider.dart';
@@ -32,10 +33,12 @@ import 'package:hivorr/data/providers/scheduling_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
+import 'package:hivorr/data/providers/transaction_history_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
 import 'package:hivorr/data/repositories/dispute_repository.dart';
+import 'package:hivorr/data/repositories/earnings_repository.dart';
 import 'package:hivorr/data/repositories/escrow_repository.dart';
 import 'package:hivorr/data/repositories/financial_deposit_repository.dart';
 import 'package:hivorr/data/repositories/financial_payout_repository.dart';
@@ -52,8 +55,10 @@ import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
+import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
+import 'package:hivorr/systems/finance/services/service_earnings_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
@@ -99,6 +104,11 @@ class HivorrApp extends StatefulWidget {
     this.payoutProvider,
     this.depositRepository,
     this.depositProvider,
+    this.earningsRepository,
+    this.earningsProvider,
+    this.earningsHistoryProvider,
+    this.earningsService,
+    this.earningsAnalytics,
     this.disputeRepository,
     this.disputeProvider,
     this.jobRepository,
@@ -211,6 +221,21 @@ class HivorrApp extends StatefulWidget {
 
   /// Deposit provider surfaced to the widget tree (EP-02-16).
   final FinancialDepositProvider? depositProvider;
+
+  /// Earnings repository (EP-03-16). Optional for testability.
+  final EarningsRepository? earningsRepository;
+
+  /// Earnings summary provider surfaced to the widget tree (EP-03-16).
+  final EarningsProvider? earningsProvider;
+
+  /// Transaction history provider surfaced to the widget tree (EP-03-16).
+  final TransactionHistoryProvider? earningsHistoryProvider;
+
+  /// Earnings facade surfaced to the widget tree (EP-03-16, read-only).
+  final ServiceEarningsService? earningsService;
+
+  /// Earnings display-formatting seam (EP-03-16).
+  final ServiceAnalyticsService? earningsAnalytics;
 
   /// Dispute-resolution repository (EP-02-17). Optional for testability.
   final DisputeRepository? disputeRepository;
@@ -408,6 +433,13 @@ class _HivorrAppState extends State<HivorrApp> {
     final FinancialDepositRepository? depositRepository =
         widget.depositRepository;
     final FinancialDepositProvider? depositProvider = widget.depositProvider;
+    final EarningsRepository? earningsRepository = widget.earningsRepository;
+    final EarningsProvider? earningsProvider = widget.earningsProvider;
+    final TransactionHistoryProvider? earningsHistoryProvider =
+        widget.earningsHistoryProvider;
+    final ServiceEarningsService? earningsService = widget.earningsService;
+    final ServiceAnalyticsService? earningsAnalytics =
+        widget.earningsAnalytics;
     final DisputeRepository? disputeRepository = widget.disputeRepository;
     final DisputeProvider? disputeProvider = widget.disputeProvider;
     final JobRepository? jobRepository = widget.jobRepository;
@@ -509,6 +541,20 @@ class _HivorrAppState extends State<HivorrApp> {
           ChangeNotifierProvider<FinancialDepositProvider>.value(
             value: depositProvider,
           ),
+        if (earningsRepository != null)
+          Provider<EarningsRepository>.value(value: earningsRepository),
+        if (earningsProvider != null)
+          ChangeNotifierProvider<EarningsProvider>.value(
+            value: earningsProvider,
+          ),
+        if (earningsHistoryProvider != null)
+          ChangeNotifierProvider<TransactionHistoryProvider>.value(
+            value: earningsHistoryProvider,
+          ),
+        if (earningsService != null)
+          Provider<ServiceEarningsService>.value(value: earningsService),
+        if (earningsAnalytics != null)
+          Provider<ServiceAnalyticsService>.value(value: earningsAnalytics),
         if (disputeRepository != null)
           Provider<DisputeRepository>.value(value: disputeRepository),
         if (disputeProvider != null)

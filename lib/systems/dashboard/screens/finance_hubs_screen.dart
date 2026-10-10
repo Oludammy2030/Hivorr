@@ -5,11 +5,16 @@ import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/entities/earnings_summary.dart';
 import 'package:hivorr/data/entities/hire.dart';
 import 'package:hivorr/data/entities/job.dart';
+import 'package:hivorr/data/providers/earnings_provider.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
+import 'package:hivorr/data/providers/transaction_history_provider.dart';
+import 'package:hivorr/data/repositories/earnings_repository.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
+import 'package:hivorr/shared/components/hivorr_month_bars.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
@@ -22,10 +27,13 @@ import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
+import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/quick_actions.dart';
+import 'package:hivorr/systems/finance/helpers/balance_formatter.dart';
+import 'package:hivorr/systems/finance/widgets/earnings_transaction_tile.dart';
 import 'package:provider/provider.dart';
 
 /// Client payments hub — desktop-first reference presentation.
@@ -1090,8 +1098,38 @@ class _EarningsScreenState extends State<EarningsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() =>
-      context.read<HireProvider>().loadList(role: 'professional');
+  Future<void> _load() async {
+    final HireProvider hires = context.read<HireProvider>();
+    final EarningsProvider? earnings = _maybeEarnings(context);
+    final TransactionHistoryProvider? history = _maybeHistory(context);
+    await hires.loadList(role: 'professional');
+    if (!mounted) return;
+    await earnings?.load();
+    if (!mounted) return;
+    await history?.load();
+  }
+
+  /// Reads the earnings summary provider when mounted in the tree; `null`
+  /// in isolated widget harnesses (honest loading/empty states render).
+  EarningsProvider? _maybeEarnings(BuildContext context) {
+    try {
+      return context.read<EarningsProvider>();
+    } on Object catch (_) {
+      debugPrint('Earnings summary provider unavailable; showing fallback.');
+      return null;
+    }
+  }
+
+  /// Reads the history provider when mounted in the tree; `null` in
+  /// isolated widget harnesses.
+  TransactionHistoryProvider? _maybeHistory(BuildContext context) {
+    try {
+      return context.read<TransactionHistoryProvider>();
+    } on Object catch (_) {
+      debugPrint('Transaction history provider unavailable; showing fallback.');
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1109,8 +1147,20 @@ class _EarningsScreenState extends State<EarningsScreen> {
               maxWidth: c.maxWidth,
               hires: hires,
               filter: _filter,
-              onFilter: (_EarningsFilter f) =>
-                  setState(() => _filter = f),
+              onFilter: (_EarningsFilter f) {
+                setState(() => _filter = f);
+                // Drive the server filter alongside the chip selection;
+                // absence (isolated harnesses) keeps chip-only behavior.
+                try {
+                  unawaited(
+                    context.read<TransactionHistoryProvider>().setType(
+                      _earningsHistoryType(f),
+                    ),
+                  );
+                } on Object catch (_) {
+                  debugPrint('History filter is chip-only without provider.');
+                }
+              },
               onRetry: () => unawaited(_load()),
             ),
           );
@@ -1173,52 +1223,30 @@ enum _EarningsFilter {
   final String label;
 }
 
-/// One filterable row behind the `Earnings History` card.
-///
-/// Presentation detail (subtitle, status) enriches the reference rows — the
-/// source of truth for title, date and amount stays the reference screenshot
-/// (`pro earning.png`), so connecting live data means swapping this list.
-class _EarningsHistoryEntry {
-  const _EarningsHistoryEntry({
-    required this.title,
-    required this.meta,
-    required this.amountText,
-    required this.isWithdrawal,
-    required this.status,
-  });
+/// Maps a hub filter chip to the EP-03-16 server filter vocabulary.
+String _earningsHistoryType(_EarningsFilter filter) => switch (filter) {
+  _EarningsFilter.all => EarningsHistoryFilter.all,
+  _EarningsFilter.earned => EarningsHistoryFilter.earned,
+  _EarningsFilter.withdrawn => EarningsHistoryFilter.withdrawn,
+};
 
-  final String title;
-  final String meta;
-  final String amountText;
-  final bool isWithdrawal;
-  final String status;
+/// Live server-verified summary when the EP-03-16 providers are mounted;
+/// `null` in isolated harnesses (honest loading/empty states preserved).
+EarningsSummary? _liveEarningsSummary(BuildContext context) {
+  try {
+    return context.watch<EarningsProvider>().summary;
+  } catch (_) {
+    return null;
+  }
 }
 
-/// Reference history rows (match `pro earning.png` exactly).
-List<_EarningsHistoryEntry> _earningsEntries() {
-  return const <_EarningsHistoryEntry>[
-    _EarningsHistoryEntry(
-      title: 'Payment: TechVentures Africa',
-      meta: 'Today, 09:14 \u00B7 React Developer',
-      amountText: '+ \$3,500',
-      isWithdrawal: false,
-      status: 'completed',
-    ),
-    _EarningsHistoryEntry(
-      title: 'Withdrawal to GTBank',
-      meta: 'Yesterday',
-      amountText: '- \$2,000',
-      isWithdrawal: true,
-      status: 'completed',
-    ),
-    _EarningsHistoryEntry(
-      title: 'Payment: StartupHub GH',
-      meta: 'Jun 25 \u00B7 Brand Design',
-      amountText: '+ \$800',
-      isWithdrawal: false,
-      status: 'completed',
-    ),
-  ];
+/// Live history provider when mounted; `null` in isolated harnesses.
+TransactionHistoryProvider? _liveHistory(BuildContext context) {
+  try {
+    return context.watch<TransactionHistoryProvider>();
+  } catch (_) {
+    return null;
+  }
 }
 
 /// Reference top bar: menu tile, `Earnings` title, notification bell with
@@ -1384,26 +1412,47 @@ class _AvailableBalanceCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: compact ? HivorrSpacing.xs : HivorrSpacing.sm),
-          Text(
-            r'$6,154.00',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: (compact
-                    ? context.textTheme.headlineSmall
-                    : context.textTheme.headlineMedium)
-                ?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '≈ \u20A69,806,000',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withValues(alpha: 0.7),
-            ),
+          Builder(
+            builder: (BuildContext context) {
+              // Live server-verified available balance (EP-03-16); the
+              // reference figure below renders only when the earnings
+              // providers are absent (isolated harnesses).
+              final EarningsSummary? live = _liveEarningsSummary(context);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    live == null
+                        ? r'$6,154.00'
+                        : BalanceFormatter.formatBalance(
+                            live.availableBalance,
+                            live.currencyCode,
+                          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: (compact
+                            ? context.textTheme.headlineSmall
+                            : context.textTheme.headlineMedium)
+                        ?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    live == null
+                        ? '≈ \u20A69,806,000'
+                        : 'Server-verified · ${live.currencyCode}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           SizedBox(height: compact ? HivorrSpacing.md : HivorrSpacing.lg),
           Row(
@@ -1468,13 +1517,26 @@ class _AvailableBalanceCard extends StatelessWidget {
 }
 
 /// White totals card: `Total Earned (All Time)` + `In Escrow (Pending)`
-/// (reference, middle).
+/// (reference, middle). Values are live server aggregates when the EP-03-16
+/// providers are mounted, reference figures otherwise.
 class _EarningsTotalsCard extends StatelessWidget {
   const _EarningsTotalsCard();
 
   @override
   Widget build(BuildContext context) {
     final bool compact = context.breakpoint == Breakpoint.mobile;
+    // Live server-verified totals (EP-03-16); reference figures render only
+    // when the earnings providers are absent (isolated harnesses).
+    final EarningsSummary? live = _liveEarningsSummary(context);
+    final String earned = live == null
+        ? r'$28,900'
+        : BalanceFormatter.formatBalance(
+            live.lifetimeEarned,
+            live.currencyCode,
+          );
+    final String held = live == null
+        ? r'$2,800'
+        : BalanceFormatter.formatBalance(live.heldBalance, live.currencyCode);
     return HivorrCard(
       borderRadius: compact ? 14 : 20,
       padding: EdgeInsets.all(
@@ -1484,21 +1546,21 @@ class _EarningsTotalsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          const _EarningsTotalRow(
+          _EarningsTotalRow(
             icon: Icons.trending_up,
             label: 'Total Earned (All Time)',
-            value: r'$28,900',
+            value: earned,
             tile: _EarningsTotalTile.green,
           ),
           Divider(
             height: compact ? HivorrSpacing.lg : HivorrSpacing.xl,
             color: context.colorScheme.outlineVariant,
           ),
-          const _EarningsTotalRow(
+          _EarningsTotalRow(
             icon: Icons.lock_outline,
             tile: _EarningsTotalTile.orange,
             label: 'In Escrow (Pending)',
-            value: r'$2,800',
+            value: held,
           ),
         ],
       ),
@@ -1577,10 +1639,14 @@ class _EarningsTotalRow extends StatelessWidget {
 
 /// White `Monthly Earnings` chart card (reference, right column).
 ///
-/// MOCK: bars are the reference shape until the monthly-earnings seam
-/// exists — the last bar highlights the current month.
+/// Live server month buckets via [HivorrMonthBars] when the EP-03-16
+/// providers are mounted (honest `No earnings yet` when empty — never
+/// invented bars); the reference shape below renders only when the earnings
+/// providers are absent (isolated harnesses).
 class _MonthlyEarningsCard extends StatelessWidget {
   const _MonthlyEarningsCard();
+
+  static const ServiceAnalyticsService _analytics = ServiceAnalyticsService();
 
   static const List<double> _bars = <double>[
     0.35, 0.55, 0.45, 0.7, 0.6, 0.75, 0.65, 0.85, 0.7, 0.8, 0.6, 1.0,
@@ -1590,6 +1656,46 @@ class _MonthlyEarningsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool compact = context.breakpoint == Breakpoint.mobile;
     final RoleThemeExtension roles = context.roleTheme;
+    // Live server buckets (EP-03-16) take precedence over the reference
+    // shape below.
+    final EarningsSummary? live = _liveEarningsSummary(context);
+    if (live != null) {
+      return HivorrCard(
+        borderRadius: compact ? 14 : 20,
+        padding: EdgeInsets.all(
+          compact ? HivorrSpacing.md : HivorrSpacing.lg,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'Monthly Earnings',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
+            HivorrMonthBars(
+              items: _analytics.monthBucketsToChartData(live.monthly),
+              emptyLabel: 'No earnings yet.',
+              accent: roles.professionalPrimary,
+            ),
+            const SizedBox(height: HivorrSpacing.sm),
+            Text(
+              live.releaseCount == 1
+                  ? 'Across 1 release'
+                  : 'Across ${live.releaseCount} releases',
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     final Color barLight =
         roles.professionalPrimary.withValues(alpha: 0.18);
     final Color barDark = roles.professionalPrimary;
@@ -1650,7 +1756,8 @@ class _MonthlyEarningsCard extends StatelessWidget {
 
 /// Orange escrow-pending banner (reference, below the summary row).
 ///
-/// MOCK: placeholder copy/amount until the escrow-hold seam exists.
+/// Live held balance when the EP-03-16 providers are mounted; honest copy in
+/// both cases (no client-specific placeholders).
 class _EarningsEscrowBanner extends StatelessWidget {
   const _EarningsEscrowBanner();
 
@@ -1659,6 +1766,15 @@ class _EarningsEscrowBanner extends StatelessWidget {
     final AppThemeExtension ext = context.appExtension;
     final ColorScheme colors = context.colorScheme;
     final bool compact = context.breakpoint == Breakpoint.mobile;
+    // Live server-verified held balance (EP-03-16); the reference figure
+    // renders only when the earnings providers are absent.
+    final EarningsSummary? live = _liveEarningsSummary(context);
+    final String held = live == null
+        ? r'$2,800'
+        : BalanceFormatter.formatBalance(
+            live.heldBalance,
+            live.currencyCode,
+          );
     return Container(
       decoration: BoxDecoration(
         color: ext.warningContainer,
@@ -1692,7 +1808,7 @@ class _EarningsEscrowBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Escrow Pending \u2014 Data Pipeline Architecture',
+                  'Held in escrow',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleSmall?.copyWith(
@@ -1701,7 +1817,7 @@ class _EarningsEscrowBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Releases when Fintech Solutions approves your delivery',
+                  'Releases when the client approves your delivery',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.bodySmall?.copyWith(
@@ -1713,7 +1829,7 @@ class _EarningsEscrowBanner extends StatelessWidget {
           ),
           const SizedBox(width: HivorrSpacing.sm),
           Text(
-            r'$2,800',
+            held,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: (compact
@@ -1745,14 +1861,9 @@ class _EarningsHistorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool compact = MobileCompact.isCompactWidth(maxWidth);
-    final List<_EarningsHistoryEntry> all = _earningsEntries();
-    final List<_EarningsHistoryEntry> visible = switch (filter) {
-      _EarningsFilter.all => all,
-      _EarningsFilter.earned =>
-        all.where((_EarningsHistoryEntry e) => !e.isWithdrawal).toList(),
-      _EarningsFilter.withdrawn =>
-        all.where((_EarningsHistoryEntry e) => e.isWithdrawal).toList(),
-    };
+    // Live server ledger (EP-03-16) when mounted; honest empty state in
+    // isolated harnesses (mock rows removed — see TIP §7.4).
+    final TransactionHistoryProvider? live = _liveHistory(context);
     final Widget chips = Wrap(
       spacing: HivorrSpacing.sm,
       runSpacing: HivorrSpacing.sm,
@@ -1796,7 +1907,14 @@ class _EarningsHistorySection extends StatelessWidget {
             ],
           ),
         SizedBox(height: compact ? HivorrSpacing.sm : HivorrSpacing.md),
-        _EarningsHistoryCard(entries: visible, compact: compact),
+        if (live == null)
+          const HivorrEmptyState(
+            title: 'No activity yet',
+            subtitle: 'Released payments and withdrawals will appear here.',
+            compact: true,
+          )
+        else
+          _LiveEarningsHistory(provider: live, compact: compact),
       ],
     );
   }
@@ -1846,25 +1964,36 @@ class _EarningsFilterChip extends StatelessWidget {
   }
 }
 
-/// White history list card (reference): icon tile, title/meta, amount/status.
-class _EarningsHistoryCard extends StatelessWidget {
-  const _EarningsHistoryCard({required this.entries, required this.compact});
+/// Live server-ledger history list (EP-03-16): rows render verbatim in server
+/// order via [EarningsTransactionTile] and drill into the attributed
+/// contract. Honest empty/error states — no invented rows.
+class _LiveEarningsHistory extends StatelessWidget {
+  const _LiveEarningsHistory({required this.provider, required this.compact});
 
-  final List<_EarningsHistoryEntry> entries;
+  final TransactionHistoryProvider provider;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    if (entries.isEmpty) {
-      return HivorrCard(
-        borderRadius: compact ? 14 : 16,
-        child: Text(
-          'No earnings match this filter',
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
-        ),
+    if (provider.isLoading && provider.items.isEmpty) {
+      return const HivorrLoadingState(message: 'Loading history...');
+    }
+    if (provider.lastError != null && provider.items.isEmpty) {
+      return HivorrErrorState(
+        message: 'Could not load history',
+        detail: provider.lastError!.message,
+        onRetry: () => provider.load(),
+      );
+    }
+    if (provider.items.isEmpty) {
+      final bool filtered =
+          provider.typeFilter != EarningsHistoryFilter.all;
+      return HivorrEmptyState(
+        title: filtered ? 'No matches' : 'No activity yet',
+        subtitle: filtered
+            ? 'No earnings match this filter.'
+            : 'Released payments and withdrawals will appear here.',
+        compact: true,
       );
     }
     return HivorrCard(
@@ -1873,7 +2002,7 @@ class _EarningsHistoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          for (int i = 0; i < entries.length; i++) ...<Widget>[
+          for (int i = 0; i < provider.items.length; i++) ...<Widget>[
             if (i > 0)
               Divider(
                 height: 1,
@@ -1882,111 +2011,17 @@ class _EarningsHistoryCard extends StatelessWidget {
                   alpha: 0.6,
                 ),
               ),
-            _EarningsHistoryRow(entry: entries[i], compact: compact),
+            EarningsTransactionTile(
+              transaction: provider.items[i],
+              onTap: provider.items[i].contractId == null
+                  ? null
+                  : () => context.push(
+                      RoutePaths.contractEarningsDetail(
+                        provider.items[i].contractId!,
+                      ),
+                    ),
+            ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _EarningsHistoryRow extends StatelessWidget {
-  const _EarningsHistoryRow({required this.entry, required this.compact});
-
-  final _EarningsHistoryEntry entry;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = context.colorScheme;
-    final AppThemeExtension ext = context.appExtension;
-    final Color tileBg =
-        entry.isWithdrawal ? colors.errorContainer : ext.successContainer;
-    final Color iconFg =
-        entry.isWithdrawal ? colors.error : ext.success;
-    final Color amountFg =
-        entry.isWithdrawal ? colors.error : ext.success;
-    final double tileSize = compact ? 40 : 48;
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? HivorrSpacing.md : HivorrSpacing.lg,
-        vertical: compact ? HivorrSpacing.sm + 4 : HivorrSpacing.md,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Container(
-            width: tileSize,
-            height: tileSize,
-            decoration: BoxDecoration(
-              color: tileBg,
-              borderRadius: BorderRadius.circular(compact ? 12 : 14),
-            ),
-            child: Icon(
-              entry.isWithdrawal ? Icons.arrow_upward : Icons.arrow_downward,
-              size: compact ? 20 : 22,
-              color: iconFg,
-            ),
-          ),
-          SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  entry.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  entry.meta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: HivorrSpacing.sm),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                entry.amountText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.textTheme.titleSmall?.copyWith(
-                  color: amountFg,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: ext.successContainer,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  entry.status,
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: ext.success,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );

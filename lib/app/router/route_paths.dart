@@ -138,6 +138,25 @@ abstract final class RoutePaths {
   /// Currency-conversion screen (EP-02-15).
   static const String convert = '/finance/convert';
 
+  /// Earnings visibility screens (EP-03-16, protected, read-only over the
+  /// server ledger — no settlement logic in the routes).
+  static const String earningsDetail = '/finance/earnings';
+  static const String earningsHistory = '/finance/earnings/history';
+
+  /// Builds a URL-encoded earnings history path, optionally scoped to a
+  /// contract via `?contractId=`.
+  static String earningsHistoryFor({String? contractId}) => contractId == null
+      ? earningsHistory
+      : '$earningsHistory?contractId=${Uri.encodeComponent(contractId)}';
+
+  /// Contract earnings drill-down route (EP-03-16, protected).
+  /// Parameter: `id` (authoritative `service_contracts.id`).
+  static const String contractEarningsDetailRoute = '/contracts/:id/earnings';
+
+  /// Builds a URL-encoded contract earnings detail path.
+  static String contractEarningsDetail(String id) =>
+      '/contracts/${Uri.encodeComponent(id)}/earnings';
+
   /// Service listing owner-management screens (EP-03-08, protected).
   static const String serviceListingsMine = '/services/mine';
   static const String serviceListingNew = '/services/mine/new';
