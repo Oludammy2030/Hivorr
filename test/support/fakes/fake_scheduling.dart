@@ -326,11 +326,17 @@ class FakeSchedulingRepository implements SchedulingRepository {
   FakeSchedulingRepository({
     List<AvailabilitySlot>? slots,
     List<Appointment>? appointments,
+    this.listHasMore = false,
   }) : _slots = <AvailabilitySlot>[...?slots],
        _appointments = <Appointment>[...?appointments];
 
   final List<AvailabilitySlot> _slots;
   final List<Appointment> _appointments;
+
+  /// Whether the first `listAppointments` page reports a further page.
+  /// Follow-up pages (non-null `cursor`) return empty, modelling keyset
+  /// exhaustion without duplicating ids.
+  bool listHasMore;
 
   int upsertCalls = 0;
   int bookCalls = 0;
@@ -461,6 +467,9 @@ class FakeSchedulingRepository implements SchedulingRepository {
     String? cursor,
   }) async {
     lastStatus = status;
+    if (cursor != null) {
+      return const AppointmentPage(items: <Appointment>[], hasMore: false);
+    }
     final List<Appointment> filtered = _appointments
         .where(
           (Appointment a) =>
@@ -470,7 +479,8 @@ class FakeSchedulingRepository implements SchedulingRepository {
         .toList(growable: false);
     return AppointmentPage(
       items: filtered,
-      hasMore: false,
+      hasMore: listHasMore,
+      nextCursor: listHasMore ? 'cursor-1' : null,
     );
   }
 }

@@ -894,7 +894,16 @@ class _EngagementRow extends StatelessWidget {
             ),
             if (contractId != null)
               _GhostButton(
-                label: 'Contract',
+                label: 'View Contract',
+                icon: Icons.description_outlined,
+                fill: colors.surface,
+                foreground: colors.onSurfaceVariant,
+                onTap: () =>
+                    context.go(RoutePaths.contractDetail(contractId)),
+              ),
+            if (contractId != null)
+              _GhostButton(
+                label: 'Escrow',
                 icon: Icons.lock_outline,
                 fill: colors.surface,
                 foreground: colors.onSurfaceVariant,
