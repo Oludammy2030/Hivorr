@@ -43,23 +43,40 @@ comment on column public.job_applications.applicant_profession_slug is
   'Snapshot of the primary approved profession slug at submission (public profile route segment). NULL when unapproved.';
 
 -- ─── 2. Backfill existing rows (migration runs as owner: RLS bypassed) ───────
+-- NOTE: correlated scalar subqueries in SET (not a LATERAL join): a LATERAL
+-- item in an UPDATE's FROM list may not reference the target table (42P10).
+-- Scalar subqueries may freely correlate on it. One-time cost, idempotent via
+-- the NULL guard; rows without a profile keep NULLs (client falls back).
 update public.job_applications a
-   set applicant_display_name = nullif(btrim(ep.display_name), ''),
-       applicant_avatar_path = nullif(ep.avatar_path, ''),
-       applicant_profession_name = prof.profession_name,
-       applicant_profession_slug = prof.profession_slug
-  from public.entity_profiles ep
-  left join lateral (
-    select p.name as profession_name, p.slug as profession_slug
-      from public.entity_professions epr
-      join public.professions p on p.id = epr.profession_id
-     where epr.entity_id = ep.entity_id
-       and epr.trade_verification_status = 'approved'
-     order by epr.is_primary desc, epr.created_at
-     limit 1
-  ) prof on true
- where ep.entity_id = a.professional_entity_id
-   and a.applicant_display_name is null;
+   set applicant_display_name = (
+         select nullif(btrim(ep.display_name), '')
+           from public.entity_profiles ep
+          where ep.entity_id = a.professional_entity_id
+       ),
+       applicant_avatar_path = (
+         select nullif(ep.avatar_path, '')
+           from public.entity_profiles ep
+          where ep.entity_id = a.professional_entity_id
+       ),
+       applicant_profession_name = (
+         select p.name
+           from public.entity_professions epr
+           join public.professions p on p.id = epr.profession_id
+          where epr.entity_id = a.professional_entity_id
+            and epr.trade_verification_status = 'approved'
+          order by epr.is_primary desc, epr.created_at
+          limit 1
+       ),
+       applicant_profession_slug = (
+         select p.slug
+           from public.entity_professions epr
+           join public.professions p on p.id = epr.profession_id
+          where epr.entity_id = a.professional_entity_id
+            and epr.trade_verification_status = 'approved'
+          order by epr.is_primary desc, epr.created_at
+          limit 1
+       )
+ where a.applicant_display_name is null;
 
 -- ─── 3. application_submit: snapshot identity (self-read, RLS-legal) ─────────
 create or replace function public.application_submit(
