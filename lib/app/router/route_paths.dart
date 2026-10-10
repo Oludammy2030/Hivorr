@@ -246,14 +246,6 @@ abstract final class RoutePaths {
   static String appointmentBook(String contractId) =>
       '/contracts/${Uri.encodeComponent(contractId)}/appointments/new';
 
-  /// Per-contract appointment list route (EP-03-14, protected).
-  /// Parameter: `id` (authoritative `service_contracts.id`).
-  static const String appointmentListRoute = '/contracts/:id/appointments';
-
-  /// Builds a URL-encoded appointment list path for a contract.
-  static String appointmentList(String contractId) =>
-      '/contracts/${Uri.encodeComponent(contractId)}/appointments';
-
   /// Appointment detail route (EP-03-14, protected).
   /// Parameter: `id` (authoritative `appointments.id`).
   static const String appointmentDetailRoute = '/appointments/:id';

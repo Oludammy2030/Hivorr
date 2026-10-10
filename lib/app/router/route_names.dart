@@ -117,7 +117,6 @@ abstract final class RouteNames {
   /// Scheduling routes (EP-03-14).
   static const String availability = 'availability';
   static const String appointmentBook = 'appointment-book';
-  static const String appointmentList = 'appointment-list';
   static const String appointmentDetail = 'appointment-detail';
 
   /// Double-blind review routes (EP-03-12).
