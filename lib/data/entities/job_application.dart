@@ -23,6 +23,10 @@ class JobApplication {
     required this.updatedAt,
     this.jobTitle,
     this.jobStatus,
+    this.applicantDisplayName,
+    this.applicantAvatarPath,
+    this.applicantProfessionName,
+    this.applicantProfessionSlug,
   });
 
   /// The application row id.
@@ -69,6 +73,29 @@ class JobApplication {
 
   /// Denormalized job status (`application_list_mine` only).
   final String? jobStatus;
+
+  /// Submit-time snapshot of the applicant's public display name
+  /// (`20261010090001`). Null on pre-migration rows and stale servers —
+  /// callers fall back to the public-profile read path.
+  final String? applicantDisplayName;
+
+  /// Submit-time snapshot of the applicant's avatar storage path.
+  final String? applicantAvatarPath;
+
+  /// Submit-time snapshot of the primary approved profession name.
+  /// Null when the applicant had no approved profession at submission.
+  final String? applicantProfessionName;
+
+  /// Submit-time snapshot of the primary approved profession slug
+  /// (public profile route segment).
+  final String? applicantProfessionSlug;
+
+  /// Whether the row carries a usable identity snapshot (no follow-up
+  /// profile RPC needed to name the applicant).
+  bool get hasIdentitySnapshot {
+    final String? name = applicantDisplayName?.trim();
+    return name != null && name.isNotEmpty;
+  }
 
   /// Whether the applicant may still withdraw.
   bool get isWithdrawable => status == 'submitted' || status == 'shortlisted';

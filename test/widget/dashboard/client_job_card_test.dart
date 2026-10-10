@@ -12,6 +12,7 @@ import 'package:hivorr/data/repositories/hire_repository.dart';
 import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
+import 'package:hivorr/systems/dashboard/screens/opportunities_screen.dart';
 import 'package:hivorr/systems/jobs/services/hire_service.dart';
 import 'package:hivorr/systems/jobs/services/job_service.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
@@ -253,6 +254,90 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('detail-job-1'), findsOneWidget);
+    });
+
+    testWidgets('applicants button opens the inbox for that job, not detail',
+        (tester) async {
+      final JobProvider jobs = JobProvider(service: _StubJobService());
+      final HireProvider hires = HireProvider(service: _StubHireService());
+      final OnboardingProvider onboarding = OnboardingProvider(
+        service: _StubOnboardingService(),
+      );
+      await onboarding.loadProgress('entity-1');
+      final AuthProvider auth = AuthProvider(service: FakeAuthService());
+      final Size previousPhysical = tester.view.physicalSize;
+      final double previousDpr = tester.view.devicePixelRatio;
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      final GoRouter router = GoRouter(
+        initialLocation: '/dashboard',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/dashboard',
+            builder: (BuildContext context, GoRouterState state) =>
+                const DashboardOverviewScreen(),
+            routes: <RouteBase>[
+              GoRoute(
+                path: 'jobs/:id',
+                builder: (BuildContext context, GoRouterState state) =>
+                    Scaffold(
+                  body: Center(
+                    child: Text(
+                      'detail-${state.pathParameters['id']}',
+                    ),
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'applications',
+                builder: (BuildContext context, GoRouterState state) =>
+                    MyApplicationsScreen(
+                  initialJobId: state.uri.queryParameters['job'],
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+      addTearDown(() {
+        tester.view.physicalSize = previousPhysical;
+        tester.view.devicePixelRatio = previousDpr;
+        router.dispose();
+        jobs.dispose();
+        hires.dispose();
+        onboarding.dispose();
+        auth.dispose();
+      });
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: _providers(
+            jobs: jobs,
+            hires: hires,
+            onboarding: onboarding,
+            auth: auth,
+          ),
+          child: MaterialApp.router(
+            theme: AppTheme.lightTheme,
+            debugShowCheckedModeBanner: false,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Job-specific Applicants button → inbox preselected to job-1, with the
+      // authoritative count in the header — not the job detail screen.
+      await tester.tap(find.text('12 Applicants'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('detail-job-1'), findsNothing);
+      expect(find.text('Select Job'), findsOneWidget);
+      expect(find.textContaining('12 applications'), findsOneWidget);
+      expect(
+        find.text('Senior React Developer Needed Urgently For Fintech'),
+        findsWidgets,
+      );
     });
   });
 }

@@ -42,8 +42,9 @@ import 'package:provider/provider.dart';
 /// at least one `disputed` hire (jobs carry no disputed code — disputes live
 /// on the linked hire/contract, consolidated here from the former Hires hub).
 /// Draft/paused rows only surface under All Jobs (no server vocabulary
-/// change). Card actions reuse the existing destinations: Applications/title
-/// → job detail (applications inbox), Chat → messages, Close → `cancel` with
+/// change). Card actions reuse the existing destinations: Applications →
+/// applications inbox (`dashboardApplicationsFor(job.id)`, `?job=` filtered),
+/// title/card background → job detail, Chat → messages, Close → `cancel` with
 /// confirm (hidden once terminal). Each card also carries its Engagements
 /// (linked hires consolidated from Hires): live status badges plus View Hire
 /// (hire detail), Message (contract thread), Contract (escrow), Cancel Hire
@@ -91,6 +92,12 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
 
   Future<void> _refreshHires() =>
       context.read<HireProvider>().loadList(role: 'client');
+
+  /// Phase 2: non-blocking posted refresh for authoritative
+  /// `applications_count` + status (hire cancel reopens the job to `open`,
+  /// affecting the pending-apps bell fold). Failures keep previous counts.
+  Future<void> _refreshCounts() =>
+      context.read<JobProvider>().refreshPosted();
 
   /// Groups client hires by their job for card-level engagement sections.
   Map<String, List<Hire>> _hiresByJob(List<Hire> hires) {
@@ -201,6 +208,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
       if (!mounted) return;
       _snack('Hire cancelled.', HivorrSnackbarVariant.success);
       unawaited(_refreshHires());
+      unawaited(_refreshCounts());
     } on ApiException catch (e) {
       if (!mounted) return;
       _snack(e.message, HivorrSnackbarVariant.error);
@@ -219,6 +227,7 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
       if (!mounted) return;
       _snack('Hire completed.', HivorrSnackbarVariant.success);
       unawaited(_refreshHires());
+      unawaited(_refreshCounts());
     } on ApiException catch (e) {
       if (!mounted) return;
       _snack(e.message, HivorrSnackbarVariant.error);

@@ -147,6 +147,52 @@ void main() {
       expect(app.jobTitle, 'Fix my sink');
     });
 
+    test('application DTO maps the identity snapshot when present', () {
+      final JobApplication app = JobMapper.applicationToEntity(
+        JobApplicationDto.fromJson(<String, dynamic>{
+          'id': 'app-9',
+          'job_id': 'job-1',
+          'professional_entity_id': 'pro-9',
+          'client_entity_id': 'client-1',
+          'cover_note': 'I can do this work well.',
+          'currency_code': 'NGN',
+          'status': 'submitted',
+          'submitted_at': '2026-09-02T10:00:00Z',
+          'created_at': '2026-09-02T10:00:00Z',
+          'updated_at': '2026-09-02T10:00:00Z',
+          'applicant_display_name': 'Adaeze Okafor',
+          'applicant_avatar_path': 'avatars/pro-9.png',
+          'applicant_profession_name': 'Electrician',
+          'applicant_profession_slug': 'electrician',
+        }),
+      );
+      expect(app.applicantDisplayName, 'Adaeze Okafor');
+      expect(app.applicantAvatarPath, 'avatars/pro-9.png');
+      expect(app.applicantProfessionName, 'Electrician');
+      expect(app.applicantProfessionSlug, 'electrician');
+      expect(app.hasIdentitySnapshot, isTrue);
+    });
+
+    test('application DTO tolerates pre-migration rows without snapshot', () {
+      final JobApplication app = JobMapper.applicationToEntity(
+        JobApplicationDto.fromJson(<String, dynamic>{
+          'id': 'app-0',
+          'job_id': 'job-1',
+          'professional_entity_id': 'pro-0',
+          'client_entity_id': 'client-1',
+          'cover_note': 'I can do this work well.',
+          'currency_code': 'NGN',
+          'status': 'submitted',
+          'submitted_at': '2026-09-02T10:00:00Z',
+          'created_at': '2026-09-02T10:00:00Z',
+          'updated_at': '2026-09-02T10:00:00Z',
+        }),
+      );
+      expect(app.applicantDisplayName, isNull);
+      expect(app.applicantProfessionSlug, isNull);
+      expect(app.hasIdentitySnapshot, isFalse);
+    });
+
     test('job list envelope degrades missing items to empty', () {
       final JobListEnvelopeDto envelope = JobListEnvelopeDto.fromJson(
         <String, dynamic>{'has_more': false},
