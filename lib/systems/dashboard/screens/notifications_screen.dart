@@ -13,10 +13,13 @@ import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/layouts/mobile_compact.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
+import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:provider/provider.dart';
 
 /// Notifications center: activity feed derived from hiring data (EP-04-04).
@@ -160,18 +163,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Hire focus shares the client chrome (hamburger + drawer); professional
+    // focus uses the shared professional chrome (same contract as Messages).
+    // Single page title (`Notifications`); reloads stay on pull-to-refresh
+    // and the retry states below.
+    final bool menu = showClientMenu(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Notifications', style: context.textTheme.titleLarge),
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh),
-            onPressed: () => unawaited(_load()),
-          ),
-        ],
-      ),
-      body: SafeArea(
+      drawer: menu ? const ClientDashboardDrawer() : null,
+      appBar: menu
+          ? const ClientMobileAppBar(title: 'Notifications')
+          : const ProfessionalMobileAppBar(title: 'Notifications'),
+      body: MobileSafeBody(
         child: _loading
             ? const HivorrLoadingState()
             : _error != null
@@ -194,7 +196,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   return RefreshIndicator(
                     onRefresh: _load,
                     child: ListView.separated(
-                      padding: const EdgeInsets.all(HivorrSpacing.md),
+                      padding: MobileCompact.scrollPadding,
                       itemCount: items.length,
                       separatorBuilder: (_, _) =>
                           const SizedBox(height: HivorrSpacing.sm),

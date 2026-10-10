@@ -35,6 +35,7 @@ import 'package:hivorr/systems/analytics/services/service_analytics_service.dart
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 import 'package:hivorr/systems/dashboard/models/dashboard_capability.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/dashboard_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_status_badge.dart';
@@ -2682,34 +2683,12 @@ Widget _professionalScaffold(
         );
   if (isMobile) {
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 48,
-        title: Text(
-          'Dashboard',
-          style: context.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Notifications',
-            iconSize: 20,
-            padding: const EdgeInsets.all(HivorrSpacing.sm),
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => context.go(RoutePaths.dashboardNotifications),
-          ),
-          IconButton(
-            tooltip: 'Refresh',
-            iconSize: 20,
-            padding: const EdgeInsets.all(HivorrSpacing.sm),
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            icon: const Icon(Icons.refresh),
-            onPressed: () =>
-                unawaited(_professionalRefresh(context, capability)),
-          ),
-        ],
-      ),
+      // Shared professional chrome: single `Dashboard` title with the bell +
+      // Professional pill + avatar on one compact row. Bottom navigation
+      // lives in the dashboard shell and is intentionally untouched here. No
+      // refresh action — pull-to-refresh on the content covers reloads (same
+      // contract as the client chrome).
+      appBar: const ProfessionalMobileAppBar(title: 'Dashboard'),
       body: MobileSafeBody(child: content),
     );
   }

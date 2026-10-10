@@ -30,6 +30,7 @@ import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
 import 'package:hivorr/systems/dashboard/models/client_overview_mock.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
+import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/hiring_cards.dart';
 import 'package:hivorr/systems/dashboard/widgets/quick_actions.dart';
 import 'package:hivorr/systems/finance/helpers/balance_formatter.dart';
@@ -1169,31 +1170,12 @@ class _EarningsScreenState extends State<EarningsScreen> {
     );
 
     if (isMobile) {
-      // Single page title (`Earnings`); no refresh action — the content
-      // RefreshIndicator below covers reloads.
+      // Shared professional chrome: single `Earnings` title with the bell +
+      // Professional pill + avatar on one compact row. Bottom navigation
+      // lives in the dashboard shell. No refresh action — the content
+      // RefreshIndicator below covers reloads (same contract as client).
       return Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 48,
-          title: Text(
-            'Earnings',
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: <Widget>[
-            IconButton(
-              tooltip: 'Notifications',
-              iconSize: 20,
-              padding: const EdgeInsets.all(HivorrSpacing.sm),
-              constraints: const BoxConstraints(
-                minWidth: 40,
-                minHeight: 40,
-              ),
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.go(RoutePaths.dashboardNotifications),
-            ),
-          ],
-        ),
+        appBar: const ProfessionalMobileAppBar(title: 'Earnings'),
         body: MobileSafeBody(child: content),
       );
     }
@@ -1828,16 +1810,21 @@ class _EarningsEscrowBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: HivorrSpacing.sm),
-          Text(
-            held,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: (compact
-                    ? context.textTheme.titleMedium
-                    : context.textTheme.titleLarge)
-                ?.copyWith(
-              color: ext.warning,
-              fontWeight: FontWeight.w700,
+          // Flexible bound so large held balances share 320dp viewports
+          // with the banner copy instead of overflowing.
+          Flexible(
+            child: Text(
+              held,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: (compact
+                      ? context.textTheme.titleMedium
+                      : context.textTheme.titleLarge)
+                  ?.copyWith(
+                color: ext.warning,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

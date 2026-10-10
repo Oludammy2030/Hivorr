@@ -45,6 +45,9 @@ class DashboardMoreSheet extends StatelessWidget {
       hire: hire,
       offer: offer,
     );
+    // Professional-only focus carries the green identity into the selected
+    // states below; hire and fail-open focuses keep the brand-blue default.
+    final bool isProfessional = offer && !hire;
 
     return SafeArea(
       top: false,
@@ -69,7 +72,7 @@ class DashboardMoreSheet extends StatelessWidget {
                     child: Text(
                       'More',
                       style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -84,6 +87,7 @@ class DashboardMoreSheet extends StatelessWidget {
                 _MoreRow(
                   item: item,
                   selected: _isSelected(location, item.location),
+                  isProfessional: isProfessional,
                   onTap: () {
                     Navigator.of(context).pop();
                     final String base = item.location.split('?').first;
@@ -104,6 +108,7 @@ class DashboardMoreSheet extends StatelessWidget {
                   section: DashboardNavSection.shared,
                 ),
                 selected: _isSelected(location, RoutePaths.activities),
+                isProfessional: isProfessional,
                 onTap: () {
                   Navigator.of(context).pop();
                   if (location != RoutePaths.activities) {
@@ -129,16 +134,24 @@ class _MoreRow extends StatelessWidget {
   const _MoreRow({
     required this.item,
     required this.selected,
+    required this.isProfessional,
     required this.onTap,
   });
 
   final DashboardNavItem item;
   final bool selected;
+
+  /// Professional-only focus renders selected states in green; every other
+  /// focus keeps the brand-blue default (client unaffected).
+  final bool isProfessional;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
+    final Color accent = isProfessional
+        ? context.roleTheme.professionalPrimary
+        : colors.primary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -150,7 +163,7 @@ class _MoreRow extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: selected
-              ? colors.primary.withValues(alpha: 0.08)
+              ? accent.withValues(alpha: 0.08)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -159,7 +172,7 @@ class _MoreRow extends StatelessWidget {
             Icon(
               selected ? item.activeIcon : item.icon,
               size: 22,
-              color: selected ? colors.primary : colors.onSurfaceVariant,
+              color: selected ? accent : colors.onSurfaceVariant,
             ),
             const SizedBox(width: HivorrSpacing.md),
             Expanded(
@@ -167,14 +180,13 @@ class _MoreRow extends StatelessWidget {
                 item.label,
                 style: context.textTheme.bodyMedium?.copyWith(
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? colors.primary : colors.onSurface,
+                  color: selected ? accent : colors.onSurface,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (selected)
-              Icon(Icons.check, size: 20, color: colors.primary),
+            if (selected) Icon(Icons.check, size: 20, color: accent),
           ],
         ),
       ),
