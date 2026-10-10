@@ -254,7 +254,8 @@ void main() {
       expect(find.text('Cancel Hire'), findsOneWidget);
       expect(find.text('Complete Hire'), findsOneWidget);
       expect(find.text('File Dispute'), findsWidgets);
-      expect(find.text('Contract'), findsWidgets);
+      expect(find.text('View Contract'), findsWidgets);
+      expect(find.text('Escrow'), findsWidgets);
       expect(find.text('View Hire'), findsWidgets);
       expect(find.text('Message'), findsWidgets);
     });

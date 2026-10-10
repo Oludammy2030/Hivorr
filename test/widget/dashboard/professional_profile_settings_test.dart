@@ -196,6 +196,7 @@ void main() {
       expect(find.text('Open to full-time roles'), findsOneWidget);
       expect(find.text('Open to part-time'), findsOneWidget);
       expect(find.text('Remote only'), findsOneWidget);
+      expect(find.text('Manage schedule'), findsOneWidget);
       expect(find.text('Notifications'), findsOneWidget);
       expect(find.text('New job matches'), findsOneWidget);
       expect(find.text('Application updates'), findsOneWidget);
