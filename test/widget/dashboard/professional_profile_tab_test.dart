@@ -220,7 +220,7 @@ void main() {
       await tester.tap(save);
       await tester.pumpAndSettle();
       expect(
-        find.text('Enter your full name and email.'),
+        find.text('Enter your full name, display name, and email.'),
         findsOneWidget,
       );
     });
