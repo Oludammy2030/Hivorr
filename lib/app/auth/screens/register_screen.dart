@@ -167,7 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           HivorrTextField(
             controller: _displayName,
             label: 'Display name',
-            hint: 'How clients see you',
+            hint: 'How people see you on Hivorr',
             errorText: displayNameError,
             enabled: !_submitting,
             onChanged: (_) => setState(() {}),
