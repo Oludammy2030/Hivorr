@@ -246,7 +246,9 @@ void main() {
       expect(find.text('Manage all'), findsOneWidget);
       expect(find.text('Senior React Developer'), findsWidgets);
       expect(find.text('Mobile App Designer'), findsOneWidget);
-      expect(find.text('12 Applicants'), findsOneWidget);
+      // Applicants buttons are count-free (one per active job card); the
+      // Applied indicator beside the price carries each job's total.
+      expect(find.text('Applicants'), findsNWidgets(2));
       expect(find.text('Message'), findsWidgets);
       expect(find.text(r'$3,500'), findsOneWidget);
       expect(find.text('12 applied'), findsOneWidget);
