@@ -12,7 +12,9 @@
 
 begin;
 set search_path to extensions, public;
-select plan(15);
+-- 1 lives_ok (publish) + 4 submit-snapshot + 2 null-snapshot + 3 list
+-- projection + 2 no-leakage + 1 job_get carry-through = 13.
+select plan(13);
 
 -- ─── 0. Fixtures ─────────────────────────────────────────────────────────────
 set role postgres;
