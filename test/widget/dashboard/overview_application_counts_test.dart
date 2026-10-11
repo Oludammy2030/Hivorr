@@ -214,7 +214,8 @@ void main() {
       addTearDown(disposeAll);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('0 Applicants'), findsOneWidget);
+      // Applicants button is count-free; Applied carries the total.
+      expect(find.text('Applicants'), findsOneWidget);
       expect(find.text('0 applied'), findsOneWidget);
       expect(find.text('Open Jobs'), findsOneWidget);
       expect(find.text('No new applications across your active jobs yet'),
@@ -243,7 +244,7 @@ void main() {
           isNull,
           reason: 'width ${width.toInt()}',
         );
-        expect(find.text('3 Applicants'), findsOneWidget);
+        expect(find.text('Applicants'), findsOneWidget);
         expect(find.text('3 applied'), findsOneWidget);
         expect(
           find.text(
@@ -282,8 +283,10 @@ void main() {
       addTearDown(disposeAll);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('2 Applicants'), findsOneWidget);
-      expect(find.text('3 Applicants'), findsOneWidget);
+      // One count-free button per card; per-job totals stay on Applied.
+      expect(find.text('Applicants'), findsNWidgets(2));
+      expect(find.text('2 applied'), findsOneWidget);
+      expect(find.text('3 applied'), findsOneWidget);
       expect(
         find.text(
           'You have 5 new applications across your active jobs',
@@ -309,7 +312,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('2 Applicants'), findsOneWidget);
+      expect(find.text('Applicants'), findsOneWidget);
+      expect(find.text('2 applied'), findsOneWidget);
       expect(
         find.text("You've reviewed all 2 applications."),
         findsOneWidget,
@@ -341,6 +345,84 @@ void main() {
       disposeAll();
     });
 
+    testWidgets('Five applications across all statuses count once each', (
+      tester,
+    ) async {
+      // Established rule: every persisted row counts toward the card total
+      // (reviewed/shortlisted/rejected/accepted/withdrawn all included;
+      // drafts do not exist). Only submitted/shortlisted await review.
+      await pump(
+        tester,
+        posted: <Job>[_job('job-1', 'Senior React Developer', apps: 5)],
+        apps: <String, List<JobApplication>>{
+          'job-1': <JobApplication>[
+            _app('a1', 'job-1', 'submitted'),
+            _app('a2', 'job-1', 'shortlisted'),
+            _app('a3', 'job-1', 'rejected'),
+            _app('a4', 'job-1', 'accepted'),
+            _app('a5', 'job-1', 'withdrawn'),
+          ],
+        },
+      );
+      addTearDown(disposeAll);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      // Applied is the sole count indicator; the button is count-free.
+      expect(find.text('Applicants'), findsOneWidget);
+      expect(find.text('5 applied'), findsOneWidget);
+      expect(
+        find.text(
+          'You have 5 new applications across your active jobs',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Counters update after a new submission refreshes', (
+      tester,
+    ) async {
+      final List<Job> posted = <Job>[
+        _job('job-1', 'Senior React Developer', apps: 2),
+      ];
+      final Map<String, List<JobApplication>> apps =
+          <String, List<JobApplication>>{
+            'job-1': <JobApplication>[
+              _app('a1', 'job-1', 'submitted'),
+              _app('a2', 'job-1', 'submitted'),
+            ],
+          };
+      await pump(tester, posted: posted, apps: apps);
+      addTearDown(disposeAll);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Applicants'), findsOneWidget);
+      expect(find.text('2 applied'), findsOneWidget);
+
+      // A professional submits; the next refresh carries the new rows.
+      // The stub lists are live references, mirroring the server trigger.
+      apps['job-1'] = <JobApplication>[
+        ...apps['job-1']!,
+        _app('a3', 'job-1', 'submitted'),
+      ];
+      posted[0] = _job('job-1', 'Senior React Developer', apps: 3);
+      await jobs.loadMine(role: 'posted');
+      await jobs.loadRecentReceived();
+      await jobs.countAwaitingReview();
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Applicants'), findsOneWidget);
+      expect(find.text('3 applied'), findsOneWidget);
+      expect(find.text('2 applied'), findsNothing);
+      expect(
+        find.text(
+          'You have 3 new applications across your active jobs',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('Scenario 7: loading shows ellipses, never zero', (
       tester,
     ) async {
@@ -357,7 +439,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('…'), findsWidgets);
-      expect(find.text('0 Applicants'), findsNothing);
+      expect(find.text('0 applied'), findsNothing);
       expect(find.text('No new applications across your active jobs yet'),
           findsNothing);
       gate.complete(
@@ -384,7 +466,7 @@ void main() {
       addTearDown(disposeAll);
       await tester.pumpAndSettle();
       expect(find.text('Could not load dashboard'), findsOneWidget);
-      expect(find.text('0 Applicants'), findsNothing);
+      expect(find.text('0 applied'), findsNothing);
     });
   });
 }

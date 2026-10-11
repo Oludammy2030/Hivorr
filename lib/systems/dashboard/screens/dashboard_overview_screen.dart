@@ -61,16 +61,40 @@ class DashboardOverviewScreen extends StatefulWidget {
       _DashboardOverviewScreenState();
 }
 
-class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
+class _DashboardOverviewScreenState extends State<DashboardOverviewScreen>
+    with WidgetsBindingObserver {
   bool _hydrated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_hydrated) {
       _hydrated = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _hydrate());
+      WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_hydrate()));
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    // A professional may have applied while the app sat backgrounded.
+    // Keep-old-on-failure seams only: a failed background refresh must
+    // never blank the dashboard into zeros.
+    final JobProvider jobs = context.read<JobProvider>();
+    unawaited(jobs.refreshPosted());
+    unawaited(jobs.countAwaitingReview());
   }
 
   Future<void> _hydrate() async {
@@ -82,16 +106,19 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     final bool offer = focus == null || focus == EntityCapability.offer;
     final JobProvider jobs = context.read<JobProvider>();
     final HireProvider hires = context.read<HireProvider>();
+    // Fully sequential: providers drop overlapping loads behind one shared
+    // gate, so each list must settle before the next starts — otherwise a
+    // fresh login can drop loadMine(posted) and paint a stale zero.
     if (hire) {
-      // Sequential: the provider drops overlapping loads behind one shared
-      // gate, so posted must settle before the dependent counts run —
-      // otherwise the first paint can serve a stale zero.
-      unawaited(_hydrateHiring(jobs, hires));
+      await _hydrateHiring(jobs, hires);
+      if (!mounted) return;
     }
     if (offer) {
-      unawaited(jobs.loadDiscovery(refresh: true));
-      unawaited(jobs.loadMine(role: 'applied'));
-      unawaited(hires.loadList(role: 'professional'));
+      await jobs.loadDiscovery(refresh: true);
+      if (!mounted) return;
+      await jobs.loadMine(role: 'applied');
+      if (!mounted) return;
+      await hires.loadList(role: 'professional');
     }
   }
 
@@ -1887,7 +1914,8 @@ class _ChatTile extends StatelessWidget {
 }
 
 /// Reference active-job card: status/location chips, title, subtitle,
-/// budget + applicant count, Applicants / Message actions.
+/// budget + Applied count, Applicants (count-free inbox entry) / Message
+/// actions.
 class _ClientJobCard extends StatelessWidget {
   const _ClientJobCard({required this.job});
 
@@ -1900,8 +1928,6 @@ class _ClientJobCard extends StatelessWidget {
     final bool compact = context.breakpoint == Breakpoint.mobile;
     final String? budget = _budgetText(job);
     final String applied = '${job.applicationsCount} applied';
-    final String applicants =
-        '${job.applicationsCount} Applicant${job.applicationsCount == 1 ? '' : 's'}';
     final String? preview = _jobPreview(job);
     return HivorrCard(
       onTap: () => context.go(RoutePaths.dashboardJobDetail(job.id)),
@@ -2026,7 +2052,9 @@ class _ClientJobCard extends StatelessWidget {
                   Icons.people_outline,
                   size: compact ? 16 : 18,
                 ),
-                label: Text(applicants),
+                // Count-free: the Applied indicator above carries the
+                // single per-job total; this button only opens the inbox.
+                label: const Text('Applicants'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
                   foregroundColor: colors.onPrimary,

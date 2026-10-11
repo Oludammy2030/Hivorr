@@ -326,9 +326,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Job-specific Applicants button → inbox preselected to job-1, with the
-      // authoritative count in the header — not the job detail screen.
-      await tester.tap(find.text('12 Applicants'));
+      // Job-specific Applicants button (count-free) → inbox preselected to
+      // job-1, with the authoritative count in the header — not the job
+      // detail screen. First card is job-1 (open-first, posted order).
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Applicants').first,
+      );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('detail-job-1'), findsNothing);
