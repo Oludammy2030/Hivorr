@@ -1246,7 +1246,11 @@ class _ClientQuickActionsSectionState
                         label: 'View Applications',
                         icon: Icons.people_outline,
                         tint: _QuickTint.green,
-                        onTap: () => context.go(RoutePaths.dashboardJobs),
+                        // Phase 3: labeled Applications, so open the existing
+                        // inbox (unfiltered → first-job fallback), not the
+                        // My Jobs list.
+                        onTap: () =>
+                            context.go(RoutePaths.dashboardApplications),
                       ),
                     ),
                     const SizedBox(width: gap),
@@ -1296,7 +1300,9 @@ class _ClientQuickActions extends StatelessWidget {
             label: 'View Applications',
             icon: Icons.people_outline,
             tint: _QuickTint.green,
-            onTap: () => context.go(RoutePaths.dashboardJobs),
+            // Phase 3: labeled Applications, so open the existing inbox
+            // (unfiltered → first-job fallback), not the My Jobs list.
+            onTap: () => context.go(RoutePaths.dashboardApplications),
           ),
         ),
         SizedBox(width: compact ? HivorrSpacing.sm : HivorrSpacing.md),
@@ -1451,7 +1457,9 @@ class _QuickTile extends StatelessWidget {
   }
 }
 
-/// Recent posted jobs rendered as reference job cards (open first).
+/// Active posted jobs (open + awarded/in-progress only) rendered as
+/// reference job cards (open first). Cancelled, completed, draft and paused
+/// jobs are excluded here and remain accessible via My Jobs tabs.
 class _ClientActiveJobs extends StatelessWidget {
   const _ClientActiveJobs();
 
@@ -1460,7 +1468,7 @@ class _ClientActiveJobs extends StatelessWidget {
     final JobProvider jobs = context.watch<JobProvider>();
     final List<Job> ordered = <Job>[
       ...jobs.posted.where((Job job) => job.isOpen),
-      ...jobs.posted.where((Job job) => !job.isOpen),
+      ...jobs.posted.where((Job job) => job.isAwarded),
     ];
     if (jobs.isLoading && jobs.posted.isEmpty) {
       return const HivorrLoadingState();
@@ -1971,8 +1979,12 @@ class _ClientJobCard extends StatelessWidget {
             runSpacing: compact ? HivorrSpacing.xs : HivorrSpacing.sm,
             children: <Widget>[
               ElevatedButton.icon(
-                onPressed: () =>
-                    context.go(RoutePaths.dashboardJobDetail(job.id)),
+                // Phase 3: Applicants opens the existing Applications inbox
+                // preselected to this job (same seam as My Jobs). Card
+                // background + Read more keep Job Details available.
+                onPressed: () => context.go(
+                  RoutePaths.dashboardApplicationsFor(job.id),
+                ),
                 icon: Icon(
                   Icons.people_outline,
                   size: compact ? 16 : 18,

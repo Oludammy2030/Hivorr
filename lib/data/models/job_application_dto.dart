@@ -4,7 +4,9 @@
 /// (`supabase/migrations/20260928090001_jobs_applications_schema.sql:108-152`),
 /// using the actual snake_case keys returned inside the `application_*`
 /// envelopes. `job_title`/`job_status` are present only in
-/// `application_list_mine`.
+/// `application_list_mine`. `applicant_*` carry the submit-time identity
+/// snapshot (`20261010090001`) — absent (null) on pre-migration rows and
+/// stale servers, which callers must tolerate via the public-profile fallback.
 class JobApplicationDto {
   const JobApplicationDto({
     required this.id,
@@ -22,6 +24,10 @@ class JobApplicationDto {
     required this.updatedAt,
     this.jobTitle,
     this.jobStatus,
+    this.applicantDisplayName,
+    this.applicantAvatarPath,
+    this.applicantProfessionName,
+    this.applicantProfessionSlug,
   });
 
   factory JobApplicationDto.fromJson(Map<String, dynamic> json) =>
@@ -41,6 +47,10 @@ class JobApplicationDto {
         updatedAt: _parseDateTime(json['updated_at']),
         jobTitle: json['job_title'] as String?,
         jobStatus: json['job_status'] as String?,
+        applicantDisplayName: json['applicant_display_name'] as String?,
+        applicantAvatarPath: json['applicant_avatar_path'] as String?,
+        applicantProfessionName: json['applicant_profession_name'] as String?,
+        applicantProfessionSlug: json['applicant_profession_slug'] as String?,
       );
 
   final String id;
@@ -58,6 +68,10 @@ class JobApplicationDto {
   final DateTime updatedAt;
   final String? jobTitle;
   final String? jobStatus;
+  final String? applicantDisplayName;
+  final String? applicantAvatarPath;
+  final String? applicantProfessionName;
+  final String? applicantProfessionSlug;
 
   static double? _toNullableDouble(dynamic value) {
     if (value == null) return null;

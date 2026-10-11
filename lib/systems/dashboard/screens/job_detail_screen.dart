@@ -47,7 +47,11 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() => context.read<JobProvider>().select(widget.jobId);
+  /// Phase 2: force re-reads the authoritative `job_get` envelope so
+  /// post-action refreshes (apply / shortlist / reject / hire) are not
+  /// dropped by the selection memo when the id is unchanged.
+  Future<void> _load({bool force = false}) =>
+      context.read<JobProvider>().select(widget.jobId, force: force);
 
   void _snack(String message, HivorrSnackbarVariant variant) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -64,7 +68,9 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
       await action();
       if (!mounted) return;
       _snack(success, HivorrSnackbarVariant.success);
-      unawaited(_load());
+      // Force bypasses the same-id memo so the detail reflects the
+      // persisted transition (hire flips job to awarded + bulk-rejects).
+      unawaited(_load(force: true));
     } on ApiException catch (e) {
       if (!mounted) return;
       _snack(e.message, HivorrSnackbarVariant.error);
@@ -85,7 +91,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
-            onPressed: () => unawaited(_load()),
+            onPressed: () => unawaited(_load(force: true)),
           ),
         ],
       ),
@@ -96,12 +102,12 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             ? HivorrErrorState(
                 message: 'Could not load job',
                 detail: jobs.lastError!.message,
-                onRetry: () => unawaited(_load()),
+                onRetry: () => unawaited(_load(force: true)),
               )
             : job == null
             ? const HivorrLoadingState()
             : RefreshIndicator(
-                onRefresh: _load,
+                onRefresh: () => _load(force: true),
                 child: _DetailBody(job: job, acting: _acting, onAction: _run),
               ),
       ),
@@ -586,9 +592,12 @@ class _ApplicationsInbox extends StatelessWidget {
                           primary: true,
                           enabled: !acting,
                           onTap: () => onAction(
-                            () => hires
-                                .acceptHire(application.id)
-                                .then((_) => jobs.select(application.jobId)),
+                            () => hires.acceptHire(application.id).then(
+                              (_) => jobs.select(
+                                application.jobId,
+                                force: true,
+                              ),
+                            ),
                             success: 'Professional hired.',
                           ),
                         ),
@@ -676,7 +685,9 @@ class _ApplySheetState extends State<_ApplySheet> {
           variant: HivorrSnackbarVariant.success,
         ),
       );
-      unawaited(context.read<JobProvider>().select(widget.jobId));
+      // Force bypasses the same-id memo so the banner reflects the
+      // persisted application (previously a no-op, leaving counts stale).
+      unawaited(context.read<JobProvider>().select(widget.jobId, force: true));
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
