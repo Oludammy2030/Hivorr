@@ -10,6 +10,13 @@ import 'package:hivorr/data/entities/verification_status.dart';
 /// `rejected` is **derived client-side** (decision log #2) because the column
 /// never stores it — a previously-submitted, non-approved proof reads as
 /// rejected for UX.
+///
+/// Known limitation (identity audit): the binding row cannot distinguish
+/// `in_review` from `pending`, nor `rejected` from `requires_resubmission`.
+/// Screens needing the exact review state must join
+/// `verification_submissions` (5-state source of truth) instead of relying
+/// on this enum. Do not add states here without a matching server CHECK
+/// change — the gating contract is `approved`-only either way.
 enum TradeVerificationStatusKind {
   /// No submission yet — the DB default.
   unverified,

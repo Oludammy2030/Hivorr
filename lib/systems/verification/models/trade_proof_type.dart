@@ -7,6 +7,14 @@
 /// (`supabase/migrations/20260829090003_verification_admin_review_schema.sql:358`).
 /// Adding a future proof subtype is just a new enum value + label — no schema
 /// change is required.
+///
+/// Certificates deliberately flow through this lane (not the server-side
+/// `certification` kind): a certificate must bind to a profession and unlock
+/// that profession's trade gate on approval. A bare `certification`
+/// submission would only ever propagate to KYC tier_1 with no profession
+/// binding, bypassing the per-profession approval the marketplace relies on
+/// (AGENT.md Rule 2). The `certification` kind stays server-reserved;
+/// do not submit it from the client without a founder-approved design.
 enum TradeProofType {
   /// A certification of skill/competence (e.g. trade certificate).
   certificate,

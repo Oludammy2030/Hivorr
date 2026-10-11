@@ -901,6 +901,7 @@ class _ProProfileBodyState extends State<_ProProfileBody> {
 
   final GlobalKey _formKey = GlobalKey();
   final TextEditingController _name = TextEditingController();
+  final TextEditingController _displayName = TextEditingController();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
@@ -935,6 +936,11 @@ class _ProProfileBodyState extends State<_ProProfileBody> {
       _name.text = full.isNotEmpty
           ? full
           : (display.isNotEmpty ? display : _displayIdentity(email));
+      // Display name keeps its own value so a public-handle edit never
+      // rewrites the legal anchor (and vice versa).
+      _displayName.text = display.isNotEmpty
+          ? display
+          : (full.isNotEmpty ? full : _displayIdentity(email));
       _email.text = email;
     } catch (_) {
       // Auth provider absent — fields stay empty.
@@ -944,6 +950,7 @@ class _ProProfileBodyState extends State<_ProProfileBody> {
   @override
   void dispose() {
     _name.dispose();
+    _displayName.dispose();
     _title.dispose();
     _email.dispose();
     _phone.dispose();
@@ -992,9 +999,13 @@ class _ProProfileBodyState extends State<_ProProfileBody> {
 
   Future<void> _save() async {
     final String name = _name.text.trim();
+    final String display = _displayName.text.trim();
     final String email = _email.text.trim();
-    if (name.isEmpty || email.isEmpty) {
-      _snack('Enter your full name and email.', HivorrSnackbarVariant.error);
+    if (name.isEmpty || display.isEmpty || email.isEmpty) {
+      _snack(
+        'Enter your full name, display name, and email.',
+        HivorrSnackbarVariant.error,
+      );
       return;
     }
     EntityProvider? entities;
@@ -1013,7 +1024,7 @@ class _ProProfileBodyState extends State<_ProProfileBody> {
         await entities.updateProfile(
           entityId: entityId,
           legalName: name,
-          displayName: name,
+          displayName: display,
           bio: bio.isEmpty ? null : bio,
         );
       }
@@ -1242,6 +1253,7 @@ class _ProProfileBodyState extends State<_ProProfileBody> {
       formKey: _formKey,
       maxWidth: widget.maxWidth,
       name: _name,
+      displayName: _displayName,
       title: _title,
       email: _email,
       phone: _phone,
@@ -1670,6 +1682,7 @@ class _PersonalCard extends StatelessWidget {
     required this.formKey,
     required this.maxWidth,
     required this.name,
+    required this.displayName,
     required this.title,
     required this.email,
     required this.phone,
@@ -1684,6 +1697,7 @@ class _PersonalCard extends StatelessWidget {
   final GlobalKey formKey;
   final double maxWidth;
   final TextEditingController name;
+  final TextEditingController displayName;
   final TextEditingController title;
   final TextEditingController email;
   final TextEditingController phone;
@@ -1748,25 +1762,31 @@ class _PersonalCard extends StatelessWidget {
           const SizedBox(height: HivorrSpacing.md),
           pair(
             _ProField(
+              label: 'Display Name',
+              controller: displayName,
+              onChanged: onChanged,
+            ),
+            _ProField(
               label: 'Email',
               controller: email,
               keyboardType: TextInputType.emailAddress,
             ),
+          ),
+          const SizedBox(height: HivorrSpacing.md),
+          pair(
             _ProField(
               label: 'Phone',
               controller: phone,
               keyboardType: TextInputType.phone,
             ),
+            _ProField(label: 'Location', controller: location),
           ),
           const SizedBox(height: HivorrSpacing.md),
-          pair(
-            _ProField(label: 'Location', controller: location),
-            _ProField(
-              label: 'Hourly Rate (USD)',
-              controller: rate,
-              keyboardType: TextInputType.number,
-              onChanged: onChanged,
-            ),
+          _ProField(
+            label: 'Hourly Rate (USD)',
+            controller: rate,
+            keyboardType: TextInputType.number,
+            onChanged: onChanged,
           ),
           const SizedBox(height: HivorrSpacing.md),
           _ProField(label: 'Professional Bio', controller: bio, maxLines: 5),

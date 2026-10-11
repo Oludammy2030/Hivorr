@@ -216,6 +216,29 @@ void main() {
       expect(find.text('Amara Diallo'), findsWidgets);
     });
 
+    testWidgets('profile tab separates legal and display names', (tester) async {
+      await pumpScreen(
+        tester,
+        const ProfileScreen(),
+        width: 1440,
+        height: 900,
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<JobProvider>.value(value: jobs),
+          ChangeNotifierProvider<HireProvider>.value(value: hires),
+          ChangeNotifierProvider<OnboardingProvider>.value(value: onboarding),
+          ChangeNotifierProvider<AuthProvider>.value(value: auth),
+          ChangeNotifierProvider<FinancialPayoutProvider>.value(
+            value: payouts,
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Personal Information'), findsOneWidget);
+      expect(find.text('Full Name'), findsOneWidget);
+      expect(find.text('Display Name'), findsOneWidget);
+    });
+
     testWidgets('toggling a switch flips its state', (tester) async {
       await pumpSettings(tester);
 
