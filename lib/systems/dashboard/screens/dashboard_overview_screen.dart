@@ -83,16 +83,28 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     final JobProvider jobs = context.read<JobProvider>();
     final HireProvider hires = context.read<HireProvider>();
     if (hire) {
-      unawaited(
-        jobs.loadMine(role: 'posted').then((_) => jobs.loadRecentReceived()),
-      );
-      unawaited(hires.loadList(role: 'client'));
+      // Sequential: the provider drops overlapping loads behind one shared
+      // gate, so posted must settle before the dependent counts run —
+      // otherwise the first paint can serve a stale zero.
+      unawaited(_hydrateHiring(jobs, hires));
     }
     if (offer) {
       unawaited(jobs.loadDiscovery(refresh: true));
       unawaited(jobs.loadMine(role: 'applied'));
       unawaited(hires.loadList(role: 'professional'));
     }
+  }
+
+  /// Ordered hiring-side hydration: posted jobs first (authoritative counts),
+  /// then the received feed and the awaiting-review total derived from it.
+  Future<void> _hydrateHiring(JobProvider jobs, HireProvider hires) async {
+    await jobs.loadMine(role: 'posted');
+    if (!mounted) return;
+    await jobs.loadRecentReceived();
+    if (!mounted) return;
+    await jobs.countAwaitingReview();
+    if (!mounted) return;
+    await hires.loadList(role: 'client');
   }
 
   Future<void> _refresh(DashboardCapability? capability) async {
@@ -102,6 +114,7 @@ class _DashboardOverviewScreenState extends State<DashboardOverviewScreen> {
     if (capability == null || capability.showsHiring) {
       await jobs.loadMine(role: 'posted');
       await jobs.loadRecentReceived();
+      await jobs.countAwaitingReview();
       await hires.loadList(role: 'client');
     }
     if (capability == null || capability.showsWork) {
@@ -729,16 +742,18 @@ class _ClientTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final RoleThemeExtension roles = context.roleTheme;
-    // Attention signal for the bell: open applications awaiting review.
-    // NotificationProvider is not in the widget tree, so the hero's own
-    // pending-application count drives the dot (clears when nothing pends).
+    // Attention signal for the bell: applications awaiting review.
+    // NotificationProvider is not in the widget tree, so the row-status
+    // count drives the dot (clears when nothing pends). Unknown review
+    // state falls back to the open-job trigger sum — never a silent zero.
     int pendingApps = 0;
     try {
-      pendingApps = context
-          .watch<JobProvider>()
-          .posted
-          .where((Job job) => job.isOpen)
-          .fold<int>(0, (int sum, Job job) => sum + job.applicationsCount);
+      final JobProvider jobs = context.watch<JobProvider>();
+      pendingApps = jobs.isAwaitingReviewLoaded
+          ? jobs.awaitingReviewTotal
+          : jobs.posted
+              .where((Job job) => job.isOpen)
+              .fold<int>(0, (int sum, Job job) => sum + job.applicationsCount);
     } catch (_) {
       pendingApps = 0;
     }
@@ -1000,6 +1015,11 @@ class _ClientHero extends StatelessWidget {
       0,
       (int sum, Job job) => sum + job.applicationsCount,
     );
+    // Status-aware banner inputs: the trigger sum knows applications exist;
+    // the row-status count knows whether any still need review. An unknown
+    // review state must never read as "reviewed".
+    final bool awaitingKnown = jobs.isAwaitingReviewLoaded;
+    final int awaiting = jobs.awaitingReviewTotal;
     final int activeHires = hires.hires
         .where((Hire hire) => hire.isActive)
         .length;
@@ -1054,7 +1074,7 @@ class _ClientHero extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.85),
               ),
             )
-          else if (totalApps > 0)
+          else if (totalApps > 0 && (!awaitingKnown || awaiting > 0))
             Text.rich(
               TextSpan(
                 style: (compact
@@ -1077,6 +1097,23 @@ class _ClientHero extends StatelessWidget {
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+            )
+          else if (totalApps > 0)
+            // Reviewed state: applications exist but none need review.
+            // Only reachable with a computed row-status count — never while
+            // the review state is still unknown.
+            Text(
+              totalApps == 1
+                  ? "You've reviewed your 1 application."
+                  : "You've reviewed all $totalApps applications.",
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: (compact
+                      ? context.textTheme.bodySmall
+                      : context.textTheme.bodyMedium)
+                  ?.copyWith(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
             )
           else
             Text(
@@ -2052,9 +2089,7 @@ class _ClientStatsGrid extends StatelessWidget {
     final int activeHires = hires.hires
         .where((Hire hire) => hire.isActive)
         .length;
-    final int openApps = jobs.posted
-        .where((Job job) => job.isOpen)
-        .fold<int>(0, (int sum, Job job) => sum + job.applicationsCount);
+    final int openJobs = jobs.posted.where((Job job) => job.isOpen).length;
     final int postedWeek = jobs.posted.where((Job job) {
       final DateTime at = job.postedAt ?? job.createdAt;
       return DateTime.now().difference(at) <= const Duration(days: 7);
@@ -2112,9 +2147,9 @@ class _ClientStatsGrid extends StatelessWidget {
             icon: Icons.description_outlined,
             tileBg: colors.secondaryContainer,
             iconFg: colors.onSecondaryContainer,
-            label: 'Open Apps',
-            value: loading ? '…' : '$openApps',
-            sub: 'to review',
+            label: 'Open Jobs',
+            value: loading ? '…' : '$openJobs',
+            sub: 'active now',
             subColor: colors.primary,
             onTap: () => context.go(RoutePaths.dashboardJobs),
           ),
