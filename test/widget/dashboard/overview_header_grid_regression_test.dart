@@ -129,7 +129,7 @@ void main() {
         final Offset jobsPosted = tester.getCenter(find.text('Jobs Posted'));
         final Offset activeHires = tester.getCenter(find.text('Active Hires'));
         final Offset totalSpent = tester.getCenter(find.text('Total Spent'));
-        final Offset openApps = tester.getCenter(find.text('Open Apps'));
+        final Offset openApps = tester.getCenter(find.text('Open Jobs'));
         expect(
           (jobsPosted.dy - activeHires.dy).abs(),
           lessThan(1.0),

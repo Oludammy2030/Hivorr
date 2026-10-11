@@ -81,6 +81,9 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
   List<JobApplication> _myApplications = const <JobApplication>[];
   List<JobApplication> _recentReceived = const <JobApplication>[];
   bool _recentReceivedLoading = false;
+  int _awaitingReviewTotal = 0;
+  bool _awaitingReviewLoaded = false;
+  bool _awaitingLoading = false;
   bool _postedRefreshing = false;
   Job? _selected;
   List<JobApplication> _applications = const <JobApplication>[];
@@ -114,6 +117,18 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Whether the received-applications feed is loading.
   bool get isRecentReceivedLoading => _recentReceivedLoading;
+
+  /// Applications awaiting client review (`submitted` or `shortlisted`) summed
+  /// across open posted jobs (see [countAwaitingReview]). Only meaningful when
+  /// [isAwaitingReviewLoaded] is true; otherwise the hero falls back to the
+  /// trigger-count message rather than claiming a reviewed state.
+  int get awaitingReviewTotal => _awaitingReviewTotal;
+
+  /// Whether an awaiting-review count has been computed from row statuses.
+  bool get isAwaitingReviewLoaded => _awaitingReviewLoaded;
+
+  /// Whether an awaiting-review count is in flight.
+  bool get isAwaitingReviewLoading => _awaitingLoading;
 
   /// The selected job, or `null` before [select].
   Job? get selected => _selected;
@@ -382,6 +397,59 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
       });
     } finally {
       _recentReceivedLoading = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  /// Counts applications awaiting client review across the client's open jobs.
+  ///
+  /// Actionable means `isActive` (`submitted` or `shortlisted`, mirroring the
+  /// inbox): reviewed (shortlisted counts as still actionable until hired),
+  /// rejected, accepted, and withdrawn rows never qualify. Bounded by design:
+  /// at most [maxJobs] open jobs with a non-zero trigger count, up to 100
+  /// rows each (jobs beyond either bound are excluded and documented as a
+  /// limitation, not silently zeroed — totals only publish on full success).
+  ///
+  /// Any per-job failure keeps the previous total and loaded flag, so a
+  /// partial read can never present a lowered count as truth or flip the
+  /// hero into the reviewed state. Never touches [_error]/selection state.
+  Future<void> countAwaitingReview({int maxJobs = 10}) async {
+    if (_awaitingLoading || _disposed) {
+      return;
+    }
+    _awaitingLoading = true;
+    notifyListeners();
+    try {
+      final List<Job> targets = _posted
+          .where((Job job) => job.isOpen && job.applicationsCount > 0)
+          .take(maxJobs)
+          .toList(growable: false);
+      var total = 0;
+      var failed = false;
+      for (final Job job in targets) {
+        try {
+          final ApplicationPage page = await _service.listApplicationsForJob(
+            job.id,
+            limit: 100,
+          );
+          total += page.applications
+              .where((JobApplication a) => a.isActive)
+              .length;
+        } on ApiException catch (e) {
+          failed = true;
+          _logger?.warning('Awaiting-review count failed', <String, Object?>{
+            'jobId': job.id,
+            'kind': e.kind.name,
+            'code': e.code,
+          });
+        }
+      }
+      if (!failed) {
+        _awaitingReviewTotal = total;
+        _awaitingReviewLoaded = true;
+      }
+    } finally {
+      _awaitingLoading = false;
       if (!_disposed) notifyListeners();
     }
   }

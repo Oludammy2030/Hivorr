@@ -255,7 +255,7 @@ void main() {
       expect(find.text('Jobs Posted'), findsWidgets);
       expect(find.text('Active Hires'), findsWidgets);
       expect(find.text('Total Spent'), findsWidgets);
-      expect(find.text('Open Apps'), findsOneWidget);
+      expect(find.text('Open Jobs'), findsOneWidget);
       expect(find.text(r'$8.9K'), findsOneWidget);
 
       // Mock money rail (reference placeholders — see client_overview_mock).
