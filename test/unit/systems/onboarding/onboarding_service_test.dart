@@ -263,6 +263,40 @@ void main() {
       },
     );
 
+    test(
+      'bindProfession forwards the professional display name when supplied',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await selectTechnologyProfession(stack.taxonomy);
+        await stack.service.resume('u1');
+        await stack.service.bindProfession(
+          industryId: 'ind-tech',
+          professionId: 'prof-sw',
+          professionalDisplayName: 'Adaeze Fixes It',
+        );
+        expect(stack.remote.bindProfessionCallCount, 1);
+        expect(
+          stack.remote.lastBoundProfessionalDisplayName,
+          'Adaeze Fixes It',
+        );
+      },
+    );
+
+    test(
+      'bindProfession omits the professional display name when absent',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await selectTechnologyProfession(stack.taxonomy);
+        await stack.service.resume('u1');
+        await stack.service.bindProfession(
+          industryId: 'ind-tech',
+          professionId: 'prof-sw',
+        );
+        expect(stack.remote.bindProfessionCallCount, 1);
+        expect(stack.remote.lastBoundProfessionalDisplayName, isNull);
+      },
+    );
+
     test('submitIdentity delegates 1:1 and sets the mirror flag', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.service.resume('u1');

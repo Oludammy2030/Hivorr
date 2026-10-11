@@ -468,9 +468,12 @@ class OnboardingService {
   /// Validates that the taxonomy selection matches [industryId]/[professionId]
   /// first. `PLT005` (duplicate binding) and `PLT004` (missing/inactive)
   /// surface unchanged as normalized [ApiException]s for inline guidance.
+  /// [professionalDisplayName] is the proposed public professional name
+  /// (stored on the binding; effective for display only after approval).
   Future<void> bindProfession({
     required String industryId,
     required String professionId,
+    String? professionalDisplayName,
   }) async {
     final ISentrySpan? span = _tracer?.startTransaction(
       'onboarding.step.profession.bind',
@@ -492,7 +495,10 @@ class OnboardingService {
           code: 'PLT003',
         );
       }
-      await _entityRepository.bindProfession(professionId: professionId);
+      await _entityRepository.bindProfession(
+        professionId: professionId,
+        professionalDisplayName: professionalDisplayName,
+      );
       // Binding a profession is the professional-capability commitment —
       // activate the fluid `professional` role (idempotent upsert RPC).
       await _entityRepository.activateRole(

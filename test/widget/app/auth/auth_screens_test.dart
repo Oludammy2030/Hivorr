@@ -177,11 +177,11 @@ Future<void> enterLoginCredentials(
   await tester.pump();
 }
 
-/// Fills the new required identity fields for registration restructuring.
+/// Fills the required identity fields for registration (display name is
+/// server-derived from first + last, never entered).
 Future<void> fillRegistrationIdentity(WidgetTester tester) async {
   await enterField(tester, 'First name', 'Jane');
   await enterField(tester, 'Last name', 'Doe');
-  await enterField(tester, 'Display name', 'Jane D');
   await enterField(tester, 'Phone number', '+1 555 000 1234');
 }
 
@@ -372,7 +372,7 @@ void main() {
       expect(find.text('Create your free account'), findsOneWidget);
       expect(find.text('First name'), findsOneWidget);
       expect(find.text('Last name'), findsOneWidget);
-      expect(find.text('Display name'), findsOneWidget);
+      expect(find.text('Display name'), findsNothing);
       expect(find.text('Email address'), findsOneWidget);
       expect(find.text('Phone number'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);

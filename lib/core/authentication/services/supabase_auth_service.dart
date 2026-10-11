@@ -253,19 +253,21 @@ class SupabaseAuthService implements AuthService {
           first.isEmpty ||
           last == null ||
           last.isEmpty ||
-          display == null ||
-          display.isEmpty ||
           phone == null ||
           phone.isEmpty) {
         return;
       }
+      // Display name is server-derived (first + last) when absent —
+      // registration no longer collects it (identity audit Phase 1a).
+      final String effectiveDisplay =
+          (display == null || display.isEmpty) ? '$first $last' : display;
       // Ensure entity root exists first (idempotent).
       await _provisionIfNeeded(user.id, rethrowOnError: false);
       final String? middle = (meta['middle_name'] as String?)?.trim();
       final Map<String, dynamic> params = <String, dynamic>{
         'p_first_name': first,
         'p_last_name': last,
-        'p_display_name': display,
+        'p_display_name': effectiveDisplay,
         'p_phone_number': phone,
       };
       if (middle != null && middle.isNotEmpty) {

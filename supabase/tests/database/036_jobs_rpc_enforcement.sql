@@ -5,6 +5,8 @@
 --     PLT002 (hire to post, offer to apply — switch focus via the launcher);
 --     owner checks return
 --     PLT002; identical PLT004 for foreign/unavailable ids (no oracle).
+--     Typed jobs additionally require an approved trade binding for the job
+--     profession (PLT005, Rule 2 — fixtures bind B/C/E approved below).
 --   - Validation: PLT003 paths for title/description/budget/currency/taxonomy/
 --     cover note/quote/duration/limit/role/status filters.
 --   - State machines: draft->open<->paused, ->cancelled; awarded->completed;
@@ -55,6 +57,14 @@ select set_config('platform.rpc_invocation', '', true);
 
 select set_config('test.prof1',
   (select id::text from public.professions where is_active limit 1), true);
+
+-- Identity Phase 1c: applicant professionals hold approved bindings for the
+-- typed fixture profession, satisfying the application_submit trade gate.
+insert into public.entity_professions (entity_id, profession_id, is_primary, trade_verification_status)
+values (current_setting('test.b')::uuid, current_setting('test.prof1')::uuid, true, 'approved'),
+       (current_setting('test.c')::uuid, current_setting('test.prof1')::uuid, true, 'approved'),
+       (current_setting('test.e')::uuid, current_setting('test.prof1')::uuid, true, 'approved')
+on conflict (entity_id, profession_id) do update set trade_verification_status = 'approved';
 
 -- ─── 1. Authorization: anon ────────────────────────────────────────────────
 set role anon;
