@@ -177,11 +177,13 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> bindProfession({
     required String industryId,
     required String professionId,
+    String? professionalDisplayName,
   }) async {
     await _runAsSubmit(
       () => _service.bindProfession(
         industryId: industryId,
         professionId: professionId,
+        professionalDisplayName: professionalDisplayName,
       ),
     );
   }

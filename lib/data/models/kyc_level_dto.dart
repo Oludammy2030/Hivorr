@@ -63,14 +63,25 @@ class TradeVerificationDto {
   const TradeVerificationDto({
     required this.professionId,
     required this.status,
+    this.professionalDisplayName,
   });
 
-  factory TradeVerificationDto.fromJson(Map<String, dynamic> json) =>
-      TradeVerificationDto(
-        professionId: (json['profession_id'] as String?) ?? '',
-        status: (json['trade_verification_status'] as String?) ?? 'unverified',
-      );
+  factory TradeVerificationDto.fromJson(Map<String, dynamic> json) {
+    final String? rawName =
+        (json['professional_display_name'] as String?)?.trim();
+    return TradeVerificationDto(
+      professionId: (json['profession_id'] as String?) ?? '',
+      status: (json['trade_verification_status'] as String?) ?? 'unverified',
+      professionalDisplayName: (rawName == null || rawName.isEmpty)
+          ? null
+          : rawName,
+    );
+  }
 
   final String professionId;
   final String status;
+
+  /// Proposed public professional name for this binding (null until the
+  /// professional supplies one; effective for display only when approved).
+  final String? professionalDisplayName;
 }

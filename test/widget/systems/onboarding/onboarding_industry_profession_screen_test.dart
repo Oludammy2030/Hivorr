@@ -119,6 +119,36 @@ void main() {
       stack.provider.dispose();
     });
 
+    testWidgets('professional name field forwards its value on bind', (
+      WidgetTester tester,
+    ) async {
+      final (OnboardingTestStack stack, OnboardingStepController controller) =
+          await pumpCombined(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownMenu<Industry>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Technology').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownMenu<Profession>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Software Engineer').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Professional name'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Professional name'),
+        'Adaeze Fixes It',
+      );
+      await tester.pumpAndSettle();
+      controller.onPrimary!.call();
+      await tester.pumpAndSettle();
+      expect(stack.remote.bindProfessionCallCount, 1);
+      expect(
+        stack.remote.lastBoundProfessionalDisplayName,
+        'Adaeze Fixes It',
+      );
+      stack.provider.dispose();
+    });
+
     testWidgets('PLT005 conflict continues to identity verification', (
       WidgetTester tester,
     ) async {

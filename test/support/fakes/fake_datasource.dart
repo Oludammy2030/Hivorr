@@ -42,6 +42,9 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
   /// The profession id most recently bound via [bindProfession].
   String? lastBoundProfessionId;
 
+  /// The professional display name most recently bound, if supplied.
+  String? lastBoundProfessionalDisplayName;
+
   /// The avatar path most recently persisted via [updateAvatarPath].
   String? lastAvatarPath;
 
@@ -116,7 +119,10 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
   }
 
   @override
-  Future<void> bindProfession({required String professionId}) async {
+  Future<void> bindProfession({
+    required String professionId,
+    String? professionalDisplayName,
+  }) async {
     bindProfessionCallCount++;
     if (throwConflictOnBind) {
       throw const ApiException(
@@ -126,6 +132,7 @@ class FakeEntityRemoteDataSource extends EntityRemoteDataSource {
       );
     }
     lastBoundProfessionId = professionId;
+    lastBoundProfessionalDisplayName = professionalDisplayName;
   }
 
   @override

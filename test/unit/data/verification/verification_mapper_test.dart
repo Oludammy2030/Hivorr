@@ -160,6 +160,33 @@ void main() {
       );
       expect(trade.professionId, 'p9');
       expect(trade.status, 'unverified');
+      expect(trade.professionalDisplayName, isNull);
+    });
+
+    test('tradeToEntity carries the professional display name', () {
+      final TradeVerification trade = VerificationMapper.tradeToEntity(
+        const TradeVerificationDto(
+          professionId: 'p9',
+          status: 'approved',
+          professionalDisplayName: 'Adaeze Fixes It',
+        ),
+      );
+      expect(trade.professionalDisplayName, 'Adaeze Fixes It');
+    });
+
+    test('trade DTO trims blank professional names to null', () {
+      const TradeVerificationDto dto = TradeVerificationDto(
+        professionId: 'p9',
+        status: 'pending',
+      );
+      expect(dto.professionalDisplayName, isNull);
+      final TradeVerificationDto blank =
+          TradeVerificationDto.fromJson(<String, dynamic>{
+            'profession_id': 'p9',
+            'trade_verification_status': 'pending',
+            'professional_display_name': '   ',
+          });
+      expect(blank.professionalDisplayName, isNull);
     });
   });
 }

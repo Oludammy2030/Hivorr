@@ -35,7 +35,10 @@ abstract class EntityRemoteDataSource {
   ///
   /// Lands `trade_verification_status = unverified` server-side. Duplicate
   /// binding throws `PLT005` (`ApiExceptionKind.conflict`).
-  Future<void> bindProfession({required String professionId});
+  Future<void> bindProfession({
+    required String professionId,
+    String? professionalDisplayName,
+  });
 
   /// Persists a Storage-uploaded avatar path via the self-scoped REST update
   /// (`entity_profiles_authenticated_update`; `legal_name` remains RPC-guarded).

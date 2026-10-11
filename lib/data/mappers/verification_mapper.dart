@@ -56,7 +56,11 @@ abstract final class VerificationMapper {
 
   /// Maps a trade-verification DTO into a domain [TradeVerification].
   static TradeVerification tradeToEntity(TradeVerificationDto dto) =>
-      TradeVerification(professionId: dto.professionId, status: dto.status);
+      TradeVerification(
+        professionId: dto.professionId,
+        status: dto.status,
+        professionalDisplayName: dto.professionalDisplayName,
+      );
 
   /// Maps the trade slice of the status aggregate into a domain
   /// [TradeVerificationStatus].

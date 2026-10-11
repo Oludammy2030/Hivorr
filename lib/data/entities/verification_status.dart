@@ -8,7 +8,11 @@ import 'package:hivorr/data/entities/trade_verification_status.dart';
 /// client (server-authoritative, `AGENT.md` Rule 4). The full trade workflow is
 /// owned by EP-02-11, which consumes [statusKind] for the gate + timeline.
 class TradeVerification {
-  const TradeVerification({required this.professionId, required this.status});
+  const TradeVerification({
+    required this.professionId,
+    required this.status,
+    this.professionalDisplayName,
+  });
 
   /// Builds an [unverified] placeholder for an absent profession (EP-02-11).
   const TradeVerification.unverified(String professionId)
@@ -19,6 +23,11 @@ class TradeVerification {
 
   /// Trade verification status (read-only display).
   final String status;
+
+  /// Proposed public professional name for this binding (null until
+  /// supplied; effective for display only when [statusKind] is approved —
+  /// enforced by readers, see the Phase 2 context resolver).
+  final String? professionalDisplayName;
 
   /// The typed trade-verification state derived from [status]
   /// (EP-02-11 §5.2 / decision log #2).
