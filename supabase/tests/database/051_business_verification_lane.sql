@@ -5,11 +5,11 @@
 -- no KYC/trade cross-grant), representative authorization, the D5 guard,
 -- and stranger isolation:
 --   - 3 create+join + 1 stranger-isolation + 3 credential + 2 submit +
---   - 4 approve-propagation + 1 D5-guard + 3 reject-path = 17.
+--   - 4 approve-propagation + 1 D5-guard + 3 reject-path + 3 diagnostics = 20.
 
 begin;
 set search_path to extensions, public;
-select plan(17);
+select plan(20);
 
 -- ─── 0. Fixtures ─────────────────────────────────────────────────────────────
 set role postgres;
@@ -31,6 +31,25 @@ on conflict (id) do nothing;
 set role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.a'), true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
+
+-- Deployment + identity diagnostics (regression tripwires for the RLS lane).
+select is(
+  auth.uid()::text,
+  current_setting('test.a'),
+  'jwt identity visible to policy evaluation'
+);
+select is(
+  (select count(*)::int from pg_policies
+    where schemaname = 'public' and tablename = 'businesses'),
+  5,
+  'businesses RLS policies deployed'
+);
+select is(
+  (select count(*)::int from pg_policies
+    where schemaname = 'public' and tablename = 'business_memberships'),
+  5,
+  'memberships RLS policies deployed'
+);
 
 -- Data-modifying statements cannot nest in a scalar subquery: insert first
 -- (with explicit created_by so the RLS WITH CHECK never depends on NULL
