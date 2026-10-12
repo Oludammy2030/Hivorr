@@ -169,6 +169,11 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.a'), true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- The approve RPC above set platform.rpc_invocation='on' transaction-locally
+-- (production RPCs run per-transaction, so this never leaks there); reset it
+-- so the guard under test actually evaluates.
+select set_config('platform.rpc_invocation', '', true);
+
 select throws_ok(
   $$ update public.businesses set verification_status = 'rejected'
      where id = current_setting('test.biz')::uuid $$,
