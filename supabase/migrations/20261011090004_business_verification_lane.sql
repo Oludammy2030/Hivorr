@@ -152,7 +152,11 @@ grant select, insert, update, delete on table public.businesses to service_role;
 
 create policy businesses_member_select
   on public.businesses for select to authenticated
-  using (public.is_business_member(businesses.id));
+  using (
+    public.is_business_member(businesses.id)
+    -- Creators read their own row before joining (create-then-join flow).
+    or businesses.created_by = auth.uid()
+  );
 
 create policy businesses_admin_select
   on public.businesses for select to authenticated
