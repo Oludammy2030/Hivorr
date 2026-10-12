@@ -5,11 +5,11 @@
 -- no KYC/trade cross-grant), representative authorization, the D5 guard,
 -- and stranger isolation:
 --   - 3 create+join + 1 stranger-isolation + 3 credential + 2 submit +
---   - 4 approve-propagation + 1 D5-guard + 3 reject-path + 3 diagnostics = 20.
+--   - 4 approve-propagation + 1 D5-guard + 3 reject-path + 4 diagnostics = 21.
 
 begin;
 set search_path to extensions, public;
-select plan(20);
+select plan(21);
 
 -- ─── 0. Fixtures ─────────────────────────────────────────────────────────────
 set role postgres;
@@ -51,14 +51,23 @@ select is(
   'memberships RLS policies deployed'
 );
 
+select is(
+  (select with_check from pg_policies
+    where schemaname = 'public'
+      and tablename = 'businesses'
+      and policyname = 'businesses_authenticated_insert'),
+  '((created_by IS NULL) OR (created_by = auth.uid()))',
+  'deployed insert policy matches the migration text'
+);
 -- Data-modifying statements cannot nest in a scalar subquery: insert first
 -- (with explicit created_by so the RLS WITH CHECK never depends on NULL
 -- semantics), then capture the id with a select-back on the unique CAC.
+-- No ON CONFLICT: every CI run migrates a fresh database, and the arbiter
+-- interacts poorly with RLS speculative insertion.
 insert into public.businesses
   (trading_name, registered_legal_name, cac_number, created_by)
 values ('Amara Foods', 'Amara Foods Ltd', 'CAC-BIZ-001',
-  current_setting('test.a')::uuid)
-on conflict (cac_number) do nothing;
+  current_setting('test.a')::uuid);
 select set_config('test.biz', (select id::text from public.businesses
   where cac_number = 'CAC-BIZ-001'), true);
 select ok(
