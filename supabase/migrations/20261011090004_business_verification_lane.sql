@@ -29,7 +29,7 @@ create table if not exists public.businesses (
   registered_legal_name text not null,
   cac_number text,
   verification_status text not null default 'pending',
-  created_by uuid references public.entities (id) on delete set null,
+  created_by uuid default auth.uid() references public.entities (id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint businesses_trading_name_length check (

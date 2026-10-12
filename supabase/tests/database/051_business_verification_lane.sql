@@ -32,11 +32,13 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.a'), true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
--- Data-modifying statements cannot nest in a scalar subquery: insert first,
--- then capture the id with a select-back on the unique CAC number.
+-- Data-modifying statements cannot nest in a scalar subquery: insert first
+-- (with explicit created_by so the RLS WITH CHECK never depends on NULL
+-- semantics), then capture the id with a select-back on the unique CAC.
 insert into public.businesses
-  (trading_name, registered_legal_name, cac_number)
-values ('Amara Foods', 'Amara Foods Ltd', 'CAC-BIZ-001')
+  (trading_name, registered_legal_name, cac_number, created_by)
+values ('Amara Foods', 'Amara Foods Ltd', 'CAC-BIZ-001',
+  current_setting('test.a')::uuid)
 on conflict (cac_number) do nothing;
 select set_config('test.biz', (select id::text from public.businesses
   where cac_number = 'CAC-BIZ-001'), true);
