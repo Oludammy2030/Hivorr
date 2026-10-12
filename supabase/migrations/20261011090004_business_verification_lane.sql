@@ -389,6 +389,12 @@ begin
 
   v_sub_type := coalesce(nullif(btrim(p_submission_type), ''), v_cred.kind);
 
+  -- Kind default: a business document queues to the business lane when the
+  -- caller omits the type (mirrors kind-derived defaults elsewhere).
+  if v_sub_type = 'business_document' then
+    v_sub_type := 'business_verification';
+  end if;
+
   if v_sub_type not in ('identity_document', 'trade_proof', 'certification', 'business_verification') then
     perform public.platform_raise_error('PLT003', 'Invalid submission type.');
   end if;

@@ -183,8 +183,9 @@ select set_config('test.cred2', (select (public.entity_credentials_submit(
   current_setting('test.biz')::uuid
 )->'data'->>'id')), true);
 select lives_ok(
-  $$ select public.verification_submit(current_setting('test.cred2')::uuid) $$,
-  'second business document queues (PLT000)'
+  $$ select public.verification_submit(
+    current_setting('test.cred2')::uuid, 'business_verification') $$,
+  'second business document queues with explicit lane type (PLT000)'
 );
 set role service_role;
 select lives_ok(
