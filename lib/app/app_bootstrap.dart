@@ -17,6 +17,7 @@ import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
+import 'package:hivorr/systems/business/services/business_service.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
 import 'package:hivorr/systems/finance/services/escrow_service.dart';
@@ -52,6 +53,9 @@ class BootstrapResult {
     this.schedulingRepository,
     this.schedulingProvider,
     this.schedulingService,
+    this.businessRepository,
+    this.businessProvider,
+    this.businessService,
     this.contractEscrowOrchestrator,
     required this.verificationRepository,
     required this.verificationProvider,
@@ -148,6 +152,16 @@ class BootstrapResult {
   /// Scheduling facade surfaced to the widget tree (EP-03-14 validators +
   /// idempotency orchestration; server stays authoritative).
   final SchedulingService? schedulingService;
+
+  /// Business repository (identity audit Phase 2a). Optional for testability.
+  final BusinessRepository? businessRepository;
+
+  /// Business provider surfaced to the widget tree (identity Phase 2a).
+  final BusinessProvider? businessProvider;
+
+  /// Business facade surfaced to the widget tree (identity Phase 2a
+  /// validators; server stays authoritative).
+  final BusinessService? businessService;
 
   /// Verification-gated escrow release orchestrator (EP-03-11). Composes the
   /// contract verification half with the escrow proxy-seamed fund-movement
@@ -412,6 +426,15 @@ class AppBootstrap {
       SchedulingService service,
     })
     scheduling = registerSchedulingLayer(apiLayer);
+    // Identity audit Phase 2a business slice (member-scoped RLS-CRUD +
+    // verification pipeline; decisions stay server-side). Screens resolve
+    // the provider/service from the tree.
+    final ({
+      BusinessRepository repository,
+      BusinessProvider provider,
+      BusinessService service,
+    })
+    business = registerBusinessLayer(apiLayer);
     final ({JobRepository repository, JobProvider provider}) jobs =
         registerJobsLayer(apiLayer);
     final ({HireRepository repository, HireProvider provider}) hires =
@@ -480,6 +503,9 @@ class AppBootstrap {
       schedulingRepository: scheduling.repository,
       schedulingProvider: scheduling.provider,
       schedulingService: scheduling.service,
+      businessRepository: business.repository,
+      businessProvider: business.provider,
+      businessService: business.service,
       contractEscrowOrchestrator: contractEscrowOrchestrator,
       verificationRepository: verification.repository,
       verificationProvider: verification.provider,
