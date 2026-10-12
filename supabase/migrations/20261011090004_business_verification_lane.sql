@@ -113,6 +113,28 @@ alter table public.verification_audit_trail
   );
 
 -- ─── 4. RLS (default-deny; member-scoped + admin; anon 0) ────────────────────
+-- Membership checks inside policies go through is_business_member() (SECURITY
+-- DEFINER, RLS-bypassing like is_platform_admin): a policy that SELECTs the
+-- table it guards would otherwise recurse infinitely.
+create or replace function public.is_business_member(p_business_id uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.business_memberships m
+     where m.business_id = p_business_id
+       and m.entity_id = auth.uid()
+  );
+$$;
+
+comment on function public.is_business_member(uuid) is
+  'RLS helper: caller membership probe for business policies. SECURITY DEFINER (table-owner bypass, same posture as is_platform_admin) so member-scoped policies never self-reference business_memberships.';
+
+grant execute on function public.is_business_member(uuid) to authenticated, service_role;
+
 alter table public.businesses enable row level security;
 alter table public.business_memberships enable row level security;
 
@@ -130,12 +152,7 @@ grant select, insert, update, delete on table public.businesses to service_role;
 
 create policy businesses_member_select
   on public.businesses for select to authenticated
-  using (
-    exists (
-      select 1 from public.business_memberships m
-       where m.business_id = businesses.id and m.entity_id = auth.uid()
-    )
-  );
+  using (public.is_business_member(businesses.id));
 
 create policy businesses_admin_select
   on public.businesses for select to authenticated
@@ -147,18 +164,8 @@ create policy businesses_authenticated_insert
 
 create policy businesses_member_update
   on public.businesses for update to authenticated
-  using (
-    exists (
-      select 1 from public.business_memberships m
-       where m.business_id = businesses.id and m.entity_id = auth.uid()
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.business_memberships m
-       where m.business_id = businesses.id and m.entity_id = auth.uid()
-    )
-  );
+  using (public.is_business_member(businesses.id))
+  with check (public.is_business_member(businesses.id));
 
 create policy businesses_admin_all
   on public.businesses for all to authenticated
@@ -179,11 +186,7 @@ create policy business_memberships_member_select
   on public.business_memberships for select to authenticated
   using (
     business_memberships.entity_id = auth.uid()
-    or exists (
-      select 1 from public.business_memberships m
-       where m.business_id = business_memberships.business_id
-         and m.entity_id = auth.uid()
-    )
+    or public.is_business_member(business_memberships.business_id)
   );
 
 create policy business_memberships_admin_select
@@ -199,10 +202,7 @@ create policy business_memberships_self_insert
        where b.id = business_memberships.business_id
          and (
            b.created_by = auth.uid()
-           or exists (
-             select 1 from public.business_memberships m
-              where m.business_id = b.id and m.entity_id = auth.uid()
-           )
+           or public.is_business_member(b.id)
          )
     )
   );
