@@ -148,6 +148,11 @@ grant insert (trading_name, registered_legal_name, cac_number, created_by)
   on table public.businesses to authenticated;
 grant update (trading_name, registered_legal_name, cac_number, updated_at)
   on table public.businesses to authenticated;
+-- Guarded status column in the client grant (super_admin §3 precedent):
+-- the review RPCs run as the calling admin (INVOKER) and need it; the D5
+-- trigger below blocks direct PostgREST writes, so the grant is safe.
+grant update (verification_status)
+  on table public.businesses to authenticated;
 grant select, insert, update, delete on table public.businesses to service_role;
 
 create policy businesses_member_select
