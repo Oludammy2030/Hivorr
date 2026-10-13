@@ -96,6 +96,10 @@ abstract final class RoutePaths {
   static const String onboardingTradeProof = '/onboarding/trade-proof';
   static const String onboardingComplete = '/onboarding/complete';
 
+  /// Professional readiness checklist (identity audit Phase 4) — what is
+  /// needed to bid, publish, and earn, with deep links. Private route.
+  static const String professionalRequirements = '/professional/requirements';
+
   /// Unified-account activity launcher (Explore / Earn).
   ///
   /// Private authenticated route (no SEO): "Welcome to Hivorr — How would you

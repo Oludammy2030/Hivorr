@@ -15,6 +15,9 @@ import 'package:hivorr/data/repositories/job_repository_impl.dart';
 class FakeJobsRemote implements JobsRemoteDataSource {
   int createCalls = 0;
 
+  /// The business id most recently passed to [createJob].
+  String? lastBusinessId;
+
   /// When `true`, [submitApplication] throws the trade-gate denial
   /// (`PLT005` conflict with guidance) instead of [UnimplementedError].
   bool throwTradeGateOnSubmit = false;
@@ -41,8 +44,10 @@ class FakeJobsRemote implements JobsRemoteDataSource {
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   }) async {
     createCalls++;
+    lastBusinessId = businessId;
     return JobDto.fromJson(jobRow());
   }
 
@@ -213,6 +218,34 @@ void main() {
               )
               .having((ApiException e) => e.code, 'code', 'PLT003'),
         ),
+      );
+      expect(remote.createCalls, 0);
+    });
+
+    test('business id forwards to the RPC when supplied', () async {
+      final FakeJobsRemote remote = FakeJobsRemote();
+      final JobRepositoryImpl repo = JobRepositoryImpl(remote: remote);
+      await repo.createJob(
+        title: 'A perfectly valid job title here',
+        description:
+            'A description that is definitely longer than fifty characters.',
+        businessId: 'biz-1',
+      );
+      expect(remote.createCalls, 1);
+      expect(remote.lastBusinessId, 'biz-1');
+    });
+
+    test('blank business id never reaches the RPC (PLT003)', () async {
+      final FakeJobsRemote remote = FakeJobsRemote();
+      final JobRepositoryImpl repo = JobRepositoryImpl(remote: remote);
+      expect(
+        () => repo.createJob(
+          title: 'A perfectly valid job title here',
+          description:
+              'A description that is definitely longer than fifty characters.',
+          businessId: '   ',
+        ),
+        throwsA(isA<ApiException>()),
       );
       expect(remote.createCalls, 0);
     });

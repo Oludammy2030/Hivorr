@@ -55,6 +55,7 @@ class JobRepositoryImpl implements JobRepository {
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   }) async {
     _requireLength(title, min: 10, max: 120, field: 'title');
     _requireLength(description, min: 50, max: 5000, field: 'description');
@@ -62,6 +63,7 @@ class JobRepositoryImpl implements JobRepository {
     _requireCurrency(currencyCode);
     if (professionId != null) _requireNonEmpty(professionId, 'professionId');
     if (industryId != null) _requireNonEmpty(industryId, 'industryId');
+    if (businessId != null) _requireNonEmpty(businessId, 'businessId');
     final JobDto dto = await _remote.createJob(
       title: title.trim(),
       description: description.trim(),
@@ -71,6 +73,7 @@ class JobRepositoryImpl implements JobRepository {
       budgetMax: budgetMax,
       currencyCode: currencyCode,
       location: location?.trim(),
+      businessId: businessId,
     );
     return JobMapper.jobToEntity(dto);
   }

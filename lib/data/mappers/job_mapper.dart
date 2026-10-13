@@ -16,6 +16,9 @@ abstract final class JobMapper {
     clientEntityId: dto.clientEntityId,
     professionId: dto.professionId,
     industryId: dto.industryId,
+    businessId: dto.businessId,
+    clientDisplayName: dto.clientDisplayName,
+    clientBusinessName: dto.clientBusinessName,
     title: dto.title,
     description: dto.description,
     budgetMin: dto.budgetMin,
@@ -55,6 +58,9 @@ abstract final class JobMapper {
         applicantAvatarPath: dto.applicantAvatarPath,
         applicantProfessionName: dto.applicantProfessionName,
         applicantProfessionSlug: dto.applicantProfessionSlug,
+        clientDisplayName: dto.clientDisplayName,
+        clientBusinessId: dto.clientBusinessId,
+        clientBusinessName: dto.clientBusinessName,
       );
 
   /// Maps a `job_list` / `job_list_mine` envelope into domain [Job]s.
