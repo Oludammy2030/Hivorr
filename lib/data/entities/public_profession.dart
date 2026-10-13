@@ -13,6 +13,7 @@ class PublicProfession {
     required this.professionName,
     required this.industrySlug,
     required this.industryName,
+    this.professionalDisplayName,
   });
 
   /// Row id from `entity_professions`.
@@ -35,4 +36,8 @@ class PublicProfession {
 
   /// Human-readable industry name.
   final String industryName;
+
+  /// Approved professional name for this binding (null when never supplied;
+  /// present only on approved bindings by RPC construction).
+  final String? professionalDisplayName;
 }

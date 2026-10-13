@@ -1,9 +1,12 @@
 // ignore_for_file: prefer_initializing_formals
 
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/logging/hivorr_logger.dart';
 import 'package:hivorr/data/entities/business.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/systems/business/services/business_service.dart';
 
 /// Load lifecycle of the business provider (identity audit Phase 2a).
@@ -38,6 +41,8 @@ class BusinessProvider extends ChangeNotifier {
   List<Business> _businesses = const <Business>[];
   BusinessLoadState _loadState = BusinessLoadState.idle;
   ApiException? _error;
+  bool _submitting = false;
+  ApiException? _submitError;
   bool _disposed = false;
 
   /// The caller's businesses in server order (verbatim).
@@ -58,6 +63,12 @@ class BusinessProvider extends ChangeNotifier {
 
   /// The error from the last failed operation.
   ApiException? get lastError => _error;
+
+  /// Whether a document submission is in flight.
+  bool get isSubmitting => _submitting;
+
+  /// The error from the last failed submission, if any.
+  ApiException? get submitError => _submitError;
 
   /// Loads the businesses for [entityId].
   Future<void> loadMine({required String entityId}) async {
@@ -101,6 +112,50 @@ class BusinessProvider extends ChangeNotifier {
   Future<void> leave({required String businessId, required String entityId}) async {
     await _service.leaveBusiness(businessId: businessId, entityId: entityId);
     await loadMine(entityId: entityId);
+  }
+
+  /// Uploads CAC evidence and queues a `business_verification` submission.
+  ///
+  /// Tracks [isSubmitting]/[submitError] for the verification flow; the list
+  /// refreshes on success so status flips surface without a manual reload.
+  Future<VerificationSubmission> submitDocument({
+    required String entityId,
+    required String businessId,
+    required String title,
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileName,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    if (_submitting) {
+      throw const ApiException(
+        kind: ApiExceptionKind.conflict,
+        message: 'A submission is already in progress.',
+        code: 'PLT005',
+      );
+    }
+    _submitting = true;
+    _submitError = null;
+    notifyListeners();
+    try {
+      final VerificationSubmission submission =
+          await _service.submitDocument(
+            businessId: businessId,
+            title: title,
+            bytes: bytes,
+            mimeType: mimeType,
+            fileName: fileName,
+            onProgress: onProgress,
+          );
+      await loadMine(entityId: entityId);
+      return submission;
+    } on ApiException catch (e) {
+      _submitError = e;
+      rethrow;
+    } finally {
+      _submitting = false;
+      if (!_disposed) notifyListeners();
+    }
   }
 
   @override

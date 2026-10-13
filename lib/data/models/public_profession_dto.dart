@@ -10,18 +10,25 @@ class PublicProfessionDto {
     required this.professionName,
     required this.industrySlug,
     required this.industryName,
+    this.professionalDisplayName,
   });
 
-  factory PublicProfessionDto.fromJson(Map<String, dynamic> json) =>
-      PublicProfessionDto(
-        id: json['id'] as String,
-        professionId: json['profession_id'] as String,
-        isPrimary: json['is_primary'] as bool? ?? false,
-        professionSlug: json['profession_slug'] as String? ?? '',
-        professionName: json['profession_name'] as String? ?? '',
-        industrySlug: json['industry_slug'] as String? ?? '',
-        industryName: json['industry_name'] as String? ?? '',
-      );
+  factory PublicProfessionDto.fromJson(Map<String, dynamic> json) {
+    final String? rawName =
+        (json['professional_display_name'] as String?)?.trim();
+    return PublicProfessionDto(
+      id: json['id'] as String,
+      professionId: json['profession_id'] as String,
+      isPrimary: json['is_primary'] as bool? ?? false,
+      professionSlug: json['profession_slug'] as String? ?? '',
+      professionName: json['profession_name'] as String? ?? '',
+      industrySlug: json['industry_slug'] as String? ?? '',
+      industryName: json['industry_name'] as String? ?? '',
+      professionalDisplayName: (rawName == null || rawName.isEmpty)
+          ? null
+          : rawName,
+    );
+  }
 
   final String id;
   final String professionId;
@@ -31,6 +38,11 @@ class PublicProfessionDto {
   final String industrySlug;
   final String industryName;
 
+  /// Approved professional name for this binding (null when the professional
+  /// never supplied one; present only on approved bindings by construction
+  /// of the projecting RPC).
+  final String? professionalDisplayName;
+
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     'profession_id': professionId,
@@ -39,5 +51,6 @@ class PublicProfessionDto {
     'profession_name': professionName,
     'industry_slug': industrySlug,
     'industry_name': industryName,
+    'professional_display_name': professionalDisplayName,
   };
 }
