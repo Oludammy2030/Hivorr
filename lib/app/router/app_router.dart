@@ -34,6 +34,9 @@ import 'package:hivorr/systems/admin/screens/admin_settings_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
+import 'package:hivorr/systems/business/screens/business_detail_screen.dart';
+import 'package:hivorr/systems/business/screens/business_form_screen.dart';
+import 'package:hivorr/systems/business/screens/business_list_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/client_find_service_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/conversation_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
@@ -617,6 +620,28 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) =>
               ContractDetailScreen(
                 contractId: state.pathParameters['id'] ?? '',
+              ),
+        ),
+        // Business identities (identity audit Phase 2a, protected — guard
+        // keeps login gate; member-scoped reads stay server-side).
+        GoRoute(
+          path: RoutePaths.businesses,
+          name: RouteNames.businesses,
+          builder: (BuildContext context, GoRouterState state) =>
+              const BusinessListScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.businessNew,
+          name: RouteNames.businessNew,
+          builder: (BuildContext context, GoRouterState state) =>
+              const BusinessFormScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.businessDetailRoute,
+          name: RouteNames.businessDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              BusinessDetailScreen(
+                businessId: state.pathParameters['id'] ?? '',
               ),
         ),
         // Contract earnings drill-down (EP-03-16, protected — deep-links

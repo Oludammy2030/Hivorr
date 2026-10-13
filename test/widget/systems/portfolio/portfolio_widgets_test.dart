@@ -42,6 +42,7 @@ PublicProfession seedProfession({
   String professionName = 'Software Engineer',
   String industrySlug = 'technology',
   String industryName = 'Technology',
+  String? professionalDisplayName,
 }) => PublicProfession(
   id: id,
   professionId: professionId,
@@ -50,6 +51,7 @@ PublicProfession seedProfession({
   professionName: professionName,
   industrySlug: industrySlug,
   industryName: industryName,
+  professionalDisplayName: professionalDisplayName,
 );
 
 PortfolioItem seedItem({
@@ -94,6 +96,21 @@ void main() {
       expect(find.textContaining('NG'), findsOneWidget);
       expect(find.text('Software Engineer · Technology'), findsOneWidget);
       expect(find.text('Electrician · Construction'), findsOneWidget);
+    });
+
+    testWidgets('headline prefers the approved professional name', (
+      WidgetTester tester,
+    ) async {
+      final PublicProfile profile = seedProfile(
+        displayName: 'Adaeze Okafor',
+        professions: <PublicProfession>[
+          seedProfession(professionalDisplayName: 'Adaeze Fixes It'),
+        ],
+      );
+      await pumpTheme(tester, ProfileHeaderCard(profile: profile));
+
+      expect(find.text('Adaeze Fixes It'), findsOneWidget);
+      expect(find.text('Adaeze Okafor'), findsNothing);
     });
 
     testWidgets('renders initials avatar when no avatar URL is provided', (

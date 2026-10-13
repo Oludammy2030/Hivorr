@@ -227,6 +227,15 @@ abstract final class RoutePaths {
   static String contractMilestonesEdit(String id) =>
       '/contracts/${Uri.encodeComponent(id)}/milestones/edit';
 
+  /// Business identity screens (identity audit Phase 2a, protected).
+  static const String businesses = '/businesses';
+  static const String businessNew = '/businesses/new';
+  static const String businessDetailRoute = '/businesses/:id';
+
+  /// Builds a URL-encoded business detail path.
+  static String businessDetail(String id) =>
+      '/businesses/${Uri.encodeComponent(id)}';
+
   /// Availability template editor (EP-03-14, protected, professional).
   /// Optional query param: `professionId`.
   static const String availability = '/availability';

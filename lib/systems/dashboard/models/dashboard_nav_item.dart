@@ -245,6 +245,13 @@ const List<DashboardNavItem> dashboardNavItems = <DashboardNavItem>[
     section: DashboardNavSection.hiring,
     showForOffer: false,
   ),
+  DashboardNavItem(
+    label: 'Businesses',
+    icon: Icons.business_outlined,
+    activeIcon: Icons.business,
+    location: '/businesses',
+    section: DashboardNavSection.shared,
+  ),
   // Shared.
   DashboardNavItem(
     label: 'Messages',

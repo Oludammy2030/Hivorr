@@ -48,6 +48,7 @@ class PortfolioMappers {
         professionName: dto.professionName,
         industrySlug: dto.industrySlug,
         industryName: dto.industryName,
+        professionalDisplayName: dto.professionalDisplayName,
       );
 
   /// Maps [PublicCredentialDto] → [PublicCredential].

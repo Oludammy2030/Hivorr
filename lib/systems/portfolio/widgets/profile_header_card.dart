@@ -7,6 +7,7 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_avatar.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
+import 'package:hivorr/systems/identity/services/identity_resolver.dart';
 
 /// Identity summary card for the public professional profile (EP-02-19 §5.6,
 /// DoD FV-16/UA-02).
@@ -39,6 +40,12 @@ class ProfileHeaderCard extends StatelessWidget {
     final AppThemeExtension ext = context.appExtension;
     final List<PublicProfession> badges = profile.professions;
     final String? country = _displayCountry(profile.countryCode);
+    // Context-aware headline: the approved professional name wins over the
+    // derived profile display name (identity audit Phase 3).
+    final String headline = IdentityResolver.publicProfileHeadline(
+      displayName: profile.displayName,
+      professions: badges,
+    ).name;
 
     return HivorrCard(
       padding: const EdgeInsets.all(HivorrSpacing.lg),
@@ -50,7 +57,7 @@ class ProfileHeaderCard extends StatelessWidget {
             children: <Widget>[
               HivorrAvatar(
                 image: avatarUrl == null ? null : NetworkImage(avatarUrl!),
-                name: profile.displayName,
+                name: headline,
                 size: 72,
               ),
               const SizedBox(width: HivorrSpacing.md),
@@ -59,7 +66,7 @@ class ProfileHeaderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      profile.displayName,
+                      headline,
                       style: context.textTheme.headlineSmall?.copyWith(
                         color: colors.onSurface,
                         fontWeight: FontWeight.w600,

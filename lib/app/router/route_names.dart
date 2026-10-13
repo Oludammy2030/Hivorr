@@ -114,6 +114,11 @@ abstract final class RouteNames {
   static const String contractDetail = 'contract-detail';
   static const String contractMilestonesEdit = 'contract-milestones-edit';
 
+  /// Business identity routes (identity audit Phase 2a).
+  static const String businesses = 'businesses';
+  static const String businessNew = 'business-new';
+  static const String businessDetail = 'business-detail';
+
   /// Scheduling routes (EP-03-14).
   static const String availability = 'availability';
   static const String appointmentBook = 'appointment-book';

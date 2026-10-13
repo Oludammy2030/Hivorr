@@ -63,6 +63,17 @@ void main() {
     expect(RouteNames.appointmentList, 'appointment-list');
   });
 
+  test('identity Phase 2a business routes use the top-level URL family', () {
+    expect(RoutePaths.businesses, '/businesses');
+    expect(RoutePaths.businessNew, '/businesses/new');
+    expect(RoutePaths.businessDetailRoute, '/businesses/:id');
+    expect(RoutePaths.businessDetail('abc-123'), '/businesses/abc-123');
+    expect(RoutePaths.businessDetail('a b/c'), '/businesses/a%20b%2Fc');
+    expect(RouteNames.businesses, 'businesses');
+    expect(RouteNames.businessNew, 'business-new');
+    expect(RouteNames.businessDetail, 'business-detail');
+  });
+
   test('EP-03-16 earnings routes use the finance/contract URL families', () {
     expect(RoutePaths.earningsDetail, '/finance/earnings');
     expect(RoutePaths.earningsHistory, '/finance/earnings/history');
