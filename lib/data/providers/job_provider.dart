@@ -464,6 +464,7 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   }) async {
     final Job job = await _service.createJob(
       title: title,
@@ -474,6 +475,7 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
       budgetMax: budgetMax,
       currencyCode: currencyCode,
       location: location,
+      businessId: businessId,
     );
     _posted = <Job>[job, ..._posted];
     _selected = job;

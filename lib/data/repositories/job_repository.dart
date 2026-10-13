@@ -8,6 +8,9 @@ import 'package:hivorr/data/entities/job_application.dart';
 /// operations only.
 abstract class JobRepository {
   /// Creates a draft job.
+  ///
+  /// [businessId] hires as a verified business (authorized representative);
+  /// null posts personally.
   Future<Job> createJob({
     required String title,
     required String description,
@@ -17,6 +20,7 @@ abstract class JobRepository {
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   });
 
   /// Updates a draft/open/paused job. Only non-null fields are sent.

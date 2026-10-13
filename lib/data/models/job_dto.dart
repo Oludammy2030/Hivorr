@@ -9,6 +9,9 @@ class JobDto {
     required this.clientEntityId,
     this.professionId,
     this.industryId,
+    this.businessId,
+    this.clientDisplayName,
+    this.clientBusinessName,
     required this.title,
     required this.description,
     this.budgetMin,
@@ -31,6 +34,9 @@ class JobDto {
     clientEntityId: (json['client_entity_id'] as String?) ?? '',
     professionId: json['profession_id'] as String?,
     industryId: json['industry_id'] as String?,
+    businessId: json['business_id'] as String?,
+    clientDisplayName: json['client_display_name'] as String?,
+    clientBusinessName: json['client_business_name'] as String?,
     title: (json['title'] as String?) ?? '',
     description: (json['description'] as String?) ?? '',
     budgetMin: _toNullableDouble(json['budget_min']),
@@ -52,6 +58,9 @@ class JobDto {
   final String clientEntityId;
   final String? professionId;
   final String? industryId;
+  final String? businessId;
+  final String? clientDisplayName;
+  final String? clientBusinessName;
   final String title;
   final String description;
   final double? budgetMin;

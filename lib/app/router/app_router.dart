@@ -72,6 +72,7 @@ import 'package:hivorr/systems/marketplace/screens/service_detail_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_form_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_media_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
+import 'package:hivorr/systems/onboarding/screens/professional_requirements_screen.dart';
 import 'package:hivorr/systems/portfolio/screens/professional_profile_screen.dart';
 import 'package:hivorr/systems/reviews/screens/review_reveal_screen.dart';
 import 'package:hivorr/systems/reviews/screens/review_submit_screen.dart';
@@ -772,6 +773,12 @@ class AppRouter {
           path: '/onboarding/profession',
           redirect: (BuildContext context, GoRouterState state) =>
               RoutePaths.onboardingIndustry,
+        ),
+        GoRoute(
+          path: RoutePaths.professionalRequirements,
+          name: RouteNames.professionalRequirements,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ProfessionalRequirementsScreen(),
         ),
       ],
     );

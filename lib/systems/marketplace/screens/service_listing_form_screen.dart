@@ -8,13 +8,17 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/entities/listing_media.dart';
 import 'package:hivorr/data/entities/profession.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
-import 'package:hivorr/shared/components/hivorr_form_field.dart';
+import
+'package:hivorr/shared/components/hivorr_dialog.dart';
+import
+'package:hivorr/shared/components/hivorr_form_field.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/layouts/hivorr_screen_scaffold.dart';
 import 'package:hivorr/shared/mixins/form_validation_mixin.dart';
-import 'package:hivorr/shared/widgets/hivorr_button.dart';
+import
+'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
@@ -236,6 +240,37 @@ class _ServiceListingFormScreenState extends State<ServiceListingFormScreen>
       if (!mounted) return;
       final bool isTradeGate =
           e.kind == ApiExceptionKind.conflict || e.code == 'PLT005';
+      if (isTradeGate && publish) {
+        // Identity audit Phase 4: trade denial opens the requirements
+        // checklist instead of a dead snackbar (the draft is already saved).
+        final bool? go = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) => HivorrDialog(
+            title: 'Verification required',
+            content: const Text(
+              'Publishing needs an approved trade proof. '
+              'See exactly what is missing — your draft is saved.',
+            ),
+            actions: <Widget>[
+              HivorrButton(
+                label: 'Stay here',
+                onPressed: () => Navigator.of(context).pop(false),
+                variant: HivorrButtonVariant.text,
+              ),
+              HivorrButton(
+                label: 'View requirements',
+                onPressed: () => Navigator.of(context).pop(true),
+                variant: HivorrButtonVariant.primary,
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        if (go == true) {
+          await context.push(RoutePaths.professionalRequirements);
+        }
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         HivorrSnackbar.show(
           context,

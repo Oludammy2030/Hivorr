@@ -74,6 +74,22 @@ class ApplicationCard extends StatelessWidget {
               ),
             ),
           ],
+          // Frozen hiring identity (identity audit Phase 4): who is hiring
+          // on this application — business-backed or personal. Snapshot at
+          // submit; never a live lookup, so history cannot shift.
+          if (application.clientBusinessName != null &&
+              application.clientBusinessName!.trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: HivorrSpacing.xs),
+            Text(
+              'Hiring as ${application.clientBusinessName!.trim()}',
+              style: context.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );

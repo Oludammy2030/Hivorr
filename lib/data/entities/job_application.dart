@@ -27,6 +27,9 @@ class JobApplication {
     this.applicantAvatarPath,
     this.applicantProfessionName,
     this.applicantProfessionSlug,
+    this.clientDisplayName,
+    this.clientBusinessId,
+    this.clientBusinessName,
   });
 
   /// The application row id.
@@ -89,6 +92,19 @@ class JobApplication {
   /// Submit-time snapshot of the primary approved profession slug
   /// (public profile route segment).
   final String? applicantProfessionSlug;
+
+  /// Submit-time snapshot of the client display name, copied from the job
+  /// row (`20261011090006`). The applicant has no profile read on the
+  /// client, so this frozen value is the professional's view of who hired.
+  final String? clientDisplayName;
+
+  /// Submit-time snapshot of the hiring business id; null for personal
+  /// hiring.
+  final String? clientBusinessId;
+
+  /// Submit-time snapshot of the hiring business trading name; null for
+  /// personal hiring.
+  final String? clientBusinessName;
 
   /// Whether the row carries a usable identity snapshot (no follow-up
   /// profile RPC needed to name the applicant).

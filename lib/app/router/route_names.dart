@@ -108,6 +108,9 @@ abstract final class RouteNames {
   static const String onboardingTradeProof = 'onboarding-trade-proof';
   static const String onboardingComplete = 'onboarding-complete';
 
+  /// Professional readiness checklist (identity audit Phase 4).
+  static const String professionalRequirements = 'professional-requirements';
+
   /// Service contract engagement routes (EP-03-10).
   static const String contracts = 'contracts';
   static const String contractNew = 'contract-new';
