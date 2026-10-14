@@ -22,7 +22,10 @@ import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/systems/communication/services/message_crypto.dart';
 import 'package:hivorr/systems/communication/services/messaging_service.dart';
-import 'package:hivorr/systems/dashboard/widgets/messaging_thread_meta.dart';
+import
+'package:hivorr/systems/dashboard/widgets/messaging_thread_meta.dart';
+import
+'package:hivorr/systems/identity/widgets/counterparty_identity.dart';
 import 'package:provider/provider.dart';
 
 /// One contract-scoped message thread (EP-04-04).
@@ -202,7 +205,11 @@ class _ConversationScreenState extends State<ConversationScreen>
             }
           },
         ),
-        title: Text(_title(), style: context.textTheme.titleLarge),
+        title: _ThreadTitle(
+          conversation: selected,
+          fallback: _title(),
+          viewerEntityId: entityId,
+        ),
         actions: <Widget>[
           IconButton(
             tooltip: 'Refresh',
@@ -314,6 +321,43 @@ class _ConversationScreenState extends State<ConversationScreen>
     } on ProviderNotFoundException {
       return const <Hire>[];
     }
+  }
+}
+
+/// AppBar title resolving the thread counterparty (identity Phase 5).
+///
+/// Reads hires + viewer identity like [_ThreadWorkBanner]'s title path and
+/// renders [ThreadCounterparty]; any failure keeps the deterministic
+/// fallback label — never a blank title.
+class _ThreadTitle extends StatelessWidget {
+  const _ThreadTitle({
+    required this.conversation,
+    required this.fallback,
+    required this.viewerEntityId,
+  });
+
+  final Conversation? conversation;
+  final String fallback;
+  final String? viewerEntityId;
+
+  @override
+  Widget build(BuildContext context) {
+    final Conversation? current = conversation;
+    if (current == null) {
+      return Text(fallback, style: context.textTheme.titleLarge);
+    }
+    List<Hire> hires = const <Hire>[];
+    try {
+      hires = context.watch<HireProvider>().hires;
+    } on ProviderNotFoundException {
+      hires = const <Hire>[];
+    }
+    return ThreadCounterparty(
+      hire: MessagingThreadMeta.hireFor(hires, current),
+      viewerEntityId: viewerEntityId,
+      fallbackPeer: fallback,
+      textStyle: context.textTheme.titleLarge,
+    );
   }
 }
 

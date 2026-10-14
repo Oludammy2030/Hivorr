@@ -119,6 +119,7 @@ PublicProfessionDto seedPublicProfessionDto({
   String professionName = 'Software Engineer',
   String industrySlug = 'technology',
   String industryName = 'Technology',
+  String? professionalDisplayName,
 }) => PublicProfessionDto(
   id: id,
   professionId: professionId,
@@ -127,6 +128,7 @@ PublicProfessionDto seedPublicProfessionDto({
   professionName: professionName,
   industrySlug: industrySlug,
   industryName: industryName,
+  professionalDisplayName: professionalDisplayName,
 );
 
 /// A default approved credential DTO.

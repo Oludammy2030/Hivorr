@@ -24,12 +24,16 @@ import 'package:hivorr/shared/widgets/hivorr_snackbar.dart';
 import 'package:hivorr/systems/documents/widgets/contract_milestone_adapter.dart';
 import 'package:hivorr/systems/documents/widgets/contract_status_badge.dart';
 import 'package:hivorr/systems/documents/widgets/contract_timeline.dart';
-import 'package:hivorr/systems/documents/widgets/contract_write_cta_panel.dart';
+import
+'package:hivorr/systems/documents/widgets/contract_write_cta_panel.dart';
 import 'package:hivorr/systems/finance/helpers/balance_formatter.dart';
 import 'package:hivorr/systems/finance/services/contract_escrow_orchestrator.dart';
 import 'package:hivorr/systems/finance/services/contract_escrow_state.dart';
 import 'package:hivorr/systems/finance/widgets/escrow_dispute_banner.dart';
-import 'package:hivorr/systems/finance/widgets/milestone_list_card.dart';
+import
+'package:hivorr/systems/finance/widgets/milestone_list_card.dart';
+import
+'package:hivorr/systems/identity/widgets/counterparty_identity.dart';
 import 'package:hivorr/systems/reviews/widgets/contract_review_section.dart';
 import 'package:provider/provider.dart';
 
@@ -488,6 +492,18 @@ class _DetailBody extends StatelessWidget {
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
+              // Counterparty face (identity audit Phase 5): the other
+              // party's role-appropriate identity — approved professional
+              // name for clients, frozen hiring identity for professionals.
+              // Access stays governed by the role caption and server RLS;
+              // this label never grants anything.
+              if (_isParticipant) ...[
+                const SizedBox(height: 4),
+                ContractCounterparty(
+                  contract: contract,
+                  viewerId: viewerId,
+                ),
+              ],
               if (contract.escrowId != null) ...[
                 const SizedBox(height: 4),
                 _EscrowLinkRow(escrowId: contract.escrowId!),

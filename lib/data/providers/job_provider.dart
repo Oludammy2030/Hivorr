@@ -245,6 +245,12 @@ class JobProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// Fetches one job detail without touching selection or load state.
+  ///
+  /// Read-only seam for identity surfaces (contract counterparty, thread
+  /// headers) that need a job's frozen client snapshots. Never notifies.
+  Future<JobDetail> fetchJob(String jobId) => _service.getJob(jobId);
+
   /// Re-reads the client's posted jobs without disturbing the shared
   /// [isLoading]/[_loadState] gate (Phase 2 applicant-count consistency).
   ///
