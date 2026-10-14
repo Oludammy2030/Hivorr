@@ -17,6 +17,7 @@ abstract final class ContractMapper {
       ServiceContract(
         id: dto.id,
         serviceListingId: dto.serviceListingId,
+        jobId: dto.jobId,
         clientEntityId: dto.clientEntityId,
         professionalEntityId: dto.professionalEntityId,
         status: dto.status,
@@ -81,6 +82,7 @@ abstract final class ContractMapper {
     return ServiceContract(
       id: base.id,
       serviceListingId: base.serviceListingId,
+      jobId: base.jobId,
       clientEntityId: base.clientEntityId,
       professionalEntityId: base.professionalEntityId,
       status: base.status,

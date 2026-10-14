@@ -10,6 +10,7 @@ class ServiceContractDto {
   const ServiceContractDto({
     required this.id,
     required this.serviceListingId,
+    this.jobId,
     required this.clientEntityId,
     required this.professionalEntityId,
     required this.status,
@@ -36,6 +37,7 @@ class ServiceContractDto {
       ServiceContractDto(
         id: (json['id'] as String?) ?? '',
         serviceListingId: (json['service_listing_id'] as String?) ?? '',
+        jobId: json['job_id'] as String?,
         clientEntityId: (json['client_entity_id'] as String?) ?? '',
         professionalEntityId:
             (json['professional_entity_id'] as String?) ?? '',
@@ -61,6 +63,10 @@ class ServiceContractDto {
 
   final String id;
   final String serviceListingId;
+
+  /// Linked job for hire-sourced contracts; null for listing-sourced ones
+  /// (`service_contracts_source_xor`). Pre-migration rows read null.
+  final String? jobId;
   final String clientEntityId;
   final String professionalEntityId;
   final String status;

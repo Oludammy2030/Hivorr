@@ -24,6 +24,7 @@ import 'package:hivorr/systems/communication/services/messaging_service.dart';
 import 'package:hivorr/systems/dashboard/shell/client_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/shell/professional_mobile_chrome.dart';
 import 'package:hivorr/systems/dashboard/widgets/messaging_thread_meta.dart';
+import 'package:hivorr/systems/identity/widgets/counterparty_identity.dart';
 import 'package:provider/provider.dart';
 
 /// Client Messages: conversation list + active chat (EP-04-04).
@@ -683,7 +684,12 @@ class _ThreadPaneState extends State<_ThreadPane> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _ThreadHeader(peer: peer, conversation: widget.conversation),
+        _ThreadHeader(
+          peer: peer,
+          conversation: widget.conversation,
+          hire: hire,
+          viewerEntityId: entityId,
+        ),
         _WorkBanner(workTitle: workTitle, hire: hire),
         if (messaging.isLoading && selected == null)
           const Expanded(child: HivorrLoadingState())
@@ -774,10 +780,21 @@ class _ThreadPaneState extends State<_ThreadPane> {
 
 /// Header with peer avatar/name; subtitle carries the live work context.
 class _ThreadHeader extends StatelessWidget {
-  const _ThreadHeader({required this.peer, required this.conversation});
+  const _ThreadHeader({
+    required this.peer,
+    required this.conversation,
+    required this.hire,
+    required this.viewerEntityId,
+  });
 
   final String peer;
   final Conversation conversation;
+
+  /// Hire linked to the thread, if resolved (drives counterparty identity).
+  final Hire? hire;
+
+  /// Viewing entity id, if known.
+  final String? viewerEntityId;
 
   @override
   Widget build(BuildContext context) {
@@ -817,9 +834,11 @@ class _ThreadHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  peer,
-                  style: context.textTheme.titleSmall?.copyWith(
+                ThreadCounterparty(
+                  hire: hire,
+                  viewerEntityId: viewerEntityId,
+                  fallbackPeer: peer,
+                  textStyle: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
