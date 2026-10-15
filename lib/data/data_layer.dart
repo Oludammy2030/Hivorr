@@ -22,10 +22,9 @@ import 'package:hivorr/data/datasources/remote/service_contract_remote_data_sour
 import 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_review_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/service_search_remote_data_source.dart';
-import
-'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
-import
-'package:hivorr/data/datasources/remote/supabase_business_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_admin_dispute_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
+import 'package:hivorr/data/datasources/remote/supabase_business_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_dispute_remote_data_source.dart';
 import 'package:hivorr/data/datasources/remote/supabase_earnings_remote_data_source.dart';
@@ -50,6 +49,7 @@ import 'package:hivorr/data/datasources/remote/supabase_trade_verification_remot
 import 'package:hivorr/data/datasources/remote/supabase_verification_remote_data_source.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
 import 'package:hivorr/data/local/payout_account_local_store.dart';
+import 'package:hivorr/data/providers/admin_dispute_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/business_provider.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
@@ -75,6 +75,8 @@ import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/trade_verification_provider.dart';
 import 'package:hivorr/data/providers/transaction_history_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
+import 'package:hivorr/data/repositories/admin_dispute_repository.dart';
+import 'package:hivorr/data/repositories/admin_dispute_repository_impl.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/data/repositories/admin_review_repository_impl.dart';
 import 'package:hivorr/data/repositories/business_repository.dart';
@@ -152,6 +154,7 @@ export 'package:hivorr/data/datasources/local/entity_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/hive_service_search_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/service_search_local_data_source.dart';
 export 'package:hivorr/data/datasources/local/taxonomy_local_data_source.dart';
+export 'package:hivorr/data/datasources/remote/admin_dispute_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/business_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/conversion_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/data_exception_mapper.dart';
@@ -183,6 +186,7 @@ export 'package:hivorr/data/datasources/remote/service_listing_envelope_parser.d
 export 'package:hivorr/data/datasources/remote/service_listing_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/service_search_envelope_parser.dart';
 export 'package:hivorr/data/datasources/remote/service_search_remote_data_source.dart';
+export 'package:hivorr/data/datasources/remote/supabase_admin_dispute_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_admin_review_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_business_remote_data_source.dart';
 export 'package:hivorr/data/datasources/remote/supabase_conversion_remote_data_source.dart';
@@ -253,6 +257,7 @@ export 'package:hivorr/data/entities/public_credential.dart';
 export 'package:hivorr/data/entities/public_profession.dart';
 export 'package:hivorr/data/entities/public_profile.dart';
 export 'package:hivorr/data/entities/service_contract.dart';
+export 'package:hivorr/data/entities/service_dispute_contract_summary.dart';
 export 'package:hivorr/data/entities/service_listing.dart';
 export 'package:hivorr/data/entities/service_listing_proof.dart';
 export 'package:hivorr/data/entities/trade_verification_status.dart';
@@ -292,6 +297,7 @@ export 'package:hivorr/data/models/conversation_dto.dart';
 export 'package:hivorr/data/models/conversion_preview_dto.dart';
 export 'package:hivorr/data/models/currency_conversion_dto.dart';
 export 'package:hivorr/data/models/deposit_dto.dart';
+export 'package:hivorr/data/models/dispute_admin_list_envelope_dto.dart';
 export 'package:hivorr/data/models/dispute_case_detail.dart';
 export 'package:hivorr/data/models/dispute_case_detail_envelope_dto.dart';
 export 'package:hivorr/data/models/dispute_case_dto.dart';
@@ -331,6 +337,8 @@ export 'package:hivorr/data/models/public_profile_dto.dart';
 export 'package:hivorr/data/models/scheduling_dto.dart';
 export 'package:hivorr/data/models/scheduling_envelopes_dto.dart';
 export 'package:hivorr/data/models/service_contract_dto.dart';
+export 'package:hivorr/data/models/service_dispute_contract_summary_dto.dart';
+export 'package:hivorr/data/models/service_dispute_detail_envelope_dto.dart';
 export 'package:hivorr/data/models/service_listing_dto.dart';
 export 'package:hivorr/data/models/service_listing_proof_dto.dart';
 export 'package:hivorr/data/models/trade_verification_dto.dart';
@@ -338,6 +346,7 @@ export 'package:hivorr/data/models/verification_status_dto.dart';
 export 'package:hivorr/data/models/verification_submission_dto.dart';
 export 'package:hivorr/data/models/withdrawal_dto.dart';
 export 'package:hivorr/data/providers/admin_config_provider.dart';
+export 'package:hivorr/data/providers/admin_dispute_provider.dart';
 export 'package:hivorr/data/providers/admin_review_provider.dart';
 export 'package:hivorr/data/providers/business_provider.dart';
 export 'package:hivorr/data/providers/conversion_provider.dart';
@@ -365,6 +374,8 @@ export 'package:hivorr/data/providers/taxonomy_provider.dart';
 export 'package:hivorr/data/providers/trade_verification_provider.dart';
 export 'package:hivorr/data/providers/transaction_history_provider.dart';
 export 'package:hivorr/data/providers/verification_provider.dart';
+export 'package:hivorr/data/repositories/admin_dispute_repository.dart';
+export 'package:hivorr/data/repositories/admin_dispute_repository_impl.dart';
 export 'package:hivorr/data/repositories/admin_review_repository.dart';
 export 'package:hivorr/data/repositories/admin_review_repository_impl.dart';
 export 'package:hivorr/data/repositories/business_repository.dart';
@@ -598,6 +609,29 @@ registerAdminReviewLayer(ApiLayer apiLayer) {
   return (
     repository: repository,
     provider: AdminReviewProvider(repo: repository),
+  );
+}
+
+/// Wires the admin dispute-queue data slice for the R3 follow-up.
+///
+/// Builds the [AdminDisputeRepository] over the [ApiLayer] and returns a ready
+/// [AdminDisputeProvider]. Exposed for the bootstrap to register in the widget
+/// tree's MultiProvider (mirrors `registerAdminReviewLayer`).
+///
+/// Read-only: queue paging + single-case reads. Admin authorization is
+/// enforced server-side by `is_platform_admin()`; resolution stays
+/// service-role SQL/manual and is never exposed here.
+({AdminDisputeRepository repository, AdminDisputeProvider provider})
+registerAdminDisputeLayer(ApiLayer apiLayer) {
+  final remote = SupabaseAdminDisputeRemoteDataSource(
+    dio: apiLayer.dio,
+    supabase: apiLayer.supabaseClient,
+    exceptionMapper: apiLayer.exceptionMapper,
+  );
+  final repository = AdminDisputeRepositoryImpl(remote: remote);
+  return (
+    repository: repository,
+    provider: AdminDisputeProvider(repository: repository),
   );
 }
 
@@ -840,8 +874,9 @@ registerConversionLayer(
 /// freeze/release the escrow server-side — the client never writes tables and
 /// never references the service-role-only `dispute_resolve`.
 ({DisputeRepository repository, DisputeProvider provider}) registerDisputeLayer(
-  ApiLayer apiLayer,
-) {
+  ApiLayer apiLayer, {
+  ServiceContractProvider? contractProvider,
+}) {
   final remote = SupabaseDisputeRemoteDataSource(
     dio: apiLayer.dio,
     supabase: apiLayer.supabaseClient,
@@ -849,7 +884,13 @@ registerConversionLayer(
   );
   final repository = DisputeRepositoryImpl(remote: remote);
   final service = DisputeService(repository: repository);
-  return (repository: repository, provider: DisputeProvider(service: service));
+  return (
+    repository: repository,
+    provider: DisputeProvider(
+      service: service,
+      contractProvider: contractProvider,
+    ),
+  );
 }
 
 /// Wires the service listing owner-management slice for EP-03-08.

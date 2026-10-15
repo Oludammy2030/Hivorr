@@ -136,6 +136,55 @@ class DisputeRepositoryImpl implements DisputeRepository {
     return DisputeMapper.caseToEntity(dto);
   }
 
+  @override
+  Future<DisputeCaseDetail> fileServiceDispute({
+    required String contractId,
+    required String disputeType,
+    required String reason,
+    String? desiredOutcome,
+    String priority = 'medium',
+  }) async {
+    _requireNonEmpty(contractId, 'contractId');
+    _requireInVocabulary(disputeType, _disputeTypes, 'disputeType');
+    if (desiredOutcome != null) {
+      _requireInVocabulary(desiredOutcome, _desiredOutcomes, 'desiredOutcome');
+    }
+    _requireInVocabulary(priority, _priorities, 'priority');
+    _requireLength(reason, min: 10, max: 2000, field: 'reason');
+    final DisputeCaseDto filed = await _remote.fileServiceDispute(
+      contractId: contractId,
+      disputeType: disputeType,
+      reason: reason,
+      desiredOutcome: desiredOutcome,
+      priority: priority,
+    );
+    // Re-read the authoritative case with the joined contract summary —
+    // the freeze (contract + escrow hold) is server-applied.
+    return getServiceCase(filed.id);
+  }
+
+  @override
+  Future<DisputeCaseDetail> getServiceCase(String caseId) async {
+    final dto = await _remote.getServiceCase(caseId);
+    return DisputeMapper.serviceDetailToEntity(dto);
+  }
+
+  @override
+  Future<List<DisputeCase>> listDisputesForContract(
+    String contractId, {
+    String? status,
+  }) async {
+    _requireNonEmpty(contractId, 'contractId');
+    if (status != null) {
+      _requireInVocabulary(status, _statuses, 'status');
+    }
+    final dto = await _remote.listDisputesForContract(
+      contractId,
+      status: status,
+    );
+    return DisputeMapper.listEnvelopeToEntities(dto);
+  }
+
   static void _requireNonEmpty(String value, String field) {
     if (value.trim().isEmpty) {
       throw ApiException(

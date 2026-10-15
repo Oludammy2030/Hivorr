@@ -139,11 +139,11 @@ class _ContractEarningsDetailScreenState
                     if (contract.isDisputed) ...<Widget>[
                       const SizedBox(height: HivorrSpacing.md),
                       EscrowFrozenBanner(
-                        onViewDispute: contract.escrowId == null
-                            ? null
-                            : () => context.push(
-                                RoutePaths.disputesFile(contract.escrowId!),
-                              ),
+                        onViewDispute: () => context.push(
+                          RoutePaths.disputesFileForContract(
+                            widget.contractId,
+                          ),
+                        ),
                       ),
                     ],
                     const SizedBox(height: HivorrSpacing.lg),

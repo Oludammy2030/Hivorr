@@ -14,6 +14,7 @@ import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
 import 'package:hivorr/data/providers/admin_config_provider.dart';
+import 'package:hivorr/data/providers/admin_dispute_provider.dart';
 import 'package:hivorr/data/providers/admin_review_provider.dart';
 import 'package:hivorr/data/providers/business_provider.dart';
 import 'package:hivorr/data/providers/conversion_provider.dart';
@@ -36,6 +37,7 @@ import 'package:hivorr/data/providers/service_listing_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/transaction_history_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
+import 'package:hivorr/data/repositories/admin_dispute_repository.dart';
 import 'package:hivorr/data/repositories/admin_review_repository.dart';
 import 'package:hivorr/data/repositories/business_repository.dart';
 import 'package:hivorr/data/repositories/conversion_repository.dart';
@@ -133,6 +135,8 @@ class HivorrApp extends StatefulWidget {
     this.portfolioService,
     this.adminReviewRepository,
     this.adminReviewProvider,
+    this.adminDisputeRepository,
+    this.adminDisputeProvider,
     this.manageUserRepository,
     this.manageUserProvider,
     this.adminConfigProvider,
@@ -308,6 +312,12 @@ class HivorrApp extends StatefulWidget {
 
   /// Admin review provider surfaced to the widget tree (EP-02-11).
   final AdminReviewProvider? adminReviewProvider;
+
+  /// Admin dispute-queue repository (R3 follow-up). Optional for testability.
+  final AdminDisputeRepository? adminDisputeRepository;
+
+  /// Admin dispute-queue provider surfaced to the widget tree (R3 follow-up).
+  final AdminDisputeProvider? adminDisputeProvider;
 
   /// Manage User repository (EP-02-11). Optional for testability.
   final ManageUserRepository? manageUserRepository;
@@ -625,6 +635,14 @@ class _HivorrAppState extends State<HivorrApp> {
         if (widget.adminReviewProvider != null)
           ChangeNotifierProvider<AdminReviewProvider>.value(
             value: widget.adminReviewProvider!,
+          ),
+        if (widget.adminDisputeRepository != null)
+          Provider<AdminDisputeRepository>.value(
+            value: widget.adminDisputeRepository!,
+          ),
+        if (widget.adminDisputeProvider != null)
+          ChangeNotifierProvider<AdminDisputeProvider>.value(
+            value: widget.adminDisputeProvider!,
           ),
         if (widget.manageUserRepository != null)
           Provider<ManageUserRepository>.value(

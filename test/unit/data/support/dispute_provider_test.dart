@@ -145,7 +145,7 @@ void main() {
       expect(provider.evidence, hasLength(1));
       expect(provider.resolution, isNotNull);
       expect(provider.resolution!.resolutionType, 'release_to_payee');
-      expect(repo.getCaseCallCount, 1);
+      expect(repo.getServiceCaseCallCount, 1);
       provider.dispose();
     });
 
@@ -171,10 +171,10 @@ void main() {
       );
       final provider = build(repo: repo);
       await provider.select('dispute-1');
-      final callsAfterFirst = repo.getCaseCallCount;
+      final callsAfterFirst = repo.getServiceCaseCallCount;
 
       await provider.select('dispute-1');
-      expect(repo.getCaseCallCount, callsAfterFirst);
+      expect(repo.getServiceCaseCallCount, callsAfterFirst);
       provider.dispose();
     });
   });
@@ -184,7 +184,7 @@ void main() {
       final repo = FakeDisputeRepository();
       final provider = build(repo: repo);
       await provider.refresh();
-      expect(repo.getCaseCallCount, 0);
+      expect(repo.getServiceCaseCallCount, 0);
       provider.dispose();
     });
 
@@ -194,10 +194,10 @@ void main() {
       );
       final provider = build(repo: repo);
       await provider.select('dispute-1');
-      final callsAfterSelect = repo.getCaseCallCount;
+      final callsAfterSelect = repo.getServiceCaseCallCount;
 
       await provider.refresh();
-      expect(repo.getCaseCallCount, callsAfterSelect + 1);
+      expect(repo.getServiceCaseCallCount, callsAfterSelect + 1);
       provider.dispose();
     });
 
@@ -209,13 +209,13 @@ void main() {
         );
         final provider = build(repo: repo);
         await provider.select('dispute-1');
-        final callsAfterSelect = repo.getCaseCallCount;
+        final callsAfterSelect = repo.getServiceCaseCallCount;
 
         WidgetsBinding.instance.handleAppLifecycleStateChanged(
           AppLifecycleState.paused,
         );
         await provider.refresh();
-        expect(repo.getCaseCallCount, callsAfterSelect);
+        expect(repo.getServiceCaseCallCount, callsAfterSelect);
 
         WidgetsBinding.instance.handleAppLifecycleStateChanged(
           AppLifecycleState.resumed,
@@ -431,7 +431,7 @@ void main() {
   });
 }
 
-/// [FakeDisputeRepository] whose [getCase] can be stalled by a [gate]
+/// [FakeDisputeRepository] whose service-case read can be stalled by a [gate]
 /// [Completer], letting tests observe in-flight provider refresh state.
 class _PausableRepo extends FakeDisputeRepository {
   _PausableRepo({required DisputeCaseDetail detail}) : super(detail: detail);
@@ -439,8 +439,8 @@ class _PausableRepo extends FakeDisputeRepository {
   Completer<void>? gate;
 
   @override
-  Future<DisputeCaseDetail> getCase(String caseId) async {
+  Future<DisputeCaseDetail> getServiceCase(String caseId) async {
     if (gate != null) await gate!.future;
-    return super.getCase(caseId);
+    return super.getServiceCase(caseId);
   }
 }

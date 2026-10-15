@@ -62,6 +62,13 @@ abstract final class RoutePaths {
   /// Admin review detail (EP-02-11, document viewer + audit trail).
   static const String adminReviewDetail = '/admin/review-queue/:submissionId';
 
+  /// Admin dispute queue (R3 follow-up, read-only).
+  static const String adminDisputes = '/admin/disputes';
+
+  /// Admin dispute detail (R3 follow-up, read-only).
+  /// Parameter: `caseId` (authoritative `dispute_cases.id`).
+  static const String adminDisputeDetail = '/admin/disputes/:caseId';
+
   /// Manage User directory (EP-02-11 admin console). All Users.
   static const String adminManageUsers = '/admin/users';
 
@@ -128,13 +135,22 @@ abstract final class RoutePaths {
   static String escrowDetailFor(String id) =>
       '/finance/escrow/${Uri.encodeComponent(id)}';
 
-  /// Dispute screens (EP-02-17).
+  /// Dispute screens (EP-02-17, extended EP-03-17).
   static const String disputes = '/support/disputes';
   static const String disputesNew = '/support/disputes/file/:escrowId';
+
+  /// Contract-scoped dispute filing (EP-03-17). Parameter: `contractId`
+  /// (authoritative `service_contracts.id` — the server resolves the escrow).
+  static const String disputesFileForContractRoute =
+      '/support/disputes/file-by-contract/:contractId';
 
   /// Builds a URL-encoded dispute-filing path for an escrow/contract id.
   static String disputesFile(String escrowId) =>
       '/support/disputes/file/${Uri.encodeComponent(escrowId)}';
+
+  /// Builds a URL-encoded contract-scoped dispute-filing path (EP-03-17).
+  static String disputesFileForContract(String contractId) =>
+      '/support/disputes/file-by-contract/${Uri.encodeComponent(contractId)}';
   static const String disputeDetail = '/support/disputes/:id';
   static const String disputesEvidenceNew =
       '/support/disputes/:caseId/evidence/new';

@@ -7,7 +7,9 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/contract_milestone.dart';
+import 'package:hivorr/data/entities/dispute_case.dart';
 import 'package:hivorr/data/entities/service_contract.dart';
+import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/earnings_provider.dart';
 import 'package:hivorr/data/providers/escrow_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
@@ -217,6 +219,40 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     }
   }
 
+  /// Routes a frozen-contract banner tap to the open dispute case when one
+  /// exists, else falls back to contract-scoped filing (which surfaces the
+  /// already-disputed conflict with guidance). Best-effort: any lookup
+  /// failure degrades to the filing route — the server remains the authority
+  /// for the conflict (DoD §2.3).
+  Future<void> _openDisputeTarget(ServiceContract contract) async {
+    try {
+      final DisputeProvider disputes = context.read<DisputeProvider>();
+      final List<DisputeCase> cases = await disputes.listForContract(
+        contract.id,
+      );
+      DisputeCase? open;
+      for (final DisputeCase c in cases) {
+        if (c.status == 'open' || c.status == 'under_review') {
+          open = c;
+          break;
+        }
+      }
+      if (!mounted) return;
+      if (open != null) {
+        unawaited(
+          context.push(RoutePaths.disputeDetail.replaceAll(':id', open.id)),
+        );
+        return;
+      }
+    } on ProviderNotFoundException {
+      // Dispute slice absent (isolated harness) — fall through to filing.
+    } on ApiException {
+      // Lookup failed — fall through to filing with server-side conflict copy.
+    }
+    if (!mounted) return;
+    unawaited(context.push(RoutePaths.disputesFileForContract(contract.id)));
+  }
+
   Future<void> _confirmCancel(ServiceContract contract) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -310,7 +346,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                             m,
                           ),
                     onFileDispute: () => context.push(
-                      RoutePaths.disputesFile(provider.selected!.id),
+                      RoutePaths.disputesFileForContract(provider.selected!.id),
+                    ),
+                    onViewDispute: () => unawaited(
+                      _openDisputeTarget(provider.selected!),
                     ),
                   );
                 case ServiceContractLoadState.loaded:
@@ -373,8 +412,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                               : (ContractMilestone m) =>
                                   _runRelease(contract, m),
                           onFileDispute: () => context.push(
-                            RoutePaths.disputesFile(contract.id),
+                            RoutePaths.disputesFileForContract(contract.id),
                           ),
+                          onViewDispute: () =>
+                              unawaited(_openDisputeTarget(contract)),
                         ),
                       ],
                     ),
@@ -415,6 +456,7 @@ class _DetailBody extends StatelessWidget {
     required this.onRevision,
     required this.onClose,
     required this.onFileDispute,
+    required this.onViewDispute,
     this.onVerifyAndRelease,
   });
 
@@ -429,6 +471,10 @@ class _DetailBody extends StatelessWidget {
   final ValueChanged<ContractMilestone> onRevision;
   final VoidCallback onClose;
   final VoidCallback onFileDispute;
+
+  /// Routes a frozen banner tap to the open dispute case (falls back to
+  /// filing when no open case resolves).
+  final VoidCallback onViewDispute;
 
   /// Combined verify-then-release action (EP-03-11 orchestrator). `null`
   /// when the orchestrator is absent or the row is not release-eligible —
@@ -521,7 +567,7 @@ class _DetailBody extends StatelessWidget {
         ),
         const SizedBox(height: HivorrSpacing.md),
         if (disputed) ...[
-          EscrowDisputeBanner(onViewDispute: onFileDispute),
+          EscrowDisputeBanner(onViewDispute: onViewDispute),
           const SizedBox(height: HivorrSpacing.md),
         ],
         MilestoneListCard(

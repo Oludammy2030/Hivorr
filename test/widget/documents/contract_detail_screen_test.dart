@@ -1,18 +1,26 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/data/entities/service_contract.dart';
+import 'package:hivorr/data/providers/dispute_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/systems/documents/screens/contract_detail_screen.dart';
 import 'package:hivorr/systems/documents/services/contract_service.dart';
 import 'package:hivorr/systems/documents/widgets/contract_status_badge.dart';
 import 'package:hivorr/systems/finance/widgets/escrow_dispute_banner.dart';
 import 'package:hivorr/systems/finance/widgets/milestone_list_card.dart';
+import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
+import 'package:hivorr/systems/support/screens/dispute_filing_screen.dart';
+import 'package:hivorr/systems/support/services/dispute_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import '../../support/fakes/fake_auth.dart';
 import '../../support/fakes/fake_service_contract.dart';
+import '../../support/fakes/support/fake_dispute_repository.dart';
 import '../../support/harnesses/widget_harness.dart';
 
 void main() {
@@ -164,6 +172,171 @@ void main() {
 
       expect(find.byType(EscrowDisputeBanner), findsOneWidget);
       expect(find.text('Accept offer'), findsNothing);
+    });
+
+    testWidgets('disputed banner routes to the open dispute case', (
+      WidgetTester tester,
+    ) async {
+      final contracts = providerWith(
+        FakeServiceContractRepository(
+          seed: [
+            FakeServiceContractRepository.contract(
+              id: 'c9',
+              status: 'disputed',
+            ),
+          ],
+        ),
+      );
+      addTearDown(contracts.dispose);
+      final auth = authedAs('client-1');
+      addTearDown(auth.dispose);
+      final disputes = DisputeProvider(
+        service: DisputeService(
+          repository: FakeDisputeRepository(
+            cases: [
+              seedDisputeCaseEntity(
+                id: 'd-open',
+                escrowId: '',
+                contractId: 'c9',
+                status: 'open',
+              ),
+            ],
+          ),
+        ),
+      );
+      addTearDown(disputes.dispose);
+      final GoRouter router = GoRouter(
+        initialLocation: '/contracts/c9',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/contracts/:id',
+            builder: (BuildContext context, GoRouterState state) =>
+                ContractDetailScreen(
+                  contractId: state.pathParameters['id'] ?? '',
+                ),
+          ),
+          GoRoute(
+            path: '/support/disputes/:id',
+            builder: (BuildContext context, GoRouterState state) =>
+                DisputeDetailScreen(
+                  caseId: state.pathParameters['id'] ?? '',
+                ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<ServiceContractProvider>.value(
+              value: contracts,
+            ),
+            Provider<ContractService>.value(
+              value: ContractService(
+                repository: FakeServiceContractRepository(
+                  seed: const <ServiceContract>[],
+                ),
+              ),
+            ),
+            ChangeNotifierProvider<AuthProvider>.value(value: auth),
+            ChangeNotifierProvider<DisputeProvider>.value(value: disputes),
+          ],
+          child: MaterialApp.router(
+            routerConfig: router,
+            theme: AppTheme.lightTheme,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('View dispute'), findsOneWidget);
+      await tester.tap(find.text('View dispute'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, 'Dispute'), findsOneWidget);
+    });
+
+    testWidgets('disputed banner falls back to filing without an open case', (
+      WidgetTester tester,
+    ) async {
+      final contracts = providerWith(
+        FakeServiceContractRepository(
+          seed: [
+            FakeServiceContractRepository.contract(
+              id: 'c9',
+              status: 'disputed',
+            ),
+          ],
+        ),
+      );
+      addTearDown(contracts.dispose);
+      final auth = authedAs('client-1');
+      addTearDown(auth.dispose);
+      final disputes = DisputeProvider(
+        service: DisputeService(
+          repository: FakeDisputeRepository(
+            cases: [
+              seedDisputeCaseEntity(
+                id: 'd-old',
+                escrowId: '',
+                contractId: 'c9',
+                status: 'withdrawn',
+              ),
+            ],
+          ),
+        ),
+      );
+      addTearDown(disputes.dispose);
+      final GoRouter router = GoRouter(
+        initialLocation: '/contracts/c9',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/contracts/:id',
+            builder: (BuildContext context, GoRouterState state) =>
+                ContractDetailScreen(
+                  contractId: state.pathParameters['id'] ?? '',
+                ),
+          ),
+          GoRoute(
+            path: '/support/disputes/file-by-contract/:contractId',
+            builder: (BuildContext context, GoRouterState state) =>
+                DisputeFilingScreen(
+                  contractId: state.pathParameters['contractId'] ?? '',
+                ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<ServiceContractProvider>.value(
+              value: contracts,
+            ),
+            Provider<ContractService>.value(
+              value: ContractService(
+                repository: FakeServiceContractRepository(
+                  seed: const <ServiceContract>[],
+                ),
+              ),
+            ),
+            ChangeNotifierProvider<AuthProvider>.value(value: auth),
+            ChangeNotifierProvider<DisputeProvider>.value(value: disputes),
+          ],
+          child: MaterialApp.router(
+            routerConfig: router,
+            theme: AppTheme.lightTheme,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('View dispute'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, 'File dispute'), findsOneWidget);
     });
 
     testWidgets('unknown contract renders not-found empty state', (

@@ -7,12 +7,17 @@ import 'package:hivorr/data/models/dispute_case_dto.dart';
 import 'package:hivorr/data/models/dispute_evidence_dto.dart';
 import 'package:hivorr/data/models/dispute_list_envelope_dto.dart';
 import 'package:hivorr/data/models/dispute_resolution_dto.dart';
+import 'package:hivorr/data/models/service_dispute_contract_summary_dto.dart';
+import 'package:hivorr/data/models/service_dispute_detail_envelope_dto.dart';
 
-/// In-memory [DisputeRemoteDataSource] for repository tests (EP-02-17).
+/// In-memory [DisputeRemoteDataSource] for repository tests (EP-02-17,
+/// extended EP-03-17).
 ///
 /// Serves scripted case/details keyed by id with call counters. The 5-RPC
 /// surface is mirrored exactly — `listDisputes`, `getCase`, `fileDispute`,
-/// `submitEvidence`, `withdrawDispute` — with **no resolve method** (the
+/// `submitEvidence`, `withdrawDispute` — plus the three contract-scoped
+/// EP-03-17 RPCs (`fileServiceDispute`, `getServiceCase`,
+/// `listDisputesForContract`) — with **no resolve method** (the
 /// server-granted `dispute_resolve` is absent from the client contract).
 class FakeDisputeRemoteDataSource implements DisputeRemoteDataSource {
   FakeDisputeRemoteDataSource({
@@ -43,6 +48,9 @@ class FakeDisputeRemoteDataSource implements DisputeRemoteDataSource {
   int fileCallCount = 0;
   int submitEvidenceCallCount = 0;
   int withdrawCallCount = 0;
+  int fileServiceCallCount = 0;
+  int getServiceCaseCallCount = 0;
+  int listForContractCallCount = 0;
 
   /// The last `status` passed to [listDisputes].
   String? lastStatusFilter;
@@ -58,6 +66,7 @@ class FakeDisputeRemoteDataSource implements DisputeRemoteDataSource {
 
   /// The last fields passed to [fileDispute] for assertion.
   String? lastEscrowId;
+  String? lastContractId;
   String? lastDisputeType;
   String? lastReason;
   String? lastDesiredOutcome;
@@ -162,11 +171,74 @@ class FakeDisputeRemoteDataSource implements DisputeRemoteDataSource {
       status: 'withdrawn',
     );
   }
+
+  @override
+  Future<DisputeCaseDto> fileServiceDispute({
+    required String contractId,
+    required String disputeType,
+    required String reason,
+    String? desiredOutcome,
+    String priority = 'medium',
+  }) async {
+    fileServiceCallCount++;
+    lastContractId = contractId;
+    lastDisputeType = disputeType;
+    lastReason = reason;
+    lastDesiredOutcome = desiredOutcome;
+    lastPriority = priority;
+    if (nextError != null) throw nextError!;
+    return seedDisputeCaseDto(
+      id: fileId,
+      escrowId: '',
+      contractId: contractId,
+      disputeType: disputeType,
+      reason: reason,
+      desiredOutcome: desiredOutcome,
+      priority: priority,
+      status: 'open',
+    );
+  }
+
+  @override
+  Future<ServiceDisputeDetailEnvelopeDto> getServiceCase(String caseId) async {
+    getServiceCaseCallCount++;
+    lastCaseId = caseId;
+    if (nextError != null) throw nextError!;
+    final DisputeCaseDetailEnvelopeDto? detail = _details[caseId];
+    if (detail == null) {
+      throw const ApiException(
+        kind: ApiExceptionKind.notFound,
+        message: 'Dispute not found.',
+        code: 'PLT004',
+      );
+    }
+    return ServiceDisputeDetailEnvelopeDto.fromBase(detail);
+  }
+
+  @override
+  Future<DisputeListEnvelopeDto> listDisputesForContract(
+    String contractId, {
+    String? status,
+  }) async {
+    listForContractCallCount++;
+    lastContractId = contractId;
+    lastStatusFilter = status;
+    if (nextError != null) throw nextError!;
+    final List<DisputeCaseDto> filtered = _list
+        .where(
+          (DisputeCaseDto c) =>
+              c.contractId == contractId &&
+              (status == null || c.status == status),
+        )
+        .toList();
+    return DisputeListEnvelopeDto(disputes: filtered);
+  }
 }
 
 DisputeCaseDto seedDisputeCaseDto({
   String id = 'dispute-1',
   String escrowId = 'escrow-1',
+  String? contractId,
   String filerEntityId = 'entity-filer',
   String counterpartyEntityId = 'entity-counterparty',
   String disputeType = 'service_quality',
@@ -178,6 +250,7 @@ DisputeCaseDto seedDisputeCaseDto({
 }) => DisputeCaseDto(
   id: id,
   escrowId: escrowId,
+  contractId: contractId,
   filerEntityId: filerEntityId,
   counterpartyEntityId: counterpartyEntityId,
   disputeType: disputeType,
@@ -243,4 +316,24 @@ DisputeCaseDetailEnvelopeDto seedDisputeDetailDto({
   caseDto: caseDto ?? seedDisputeCaseDto(),
   evidence: evidence,
   resolution: resolution,
+);
+
+ServiceDisputeDetailEnvelopeDto seedServiceDisputeDetailDto({
+  DisputeCaseDto? caseDto,
+  List<DisputeEvidenceDto> evidence = const <DisputeEvidenceDto>[],
+  DisputeResolutionDto? resolution,
+  ServiceDisputeContractSummaryDto? contract,
+}) => ServiceDisputeDetailEnvelopeDto(
+  caseDto: caseDto ?? seedDisputeCaseDto(contractId: 'contract-1'),
+  evidence: evidence,
+  resolution: resolution,
+  contract:
+      contract ??
+      const ServiceDisputeContractSummaryDto(
+        id: 'contract-1',
+        status: 'disputed',
+        totalAmount: 20000,
+        currencyCode: 'NGN',
+        serviceListingId: 'listing-1',
+      ),
 );

@@ -159,6 +159,14 @@ class _SuperAdminSidebarState extends State<SuperAdminSidebar> {
                 ),
                 const SizedBox(height: 2),
                 _NavItem(
+                  icon: Icons.gavel_outlined,
+                  activeIcon: Icons.gavel,
+                  label: 'Disputes',
+                  selected: widget.location.startsWith('/admin/disputes'),
+                  onTap: () => _go(context, RoutePaths.adminDisputes),
+                ),
+                const SizedBox(height: 2),
+                _NavItem(
                   icon: Icons.settings_outlined,
                   activeIcon: Icons.settings,
                   label: 'Settings',

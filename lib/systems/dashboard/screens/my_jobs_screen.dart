@@ -942,7 +942,7 @@ class _EngagementRow extends StatelessWidget {
                 fill: warningFill,
                 foreground: warningForeground,
                 onTap: () =>
-                    context.go(RoutePaths.disputesFile(contractId)),
+                    context.go(RoutePaths.disputesFileForContract(contractId)),
               ),
           ],
         ),

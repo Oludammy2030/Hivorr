@@ -28,6 +28,10 @@ class _HangingDisputeRepository extends FakeDisputeRepository {
   @override
   Future<DisputeCaseDetail> getCase(String caseId) =>
       Completer<DisputeCaseDetail>().future;
+
+  @override
+  Future<DisputeCaseDetail> getServiceCase(String caseId) =>
+      Completer<DisputeCaseDetail>().future;
 }
 
 DisputeCaseDetail detail({
