@@ -171,6 +171,67 @@ class DisputeService {
         return case_;
       });
 
+  /// Files a service-engagement dispute against a contract (EP-03-17).
+  ///
+  /// Returns the authoritative detail (case + joined contract summary) after
+  /// the server applies the contract freeze and, when funded, the escrow hold.
+  Future<DisputeCaseDetail> fileServiceDispute({
+    required String contractId,
+    required String disputeType,
+    required String reason,
+    String? desiredOutcome,
+    String priority = 'medium',
+  }) => _tracedAndLogged('support.dispute.file-service', () async {
+    _logger?.info('Filing service dispute', <String, Object?>{
+      'contractId': _redactor.redact(contractId),
+      'disputeType': disputeType,
+      'desiredOutcome': desiredOutcome,
+      'priority': priority,
+    });
+    final detail = await _repository.fileServiceDispute(
+      contractId: contractId,
+      disputeType: disputeType,
+      reason: reason,
+      desiredOutcome: desiredOutcome,
+      priority: priority,
+    );
+    _logger?.info('Service dispute filed — contract frozen', <String, Object?>{
+      'caseId': _redactor.redact(detail.disputeCase.id),
+      'status': detail.disputeCase.status,
+    });
+    return detail;
+  });
+
+  /// Fetches a service-engagement case with its joined contract summary.
+  Future<DisputeCaseDetail> getServiceCase(String caseId) =>
+      _tracedAndLogged('support.dispute.get-service', () async {
+        final detail = await _repository.getServiceCase(caseId);
+        _logger?.info('Service dispute detail fetched', <String, Object?>{
+          'caseId': _redactor.redact(detail.disputeCase.id),
+          'status': detail.disputeCase.status,
+          'evidenceCount': detail.evidence.length,
+        });
+        return detail;
+      });
+
+  /// Lists dispute cases anchored to one service contract.
+  Future<List<DisputeCase>> listDisputesForContract(
+    String contractId, {
+    String? status,
+  }) =>
+      _tracedAndLogged('support.dispute.list-service', () async {
+        final cases = await _repository.listDisputesForContract(
+          contractId,
+          status: status,
+        );
+        _logger?.info('Service dispute list fetched', <String, Object?>{
+          'contractId': _redactor.redact(contractId),
+          'statusFilter': status,
+          'disputeCount': cases.length,
+        });
+        return cases;
+      });
+
   /// Wraps [action] in a `support.dispute.*` [PerformanceTracer] span and
   /// surfaces failures via the logger with redacted context.
   Future<T> _tracedAndLogged<T>(

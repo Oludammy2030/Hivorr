@@ -97,6 +97,27 @@ void main() {
           'resolution': resolutions[caseId],
         });
       },
+      // EP-03-17: provider selections read through the contract-scoped path,
+      // which returns the same envelope plus a null contract join for
+      // escrow-only rows (no service_contracts fixture in this server).
+      'service_dispute_get': (Map<String, dynamic> body) {
+        final String caseId = body['p_case_id'] as String;
+        final Map<String, dynamic>? row = cases[caseId];
+        if (row == null) {
+          return <String, dynamic>{
+            'success': false,
+            'code': 'PLT004',
+            'message': 'not found',
+            'data': null,
+          };
+        }
+        return ok(<String, dynamic>{
+          'case': row,
+          'evidence': evidenceByCase[caseId] ?? <Map<String, dynamic>>[],
+          'resolution': resolutions[caseId],
+          'contract': null,
+        });
+      },
       'dispute_file': (Map<String, dynamic> body) {
         fileRpcCount++;
         final String caseId = 'dispute-$fileRpcCount';

@@ -88,6 +88,8 @@ class BootstrapResult {
     this.portfolioService,
     this.adminReviewRepository,
     this.adminReviewProvider,
+    this.adminDisputeRepository,
+    this.adminDisputeProvider,
     this.manageUserRepository,
     this.manageUserProvider,
     this.adminConfigProvider,
@@ -262,6 +264,12 @@ class BootstrapResult {
   /// (EP-02-11).
   final AdminReviewProvider? adminReviewProvider;
 
+  /// Admin dispute-queue repository (R3 follow-up). Optional for testability.
+  final AdminDisputeRepository? adminDisputeRepository;
+
+  /// Admin dispute-queue provider surfaced to the widget tree (R3 follow-up).
+  final AdminDisputeProvider? adminDisputeProvider;
+
   /// Manage User repository (EP-02-11). Optional for testability.
   final ManageUserRepository? manageUserRepository;
 
@@ -384,8 +392,6 @@ class AppBootstrap {
       ),
       historyReadEnabled: appConfig.conversionHistoryReadEnabled,
     );
-    final ({DisputeRepository repository, DisputeProvider provider}) dispute =
-        registerDisputeLayer(apiLayer);
     // EP-03-10 contract engagement slice (offer/accept/verify/close over the
     // EP-03-02 RPCs + `service-listing-media` evidence uploads). Wired for the
     // contract screens, which resolve the provider/service from the tree.
@@ -402,6 +408,14 @@ class AppBootstrap {
         tokenProvider: apiLayer.tokenProvider,
       ),
     );
+    // Dispute slice (EP-02-17 + EP-03-17). Registered after the contract slice
+    // so post-write engagement refreshes (DoD §2.1) can re-read the linked
+    // contract without waiting for the next contract-screen visit.
+    final ({DisputeRepository repository, DisputeProvider provider}) dispute =
+        registerDisputeLayer(
+          apiLayer,
+          contractProvider: serviceContract.provider,
+        );
     // EP-03-14 scheduling slice (availability + appointments over the
     // EP-03-05 RPCs; reads are RLS participant-scoped). Screens resolve the
     // provider/service from the tree; without this the scheduling routes
@@ -455,6 +469,8 @@ class AppBootstrap {
     portfolio = registerPortfolioLayer(apiLayer: apiLayer);
     final ({AdminReviewRepository repository, AdminReviewProvider provider})
     adminReview = registerAdminReviewLayer(apiLayer);
+    final ({AdminDisputeRepository repository, AdminDisputeProvider provider})
+    adminDisputes = registerAdminDisputeLayer(apiLayer);
     final ({ManageUserRepository repository, ManageUserProvider provider})
     manageUser = registerManageUserLayer(apiLayer);
     final AdminConfigProvider adminConfig = AdminConfigProvider(
@@ -516,6 +532,8 @@ class AppBootstrap {
       portfolioService: portfolio.service,
       adminReviewRepository: adminReview.repository,
       adminReviewProvider: adminReview.provider,
+      adminDisputeRepository: adminDisputes.repository,
+      adminDisputeProvider: adminDisputes.provider,
       manageUserRepository: manageUser.repository,
       manageUserProvider: manageUser.provider,
       adminConfigProvider: adminConfig,

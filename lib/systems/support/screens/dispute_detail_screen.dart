@@ -17,6 +17,7 @@ import 'package:hivorr/shared/widgets/hivorr_error_state.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
 import 'package:hivorr/systems/support/helpers/dispute_id_ref.dart';
 import 'package:hivorr/systems/support/models/dispute_status.dart';
+import 'package:hivorr/systems/support/widgets/dispute_contract_card.dart';
 import 'package:hivorr/systems/support/widgets/dispute_status_badge.dart';
 import 'package:hivorr/systems/support/widgets/evidence_attachment_card.dart';
 import 'package:provider/provider.dart';
@@ -150,6 +151,25 @@ class _DisputeDetailScreenState extends State<DisputeDetailScreen>
               padding: const EdgeInsets.all(HivorrSpacing.lg),
               children: <Widget>[
                 _HeaderCard(case_: case_, onViewEscrow: widget.onViewEscrow),
+                if (provider.contractSummary != null) ...[
+                  const SizedBox(height: HivorrSpacing.md),
+                  DisputeContractCard(
+                    summary: provider.contractSummary!,
+                    onViewContract: () => context.push(
+                      RoutePaths.contractDetail(
+                        provider.contractSummary!.id,
+                      ),
+                    ),
+                    onViewEscrow:
+                        provider.contractSummary!.isFunded
+                            ? () => context.push(
+                              RoutePaths.escrowDetailFor(
+                                provider.contractSummary!.escrowId!,
+                              ),
+                            )
+                            : null,
+                  ),
+                ],
                 const SizedBox(height: HivorrSpacing.md),
                 _ReasonCard(reason: case_.reason),
                 const SizedBox(height: HivorrSpacing.md),
@@ -223,17 +243,23 @@ class _HeaderCard extends StatelessWidget {
           const SizedBox(height: HivorrSpacing.sm),
           Row(
             children: <Widget>[
-              Text(
-                'Case ${idRefSuffix(case_.id)}',
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  'Case ${idRefSuffix(case_.id)}',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: HivorrSpacing.md),
-              Text(
-                'Filed ${HivorrFormatters.dateTime(case_.filedAt)}',
-                style: context.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
+              Flexible(
+                child: Text(
+                  'Filed ${HivorrFormatters.dateTime(case_.filedAt)}',
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -307,10 +333,13 @@ class _MetaChip extends StatelessWidget {
         children: <Widget>[
           Icon(icon, size: 14, color: colors.onSurfaceVariant),
           const SizedBox(width: HivorrSpacing.xs),
-          Text(
-            label,
-            style: context.textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
+          Flexible(
+            child: Text(
+              label,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -368,9 +397,12 @@ class _EvidenceSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text(
-              'Evidence (${evidence.length})',
-              style: context.textTheme.titleSmall,
+            Expanded(
+              child: Text(
+                'Evidence (${evidence.length})',
+                style: context.textTheme.titleSmall,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             if (canSubmit)
               HivorrButton(

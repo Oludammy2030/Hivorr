@@ -7,6 +7,7 @@ import 'package:hivorr/data/models/dispute_case_dto.dart';
 import 'package:hivorr/data/models/dispute_evidence_dto.dart';
 import 'package:hivorr/data/models/dispute_list_envelope_dto.dart';
 import 'package:hivorr/data/models/dispute_resolution_dto.dart';
+import 'package:hivorr/data/models/service_dispute_detail_envelope_dto.dart';
 
 /// Transformations between the dispute transport DTOs and the pure-Dart domain
 /// entities (EP-02-17 §5.3/§5.4).
@@ -16,22 +17,31 @@ import 'package:hivorr/data/models/dispute_resolution_dto.dart';
 /// Missing lists degrade to `[]` and a missing resolution to `null`.
 abstract final class DisputeMapper {
   /// Maps a `dispute_cases` DTO into a domain [DisputeCase].
-  static DisputeCase caseToEntity(DisputeCaseDto dto) => DisputeCase(
-    id: dto.id,
-    escrowId: dto.escrowId,
-    filerEntityId: dto.filerEntityId,
-    counterpartyEntityId: dto.counterpartyEntityId,
-    disputeType: dto.disputeType,
-    status: dto.status,
-    reason: dto.reason,
-    desiredOutcome: dto.desiredOutcome,
-    priority: dto.priority,
-    filedAt: dto.filedAt,
-    resolvedAt: dto.resolvedAt,
-    closedAt: dto.closedAt,
-    withdrawnAt: dto.withdrawnAt,
-    metadata: dto.metadata,
-  );
+  ///
+  /// `contract_id` (EP-03-17) degrades to `null` when absent, null, or blank
+  /// so legacy escrow-only rows map without throwing.
+  static DisputeCase caseToEntity(DisputeCaseDto dto) {
+    final String? rawContract = dto.contractId;
+    final String? contractId =
+        rawContract == null || rawContract.trim().isEmpty ? null : rawContract;
+    return DisputeCase(
+      id: dto.id,
+      escrowId: dto.escrowId,
+      contractId: contractId,
+      filerEntityId: dto.filerEntityId,
+      counterpartyEntityId: dto.counterpartyEntityId,
+      disputeType: dto.disputeType,
+      status: dto.status,
+      reason: dto.reason,
+      desiredOutcome: dto.desiredOutcome,
+      priority: dto.priority,
+      filedAt: dto.filedAt,
+      resolvedAt: dto.resolvedAt,
+      closedAt: dto.closedAt,
+      withdrawnAt: dto.withdrawnAt,
+      metadata: dto.metadata,
+    );
+  }
 
   /// Maps a `dispute_evidence` DTO into a domain [DisputeEvidence].
   static DisputeEvidence evidenceToEntity(DisputeEvidenceDto dto) =>
@@ -75,5 +85,18 @@ abstract final class DisputeMapper {
     resolution: dto.resolution == null
         ? null
         : resolutionToEntity(dto.resolution!),
+  );
+
+  /// Maps the `service_dispute_get` envelope into a [DisputeCaseDetail],
+  /// including the joined service-engagement summary when present.
+  static DisputeCaseDetail serviceDetailToEntity(
+    ServiceDisputeDetailEnvelopeDto dto,
+  ) => DisputeCaseDetail(
+    disputeCase: caseToEntity(dto.caseDto),
+    evidence: dto.evidence.map(evidenceToEntity).toList(growable: false),
+    resolution: dto.resolution == null
+        ? null
+        : resolutionToEntity(dto.resolution!),
+    contractSummary: dto.contract?.toEntity(),
   );
 }

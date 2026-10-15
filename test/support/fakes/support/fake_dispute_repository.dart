@@ -4,14 +4,18 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/entities/dispute_case.dart';
 import 'package:hivorr/data/entities/dispute_evidence.dart';
 import 'package:hivorr/data/entities/dispute_resolution.dart';
+import 'package:hivorr/data/entities/service_dispute_contract_summary.dart';
 import 'package:hivorr/data/models/dispute_case_detail.dart';
 import 'package:hivorr/data/repositories/dispute_repository.dart';
 
-/// In-memory [DisputeRepository] for provider/widget tests (EP-02-17).
+/// In-memory [DisputeRepository] for provider/widget tests (EP-02-17,
+/// extended EP-03-17).
 ///
 /// Serves scripted cases/details with call counters. Mirrors the real
-/// repository's 5-method surface (`listDisputes`, `getCase`, `fileDispute`,
-/// `submitEvidence`, `withdrawDispute`) — with **no resolve method**.
+/// repository's 8-method surface (`listDisputes`, `getCase`, `fileDispute`,
+/// `submitEvidence`, `withdrawDispute`, plus the EP-03-17 contract-scoped
+/// `fileServiceDispute`, `getServiceCase`, `listDisputesForContract`) — with
+/// **no resolve method**.
 class FakeDisputeRepository implements DisputeRepository {
   FakeDisputeRepository({
     List<DisputeCase> cases = const <DisputeCase>[],
@@ -28,12 +32,18 @@ class FakeDisputeRepository implements DisputeRepository {
   int fileCallCount = 0;
   int submitEvidenceCallCount = 0;
   int withdrawCallCount = 0;
+  int fileServiceCallCount = 0;
+  int getServiceCaseCallCount = 0;
+  int listForContractCallCount = 0;
 
   /// The last `status` passed to [listDisputes].
   String? lastStatusFilter;
 
   /// The last case id passed to [getCase]/[submitEvidence]/[withdrawDispute].
   String? lastCaseId;
+
+  /// The last contract id passed to the EP-03-17 contract-scoped methods.
+  String? lastContractId;
 
   /// The last fields passed to [fileDispute].
   String? lastEscrowId;
@@ -146,12 +156,61 @@ class FakeDisputeRepository implements DisputeRepository {
       withdrawnAt: DateTime.fromMillisecondsSinceEpoch(3000),
     );
   }
+
+  @override
+  Future<DisputeCaseDetail> fileServiceDispute({
+    required String contractId,
+    required String disputeType,
+    required String reason,
+    String? desiredOutcome,
+    String priority = 'medium',
+  }) async {
+    fileServiceCallCount++;
+    lastContractId = contractId;
+    lastDisputeType = disputeType;
+    lastReason = reason;
+    lastDesiredOutcome = desiredOutcome;
+    lastPriority = priority;
+    if (nextError != null) throw nextError!;
+    return seedDisputeDetailEntity(
+      id: 'dispute-service-1',
+      contractId: contractId,
+      status: 'open',
+    );
+  }
+
+  @override
+  Future<DisputeCaseDetail> getServiceCase(String caseId) async {
+    getServiceCaseCallCount++;
+    lastCaseId = caseId;
+    if (nextError != null) throw nextError!;
+    return _detail ?? seedDisputeDetailEntity(id: caseId);
+  }
+
+  @override
+  Future<List<DisputeCase>> listDisputesForContract(
+    String contractId, {
+    String? status,
+  }) async {
+    listForContractCallCount++;
+    lastContractId = contractId;
+    lastStatusFilter = status;
+    if (nextError != null) throw nextError!;
+    return _cases
+        .where(
+          (DisputeCase c) =>
+              c.contractId == contractId &&
+              (status == null || c.status == status),
+        )
+        .toList();
+  }
 }
 
-/// Fixture builders shared across the dispute tests (EP-02-17).
+/// Fixture builders shared across the dispute tests (EP-02-17, EP-03-17).
 DisputeCase seedDisputeCaseEntity({
   String id = 'dispute-1',
   String escrowId = 'escrow-1',
+  String? contractId,
   String filerEntityId = 'entity-filer',
   String counterpartyEntityId = 'entity-counterparty',
   String disputeType = 'service_quality',
@@ -167,6 +226,7 @@ DisputeCase seedDisputeCaseEntity({
 }) => DisputeCase(
   id: id,
   escrowId: escrowId,
+  contractId: contractId,
   filerEntityId: filerEntityId,
   counterpartyEntityId: counterpartyEntityId,
   disputeType: disputeType,
@@ -230,10 +290,17 @@ DisputeResolution seedDisputeResolutionEntity({
 DisputeCaseDetail seedDisputeDetailEntity({
   String id = 'dispute-1',
   String status = 'open',
+  String? contractId,
   List<DisputeEvidence> evidence = const <DisputeEvidence>[],
   DisputeResolution? resolution,
+  ServiceDisputeContractSummary? contractSummary,
 }) => DisputeCaseDetail(
-  disputeCase: seedDisputeCaseEntity(id: id, status: status),
+  disputeCase: seedDisputeCaseEntity(
+    id: id,
+    status: status,
+    contractId: contractId,
+  ),
   evidence: evidence,
   resolution: resolution,
+  contractSummary: contractSummary,
 );

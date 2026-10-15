@@ -12,7 +12,10 @@ import 'package:hivorr/core/notifications/providers/notification_provider.dart';
 import 'package:hivorr/data/entities/dispute_case.dart';
 import 'package:hivorr/data/entities/dispute_evidence.dart';
 import 'package:hivorr/data/entities/dispute_resolution.dart';
+import 'package:hivorr/data/entities/service_dispute_contract_summary.dart';
+import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/systems/support/services/dispute_service.dart';
+import 'package:hivorr/systems/support/services/service_dispute_notifier.dart';
 
 /// Notification channel used for dispute lifecycle events (EP-02-17 §5.6).
 abstract final class DisputeNotificationChannel {
@@ -50,16 +53,24 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
   ///
   /// [notificationProvider] enables the dispute notification hook; [logger]
   /// enables PII-safe structured logging; [clock] is injectable for
-  /// deterministic tests.
+  /// deterministic tests. [counterpartyNotifier] enables the EP-03-17 R2
+  /// counterparty fan-out (`dispute_notify` Edge Function) — best-effort and
+  /// never fatal to the dispute write. [contractProvider] enables the
+  /// post-write engagement refresh (DoD §2.1) so contract screens reflect the
+  /// freeze without waiting for their next visit — best-effort and guarded.
   DisputeProvider({
     required DisputeService service,
     HivorrLogger? logger,
     NotificationProvider? notificationProvider,
     DateTime Function()? clock,
+    ServiceDisputeNotifier? counterpartyNotifier,
+    ServiceContractProvider? contractProvider,
   }) : _service = service,
        _logger = logger,
        _notificationProvider = notificationProvider,
-       _clock = clock ?? DateTime.now {
+       _clock = clock ?? DateTime.now,
+       _counterpartyNotifier = counterpartyNotifier,
+       _contractProvider = contractProvider {
     try {
       WidgetsBinding.instance.addObserver(this);
     } on Object {
@@ -71,11 +82,19 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
   final HivorrLogger? _logger;
   final NotificationProvider? _notificationProvider;
   final DateTime Function() _clock;
+  final ServiceDisputeNotifier? _counterpartyNotifier;
+  final ServiceContractProvider? _contractProvider;
 
   List<DisputeCase> _disputes = const <DisputeCase>[];
   DisputeCase? _selected;
   List<DisputeEvidence> _evidence = const <DisputeEvidence>[];
   DisputeResolution? _resolution;
+
+  /// Joined service-engagement summary for the selected case (EP-03-17).
+  ///
+  /// Populated when the selection was loaded through the contract-scoped
+  /// `service_dispute_get` path; `null` for escrow-only selections.
+  ServiceDisputeContractSummary? _contractSummary;
   DisputeLoadState _loadState = DisputeLoadState.idle;
   ApiException? _error;
   bool _refreshing = false;
@@ -93,6 +112,9 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Resolution of the selected dispute case, when resolved.
   DisputeResolution? get resolution => _resolution;
+
+  /// Service-engagement summary for the selected case (EP-03-17).
+  ServiceDisputeContractSummary? get contractSummary => _contractSummary;
 
   /// The load lifecycle state.
   DisputeLoadState get loadState => _loadState;
@@ -132,6 +154,10 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Loads the detail (case + evidence + resolution) for [caseId] in one RPC.
+  ///
+  /// Reads through the contract-scoped `service_dispute_get` path so
+  /// contract-anchored selections also carry their joined engagement summary;
+  /// escrow-only selections degrade gracefully (`contractSummary == null`).
   Future<void> select(String caseId) async {
     if (isLoading) return;
     if (_selected?.id == caseId && isLoaded) return;
@@ -139,11 +165,19 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     _error = null;
     notifyListeners();
     try {
-      final detail = await _service.getCase(caseId);
+      final detail = await _service.getServiceCase(caseId);
+      final bool newlyResolved =
+          _selected?.id == detail.disputeCase.id &&
+          _resolution == null &&
+          detail.resolution != null;
       _selected = detail.disputeCase;
       _evidence = detail.evidence;
       _resolution = detail.resolution;
+      _contractSummary = detail.contractSummary;
       _loadState = DisputeLoadState.loaded;
+      if (newlyResolved) {
+        _notifyCounterparty(detail.disputeCase.id, 'resolved');
+      }
     } on ApiException catch (e) {
       _error = e;
       _loadState = DisputeLoadState.error;
@@ -157,7 +191,59 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// Loads the service-engagement detail (case + evidence + resolution +
+  /// joined contract summary) for [caseId] in one RPC (EP-03-17).
+  Future<void> selectService(String caseId) async {
+    if (isLoading) return;
+    if (_selected?.id == caseId && isLoaded && _contractSummary != null) {
+      return;
+    }
+    _loadState = DisputeLoadState.loading;
+    _error = null;
+    notifyListeners();
+    try {
+      final detail = await _service.getServiceCase(caseId);
+      final bool newlyResolved =
+          _selected?.id == detail.disputeCase.id &&
+          _resolution == null &&
+          detail.resolution != null;
+      _selected = detail.disputeCase;
+      _evidence = detail.evidence;
+      _resolution = detail.resolution;
+      _contractSummary = detail.contractSummary;
+      _loadState = DisputeLoadState.loaded;
+      if (newlyResolved) {
+        _notifyCounterparty(detail.disputeCase.id, 'resolved');
+      }
+    } on ApiException catch (e) {
+      _error = e;
+      _loadState = DisputeLoadState.error;
+      _logger?.warning('Service dispute detail load failed', <String, Object?>{
+        'caseId': caseId,
+        'kind': e.kind.name,
+        'code': e.code,
+      });
+    } finally {
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  /// Lists dispute cases anchored to one service contract (EP-03-17).
+  ///
+  /// Transient read: the result is returned, not memoized into [disputes],
+  /// so the global list scope is never polluted by a contract filter.
+  Future<List<DisputeCase>> listForContract(
+    String contractId, {
+    String? status,
+  }) =>
+      _service.listDisputesForContract(contractId, status: status);
+
   /// Re-reads the current selection (pull-to-refresh / lifecycle resume).
+  ///
+  /// Reads through the contract-scoped path so contract-anchored selections
+  /// keep their joined engagement summary; escrow-only selections degrade
+  /// gracefully (`contractSummary == null`). A newly observed resolution
+  /// fans out to the counterparty (R2 `resolved` event).
   Future<void> refresh() async {
     final DisputeCase? current = _selected;
     if (current == null || _refreshing || _paused) return;
@@ -165,11 +251,17 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     _error = null;
     notifyListeners();
     try {
-      final detail = await _service.getCase(current.id);
+      final detail = await _service.getServiceCase(current.id);
+      final bool newlyResolved =
+          _resolution == null && detail.resolution != null;
       _selected = detail.disputeCase;
       _evidence = detail.evidence;
       _resolution = detail.resolution;
+      _contractSummary = detail.contractSummary;
       _loadState = DisputeLoadState.loaded;
+      if (newlyResolved) {
+        _notifyCounterparty(detail.disputeCase.id, 'resolved');
+      }
     } on ApiException catch (e) {
       _error = e;
       _loadState = DisputeLoadState.error;
@@ -202,9 +294,41 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     _selected = filed;
     _evidence = const <DisputeEvidence>[];
     _resolution = null;
+    _contractSummary = null;
     _maybeNotify(filed, filedAction: 'filed');
+    _notifyCounterparty(filed.id, 'filed');
     if (!_disposed) notifyListeners();
     return filed;
+  }
+
+  /// Files a service-engagement dispute against a contract (EP-03-17).
+  ///
+  /// The server freezes the contract (and the escrow hold when funded) and
+  /// returns the authoritative detail including the joined contract summary,
+  /// which becomes the new selection.
+  Future<DisputeCase> fileForContract({
+    required String contractId,
+    required String disputeType,
+    required String reason,
+    String? desiredOutcome,
+    String priority = 'medium',
+  }) async {
+    final detail = await _service.fileServiceDispute(
+      contractId: contractId,
+      disputeType: disputeType,
+      reason: reason,
+      desiredOutcome: desiredOutcome,
+      priority: priority,
+    );
+    _selected = detail.disputeCase;
+    _evidence = detail.evidence;
+    _resolution = detail.resolution;
+    _contractSummary = detail.contractSummary;
+    _maybeNotify(detail.disputeCase, filedAction: 'filed');
+    _notifyCounterparty(detail.disputeCase.id, 'filed');
+    unawaited(_refreshContract(detail.disputeCase.contractId));
+    if (!_disposed) notifyListeners();
+    return detail.disputeCase;
   }
 
   /// Submits evidence and appends it to the selected case.
@@ -234,8 +358,30 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     final DisputeCase updated = await _service.withdrawDispute(caseId);
     _selected = updated;
     _maybeNotify(updated, filedAction: 'withdrawn');
+    _notifyCounterparty(updated.id, 'withdrawn');
+    unawaited(_refreshContract(updated.contractId));
     if (!_disposed) notifyListeners();
     return updated;
+  }
+
+  /// Re-reads the linked engagement so contract screens reflect the freeze
+  /// without waiting for their next visit (DoD §2.1). Best-effort: a missing
+  /// provider, a blank id, or a failed re-read is swallowed — the dispute
+  /// write already committed and contract screens re-read on open.
+  Future<void> _refreshContract(String? contractId) async {
+    final ServiceContractProvider? contracts = _contractProvider;
+    if (contracts == null) return;
+    if (contractId == null || contractId.trim().isEmpty) return;
+    try {
+      await contracts.select(contractId);
+    } on Object catch (e, stackTrace) {
+      _logger?.error(
+        'Contract refresh after dispute write failed (best-effort)',
+        error: e,
+        stackTrace: stackTrace,
+        context: <String, Object?>{'contractId': _shortId(contractId)},
+      );
+    }
   }
 
   /// Pauses background refreshes (lifecycle gate).
@@ -253,21 +399,50 @@ class DisputeProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (notifications == null) return;
     final bool withdrawn = filedAction == 'withdrawn';
     final int id = case_.id.hashCode & 0x7fffffff;
+    // Contract-anchored cases (EP-03-17) reference the engagement; escrow-only
+    // cases keep the legacy escrow copy. Unfunded contracts have no escrow id.
+    final String subject = case_.hasContract
+        ? 'Contract ${_shortId(case_.contractId ?? '')}'
+        : 'Escrow ${_shortId(case_.escrowId)}';
     unawaited(
       notifications.showLocal(
         HivorrNotification(
           id: id,
           title: withdrawn ? 'Dispute withdrawn' : 'Dispute filed',
           body: withdrawn
-              ? 'Escrow ${_shortId(case_.escrowId)} is unfrozen.'
-              : 'Escrow ${_shortId(case_.escrowId)} is now frozen pending '
-                    'resolution.',
+              ? '$subject is unfrozen.'
+              : '$subject is now frozen pending resolution.',
           channelId: DisputeNotificationChannel.system,
           priority: NotificationPriority.normal,
           timestamp: _clock(),
           actionRoute: '/support/disputes/${case_.id}',
         ),
       ),
+    );
+  }
+
+  /// Best-effort counterparty fan-out (EP-03-17 R2).
+  ///
+  /// A failed or unconfigured notifier is swallowed by design: the dispute
+  /// write already committed server-side, and the counterparty learns the
+  /// state on their next read. Only redacted ids leave the device.
+  void _notifyCounterparty(String caseId, String event) {
+    final ServiceDisputeNotifier? notifier = _counterpartyNotifier;
+    if (notifier == null) return;
+    unawaited(
+      Future<void>(() => notifier.notifyCounterparty(caseId: caseId, event: event))
+          .then((_) {
+            _logger?.info('Counterparty notified', <String, Object?>{
+              'caseId': _shortId(caseId),
+              'event': event,
+            });
+          })
+          .catchError((Object error) {
+            _logger?.warning('Counterparty notify failed (best-effort)', <
+              String,
+              Object?
+            >{'caseId': _shortId(caseId), 'event': event});
+          }),
     );
   }
 

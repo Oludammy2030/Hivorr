@@ -17,6 +17,7 @@
 --   - Exactly 2 service_% SECURITY DEFINER (service_review_reveal_if_ready +
 --     service_listing_portfolio_list, each an approved deviation);
 --     exactly 28 service_% RPCs (23 pre-EP-03-15 + 3 proof-linkage RPCs + 2 EP-03-16 earnings RPCs).
+--     (+5 EP-03-17/R3: 3 service dispute file/get/list + 2 dispute admin list/get.)
 --   - Realtime excludes all 3 tables; comments present.
 --   - service-listing-media bucket provisioned with 4 storage.objects policies.
 --   - EXECUTE posture: anon receives only service_listing_get +
@@ -224,8 +225,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prosecdef),
-  2,
-  'exactly two service_% functions are SECURITY DEFINER (service_review_reveal_if_ready, approved deviation for double-blind count; service_listing_portfolio_list, approved deviation for anon proof reads per EP-03-15)'
+  5,
+  'exactly five service_% functions are SECURITY DEFINER (reveal + portfolio_list + unfreeze + 2 R3 dispute admin reads)'
 );
 select ok(
   (select p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname='public' and p.proname='service_review_reveal_if_ready')
@@ -233,7 +234,7 @@ select ok(
   'service_review_reveal_if_ready and service_listing_portfolio_list are SECURITY DEFINER'
 );
 
--- ─── 16. Exactly 28 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings) ─────
+-- ─── 16. Exactly 33 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings + 3 EP-03-17 disputes + 2 R3 admin) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -241,8 +242,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prorettype <> 'trigger'::regtype),
-  28,
-  'exactly 28 service_% RPCs exist (7 listing + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings)'
+  33,
+  'exactly 33 service_% RPCs exist (7 listing + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings + 3 EP-03-17 disputes + 2 R3 admin)'
 );
 
 -- ─── 17. Realtime excludes all 3 tables ───────────────────────────────────────
@@ -302,26 +303,26 @@ select is(
   'anon can execute exactly five service_% functions (listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list)'
 );
 
--- ─── 22. authenticated EXECUTE on all 28 ──────────────────────────────────────
+-- ─── 22. authenticated EXECUTE on all 33 ──────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'authenticated'),
-  28,
-  'authenticated can execute all 28 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings)'
+  33,
+  'authenticated can execute all 33 service_% RPCs (7 marketplace + 10 contract + 4 review + 2 ranking + 3 proof + 2 earnings + 3 EP-03-17 disputes + 2 R3 admin)'
 );
 
--- ─── 23. service_role EXECUTE on all 28 ───────────────────────────────────────
+-- ─── 23. service_role EXECUTE on all 33 ───────────────────────────────────────
 select is(
   (select count(*)::int
      from information_schema.routine_privileges
     where routine_schema = 'public'
       and routine_name like 'service\_%'
       and grantee = 'service_role'),
-  28,
-  'service_role can execute all 28 service_% RPCs'
+  33,
+  'service_role can execute all 33 service_% RPCs'
 );
 
 -- ─── 24. The anon-executable RPCs are service_listing_get + review_get_for_listing + ranking_search + weights_get + portfolio_list ─

@@ -134,6 +134,38 @@ abstract final class StoragePaths {
     return '$safeId/$safeCase/$name';
   }
 
+  /// Builds a `service-listing-media` path for a service-engagement dispute
+  /// evidence attachment (EP-03-17):
+  /// `{entityId}/dispute/{caseId}/{uuid}_{sanitizedFileName}`.
+  ///
+  /// The first segment is the uploader's entity id so the storage RLS gate
+  /// `(storage.foldername(name))[1] = auth.uid()::text`
+  /// (`20260921090001_service_marketplace_schema.sql` bucket policies) passes,
+  /// and the public-read bucket lets the counterparty preview the attachment
+  /// (mirroring milestone evidence). The `dispute/{caseId}` infix keeps
+  /// service-dispute evidence namespaced apart from listing media. The caller
+  /// supplies [entityId] from the authenticated session (never a dispute
+  /// party id — that is not the uploader). Mirrors [disputeEvidence].
+  static String serviceDisputeEvidence({
+    required String entityId,
+    required String caseId,
+    required String fileName,
+  }) {
+    _validateEntityId(entityId);
+    if (caseId.isEmpty) {
+      throw const StorageValidationException(
+        'Case id cannot be empty.',
+        field: 'caseId',
+      );
+    }
+    final safeId = sanitize(entityId);
+    final safeCase = sanitize(caseId);
+    final safeName = sanitize(fileName);
+    final random = _uuid.v4();
+    final name = safeName.isEmpty ? random : '${random}_$safeName';
+    return '$safeId/dispute/$safeCase/$name';
+  }
+
   /// Builds a `portfolio-items` path: `{entityId}/{itemId}/{sanitizedFileName}`.
   static String portfolioItem({
     required String entityId,

@@ -76,6 +76,8 @@ import 'package:hivorr/systems/scheduling/screens/appointment_book_screen.dart';
 import 'package:hivorr/systems/scheduling/screens/appointment_detail_screen.dart';
 import 'package:hivorr/systems/scheduling/screens/appointment_list_screen.dart';
 import 'package:hivorr/systems/scheduling/screens/availability_editor_screen.dart';
+import 'package:hivorr/systems/support/screens/admin_dispute_detail_screen.dart';
+import 'package:hivorr/systems/support/screens/admin_dispute_queue_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_detail_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_evidence_form_screen.dart';
 import 'package:hivorr/systems/support/screens/dispute_filing_screen.dart';
@@ -315,6 +317,22 @@ class AppRouter {
                     submissionId: state.pathParameters['submissionId'] ?? '',
                   ),
             ),
+            // Service-engagement dispute queue (R3 follow-up, read-only —
+            // resolution stays service-role SQL/manual).
+            GoRoute(
+              path: RoutePaths.adminDisputes,
+              name: RouteNames.adminDisputes,
+              builder: (BuildContext context, GoRouterState state) =>
+                  const AdminDisputeQueueScreen(),
+            ),
+            GoRoute(
+              path: RoutePaths.adminDisputeDetail,
+              name: RouteNames.adminDisputeDetail,
+              builder: (BuildContext context, GoRouterState state) =>
+                  AdminDisputeDetailScreen(
+                    caseId: state.pathParameters['caseId'] ?? '',
+                  ),
+            ),
             GoRoute(
               path: RoutePaths.adminManageUsers,
               name: RouteNames.adminManageUsers,
@@ -546,6 +564,14 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) =>
               DisputeFilingScreen(
                 escrowId: state.pathParameters['escrowId'] ?? '',
+              ),
+        ),
+        GoRoute(
+          path: RoutePaths.disputesFileForContractRoute,
+          name: RouteNames.disputesFileForContract,
+          builder: (BuildContext context, GoRouterState state) =>
+              DisputeFilingScreen(
+                contractId: state.pathParameters['contractId'] ?? '',
               ),
         ),
         GoRoute(

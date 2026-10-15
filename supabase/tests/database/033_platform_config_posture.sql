@@ -6,9 +6,11 @@
 --   - CHECK vocabularies (key format, value is object, required weight keys,
 --     range 0..1, sum 0.999..1.001, priors), indexes, trigger, comments.
 --   - service_listings GIN retained + new ranking partial index exists.
---   - Exactly 2 SECURITY DEFINER among service_% RPCs (reveal + portfolio_list),
---     ranking RPCs remain INVOKER; exactly 28 service_% RPCs
---     (21 prior +2 EP-03-11: link_escrow + release_gate +3 EP-03-15 proof +2 EP-03-16 earnings).
+--   - Exactly 5 SECURITY DEFINER among service_% RPCs (reveal + portfolio_list
+--     + unfreeze + 2 R3 dispute admin reads), ranking RPCs remain INVOKER;
+--     exactly 33 service_% RPCs (21 prior +2 EP-03-11: link_escrow +
+--     release_gate +3 EP-03-15 proof +2 EP-03-16 earnings +3 EP-03-17 service
+--     disputes +2 R3 dispute admin reads).
 --   - Realtime excludes platform_config.
 --   - EXECUTE posture: anon can execute ranking_search + listing_get + review_get_for_listing (3), authenticated 23.
 
@@ -138,20 +140,20 @@ select is(
   'entities_last_seen_at_idx exists'
 );
 
--- ─── 13. Exactly 1 service_% SECURITY DEFINER (reveal) ─────────────────────
+-- ─── 13. Exactly 5 service_% SECURITY DEFINER ─────────────────────────────────
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname like 'service\_%' and p.prosecdef),
-  2,
-  'exactly two service_% functions are SECURITY DEFINER'
+  5,
+  'exactly five service_% functions are SECURITY DEFINER (reveal + portfolio_list + unfreeze + 2 R3 dispute admin reads)'
 );
 
--- ─── 14. Exactly 23 service_% RPCs (21 prior +2 escrow-linkage) ──────────────
+-- ─── 14. Exactly 33 service_% RPCs ────────────────────────────────────────────
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname like 'service\_%' and p.prorettype='jsonb'::regtype),
-  28,
-  'exactly 28 service_% RPCs exist (21 prior + link_escrow + release_gate + 3 proof + 2 earnings)'
+  33,
+  'exactly 33 service_% RPCs exist (21 prior + link_escrow + release_gate + 3 proof + 2 earnings + 3 EP-03-17 service disputes + 2 R3 admin)'
 );
 
 -- ─── 15. Realtime excludes platform_config ──────────────────────────────────

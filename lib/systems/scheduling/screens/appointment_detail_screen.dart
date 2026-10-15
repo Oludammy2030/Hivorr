@@ -262,7 +262,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                       _confirmCancel(appointment),
                     ),
                     onFileDispute: () => context.push(
-                      RoutePaths.disputesFile(appointment.contractId),
+                      RoutePaths.disputesFileForContract(appointment.contractId),
                     ),
                   ),
                 );

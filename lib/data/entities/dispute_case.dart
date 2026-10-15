@@ -1,7 +1,10 @@
-/// A formal dispute raised against an escrow (EP-02-17).
+/// A formal dispute raised against an escrow (EP-02-17) or a service
+/// engagement (EP-03-17 contract linkage).
 ///
 /// Mirrors `dispute_cases`
-/// (`supabase/migrations/20260829120005_dispute_resolution_schema.sql:54-101`).
+/// (`supabase/migrations/20260829120005_dispute_resolution_schema.sql:54-101`
+/// plus `contract_id` from
+/// `supabase/migrations/20261011090001_service_dispute_contract_link.sql`).
 /// `dispute_type`/`status`/`desired_outcome`/`priority` match the frozen CHECK
 /// vocabularies compiled in
 /// `lib/systems/support/models/dispute_status.dart`; status transitions are
@@ -13,6 +16,7 @@ class DisputeCase {
   const DisputeCase({
     required this.id,
     required this.escrowId,
+    this.contractId,
     required this.filerEntityId,
     required this.counterpartyEntityId,
     required this.disputeType,
@@ -31,7 +35,17 @@ class DisputeCase {
   final String id;
 
   /// The escrow this dispute freezes (`financial_escrow.id`).
+  ///
+  /// Empty string when the dispute is anchored to an unfunded service
+  /// contract only (EP-03-17): the server stores `escrow_id IS NULL` and the
+  /// DTO maps the null to `''` so legacy non-nullable call sites keep working.
   final String escrowId;
+
+  /// The disputed service engagement (`service_contracts.id`, EP-03-17).
+  ///
+  /// `null` for legacy escrow-only disputes filed before the contract linkage
+  /// existed. Non-null for every case filed via `service_dispute_file`.
+  final String? contractId;
 
   /// The entity that filed the dispute.
   final String filerEntityId;
@@ -70,6 +84,14 @@ class DisputeCase {
 
   /// Server-side case metadata (passthrough).
   final Map<String, dynamic> metadata;
+
+  /// Whether the case is anchored to a service contract (EP-03-17).
+  bool get hasContract =>
+      contractId != null && contractId!.trim().isNotEmpty;
+
+  /// Whether an escrow hold backs this case (`false` for disputes filed
+  /// against unfunded contracts only).
+  bool get hasEscrow => escrowId.trim().isNotEmpty;
 
   /// Whether the case is still actionable (`open`).
   bool get isOpen => status == 'open';

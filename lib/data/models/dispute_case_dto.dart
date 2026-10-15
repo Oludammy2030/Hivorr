@@ -1,13 +1,16 @@
-/// Data Transfer Object for a `dispute_cases` row (EP-02-17).
+/// Data Transfer Object for a `dispute_cases` row (EP-02-17, extended EP-03-17).
 ///
 /// Mirrors the frozen migration column set
-/// (`supabase/migrations/20260829120005_dispute_resolution_schema.sql:54-101`),
+/// (`supabase/migrations/20260829120005_dispute_resolution_schema.sql:54-101`)
+/// plus the nullable `contract_id` anchor from
+/// (`supabase/migrations/20261011090001_service_dispute_contract_link.sql`),
 /// using the actual snake_case keys returned inside the `dispute_file` /
-/// `dispute_get` / `dispute_list` envelopes.
+/// `service_dispute_file` / `dispute_get` / `dispute_list` envelopes.
 class DisputeCaseDto {
   const DisputeCaseDto({
     required this.id,
     required this.escrowId,
+    this.contractId,
     required this.filerEntityId,
     required this.counterpartyEntityId,
     required this.disputeType,
@@ -25,6 +28,7 @@ class DisputeCaseDto {
   factory DisputeCaseDto.fromJson(Map<String, dynamic> json) => DisputeCaseDto(
     id: (json['id'] as String?) ?? '',
     escrowId: (json['escrow_id'] as String?) ?? '',
+    contractId: json['contract_id'] as String?,
     filerEntityId: (json['filer_entity_id'] as String?) ?? '',
     counterpartyEntityId: (json['counterparty_entity_id'] as String?) ?? '',
     disputeType: (json['dispute_type'] as String?) ?? '',
@@ -43,6 +47,11 @@ class DisputeCaseDto {
 
   final String id;
   final String escrowId;
+
+  /// Nullable `service_contracts.id` anchor (EP-03-17). `null` for legacy
+  /// escrow-only rows; the server may also return an empty string, which the
+  /// mapper normalizes to `null`.
+  final String? contractId;
   final String filerEntityId;
   final String counterpartyEntityId;
   final String disputeType;

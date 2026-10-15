@@ -41,6 +41,8 @@ abstract final class RouteNames {
   static const String adminVerificationApprovals =
       'admin-verification-approvals';
   static const String adminReviewDetail = 'admin-review-detail';
+  static const String adminDisputes = 'admin-disputes';
+  static const String adminDisputeDetail = 'admin-dispute-detail';
   static const String adminDashboard = 'admin-dashboard';
 
   /// Manage User routes (EP-02-11 admin console).
@@ -87,9 +89,10 @@ abstract final class RouteNames {
   static const String serviceDetail = 'service-detail';
   static const String serviceSeoDetail = 'service-seo-detail';
 
-  /// Dispute routes (EP-02-17).
+  /// Dispute routes (EP-02-17, extended EP-03-17).
   static const String disputes = 'disputes';
   static const String disputesNew = 'disputes-new';
+  static const String disputesFileForContract = 'disputes-file-for-contract';
   static const String disputeDetail = 'dispute-detail';
   static const String disputesEvidenceNew = 'disputes-evidence-new';
 

@@ -6,11 +6,14 @@ import 'package:hivorr/data/models/dispute_case_detail_envelope_dto.dart';
 import 'package:hivorr/data/models/dispute_case_dto.dart';
 import 'package:hivorr/data/models/dispute_evidence_dto.dart';
 import 'package:hivorr/data/models/dispute_list_envelope_dto.dart';
+import 'package:hivorr/data/models/service_dispute_detail_envelope_dto.dart';
 
-/// Supabase-backed implementation of [DisputeRemoteDataSource] (EP-02-17 §5.3).
+/// Supabase-backed implementation of [DisputeRemoteDataSource] (EP-02-17 §5.3,
+/// extended EP-03-17).
 ///
-/// Wraps the **five client-callable** dispute RPCs via `supabase.rpc(...)`
-/// and unwraps the standard `{success, code, message, data}` envelope with
+/// Wraps the **five client-callable** dispute RPCs plus the three
+/// contract-scoped EP-03-17 RPCs via `supabase.rpc(...)` and unwraps the
+/// standard `{success, code, message, data}` envelope with
 /// [DisputeEnvelopeParser]. `dispute_withdraw` is SECURITY DEFINER server-side
 /// but is called exactly like the other entity RPCs (`p_case_id`) — filer
 /// scoping is enforced inside the function body.
@@ -116,5 +119,59 @@ class SupabaseDisputeRemoteDataSource extends BaseApiService
         );
     final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
     return DisputeCaseDto.fromJson(data);
+  });
+
+  @override
+  Future<DisputeCaseDto> fileServiceDispute({
+    required String contractId,
+    required String disputeType,
+    required String reason,
+    String? desiredOutcome,
+    String priority = 'medium',
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
+          'service_dispute_file',
+          params: <String, dynamic>{
+            'p_contract_id': contractId,
+            'p_dispute_type': disputeType,
+            'p_reason': reason,
+            'p_desired_outcome': ?desiredOutcome,
+            'p_priority': priority,
+          },
+        );
+    final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
+    return DisputeCaseDto.fromJson(data);
+  });
+
+  @override
+  Future<ServiceDisputeDetailEnvelopeDto> getServiceCase(String caseId) =>
+      _guard(() async {
+        final Map<String, dynamic> response = await supabase
+            .rpc<Map<String, dynamic>>(
+              'service_dispute_get',
+              params: <String, dynamic>{'p_case_id': caseId},
+            );
+        final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(
+          response,
+        );
+        return ServiceDisputeDetailEnvelopeDto.fromJson(data);
+      });
+
+  @override
+  Future<DisputeListEnvelopeDto> listDisputesForContract(
+    String contractId, {
+    String? status,
+  }) => _guard(() async {
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
+          'service_dispute_list_for_contract',
+          params: <String, dynamic>{
+            'p_contract_id': contractId,
+            'p_status': ?status,
+          },
+        );
+    final Map<String, dynamic> data = DisputeEnvelopeParser.unwrap(response);
+    return DisputeListEnvelopeDto.fromJson(data);
   });
 }
