@@ -14,10 +14,11 @@
 --     D5 trigger instead (direct writes raise PLT002 — behavioral proof in 024).
 --   - CHECK vocabularies (slug, published_at semantics, media path parity,
 --     mime allowlist), unique constraints, named indexes incl. GIN, triggers.
---   - Exactly 2 service_% SECURITY DEFINER (service_review_reveal_if_ready +
---     service_listing_portfolio_list, each an approved deviation);
---     exactly 28 service_% RPCs (23 pre-EP-03-15 + 3 proof-linkage RPCs + 2 EP-03-16 earnings RPCs).
---     (+5 EP-03-17/R3: 3 service dispute file/get/list + 2 dispute admin list/get.)
+--   - Exactly 5 service_% SECURITY DEFINER (service_review_reveal_if_ready +
+--     service_listing_portfolio_list, each an approved deviation, + unfreeze +
+--     2 R3 dispute admin reads);
+--     exactly 33 service_% RPCs (23 pre-EP-03-15 + 3 proof-linkage RPCs + 2 EP-03-16 earnings RPCs
+--     + 3 EP-03-17 service disputes + 2 R3 dispute admin reads).
 --   - Realtime excludes all 3 tables; comments present.
 --   - service-listing-media bucket provisioned with 4 storage.objects policies.
 --   - EXECUTE posture: anon receives only service_listing_get +

@@ -552,6 +552,24 @@ class _ApplicationsInbox extends StatelessWidget {
                       HiringStatusBadge(code: application.status),
                     ],
                   ),
+                  // Frozen applicant face (identity audit Phase 4): the
+                  // submit-time snapshot, never a live profile lookup, so
+                  // history cannot shift under later renames.
+                  if (application.hasIdentitySnapshot) ...<Widget>[
+                    const SizedBox(height: HivorrSpacing.xs),
+                    Text(
+                      application.applicantProfessionName == null ||
+                              application.applicantProfessionName!.isEmpty
+                          ? application.applicantDisplayName!
+                          : '${application.applicantDisplayName} · ${application.applicantProfessionName}',
+                      style: context.textTheme.labelMedium?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: HivorrSpacing.xs),
                   Text(
                     application.coverNote,

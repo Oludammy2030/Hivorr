@@ -37,7 +37,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _firstName = TextEditingController();
   final TextEditingController _middleName = TextEditingController();
   final TextEditingController _lastName = TextEditingController();
-  final TextEditingController _displayName = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
   final TextEditingController _password = TextEditingController();
@@ -51,7 +50,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _firstName.dispose();
     _middleName.dispose();
     _lastName.dispose();
-    _displayName.dispose();
     _email.dispose();
     _phone.dispose();
     _password.dispose();
@@ -69,9 +67,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         : null;
     final String? lastNameError = _attempted && !_isLastNameValid
         ? _lastNameError
-        : null;
-    final String? displayNameError = _attempted && !_isDisplayNameValid
-        ? _displayNameError
         : null;
     final String? emailError = _attempted && !_isEmailValid
         ? _emailError
@@ -162,15 +157,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               );
             },
-          ),
-          const SizedBox(height: HivorrSpacing.md),
-          HivorrTextField(
-            controller: _displayName,
-            label: 'Display name',
-            hint: 'How people see you on Hivorr',
-            errorText: displayNameError,
-            enabled: !_submitting,
-            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: HivorrSpacing.md),
           HivorrTextField(
@@ -286,10 +272,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool get _isLastNameValid =>
       HivorrValidators.required(_lastName.text, field: 'Last name') == null;
 
-  bool get _isDisplayNameValid =>
-      HivorrValidators.required(_displayName.text, field: 'Display name') ==
-      null;
-
   bool get _isEmailValid => HivorrValidators.email(_email.text) == null;
 
   bool get _isPhoneValid => HivorrValidators.phone(_phone.text) == null;
@@ -307,9 +289,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? get _lastNameError =>
       HivorrValidators.required(_lastName.text, field: 'Last name');
-
-  String? get _displayNameError =>
-      HivorrValidators.required(_displayName.text, field: 'Display name');
 
   String? get _emailError => HivorrValidators.email(_email.text);
 
@@ -330,9 +309,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     if (!_isLastNameValid) {
       return 'Enter your last name.';
-    }
-    if (!_isDisplayNameValid) {
-      return 'Enter a display name.';
     }
     if (!_isEmailValid) {
       return 'Check your email address.';
@@ -358,7 +334,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     if (!_isFirstNameValid ||
         !_isLastNameValid ||
-        !_isDisplayNameValid ||
         !_isEmailValid ||
         !_isPhoneValid ||
         !_isPasswordValid ||
@@ -379,7 +354,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ? null
               : _middleName.text.trim(),
           lastName: _lastName.text.trim(),
-          displayName: _displayName.text.trim(),
           phoneNumber: _phone.text.trim(),
         ),
       );

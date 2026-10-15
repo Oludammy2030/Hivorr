@@ -39,6 +39,7 @@ class SupabaseJobsRemoteDataSource extends BaseApiService
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   }) => _guard(() async {
     final Map<String, dynamic> response = await supabase
         .rpc<Map<String, dynamic>>(
@@ -52,6 +53,7 @@ class SupabaseJobsRemoteDataSource extends BaseApiService
             'p_budget_max': ?budgetMax,
             'p_currency_code': currencyCode,
             'p_location': ?location,
+            'p_business_id': ?businessId,
           },
         );
     return JobDto.fromJson(JobsEnvelopeParser.unwrap(response));

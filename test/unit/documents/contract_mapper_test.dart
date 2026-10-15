@@ -5,6 +5,7 @@ import 'package:hivorr/data/entities/contract_milestone.dart';
 import 'package:hivorr/data/entities/service_contract.dart';
 import 'package:hivorr/data/mappers/contract_mapper.dart';
 import 'package:hivorr/data/models/contract_envelopes_dto.dart';
+import 'package:hivorr/data/models/service_contract_dto.dart';
 
 void main() {
   Map<String, dynamic> detailJson() => <String, dynamic>{
@@ -155,6 +156,50 @@ void main() {
         eventType: 'revision_requested',
       );
       expect(e.eventType, 'revision_requested');
+    });
+  });
+
+  group('ServiceContract job linkage (identity Phase 5)', () {
+    test('contractToEntity maps job_id when present', () {
+      final ServiceContract contract = ContractMapper.contractToEntity(
+        ServiceContractDto.fromJson(<String, dynamic>{
+          'id': 'c9',
+          'service_listing_id': '',
+          'job_id': 'job-9',
+          'client_entity_id': 'client-1',
+          'professional_entity_id': 'pro-1',
+          'status': 'active',
+          'total_amount': 10000,
+          'currency_code': 'NGN',
+        }),
+      );
+      expect(contract.jobId, 'job-9');
+    });
+
+    test('contractToEntity tolerates missing job_id (listing contracts)', () {
+      final ServiceContract contract = ContractMapper.contractToEntity(
+        ServiceContractDto.fromJson(<String, dynamic>{
+          'id': 'c8',
+          'service_listing_id': 'listing-1',
+          'client_entity_id': 'client-1',
+          'professional_entity_id': 'pro-1',
+          'status': 'active',
+          'total_amount': 10000,
+          'currency_code': 'NGN',
+        }),
+      );
+      expect(contract.jobId, isNull);
+    });
+
+    test('detail envelope preserves the job link', () {
+      final Map<String, dynamic> json = detailJson();
+      (json['contract'] as Map<String, dynamic>)['job_id'] = 'job-7';
+      final ServiceContract contract =
+          ContractMapper.detailEnvelopeToEntity(
+            ContractDetailEnvelopeDto.fromJson(json),
+          );
+      expect(contract.jobId, 'job-7');
+      expect(contract.listingTitle, 'Certified plumbing repair service');
     });
   });
 }

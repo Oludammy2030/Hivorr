@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
+import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/industry.dart';
 import 'package:hivorr/data/entities/profession.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
@@ -11,6 +12,7 @@ import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_loading_state.dart';
+import 'package:hivorr/shared/widgets/hivorr_text_field.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:provider/provider.dart';
 
@@ -44,6 +46,15 @@ class IndustryProfessionSelectionScreen extends StatefulWidget {
 class _IndustryProfessionSelectionScreenState
     extends State<IndustryProfessionSelectionScreen> {
   String? _conflictMessage;
+  String? _nameError;
+  final TextEditingController _nameController = TextEditingController();
+  bool _namePrefilled = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant IndustryProfessionSelectionScreen oldWidget) {
@@ -79,10 +90,22 @@ class _IndustryProfessionSelectionScreenState
     if (industry == null || profession == null) {
       return;
     }
-    setState(() => _conflictMessage = null);
+    final String name = _nameController.text.trim();
+    if (name.length > 120) {
+      setState(() {
+        _conflictMessage = null;
+        _nameError = 'Professional name must be 120 characters or fewer.';
+      });
+      return;
+    }
+    setState(() {
+      _conflictMessage = null;
+      _nameError = null;
+    });
     await provider.bindProfession(
       industryId: industry.id,
       professionId: profession.id,
+      professionalDisplayName: name.isEmpty ? null : name,
     );
     if (!mounted) {
       return;
@@ -272,6 +295,10 @@ class _IndustryProfessionSelectionScreenState
     final Profession? profession = taxonomy.selectedProfession;
     final bool loadingProfessions =
         taxonomy.state == TaxonomyProviderState.loading;
+    if (profession != null && !_namePrefilled) {
+      _namePrefilled = true;
+      _prefillName();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -312,8 +339,38 @@ class _IndustryProfessionSelectionScreenState
             'Select a profession to continue.',
             style: context.textTheme.bodySmall?.copyWith(color: colors.error),
           ),
+        if (profession != null) ...<Widget>[
+          const SizedBox(height: HivorrSpacing.md),
+          HivorrTextField(
+            controller: _nameController,
+            label: 'Professional name',
+            hint: 'Clients will see this name once approved',
+            errorText: _nameError,
+            onChanged: (_) => setState(() => _nameError = null),
+          ),
+        ],
       ],
     );
+  }
+
+  /// Prefills the professional name once from the account display name so
+  /// most users can accept the default; editing never touches the profile.
+  void _prefillName() {
+    if (_nameController.text.trim().isNotEmpty) {
+      return;
+    }
+    try {
+      final String? display = context
+          .read<AuthProvider>()
+          .currentSession
+          ?.displayName
+          ?.trim();
+      if (display != null && display.isNotEmpty) {
+        _nameController.text = display;
+      }
+    } catch (_) {
+      // Auth provider absent (tests) — field stays empty (optional).
+    }
   }
 
   bool industryHasNoProfessions(List<Profession> professions) =>

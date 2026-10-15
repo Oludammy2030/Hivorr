@@ -15,6 +15,13 @@ import 'package:hivorr/data/repositories/job_repository_impl.dart';
 class FakeJobsRemote implements JobsRemoteDataSource {
   int createCalls = 0;
 
+  /// The business id most recently passed to [createJob].
+  String? lastBusinessId;
+
+  /// When `true`, [submitApplication] throws the trade-gate denial
+  /// (`PLT005` conflict with guidance) instead of [UnimplementedError].
+  bool throwTradeGateOnSubmit = false;
+
   static Map<String, dynamic> jobRow() => <String, dynamic>{
     'id': 'job-1',
     'client_entity_id': 'client-1',
@@ -37,8 +44,10 @@ class FakeJobsRemote implements JobsRemoteDataSource {
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   }) async {
     createCalls++;
+    lastBusinessId = businessId;
     return JobDto.fromJson(jobRow());
   }
 
@@ -102,7 +111,18 @@ class FakeJobsRemote implements JobsRemoteDataSource {
     double? quotedAmount,
     String currencyCode = 'NGN',
     int? durationDays,
-  }) async => throw UnimplementedError();
+  }) async {
+    if (throwTradeGateOnSubmit) {
+      throw const ApiException(
+        kind: ApiExceptionKind.conflict,
+        message:
+            'Trade verification required for this profession. '
+            'Complete approval to apply.',
+        code: 'PLT005',
+      );
+    }
+    throw UnimplementedError();
+  }
 
   @override
   Future<JobApplicationDto> withdrawApplication(String applicationId) async =>
@@ -202,6 +222,34 @@ void main() {
       expect(remote.createCalls, 0);
     });
 
+    test('business id forwards to the RPC when supplied', () async {
+      final FakeJobsRemote remote = FakeJobsRemote();
+      final JobRepositoryImpl repo = JobRepositoryImpl(remote: remote);
+      await repo.createJob(
+        title: 'A perfectly valid job title here',
+        description:
+            'A description that is definitely longer than fifty characters.',
+        businessId: 'biz-1',
+      );
+      expect(remote.createCalls, 1);
+      expect(remote.lastBusinessId, 'biz-1');
+    });
+
+    test('blank business id never reaches the RPC (PLT003)', () async {
+      final FakeJobsRemote remote = FakeJobsRemote();
+      final JobRepositoryImpl repo = JobRepositoryImpl(remote: remote);
+      expect(
+        () => repo.createJob(
+          title: 'A perfectly valid job title here',
+          description:
+              'A description that is definitely longer than fifty characters.',
+          businessId: '   ',
+        ),
+        throwsA(isA<ApiException>()),
+      );
+      expect(remote.createCalls, 0);
+    });
+
     test('short description never reaches the RPC (PLT003)', () async {
       final FakeJobsRemote remote = FakeJobsRemote();
       final JobRepositoryImpl repo = JobRepositoryImpl(remote: remote);
@@ -256,6 +304,29 @@ void main() {
       expect(
         () => repo.submitApplication(jobId: 'job-1', coverNote: 'Too short'),
         throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('trade-gate denial propagates as conflict with guidance intact', () async {
+      final FakeJobsRemote remote = FakeJobsRemote()
+        ..throwTradeGateOnSubmit = true;
+      final JobRepositoryImpl repo = JobRepositoryImpl(remote: remote);
+      await expectLater(
+        repo.submitApplication(
+          jobId: 'job-1',
+          coverNote: 'Certified plumber with own tools, available this week.',
+        ),
+        throwsA(
+          isA<ApiException>()
+              .having((ApiException e) => e.kind, 'kind', ApiExceptionKind.conflict)
+              .having((ApiException e) => e.code, 'code', 'PLT005')
+              .having(
+                (ApiException e) => e.message,
+                'message',
+                'Trade verification required for this profession. '
+                    'Complete approval to apply.',
+              ),
+        ),
       );
     });
   });

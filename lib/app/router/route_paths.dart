@@ -103,6 +103,10 @@ abstract final class RoutePaths {
   static const String onboardingTradeProof = '/onboarding/trade-proof';
   static const String onboardingComplete = '/onboarding/complete';
 
+  /// Professional readiness checklist (identity audit Phase 4) — what is
+  /// needed to bid, publish, and earn, with deep links. Private route.
+  static const String professionalRequirements = '/professional/requirements';
+
   /// Unified-account activity launcher (Explore / Earn).
   ///
   /// Private authenticated route (no SEO): "Welcome to Hivorr — How would you
@@ -242,6 +246,15 @@ abstract final class RoutePaths {
   /// Builds a URL-encoded contract milestone editor path.
   static String contractMilestonesEdit(String id) =>
       '/contracts/${Uri.encodeComponent(id)}/milestones/edit';
+
+  /// Business identity screens (identity audit Phase 2a, protected).
+  static const String businesses = '/businesses';
+  static const String businessNew = '/businesses/new';
+  static const String businessDetailRoute = '/businesses/:id';
+
+  /// Builds a URL-encoded business detail path.
+  static String businessDetail(String id) =>
+      '/businesses/${Uri.encodeComponent(id)}';
 
   /// Availability template editor (EP-03-14, protected, professional).
   /// Optional query param: `professionId`.

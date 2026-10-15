@@ -76,6 +76,7 @@ class JobService {
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   }) => _tracedAndLogged('jobs.create', () async {
     final Job job = await _repository.createJob(
       title: title,
@@ -86,6 +87,7 @@ class JobService {
       budgetMax: budgetMax,
       currencyCode: currencyCode,
       location: location,
+      businessId: businessId,
     );
     _logger?.info('Job created', <String, Object?>{
       'jobId': _redactor.redact(job.id),

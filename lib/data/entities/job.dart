@@ -14,6 +14,9 @@ class Job {
     required this.clientEntityId,
     this.professionId,
     this.industryId,
+    this.businessId,
+    this.clientDisplayName,
+    this.clientBusinessName,
     required this.title,
     required this.description,
     this.budgetMin,
@@ -42,6 +45,17 @@ class Job {
 
   /// Optional taxonomy binding (industry).
   final String? industryId;
+
+  /// Hiring business (`jobs.business_id`), or null for personal hiring.
+  final String? businessId;
+
+  /// Snapshot of the poster display name at creation (never legal-adjacent
+  /// PII beyond the public handle; point-in-time, never refreshed).
+  final String? clientDisplayName;
+
+  /// Snapshot of the hiring business trading name at creation; null for
+  /// personal hiring.
+  final String? clientBusinessName;
 
   /// Job title, 10–120 chars (CHECK).
   final String title;

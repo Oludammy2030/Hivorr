@@ -88,8 +88,13 @@ class EntityRepositoryImpl implements EntityRepository {
   }
 
   @override
-  Future<void> bindProfession({required String professionId}) =>
-      remote.bindProfession(professionId: professionId);
+  Future<void> bindProfession({
+    required String professionId,
+    String? professionalDisplayName,
+  }) => remote.bindProfession(
+    professionId: professionId,
+    professionalDisplayName: professionalDisplayName,
+  );
 
   @override
   Future<EntityProfile> updateAvatarPath({

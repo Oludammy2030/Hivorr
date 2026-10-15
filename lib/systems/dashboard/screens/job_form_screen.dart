@@ -5,7 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
+import 'package:hivorr/core/authentication/providers/auth_provider.dart';
+import 'package:hivorr/data/entities/business.dart';
 import 'package:hivorr/data/entities/job.dart';
+import 'package:hivorr/data/providers/business_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
@@ -79,6 +82,12 @@ class _JobFormScreenState extends State<JobFormScreen> {
   String _experienceLevel = 'Any';
   DateTime? _deadline;
 
+  /// Hiring business id, or null for personal hiring. Server validates the
+  /// link (verified business + authorized representative); the selector only
+  /// offers verified businesses so dead ends never reach submit.
+  String? _businessId;
+  bool _businessesRequested = false;
+
   bool _saving = false;
   bool _prefilled = false;
   bool _loadRequested = false;
@@ -103,6 +112,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
     final double? amount = job.budgetMax ?? job.budgetMin;
     if (amount != null) _budget.text = _trimZero(amount);
     if (job.location != null) _location.text = job.location!;
+    _businessId = job.businessId;
   }
 
   String _trimZero(double v) =>
@@ -115,6 +125,27 @@ class _JobFormScreenState extends State<JobFormScreen> {
 
   void setExperienceLevel(String value) =>
       setState(() => _experienceLevel = value);
+
+  void setBusiness(String? value) => setState(() => _businessId = value);
+
+  /// Best-effort business roster load for the "Hiring as" selector (silent
+  /// when auth/business providers are absent, e.g. in isolated tests).
+  void _requestBusinesses(BuildContext context) {
+    if (_businessesRequested) return;
+    _businessesRequested = true;
+    try {
+      final String? entityId = context
+          .read<AuthProvider>()
+          .currentSession
+          ?.entityId;
+      if (entityId == null || entityId.isEmpty) return;
+      unawaited(
+        context.read<BusinessProvider>().loadMine(entityId: entityId),
+      );
+    } on Object {
+      // Providers absent — selector falls back to personal-only.
+    }
+  }
 
   String? _validateTitle(String? value) =>
       (value != null && JobService.validateTitle(value))
@@ -190,6 +221,7 @@ class _JobFormScreenState extends State<JobFormScreen> {
               budgetMin: amount,
               budgetMax: amount,
               location: _locationOrNull(),
+              businessId: _businessId,
             );
       if (!mounted) return;
       _snack(
@@ -208,6 +240,11 @@ class _JobFormScreenState extends State<JobFormScreen> {
   @override
   Widget build(BuildContext context) {
     final JobProvider jobs = context.watch<JobProvider>();
+    if (!_businessesRequested) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _requestBusinesses(context);
+      });
+    }
     if (_editing) {
       if (jobs.selected?.id == widget.jobId) {
         _prefill(jobs.selected);
@@ -467,6 +504,10 @@ class _JobDetailsCard extends StatelessWidget {
             maxLines: 7,
             validator: state._validateDescription,
           ),
+          const SizedBox(height: HivorrSpacing.md),
+          const _FieldLabel(text: 'Hiring as'),
+          const SizedBox(height: HivorrSpacing.sm),
+          _HiringAsDropdown(state: state),
           const SizedBox(height: HivorrSpacing.md),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints c) {
@@ -811,6 +852,77 @@ class _ExperienceDropdown extends StatelessWidget {
       onChanged: (String? value) {
         if (value != null) state.setExperienceLevel(value);
       },
+      style: context.textTheme.bodyLarge,
+      icon: Icon(
+        Icons.keyboard_arrow_down,
+        color: colors.onSurface,
+      ),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: fill,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: HivorrSpacing.md,
+          vertical: 15,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colors.primary, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+/// Hiring-identity selector (identity audit Phase 4).
+///
+/// `null` posts personally; a verified business id posts on its behalf
+/// (server enforces verification + representative authorization). Only
+/// verified businesses are offered — unverified rows would only fail at
+/// submit with PLT005.
+class _HiringAsDropdown extends StatelessWidget {
+  const _HiringAsDropdown({required this.state});
+
+  final _JobFormScreenState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final Color fill = colors.surfaceContainerHighest.withValues(
+      alpha: context.isDarkMode ? 1.0 : 0.45,
+    );
+    List<Business> verified = const <Business>[];
+    try {
+      verified = context
+          .watch<BusinessProvider>()
+          .businesses
+          .where((Business business) => business.isVerified)
+          .toList(growable: false);
+    } on Object {
+      verified = const <Business>[];
+    }
+    return DropdownButtonFormField<String?>(
+      isExpanded: true,
+      initialValue: state._businessId,
+      items: <DropdownMenuItem<String?>>[
+        const DropdownMenuItem<String?>(
+          value: null,
+          child: Text('Myself (personal)'),
+        ),
+        for (final Business business in verified)
+          DropdownMenuItem<String?>(
+            value: business.id,
+            child: Text(business.tradingName, overflow: TextOverflow.ellipsis),
+          ),
+      ],
+      onChanged: state.setBusiness,
       style: context.textTheme.bodyLarge,
       icon: Icon(
         Icons.keyboard_arrow_down,

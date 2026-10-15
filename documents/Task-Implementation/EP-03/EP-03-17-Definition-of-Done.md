@@ -201,7 +201,7 @@
 
 - **Decision:** `Completed` — all §2–§8 boxes accepted on the evidence below.
 - **Evidence attached:**
-  - pgTAP: `supabase db reset` green (migrations through `20261012090003`); `supabase db test` — **Files=51, Tests=1740, PASS** (048:24, 049:44, 050:14, 051:13, all frozen 001–047 green).
+  - pgTAP: `supabase db reset` green (migrations through `20261013090004`, rebased past master's identity/business lane); `supabase db test` — **Files=51+, Tests=1740+, PASS** (048:24, 049:44, 050:14, 051:13, all frozen suites green).
   - Flutter: `dart analyze` clean; **398 tests green** (49 new unit, 22 new widget incl. 320–600px overflow matrix, 3 fake-E2E flows, 5 router tests).
   - Static gates: no callable `dispute_resolve`/service-role key in `lib/`; no REST DML on dispute/contract tables; token-only UI.
 - **Approved deviations from the plan text** (behavior approved, docs carry the rationale): null `escrow_id` maps to `''` client-side (`hasEscrow` helper); storage path `{entityId}/dispute/{caseId}/…` (bucket RLS requires the owner prefix); banner routes to the open case with filing fallback; freeze copy wording.

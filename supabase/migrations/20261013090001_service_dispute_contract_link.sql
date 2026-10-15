@@ -1,7 +1,7 @@
 -- =============================================================================
 -- EP-03-17: Service-Engagement Dispute Linkage & Contract-Scoped Filing
 -- -----------------------------------------------------------------------------
--- Migration: 20261011090001_service_dispute_contract_link.sql
+-- Migration: 20261013090001_service_dispute_contract_link.sql
 -- Depends on: 20260829120005_dispute_resolution_schema.sql (dispute_cases,
 --             dispute_place/release_escrow_hold DEFINER helpers, dispute_*
 --             RPCs, envelope vocabulary)

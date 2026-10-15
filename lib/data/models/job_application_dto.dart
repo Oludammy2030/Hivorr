@@ -28,6 +28,9 @@ class JobApplicationDto {
     this.applicantAvatarPath,
     this.applicantProfessionName,
     this.applicantProfessionSlug,
+    this.clientDisplayName,
+    this.clientBusinessId,
+    this.clientBusinessName,
   });
 
   factory JobApplicationDto.fromJson(Map<String, dynamic> json) =>
@@ -51,6 +54,9 @@ class JobApplicationDto {
         applicantAvatarPath: json['applicant_avatar_path'] as String?,
         applicantProfessionName: json['applicant_profession_name'] as String?,
         applicantProfessionSlug: json['applicant_profession_slug'] as String?,
+        clientDisplayName: json['client_display_name'] as String?,
+        clientBusinessId: json['client_business_id'] as String?,
+        clientBusinessName: json['client_business_name'] as String?,
       );
 
   final String id;
@@ -72,6 +78,9 @@ class JobApplicationDto {
   final String? applicantAvatarPath;
   final String? applicantProfessionName;
   final String? applicantProfessionSlug;
+  final String? clientDisplayName;
+  final String? clientBusinessId;
+  final String? clientBusinessName;
 
   static double? _toNullableDouble(dynamic value) {
     if (value == null) return null;

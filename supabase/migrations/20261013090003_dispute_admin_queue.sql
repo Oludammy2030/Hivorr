@@ -1,8 +1,8 @@
 -- =============================================================================
 -- R3 (EP-03-17 follow-up): service-engagement dispute admin visibility
 -- -----------------------------------------------------------------------------
--- Migration: 20261012090002_dispute_admin_queue.sql
--- Depends on: 20261011090001_service_dispute_contract_link.sql (contract_id,
+-- Migration: 20261013090003_dispute_admin_queue.sql
+-- Depends on: 20261013090001_service_dispute_contract_link.sql (contract_id,
 --             service_dispute_get join shape)
 --             20260916090001_super_admin_system.sql (is_platform_admin helper)
 --

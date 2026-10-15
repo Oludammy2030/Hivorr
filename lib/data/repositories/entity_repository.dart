@@ -35,7 +35,13 @@ abstract class EntityRepository {
   ///
   /// The server validates existence/active state (`PLT004`), rejects duplicate
   /// bindings (`PLT005`), and lands `trade_verification_status = unverified`.
-  Future<void> bindProfession({required String professionId});
+  /// [professionalDisplayName] is the proposed public professional name
+  /// (stored on the binding, validated 1-120 when supplied; effective for
+  /// display only after trade approval).
+  Future<void> bindProfession({
+    required String professionId,
+    String? professionalDisplayName,
+  });
 
   /// Persists a Storage-uploaded avatar path via the self-scoped REST update.
   ///

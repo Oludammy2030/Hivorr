@@ -155,7 +155,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           // professional wizard resumes at industry selection.
           await onboarding.selectCapability(EntityCapability.offer);
         }
-        return RoutePaths.onboardingIndustry;
+        // Identity audit Phase 4: non-ready Earn traffic lands on the
+        // requirements checklist (what is needed + deep links) instead of
+        // a blind wizard jump.
+        return RoutePaths.professionalRequirements;
       case HivorrActivity.buy:
       case HivorrActivity.sell:
       case HivorrActivity.logistics:

@@ -191,6 +191,44 @@ void main() {
       expect(app.applicantDisplayName, isNull);
       expect(app.applicantProfessionSlug, isNull);
       expect(app.hasIdentitySnapshot, isFalse);
+      expect(app.clientDisplayName, isNull);
+      expect(app.clientBusinessName, isNull);
+    });
+
+    test('application DTO maps the client snapshots when present', () {
+      final JobApplication app = JobMapper.applicationToEntity(
+        JobApplicationDto.fromJson(<String, dynamic>{
+          'id': 'app-7',
+          'job_id': 'job-1',
+          'professional_entity_id': 'pro-7',
+          'client_entity_id': 'client-1',
+          'cover_note': 'I can do this work well.',
+          'currency_code': 'NGN',
+          'status': 'submitted',
+          'submitted_at': '2026-09-02T10:00:00Z',
+          'created_at': '2026-09-02T10:00:00Z',
+          'updated_at': '2026-09-02T10:00:00Z',
+          'client_display_name': 'Amara Diallo',
+          'client_business_id': 'biz-1',
+          'client_business_name': 'Amara Foods',
+        }),
+      );
+      expect(app.clientDisplayName, 'Amara Diallo');
+      expect(app.clientBusinessId, 'biz-1');
+      expect(app.clientBusinessName, 'Amara Foods');
+    });
+
+    test('job DTO maps business linkage and client snapshots', () {
+      final Map<String, dynamic> json = Map<String, dynamic>.from(
+        jobJson(),
+      );
+      json['business_id'] = 'biz-1';
+      json['client_display_name'] = 'Amara Diallo';
+      json['client_business_name'] = 'Amara Foods';
+      final Job job = JobMapper.jobToEntity(JobDto.fromJson(json));
+      expect(job.businessId, 'biz-1');
+      expect(job.clientDisplayName, 'Amara Diallo');
+      expect(job.clientBusinessName, 'Amara Foods');
     });
 
     test('job list envelope degrades missing items to empty', () {

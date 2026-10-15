@@ -18,6 +18,7 @@ class ServiceContract {
   const ServiceContract({
     required this.id,
     required this.serviceListingId,
+    this.jobId,
     required this.clientEntityId,
     required this.professionalEntityId,
     required this.status,
@@ -47,6 +48,10 @@ class ServiceContract {
 
   /// The bound `service_listings` row.
   final String serviceListingId;
+
+  /// Linked `jobs` row for hire-sourced contracts; null for listing-sourced
+  /// ones (exactly one source set per `service_contracts_source_xor`).
+  final String? jobId;
 
   /// The consuming client (offer author).
   final String clientEntityId;

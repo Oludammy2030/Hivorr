@@ -1,7 +1,7 @@
 -- =============================================================================
 -- R2 (EP-03-17 follow-up): notification_events push channel + Realtime wiring
 -- -----------------------------------------------------------------------------
--- Migration: 20261012090001_dispute_notify_channel.sql
+-- Migration: 20261013090002_dispute_notify_channel.sql
 -- Depends on: 20260821090002_entity_core_tables.sql (entities)
 --
 -- PURPOSE

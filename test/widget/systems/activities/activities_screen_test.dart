@@ -144,5 +144,45 @@ void main() {
       expect(tester.takeException(), isNull);
       stack.provider.dispose();
     });
+
+    testWidgets('live Earn card routes non-ready users to requirements',
+        (WidgetTester tester) async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      final GoRouter router = GoRouter(
+        initialLocation: RoutePaths.activities,
+        routes: <RouteBase>[
+          GoRoute(
+            path: RoutePaths.activities,
+            builder: (BuildContext context, GoRouterState state) =>
+                const ActivitiesScreen(),
+          ),
+          GoRoute(
+            path: RoutePaths.professionalRequirements,
+            builder: (BuildContext context, GoRouterState state) =>
+                const Scaffold(body: Text('REQUIREMENTS')),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: stack.buildProviders(),
+          child: MaterialApp.router(
+            routerConfig: router,
+            theme: AppTheme.lightTheme,
+            debugShowCheckedModeBanner: false,
+          ),
+        ),
+      );
+      await tester.pump();
+      final Finder earnCard = find.text('I Want to Offer My Services');
+      await tester.scrollUntilVisible(earnCard, 200);
+      await tester.pump();
+      await tester.tap(earnCard);
+      await tester.pumpAndSettle();
+      expect(find.text('REQUIREMENTS'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      stack.provider.dispose();
+    });
   });
 }

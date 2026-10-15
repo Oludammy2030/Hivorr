@@ -1,10 +1,10 @@
 -- =============================================================================
 -- EP-03-17 R4 follow-up: null-escrow tolerance for withdraw/resolve
 -- -----------------------------------------------------------------------------
--- Migration: 20261012090003_dispute_unfunded_tolerance.sql
+-- Migration: 20261013090004_dispute_unfunded_tolerance.sql
 -- Depends on: 20260829120005_dispute_resolution_schema.sql (dispute_resolve)
 --             20260829120006_dispute_withdraw_definer.sql (dispute_withdraw)
---             20261011090001_service_dispute_contract_link.sql (nullable
+--             20261013090001_service_dispute_contract_link.sql (nullable
 --             escrow_id, contract freeze/unfreeze triggers)
 --
 -- PURPOSE

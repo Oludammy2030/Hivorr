@@ -1128,6 +1128,11 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
   final TextEditingController _portfolio = TextEditingController();
   bool _sending = false;
 
+  /// Set when the server denies the submit on the trade gate (identity
+  /// audit Phase 4): the dialog stays open on a requirements entry instead
+  /// of a dead error.
+  bool _tradeDenied = false;
+
   @override
   void dispose() {
     _rate.dispose();
@@ -1205,7 +1210,10 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
       );
       return;
     }
-    setState(() => _sending = true);
+    setState(() {
+      _sending = true;
+      _tradeDenied = false;
+    });
     try {
       await context.read<JobProvider>().apply(
         jobId: widget.job.id,
@@ -1227,6 +1235,12 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
           .any((JobApplication app) => app.jobId == widget.job.id);
       if (nowApplied) {
         Navigator.of(context).pop(true);
+        return;
+      }
+      // Trade-gate denial (identity audit Phase 4): keep the dialog open on
+      // the requirements entry instead of a dead snackbar.
+      if (e.code == 'PLT005' && e.message.contains('Trade verification')) {
+        setState(() => _tradeDenied = true);
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1341,6 +1355,22 @@ class _FwApplyDialogState extends State<_FwApplyDialog> {
                   },
                 ),
                 const SizedBox(height: HivorrSpacing.lg),
+                if (_tradeDenied) ...<Widget>[
+                  HivorrErrorState(
+                    message: 'Trade verification required',
+                    detail:
+                        'This job needs an approved trade proof. See exactly what is missing.',
+                    actionLabel: 'View requirements',
+                    onAction: () {
+                      Navigator.of(context).pop(false);
+                      unawaited(
+                        context.push(RoutePaths.professionalRequirements),
+                      );
+                    },
+                    onRetry: () => unawaited(_submit()),
+                  ),
+                  const SizedBox(height: HivorrSpacing.md),
+                ],
                 InkWell(
                   onTap: _sending ? null : _submit,
                   borderRadius: BorderRadius.circular(

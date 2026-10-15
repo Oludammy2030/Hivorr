@@ -11,6 +11,9 @@ import 'package:hivorr/data/models/job_envelopes_dto.dart';
 /// and `application_submit/withdraw/shortlist/reject/list_for_job/list_mine`.
 abstract class JobsRemoteDataSource {
   /// Creates a draft job (`job_create`, VOLATILE).
+  ///
+  /// [businessId] hires as a verified business (authorized representative);
+  /// null posts personally.
   Future<JobDto> createJob({
     required String title,
     required String description,
@@ -20,6 +23,7 @@ abstract class JobsRemoteDataSource {
     double? budgetMax,
     String currencyCode = 'NGN',
     String? location,
+    String? businessId,
   });
 
   /// Updates a draft/open/paused job (`job_update`, VOLATILE).

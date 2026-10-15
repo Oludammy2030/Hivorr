@@ -97,13 +97,17 @@ class SupabaseEntityRemoteDataSource extends BaseApiService
   });
 
   @override
-  Future<void> bindProfession({required String professionId}) =>
-      _guard(() async {
-        final Map<String, dynamic> params = <String, dynamic>{
-          'p_profession_id': professionId,
-        };
-        await supabase.rpc<void>('entity_profession_bind', params: params);
-      });
+  Future<void> bindProfession({
+    required String professionId,
+    String? professionalDisplayName,
+  }) => _guard(() async {
+    final Map<String, dynamic> params = <String, dynamic>{
+      'p_profession_id': professionId,
+      if (professionalDisplayName != null)
+        'p_professional_display_name': professionalDisplayName,
+    };
+    await supabase.rpc<void>('entity_profession_bind', params: params);
+  });
 
   @override
   Future<EntityProfileDto> updateAvatarPath({

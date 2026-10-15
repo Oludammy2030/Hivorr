@@ -34,6 +34,9 @@ import 'package:hivorr/systems/admin/screens/admin_settings_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_detail_screen.dart';
 import 'package:hivorr/systems/admin/screens/manage_user_screen.dart';
 import 'package:hivorr/systems/admin/shell/super_admin_shell.dart';
+import 'package:hivorr/systems/business/screens/business_detail_screen.dart';
+import 'package:hivorr/systems/business/screens/business_form_screen.dart';
+import 'package:hivorr/systems/business/screens/business_list_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/client_find_service_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/conversation_screen.dart';
 import 'package:hivorr/systems/dashboard/screens/dashboard_overview_screen.dart';
@@ -69,6 +72,7 @@ import 'package:hivorr/systems/marketplace/screens/service_detail_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_form_screen.dart';
 import 'package:hivorr/systems/marketplace/screens/service_listing_media_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_shell_screen.dart';
+import 'package:hivorr/systems/onboarding/screens/professional_requirements_screen.dart';
 import 'package:hivorr/systems/portfolio/screens/professional_profile_screen.dart';
 import 'package:hivorr/systems/reviews/screens/review_reveal_screen.dart';
 import 'package:hivorr/systems/reviews/screens/review_submit_screen.dart';
@@ -645,6 +649,28 @@ class AppRouter {
                 contractId: state.pathParameters['id'] ?? '',
               ),
         ),
+        // Business identities (identity audit Phase 2a, protected — guard
+        // keeps login gate; member-scoped reads stay server-side).
+        GoRoute(
+          path: RoutePaths.businesses,
+          name: RouteNames.businesses,
+          builder: (BuildContext context, GoRouterState state) =>
+              const BusinessListScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.businessNew,
+          name: RouteNames.businessNew,
+          builder: (BuildContext context, GoRouterState state) =>
+              const BusinessFormScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.businessDetailRoute,
+          name: RouteNames.businessDetail,
+          builder: (BuildContext context, GoRouterState state) =>
+              BusinessDetailScreen(
+                businessId: state.pathParameters['id'] ?? '',
+              ),
+        ),
         // Contract earnings drill-down (EP-03-16, protected — deep-links
         // only; filing and releasing stay in their owning systems).
         GoRoute(
@@ -773,6 +799,12 @@ class AppRouter {
           path: '/onboarding/profession',
           redirect: (BuildContext context, GoRouterState state) =>
               RoutePaths.onboardingIndustry,
+        ),
+        GoRoute(
+          path: RoutePaths.professionalRequirements,
+          name: RouteNames.professionalRequirements,
+          builder: (BuildContext context, GoRouterState state) =>
+              const ProfessionalRequirementsScreen(),
         ),
       ],
     );
