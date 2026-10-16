@@ -26,6 +26,9 @@ class FakeServiceSearchRepository implements ServiceSearchRepository {
   /// The last `query` passed to [search].
   String? lastQuery;
 
+  /// The last `filters` passed to [search].
+  ServiceSearchFilters? lastFilters;
+
   /// When set, [search] throws this instead of returning a page (e.g. a
   /// `PLT004` [ApiException] for no-oracle empty-state tests).
   ApiException? searchError;
@@ -41,6 +44,7 @@ class FakeServiceSearchRepository implements ServiceSearchRepository {
     searchCallCount++;
     lastProfessionId = professionId;
     lastQuery = query;
+    lastFilters = filters;
     final ApiException? error = searchError;
     if (error != null) throw error;
     return ServiceSearchPage(

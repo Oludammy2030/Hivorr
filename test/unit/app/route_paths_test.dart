@@ -119,4 +119,17 @@ void main() {
     expect(RouteNames.publicStore, 'public-store');
     expect(RouteNames.dashboardServices, 'dashboard-services');
   });
+
+  test('EP-03-19 SEO browse and alias routes match the route table', () {
+    expect(RoutePaths.serviceSeoBrowseRoute, '/s/:industrySlug');
+    expect(RoutePaths.profileAliasRoute, '/c/:slug/:id');
+    expect(RouteNames.serviceSeoBrowse, 'service-seo-browse');
+    expect(RouteNames.profileAlias, 'profile-alias');
+    expect(RoutePaths.serviceSeoBrowse('technology'), '/s/technology');
+    expect(RoutePaths.serviceSeoBrowse('a b/c'), '/s/a%20b%2Fc');
+    expect(
+      RoutePaths.profileAlias(slug: 'electrician', id: 'abc-123'),
+      '/c/electrician/abc-123',
+    );
+  });
 }

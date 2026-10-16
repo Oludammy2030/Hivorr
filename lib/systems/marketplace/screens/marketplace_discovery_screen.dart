@@ -6,8 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/industry.dart';
 import 'package:hivorr/data/entities/profession.dart';
+import 'package:hivorr/data/entities/service_listing.dart';
 import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
+import 'package:hivorr/engine/growth_engine/listing_seo_meta.dart';
+import 'package:hivorr/engine/growth_engine/seo_head.dart';
+import 'package:hivorr/engine/growth_engine/seo_meta_view.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
@@ -16,6 +20,7 @@ import 'package:hivorr/shared/layouts/hivorr_screen_scaffold.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_card.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
+import 'package:hivorr/shared/widgets/hivorr_empty_state.dart';
 import 'package:hivorr/systems/marketplace/widgets/discovery_results_view.dart';
 import 'package:hivorr/systems/marketplace/widgets/ranking_explainer_chip.dart';
 import 'package:provider/provider.dart';
@@ -29,8 +34,15 @@ import 'package:provider/provider.dart';
 /// selection is never mutated here. Follows the `MyListingsScreen` lifecycle
 /// convention (one-shot initial load, resume refresh) and renders only
 /// [AppTheme] tokens (AGENT.md Rule 5).
+///
+/// EP-03-19: [initialIndustrySlug] serves the SEO browse `/s/:industrySlug`
+/// (validated against taxonomy; unknown slug renders SEO-404, never a
+/// redirect loop). `null` preserves the legacy `/services` browse.
 class MarketplaceDiscoveryScreen extends StatefulWidget {
-  const MarketplaceDiscoveryScreen({super.key});
+  const MarketplaceDiscoveryScreen({super.key, this.initialIndustrySlug});
+
+  /// SEO industry slug from `/s/:industrySlug` (cosmetic/validating only).
+  final String? initialIndustrySlug;
 
   @override
   State<MarketplaceDiscoveryScreen> createState() =>
@@ -42,6 +54,7 @@ class _MarketplaceDiscoveryScreenState extends State<MarketplaceDiscoveryScreen>
   bool _initialized = false;
   String? _industryId;
   bool _warming = false;
+  bool _unknownSlug = false;
 
   @override
   void didChangeDependencies() {
@@ -73,6 +86,37 @@ class _MarketplaceDiscoveryScreenState extends State<MarketplaceDiscoveryScreen>
       await taxonomy.loadIndustries();
     }
     if (!mounted) return;
+    // EP-03-19: resolve the SEO slug to a taxonomy id (slug is cosmetic,
+    // the id filters the ranked search). Unknown slugs stay on this URL as
+    // SEO-404 content — never a redirect loop.
+    final String? slug = widget.initialIndustrySlug?.trim();
+    if (slug != null && slug.isNotEmpty) {
+      Industry? match;
+      for (final Industry industry in taxonomy.industries) {
+        if (industry.slug == slug) {
+          match = industry;
+          break;
+        }
+      }
+      if (match == null) {
+        setState(() {
+          _unknownSlug = true;
+          _industryId = null;
+        });
+        return;
+      }
+      _industryId = match.id;
+      await taxonomy.loadProfessions(match.id);
+      if (!mounted) return;
+      final MarketplaceSearchProvider? provider =
+          context.read<MarketplaceSearchProvider?>();
+      if (provider != null) {
+        final ServiceSearchFilters current = provider.filters;
+        provider.setFilters(
+          current.copyWith(industryId: match.id),
+        );
+      }
+    }
     final ServiceSearchIndex? index = context.read<ServiceSearchIndex?>();
     if (index != null && !_warming) {
       _warming = true;
@@ -95,6 +139,13 @@ class _MarketplaceDiscoveryScreenState extends State<MarketplaceDiscoveryScreen>
 
   Future<void> _selectIndustry(String? id) async {
     setState(() => _industryId = id);
+    final MarketplaceSearchProvider? provider =
+        context.read<MarketplaceSearchProvider?>();
+    if (provider != null) {
+      final ServiceSearchFilters current = provider.filters;
+      provider.setFilters(current.copyWith(industryId: id));
+      unawaited(provider.search());
+    }
     if (id != null) {
       await context.read<TaxonomyProvider>().loadProfessions(id);
     }
@@ -110,6 +161,14 @@ class _MarketplaceDiscoveryScreenState extends State<MarketplaceDiscoveryScreen>
 
   @override
   Widget build(BuildContext context) {
+    // EP-03-19: browse head for SEO discoverability (web-only side effect).
+    final String? slug = widget.initialIndustrySlug?.trim();
+    final String industryName = _industryNameFor(slug);
+    final ListingSeoMeta browseMeta = ListingSeoMetaBuilder.buildBrowse(
+      baseUrl: seoOrigin(),
+      industrySlug: slug,
+      industryName: industryName.isEmpty ? null : industryName,
+    );
     return HivorrScreenScaffold(
       appBar: AppBar(
         title: Text('Find services', style: context.textTheme.titleLarge),
@@ -123,46 +182,76 @@ class _MarketplaceDiscoveryScreenState extends State<MarketplaceDiscoveryScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              _SearchEntry(
-                onTap: () => context.push(RoutePaths.serviceSearch),
-              ),
-              const SizedBox(height: HivorrSpacing.xs),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: RankingExplainerChip(),
-              ),
-              const SizedBox(height: HivorrSpacing.sm),
-              HivorrSectionHeader(
-                title: 'Browse by profession',
-                action: HivorrButton(
-                  label: 'Search',
-                  size: HivorrButtonSize.small,
-                  variant: HivorrButtonVariant.outline,
-                  onPressed: () => context.push(RoutePaths.serviceSearch),
+              SeoHead(view: SeoMetaView.fromBrowse(browseMeta)),
+              if (_unknownSlug)
+                Expanded(
+                  child: HivorrEmptyState(
+                    title: 'No services found',
+                    subtitle:
+                        'This category is not available. Try browsing all services.',
+                    actionButton: HivorrButton(
+                      label: 'Browse all services',
+                      onPressed: () =>
+                          context.go(RoutePaths.serviceDiscovery),
+                    ),
+                  ),
+                )
+              else ...<Widget>[
+                _SearchEntry(
+                  onTap: () => context.push(RoutePaths.serviceSearch),
                 ),
-              ),
-              _IndustryChips(
-                selected: _industryId,
-                onSelected: _selectIndustry,
-              ),
-              const SizedBox(height: HivorrSpacing.xs),
-              _ProfessionChips(
-                industryId: _industryId,
-                onSelected: _selectProfession,
-              ),
-              const SizedBox(height: HivorrSpacing.sm),
-              const Expanded(
-                child: DiscoveryResultsView(
-                  emptyTitle: 'No services yet',
-                  emptySubtitle:
-                      'Try another profession or check back soon — new verified services appear here first.',
+                const SizedBox(height: HivorrSpacing.xs),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: RankingExplainerChip(),
                 ),
-              ),
+                const SizedBox(height: HivorrSpacing.sm),
+                HivorrSectionHeader(
+                  title: 'Browse by profession',
+                  action: HivorrButton(
+                    label: 'Search',
+                    size: HivorrButtonSize.small,
+                    variant: HivorrButtonVariant.outline,
+                    onPressed: () => context.push(RoutePaths.serviceSearch),
+                  ),
+                ),
+                _IndustryChips(
+                  selected: _industryId,
+                  onSelected: _selectIndustry,
+                ),
+                const SizedBox(height: HivorrSpacing.xs),
+                _ProfessionChips(
+                  industryId: _industryId,
+                  onSelected: _selectProfession,
+                ),
+                const SizedBox(height: HivorrSpacing.sm),
+                const Expanded(
+                  child: DiscoveryResultsView(
+                    emptyTitle: 'No services yet',
+                    emptySubtitle:
+                        'Try another profession or check back soon — new verified services appear here first.',
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// Resolves the display name for an SEO slug from cached taxonomy.
+  String _industryNameFor(String? slug) {
+    if (slug == null || slug.isEmpty) return '';
+    try {
+      final TaxonomyProvider taxonomy = context.read<TaxonomyProvider>();
+      for (final Industry industry in taxonomy.industries) {
+        if (industry.slug == slug) return industry.name;
+      }
+    } on Object {
+      return '';
+    }
+    return '';
   }
 }
 

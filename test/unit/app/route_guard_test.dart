@@ -233,6 +233,19 @@ void main() {
       );
     });
 
+    test('EP-03-19 unauthenticated SEO browse and alias stay public', () {
+      final provider = FakeAuthProvider(
+        initialStatus: AuthStatus.unauthenticated,
+      );
+      final guard = RouteGuard(authProvider: provider);
+      // Single-segment industry browse and the /c/ compatibility alias are
+      // public content; drafts stay a data-level PLT004 (screen), never a
+      // guard login leak.
+      expect(guard.redirectResolver('/s/technology'), isNull);
+      expect(guard.redirectResolver('/s/plumber/abc-123'), isNull);
+      expect(guard.redirectResolver('/c/electrician/abc-123'), isNull);
+    });
+
     test('authenticated user is routed from home to the dashboard', () {
       final provider = FakeAuthProvider(
         initialStatus: AuthStatus.authenticated,

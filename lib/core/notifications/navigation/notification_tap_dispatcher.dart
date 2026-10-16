@@ -6,7 +6,7 @@ import 'package:hivorr/core/notifications/models/hivorr_notification.dart';
 ///
 /// Allowlist-only: [actionRoute] must start with a known prefix
 /// (`/contracts`, `/dashboard`, `/appointments`, `/support`, `/finance`,
-/// `/services`, `/s`, `/p`). Anything else is logged and dropped — never
+/// `/services`, `/s`, `/p`, `/c`). Anything else is logged and dropped — never
 /// navigated (no open redirect). Auth preservation (`?next=` resume) stays
 /// in `RouteGuard`; this dispatcher only validates and forwards.
 class NotificationTapDispatcher {
@@ -26,7 +26,8 @@ class NotificationTapDispatcher {
         actionRoute.startsWith('/finance') ||
         actionRoute.startsWith('/services') ||
         actionRoute.startsWith('/s/') ||
-        actionRoute.startsWith('/p/');
+        actionRoute.startsWith('/p/') ||
+        actionRoute.startsWith('/c/');
   }
 
   /// Resolves the navigation target for [notification], or null to drop.
