@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:hivorr/config/environments/environment_config.dart';
 import 'package:hivorr/core/logging/logging.dart';
+import 'package:hivorr/core/notifications/channels/lifecycle_channels.dart';
 import 'package:hivorr/core/notifications/channels/notification_channel_manager.dart';
 import 'package:hivorr/core/notifications/notification_config.dart';
 import 'package:hivorr/core/notifications/permission/notification_permission_manager.dart';
@@ -12,18 +13,22 @@ import 'package:hivorr/core/notifications/services/local_notification_service.da
 import 'package:hivorr/core/notifications/services/notification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+export 'package:hivorr/core/notifications/channels/lifecycle_channels.dart';
 export 'package:hivorr/core/notifications/channels/notification_channel_manager.dart';
 export 'package:hivorr/core/notifications/models/hivorr_notification.dart';
 export 'package:hivorr/core/notifications/models/notification_channel.dart';
 export 'package:hivorr/core/notifications/models/notification_permission_status.dart';
 export 'package:hivorr/core/notifications/models/notification_priority.dart';
+export 'package:hivorr/core/notifications/navigation/notification_tap_dispatcher.dart';
 export 'package:hivorr/core/notifications/notification_config.dart';
 export 'package:hivorr/core/notifications/permission/notification_permission_manager.dart';
+export 'package:hivorr/core/notifications/permission/notification_permission_prompt.dart';
 export 'package:hivorr/core/notifications/providers/notification_provider.dart';
 export 'package:hivorr/core/notifications/push/push_notification_receiver.dart';
 export 'package:hivorr/core/notifications/push/supabase_push_receiver.dart';
 export 'package:hivorr/core/notifications/services/local_notification_service.dart';
 export 'package:hivorr/core/notifications/services/notification_service.dart';
+export 'package:hivorr/core/notifications/templates/lifecycle_notification_templates.dart';
 
 /// Aggregate of the wired notification engine, returned by
 /// [initializeNotifications].
@@ -86,6 +91,7 @@ NotificationLayer initializeNotifications(
   );
   unawaited(service.initialize());
   unawaited(channelManager.createDefaultChannel(notificationConfig));
+  unawaited(LifecycleChannels.registerAll(channelManager));
 
   final permissionManager = NotificationPermissionManager();
 
