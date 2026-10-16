@@ -75,9 +75,14 @@ select is(
     '{}'::jsonb
   ))->'data'->>'enqueued')::boolean,
   false, 'duplicate dedup_key is a no-op');
+-- Count checks run as postgres: authenticated holds zero grants by design.
+set role postgres;
 select is(
   (select count(*)::int from public.notification_outbox where dedup_key = 'matrix-dedup-1'),
   1, 'single row for duplicate dedup_key');
+set role authenticated;
+select set_config('request.jwt.claim.sub', current_setting('test.b'), true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   $$ select public.notification_enqueue('k-pii', current_setting('test.a')::uuid, 'contract_offered', 'New offer', 'Mail me at joe@example.com please', 'hivorr_contracts', 'normal', '/contracts/x', '{}'::jsonb) $$,
   'P0001', 'PLT003: Title/body must not contain contact details.', 'contact-details PII in body rejected');
