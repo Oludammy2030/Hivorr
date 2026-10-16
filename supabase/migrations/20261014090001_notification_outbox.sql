@@ -198,7 +198,9 @@ begin
   -- Caller-participant binding: when the payload references a source object,
   -- the caller must belong to it (identical PLT004, no existence oracle).
   -- service_role/postgres (drain, tests, Edge Functions) bypass the check.
-  if current_user not in ('service_role', 'postgres') then
+  -- NOTE: current_user is the DEFINER owner inside this function, so the
+  -- bypass reads the JWT role claim (message_send precedent), not the role.
+  if coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role', 'postgres') then
     if coalesce(p_payload->>'contractId', '') <> '' then
       if (p_payload->>'contractId') !~ '^[0-9a-fA-F-]{36}$'
          or not exists (
@@ -270,7 +272,8 @@ as $$
 declare
   v_items jsonb;
 begin
-  if current_user not in ('service_role', 'postgres') then
+  -- DEFINER runs as owner: read the JWT role claim (not current_user).
+  if coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role', 'postgres') then
     perform public.platform_raise_error('PLT004', 'Not found.');
   end if;
 
@@ -293,10 +296,7 @@ begin
      set status = 'leased', attempts = o.attempts + 1,
          next_retry_at = now() + interval '5 minutes'
     from leased
-   where o.id = leased.id
-  returning o.id, o.dedup_key, o.recipient_entity_id, o.event_type,
-            o.title, o.body, o.channel_id, o.priority, o.action_route,
-            o.payload, o.attempts;
+   where o.id = leased.id;
 
   -- Collect leased rows for the drain (service_role sees all via owner bypass).
   select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at), '[]'::jsonb)
@@ -335,7 +335,8 @@ as $$
 declare
   v_attempts int;
 begin
-  if current_user not in ('service_role', 'postgres') then
+  -- DEFINER runs as owner: read the JWT role claim (not current_user).
+  if coalesce(current_setting('request.jwt.claim.role', true), '') not in ('service_role', 'postgres') then
     perform public.platform_raise_error('PLT004', 'Not found.');
   end if;
 
