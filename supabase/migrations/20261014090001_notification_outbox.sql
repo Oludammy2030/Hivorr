@@ -126,7 +126,7 @@ volatile
 as $$
 declare
   v_actor uuid := auth.uid();
-  v_enqueued boolean := false;
+  v_rows integer := 0;
 begin
   if not public.platform_is_authenticated() then
     perform public.platform_raise_error('PLT001', 'Authentication required.');
@@ -241,12 +241,12 @@ begin
   )
   on conflict (dedup_key) do nothing;
 
-  get diagnostics v_enqueued = row_count;
+  get diagnostics v_rows = row_count;
   -- row_count is 1 on insert, 0 on conflict (exactly-once no-op).
 
   return jsonb_build_object(
     'success', true, 'code', 'PLT000', 'message', 'Notification enqueued.',
-    'data', jsonb_build_object('dedup_key', btrim(p_dedup_key), 'enqueued', (v_enqueued = 1))
+    'data', jsonb_build_object('dedup_key', btrim(p_dedup_key), 'enqueued', (v_rows = 1))
   );
 end;
 $$;

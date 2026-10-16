@@ -43,20 +43,20 @@ set role anon;
 select set_config('request.jwt.claim.role', 'anon', true);
 select throws_ok(
   $$ select public.notification_enqueue('k1', '00000000-0000-0000-0000-000000000000'::uuid, 'contract_offered', 't', 'b') $$,
-  'PLT001', 'anon enqueue blocked (auth required)');
+  '42501', null, 'anon enqueue blocked (no EXECUTE grant)');
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.b'), true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   $$ select public.notification_enqueue('k-bad-event', current_setting('test.a')::uuid, 'nope', 't', 'b') $$,
-  'PLT003', 'invalid event type rejected');
+  'P0001', 'PLT003: Invalid event type.', 'invalid event type rejected');
 select throws_ok(
   $$ select public.notification_enqueue('k-bad-route', current_setting('test.a')::uuid, 'contract_offered', 't', 'b', 'hivorr_contracts', 'normal', 'https://evil.example/x') $$,
-  'PLT003', 'non-allowlisted action route rejected');
+  'P0001', 'PLT003: Invalid action route.', 'non-allowlisted action route rejected');
 select throws_ok(
   $$ select public.notification_enqueue('k-bad-recipient', '00000000-0000-0000-0000-000000000000'::uuid, 'contract_offered', 't', 'b') $$,
-  'PLT004', 'unknown recipient rejected');
+  'P0001', 'PLT004: Recipient not found.', 'unknown recipient rejected');
 
 -- ─── 2. Exactly-once dedup ──────────────────────────────────────────────────
 select is(
@@ -80,24 +80,24 @@ select is(
   1, 'single row for duplicate dedup_key');
 select throws_ok(
   $$ select public.notification_enqueue('k-pii', current_setting('test.a')::uuid, 'contract_offered', 'New offer', 'Mail me at joe@example.com please', 'hivorr_contracts', 'normal', '/contracts/x', '{}'::jsonb) $$,
-  'PLT003', 'contact-details PII in body rejected');
+  'P0001', 'PLT003: Title/body must not contain contact details.', 'contact-details PII in body rejected');
 select throws_ok(
   $$ select public.notification_enqueue('k-nonparty', current_setting('test.a')::uuid, 'contract_offered', 'New contract offer', 'Contract ***0001 is awaiting review.', 'hivorr_contracts', 'normal', '/contracts/00000000-0000-0000-0000-000000000001', '{"contractId":"00000000-0000-0000-0000-000000000001","event":"contract_offered"}'::jsonb) $$,
-  'PLT004', 'non-party enqueue for unknown contract rejected (no oracle)');
+  'P0001', 'PLT004: Recipient not found.', 'non-party enqueue for unknown contract rejected (no oracle)');
 
 -- ─── 3. Direct writes + claim/ack guards ────────────────────────────────────
 select throws_ok(
   $$ insert into public.notification_outbox (dedup_key, recipient_entity_id, event_type, title, body) values ('direct-1', current_setting('test.a')::uuid, 'contract_offered', 't', 'b') $$,
-  null, 'authenticated direct INSERT blocked');
+  '42501', null, 'authenticated direct INSERT blocked (no grant)');
 set role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.b'), true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   $$ select public.notification_claim_batch(5) $$,
-  'PLT004', 'claim_batch rejects non-service_role');
+  '42501', null, 'claim_batch rejects non-service_role (no EXECUTE grant)');
 select throws_ok(
   $$ select public.notification_ack('00000000-0000-0000-0000-000000000000'::uuid, true) $$,
-  'PLT004', 'ack rejects non-service_role');
+  '42501', null, 'ack rejects non-service_role (no EXECUTE grant)');
 
 -- ─── 4. listing_published (owner self-confirm) ──────────────────────────────
 set role authenticated;
