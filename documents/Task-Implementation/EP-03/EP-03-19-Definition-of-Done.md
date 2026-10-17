@@ -66,7 +66,7 @@ Verify each behavior on a web build with clean path URLs (no `#/`). All checks u
 
 ## 4. Data Verification
 
-No migration is expected. Verify reuse and integrity of existing data contracts.
+No migration is expected (amended by §10 for `service_ranking_search`). Verify reuse and integrity of existing data contracts.
 
 - [ ] DV-01 — No new tables, columns, buckets, or RPCs were created for this task (schema diff vs EP-03-01 baseline is empty for this task's scope).
 - [ ] DV-02 — `ServiceListing` fields used for SEO (`id`, `slug`, `title` 10–120, `description` 50–5000, `professionSlug/Name`, `industrySlug/Name`) match RPC payloads; canonical prefers RPC `professionSlug`, then route slug, then listing slug — verified across at least one listing per case.
@@ -78,7 +78,7 @@ No migration is expected. Verify reuse and integrity of existing data contracts.
 ## 5. Security Verification
 
 - [ ] SV-01 — Authentication: anon can read `published` via `service_listing_get` / `service_ranking_search` / `service_listing_portfolio_list` only; all write and owner/private reads still require auth (spot-check `/services/mine`, `/contracts/:id`, `/finance/earnings` redirect to login with `?next=`).
-- [ ] SV-02 — Authorization / RLS: anon `service_listing_get(draft-id)` returns identical `PLT004` as unknown id (no oracle); anon search returns `published`-only; media for unpublished parents is not reachable; posture-audit-style check extended and green (failures routed to EP-03-01, not patched here by scope creep).
+- [ ] SV-02 — Authorization / RLS: anon `service_listing_get(draft-id)` returns identical `PLT004` as unknown id (no oracle); anon search returns `published`-only; media for unpublished parents is not reachable; posture-audit-style check extended and green (amended by §10: the anon browse defect found here was fixed in-PR by product-lead decision rather than routed to EP-03-01).
 - [ ] SV-03 — Access control: `robots.txt` allows `/services`, `/s/`, `/p/` (+ existing public info doors) and disallows `/services/mine`, `/contracts`, `/dashboard`, `/admin`, `/finance`, `/support`; drafts/unknown render not-found with no self-promoting canonical.
 - [ ] SV-04 — Sensitive data protection: meta, canonicals, `og:` payloads, and share URLs contain no `legal_name`, `document_path`, contact details, escrow amounts, or viewer `entity_id`; page source / head inspection on detail, browse, and alias confirms this.
 - [ ] SV-05 — Open-redirect safety: `/c/` redirect target is the allowlisted canonical `/p/:slug/:id` only; query passthrough is URL-encoded; `NotificationTapDispatcher.isAllowedRoute` covers the new public shapes and still drops non-allowlisted routes (malformed payload → log + drop, verified by unit test).
@@ -131,10 +131,56 @@ Real-world checks with a project-lead walkthrough on staging web (anon window + 
 The task may be marked Completed only when all of the following hold:
 
 - [ ] FA-01 — All Functional (§2), Technical (§3), Data (§4), Security (§5), Performance (§6), Testing (§7), and User Acceptance (§8) boxes above are checked with evidence (test run IDs / staging URLs / screenshots / head dumps linked in the review).
-- [ ] FA-02 — No out-of-scope delivery exists: zero new tables/columns/RPCs/RLS/buckets/ranking changes/SSR/admin expansion; diff review confirms thin router + SEO-seam + screen mounts + `web/*` only.
+- [ ] FA-02 — No out-of-scope delivery exists: zero new tables/columns/RPCs/RLS/buckets/ranking changes/SSR/admin expansion; diff review confirms thin router + SEO-seam + screen mounts + `web/*` only (amended by §10: one product-lead-approved `service_ranking_search` security-mode change, no new object).
 - [ ] FA-03 — Reuse-first honored: no duplicate detail/browse/profile screens, no `marketplace/seo/` silo, `PortfolioSeoMeta` untouched, growth-engine seam reused by design and documented for EP-04 product/store reuse.
 - [ ] FA-04 — `web/index.html`, `web/manifest.json`, `web/robots.txt`, `web/sitemap.xml` reviewed and correct; `flutter build web` + `dart analyze` + `flutter test` (affected + full) green on the approval commit.
 - [ ] FA-05 — EP-03-09 canonical-meta debt explicitly closed; any EP-03-20-deferred items (live crawl, p95 benchmark, goldens) are listed by name with owners — no silent carryover.
 - [ ] FA-06 — Project lead has signed each section in the review record; the approved implementation plan remains unmodified and this DoD is stored alongside it as its verification companion.
+
+## 10. Post-Verification Scope Amendment — Anon Browse Corrective (2026-10-17)
+
+Recorded, product-lead-approved deviation from this plan's "no migration / no
+ranking changes" posture (§4 note, SV-02, FA-02).
+
+**Finding.** During the SV-02 anon posture work
+(`supabase/tests/database/056_service_listing_seo_posture.sql`),
+`service_ranking_search` failed for the anonymous role:
+`ERROR: permission denied for table entity_kyc_levels`. The RPC is granted to
+`anon` (`20260927090001:540`) and its body even carries `current_user = 'anon'`
+error branches, but it was declared `SECURITY INVOKER` while reading `entities`,
+`entity_kyc_levels` and `service_contracts` — tables anon has no SELECT grant on
+(`revoke all … from anon` at `20260819090001:18`). The same self-scoped RLS
+policies also silently zeroed `w_verify`/`w_completion` for every authenticated
+caller; the pgTAP suites ran as `postgres` (table owner → RLS bypassed), which is
+why the defect was previously invisible.
+
+**Impact.** Anonymous marketplace browse/search — behind `/services`,
+`/services/search` and the EP-03-19 route `/s/:industrySlug` (FV-02, FV-03,
+WF-02, SV-01) — failed at the database for logged-out visitors, defeating the
+task's anonymous discoverability goal.
+
+**Approved resolution.** Fix in this PR (product-lead decision): promote the RPC
+to `SECURITY DEFINER` with a pinned `search_path = pg_catalog, public`, mirroring
+`portfolio_public_profile_get`. No new table/column/RPC/policy/grant is added —
+only the RPC's security mode changes. Safety: the body hard-filters
+`status = 'published'` and projects only whitelisted public fields; kyc tier,
+`last_seen_at` and contract completion are read solely to compute scores and are
+never returned. The error contract is unchanged (`platform_raise_error` formats
+identically to the inline anon raises).
+
+**Artifacts.**
+- `supabase/migrations/20261017090001_service_ranking_search_anon_definer.sql`
+- Posture counts updated 5→6 in `023_service_marketplace_schema_posture.sql` and
+  `033_platform_config_posture.sql`; mode note refreshed in
+  `034_service_ranking_rpc_enforcement.sql`; `056` strengthened with a positive
+  anon ranking assertion.
+
+**Effect on this DoD.**
+- §4 "No migration is expected" and DV-01/DV-02: superseded by this amendment for
+  `service_ranking_search` only; no other schema object changes.
+- SV-02: the "routed to EP-03-01, not patched here" clause is amended to "fixed
+  here by product-lead decision"; the posture extension is green in CI.
+- FA-02: "zero … ranking changes" is amended for this single RPC mode change.
+- The EP-03-01 follow-up for the anon browse defect is no longer required.
 
 *Verification companion to the approved EP-03-19 implementation plan. It creates no new requirements and redesigns nothing — unchecked boxes block approval.*
