@@ -140,12 +140,12 @@ select is(
   'entities_last_seen_at_idx exists'
 );
 
--- ─── 13. Exactly 5 service_% SECURITY DEFINER ─────────────────────────────────
+-- ─── 13. Exactly 6 service_% SECURITY DEFINER ─────────────────────────────────
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname like 'service\_%' and p.prosecdef),
-  5,
-  'exactly five service_% functions are SECURITY DEFINER (reveal + portfolio_list + unfreeze + 2 R3 dispute admin reads)'
+  6,
+  'exactly six service_% functions are SECURITY DEFINER (reveal + portfolio_list + ranking_search + unfreeze + 2 R3 dispute admin reads)'
 );
 
 -- ─── 14. Exactly 33 service_% RPCs ────────────────────────────────────────────

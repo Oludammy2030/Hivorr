@@ -1,5 +1,8 @@
 -- EP-03-06: Ranking RPC Enforcement
--- Validates service_ranking_search (SECURITY INVOKER STABLE) behavior: deterministic ordering,
+-- Validates service_ranking_search (SECURITY DEFINER STABLE since the EP-03-19
+-- anon-browse corrective migration; runs as the owner so the pgTAP suite's
+-- postgres session and RLS-bypassing weights stay consistent with anonymous
+-- callers) behavior: deterministic ordering,
 -- filter subsets, ts_rank, cursor pagination, published-only, injection sanitized, validation.
 
 begin;

@@ -6,14 +6,15 @@
 --   - anon `service_listing_get` succeeds on published, returns the identical
 --     PLT004 on draft and unknown ids (no enumeration oracle);
 --   - anon direct SELECT sees published rows only;
---   - anon `service_ranking_search` returns published rows only;
+--   - anon `service_ranking_search` runs (the anon browse fix) and surfaces the
+--     published fixture while never returning the draft fixture;
 --   - anon cannot see media of an unpublished parent;
 --   - anon cannot call gated listing writes (create/publish).
 -- Mirrors the assertions in 024_service_marketplace_rpc_enforcement.sql §1.
 
 begin;
 set search_path to extensions, public;
-select plan(8);
+select plan(9);
 
 -- ─── Fixtures (isolated ids; published + draft via the canonical RPCs) ──────
 set role postgres;
@@ -82,6 +83,13 @@ select throws_ok($$ select public.service_listing_create(null::uuid, null::text,
   '42501', null, 'anon cannot call service_listing_create');
 select throws_ok($$ select public.service_listing_publish(null::uuid) $$,
   '42501', null, 'anon cannot call service_listing_publish');
+select is(
+  (select count(*)::int
+    from jsonb_array_elements(
+      (public.service_ranking_search(p_query=>'Posture Published', p_limit=>50)->'data'->'items')) e
+    where e->>'id' = current_setting('test.seo_pub')),
+  1,
+  'anon service_ranking_search runs and surfaces the published fixture (anon browse fix)');
 select is(
   (select count(*)::int
     from jsonb_array_elements(
