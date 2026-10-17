@@ -122,10 +122,44 @@ GoRouter doorRouter({String initialLocation = RoutePaths.welcome}) {
         builder: _placeholder('Public profile'),
       ),
       GoRoute(
+        path: RoutePaths.profileAliasRoute,
+        name: RouteNames.profileAlias,
+        redirect: (BuildContext context, GoRouterState state) =>
+            RoutePaths.publicProfile(
+          slug: state.pathParameters['slug'] ?? '',
+          id: state.pathParameters['id'] ?? '',
+        ),
+      ),
+      GoRoute(
         path: RoutePaths.publicStoreRoute,
         name: RouteNames.publicStore,
         builder: (BuildContext context, GoRouterState state) =>
             const StoreScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.serviceDiscovery,
+        name: RouteNames.serviceDiscovery,
+        builder: _placeholder('Service discovery'),
+      ),
+      GoRoute(
+        path: RoutePaths.serviceSearch,
+        name: RouteNames.serviceSearch,
+        builder: _placeholder('Service search'),
+      ),
+      GoRoute(
+        path: RoutePaths.serviceDetailRoute,
+        name: RouteNames.serviceDetail,
+        builder: _placeholder('Service detail'),
+      ),
+      GoRoute(
+        path: RoutePaths.serviceSeoDetailRoute,
+        name: RouteNames.serviceSeoDetail,
+        builder: _placeholder('Service SEO detail'),
+      ),
+      GoRoute(
+        path: RoutePaths.serviceSeoBrowseRoute,
+        name: RouteNames.serviceSeoBrowse,
+        builder: _placeholder('Service SEO browse'),
       ),
     ],
   );

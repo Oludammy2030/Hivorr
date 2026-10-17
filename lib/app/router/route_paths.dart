@@ -212,6 +212,24 @@ abstract final class RoutePaths {
   static String serviceSeoDetail({required String slug, required String id}) =>
       '/s/${Uri.encodeComponent(slug)}/${Uri.encodeComponent(id)}';
 
+  /// SEO industry browse (EP-03-19). Parameter: `industrySlug` (validated
+  /// against taxonomy; unknown slug renders SEO-404, never a redirect loop).
+  /// Registered after [serviceSeoDetailRoute] so the 2-segment detail wins.
+  static const String serviceSeoBrowseRoute = '/s/:industrySlug';
+
+  /// Builds a URL-encoded SEO industry browse path.
+  static String serviceSeoBrowse(String industrySlug) =>
+      '/s/${Uri.encodeComponent(industrySlug)}';
+
+  /// Compatibility alias for profile → listing cross-link (EP-03-19).
+  /// Parameters: `slug` (cosmetic), `id`. Never renders directly — redirects
+  /// single-hop to [publicProfile].
+  static const String profileAliasRoute = '/c/:slug/:id';
+
+  /// Builds a URL-encoded compatibility alias path.
+  static String profileAlias({required String slug, required String id}) =>
+      '/c/${Uri.encodeComponent(slug)}/${Uri.encodeComponent(id)}';
+
   /// Public profile route. Parameters: `slug`, `id`.
   static const String publicProfileRoute = '/p/:slug/:id';
 

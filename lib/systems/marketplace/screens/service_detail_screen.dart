@@ -8,6 +8,9 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/listing_media.dart';
 import 'package:hivorr/data/entities/service_listing.dart';
+import 'package:hivorr/engine/growth_engine/listing_seo_meta.dart';
+import 'package:hivorr/engine/growth_engine/seo_head.dart';
+import 'package:hivorr/engine/growth_engine/seo_meta_view.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -41,6 +44,7 @@ class ServiceDetailScreen extends StatefulWidget {
     super.key,
     required this.listingId,
     this.initialListing,
+    this.routeSlug,
   });
 
   /// The `service_listings.id` from the route (`:id`) — authoritative.
@@ -48,6 +52,11 @@ class ServiceDetailScreen extends StatefulWidget {
 
   /// Ranked row passed as route `extra` for instant paint (optional).
   final ServiceListing? initialListing;
+
+  /// Cosmetic `:slug` from the `/s/:slug/:id` alias (SEO context only,
+  /// EP-03-19). The RPC `professionSlug` wins for the canonical; this is
+  /// the fallback when the payload carries no slug.
+  final String? routeSlug;
 
   @override
   State<ServiceDetailScreen> createState() => _ServiceDetailScreenState();
@@ -105,6 +114,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           id: listing.id,
           entityId: listing.entityId,
           professionId: listing.professionId,
+          slug: listing.slug,
           title: listing.title,
           description: listing.description,
           pricingType: listing.pricingType,
@@ -184,20 +194,45 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         body: HivorrLoadingState(message: 'Loading service…'),
       );
     }
+    // EP-03-19: listing head for SEO discoverability (web-only side effect,
+    // no-op on mobile). Mounted only on loaded content — SEO-404 states
+    // intentionally carry no self-promoting canonical.
+    final String? coverPath =
+        _media.isEmpty ? null : _media.first.storagePath;
+    final ListingSeoMeta meta = ListingSeoMetaBuilder.build(
+      listingId: model.id,
+      title: model.title,
+      description: model.description,
+      baseUrl: seoOrigin(),
+      listingSlug: model.slug,
+      professionSlug: model.professionSlug,
+      professionName: model.professionName,
+      routeSlug: widget.routeSlug,
+      coverImageUrl:
+          coverPath == null ? null : _imageUrlFor(coverPath),
+    );
     return HivorrDetailScaffold(
       title: 'Service',
-      body: RefreshIndicator(
-        onRefresh: _loadAuthoritative,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: _DetailBody(
-            model: model,
-            media: _media,
-            refreshing: _loadingAuthoritative,
-            imageUrlFor: _imageUrlFor,
-            listingId: widget.listingId.trim(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          SeoHead(view: SeoMetaView.fromListing(meta)),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadAuthoritative,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: _DetailBody(
+                  model: model,
+                  media: _media,
+                  refreshing: _loadingAuthoritative,
+                  imageUrlFor: _imageUrlFor,
+                  listingId: widget.listingId.trim(),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -251,6 +286,7 @@ class _DetailModel {
     required this.id,
     required this.entityId,
     required this.professionId,
+    required this.slug,
     required this.title,
     required this.description,
     required this.pricingType,
@@ -270,6 +306,7 @@ class _DetailModel {
     id: listing.id,
     entityId: listing.entityId,
     professionId: listing.professionId,
+    slug: listing.slug,
     title: listing.title,
     description: listing.description,
     pricingType: listing.pricingType,
@@ -289,6 +326,7 @@ class _DetailModel {
     required String id,
     required String entityId,
     required String professionId,
+    required String slug,
     required String title,
     required String description,
     required String pricingType,
@@ -306,6 +344,7 @@ class _DetailModel {
     id: id,
     entityId: entityId,
     professionId: professionId,
+    slug: slug,
     title: title,
     description: description,
     pricingType: pricingType,
@@ -324,6 +363,7 @@ class _DetailModel {
   final String id;
   final String entityId;
   final String professionId;
+  final String slug;
   final String title;
   final String description;
   final String pricingType;

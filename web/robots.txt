@@ -1,0 +1,30 @@
+# Hivorr robots.txt (EP-03-19).
+#
+# Public marketplace + profile doors are crawlable. Owner, transaction,
+# dashboard, finance, support, and admin families stay out of the index.
+# Per-listing sitemap entries are owned by the release pipeline (see
+# sitemap.xml stub); this file gates families only.
+User-agent: *
+Allow: /services
+Allow: /s/
+Allow: /p/
+Allow: /welcome
+Allow: /about
+Allow: /how-it-works
+Allow: /features
+Allow: /pricing
+Allow: /security
+Allow: /contact
+Allow: /help
+Disallow: /services/mine
+Disallow: /contracts
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /finance
+Disallow: /support
+Disallow: /onboarding
+Disallow: /activities
+Disallow: /auth/
+Disallow: /login
+Disallow: /signup
+Sitemap: /sitemap.xml

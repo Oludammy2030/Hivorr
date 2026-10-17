@@ -325,6 +325,7 @@ class RouteGuard {
 
   static bool _isPublicContentView(String location) =>
       location.startsWith('/p/') ||
+      location.startsWith('/c/') ||
       location.startsWith('/store/') ||
       location == RoutePaths.serviceDiscovery ||
       location == RoutePaths.serviceSearch ||

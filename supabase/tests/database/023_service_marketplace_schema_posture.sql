@@ -14,9 +14,9 @@
 --     D5 trigger instead (direct writes raise PLT002 — behavioral proof in 024).
 --   - CHECK vocabularies (slug, published_at semantics, media path parity,
 --     mime allowlist), unique constraints, named indexes incl. GIN, triggers.
---   - Exactly 5 service_% SECURITY DEFINER (service_review_reveal_if_ready +
---     service_listing_portfolio_list, each an approved deviation, + unfreeze +
---     2 R3 dispute admin reads);
+--   - Exactly 6 service_% SECURITY DEFINER (service_review_reveal_if_ready +
+--     service_listing_portfolio_list + service_ranking_search, each an approved
+--     deviation, + unfreeze + 2 R3 dispute admin reads);
 --     exactly 33 service_% RPCs (23 pre-EP-03-15 + 3 proof-linkage RPCs + 2 EP-03-16 earnings RPCs
 --     + 3 EP-03-17 service disputes + 2 R3 dispute admin reads).
 --   - Realtime excludes all 3 tables; comments present.
@@ -218,7 +218,7 @@ select is(
   'the 4 named marketplace triggers exist (2 updated_at + search_vector + D5 guard)'
 );
 
--- ─── 15. Exactly 2 service_% SECURITY DEFINER (reveal_if_ready + portfolio_list) ─────
+-- ─── 15. Exactly 6 service_% SECURITY DEFINER (reveal_if_ready + portfolio_list + ranking_search) ─────
 select is(
   (select count(*)::int
      from pg_proc p
@@ -226,8 +226,8 @@ select is(
     where n.nspname = 'public'
       and p.proname like 'service\_%'
       and p.prosecdef),
-  5,
-  'exactly five service_% functions are SECURITY DEFINER (reveal + portfolio_list + unfreeze + 2 R3 dispute admin reads)'
+  6,
+  'exactly six service_% functions are SECURITY DEFINER (reveal + portfolio_list + ranking_search + unfreeze + 2 R3 dispute admin reads)'
 );
 select ok(
   (select p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname='public' and p.proname='service_review_reveal_if_ready')

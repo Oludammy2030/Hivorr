@@ -7,6 +7,9 @@ import 'package:hivorr/data/entities/portfolio_item.dart';
 import 'package:hivorr/data/entities/public_credential.dart';
 import 'package:hivorr/data/entities/public_profile.dart';
 import 'package:hivorr/data/providers/portfolio_provider.dart';
+import 'package:hivorr/engine/growth_engine/listing_seo_meta.dart';
+import 'package:hivorr/engine/growth_engine/seo_head.dart';
+import 'package:hivorr/engine/growth_engine/seo_meta_view.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -103,7 +106,22 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
       if (profile == null) {
         return const _ScaffoldChild(child: _ProfileNotFoundView());
       }
-      return _ScaffoldChild(child: _buildContent(context, profile));
+      // EP-03-19: profile head for SEO discoverability (web-only side
+      // effect). The meta was previously computed but never reached the
+      // document head — mount it now without changing the generic AppBar.
+      final headMeta = _service.seoMeta(routeSlug: widget.routeSlug);
+      final SeoMetaView? head = headMeta == null
+          ? null
+          : SeoMetaView.fromPortfolio(headMeta, logoPath: _profileOgImage());
+      return _ScaffoldChild(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            if (head != null) SeoHead(view: head),
+            Expanded(child: _buildContent(context, profile)),
+          ],
+        ),
+      );
     }
 
     return const _ScaffoldChild(
@@ -189,6 +207,15 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen> {
     final String? path = item.mediaPath;
     if (path == null || path.isEmpty) return null;
     return _service.mediaPublicUrl(path);
+  }
+
+  /// Brand-logo `og:image` for profile heads (absolute on web so unfurls
+  /// resolve, app-relative otherwise). Avatars stay out of meta — only the
+  /// brand fallback is used for profiles (EP-02-19 SV-08 parity).
+  String _profileOgImage() {
+    final String origin = seoOrigin().trim();
+    if (origin.isEmpty) return ListingSeoMetaBuilder.logoFallbackPath;
+    return '$origin/${ListingSeoMetaBuilder.logoFallbackPath}';
   }
 }
 

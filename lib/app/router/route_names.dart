@@ -89,6 +89,12 @@ abstract final class RouteNames {
   static const String serviceDetail = 'service-detail';
   static const String serviceSeoDetail = 'service-seo-detail';
 
+  /// SEO industry browse (EP-03-19).
+  static const String serviceSeoBrowse = 'service-seo-browse';
+
+  /// Compatibility profile alias (EP-03-19, redirects to `public-profile`).
+  static const String profileAlias = 'profile-alias';
+
   /// Dispute routes (EP-02-17, extended EP-03-17).
   static const String disputes = 'disputes';
   static const String disputesNew = 'disputes-new';

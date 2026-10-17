@@ -767,6 +767,8 @@ class AppRouter {
         ),
         // SEO alias (EP-03-09 route shape; canonical meta ships in EP-03-19).
         // `:id` is authoritative — `:slug` is cosmetic SEO context.
+        // Registered before the single-segment industry browse so the
+        // 2-segment detail wins (EP-03-19 §7.1).
         GoRoute(
           path: RoutePaths.serviceSeoDetailRoute,
           name: RouteNames.serviceSeoDetail,
@@ -775,7 +777,34 @@ class AppRouter {
             return ServiceDetailScreen(
               listingId: state.pathParameters['id'] ?? '',
               initialListing: extra is ServiceListing ? extra : null,
+              routeSlug: state.pathParameters['slug'],
             );
+          },
+        ),
+        // SEO industry browse (EP-03-19): filtered browse reusing the
+        // discovery stack. `industrySlug` is validated against taxonomy;
+        // unknown slugs render SEO-404 (no redirect loop).
+        GoRoute(
+          path: RoutePaths.serviceSeoBrowseRoute,
+          name: RouteNames.serviceSeoBrowse,
+          builder: (BuildContext context, GoRouterState state) =>
+              MarketplaceDiscoveryScreen(
+            initialIndustrySlug: state.pathParameters['industrySlug'],
+          ),
+        ),
+        // Compatibility alias (EP-03-19): single-hop redirect to the
+        // canonical profile. Never renders directly (no duplicate screen,
+        // preserves link equity).
+        GoRoute(
+          path: RoutePaths.profileAliasRoute,
+          name: RouteNames.profileAlias,
+          redirect: (BuildContext context, GoRouterState state) {
+            final String slug = state.pathParameters['slug'] ?? '';
+            final String id = state.pathParameters['id'] ?? '';
+            final String query = state.uri.query.isEmpty
+                ? ''
+                : '?${state.uri.query}';
+            return '${RoutePaths.publicProfile(slug: slug, id: id)}$query';
           },
         ),
         GoRoute(
