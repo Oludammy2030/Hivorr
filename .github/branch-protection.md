@@ -30,6 +30,12 @@ The `master` branch is the protected promotion branch. The following rules must 
 | Build (ios) | `reusable-validation.yml` (via `pr-validation.yml`) |
 | Build (windows) | `reusable-validation.yml` (via `pr-validation.yml`) |
 
+> **Note (EP-03-20 Addendum B):** the `Format, Analyze, Test` check additionally runs the phase-gate
+> verification scripts under `test/integration/verification/` (`*_verification.dart` + `*_checklist.dart`)
+> by explicit path. `flutter test`'s default `*_test.dart` globbing skips those names, so before this step
+> they were never executed in CI and could rot silently. No new required check name is introduced — the
+> coverage is part of the existing `validate` job.
+
 - Require branches to be up to date before merging: Yes
 
 ### 1.3 Push Restrictions

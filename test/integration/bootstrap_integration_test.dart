@@ -16,10 +16,12 @@ import 'package:hivorr/core/authentication/auth_config.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/authentication/state/auth_status.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/core/notifications/notifications.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../support/fakes/fake_notifications.dart';
 import '../support/fakes/fake_taxonomy.dart';
 import '../test_helpers.dart';
 
@@ -28,6 +30,11 @@ void main() {
     group('1. Initialization order', () {
       test('AppBootstrap.initialize wires systems in dependency order', () async {
         final List<String> order = <String>[];
+
+        final FakeLocalNotificationBackend notificationBackend =
+            FakeLocalNotificationBackend();
+        final FakeNotificationPermissionPlatform notificationPermissions =
+            FakeNotificationPermissionPlatform();
 
         final BootstrapResult result = await AppBootstrap.initialize(
           loadConfig: () {
@@ -55,6 +62,8 @@ void main() {
             order.add('storage');
             return FakeStorageEngine();
           },
+          notificationBackend: notificationBackend,
+          notificationPermissionPlatform: notificationPermissions,
         );
 
         // config -> API -> auth -> storage must run before locale finalization.
@@ -66,6 +75,15 @@ void main() {
         expect(result.apiLayer, isA<ApiLayer>());
         expect(result.authLayer.provider, isA<FakeAuthProvider>());
         expect(result.localeProvider, isA<LocaleProvider>());
+
+        // EP-01-15 notification engine — wired through the injectable seams so
+        // the real plugin is never loaded. Push stays fail-closed: no entity id
+        // was supplied, so no push receiver is constructed (EP-01-18 §5.15).
+        final NotificationLayer? notifications = result.notificationLayer;
+        expect(notifications, isNotNull);
+        expect(notifications!.provider, isA<NotificationProvider>());
+        expect(notifications.pushReceiver, isNull);
+        expect(notificationBackend.initializeCalled, isTrue);
       });
     });
 
@@ -216,15 +234,9 @@ void main() {
         );
         final RouteGuard guard = RouteGuard(authProvider: authProvider);
 
-        expect(
-          guard.redirectResolver(RoutePaths.home),
-          RoutePaths.dashboard,
-        );
+        expect(guard.redirectResolver(RoutePaths.home), RoutePaths.dashboard);
         expect(guard.redirectResolver(RoutePaths.profile), isNull);
-        expect(
-          guard.redirectResolver(RoutePaths.login),
-          RoutePaths.dashboard,
-        );
+        expect(guard.redirectResolver(RoutePaths.login), RoutePaths.dashboard);
       });
     });
 
@@ -248,6 +260,9 @@ void main() {
             initializeApi: fakeInitializeApi,
             initializeAuthLayer: fakeInitializeAuthLayer,
             initializeStorage: (_) async => FakeStorageEngine(),
+            notificationBackend: FakeLocalNotificationBackend(),
+            notificationPermissionPlatform:
+                FakeNotificationPermissionPlatform(),
           );
 
           final FakeAuthProvider authProvider =
@@ -265,17 +280,23 @@ void main() {
               onboardingProvider: result.onboardingProvider,
               jobProvider: result.jobProvider,
               hireProvider: result.hireProvider,
+              notificationLayer: result.notificationLayer,
             ),
           );
           await tester.pumpAndSettle();
 
           expect(find.byType(HivorrApp), findsOneWidget);
 
-          final RouteGuard guard = RouteGuard(authProvider: authProvider);
+          // EP-01-15: the wired notification engine registers its provider with
+          // the tree, so screens can resolve notification state from context.
+          final BuildContext ctx = tester.element(find.byType(MaterialApp));
           expect(
-            guard.redirectResolver(RoutePaths.home),
-            RoutePaths.dashboard,
+            Provider.of<NotificationProvider>(ctx, listen: false),
+            same(result.notificationLayer!.provider),
           );
+
+          final RouteGuard guard = RouteGuard(authProvider: authProvider);
+          expect(guard.redirectResolver(RoutePaths.home), RoutePaths.dashboard);
 
           // Cancel the Supabase auto-refresh timer started by the scripted
           // ApiLayer so the test binding does not report a pending timer.
@@ -290,6 +311,8 @@ void main() {
           initializeApi: fakeInitializeApi,
           initializeAuthLayer: fakeInitializeAuthLayer,
           initializeStorage: (_) async => FakeStorageEngine(),
+          notificationBackend: FakeLocalNotificationBackend(),
+          notificationPermissionPlatform: FakeNotificationPermissionPlatform(),
         );
 
         final FakeAuthProvider authProvider =

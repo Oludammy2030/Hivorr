@@ -194,9 +194,7 @@ class FakeServiceContractRemoteDataSource
       for (final m in milestones) {
         final Map<String, dynamic> milestone = m as Map<String, dynamic>;
         if (milestone['id'] == milestoneId) {
-          milestone['status'] = action == 'verified'
-              ? 'verified'
-              : 'pending';
+          milestone['status'] = action == 'verified' ? 'verified' : 'pending';
           return <String, dynamic>{
             'id': milestoneId,
             'status': milestone['status'],
@@ -233,16 +231,11 @@ class FakeServiceContractRemoteDataSource
     final List<Map<String, dynamic>> filtered = status == null
         ? List<Map<String, dynamic>>.from(_rows)
         : _rows
-              .where(
-                (e) =>
-                    (_contractOf(e)['status'] as String?) == status,
-              )
+              .where((e) => (_contractOf(e)['status'] as String?) == status)
               .toList();
     final List<Map<String, dynamic>> items = filtered.take(limit).toList();
     return ContractListEnvelopeDto.fromJson(<String, dynamic>{
-      'items': items
-          .map((e) => _contractOf(e))
-          .toList(growable: false),
+      'items': items.map((e) => _contractOf(e)).toList(growable: false),
       'has_more': filtered.length > items.length,
       'next_cursor': filtered.length > items.length
           ? _contractOf(items.last)['id']
@@ -276,6 +269,8 @@ class FakeServiceContractRepository implements ServiceContractRepository {
     String status = 'offered',
     String clientId = 'client-1',
     String professionalId = 'pro-1',
+    double totalAmount = 30000,
+    String currencyCode = 'NGN',
     List<ContractMilestone>? milestones,
   }) => ServiceContract(
     id: id,
@@ -283,8 +278,8 @@ class FakeServiceContractRepository implements ServiceContractRepository {
     clientEntityId: clientId,
     professionalEntityId: professionalId,
     status: status,
-    totalAmount: 30000,
-    currencyCode: 'NGN',
+    totalAmount: totalAmount,
+    currencyCode: currencyCode,
     milestones:
         milestones ??
         const <ContractMilestone>[
@@ -330,8 +325,25 @@ class FakeServiceContractRepository implements ServiceContractRepository {
     DateTime? offerExpiresAt,
   }) async {
     offerCalls++;
+    final String id = 'contract-${_rows.length + 1}';
+    // Echo the submitted structure verbatim (positions → 1-based milestones).
     final ServiceContract created = contract(
-      id: 'contract-${_rows.length + 1}',
+      id: id,
+      totalAmount: totalAmount,
+      currencyCode: currencyCode,
+      milestones: <ContractMilestone>[
+        for (final ContractMilestoneInput input in milestones)
+          ContractMilestone(
+            id: '$id-m${input.milestoneNumber}',
+            contractId: id,
+            milestoneNumber: input.milestoneNumber,
+            title: input.title,
+            description: input.description,
+            amount: input.amount,
+            status: 'pending',
+            sortOrder: input.sortOrder,
+          ),
+      ],
     );
     _rows.insert(0, created);
     return created;
@@ -447,9 +459,7 @@ class FakeServiceContractRepository implements ServiceContractRepository {
       totalAmount: current.totalAmount,
       currencyCode: current.currencyCode,
       milestones: current.milestones
-          .map(
-            (m) => m.id == milestoneId ? m.copyWithStatus(status) : m,
-          )
+          .map((m) => m.id == milestoneId ? m.copyWithStatus(status) : m)
           .toList(growable: false),
       events: current.events,
     );

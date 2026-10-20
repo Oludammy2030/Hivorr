@@ -75,11 +75,28 @@ void main() {
       });
     });
 
+    test('service-listing-media: 10 MiB, jpeg/png/webp/pdf, public-read '
+        '(EP-03-01)', () {
+      expect(StorageLimits.serviceListingMedia, 10485760);
+      expect(StorageMimeTypes.serviceListingMedia, <String>{
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'application/pdf',
+      });
+      expect(
+        StorageBucketVisibilities.serviceListingMedia,
+        isTrue,
+        reason: 'public discovery media must be participant-read',
+      );
+    });
+
     test('all expected buckets are registered', () {
       expect(StorageBuckets.all, <String>{
         'credential-documents',
         'profile-avatars',
         'portfolio-items',
+        'service-listing-media',
       });
     });
 
@@ -87,6 +104,7 @@ void main() {
       expect(StorageLimits.forBucket('credential-documents'), 10485760);
       expect(StorageLimits.forBucket('profile-avatars'), 5242880);
       expect(StorageLimits.forBucket('portfolio-items'), 10485760);
+      expect(StorageLimits.forBucket('service-listing-media'), 10485760);
       expect(StorageLimits.forBucket('unknown-bucket'), isNull);
     });
 
@@ -94,6 +112,7 @@ void main() {
       expect(StorageMimeTypes.forBucket('credential-documents'), hasLength(4));
       expect(StorageMimeTypes.forBucket('profile-avatars'), hasLength(3));
       expect(StorageMimeTypes.forBucket('portfolio-items'), hasLength(4));
+      expect(StorageMimeTypes.forBucket('service-listing-media'), hasLength(4));
       expect(StorageMimeTypes.forBucket('unknown-bucket'), isNull);
     });
 
@@ -104,6 +123,10 @@ void main() {
       );
       expect(StorageBucketVisibilities.forBucket('profile-avatars'), isTrue);
       expect(StorageBucketVisibilities.forBucket('portfolio-items'), isTrue);
+      expect(
+        StorageBucketVisibilities.forBucket('service-listing-media'),
+        isTrue,
+      );
       expect(StorageBucketVisibilities.forBucket('unknown-bucket'), isNull);
     });
   });

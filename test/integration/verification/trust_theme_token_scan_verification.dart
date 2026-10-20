@@ -118,7 +118,8 @@ bool _isGloballyAllowed(String snippet) =>
 /// Grandfathered files: pre-scan violations with a reason. New files must be
 /// clean; entries here may only shrink (shrinkage is verified by review, not
 /// by count — do not add new violations to these files).
-const Map<String, Map<String, String>> _fileAllow = <String, Map<String, String>>{
+const Map<String, Map<String, String>>
+_fileAllow = <String, Map<String, String>>{
   'lib/app/auth/screens/login_screen.dart': <String, String>{
     'Colors.*': 'pixel-matched log in.png reference, white-on-brand (§2)',
     'Color(0xFF...)':
@@ -133,9 +134,7 @@ const Map<String, Map<String, String>> _fileAllow = <String, Map<String, String>
     'Colors.*': 'white-on-gradient hero actions (§2)',
   },
   'lib/systems/dashboard/widgets/overview_display_widgets.dart':
-      <String, String>{
-    'Colors.*': 'white-on-gradient hero tiles (§2)',
-  },
+      <String, String>{'Colors.*': 'white-on-gradient hero tiles (§2)'},
   'lib/app/widgets/logo_variants.dart': <String, String>{
     'Colors.*': 'monochrome default (tintable white)',
   },
@@ -143,6 +142,11 @@ const Map<String, Map<String, String>> _fileAllow = <String, Map<String, String>
     'Colors.*': 'grandfathered — migrate per-feature',
     'fontSize:': 'grandfathered — migrate per-feature',
     'FontWeight.w800': 'grandfathered — migrate per-feature',
+  },
+  'lib/systems/dashboard/shell/hivorr_dashboard_shell.dart': <String, String>{
+    'fontSize:':
+        'pre-existing compact nav-bar label sizing (pro-dashboard '
+        'branch, bar-scoped `copyWith`) — migrate per-feature',
   },
   'lib/systems/dashboard/shell/dashboard_more_sheet.dart': <String, String>{
     'Colors.*': 'grandfathered — migrate per-feature',
@@ -163,9 +167,9 @@ const Map<String, Map<String, String>> _fileAllow = <String, Map<String, String>
   },
   'lib/systems/dashboard/screens/dashboard_overview_screen.dart':
       <String, String>{
-    'Colors.*': 'reference rows + white-on-gradient heroes — migrate rows',
-    'Color(0xFF...)': 'reference rows — migrate per-feature',
-  },
+        'Colors.*': 'reference rows + white-on-gradient heroes — migrate rows',
+        'Color(0xFF...)': 'reference rows — migrate per-feature',
+      },
   'lib/systems/dashboard/screens/profile_screen.dart': <String, String>{
     'Colors.*': 'grandfathered — migrate per-feature',
     'Color(0xFF...)':

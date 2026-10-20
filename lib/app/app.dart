@@ -10,6 +10,7 @@ import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/config/environments/app_environment.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/core/notifications/notifications.dart';
 import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
 import 'package:hivorr/data/local/onboarding_progress_store.dart';
@@ -34,6 +35,7 @@ import 'package:hivorr/data/providers/portfolio_provider.dart';
 import 'package:hivorr/data/providers/scheduling_provider.dart';
 import 'package:hivorr/data/providers/service_contract_provider.dart';
 import 'package:hivorr/data/providers/service_listing_provider.dart';
+import 'package:hivorr/data/providers/service_review_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/data/providers/transaction_history_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
@@ -55,6 +57,7 @@ import 'package:hivorr/data/repositories/portfolio_repository.dart';
 import 'package:hivorr/data/repositories/scheduling_repository.dart';
 import 'package:hivorr/data/repositories/service_contract_repository.dart';
 import 'package:hivorr/data/repositories/service_listing_repository.dart';
+import 'package:hivorr/data/repositories/service_review_repository.dart';
 import 'package:hivorr/data/repositories/service_search_repository.dart';
 import 'package:hivorr/data/repositories/taxonomy_repository.dart';
 import 'package:hivorr/data/repositories/verification_repository.dart';
@@ -67,6 +70,7 @@ import 'package:hivorr/systems/finance/services/service_earnings_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
+import 'package:hivorr/systems/reviews/services/service_review_service.dart';
 import 'package:hivorr/systems/scheduling/services/scheduling_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -140,6 +144,10 @@ class HivorrApp extends StatefulWidget {
     this.manageUserRepository,
     this.manageUserProvider,
     this.adminConfigProvider,
+    this.serviceReviewRepository,
+    this.serviceReviewProvider,
+    this.serviceReviewService,
+    this.notificationLayer,
     this.platformFilePicker,
     this.environment = AppEnvironment.production,
   });
@@ -329,6 +337,20 @@ class HivorrApp extends StatefulWidget {
   /// testability; the settings screen shows its loading state when absent.
   final AdminConfigProvider? adminConfigProvider;
 
+  /// Service review repository (EP-03-12). Optional for testability.
+  final ServiceReviewRepository? serviceReviewRepository;
+
+  /// Service review provider surfaced to the widget tree (EP-03-12).
+  final ServiceReviewProvider? serviceReviewProvider;
+
+  /// Service review facade surfaced to the widget tree (EP-03-12).
+  final ServiceReviewService? serviceReviewService;
+
+  /// Fully wired notification engine (EP-01-15). Optional for testability; its
+  /// [NotificationProvider] is registered with the tree so notification state
+  /// (permission, pending, push subscription) is observable by screens.
+  final NotificationLayer? notificationLayer;
+
   /// Real platform file picker surfaced to feature screens. Optional for
   /// testability; falls back to a fresh instance when omitted.
   final PlatformFilePicker? platformFilePicker;
@@ -466,8 +488,7 @@ class _HivorrAppState extends State<HivorrApp> {
     final TransactionHistoryProvider? earningsHistoryProvider =
         widget.earningsHistoryProvider;
     final ServiceEarningsService? earningsService = widget.earningsService;
-    final ServiceAnalyticsService? earningsAnalytics =
-        widget.earningsAnalytics;
+    final ServiceAnalyticsService? earningsAnalytics = widget.earningsAnalytics;
     final DisputeRepository? disputeRepository = widget.disputeRepository;
     final DisputeProvider? disputeProvider = widget.disputeProvider;
     final JobRepository? jobRepository = widget.jobRepository;
@@ -483,6 +504,13 @@ class _HivorrAppState extends State<HivorrApp> {
     final PortfolioProvider? portfolioProvider = widget.portfolioProvider;
     final ProfessionalProfileService? portfolioService =
         widget.portfolioService;
+    final ServiceReviewRepository? serviceReviewRepository =
+        widget.serviceReviewRepository;
+    final ServiceReviewProvider? serviceReviewProvider =
+        widget.serviceReviewProvider;
+    final ServiceReviewService? serviceReviewService =
+        widget.serviceReviewService;
+    final NotificationLayer? notificationLayer = widget.notificationLayer;
     return MultiProvider(
       providers: <SingleChildWidget>[
         ChangeNotifierProvider<AuthProvider>.value(value: widget.authProvider),
@@ -655,6 +683,20 @@ class _HivorrAppState extends State<HivorrApp> {
         if (widget.adminConfigProvider != null)
           ChangeNotifierProvider<AdminConfigProvider>.value(
             value: widget.adminConfigProvider!,
+          ),
+        if (serviceReviewRepository != null)
+          Provider<ServiceReviewRepository>.value(
+            value: serviceReviewRepository,
+          ),
+        if (serviceReviewProvider != null)
+          ChangeNotifierProvider<ServiceReviewProvider>.value(
+            value: serviceReviewProvider,
+          ),
+        if (serviceReviewService != null)
+          Provider<ServiceReviewService>.value(value: serviceReviewService),
+        if (notificationLayer != null)
+          ChangeNotifierProvider<NotificationProvider>.value(
+            value: notificationLayer.provider,
           ),
         ChangeNotifierProvider<EntryStateProvider>.value(value: _entryState),
       ],

@@ -126,9 +126,9 @@ GoRouter doorRouter({String initialLocation = RoutePaths.welcome}) {
         name: RouteNames.profileAlias,
         redirect: (BuildContext context, GoRouterState state) =>
             RoutePaths.publicProfile(
-          slug: state.pathParameters['slug'] ?? '',
-          id: state.pathParameters['id'] ?? '',
-        ),
+              slug: state.pathParameters['slug'] ?? '',
+              id: state.pathParameters['id'] ?? '',
+            ),
       ),
       GoRoute(
         path: RoutePaths.publicStoreRoute,
@@ -160,6 +160,81 @@ GoRouter doorRouter({String initialLocation = RoutePaths.welcome}) {
         path: RoutePaths.serviceSeoBrowseRoute,
         name: RouteNames.serviceSeoBrowse,
         builder: _placeholder('Service SEO browse'),
+      ),
+      // EP-03-10 contract engagement routes (protected).
+      GoRoute(
+        path: RoutePaths.contracts,
+        name: RouteNames.contracts,
+        builder: _placeholder('Contracts'),
+      ),
+      GoRoute(
+        path: RoutePaths.contractNew,
+        name: RouteNames.contractNew,
+        builder: _placeholder('Contract new'),
+      ),
+      GoRoute(
+        path: RoutePaths.contractDetailRoute,
+        name: RouteNames.contractDetail,
+        builder: _placeholder('Contract detail'),
+      ),
+      GoRoute(
+        path: RoutePaths.contractMilestonesEditRoute,
+        name: RouteNames.contractMilestonesEdit,
+        builder: _placeholder('Contract milestones edit'),
+      ),
+      // EP-03-12 review routes (protected).
+      GoRoute(
+        path: RoutePaths.contractReviewRoute,
+        name: RouteNames.contractReview,
+        builder: _placeholder('Contract review'),
+      ),
+      GoRoute(
+        path: RoutePaths.contractReviewsRoute,
+        name: RouteNames.contractReviews,
+        builder: _placeholder('Contract reviews'),
+      ),
+      // EP-03-14 appointment routes (protected).
+      GoRoute(
+        path: RoutePaths.appointmentBookRoute,
+        name: RouteNames.appointmentBook,
+        builder: _placeholder('Appointment book'),
+      ),
+      GoRoute(
+        path: RoutePaths.appointmentListRoute,
+        name: RouteNames.appointmentList,
+        builder: _placeholder('Appointment list'),
+      ),
+      GoRoute(
+        path: RoutePaths.appointmentDetailRoute,
+        name: RouteNames.appointmentDetail,
+        builder: _placeholder('Appointment detail'),
+      ),
+      // EP-04-04 messaging routes (protected).
+      GoRoute(
+        path: RoutePaths.dashboardMessages,
+        name: RouteNames.dashboardMessages,
+        builder: _placeholder('Dashboard messages'),
+      ),
+      GoRoute(
+        path: RoutePaths.dashboardMessageThreadRoute,
+        name: RouteNames.dashboardMessageThread,
+        builder: _placeholder('Dashboard message thread'),
+      ),
+      // EP-03-16 earnings routes (protected).
+      GoRoute(
+        path: RoutePaths.earningsDetail,
+        name: RouteNames.earningsDetail,
+        builder: _placeholder('Earnings detail'),
+      ),
+      GoRoute(
+        path: RoutePaths.earningsHistory,
+        name: RouteNames.earningsHistory,
+        builder: _placeholder('Earnings history'),
+      ),
+      GoRoute(
+        path: RoutePaths.contractEarningsDetailRoute,
+        name: RouteNames.contractEarningsDetail,
+        builder: _placeholder('Contract earnings detail'),
       ),
     ],
   );
