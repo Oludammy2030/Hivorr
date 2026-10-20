@@ -113,6 +113,24 @@ jobs:
           path: coverage
           retention-days: 14
 
+      - name: Phase-gate verification scans
+        # EP-03-20 rec-5: `flutter test` defaults to the `*_test.dart` glob, so
+        # the phase-gate scripts (`*_verification.dart` + `*_checklist.dart`) in
+        # test/integration/verification/ were never executed in CI and could rot
+        # silently. Run them by explicit path so a regression fails the build.
+        shell: bash
+        run: |
+          set -e
+          mapfile -t files < <(find test/integration/verification -type f \
+            \( -name '*_verification.dart' -o -name '*_checklist.dart' \) | sort)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::No phase-gate verification scripts found under test/integration/verification"
+            exit 1
+          fi
+          echo "Phase-gate verification scripts:"
+          printf '  %s\n' "${files[@]}"
+          flutter test "${files[@]}"
+
       - name: Secret scan
         shell: bash
         run: |

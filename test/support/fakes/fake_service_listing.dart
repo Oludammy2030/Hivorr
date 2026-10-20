@@ -54,32 +54,31 @@ class FakeServiceListingRemoteDataSource
     String currencyCode = 'NGN',
     String professionId = 'prof-1',
     List<Map<String, dynamic>> media = const <Map<String, dynamic>>[],
-  }) =>
-      <String, dynamic>{
-        'id': id,
-        'entity_id': 'entity-1',
-        'profession_id': professionId,
-        'industry_id': 'ind-1',
-        'slug': 'listing-$id',
-        'title': title,
-        'description': description,
-        'status': status,
-        'pricing_type': pricingType,
-        'price_min': ?priceMin,
-        'price_max': ?priceMax,
-        'currency_code': currencyCode,
-        'avg_rating': 0,
-        'review_count': 0,
-        'is_trade_verified_cache': false,
-        'created_at': '2026-09-26T10:00:00.000Z',
-        'updated_at': '2026-09-26T10:00:00.000Z',
-        'media': media,
-      };
+  }) => <String, dynamic>{
+    'id': id,
+    'entity_id': 'entity-1',
+    'profession_id': professionId,
+    'industry_id': 'ind-1',
+    'slug': 'listing-$id',
+    'title': title,
+    'description': description,
+    'status': status,
+    'pricing_type': pricingType,
+    'price_min': ?priceMin,
+    'price_max': ?priceMax,
+    'currency_code': currencyCode,
+    'avg_rating': 0,
+    'review_count': 0,
+    'is_trade_verified_cache': false,
+    'created_at': '2026-09-26T10:00:00.000Z',
+    'updated_at': '2026-09-26T10:00:00.000Z',
+    'media': media,
+  };
 
   Map<String, dynamic> _find(String id) => _rows.firstWhere(
-        (Map<String, dynamic> e) => e['id'] == id,
-        orElse: () => throw StateError('not found: $id'),
-      );
+    (Map<String, dynamic> e) => e['id'] == id,
+    orElse: () => throw StateError('not found: $id'),
+  );
 
   @override
   Future<Map<String, dynamic>> createListing({
@@ -181,8 +180,7 @@ class FakeServiceListingRemoteDataSource
     return MyListingPageDto.fromJson(<String, dynamic>{
       'items': items,
       'has_more': filtered.length > items.length,
-      'next_cursor':
-          filtered.length > items.length ? items.last['id'] : null,
+      'next_cursor': filtered.length > items.length ? items.last['id'] : null,
     });
   }
 
@@ -219,19 +217,16 @@ class FakeServiceListingRemoteDataSource
     // Full-replace: previously linked rows are superseded by the new set.
     final List<Map<String, dynamic>> existing =
         proofSeed[listingId] ?? <Map<String, dynamic>>[];
-    final Map<String, Map<String, dynamic>> byId = <String, Map<String, dynamic>>{
-      for (final Map<String, dynamic> row in existing)
-        row['id'] as String: row,
-    };
+    final Map<String, Map<String, dynamic>> byId =
+        <String, Map<String, dynamic>>{
+          for (final Map<String, dynamic> row in existing)
+            row['id'] as String: row,
+        };
     int order = 0;
     proofSeed[listingId] = <Map<String, dynamic>>[
       for (final String id in portfolioItemIds)
         byId[id] ??
-            proofRow(
-              id: id,
-              title: 'Linked proof $id',
-              linkSortOrder: ++order,
-            ),
+            proofRow(id: id, title: 'Linked proof $id', linkSortOrder: ++order),
     ];
     // Re-stamp link order from the array position (server semantics).
     order = 0;
@@ -325,28 +320,31 @@ class FakeServiceListingRepository implements ServiceListingRepository {
   /// `PLT004` [ApiException] for not-found detail tests).
   ApiException? getListingError;
 
+  /// When set, [publishListing] throws this instead of returning a row (e.g. a
+  /// `PLT005` [ApiException] for trade-gate tests).
+  ApiException? publishError;
+
   static MyServiceListing listing({
     required String id,
     String status = 'draft',
     String title = 'Certified plumbing repair service',
-  }) =>
-      MyServiceListing(
-        id: id,
-        entityId: 'entity-1',
-        professionId: 'prof-1',
-        industryId: 'ind-1',
-        slug: 'listing-$id',
-        title: title,
-        description:
-            'Full home plumbing inspection, leak repair, and fixture replacement with a written service report and warranty.',
-        status: status,
-        pricingType: 'fixed',
-        priceMin: 5000,
-        currencyCode: 'NGN',
-        avgRating: 0,
-        reviewCount: 0,
-        isTradeVerifiedCache: false,
-      );
+  }) => MyServiceListing(
+    id: id,
+    entityId: 'entity-1',
+    professionId: 'prof-1',
+    industryId: 'ind-1',
+    slug: 'listing-$id',
+    title: title,
+    description:
+        'Full home plumbing inspection, leak repair, and fixture replacement with a written service report and warranty.',
+    status: status,
+    pricingType: 'fixed',
+    priceMin: 5000,
+    currencyCode: 'NGN',
+    avgRating: 0,
+    reviewCount: 0,
+    isTradeVerifiedCache: false,
+  );
 
   @override
   Future<MyServiceListing> createListing({
@@ -378,11 +376,12 @@ class FakeServiceListingRepository implements ServiceListingRepository {
     double? priceMin,
     double? priceMax,
     String? currencyCode,
-  }) async =>
-      getListing(listingId);
+  }) async => getListing(listingId);
 
   @override
   Future<MyServiceListing> publishListing(String listingId) async {
+    final ApiException? error = publishError;
+    if (error != null) throw error;
     final int index = _rows.indexWhere((e) => e.id == listingId);
     final MyServiceListing current = _rows[index];
     final MyServiceListing updated = MyServiceListing(
@@ -451,10 +450,7 @@ class FakeServiceListingRepository implements ServiceListingRepository {
     final List<MyServiceListing> filtered = status == null
         ? List<MyServiceListing>.from(_rows)
         : _rows.where((e) => e.status == status).toList();
-    return MyListingPage(
-      items: filtered.take(limit).toList(),
-      hasMore: false,
-    );
+    return MyListingPage(items: filtered.take(limit).toList(), hasMore: false);
   }
 
   /// In-memory favorite set for EP-03-09 discovery widget tests.
@@ -489,19 +485,17 @@ class FakeServiceListingRepository implements ServiceListingRepository {
     // Full-replace in the submitted order (server semantics): previously
     // linked rows keep their stored fields with refreshed positions, exactly
     // as a post-write re-read would return them.
-    final Map<String, LinkedPortfolioItem> existing = <String, LinkedPortfolioItem>{
-      for (final LinkedPortfolioItem p
-          in proofs[listingId] ?? const <LinkedPortfolioItem>[])
-        p.item.id: p,
-    };
+    final Map<String, LinkedPortfolioItem> existing =
+        <String, LinkedPortfolioItem>{
+          for (final LinkedPortfolioItem p
+              in proofs[listingId] ?? const <LinkedPortfolioItem>[])
+            p.item.id: p,
+        };
     int order = 0;
     proofs[listingId] = <LinkedPortfolioItem>[
       for (final String id in portfolioItemIds)
         if (existing[id] != null)
-          LinkedPortfolioItem(
-            item: existing[id]!.item,
-            linkSortOrder: ++order,
-          )
+          LinkedPortfolioItem(item: existing[id]!.item, linkSortOrder: ++order)
         else
           proof(id: id, title: 'Linked proof $id', linkSortOrder: ++order),
     ];

@@ -11,10 +11,13 @@ import 'package:hivorr/core/api/api_initializer.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/core/database/database.dart';
 import 'package:hivorr/core/localization/localization.dart';
+import 'package:hivorr/core/notifications/notifications.dart';
 import 'package:hivorr/core/storage/supabase_storage_service.dart';
 import 'package:hivorr/core/sync/action_queue.dart';
 import 'package:hivorr/data/data_layer.dart';
 import 'package:hivorr/data/local/entry_state_store.dart';
+import 'package:hivorr/data/providers/service_review_provider.dart';
+import 'package:hivorr/data/repositories/service_review_repository.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/systems/analytics/services/service_analytics_service.dart';
 import 'package:hivorr/systems/business/services/business_service.dart';
@@ -25,7 +28,9 @@ import 'package:hivorr/systems/finance/services/service_earnings_service.dart';
 import 'package:hivorr/systems/marketplace/services/service_listing_service.dart';
 import 'package:hivorr/systems/portfolio/portfolio_dependency_injection.dart';
 import 'package:hivorr/systems/portfolio/services/professional_profile_service.dart';
+import 'package:hivorr/systems/reviews/services/service_review_service.dart';
 import 'package:hivorr/systems/scheduling/services/scheduling_service.dart';
+import 'package:hivorr/systems/support/services/service_dispute_notifier.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -97,6 +102,10 @@ class BootstrapResult {
     this.manageUserRepository,
     this.manageUserProvider,
     this.adminConfigProvider,
+    this.serviceReviewRepository,
+    this.serviceReviewProvider,
+    this.serviceReviewService,
+    this.notificationLayer,
   });
 
   final AppConfig appConfig;
@@ -293,6 +302,21 @@ class BootstrapResult {
   /// Staged platform-configuration provider for Admin Settings. Optional for
   /// testability.
   final AdminConfigProvider? adminConfigProvider;
+
+  /// Service review repository (EP-03-12). Optional for testability.
+  final ServiceReviewRepository? serviceReviewRepository;
+
+  /// Service review provider surfaced to the widget tree (EP-03-12).
+  final ServiceReviewProvider? serviceReviewProvider;
+
+  /// Service review facade surfaced to the widget tree (EP-03-12).
+  final ServiceReviewService? serviceReviewService;
+
+  /// Fully wired notification engine (EP-01-15). Optional for testability; the
+  /// local-notification service, permission manager, channel manager, and
+  /// [NotificationProvider] all hang off it. Push remains fail-closed: it is
+  /// only constructed when the feature flags are on and an entity id is known.
+  final NotificationLayer? notificationLayer;
 }
 
 /// Orchestrates the application's initialization sequence and launch.
@@ -310,6 +334,11 @@ class AppBootstrap {
   /// [initializeStorage] default to the production implementations. Tests
   /// inject fakes to verify ordering and failure behavior without a live
   /// backend.
+  ///
+  /// [notificationBackend] and [notificationPermissionPlatform] are the
+  /// notification plugin seams (EP-01-15). They default to the
+  /// `flutter_local_notifications`-backed implementations; tests inject fakes
+  /// because the real plugin throws under the test binding.
   static Future<BootstrapResult> initialize({
     AppConfig Function() loadConfig = AppConfig.load,
     Future<ApiLayer> Function(EnvironmentConfig) initializeApi =
@@ -319,6 +348,8 @@ class AppBootstrap {
         _defaultInitializeAuth,
     Future<StorageEngine> Function(EnvironmentConfig) initializeStorage =
         _defaultInitializeStorage,
+    LocalNotificationBackend? notificationBackend,
+    NotificationPermissionPlatform? notificationPermissionPlatform,
   }) async {
     final AppConfig appConfig = loadConfig();
     final ApiLayer apiLayer = await initializeApi(appConfig.environmentConfig);
@@ -429,6 +460,9 @@ class AppBootstrap {
         registerDisputeLayer(
           apiLayer,
           contractProvider: serviceContract.provider,
+          counterpartyNotifier: SupabaseServiceDisputeNotifier(
+            supabase: apiLayer.supabaseClient,
+          ),
         );
     // EP-03-14 scheduling slice (availability + appointments over the
     // EP-03-05 RPCs; reads are RLS participant-scoped). Screens resolve the
@@ -440,6 +474,27 @@ class AppBootstrap {
       SchedulingService service,
     })
     scheduling = registerSchedulingLayer(apiLayer);
+    // EP-03-12 service review slice (double-blind submit/reveal over the
+    // EP-03-03 RPCs; reveal stays server-side). Screens resolve the
+    // provider/service from the tree; without this the review routes
+    // throw ProviderNotFoundException.
+    final ({
+      ServiceReviewRepository repository,
+      ServiceReviewProvider provider,
+      ServiceReviewService service,
+    })
+    serviceReview = registerServiceReviewLayer(apiLayer);
+    // EP-01-15 notification engine (EP-03-20 rec-6). `initializeNotifications`
+    // is the single bootstrap entry point; without this call the
+    // local-notification service, permission manager, channel manager, and
+    // provider were dead code at runtime. Push stays fail-closed (both feature
+    // flags plus an entity id), so it is not constructed here.
+    final NotificationLayer notificationLayer = initializeNotifications(
+      appConfig.environmentConfig,
+      apiLayer.supabaseClient,
+      backend: notificationBackend,
+      permissionPlatform: notificationPermissionPlatform,
+    );
     // Identity audit Phase 2a business slice (member-scoped RLS-CRUD +
     // verification pipeline; decisions stay server-side). Screens resolve
     // the provider/service from the tree.
@@ -563,6 +618,10 @@ class AppBootstrap {
       manageUserRepository: manageUser.repository,
       manageUserProvider: manageUser.provider,
       adminConfigProvider: adminConfig,
+      serviceReviewRepository: serviceReview.repository,
+      serviceReviewProvider: serviceReview.provider,
+      serviceReviewService: serviceReview.service,
+      notificationLayer: notificationLayer,
     );
   }
 

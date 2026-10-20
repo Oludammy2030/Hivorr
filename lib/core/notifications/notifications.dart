@@ -72,20 +72,31 @@ class NotificationLayer {
 ///
 /// [loggerFactory] is optional; when supplied, notification components obtain
 /// a scoped [HivorrLogger] named `'hivorr.notifications'` for PII-safe logging.
+///
+/// [backend] and [permissionPlatform] are optional seams; both default to the
+/// `flutter_local_notifications`-backed implementations. Tests (and any caller
+/// that cannot touch the plugin, e.g. the app bootstrap under a test binding)
+/// inject fakes so the engine can be wired without the real plugin.
 NotificationLayer initializeNotifications(
   EnvironmentConfig config,
   SupabaseClient supabaseClient, {
   String? entityId,
   LoggerFactory? loggerFactory,
+  LocalNotificationBackend? backend,
+  NotificationPermissionPlatform? permissionPlatform,
 }) {
   final logger = loggerFactory?.named('hivorr.notifications');
   final notificationConfig = config.notificationConfig;
 
-  final backend = FlutterLocalNotificationsBackend(notificationConfig);
-  final channelManager = NotificationChannelManager(backend, logger: logger);
+  final resolvedBackend =
+      backend ?? FlutterLocalNotificationsBackend(notificationConfig);
+  final channelManager = NotificationChannelManager(
+    resolvedBackend,
+    logger: logger,
+  );
   final service = LocalNotificationService(
     notificationConfig,
-    backend: backend,
+    backend: resolvedBackend,
     logger: logger,
     knownChannels: channelManager.channels,
   );
@@ -93,7 +104,9 @@ NotificationLayer initializeNotifications(
   unawaited(channelManager.createDefaultChannel(notificationConfig));
   unawaited(LifecycleChannels.registerAll(channelManager));
 
-  final permissionManager = NotificationPermissionManager();
+  final permissionManager = NotificationPermissionManager(
+    platform: permissionPlatform,
+  );
 
   PushNotificationReceiver? pushReceiver;
   if (notificationConfig.enablePushNotifications &&

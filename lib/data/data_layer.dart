@@ -145,6 +145,7 @@ import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
 import 'package:hivorr/systems/reviews/services/service_review_service.dart';
 import 'package:hivorr/systems/scheduling/services/scheduling_service.dart';
 import 'package:hivorr/systems/support/services/dispute_service.dart';
+import 'package:hivorr/systems/support/services/service_dispute_notifier.dart';
 import 'package:hivorr/systems/verification/services/identity_verification_service.dart';
 import 'package:hivorr/systems/verification/services/trade_verification_service.dart';
 import 'package:hivorr/workspace/profession_registry/taxonomy_engine.dart';
@@ -876,6 +877,7 @@ registerConversionLayer(
 ({DisputeRepository repository, DisputeProvider provider}) registerDisputeLayer(
   ApiLayer apiLayer, {
   ServiceContractProvider? contractProvider,
+  ServiceDisputeNotifier? counterpartyNotifier,
 }) {
   final remote = SupabaseDisputeRemoteDataSource(
     dio: apiLayer.dio,
@@ -889,6 +891,7 @@ registerConversionLayer(
     provider: DisputeProvider(
       service: service,
       contractProvider: contractProvider,
+      counterpartyNotifier: counterpartyNotifier,
     ),
   );
 }

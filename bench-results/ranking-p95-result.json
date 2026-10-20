@@ -1,0 +1,1 @@
+{"status":"fail","env":"local","timestamp":"2026-10-18T06:21:29Z","gate":"p95<400ms","p95_ms":1180,"requests":2000,"concurrency":10,"tool":"k6-docker","seeded":true,"reason":"p95 1180ms exceeds 400ms budget"}

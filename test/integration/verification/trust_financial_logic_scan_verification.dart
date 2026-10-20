@@ -116,6 +116,29 @@ final List<RegExp> _financialMutationPatterns = <RegExp>[
   ),
 ];
 
+/// Documented display-only exceptions (audited EP-03-20, findings owned by
+/// the pre-EP-03 client-dashboard work). The `total` token family also
+/// matches *count* accumulators and display rollups of values the server
+/// already authorized — none of these mutate balances, set prices, or
+/// settle funds (the server remains the sole money authority per AGENT.md
+/// Rule 4). Each entry is exact (file basename + full-line substring); any
+/// NEW occurrence outside this table still fails the scan.
+const Map<String, List<String>> _documentedExceptions = <String, List<String>>{
+  // Dashboard stat cards: roll up *advertised job budgets* (server-provided
+  // listing rows) for a display total — no settlement, no balance mutation.
+  'dashboard_overview_screen.dart': <String>[
+    'total += job.budgetMax ?? job.budgetMin ?? 0;',
+  ],
+  // `total` is an opportunity counter and the `+` is literal UI string
+  // text — a regex false positive, not arithmetic.
+  'opportunities_screen.dart': <String>[
+    r"text = '$total+ opportunities available",
+  ],
+  // `total` is an application-count accumulator (`.length` fold over active
+  // applications) — a counter, not a money sum.
+  'job_provider.dart': <String>['total += page.applications'],
+};
+
 List<_LogicFinding> _scanFinancialLogic() {
   final scriptPath = Platform.script.toFilePath();
   final projectRoot = _computeProjectRoot(scriptPath);
@@ -155,13 +178,22 @@ List<_LogicFinding> _scanFinancialLogic() {
     final file = File(filePath);
     if (!file.existsSync()) continue;
     final content = _stripComments(file.readAsStringSync());
+    final lines = content.split('\n');
+    final exceptions = _documentedExceptions[_basename(filePath)];
 
     for (final pattern in _financialMutationPatterns) {
       for (final m in pattern.allMatches(content)) {
+        // Skip exact documented display-only exceptions (full-line match).
+        final int lineNumber = _lineOf(content, m.start);
+        final String lineText = lines[lineNumber - 1 < 0 ? 0 : lineNumber - 1];
+        if (exceptions != null &&
+            exceptions.any((String e) => lineText.contains(e))) {
+          continue;
+        }
         findings.add(
           _LogicFinding(
             filePath,
-            _lineOf(content, m.start),
+            lineNumber,
             pattern.pattern,
             _snippetAt(content, m.start, 60),
           ),

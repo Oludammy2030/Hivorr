@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hivorr/app/app_bootstrap.dart';
 import 'package:hivorr/core/localization/localization.dart';
 
+import '../../support/fakes/fake_notifications.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -15,6 +16,8 @@ void main() {
         initializeApi: fakeInitializeApi,
         initializeAuthLayer: fakeInitializeAuthLayer,
         initializeStorage: (_) async => FakeStorageEngine(),
+        notificationBackend: FakeLocalNotificationBackend(),
+        notificationPermissionPlatform: FakeNotificationPermissionPlatform(),
       );
       expect(result.appConfig, isNotNull);
       expect(result.apiLayer, isNotNull);

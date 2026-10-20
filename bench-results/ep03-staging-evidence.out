@@ -1,0 +1,162 @@
+         label         |          captured_at          | database 
+-----------------------+-------------------------------+----------
+ ep03-staging-evidence | 2026-10-18 06:21:32.356865+00 | postgres
+(1 row)
+
+        metric         |  status   |  n   
+-----------------------+-----------+------
+ listing_status_counts | published | 5000
+(1 row)
+
+       metric        | n 
+---------------------+---
+ listing_media_count | 0
+(1 row)
+
+         metric          | n 
+-------------------------+---
+ listing_favorites_count | 0
+(1 row)
+
+ metric | status | n 
+--------+--------+---
+(0 rows)
+
+ metric | status | n | escrow_linked 
+--------+--------+---+---------------
+(0 rows)
+
+        metric        | n 
+----------------------+---
+ contract_event_count | 0
+(1 row)
+
+ metric | is_revealed | n 
+--------+-------------+---
+(0 rows)
+
+        metric         | n 
+-----------------------+---
+ review_aggregate_rows | 0
+(1 row)
+
+      metric      | conversations | participants | messages 
+------------------+---------------+--------------+----------
+ messaging_counts |             0 |            0 |        0
+(1 row)
+
+             metric             | schemaname | tablename 
+--------------------------------+------------+-----------
+ messaging_realtime_publication | public     | messages
+(1 row)
+
+      metric       | slots | appointments | appointment_events 
+-------------------+-------+--------------+--------------------
+ scheduling_counts |     0 |            0 |                  0
+(1 row)
+
+ metric | status | n 
+--------+--------+---
+(0 rows)
+
+     metric     |          id           | public |          created_at           
+----------------+-----------------------+--------+-------------------------------
+ storage_bucket | portfolio-items       | t      | 2026-10-18 05:59:21.571428+00
+ storage_bucket | service-listing-media | t      | 2026-10-18 05:59:23.643672+00
+(2 rows)
+
+           metric           |           key           |          updated_at           
+----------------------------+-------------------------+-------------------------------
+ ranking_weights_provenance | service_ranking_weights | 2026-10-18 05:59:26.087565+00
+(1 row)
+
+       metric        |            proname             
+---------------------+--------------------------------
+ ranking_search_rpcs | appointment_book
+ ranking_search_rpcs | dispute_file
+ ranking_search_rpcs | dispute_resolve
+ ranking_search_rpcs | message_send
+ ranking_search_rpcs | service_contract_accept
+ ranking_search_rpcs | service_contract_offer
+ ranking_search_rpcs | service_earnings_summary
+ ranking_search_rpcs | service_listing_create
+ ranking_search_rpcs | service_listing_publish
+ ranking_search_rpcs | service_listing_unpublish
+ ranking_search_rpcs | service_listing_update
+ ranking_search_rpcs | service_ranking_search
+ ranking_search_rpcs | service_review_reveal_if_ready
+ ranking_search_rpcs | service_review_submit
+ ranking_search_rpcs | service_transaction_history
+(15 rows)
+
+    metric     |             indexname              |                                               indexdef                                               
+---------------+------------------------------------+------------------------------------------------------------------------------------------------------
+ fts_gin_index | service_listings_search_vector_gin | CREATE INDEX service_listings_search_vector_gin ON public.service_listings USING gin (search_vector)
+(1 row)
+
+ metric | status | n 
+--------+--------+---
+(0 rows)
+
+ metric | resolution_type | n 
+--------+-----------------+---
+(0 rows)
+
+ metric | status | n 
+--------+--------+---
+(0 rows)
+
+          metric           | n 
+---------------------------+---
+ notification_events_count | 0
+(1 row)
+
+     metric     |         tablename         | rowsecurity 
+----------------+---------------------------+-------------
+ rls_enablement | appointment_events        | t
+ rls_enablement | appointments              | t
+ rls_enablement | availability_slots        | t
+ rls_enablement | contract_events           | t
+ rls_enablement | contract_milestones       | t
+ rls_enablement | conversation_participants | t
+ rls_enablement | conversations             | t
+ rls_enablement | dispute_audit_trail       | t
+ rls_enablement | dispute_cases             | t
+ rls_enablement | dispute_evidence          | t
+ rls_enablement | dispute_resolutions       | t
+ rls_enablement | messages                  | t
+ rls_enablement | service_contracts         | t
+ rls_enablement | service_favorites         | t
+ rls_enablement | service_listing_media     | t
+ rls_enablement | service_listings          | t
+ rls_enablement | service_review_aggregates | t
+ rls_enablement | service_reviews           | t
+(18 rows)
+
+      metric       |         tablename         | policy_count 
+-------------------+---------------------------+--------------
+ rls_policy_matrix | appointment_events        |            2
+ rls_policy_matrix | appointments              |            3
+ rls_policy_matrix | availability_slots        |            4
+ rls_policy_matrix | contract_events           |            2
+ rls_policy_matrix | contract_milestones       |            3
+ rls_policy_matrix | conversation_participants |            3
+ rls_policy_matrix | conversations             |            2
+ rls_policy_matrix | dispute_audit_trail       |            2
+ rls_policy_matrix | dispute_cases             |            2
+ rls_policy_matrix | dispute_evidence          |            2
+ rls_policy_matrix | dispute_resolutions       |            1
+ rls_policy_matrix | messages                  |            2
+ rls_policy_matrix | service_contracts         |            3
+ rls_policy_matrix | service_favorites         |            3
+ rls_policy_matrix | service_listing_media     |            4
+ rls_policy_matrix | service_listings          |            4
+ rls_policy_matrix | service_review_aggregates |            1
+ rls_policy_matrix | service_reviews           |            4
+(18 rows)
+
+           label           |          captured_at          
+---------------------------+-------------------------------
+ ep03-staging-evidence-end | 2026-10-18 06:21:32.399779+00
+(1 row)
+
