@@ -101,11 +101,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Single cohesive workspace: inline search, filter entry, browse,
-        // ranked results — no second page.
+        // Single cohesive workspace: inline search, filter entry, ranked
+        // results — no second page.
         expect(find.byType(TextField), findsWidgets);
         expect(find.text('Filters'), findsOneWidget);
-        expect(find.text('Browse by profession'), findsOneWidget);
+        // The redundant "Browse by profession" browse row is gone — the
+        // filter button is the single filtering entry point.
+        expect(find.text('Browse by profession'), findsNothing);
         expect(
           find.byType(DiscoveryServiceCard, skipOffstage: false),
           findsWidgets,
@@ -117,7 +119,7 @@ void main() {
         await tester.tap(find.text('Filters'));
         await tester.pumpAndSettle();
         expect(find.text('Filter services'), findsOneWidget);
-        expect(find.text('Browse by profession'), findsOneWidget);
+        expect(find.text('Browse by profession'), findsNothing);
 
         // Compact selects: industry scopes the dependent profession list.
         await pickFilterOption(
@@ -138,7 +140,7 @@ void main() {
 
         // Overlay closed, same workspace, filters applied, query preserved.
         expect(find.text('Filter services'), findsNothing);
-        expect(find.text('Browse by profession'), findsOneWidget);
+        expect(find.text('Browse by profession'), findsNothing);
         expect(search.filters.industryId, 'ind-1');
         expect(search.filters.professionId, 'prof-9');
         expect(
@@ -176,7 +178,7 @@ void main() {
 
       expect(find.text('Filter services'), findsNothing);
       expect(search.filters.isEmpty, isTrue);
-      expect(find.text('Browse by profession'), findsOneWidget);
+      expect(find.text('Browse by profession'), findsNothing);
     });
 
     testWidgets('Clear filters restores unfiltered results in place', (
@@ -202,7 +204,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(search.filters.isEmpty, isTrue);
-      expect(find.text('Browse by profession'), findsOneWidget);
+      expect(find.text('Browse by profession'), findsNothing);
       expect(
         find.byType(DiscoveryServiceCard, skipOffstage: false),
         findsWidgets,

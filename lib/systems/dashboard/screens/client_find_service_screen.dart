@@ -14,7 +14,6 @@ import 'package:hivorr/data/providers/marketplace_search_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/engine/search_engine/service_search_index.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
-import 'package:hivorr/shared/components/hivorr_section_header.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_formatters.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
@@ -33,16 +32,16 @@ import 'package:provider/provider.dart';
 /// Client Find Service workspace at `/dashboard/services`.
 ///
 /// The single cohesive hiring-side discovery surface inside the dashboard
-/// shell: inline search, Industry → Profession browse, contextual filters and
-/// ranked results live in one content area. The shell (sidebar + top chrome)
-/// persists — only this content swaps on navigation.
+/// shell: inline search, contextual filters and ranked results live in one
+/// content area. The shell (sidebar + top chrome) persists — only this
+/// content swaps on navigation.
 ///
 /// State ownership mirrors the public discovery/search pair it consolidates:
 /// [MarketplaceSearchProvider] owns query/filters/results (verbatim RPC
-/// order, never re-sorted), [TaxonomyProvider] is read for browse options
-/// only (its selection is never mutated here), and the industry browse
-/// selection plus filter drafts stay local. Applying filters never touches
-/// the search query; clearing restores the unfiltered ranked defaults.
+/// order, never re-sorted), [TaxonomyProvider] is read to resolve the names
+/// behind the active-filter chips only (its selection is never mutated
+/// here), and filter drafts stay local. Applying filters never touches the
+/// search query; clearing restores the unfiltered ranked defaults.
 /// All styling resolves to [AppTheme] tokens.
 class ClientFindServiceScreen extends StatefulWidget {
   const ClientFindServiceScreen({super.key});
@@ -56,7 +55,6 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
     with WidgetsBindingObserver {
   bool _initialized = false;
   bool _warming = false;
-  String? _industryId;
   late final TextEditingController _queryController;
   Timer? _searchTimer;
 
@@ -124,33 +122,23 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
       }
     }
     if (!mounted) return;
-    // Sync the browse row with preserved filter state (e.g. back from a
-    // detail): the filter's industry scopes the profession chips.
+    // Load the preserved filter's professions (e.g. back from a detail) so
+    // the active-filter chips can resolve the profession name.
     final MarketplaceSearchProvider? provider =
         context.read<MarketplaceSearchProvider?>();
-    final String? preservedIndustry = provider?.filters.industryId;
-    if (preservedIndustry != null) {
-      _industryId = preservedIndustry;
-      await taxonomy.loadProfessions(preservedIndustry);
-      if (!mounted) return;
-      setState(() {});
-    }
+    await _ensureProfessions(provider?.filters.industryId);
+    if (!mounted) return;
     await provider?.search();
   }
 
-  Future<void> _selectIndustry(String? id) async {
-    setState(() => _industryId = id);
-    if (id != null) {
-      await context.read<TaxonomyProvider>().loadProfessions(id);
-    }
-  }
-
-  void _selectProfession(String? id) {
-    final MarketplaceSearchProvider? provider =
-        context.read<MarketplaceSearchProvider?>();
-    if (provider == null) return;
-    provider.setProfessionId(id);
-    unawaited(provider.search());
+  /// Loads [industryId]'s professions into the shared [TaxonomyProvider] so
+  /// the active-filter chips can name the selected profession. No-op when no
+  /// industry is selected or its professions are already loaded.
+  Future<void> _ensureProfessions(String? industryId) async {
+    if (industryId == null) return;
+    final TaxonomyProvider taxonomy = context.read<TaxonomyProvider>();
+    if (taxonomy.professionsByIndustry.containsKey(industryId)) return;
+    await taxonomy.loadProfessions(industryId);
   }
 
   void _onQueryChanged(String query) {
@@ -186,16 +174,10 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
       initial: provider.filters,
     );
     if (applied == null || !mounted) return;
-    // Keep the browse row in step with the applied industry (dependent
-    // profession scope) without resetting the search query.
-    if (applied.industryId != _industryId) {
-      _industryId = applied.industryId;
-      if (_industryId != null) {
-        await context.read<TaxonomyProvider>().loadProfessions(_industryId!);
-      }
-      if (!mounted) return;
-      setState(() {});
-    }
+    // Load the applied industry's professions so the active-filter chips can
+    // name the selected profession. The search query is never touched.
+    await _ensureProfessions(applied.industryId);
+    if (!mounted) return;
     provider.setFilters(applied);
     await provider.search();
   }
@@ -208,7 +190,6 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
     if (provider == null) return;
     _searchTimer?.cancel();
     _queryController.clear();
-    setState(() => _industryId = null);
     provider
       ..clearQuery()
       ..setProfessionId(null)
@@ -226,19 +207,18 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
   }
 
   /// Dismisses the industry dimension everywhere it is held (filter value
-  /// object, browse row, browse profession) since profession depends on it.
+  /// object and the dependent profession dimension).
   Future<void> _clearIndustry(ServiceSearchFilters current) async {
     final MarketplaceSearchProvider? provider =
         context.read<MarketplaceSearchProvider?>();
     if (provider == null) return;
-    setState(() => _industryId = null);
     provider.setProfessionId(null);
     await _updateFilters(
       current.copyWith(industryId: null, professionId: null),
     );
   }
 
-  /// Dismisses the profession dimension (filter + browse selection).
+  /// Dismisses the profession dimension (filter + profession selection).
   Future<void> _clearProfession(ServiceSearchFilters current) async {
     final MarketplaceSearchProvider? provider =
         context.read<MarketplaceSearchProvider?>();
@@ -258,11 +238,8 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
         appBar: const ClientMobileAppBar(title: 'Find Services'),
         body: MobileSafeBody(
           child: _FindServiceContent(
-            industryId: _industryId,
             queryController: _queryController,
             onQueryChanged: _onQueryChanged,
-            onSelectIndustry: _selectIndustry,
-            onSelectProfession: _selectProfession,
             onOpenFilters: _openFilters,
             onClearAll: _clearAll,
             onUpdateFilters: _updateFilters,
@@ -278,11 +255,8 @@ class _ClientFindServiceScreenState extends State<ClientFindServiceScreen>
         const _ClientFindServiceTopBar(),
         Expanded(
           child: _FindServiceContent(
-            industryId: _industryId,
             queryController: _queryController,
             onQueryChanged: _onQueryChanged,
-            onSelectIndustry: _selectIndustry,
-            onSelectProfession: _selectProfession,
             onOpenFilters: _openFilters,
             onClearAll: _clearAll,
             onUpdateFilters: _updateFilters,
@@ -367,15 +341,12 @@ String _initials(String name) {
 }
 
 /// Single-workspace content: inline search + filter entry, active-filter
-/// chips, Industry → Profession browse, ranked results. No navigation —
-/// search and filter both resolve in place via [MarketplaceSearchProvider].
+/// chips and ranked results. No navigation — search and filter both resolve
+/// in place via [MarketplaceSearchProvider].
 class _FindServiceContent extends StatelessWidget {
   const _FindServiceContent({
-    required this.industryId,
     required this.queryController,
     required this.onQueryChanged,
-    required this.onSelectIndustry,
-    required this.onSelectProfession,
     required this.onOpenFilters,
     required this.onClearAll,
     required this.onUpdateFilters,
@@ -383,11 +354,8 @@ class _FindServiceContent extends StatelessWidget {
     required this.onClearProfession,
   });
 
-  final String? industryId;
   final TextEditingController queryController;
   final ValueChanged<String> onQueryChanged;
-  final ValueChanged<String?> onSelectIndustry;
-  final ValueChanged<String?> onSelectProfession;
   final VoidCallback onOpenFilters;
   final Future<void> Function() onClearAll;
   final Future<void> Function(ServiceSearchFilters) onUpdateFilters;
@@ -450,17 +418,6 @@ class _FindServiceContent extends StatelessWidget {
                       onSelected: (_) => onClearAll(),
                     ),
                 ],
-              ),
-              const SizedBox(height: HivorrSpacing.sm),
-              const HivorrSectionHeader(title: 'Browse by profession'),
-              _IndustryChips(
-                selected: industryId,
-                onSelected: onSelectIndustry,
-              ),
-              const SizedBox(height: HivorrSpacing.xs),
-              _ProfessionChips(
-                industryId: industryId,
-                onSelected: onSelectProfession,
               ),
               const SizedBox(height: HivorrSpacing.sm),
               Expanded(
@@ -644,94 +601,6 @@ class _FilterButton extends StatelessWidget {
         icon: const Icon(Icons.tune, size: 18),
         onPressed: onPressed,
       ),
-    );
-  }
-}
-
-/// Industry browse row (primary chips + All). Selection scopes the
-/// profession row below; the shared [TaxonomyProvider] selection is never
-/// mutated — options are read-only.
-class _IndustryChips extends StatelessWidget {
-  const _IndustryChips({required this.selected, required this.onSelected});
-
-  final String? selected;
-  final ValueChanged<String?> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final TaxonomyProvider taxonomy = context.watch<TaxonomyProvider>();
-    final List<Industry> industries = taxonomy.industries;
-    if (industries.isEmpty) {
-      return Text(
-        'Loading industries…',
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-    return Wrap(
-      spacing: HivorrSpacing.xs,
-      runSpacing: HivorrSpacing.xs,
-      children: <Widget>[
-        HivorrChip(
-          label: 'All',
-          isSelected: selected == null,
-          onSelected: (_) => onSelected(null),
-        ),
-        for (final Industry industry in industries)
-          HivorrChip(
-            label: industry.name,
-            isSelected: selected == industry.id,
-            onSelected: (_) =>
-                onSelected(selected == industry.id ? null : industry.id),
-          ),
-      ],
-    );
-  }
-}
-
-/// Profession row dependent on the selected industry (secondary chips).
-/// Hidden until an industry is chosen — the hierarchy stays scalable no
-/// matter how many professions Hivorr adds per industry.
-class _ProfessionChips extends StatelessWidget {
-  const _ProfessionChips({required this.industryId, required this.onSelected});
-
-  final String? industryId;
-  final ValueChanged<String?> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final String? industry = industryId;
-    final MarketplaceSearchProvider? search =
-        context.watch<MarketplaceSearchProvider?>();
-    if (industry == null) {
-      return const SizedBox.shrink();
-    }
-    final TaxonomyProvider taxonomy = context.watch<TaxonomyProvider>();
-    final List<Profession> professions =
-        taxonomy.professionsByIndustry[industry] ?? const <Profession>[];
-    if (professions.isEmpty) {
-      return Text(
-        'Loading professions…',
-        style: context.textTheme.bodySmall?.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-    final String? active = search?.professionId;
-    return Wrap(
-      spacing: HivorrSpacing.xs,
-      runSpacing: HivorrSpacing.xs,
-      children: <Widget>[
-        for (final Profession profession in professions)
-          HivorrChip(
-            label: profession.name,
-            variant: HivorrChipVariant.secondary,
-            isSelected: active == profession.id,
-            onSelected: (_) =>
-                onSelected(active == profession.id ? null : profession.id),
-          ),
-      ],
     );
   }
 }
