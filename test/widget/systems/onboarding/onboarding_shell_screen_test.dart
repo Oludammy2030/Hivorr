@@ -16,14 +16,15 @@ void main() {
   Future<OnboardingTestStack> pumpShell(
     WidgetTester tester, {
     OnboardingTestStack? stack,
-    int advances = 0,
+    int advances = 1,
     String? path,
   }) async {
     final OnboardingTestStack s = stack ?? buildOnboardingStack();
     await s.hydrate('u1');
     if (advances > 0) {
-      // Professional-path tests: the focus decision itself advances past
-      // the capability step to industry, counting as the first step.
+      // The launcher owns the focus decision; selecting offer starts the
+      // professional path at industry, so `advances: 1` is the first wizard
+      // step (identity is 2, trade 3, complete 4).
       await s.provider.selectCapability(EntityCapability.offer);
       for (int i = 1; i < advances; i++) {
         await s.provider.advance();
@@ -31,7 +32,7 @@ void main() {
     }
     // The single `/onboarding/:step` route means the URL stays aligned with the
     // provider step; pump at the canonical location unless a test explicitly
-    // injects a stale path to exercise the reconcile.
+    // injects a stale path or a checklist deep link.
     final String canonical =
         path ??
         (s.provider.isComplete
@@ -57,27 +58,29 @@ void main() {
       expect(find.text('Registration'), findsOneWidget);
       expect(find.byType(OnboardingProgressIndicator), findsOneWidget);
       expect(find.text('Back'), findsOneWidget);
-      expect(
-        find.text('Wizard progress is saved automatically.'),
-        findsOneWidget,
-        reason: 'capability step auto-advances — no primary CTA is configured',
-      );
+      expect(find.text('Save & continue'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
       stack.provider.dispose();
     });
 
-    testWidgets('capability step renders the two focus cards', (
-      WidgetTester tester,
-    ) async {
-      final OnboardingTestStack stack = await pumpShell(tester);
-      expect(find.text('What will you do on Hivorr?'), findsOneWidget);
-      expect(find.text('Hire Professionals'), findsOneWidget);
-      expect(find.text('Offer Professional Services'), findsOneWidget);
-      expect(find.text('Do both'), findsNothing);
-      stack.provider.dispose();
-    });
+    testWidgets(
+      'a saved capability position redirects to the launcher, never rendering '
+      'an account-intent screen',
+      (WidgetTester tester) async {
+        final OnboardingTestStack stack = await pumpShell(
+          tester,
+          advances: 0,
+          path: RoutePaths.onboardingCapability,
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('ACTIVITIES'), findsOneWidget);
+        expect(find.text('What will you do on Hivorr?'), findsNothing);
+        expect(find.text('Registration'), findsNothing);
+        stack.provider.dispose();
+      },
+    );
 
-    testWidgets('back opens the exit dialog; Stay keeps the wizard', (
+    testWidgets('back on the first wizard step opens the exit dialog', (
       WidgetTester tester,
     ) async {
       final OnboardingTestStack stack = await pumpShell(tester);
@@ -94,7 +97,7 @@ void main() {
     testWidgets(
       'Save & exit persists progress, marks exited, and routes home',
       (WidgetTester tester) async {
-        final OnboardingTestStack stack = await pumpShell(tester, advances: 1);
+        final OnboardingTestStack stack = await pumpShell(tester);
         expect(stack.provider.progress!.step, OnboardingStepCode.industry);
         await tester.tap(find.text('Exit'));
         await tester.pumpAndSettle();
@@ -118,13 +121,13 @@ void main() {
     testWidgets('industry step shows the disabled Save & continue CTA', (
       WidgetTester tester,
     ) async {
-      final OnboardingTestStack stack = await pumpShell(tester, advances: 1);
+      final OnboardingTestStack stack = await pumpShell(tester);
       expect(find.text('Save & continue'), findsOneWidget);
       final HivorrButton button = tester.widget<HivorrButton>(
         find.widgetWithText(HivorrButton, 'Save & continue'),
       );
       expect(button.onPressed, isNull, reason: 'no industry selected yet');
-      expect(find.bySemanticsLabel('Step 2 of 4'), findsOneWidget);
+      expect(find.bySemanticsLabel('Step 1 of 3'), findsOneWidget);
       stack.provider.dispose();
     });
 
@@ -137,7 +140,7 @@ void main() {
       expect(
         find.text('Which industry best describes you?'),
         findsOneWidget,
-        reason: 'defensive index 1 renders the combined selection step',
+        reason: 'defensive index 0 renders the combined selection step',
       );
       stack.provider.dispose();
     });
@@ -168,8 +171,74 @@ void main() {
     testWidgets('ProgressIndicator reflects the active step via the provider', (
       WidgetTester tester,
     ) async {
-      final OnboardingTestStack stack = await pumpShell(tester, advances: 1);
-      expect(find.bySemanticsLabel('Step 2 of 4'), findsOneWidget);
+      final OnboardingTestStack stack = await pumpShell(tester);
+      expect(find.bySemanticsLabel('Step 1 of 3'), findsOneWidget);
+      stack.provider.dispose();
+    });
+
+    testWidgets(
+      'identity deep link opens the identity interface directly, not industry',
+      (WidgetTester tester) async {
+        final OnboardingTestStack stack = await pumpShell(
+          tester,
+          advances: 1,
+          path: RoutePaths.onboardingIdentity,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Verify your identity with a government-issued document.'),
+          findsOneWidget,
+        );
+        expect(find.text('Which industry best describes you?'), findsNothing);
+        expect(stack.provider.currentStep, OnboardingStepCode.identityDocument);
+        expect(stack.provider.progress!.completedSteps, <OnboardingStepCode>[
+          OnboardingStepCode.capability,
+        ], reason: 'opening a deep link never marks the skipped step complete');
+        stack.provider.dispose();
+      },
+    );
+
+    testWidgets(
+      'trade-proof deep link opens the proof interface with the bound profession',
+      (WidgetTester tester) async {
+        final OnboardingTestStack stack = await pumpShell(
+          tester,
+          advances: 2,
+          path:
+              '${RoutePaths.onboardingTradeProof}'
+              '?professionId=prof-sw&professionLabel=Software%20Engineer',
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'Proof of your trade unlocks bidding. Choose a proof type, then '
+            'upload a clear photo or PDF.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Software Engineer'), findsOneWidget);
+        expect(find.text('Which industry best describes you?'), findsNothing);
+        expect(stack.provider.currentStep, OnboardingStepCode.tradeProof);
+        stack.provider.dispose();
+      },
+    );
+
+    testWidgets('checklist deep link returns to requirements on Back', (
+      WidgetTester tester,
+    ) async {
+      final OnboardingTestStack stack = await pumpShell(
+        tester,
+        advances: 1,
+        path: '${RoutePaths.onboardingIdentity}?from=requirements',
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Verify your identity with a government-issued document.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('PROFESSIONAL-REQUIREMENTS'), findsOneWidget);
       stack.provider.dispose();
     });
 
@@ -178,15 +247,17 @@ void main() {
     ) async {
       final OnboardingTestStack s = buildOnboardingStack();
       await s.hydrate('u1');
+      await s.provider.selectCapability(EntityCapability.offer);
       await pumpOnboardingScreen(
         tester,
         const OnboardingShellScreen(),
-        path: '/onboarding/capability',
+        path: RoutePaths.onboardingIndustry,
         providers: s.buildProviders(),
         dark: true,
       );
       expect(tester.takeException(), isNull);
       expect(find.text('Registration'), findsOneWidget);
+      expect(find.bySemanticsLabel('Step 1 of 3'), findsOneWidget);
       s.provider.dispose();
     });
 
@@ -197,8 +268,7 @@ void main() {
       // saved wizard sits further along.
       final OnboardingTestStack stack = await pumpShell(
         tester,
-        advances: 1,
-        path: '/onboarding/capability',
+        path: RoutePaths.onboardingCapability,
       );
       await tester.pumpAndSettle();
       expect(

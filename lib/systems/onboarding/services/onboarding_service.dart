@@ -244,6 +244,23 @@ class OnboardingService {
     await _persist(updated, 'onboarding.step.${p.step.ordinal + 1}.duration');
   }
 
+  /// Moves the resume point to [step] without marking anything complete.
+  ///
+  /// Deep links from the professional-requirements checklist target an
+  /// existing verification interface directly. The step screens advance from
+  /// [OnboardingProvider.currentStep], so the position must follow the URL;
+  /// [OnboardingProgress.completedSteps] is intentionally preserved. No-op
+  /// for a missing/complete position or when already on [step].
+  Future<void> focusStep(OnboardingStepCode step) async {
+    final OnboardingProgress? p = _progress;
+    if (p == null || p.isComplete || p.step == step) {
+      return;
+    }
+    final OnboardingProgress updated = p.withStep(step);
+    _progress = updated;
+    await _persist(updated, 'onboarding.step.focus');
+  }
+
   /// Records the entity's focus choice and advances past the decision.
   ///
   /// The focus is persisted **server-side first**

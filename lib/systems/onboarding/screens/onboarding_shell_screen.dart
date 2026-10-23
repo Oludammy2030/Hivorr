@@ -11,7 +11,6 @@ import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
-import 'package:hivorr/systems/onboarding/screens/capability_selection_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/identity_verification_step_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/industry_profession_selection_screen.dart';
 import 'package:hivorr/systems/onboarding/screens/onboarding_complete_screen.dart';
@@ -26,23 +25,25 @@ import 'package:provider/provider.dart';
 ///
 /// Identity (first/middle/last, displayName, phone, email) is captured at
 /// account creation and hydrated into `entity_profiles` before onboarding
-/// starts — onboarding therefore begins at the focus decision
-/// (hire / offer) and never re-asks for basic identity information.
-/// Bio and avatar are profile concerns handled later via Profile → Edit
-/// Profile, never in-wizard. Hire-focus entities finish after capability,
-/// offer-focus entities continue through industry & profession selection →
-/// identity → trade proof. Progress is stored by [OnboardingProgress] and the
-/// shell renders the tracker, the active step body (kept alive in an
-/// [IndexedStack]), and the standard CTA bar (`Back` / `Continue`/`Submit`).
-/// The shell is registered once under the single `/onboarding/:step` route,
-/// so step transitions update the URL in place without recreating the shell's
-/// State (controllers and step bodies survive). The provider remains the
-/// source of truth: [go_router] URL and current step stay aligned via
-/// [_reconcileUrl]. Back returns to the previous stage — while a text field
-/// has focus, the first Back only dismisses the keyboard
-/// ([_dismissKeyboardIfOpen]); the explicit AppBar `Exit` affordance (and
-/// Back on the first stage) opens [OnboardingExitConfirmDialog]
-/// (Save & exit).
+/// starts. The focus decision (hire / offer) is owned by the activity launcher
+/// (`/activities`) — the wizard never renders an account-intent screen. The
+/// professional path is industry & profession selection → identity → trade
+/// proof. Progress is stored by [OnboardingProgress] and the shell renders the
+/// tracker, the active step body (kept alive in an [IndexedStack]), and the
+/// standard CTA bar (`Back` / `Continue`/`Submit`).
+///
+/// The shell is registered once under the single `/onboarding/:step` route, so
+/// step transitions update the URL in place without recreating the shell's
+/// State (controllers and step bodies survive). Explicit links — notably the
+/// professional-requirements checklist — may target a verification step
+/// directly; the shell honors a valid requested step by moving the resume point
+/// there (without marking anything complete) and reconciling stale URLs back to
+/// the saved position via [_reconcileUrl]. When entered from the checklist
+/// (`?from=requirements`), Back returns to the checklist instead of stepping
+/// backwards in the wizard. While a text field has focus, the first Back only
+/// dismisses the keyboard ([_dismissKeyboardIfOpen]); the explicit AppBar `Exit`
+/// affordance (and Back on the first professional step) opens
+/// [OnboardingExitConfirmDialog] (Save & exit).
 class OnboardingShellScreen extends StatefulWidget {
   const OnboardingShellScreen({super.key});
 
@@ -54,6 +55,9 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
   final OnboardingStepController _controller = OnboardingStepController();
   bool _exitDialogOpen = false;
   bool _reconcileScheduled = false;
+  bool _launcherScheduled = false;
+  bool _focusScheduled = false;
+  OnboardingStepCode? _focusTarget;
 
   @override
   void dispose() {
@@ -64,17 +68,48 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
   @override
   Widget build(BuildContext context) {
     final OnboardingProvider provider = context.watch<OnboardingProvider>();
-    final OnboardingStepCode step =
+    final OnboardingStepCode persisted =
         provider.currentStep ?? OnboardingStepCode.capability;
     final bool terminal = provider.isComplete;
-    // Defensive: never present the trade-proof step without a bound
-    // profession — bounce the active body back to the combined industry &
-    // profession selection step (ordinal 2).
-    final bool showProfessionFallback =
-        step == OnboardingStepCode.tradeProof &&
-        context.read<TaxonomyProvider>().selectedProfession == null;
+    final Uri uri = GoRouterState.of(context).uri;
+    final OnboardingStepCode? requested = _stepForPath(uri.path);
+    final bool fromRequirements = uri.queryParameters['from'] == 'requirements';
 
-    _reconcileUrl(context, provider);
+    // A valid URL target is an explicit request (requirements checklist) and
+    // must win over the saved resume point, even when it moves the wizard
+    // backwards (for example re-submitting identity after skipping it).
+    final bool honorRequested =
+        !terminal && requested != null && requested != persisted;
+    final OnboardingStepCode step = honorRequested ? requested : persisted;
+
+    if (honorRequested) {
+      _scheduleFocus(provider, requested);
+    }
+
+    // The focus decision is launcher-owned; a saved capability position must
+    // never render an account-intent screen inside the wizard.
+    if (!terminal && step == OnboardingStepCode.capability) {
+      _scheduleLauncher(context);
+      return const Scaffold(body: SizedBox.shrink());
+    }
+
+    final TaxonomyProvider taxonomy = context.read<TaxonomyProvider>();
+    final String? professionIdOverride = uri.queryParameters['professionId'];
+    final String? professionLabelOverride =
+        uri.queryParameters['professionLabel'];
+    // Requirements links carry the already-bound profession id, so trade proof
+    // can open directly even when the in-memory taxonomy picker is cold.
+    final bool hasProfession =
+        taxonomy.selectedProfession != null ||
+        (professionIdOverride != null && professionIdOverride.isNotEmpty);
+    final bool showProfessionFallback =
+        step == OnboardingStepCode.tradeProof && !hasProfession;
+
+    _reconcileUrl(context, provider, step);
+
+    final VoidCallback? onFinished = fromRequirements
+        ? () => context.go(RoutePaths.professionalRequirements)
+        : null;
 
     return PopScope(
       canPop: false,
@@ -86,7 +121,9 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
           context.go(RoutePaths.home);
           return;
         }
-        unawaited(_goBack(context, provider));
+        unawaited(
+          _goBack(context, provider, fromRequirements: fromRequirements),
+        );
       },
       child: Scaffold(
         appBar: AppBar(
@@ -94,7 +131,13 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
           leading: terminal
               ? null
               : BackButton(
-                  onPressed: () => unawaited(_goBack(context, provider)),
+                  onPressed: () => unawaited(
+                    _goBack(
+                      context,
+                      provider,
+                      fromRequirements: fromRequirements,
+                    ),
+                  ),
                 ),
           actions: <Widget>[
             if (!terminal)
@@ -122,17 +165,8 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
                 ),
                 Expanded(
                   child: IndexedStack(
-                    index: _bodyIndex(
-                      provider,
-                      step,
-                      terminal,
-                      showProfessionFallback,
-                    ),
+                    index: _bodyIndex(step, terminal, showProfessionFallback),
                     children: <Widget>[
-                      CapabilitySelectionScreen(
-                        active: step == OnboardingStepCode.capability,
-                        controller: _controller,
-                      ),
                       IndustryProfessionSelectionScreen(
                         active:
                             step == OnboardingStepCode.industry ||
@@ -142,10 +176,16 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
                       IdentityVerificationStepScreen(
                         active: step == OnboardingStepCode.identityDocument,
                         controller: _controller,
+                        onFinished: onFinished,
                       ),
                       TradeProofStepScreen(
-                        active: step == OnboardingStepCode.tradeProof,
+                        active:
+                            step == OnboardingStepCode.tradeProof &&
+                            !showProfessionFallback,
                         controller: _controller,
+                        professionId: professionIdOverride,
+                        professionLabel: professionLabelOverride,
+                        onFinished: onFinished,
                       ),
                       OnboardingCompleteScreen(
                         active: terminal,
@@ -157,7 +197,13 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
                 if (!terminal)
                   _BottomBar(
                     controller: _controller,
-                    onBack: () => unawaited(_goBack(context, provider)),
+                    onBack: () => unawaited(
+                      _goBack(
+                        context,
+                        provider,
+                        fromRequirements: fromRequirements,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -167,9 +213,56 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     );
   }
 
+  /// The wizard step an explicit URL targets, or `null` for the canonical
+  /// `/onboarding/:step` bookmarks that are not wizard screens.
+  ///
+  /// `capability` is launcher-owned (legacy bookmarks redirect), and the
+  /// completion route is derived from [OnboardingProvider.isComplete].
+  static OnboardingStepCode? _stepForPath(String path) => switch (path) {
+    RoutePaths.onboardingIndustry => OnboardingStepCode.industry,
+    RoutePaths.onboardingIdentity => OnboardingStepCode.identityDocument,
+    RoutePaths.onboardingTradeProof => OnboardingStepCode.tradeProof,
+    _ => null,
+  };
+
+  /// Moves the resume point to [target] once per request so step screens
+  /// advance from the step the user is actually viewing. Deferred to a
+  /// post-frame callback to avoid mutating providers during build.
+  void _scheduleFocus(OnboardingProvider provider, OnboardingStepCode target) {
+    if (_focusScheduled && _focusTarget == target) {
+      return;
+    }
+    _focusScheduled = true;
+    _focusTarget = target;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _focusScheduled = false;
+      _focusTarget = null;
+      if (!mounted) {
+        return;
+      }
+      await provider.focusStep(target);
+    });
+  }
+
+  /// The launcher owns the focus choice; redirect a saved capability position
+  /// (or a legacy `/onboarding/capability` bookmark) there.
+  void _scheduleLauncher(BuildContext context) {
+    if (_launcherScheduled) {
+      return;
+    }
+    _launcherScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _launcherScheduled = false;
+      if (!mounted) {
+        return;
+      }
+      context.go(RoutePaths.activities);
+    });
+  }
+
   /// Steps back to the previous stage (persisting the position), except on
-  /// the first step where Back means "leave the wizard" (exit-and-save). On
-  /// success the URL is restored to the previous step's route.
+  /// the first professional step where Back means "leave the wizard"
+  /// (exit-and-save). A checklist entry returns to the checklist instead.
   ///
   /// Keyboard-first: while a text field holds focus, the first Back only
   /// dismisses the keyboard — the next Back then navigates. This matches the
@@ -177,19 +270,25 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
   /// the in-app buttons and the system gesture.
   Future<void> _goBack(
     BuildContext context,
-    OnboardingProvider provider,
-  ) async {
+    OnboardingProvider provider, {
+    required bool fromRequirements,
+  }) async {
     if (_dismissKeyboardIfOpen()) {
+      return;
+    }
+    if (fromRequirements) {
+      context.go(RoutePaths.professionalRequirements);
       return;
     }
     final OnboardingStepCode? step = provider.currentStep;
     if (step == null) {
       return;
     }
-    // Capability is the wizard's first (and identity-free) step — Back there
-    // means "leave the wizard" (exit-and-save).
+    // The launcher owns the focus decision; industry is the wizard's first
+    // (and identity-free) stage, so Back there means "leave the wizard".
     final bool atFirstInteractiveStep =
-        step == OnboardingStepCode.capability;
+        step == OnboardingStepCode.capability ||
+        step == OnboardingStepCode.industry;
     if (atFirstInteractiveStep) {
       unawaited(_maybeExit(context, provider));
       return;
@@ -221,24 +320,27 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
     return true;
   }
 
-  /// Keeps the URL aligned with the provider step (EP-02-18 §5.7), the wizard's
-  /// source of truth. After a cold deep link — or any URL stuck on an outdated
-  /// step — the canonical step route replaces it; once aligned, this is a no-op.
-  /// Unknown/stray segments never map to a valid step: they fall through to
-  /// `go_router`'s unmatched-route handling (404) or are realigned here.
-  void _reconcileUrl(BuildContext context, OnboardingProvider provider) {
+  /// Keeps the URL aligned with the resolved step (EP-02-18 §5.7). A valid
+  /// requested step has already been resolved into [step]; stale bookmarks
+  /// (for example a legacy `/onboarding/capability` URL behind the saved
+  /// position) are replaced with the canonical route. Query parameters — the
+  /// checklist return marker and profession hint — are preserved.
+  void _reconcileUrl(
+    BuildContext context,
+    OnboardingProvider provider,
+    OnboardingStepCode step,
+  ) {
     if (provider.progress == null || _reconcileScheduled) {
       return;
     }
     final String canonical = provider.isComplete
         ? RoutePaths.onboardingComplete
-        : RoutePaths.onboardingRouteFor(
-            provider.currentStep ?? OnboardingStepCode.capability,
-          );
-    final String current = GoRouterState.of(context).uri.path;
-    if (current == canonical) {
+        : RoutePaths.onboardingRouteFor(step);
+    final Uri uri = GoRouterState.of(context).uri;
+    if (uri.path == canonical) {
       return;
     }
+    final String target = uri.hasQuery ? '$canonical?${uri.query}' : canonical;
     _reconcileScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reconcileScheduled = false;
@@ -246,24 +348,27 @@ class _OnboardingShellScreenState extends State<OnboardingShellScreen> {
         return;
       }
       if (GoRouterState.of(context).uri.path != canonical) {
-        context.go(canonical);
+        context.go(target);
       }
     });
   }
 
   int _bodyIndex(
-    OnboardingProvider provider,
     OnboardingStepCode step,
     bool terminal,
     bool showProfessionFallback,
   ) {
     if (terminal) {
-      return 4; // completion screen (last IndexedStack child)
+      return 3; // completion screen (last IndexedStack child)
     }
     if (showProfessionFallback) {
-      return 1; // combined industry+profession step (trade-proof needs a bound profession)
+      return 0; // combined industry+profession step (trade-proof needs a bound profession)
     }
-    return step.ordinal;
+    return switch (step) {
+      OnboardingStepCode.capability || OnboardingStepCode.industry => 0,
+      OnboardingStepCode.identityDocument => 1,
+      OnboardingStepCode.tradeProof => 2,
+    };
   }
 
   Future<void> _maybeExit(
@@ -304,9 +409,7 @@ class _BottomBar extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: colors.surface,
-              border: Border(
-                top: BorderSide(color: colors.outlineVariant),
-              ),
+              border: Border(top: BorderSide(color: colors.outlineVariant)),
             ),
             padding: const EdgeInsets.fromLTRB(
               HivorrSpacing.lg,

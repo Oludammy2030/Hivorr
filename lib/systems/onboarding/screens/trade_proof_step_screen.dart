@@ -34,11 +34,26 @@ class TradeProofStepScreen extends StatefulWidget {
     required this.active,
     required this.controller,
     this.pickFile,
+    this.professionId,
+    this.professionLabel,
+    this.onFinished,
   });
 
   final bool active;
   final OnboardingStepController controller;
   final PickTradeProofCallback? pickFile;
+
+  /// The bound profession id to use when the taxonomy picker is cold (for
+  /// example when arriving from the requirements checklist).
+  final String? professionId;
+
+  /// Display label for [professionId] when no taxonomy selection is loaded.
+  final String? professionLabel;
+
+  /// Invoked after the proof is submitted, instead of navigating to the
+  /// completion screen. Used by checklist deep links to return to the
+  /// requirements screen.
+  final VoidCallback? onFinished;
 
   @override
   State<TradeProofStepScreen> createState() => _TradeProofStepScreenState();
@@ -78,7 +93,10 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
       return;
     }
     final OnboardingProvider provider = context.read<OnboardingProvider>();
-    await provider.refreshGateStatus();
+    final String? professionId =
+        context.read<TaxonomyProvider>().selectedProfession?.id ??
+        widget.professionId;
+    await provider.refreshGateStatus(professionId: professionId);
   }
 
   @override
@@ -90,12 +108,18 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
     final TaxonomyProvider taxonomy = context.watch<TaxonomyProvider>();
     final ColorScheme colors = context.colorScheme;
     final Profession? profession = taxonomy.selectedProfession;
+    final String professionId = profession?.id ?? widget.professionId ?? '';
+    final String? professionLabel = profession?.name ?? widget.professionLabel;
 
     widget.controller.configure(
       label: 'Upload & submit',
-      canPrimary: _type != null && _picked != null && !_submitted,
+      canPrimary:
+          _type != null &&
+          _picked != null &&
+          !_submitted &&
+          professionId.isNotEmpty,
       loading: provider.isBusy,
-      onPrimary: () => _submit(context, profession),
+      onPrimary: () => _submit(context, professionId),
     );
 
     return SingleChildScrollView(
@@ -103,13 +127,14 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (profession != null) ...<Widget>[
+          if (professionLabel != null &&
+              professionLabel.isNotEmpty) ...<Widget>[
             Row(
               children: <Widget>[
                 Text('Profession', style: context.textTheme.titleSmall),
                 const SizedBox(width: HivorrSpacing.sm),
                 HivorrChip(
-                  label: profession.name,
+                  label: professionLabel,
                   variant: HivorrChipVariant.surface,
                 ),
               ],
@@ -214,11 +239,10 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
     }
   }
 
-  Future<void> _submit(BuildContext context, Profession? profession) async {
+  Future<void> _submit(BuildContext context, String professionId) async {
     final OnboardingProvider provider = context.read<OnboardingProvider>();
     final PickedDocument doc = _picked!;
     final TradeProofType type = _type!;
-    final String professionId = profession?.id ?? '';
     if (professionId.isEmpty) {
       return;
     }
@@ -250,6 +274,13 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
     if (provider.submitState == SubmitState.success) {
       setState(() => _submitted = true);
       await provider.advance();
+      if (!mounted) {
+        return;
+      }
+      if (widget.onFinished != null) {
+        widget.onFinished!();
+        return;
+      }
       if (context.mounted) {
         context.go(RoutePaths.onboardingComplete);
       }

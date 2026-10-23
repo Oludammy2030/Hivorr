@@ -34,11 +34,17 @@ class IdentityVerificationStepScreen extends StatefulWidget {
     required this.active,
     required this.controller,
     this.pickFile,
+    this.onFinished,
   });
 
   final bool active;
   final OnboardingStepController controller;
   final PickDocumentCallback? pickFile;
+
+  /// Invoked after the step is submitted or skipped, instead of navigating to
+  /// the next wizard step. Used by checklist deep links to return to the
+  /// requirements screen.
+  final VoidCallback? onFinished;
 
   @override
   State<IdentityVerificationStepScreen> createState() =>
@@ -201,6 +207,13 @@ class _IdentityVerificationStepScreenState
     if (provider.submitState == SubmitState.success) {
       setState(() => _submitted = true);
       await provider.advance();
+      if (!mounted) {
+        return;
+      }
+      if (widget.onFinished != null) {
+        widget.onFinished!();
+        return;
+      }
       if (context.mounted) {
         context.go(RoutePaths.onboardingTradeProof);
       }
@@ -211,6 +224,10 @@ class _IdentityVerificationStepScreenState
     final OnboardingProvider provider = context.read<OnboardingProvider>();
     await provider.advance();
     if (!mounted) {
+      return;
+    }
+    if (widget.onFinished != null) {
+      widget.onFinished!();
       return;
     }
     context.go(RoutePaths.onboardingTradeProof);

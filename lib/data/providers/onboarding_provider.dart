@@ -47,7 +47,7 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// The current (furthest) step code.
   OnboardingStepCode? get currentStep => _progress?.step;
 
-  /// Whether all five wizard steps are complete (derived from the local
+  /// Whether every required wizard step is complete (derived from the local
   /// resume position).
   bool get isComplete => _progress?.isComplete ?? false;
 
@@ -108,6 +108,28 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Advances one step along the capability path and persists (FV-14).
   Future<void> advance() async {
     await _runAsSubmit(() => _service.advance());
+  }
+
+  /// Moves the resume point to [step] without completing anything.
+  ///
+  /// Deep links (professional-requirements checklist) render the requested
+  /// verification step; this keeps the step screens' `advance()` aligned with
+  /// the step the user is actually looking at, while preserving completed
+  /// steps and verification mirrors. Quietly persisted — this is navigation,
+  /// not a submit, so [submitState] is untouched.
+  Future<void> focusStep(OnboardingStepCode step) async {
+    try {
+      await _service.focusStep(step);
+    } on Object catch (e, stackTrace) {
+      _logger?.error(
+        'Onboarding step focus failed',
+        error: e,
+        stackTrace: stackTrace,
+        context: <String, Object?>{'step': step.name},
+      );
+    }
+    _progress = _service.progress;
+    notifyListeners();
   }
 
   /// Records the entity's capability choice and advances to the profile step.
