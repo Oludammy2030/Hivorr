@@ -9,7 +9,9 @@ import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 ///
 /// Segment count equals the number of steps on the current focus path
 /// ([OnboardingProgress.requiredSteps]) — one for a hire-focus entity (the
-/// focus decision finishes the wizard), four for offer focus.
+/// launcher's focus decision finishes the wizard), three for offer focus
+/// (industry → identity → trade proof; the focus decision is launcher-owned and
+/// is not a wizard screen).
 /// Filled segments equal the position of the current step on that path. Done
 /// segments use `ColorScheme.primary`; pending use `surfaceVariant`. No
 /// hardcoded hex values.
@@ -27,7 +29,6 @@ class OnboardingProgressIndicator extends StatelessWidget {
     final List<OnboardingStepCode> requiredSteps =
         p?.requiredSteps ??
         const <OnboardingStepCode>[
-          OnboardingStepCode.capability,
           OnboardingStepCode.industry,
           OnboardingStepCode.identityDocument,
           OnboardingStepCode.tradeProof,

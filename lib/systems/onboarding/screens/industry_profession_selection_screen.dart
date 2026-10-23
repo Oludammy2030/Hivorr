@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/authentication/providers/auth_provider.dart';
 import 'package:hivorr/data/entities/industry.dart';
+import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/entities/profession.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
@@ -115,7 +116,7 @@ class _IndustryProfessionSelectionScreenState
       if (!mounted) {
         return;
       }
-      context.go(RoutePaths.onboardingIdentity);
+      _goNext();
       return;
     }
     if (provider.lastError?.code == 'PLT005') {
@@ -128,8 +129,18 @@ class _IndustryProfessionSelectionScreenState
       if (!mounted) {
         return;
       }
-      context.go(RoutePaths.onboardingIdentity);
+      _goNext();
     }
+  }
+
+  /// Continues to the provider's current step. Normally that is identity; on
+  /// a trade-proof deep link the combined industry step is the fallback for a
+  /// missing binding, so binding a profession returns to trade proof instead.
+  void _goNext() {
+    final OnboardingProvider provider = context.read<OnboardingProvider>();
+    final OnboardingStepCode step =
+        provider.currentStep ?? OnboardingStepCode.identityDocument;
+    context.go(RoutePaths.onboardingRouteFor(step));
   }
 
   @override

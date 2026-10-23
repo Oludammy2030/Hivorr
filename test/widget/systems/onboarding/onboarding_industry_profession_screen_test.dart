@@ -5,6 +5,7 @@ import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/data/entities/industry.dart';
 import 'package:hivorr/data/entities/profession.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/screens/industry_profession_selection_screen.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,10 @@ void main() {
     final OnboardingTestStack s = stack ?? buildOnboardingStack();
     final OnboardingStepController controller = OnboardingStepController();
     await s.hydrate('u1');
+    // The launcher records the Earn focus before the combined industry step
+    // renders; profile the provider the same way the wizard does, so advancing
+    // from industry lands on identity (not the hire-only completion).
+    await s.provider.selectCapability(EntityCapability.offer);
     await pumpOnboardingScreen(
       tester,
       IndustryProfessionSelectionScreen(active: true, controller: controller),
@@ -142,10 +147,7 @@ void main() {
       controller.onPrimary!.call();
       await tester.pumpAndSettle();
       expect(stack.remote.bindProfessionCallCount, 1);
-      expect(
-        stack.remote.lastBoundProfessionalDisplayName,
-        'Adaeze Fixes It',
-      );
+      expect(stack.remote.lastBoundProfessionalDisplayName, 'Adaeze Fixes It');
       stack.provider.dispose();
     });
 

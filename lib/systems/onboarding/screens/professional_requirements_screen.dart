@@ -65,22 +65,55 @@ class _ProfessionalRequirementsScreenState
     setState(() => _refreshing = false);
   }
 
+  /// Opens an actionable requirement at its existing interface.
+  ///
+  /// The onboarding shell renders the requested step directly (identity /
+  /// trade proof) instead of falling back to the saved industry position. The
+  /// return marker makes Back go to this checklist, and the bound profession id
+  /// lets trade proof open without a warm taxonomy picker.
+  Future<void> _openRequirement(
+    ProfessionalRequirement item,
+    VerificationProvider verification,
+  ) async {
+    final String? destination = item.destination;
+    if (destination == null) return;
+    final bool isWizardStep =
+        destination == RoutePaths.onboardingIndustry ||
+        destination == RoutePaths.onboardingIdentity ||
+        destination == RoutePaths.onboardingTradeProof;
+    final Map<String, String> params = <String, String>{
+      if (isWizardStep) 'from': 'requirements',
+    };
+    if (item.key == 'trade') {
+      final verifications = verification.status?.tradeVerifications;
+      if (verifications != null && verifications.isNotEmpty) {
+        params['professionId'] = verifications.first.professionId;
+        final String? label = verifications.first.professionalDisplayName;
+        if (label != null && label.trim().isNotEmpty) {
+          params['professionLabel'] = label;
+        }
+      }
+    }
+    final String target = params.isEmpty
+        ? destination
+        : Uri(path: destination, queryParameters: params).toString();
+    await context.push<void>(target);
+    if (!mounted) return;
+    await _refresh();
+  }
+
   List<ProfessionalRequirement> _items(
     OnboardingProvider onboarding,
     VerificationProvider verification,
   ) {
     final OnboardingProgress? progress = onboarding.progress;
-    final bool isOffer =
-        progress?.capability == EntityCapability.offer;
-    final int bound =
-        verification.status?.tradeVerifications.length ?? 0;
+    final bool isOffer = progress?.capability == EntityCapability.offer;
+    final int bound = verification.status?.tradeVerifications.length ?? 0;
     final bool identityVerified =
         verification.status?.identityVerified ?? false;
-    final bool identitySubmitted =
-        progress?.hasIdentitySubmission ?? false;
+    final bool identitySubmitted = progress?.hasIdentitySubmission ?? false;
     final bool tradeApproved = onboarding.isTradeGateOpen ?? false;
-    final bool tradeSubmitted =
-        progress?.hasTradeProofSubmission ?? false;
+    final bool tradeSubmitted = progress?.hasTradeProofSubmission ?? false;
     return resolveProfessionalRequirements(
       isOfferFocus: isOffer,
       boundProfessions: bound,
@@ -135,9 +168,8 @@ class _ProfessionalRequirementsScreenState
                         'Your professional setup is complete — bidding is unlocked.',
                     actionButton: HivorrButton(
                       label: 'Find work',
-                      onPressed: () => context.go(
-                        RoutePaths.dashboardOpportunities,
-                      ),
+                      onPressed: () =>
+                          context.go(RoutePaths.dashboardOpportunities),
                       variant: HivorrButtonVariant.primary,
                       isExpanded: true,
                     ),
@@ -166,7 +198,9 @@ class _ProfessionalRequirementsScreenState
                             item: item,
                             onAction: item.destination == null
                                 ? null
-                                : () => context.push(item.destination!),
+                                : () => unawaited(
+                                    _openRequirement(item, verification),
+                                  ),
                           ),
                         ),
                     ],
@@ -212,10 +246,7 @@ class _RequirementRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  item.title,
-                  style: context.textTheme.titleSmall,
-                ),
+                Text(item.title, style: context.textTheme.titleSmall),
                 const SizedBox(height: 2),
                 Text(
                   item.subtitle,

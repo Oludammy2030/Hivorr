@@ -816,7 +816,14 @@ class AppRouter {
         GoRoute(
           path: RoutePaths.onboarding,
           redirect: (BuildContext context, GoRouterState state) =>
-              RoutePaths.onboardingCapability,
+              RoutePaths.activities,
+        ),
+        // Legacy focus-decision bookmark: the launcher owns the intent choice,
+        // so this never renders a standalone wizard step.
+        GoRoute(
+          path: RoutePaths.onboardingCapability,
+          redirect: (BuildContext context, GoRouterState state) =>
+              RoutePaths.activities,
         ),
         GoRoute(
           path: '/onboarding/:step',

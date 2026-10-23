@@ -288,17 +288,20 @@ GoRouter onboardingTestRouter({
   required Widget child,
   List<RouteBase> routes = const <RouteBase>[],
 }) {
+  // Keep the query string in `initialLocation` (checklist return marker,
+  // profession hint) while matching on the clean path.
+  final String routePath = Uri.tryParse(path)?.path ?? path;
   return GoRouter(
     initialLocation: path,
     routes: <RouteBase>[
       GoRoute(
-        path: path,
-        name: _nameFor(path),
+        path: routePath,
+        name: _nameFor(routePath),
         builder: (BuildContext context, GoRouterState state) =>
             Scaffold(body: child),
       ),
       for (final (String name, String label) in _markers)
-        if (name != _nameFor(path)) _marker(name, label),
+        if (name != _nameFor(routePath)) _marker(name, label),
       ...routes,
     ],
   );
@@ -310,6 +313,8 @@ const List<(String, String)> _markers = <(String, String)>[
   (RouteNames.onboardingIdentity, 'ONBOARDING-IDENTITY'),
   (RouteNames.onboardingTradeProof, 'ONBOARDING-TRADE-PROOF'),
   (RouteNames.onboardingComplete, 'ONBOARDING-COMPLETE'),
+  (RouteNames.activities, 'ACTIVITIES'),
+  (RouteNames.professionalRequirements, 'PROFESSIONAL-REQUIREMENTS'),
   (RouteNames.home, 'HOME'),
   (RouteNames.dashboard, 'DASHBOARD'),
   (RouteNames.verificationStatus, 'VERIFICATION-STATUS'),
@@ -358,6 +363,8 @@ String? _nameFor(String path) => switch (path) {
   RoutePaths.onboardingIdentity => RouteNames.onboardingIdentity,
   RoutePaths.onboardingTradeProof => RouteNames.onboardingTradeProof,
   RoutePaths.onboardingComplete => RouteNames.onboardingComplete,
+  RoutePaths.activities => RouteNames.activities,
+  RoutePaths.professionalRequirements => RouteNames.professionalRequirements,
   RoutePaths.home => RouteNames.home,
   RoutePaths.dashboard => RouteNames.dashboard,
   RoutePaths.verificationStatus => RouteNames.verificationStatus,
@@ -371,6 +378,8 @@ String _pathFor(String name) => switch (name) {
   RouteNames.onboardingIdentity => RoutePaths.onboardingIdentity,
   RouteNames.onboardingTradeProof => RoutePaths.onboardingTradeProof,
   RouteNames.onboardingComplete => RoutePaths.onboardingComplete,
+  RouteNames.activities => RoutePaths.activities,
+  RouteNames.professionalRequirements => RoutePaths.professionalRequirements,
   RouteNames.home => RoutePaths.home,
   RouteNames.dashboard => RoutePaths.dashboard,
   RouteNames.verificationStatus => RoutePaths.verificationStatus,

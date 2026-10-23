@@ -2,12 +2,16 @@ import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 
 /// The wizard steps in walk order (EP-02-18, registration-restructured).
 ///
-/// `capability` is the first step — identity (names, display name, email,
-/// phone) is captured at account registration and hydrated into
-/// `entity_profiles` before onboarding starts, so the wizard never re-asks
-/// for it. [OnboardingProgress.isComplete] and the advance machine follow
-/// [EntityCapability.requiresProfessionalWizard], so a consumer-only entity
-/// never traverses the professional steps.
+/// `capability` is a legacy position: the focus decision (hire / offer) is
+/// owned by the activity launcher (`/activities`), which records the choice
+/// and starts the professional path at [industry]. The wizard itself never
+/// renders an account-intent screen, but the code is kept so previously saved
+/// positions and server status values still deserialize. Identity (names,
+/// display name, email, phone) is captured at account registration and
+/// hydrated into `entity_profiles` before onboarding starts, so the wizard
+/// never re-asks for it. [OnboardingProgress.isComplete] and the advance
+/// machine follow [EntityCapability.requiresProfessionalWizard], so a
+/// consumer-only entity never traverses the professional steps.
 enum OnboardingStepCode {
   capability,
   industry,
@@ -73,9 +77,12 @@ class OnboardingProgress {
   ///
   /// A [EntityCapability.hire] entity stops after `capability`; the professional
   /// steps (industry & profession selection → identity → tradeProof) are only
-  /// required when [EntityCapability.requiresProfessionalWizard] holds.
+  /// required when [EntityCapability.requiresProfessionalWizard] holds. The
+  /// professional path deliberately excludes `capability`: the launcher owns
+  /// the focus decision, so the wizard's first (and Back-exit) step is
+  /// industry.
   List<OnboardingStepCode> get requiredSteps => <OnboardingStepCode>[
-    OnboardingStepCode.capability,
+    if (!capability.requiresProfessionalWizard) OnboardingStepCode.capability,
     if (capability.requiresProfessionalWizard) ...<OnboardingStepCode>[
       OnboardingStepCode.industry,
       OnboardingStepCode.identityDocument,
@@ -152,6 +159,25 @@ class OnboardingProgress {
     entityId: entityId,
     step: step,
     completedSteps: requiredSteps,
+    capability: capability,
+    hasIdentitySubmission: hasIdentitySubmission,
+    hasTradeProofSubmission: hasTradeProofSubmission,
+    exited: exited,
+    updatedAt: DateTime.now(),
+  );
+
+  /// A copy positioned at [value] without changing completion.
+  ///
+  /// Used when an explicit deep link (for example the professional
+  /// requirements checklist) targets a verification step: the resume point
+  /// moves there so the step screens advance from the right place, while
+  /// [completedSteps] and the verification mirrors stay untouched. Only
+  /// derivations of "steps completed" remain authoritative; merely viewing a
+  /// step never completes it.
+  OnboardingProgress withStep(OnboardingStepCode value) => OnboardingProgress(
+    entityId: entityId,
+    step: value,
+    completedSteps: completedSteps,
     capability: capability,
     hasIdentitySubmission: hasIdentitySubmission,
     hasTradeProofSubmission: hasTradeProofSubmission,

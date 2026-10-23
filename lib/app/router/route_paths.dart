@@ -94,8 +94,10 @@ abstract final class RoutePaths {
 
   /// Onboarding wizard routes (EP-02-18) — private authenticated flow, no SEO.
   ///
-  /// Identity basics are captured at registration; the wizard starts at the
-  /// capability decision, so no profile step route exists.
+  /// Identity basics are captured at registration; the professional wizard
+  /// starts at industry & profession selection. The focus decision (hire /
+  /// offer) is owned by [activities], so `/onboarding/capability` is kept only
+  /// as a legacy bookmark that redirects to the launcher.
   static const String onboarding = '/onboarding';
   static const String onboardingCapability = '/onboarding/capability';
   static const String onboardingIndustry = '/onboarding/industry';
@@ -116,8 +118,11 @@ abstract final class RoutePaths {
 
   /// Maps a wizard step code to its bookmarkable location
   /// (EP-02-18 §5.7). `completed` maps to the completion screen.
+  ///
+  /// The legacy `capability` position maps to the activity launcher — the
+  /// focus decision is not a wizard screen anymore.
   static String onboardingRouteFor(OnboardingStepCode step) => switch (step) {
-    OnboardingStepCode.capability => onboardingCapability,
+    OnboardingStepCode.capability => activities,
     OnboardingStepCode.industry => onboardingIndustry,
     OnboardingStepCode.identityDocument => onboardingIdentity,
     OnboardingStepCode.tradeProof => onboardingTradeProof,
