@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/systems/onboarding/screens/professional_requirements_screen.dart';
 import 'package:provider/provider.dart';
@@ -87,6 +88,76 @@ void main() {
       ).uri;
       expect(uri.path, RoutePaths.onboardingIdentity);
       expect(uri.queryParameters['from'], 'requirements');
+      stack.provider.dispose();
+    });
+
+    testWidgets('persisted submissions render independent under-review rows', (
+      WidgetTester tester,
+    ) async {
+      final FakeVerificationRepository repo = FakeVerificationRepository()
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            pendingSubmissions: 2,
+            totalSubmissions: 2,
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(status: VerificationStatusKind.inReview),
+              seedSubmissionSummary(
+                submissionType: 'trade_proof',
+                professionId: 'prof-sw',
+                status: VerificationStatusKind.pending,
+              ),
+            ],
+          ),
+        );
+      final VerificationProvider verification = VerificationProvider(
+        repo: repo,
+      );
+      final OnboardingTestStack stack = await pumpRequirements(
+        tester,
+        verification: verification,
+      );
+
+      expect(
+        find.text('Your identity document is under review.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Your trade proof is under review — bidding unlocks on approval.',
+        ),
+        findsOneWidget,
+      );
+      stack.provider.dispose();
+    });
+
+    testWidgets('persisted rejection offers resubmission from the checklist', (
+      WidgetTester tester,
+    ) async {
+      final FakeVerificationRepository repo = FakeVerificationRepository()
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            totalSubmissions: 1,
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(status: VerificationStatusKind.rejected),
+            ],
+          ),
+        );
+      final VerificationProvider verification = VerificationProvider(
+        repo: repo,
+      );
+      final OnboardingTestStack stack = await pumpRequirements(
+        tester,
+        verification: verification,
+      );
+
+      expect(
+        find.text(
+          'Your identity document was not approved. Resubmit to continue.',
+        ),
+        findsOneWidget,
+      );
       stack.provider.dispose();
     });
 

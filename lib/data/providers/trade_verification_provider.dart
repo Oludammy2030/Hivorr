@@ -11,6 +11,7 @@ import 'package:hivorr/core/notifications/models/notification_priority.dart';
 import 'package:hivorr/core/notifications/providers/notification_provider.dart';
 import 'package:hivorr/data/entities/trade_verification_status.dart';
 import 'package:hivorr/data/entities/verification_status.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/submit_state.dart';
 import 'package:hivorr/data/repositories/trade_verification_repository.dart';
 import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
@@ -93,8 +94,13 @@ class TradeVerificationProvider extends ChangeNotifier {
     final TradeVerificationStatus? s = _status;
     if (s == null) return true;
     return s.tradeVerifications.any(
-      (TradeVerification t) => !t.statusKind.isTerminal,
-    );
+          (TradeVerification t) =>
+              t.statusKind == TradeVerificationStatusKind.pending,
+        ) ||
+        s.latestSubmissions.any(
+          (VerificationSubmissionSummary row) =>
+              row.isTradeProof && !row.status.isTerminal,
+        );
   }
 
   /// Submits a trade proof for [professionId] and refreshes status on success.
@@ -210,8 +216,13 @@ class TradeVerificationProvider extends ChangeNotifier {
     final TradeVerificationStatus? s = _status;
     if (s == null) return true;
     return s.tradeVerifications.any(
-      (TradeVerification t) => !t.statusKind.isTerminal,
-    );
+          (TradeVerification t) =>
+              t.statusKind == TradeVerificationStatusKind.pending,
+        ) ||
+        s.latestSubmissions.any(
+          (VerificationSubmissionSummary row) =>
+              row.isTradeProof && !row.status.isTerminal,
+        );
   }
 
   /// Emits a high-priority [HivorrNotification] once per new terminal outcome
@@ -221,6 +232,18 @@ class TradeVerificationProvider extends ChangeNotifier {
     if (_notificationProvider == null) return;
     for (final TradeVerification entry in next.tradeVerifications) {
       final String professionId = entry.professionId;
+      final VerificationSubmissionSummary? latest = next.latestSubmissionFor(
+        professionId,
+      );
+      final bool rejected =
+          entry.statusKind == TradeVerificationStatusKind.rejected ||
+          (entry.statusKind != TradeVerificationStatusKind.approved &&
+              latest != null &&
+              latest.status.needsAction);
+      if (latest != null && !latest.status.isTerminal) {
+        // A resubmission re-opens the lane, so a later rejection must notify.
+        _notifiedRejected.remove(professionId);
+      }
       if (entry.statusKind == TradeVerificationStatusKind.approved &&
           !_notifiedApproved.contains(professionId)) {
         _notifiedApproved.add(professionId);
@@ -231,8 +254,7 @@ class TradeVerificationProvider extends ChangeNotifier {
             body: 'Your trade proof has been approved. You can now bid.',
           ),
         );
-      } else if (entry.statusKind == TradeVerificationStatusKind.rejected &&
-          !_notifiedRejected.contains(professionId)) {
+      } else if (rejected && !_notifiedRejected.contains(professionId)) {
         _notifiedRejected.add(professionId);
         unawaited(
           _maybeShowNotification(

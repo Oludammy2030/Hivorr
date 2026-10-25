@@ -7,7 +7,10 @@ import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/core/storage/storage_config.dart';
 import 'package:hivorr/core/storage/storage_validators.dart';
+import 'package:hivorr/data/entities/verification_status.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/widgets/hivorr_button.dart';
@@ -59,6 +62,21 @@ class _IdentityVerificationStepScreenState
   int _sent = 0;
   int _total = 0;
   bool _submitted = false;
+  bool _restoredLocalState = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_restoredLocalState) {
+      return;
+    }
+    _restoredLocalState = true;
+    // A persisted submission stays "under review" across re-entry/refresh;
+    // approval remains server-authoritative.
+    _submitted =
+        context.read<OnboardingProvider>().progress?.hasIdentitySubmission ??
+        false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,13 +85,27 @@ class _IdentityVerificationStepScreenState
     }
     final OnboardingProvider provider = context.watch<OnboardingProvider>();
     final ColorScheme colors = context.colorScheme;
+    final VerificationStatus? verificationStatus = _verificationStatus(context);
+    final VerificationSubmissionSummary? latest =
+        verificationStatus?.latestIdentitySubmission;
+    final bool identityVerified = verificationStatus?.identityVerified ?? false;
+    final bool needsAction = latest?.status.needsAction ?? false;
+    final bool underReview = latest != null && !latest.status.isTerminal;
+    // Backend state wins when available; the local mirror is only a same-device
+    // fallback for aggregates that do not project per-lane review state.
+    final bool submitted =
+        !identityVerified && !needsAction && (underReview || _submitted);
 
-    widget.controller.configure(
-      label: 'Upload & submit',
-      canPrimary: _type != null && _picked != null && !_submitted,
-      loading: provider.isBusy,
-      onPrimary: () => _submit(context),
-    );
+    if (identityVerified || submitted) {
+      widget.controller.hidePrimary();
+    } else {
+      widget.controller.configure(
+        label: 'Upload & submit',
+        canPrimary: _type != null && _picked != null,
+        loading: provider.isBusy,
+        onPrimary: () => _submit(context),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(HivorrSpacing.lg),
@@ -87,36 +119,49 @@ class _IdentityVerificationStepScreenState
             ),
           ),
           const SizedBox(height: HivorrSpacing.lg),
-          DocumentTypePicker(
-            selected: _type,
-            onChanged: (DocumentType type) {
-              setState(() {
-                _type = type;
-                _fieldError = null;
-              });
-            },
-          ),
-          const SizedBox(height: HivorrSpacing.lg),
-          OnboardingDocumentUploadTile(
-            label: 'Identity document',
-            fileName: _picked?.fileName ?? '',
-            byteLength: _picked?.bytes.length ?? 0,
-            mimeType: _picked?.mimeType,
-            submitState: provider.submitState,
-            error: _fieldError,
-            progress: _total == 0 ? null : _sent / _total,
-            onPick: _pick,
-          ),
-          if (_submitted) ...<Widget>[
-            const SizedBox(height: HivorrSpacing.lg),
-            Text(
-              'Your identity document has been queued. We’ll review it within '
-              '24 hours.',
-              style: context.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
+          if (identityVerified)
+            const _IdentityStatusNotice(
+              title: 'Identity verified',
+              body: 'Your identity has been approved.',
+            )
+          else if (submitted)
+            const _IdentityStatusNotice(
+              title: 'Identity document under review',
+              body:
+                  'Your document has been submitted and is waiting for an '
+                  'admin decision. This can take up to 24 hours.',
+            )
+          else ...<Widget>[
+            if (needsAction) ...<Widget>[
+              const _IdentityStatusNotice(
+                title: 'Identity document needs attention',
+                body:
+                    'Your previous document was not approved. Upload a new '
+                    'document to try again.',
+                isError: true,
               ),
+              const SizedBox(height: HivorrSpacing.lg),
+            ],
+            DocumentTypePicker(
+              selected: _type,
+              onChanged: (DocumentType type) {
+                setState(() {
+                  _type = type;
+                  _fieldError = null;
+                });
+              },
             ),
-            const SizedBox(height: HivorrSpacing.sm),
+            const SizedBox(height: HivorrSpacing.lg),
+            OnboardingDocumentUploadTile(
+              label: 'Identity document',
+              fileName: _picked?.fileName ?? '',
+              byteLength: _picked?.bytes.length ?? 0,
+              mimeType: _picked?.mimeType,
+              submitState: provider.submitState,
+              error: _fieldError,
+              progress: _total == 0 ? null : _sent / _total,
+              onPick: _pick,
+            ),
           ],
           if (provider.submitState == SubmitState.error) ...<Widget>[
             const SizedBox(height: HivorrSpacing.sm),
@@ -129,6 +174,16 @@ class _IdentityVerificationStepScreenState
         ],
       ),
     );
+  }
+
+  /// Reads the optional verification aggregate without making it a hard
+  /// dependency of the onboarding shell (older widget seams omit it).
+  VerificationStatus? _verificationStatus(BuildContext context) {
+    try {
+      return Provider.of<VerificationProvider>(context).status;
+    } on ProviderNotFoundException {
+      return null;
+    }
   }
 
   Future<void> _pick() async {
@@ -235,6 +290,36 @@ class _IdentityVerificationStepScreenState
 
   void _viewStatus() {
     unawaited(context.push(RoutePaths.verificationStatus));
+  }
+}
+
+class _IdentityStatusNotice extends StatelessWidget {
+  const _IdentityStatusNotice({
+    required this.title,
+    required this.body,
+    this.isError = false,
+  });
+
+  final String title;
+  final String body;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(title, style: context.textTheme.titleMedium),
+        const SizedBox(height: HivorrSpacing.xs),
+        Text(
+          body,
+          style: context.textTheme.bodySmall?.copyWith(
+            color: isError ? colors.error : colors.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
   }
 }
 

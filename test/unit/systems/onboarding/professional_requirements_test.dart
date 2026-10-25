@@ -10,6 +10,8 @@ List<ProfessionalRequirement> resolve({
   bool identitySubmitted = true,
   bool tradeApproved = true,
   bool tradeSubmitted = true,
+  bool identityNeedsAction = false,
+  bool tradeNeedsAction = false,
 }) => resolveProfessionalRequirements(
   isOfferFocus: isOfferFocus,
   boundProfessions: boundProfessions,
@@ -17,14 +19,18 @@ List<ProfessionalRequirement> resolve({
   identitySubmitted: identitySubmitted,
   tradeApproved: tradeApproved,
   tradeSubmitted: tradeSubmitted,
+  identityNeedsAction: identityNeedsAction,
+  tradeNeedsAction: tradeNeedsAction,
   activitiesRoute: RoutePaths.activities,
   industryRoute: RoutePaths.onboardingIndustry,
   identityRoute: RoutePaths.onboardingIdentity,
   tradeRoute: RoutePaths.onboardingTradeProof,
 );
 
-ProfessionalRequirement byKey(List<ProfessionalRequirement> items, String key) =>
-    items.firstWhere((ProfessionalRequirement item) => item.key == key);
+ProfessionalRequirement byKey(
+  List<ProfessionalRequirement> items,
+  String key,
+) => items.firstWhere((ProfessionalRequirement item) => item.key == key);
 
 void main() {
   group('resolveProfessionalRequirements', () {
@@ -49,9 +55,18 @@ void main() {
       );
       expect(ProfessionalRequirement.allDone(items), isFalse);
       expect(byKey(items, 'focus').destination, RoutePaths.activities);
-      expect(byKey(items, 'profession').destination, RoutePaths.onboardingIndustry);
-      expect(byKey(items, 'identity').destination, RoutePaths.onboardingIdentity);
-      expect(byKey(items, 'trade').destination, RoutePaths.onboardingTradeProof);
+      expect(
+        byKey(items, 'profession').destination,
+        RoutePaths.onboardingIndustry,
+      );
+      expect(
+        byKey(items, 'identity').destination,
+        RoutePaths.onboardingIdentity,
+      );
+      expect(
+        byKey(items, 'trade').destination,
+        RoutePaths.onboardingTradeProof,
+      );
       for (final ProfessionalRequirement item in items) {
         expect(item.state, ProfessionalRequirementState.action);
       }
@@ -77,13 +92,42 @@ void main() {
       expect(byKey(items, 'trade').destination, isNull);
     });
 
+    test('rejected lanes become actionable resubmission rows', () {
+      final List<ProfessionalRequirement> items = resolve(
+        identityVerified: false,
+        identitySubmitted: false,
+        tradeApproved: false,
+        tradeSubmitted: false,
+        identityNeedsAction: true,
+        tradeNeedsAction: true,
+      );
+      expect(
+        byKey(items, 'identity').state,
+        ProfessionalRequirementState.action,
+      );
+      expect(
+        byKey(items, 'identity').destination,
+        RoutePaths.onboardingIdentity,
+      );
+      expect(byKey(items, 'trade').state, ProfessionalRequirementState.action);
+      expect(
+        byKey(items, 'trade').destination,
+        RoutePaths.onboardingTradeProof,
+      );
+      expect(byKey(items, 'identity').subtitle, contains('Resubmit'));
+      expect(byKey(items, 'trade').subtitle, contains('Resubmit'));
+    });
+
     test('verified identity counts as done even with pending trade', () {
       final List<ProfessionalRequirement> items = resolve(
         tradeApproved: false,
         tradeSubmitted: true,
       );
       expect(byKey(items, 'identity').state, ProfessionalRequirementState.done);
-      expect(byKey(items, 'trade').state, ProfessionalRequirementState.awaiting);
+      expect(
+        byKey(items, 'trade').state,
+        ProfessionalRequirementState.awaiting,
+      );
     });
 
     test('empty list never counts as done', () {

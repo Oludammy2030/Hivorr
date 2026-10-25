@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/logging/hivorr_logger.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/submit_state.dart';
 import 'package:hivorr/systems/onboarding/models/entity_capability.dart';
 import 'package:hivorr/systems/onboarding/services/onboarding_service.dart';
@@ -86,6 +87,11 @@ class OnboardingProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Whether bidding is unlocked per the server authority (`approved`), or
   /// `null` before the first [refreshGateStatus].
   bool? get isTradeGateOpen => _isTradeGateOpen;
+
+  /// The latest persisted trade-submission lifecycle state, or `null` when no
+  /// submission is known. Set by a successful submit or a status refresh.
+  VerificationStatusKind? get latestTradeSubmissionStatus =>
+      _service.latestTradeSubmissionStatus;
 
   /// Hydrates the wizard for [entityId] — the resume point (plan §5.5).
   ///

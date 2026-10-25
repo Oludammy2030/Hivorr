@@ -7,6 +7,7 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/notifications/models/notification_permission_status.dart';
 import 'package:hivorr/core/notifications/permission/notification_permission_manager.dart';
 import 'package:hivorr/core/notifications/providers/notification_provider.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
 
@@ -394,6 +395,73 @@ void main() {
         final provider = VerificationProvider(repo: repo);
         await provider.refreshStatus();
         expect(provider.stage, VerificationStage.actionRequired);
+        provider.dispose();
+      },
+    );
+
+    test('uses the latest identity lane over aggregate counts', () async {
+      final repo = FakeVerificationRepository()
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            totalSubmissions: 1,
+            pendingSubmissions: 0,
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(
+                submissionType: 'identity_document',
+                status: VerificationStatusKind.inReview,
+              ),
+            ],
+          ),
+        );
+      final provider = VerificationProvider(repo: repo);
+      await provider.refreshStatus();
+      expect(provider.stage, VerificationStage.inReview);
+      provider.dispose();
+    });
+
+    test('a rejected identity lane reports actionRequired', () async {
+      final repo = FakeVerificationRepository()
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            totalSubmissions: 1,
+            pendingSubmissions: 0,
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(
+                submissionType: 'identity_document',
+                status: VerificationStatusKind.rejected,
+              ),
+            ],
+          ),
+        );
+      final provider = VerificationProvider(repo: repo);
+      await provider.refreshStatus();
+      expect(provider.stage, VerificationStage.actionRequired);
+      provider.dispose();
+    });
+
+    test(
+      'a trade-only rejection does not mark identity as action required',
+      () async {
+        final repo = FakeVerificationRepository()
+          ..setStatus(
+            seedStatusEntity(
+              identityVerified: false,
+              totalSubmissions: 1,
+              pendingSubmissions: 0,
+              latestSubmissions: <VerificationSubmissionSummary>[
+                seedSubmissionSummary(
+                  submissionType: 'trade_proof',
+                  professionId: 'p1',
+                  status: VerificationStatusKind.rejected,
+                ),
+              ],
+            ),
+          );
+        final provider = VerificationProvider(repo: repo);
+        await provider.refreshStatus();
+        expect(provider.stage, VerificationStage.pending);
         provider.dispose();
       },
     );

@@ -12,6 +12,7 @@ class TradeVerificationStatusDto {
   const TradeVerificationStatusDto({
     this.tradeVerifications = const <TradeVerificationDto>[],
     this.identityVerified = false,
+    this.latestSubmissions = const <VerificationSubmissionSummaryDto>[],
   });
 
   /// Derives the trade aggregate from the full verification status DTO.
@@ -20,6 +21,7 @@ class TradeVerificationStatusDto {
   ) => TradeVerificationStatusDto(
     tradeVerifications: status.tradeVerifications,
     identityVerified: status.identityVerified,
+    latestSubmissions: status.latestSubmissions,
   );
 
   /// The per-profession trade verification entries.
@@ -27,4 +29,7 @@ class TradeVerificationStatusDto {
 
   /// Whether identity is verified (server-derived).
   final bool identityVerified;
+
+  /// Latest persisted submissions from the review queue.
+  final List<VerificationSubmissionSummaryDto> latestSubmissions;
 }

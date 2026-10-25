@@ -106,13 +106,20 @@ class VerificationProvider extends ChangeNotifier {
   /// The derived lifecycle stage from the latest aggregate, or [idle] when no
   /// aggregate has been loaded yet.
   ///
-  /// `actionRequired` (rejected / requires resubmission) is derived because the
-  /// server aggregate only reports counts, not the review outcome — see
-  /// [VerificationStage].
+  /// `actionRequired` (rejected / requires resubmission) is derived from the
+  /// identity lane's latest persisted submission; older aggregates that only
+  /// report counters fall back to the count-based derivation.
   VerificationStage get stage {
     final VerificationStatus? s = _status;
     if (s == null) return VerificationStage.idle;
     if (s.identityVerified) return VerificationStage.approved;
+    if (s.hasLatestSubmissionData) {
+      final VerificationSubmissionSummary? latest = s.latestIdentitySubmission;
+      if (latest == null) return VerificationStage.pending;
+      return latest.status.needsAction
+          ? VerificationStage.actionRequired
+          : VerificationStage.inReview;
+    }
     if (s.totalSubmissions == 0) return VerificationStage.pending;
     if (s.pendingSubmissions > 0) return VerificationStage.inReview;
     return VerificationStage.actionRequired;
@@ -242,7 +249,12 @@ class VerificationProvider extends ChangeNotifier {
   bool get _shouldPoll {
     final VerificationStatus? s = _status;
     if (s == null) return true;
-    return !s.identityVerified && s.pendingSubmissions > 0;
+    if (s.identityVerified) return false;
+    if (s.hasLatestSubmissionData) {
+      final VerificationSubmissionSummary? latest = s.latestIdentitySubmission;
+      return latest != null && !latest.status.isTerminal;
+    }
+    return s.pendingSubmissions > 0;
   }
 
   /// Emits a high-priority [HivorrNotification] once per terminal outcome:
@@ -273,8 +285,7 @@ class VerificationProvider extends ChangeNotifier {
         <String, Object?>{'identityVerified': true, 'tierCode': level.tierCode},
       );
     } else if (!next.identityVerified &&
-        next.totalSubmissions > 0 &&
-        next.pendingSubmissions == 0 &&
+        _identityNeedsAction(next) &&
         !_notifiedActionRequired) {
       _notifiedActionRequired = true;
       final int id = next.entityId.hashCode & 0x7fffffff;
@@ -299,6 +310,17 @@ class VerificationProvider extends ChangeNotifier {
       });
     }
     _wasVerified = next.identityVerified;
+  }
+
+  /// Whether the identity lane specifically has a non-approved decision.
+  ///
+  /// Trade-only rejections must not raise the identity action-required
+  /// notification (the lanes are independent).
+  static bool _identityNeedsAction(VerificationStatus status) {
+    if (status.hasLatestSubmissionData) {
+      return status.latestIdentitySubmission?.status.needsAction ?? false;
+    }
+    return status.totalSubmissions > 0 && status.pendingSubmissions == 0;
   }
 
   @override

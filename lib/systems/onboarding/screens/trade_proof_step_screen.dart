@@ -8,10 +8,12 @@ import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/core/storage/storage_config.dart';
 import 'package:hivorr/core/storage/storage_validators.dart';
 import 'package:hivorr/data/entities/profession.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/taxonomy_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
+import 'package:hivorr/shared/widgets/hivorr_button.dart';
 import 'package:hivorr/shared/widgets/hivorr_chip.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_document_upload_tile.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
@@ -50,9 +52,9 @@ class TradeProofStepScreen extends StatefulWidget {
   /// Display label for [professionId] when no taxonomy selection is loaded.
   final String? professionLabel;
 
-  /// Invoked after the proof is submitted, instead of navigating to the
-  /// completion screen. Used by checklist deep links to return to the
-  /// requirements screen.
+  /// Invoked when the professional chooses to leave the confirmation (or
+  /// finishes after approval). Checklist deep links use it to return to the
+  /// requirements screen; normal wizard entries fall back to that route.
   final VoidCallback? onFinished;
 
   @override
@@ -66,6 +68,22 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
   int _sent = 0;
   int _total = 0;
   bool _submitted = false;
+  bool _needsResubmission = false;
+  bool _restoredLocalState = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_restoredLocalState) {
+      return;
+    }
+    _restoredLocalState = true;
+    // The persisted UX mirror keeps the confirmation visible after a refresh /
+    // re-entry even before the server projection arrives.
+    _submitted =
+        context.read<OnboardingProvider>().progress?.hasTradeProofSubmission ??
+        false;
+  }
 
   @override
   void didUpdateWidget(covariant TradeProofStepScreen oldWidget) {
@@ -97,6 +115,21 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
         context.read<TaxonomyProvider>().selectedProfession?.id ??
         widget.professionId;
     await provider.refreshGateStatus(professionId: professionId);
+    if (!mounted) {
+      return;
+    }
+    final VerificationStatusKind? persisted =
+        provider.latestTradeSubmissionStatus;
+    setState(() {
+      if (persisted != null) {
+        _needsResubmission = persisted.needsAction;
+        _submitted = !persisted.needsAction;
+        return;
+      }
+      // Older aggregates do not project per-lane state; keep the persisted
+      // local mirror rather than pretending the proof was never submitted.
+      _submitted = provider.progress?.hasTradeProofSubmission ?? _submitted;
+    });
   }
 
   @override
@@ -110,17 +143,29 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
     final Profession? profession = taxonomy.selectedProfession;
     final String professionId = profession?.id ?? widget.professionId ?? '';
     final String? professionLabel = profession?.name ?? widget.professionLabel;
+    final VerificationStatusKind? persistedStatus =
+        provider.latestTradeSubmissionStatus;
+    final bool tradeApproved =
+        provider.isTradeGateOpen == true ||
+        persistedStatus == VerificationStatusKind.approved;
 
-    widget.controller.configure(
-      label: 'Upload & submit',
-      canPrimary:
-          _type != null &&
-          _picked != null &&
-          !_submitted &&
-          professionId.isNotEmpty,
-      loading: provider.isBusy,
-      onPrimary: () => _submit(context, professionId),
-    );
+    if (tradeApproved) {
+      widget.controller.configure(
+        label: 'Finish registration',
+        canPrimary: !provider.isBusy,
+        loading: provider.isBusy,
+        onPrimary: () => unawaited(_finishRegistration(context)),
+      );
+    } else if (_submitted) {
+      widget.controller.hidePrimary();
+    } else {
+      widget.controller.configure(
+        label: 'Upload & submit',
+        canPrimary: _type != null && _picked != null && professionId.isNotEmpty,
+        loading: provider.isBusy,
+        onPrimary: () => _submit(context, professionId),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(HivorrSpacing.lg),
@@ -143,50 +188,67 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
           ],
           _GatePanel(isOpen: provider.isTradeGateOpen),
           const SizedBox(height: HivorrSpacing.lg),
-          Text(
-            'Proof of your trade unlocks bidding. Choose a proof type, then '
-            'upload a clear photo or PDF.',
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: HivorrSpacing.md),
-          Wrap(
-            spacing: HivorrSpacing.sm,
-            runSpacing: HivorrSpacing.sm,
-            children: <Widget>[
-              for (final TradeProofType type in TradeProofType.values)
-                HivorrChip(
-                  label: type.label,
-                  isSelected: _type == type,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      _type = selected ? type : null;
-                      _fieldError = null;
-                    });
-                  },
-                ),
+          if (tradeApproved)
+            _DecisionPanel(
+              title: 'Trade approved',
+              body:
+                  'Your trade proof is approved — bidding is unlocked. Finish '
+                  'registration to return to your dashboard.',
+              onReturnToRequirements: _returnToRequirements,
+            )
+          else if (_submitted)
+            _DecisionPanel(
+              title: 'Trade proof under review',
+              body:
+                  'Your proof has been submitted and is waiting for an admin '
+                  'decision. Bidding stays locked until it is approved.',
+              onReturnToRequirements: _returnToRequirements,
+            )
+          else ...<Widget>[
+            if (_needsResubmission) ...<Widget>[
+              const _DecisionPanel(
+                title: 'Trade proof needs attention',
+                body:
+                    'Your previous proof was not approved. Upload a new proof '
+                    'to try again.',
+              ),
+              const SizedBox(height: HivorrSpacing.lg),
             ],
-          ),
-          const SizedBox(height: HivorrSpacing.lg),
-          OnboardingDocumentUploadTile(
-            label: 'Trade proof document',
-            fileName: _picked?.fileName ?? '',
-            byteLength: _picked?.bytes.length ?? 0,
-            mimeType: _picked?.mimeType,
-            submitState: provider.submitState,
-            error: _fieldError,
-            progress: _total == 0 ? null : _sent / _total,
-            onPick: _pick,
-          ),
-          if (_submitted) ...<Widget>[
-            const SizedBox(height: HivorrSpacing.lg),
             Text(
-              'Your trade proof has been queued for review. Bidding unlocks '
-              'as soon as it is approved.',
-              style: context.textTheme.bodySmall?.copyWith(
+              'Proof of your trade unlocks bidding. Choose a proof type, then '
+              'upload a clear photo or PDF.',
+              style: context.textTheme.bodyMedium?.copyWith(
                 color: colors.onSurfaceVariant,
               ),
+            ),
+            const SizedBox(height: HivorrSpacing.md),
+            Wrap(
+              spacing: HivorrSpacing.sm,
+              runSpacing: HivorrSpacing.sm,
+              children: <Widget>[
+                for (final TradeProofType type in TradeProofType.values)
+                  HivorrChip(
+                    label: type.label,
+                    isSelected: _type == type,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        _type = selected ? type : null;
+                        _fieldError = null;
+                      });
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: HivorrSpacing.lg),
+            OnboardingDocumentUploadTile(
+              label: 'Trade proof document',
+              fileName: _picked?.fileName ?? '',
+              byteLength: _picked?.bytes.length ?? 0,
+              mimeType: _picked?.mimeType,
+              submitState: provider.submitState,
+              error: _fieldError,
+              progress: _total == 0 ? null : _sent / _total,
+              onPick: _pick,
             ),
           ],
         ],
@@ -272,19 +334,78 @@ class _TradeProofStepScreenState extends State<TradeProofStepScreen> {
       return;
     }
     if (provider.submitState == SubmitState.success) {
-      setState(() => _submitted = true);
-      await provider.advance();
-      if (!mounted) {
-        return;
-      }
-      if (widget.onFinished != null) {
-        widget.onFinished!();
-        return;
-      }
-      if (context.mounted) {
-        context.go(RoutePaths.onboardingComplete);
-      }
+      // Submission is a review request, not an approval. Stay in the
+      // verification experience and let the persisted server state drive the
+      // next step; never complete onboarding or open bidding here.
+      setState(() {
+        _submitted = true;
+        _needsResubmission = false;
+      });
     }
+  }
+
+  /// Returns to the requirements checklist without completing onboarding.
+  void _returnToRequirements() {
+    final VoidCallback? callback = widget.onFinished;
+    if (callback != null) {
+      callback();
+      return;
+    }
+    context.go(RoutePaths.professionalRequirements);
+  }
+
+  /// Completes registration only after the server has approved the trade proof.
+  Future<void> _finishRegistration(BuildContext context) async {
+    final OnboardingProvider provider = context.read<OnboardingProvider>();
+    await provider.advance();
+    if (!mounted || provider.submitState == SubmitState.error) {
+      return;
+    }
+    if (widget.onFinished != null) {
+      widget.onFinished!();
+      return;
+    }
+    if (context.mounted) {
+      context.go(RoutePaths.onboardingComplete);
+    }
+  }
+}
+
+class _DecisionPanel extends StatelessWidget {
+  const _DecisionPanel({
+    required this.title,
+    required this.body,
+    this.onReturnToRequirements,
+  });
+
+  final String title;
+  final String body;
+  final VoidCallback? onReturnToRequirements;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(title, style: context.textTheme.titleMedium),
+        const SizedBox(height: HivorrSpacing.xs),
+        Text(
+          body,
+          style: context.textTheme.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
+        ),
+        if (onReturnToRequirements != null) ...<Widget>[
+          const SizedBox(height: HivorrSpacing.md),
+          HivorrButton(
+            label: 'Return to requirements',
+            variant: HivorrButtonVariant.outline,
+            onPressed: onReturnToRequirements,
+          ),
+        ],
+      ],
+    );
   }
 }
 

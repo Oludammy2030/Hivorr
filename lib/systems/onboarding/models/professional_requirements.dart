@@ -60,6 +60,8 @@ List<ProfessionalRequirement> resolveProfessionalRequirements({
   required bool identitySubmitted,
   required bool tradeApproved,
   required bool tradeSubmitted,
+  bool identityNeedsAction = false,
+  bool tradeNeedsAction = false,
   required String activitiesRoute,
   required String industryRoute,
   required String identityRoute,
@@ -93,30 +95,43 @@ List<ProfessionalRequirement> resolveProfessionalRequirements({
       title: 'Identity verified',
       subtitle: identityVerified
           ? 'Your identity is verified.'
+          : identityNeedsAction
+          ? 'Your identity document was not approved. Resubmit to continue.'
           : identitySubmitted
           ? 'Your identity document is under review.'
           : 'Upload an identity document for verification.',
       state: identityVerified
           ? ProfessionalRequirementState.done
+          : identityNeedsAction
+          ? ProfessionalRequirementState.action
           : identitySubmitted
           ? ProfessionalRequirementState.awaiting
           : ProfessionalRequirementState.action,
-      destination: identityVerified || identitySubmitted ? null : identityRoute,
+      destination:
+          identityVerified || (identitySubmitted && !identityNeedsAction)
+          ? null
+          : identityRoute,
     ),
     ProfessionalRequirement(
       key: 'trade',
       title: 'Trade approved',
       subtitle: tradeApproved
           ? 'Bidding unlocked — your trade proof is approved.'
+          : tradeNeedsAction
+          ? 'Your trade proof was not approved. Resubmit to unlock bidding.'
           : tradeSubmitted
           ? 'Your trade proof is under review — bidding unlocks on approval.'
           : 'Submit proof of trade to unlock bidding.',
       state: tradeApproved
           ? ProfessionalRequirementState.done
+          : tradeNeedsAction
+          ? ProfessionalRequirementState.action
           : tradeSubmitted
           ? ProfessionalRequirementState.awaiting
           : ProfessionalRequirementState.action,
-      destination: tradeApproved || tradeSubmitted ? null : tradeRoute,
+      destination: tradeApproved || (tradeSubmitted && !tradeNeedsAction)
+          ? null
+          : tradeRoute,
     ),
   ];
   return items;

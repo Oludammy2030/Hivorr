@@ -93,8 +93,20 @@ class OnboardingService {
   /// is not null`), or `null` while unknown.
   bool? _serverCompleted;
 
+  /// Latest persisted state of the active profession's trade submission.
+  ///
+  /// Populated by [refreshTradeGate] (server projection) and by a successful
+  /// [submitTradeProof] (the RPC's queued row). `null` means no submission is
+  /// known; the server remains authoritative either way.
+  VerificationStatusKind? _latestTradeSubmissionStatus;
+
   /// The in-memory wizard position, or `null` before [loadProgress]/[resume].
   OnboardingProgress? get progress => _progress;
+
+  /// The latest known trade-submission lifecycle state for the active
+  /// profession, or `null` when none is known.
+  VerificationStatusKind? get latestTradeSubmissionStatus =>
+      _latestTradeSubmissionStatus;
 
   /// The furthest step reached for the active session, if hydration happened.
   OnboardingStepCode? get currentStep => _progress?.step;
@@ -609,6 +621,7 @@ class OnboardingService {
             fileName: fileName,
             onProgress: onProgress,
           );
+      _latestTradeSubmissionStatus = submission.status;
       final OnboardingProgress? p = _progress;
       if (p != null) {
         final OnboardingProgress marked = p.withTradeProofSubmission(true);
@@ -638,9 +651,13 @@ class OnboardingService {
     final TradeVerificationStatus status = await _tradeVerification.getStatus();
     final String id = professionId ?? _taxonomy.selectedProfession?.id ?? '';
     final bool open = id.isEmpty ? false : status.kindFor(id).canBid;
+    _latestTradeSubmissionStatus = id.isEmpty
+        ? status.latestSubmissionFor('')?.status
+        : status.latestSubmissionFor(id)?.status;
     _logger?.info('Trade gate refreshed', <String, Object?>{
       'entityId': _redactor.redact(_progress?.entityId ?? ''),
       'isTradeGateOpen': open,
+      'submissionStatus': _latestTradeSubmissionStatus?.name,
     });
     return open;
   }

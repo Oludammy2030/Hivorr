@@ -1,4 +1,5 @@
 import 'package:hivorr/data/entities/verification_status.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 
 /// The per-profession trade verification state (EP-02-11).
 ///
@@ -66,6 +67,7 @@ class TradeVerificationStatus {
   const TradeVerificationStatus({
     this.tradeVerifications = const <TradeVerification>[],
     this.identityVerified = false,
+    this.latestSubmissions = const <VerificationSubmissionSummary>[],
   });
 
   /// The per-profession trade verification entries.
@@ -73,6 +75,27 @@ class TradeVerificationStatus {
 
   /// Whether identity is verified (server-derived).
   final bool identityVerified;
+
+  /// Latest persisted submissions from the review queue (identity + trade).
+  ///
+  /// Used to distinguish under-review from rejected; the binding column stays
+  /// the sole authority for [kindFor] and the bid gate.
+  final List<VerificationSubmissionSummary> latestSubmissions;
+
+  /// The exact review state for [professionId], when the server projected it.
+  VerificationSubmissionSummary? latestSubmissionFor(String professionId) {
+    VerificationSubmissionSummary? latest;
+    for (final VerificationSubmissionSummary row in latestSubmissions) {
+      if (!row.isTradeProof) continue;
+      if (row.professionId != null && row.professionId != professionId) {
+        continue;
+      }
+      if (latest == null || row.submittedAt.isAfter(latest.submittedAt)) {
+        latest = row;
+      }
+    }
+    return latest;
+  }
 
   /// The derived state for [professionId].
   ///
