@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
@@ -55,9 +57,40 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('failed refresh with no data surfaces error', (
-      tester,
+    testWidgets('actionable rows open the wizard step with a return marker', (
+      WidgetTester tester,
     ) async {
+      final OnboardingTestStack stack = buildOnboardingStack();
+      await stack.hydrate('u1');
+      final VerificationProvider v = VerificationProvider(
+        repo: FakeVerificationRepository(),
+      );
+      addTearDown(v.dispose);
+      await pumpOnboardingScreen(
+        tester,
+        const ProfessionalRequirementsScreen(),
+        path: RoutePaths.professionalRequirements,
+        providers: <SingleChildWidget>[
+          ...stack.buildProviders(),
+          ChangeNotifierProvider<VerificationProvider>.value(value: v),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Identity verified'));
+      await tester.tap(find.text('Identity verified'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('ONBOARDING-IDENTITY'), findsOneWidget);
+      final Uri uri = GoRouterState.of(
+        tester.element(find.text('ONBOARDING-IDENTITY')),
+      ).uri;
+      expect(uri.path, RoutePaths.onboardingIdentity);
+      expect(uri.queryParameters['from'], 'requirements');
+      stack.provider.dispose();
+    });
+
+    testWidgets('failed refresh with no data surfaces error', (tester) async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.hydrate('u1');
       final FakeVerificationRepository repo = FakeVerificationRepository();

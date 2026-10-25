@@ -39,15 +39,18 @@ void main() {
   });
 
   group('loadProgress / resume (FV-13, FV-14)', () {
-    test('fresh entity starts at capability with an empty progress row', () async {
-      final OnboardingTestStack stack = buildOnboardingStack();
-      activeProvider = stack.provider;
-      await stack.hydrate('u1');
-      expect(stack.provider.currentStep, OnboardingStepCode.capability);
-      expect(stack.provider.progress, isNotNull);
-      expect(stack.provider.isComplete, isFalse);
-      expect(stack.provider.entityId, 'u1');
-    });
+    test(
+      'fresh entity starts at capability with an empty progress row',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        expect(stack.provider.currentStep, OnboardingStepCode.capability);
+        expect(stack.provider.progress, isNotNull);
+        expect(stack.provider.isComplete, isFalse);
+        expect(stack.provider.entityId, 'u1');
+      },
+    );
 
     test('resume returns the furthest step reached', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
@@ -72,7 +75,11 @@ void main() {
       expect(stack.provider.isComplete, isTrue);
       final OnboardingProgress? persisted = await stack.store.read('u1');
       expect(persisted, isNotNull);
-      expect(persisted!.completedSteps, OnboardingStepCode.values);
+      expect(persisted!.completedSteps, <OnboardingStepCode>[
+        OnboardingStepCode.industry,
+        OnboardingStepCode.identityDocument,
+        OnboardingStepCode.tradeProof,
+      ]);
     });
 
     test('back steps one position and persists', () async {
@@ -84,6 +91,27 @@ void main() {
       await stack.provider.back();
       expect(stack.provider.currentStep, OnboardingStepCode.capability);
     });
+
+    test(
+      'focusStep honors a deep link without completing skipped steps',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        activeProvider = stack.provider;
+        await stack.hydrate('u1');
+        await stack.provider.selectCapability(EntityCapability.offer);
+        final SubmitState stateBefore = stack.provider.submitState;
+        await stack.provider.focusStep(OnboardingStepCode.identityDocument);
+        expect(stack.provider.currentStep, OnboardingStepCode.identityDocument);
+        expect(stack.provider.progress!.completedSteps, <OnboardingStepCode>[
+          OnboardingStepCode.capability,
+        ], reason: 'navigation never marks the skipped industry step complete');
+        expect(
+          stack.provider.submitState,
+          stateBefore,
+          reason: 'focusing a step is navigation, not a submit',
+        );
+      },
+    );
 
     test(
       'saveAndExit persists the current position without moving (FV-15)',
@@ -293,6 +321,13 @@ void main() {
       );
       expect(stack.provider.submitState, SubmitState.success);
       expect(stack.provider.progress!.hasTradeProofSubmission, isTrue);
+      expect(
+        stack.provider.isTradeGateOpen,
+        isNull,
+        reason:
+            'submitting proof never opens the bidding gate; approval is '
+            'server-authoritative',
+      );
     });
 
     test('ApiException failure logs a redacted warning', () async {
@@ -400,10 +435,7 @@ void main() {
       await stack.provider.selectCapability(EntityCapability.offer);
       stack.provider.didChangeAppLifecycleState(AppLifecycleState.paused);
       await pumpEventQueue();
-      expect(
-        (await stack.store.read('u1'))!.step,
-        OnboardingStepCode.industry,
-      );
+      expect((await stack.store.read('u1'))!.step, OnboardingStepCode.industry);
     });
 
     test('lifecycle inactive also triggers saveAndExit (FV-15)', () async {
@@ -413,10 +445,7 @@ void main() {
       await stack.provider.selectCapability(EntityCapability.offer);
       stack.provider.didChangeAppLifecycleState(AppLifecycleState.inactive);
       await pumpEventQueue();
-      expect(
-        (await stack.store.read('u1'))!.step,
-        OnboardingStepCode.industry,
-      );
+      expect((await stack.store.read('u1'))!.step, OnboardingStepCode.industry);
     });
   });
 

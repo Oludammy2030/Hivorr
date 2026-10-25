@@ -103,7 +103,15 @@ void main() {
         capability: EntityCapability.offer,
       ).finish();
       expect(done.isComplete, isTrue);
-      expect(done.completedSteps, OnboardingStepCode.values);
+      expect(
+        done.completedSteps,
+        <OnboardingStepCode>[
+          OnboardingStepCode.industry,
+          OnboardingStepCode.identityDocument,
+          OnboardingStepCode.tradeProof,
+        ],
+        reason: 'the launcher owns the focus decision; it is not a wizard step',
+      );
     });
 
     test('finish marks only the hire path complete', () {
@@ -116,6 +124,37 @@ void main() {
       expect(hireDone.completedSteps, <OnboardingStepCode>[
         OnboardingStepCode.capability,
       ], reason: 'hire-only never traverses the professional steps');
+    });
+
+    test('professional path excludes the launcher-owned capability step', () {
+      final OnboardingProgress offer = OnboardingProgress(
+        entityId: 'u1',
+        capability: EntityCapability.offer,
+      );
+      expect(offer.requiredSteps, <OnboardingStepCode>[
+        OnboardingStepCode.industry,
+        OnboardingStepCode.identityDocument,
+        OnboardingStepCode.tradeProof,
+      ]);
+    });
+
+    test('withStep moves the resume point without completing anything', () {
+      final OnboardingProgress progress = OnboardingProgress(
+        entityId: 'u1',
+        step: OnboardingStepCode.industry,
+        completedSteps: <OnboardingStepCode>[OnboardingStepCode.capability],
+        capability: EntityCapability.offer,
+      );
+      final OnboardingProgress focused = progress.withStep(
+        OnboardingStepCode.identityDocument,
+      );
+      expect(focused.step, OnboardingStepCode.identityDocument);
+      expect(
+        focused.completedSteps,
+        progress.completedSteps,
+        reason: 'viewing a step never completes it',
+      );
+      expect(focused.isComplete, isFalse);
     });
 
     test('withCapability preserves position and rebinds the path', () {

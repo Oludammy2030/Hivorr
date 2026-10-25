@@ -86,9 +86,14 @@ void main() {
         expect(stack.service.progress!.isComplete, isTrue);
         expect(
           stack.service.progress!.completedSteps,
-          OnboardingStepCode.values,
+          <OnboardingStepCode>[
+            OnboardingStepCode.industry,
+            OnboardingStepCode.identityDocument,
+            OnboardingStepCode.tradeProof,
+          ],
           reason:
-              'frozen order capability â†’ â€¦ â†’ tradeProof â†’ completed',
+              'professional order industry → … → tradeProof → completed; '
+              'the launcher owns the capability decision',
         );
       },
     );
@@ -142,10 +147,33 @@ void main() {
       },
     );
 
-    test('advance/back are no-ops before hydration', () async {
+    test(
+      'focusStep moves the resume point without completing skipped steps',
+      () async {
+        final OnboardingTestStack stack = buildOnboardingStack();
+        await stack.service.resume('u1');
+        await stack.service.selectCapability(EntityCapability.offer);
+        final List<OnboardingStepCode> before =
+            stack.service.progress!.completedSteps;
+        await stack.service.focusStep(OnboardingStepCode.identityDocument);
+        expect(stack.service.currentStep, OnboardingStepCode.identityDocument);
+        expect(
+          stack.service.progress!.completedSteps,
+          before,
+          reason: 'a deep link never marks the skipped industry step complete',
+        );
+        expect(
+          (await stack.store.read('u1'))!.step,
+          OnboardingStepCode.identityDocument,
+        );
+      },
+    );
+
+    test('advance/back/focus are no-ops before hydration', () async {
       final OnboardingTestStack stack = buildOnboardingStack();
       await stack.service.advance();
       await stack.service.back();
+      await stack.service.focusStep(OnboardingStepCode.identityDocument);
       expect(stack.service.progress, isNull);
     });
   });
