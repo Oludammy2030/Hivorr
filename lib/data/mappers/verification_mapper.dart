@@ -54,6 +54,17 @@ abstract final class VerificationMapper {
     cashout: dto.cashout,
   );
 
+  /// Maps a latest-submission DTO into a domain [VerificationSubmissionSummary].
+  static VerificationSubmissionSummary submissionSummaryToEntity(
+    VerificationSubmissionSummaryDto dto,
+  ) => VerificationSubmissionSummary(
+    submissionType: dto.submissionType,
+    professionId: dto.professionId,
+    status: VerificationStatusKind.fromServer(dto.status),
+    submittedAt: dto.submittedAt,
+    reviewedAt: dto.reviewedAt,
+  );
+
   /// Maps a trade-verification DTO into a domain [TradeVerification].
   static TradeVerification tradeToEntity(TradeVerificationDto dto) =>
       TradeVerification(
@@ -74,6 +85,9 @@ abstract final class VerificationMapper {
         .map(tradeToEntity)
         .toList(growable: false),
     identityVerified: dto.identityVerified,
+    latestSubmissions: dto.latestSubmissions
+        .map(submissionSummaryToEntity)
+        .toList(growable: false),
   );
 
   /// Maps the full status aggregate DTO into a domain [VerificationStatus].
@@ -85,6 +99,10 @@ abstract final class VerificationMapper {
         tradeVerifications: dto.tradeVerifications
             .map(tradeToEntity)
             .toList(growable: false),
+        latestSubmissions: dto.latestSubmissions
+            .map(submissionSummaryToEntity)
+            .toList(growable: false),
+        hasLatestSubmissionData: dto.hasLatestSubmissionData,
         pendingSubmissions: dto.pendingSubmissions,
         totalSubmissions: dto.totalSubmissions,
       );

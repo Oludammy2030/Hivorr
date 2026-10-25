@@ -266,13 +266,49 @@ VerificationStatusDto seedStatusDto({
   bool identityVerified = false,
   int pendingSubmissions = 1,
   int totalSubmissions = 1,
+  List<VerificationSubmissionSummaryDto> latestSubmissions =
+      const <VerificationSubmissionSummaryDto>[],
+  bool? hasLatestSubmissionData,
 }) => VerificationStatusDto(
   entityId: entityId,
   kyc: seedKycDto(tierCode: tierCode, status: kycStatus),
   identityVerified: identityVerified,
   tradeVerifications: const <TradeVerificationDto>[],
+  latestSubmissions: latestSubmissions,
+  hasLatestSubmissionData:
+      hasLatestSubmissionData ?? latestSubmissions.isNotEmpty,
   pendingSubmissions: pendingSubmissions,
   totalSubmissions: totalSubmissions,
+);
+
+/// A latest-submission projection fixture.
+VerificationSubmissionSummaryDto seedSubmissionSummaryDto({
+  String submissionType = 'identity_document',
+  String? professionId,
+  String status = 'pending',
+  DateTime? submittedAt,
+  DateTime? reviewedAt,
+}) => VerificationSubmissionSummaryDto(
+  submissionType: submissionType,
+  professionId: professionId,
+  status: status,
+  submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+  reviewedAt: reviewedAt,
+);
+
+/// A latest-submission domain fixture.
+VerificationSubmissionSummary seedSubmissionSummary({
+  String submissionType = 'identity_document',
+  String? professionId,
+  VerificationStatusKind status = VerificationStatusKind.pending,
+  DateTime? submittedAt,
+  DateTime? reviewedAt,
+}) => VerificationSubmissionSummary(
+  submissionType: submissionType,
+  professionId: professionId,
+  status: status,
+  submittedAt: submittedAt ?? DateTime.fromMillisecondsSinceEpoch(1000),
+  reviewedAt: reviewedAt,
 );
 
 /// A default KYC level DTO.
@@ -301,6 +337,9 @@ VerificationStatus seedStatusEntity({
   bool identityVerified = false,
   int pendingSubmissions = 1,
   int totalSubmissions = 1,
+  List<VerificationSubmissionSummary> latestSubmissions =
+      const <VerificationSubmissionSummary>[],
+  bool? hasLatestSubmissionData,
 }) => VerificationStatus(
   entityId: entityId,
   kycLevel: KycLevel(
@@ -310,6 +349,9 @@ VerificationStatus seedStatusEntity({
   ),
   identityVerified: identityVerified,
   tradeVerifications: const <TradeVerification>[],
+  latestSubmissions: latestSubmissions,
+  hasLatestSubmissionData:
+      hasLatestSubmissionData ?? latestSubmissions.isNotEmpty,
   pendingSubmissions: pendingSubmissions,
   totalSubmissions: totalSubmissions,
 );

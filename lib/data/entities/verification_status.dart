@@ -1,5 +1,6 @@
 import 'package:hivorr/data/entities/kyc_level.dart';
 import 'package:hivorr/data/entities/trade_verification_status.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 
 /// A single trade-verification entry within the identity verification
 /// aggregate (EP-02-10).
@@ -47,6 +48,8 @@ class VerificationStatus {
     required this.kycLevel,
     required this.identityVerified,
     this.tradeVerifications = const <TradeVerification>[],
+    this.latestSubmissions = const <VerificationSubmissionSummary>[],
+    this.hasLatestSubmissionData = false,
     required this.pendingSubmissions,
     required this.totalSubmissions,
   });
@@ -63,9 +66,68 @@ class VerificationStatus {
   /// Display-only trade verifications (empty for identity-only, EP-02-10).
   final List<TradeVerification> tradeVerifications;
 
+  /// Latest persisted submission per `(submission_type, profession)`.
+  ///
+  /// The review state surfaces here even though the binding columns keep only
+  /// `unverified | pending | approved`; the server projects it from
+  /// `verification_submissions`.
+  final List<VerificationSubmissionSummary> latestSubmissions;
+
+  /// Whether [latestSubmissions] reflects the server projection.
+  ///
+  /// `false` for old aggregates that only carry counters; callers then fall
+  /// back to [pendingSubmissions]/[totalSubmissions] instead of reading an
+  /// empty list as "never submitted".
+  final bool hasLatestSubmissionData;
+
   /// Number of pending submissions.
   final int pendingSubmissions;
 
   /// Total number of submissions.
   final int totalSubmissions;
+
+  /// The most recent identity/certification submission, if any.
+  VerificationSubmissionSummary? get latestIdentitySubmission =>
+      _latestWhere((VerificationSubmissionSummary row) => row.isIdentity);
+
+  /// Every latest trade-proof submission (one per profession).
+  List<VerificationSubmissionSummary> get latestTradeSubmissions =>
+      latestSubmissions
+          .where((VerificationSubmissionSummary row) => row.isTradeProof)
+          .toList(growable: false);
+
+  /// The latest trade-proof submission for [professionId].
+  ///
+  /// Falls back to the newest trade row when the server did not attach a
+  /// profession id to a legacy credential.
+  VerificationSubmissionSummary? latestTradeSubmissionFor(String professionId) {
+    final VerificationSubmissionSummary? exact = _latestWhere(
+      (VerificationSubmissionSummary row) =>
+          row.isTradeProof && row.professionId == professionId,
+    );
+    if (exact != null) return exact;
+    // Legacy server rows may omit the profession binding; only fall back to
+    // those, never to another profession's decision.
+    return _latestWhere(
+      (VerificationSubmissionSummary row) =>
+          row.isTradeProof && row.professionId == null,
+    );
+  }
+
+  /// The newest trade-proof submission across all professions, if any.
+  VerificationSubmissionSummary? get latestTradeSubmission =>
+      _latestWhere((VerificationSubmissionSummary row) => row.isTradeProof);
+
+  VerificationSubmissionSummary? _latestWhere(
+    bool Function(VerificationSubmissionSummary row) test,
+  ) {
+    VerificationSubmissionSummary? latest;
+    for (final VerificationSubmissionSummary row in latestSubmissions) {
+      if (!test(row)) continue;
+      if (latest == null || row.submittedAt.isAfter(latest.submittedAt)) {
+        latest = row;
+      }
+    }
+    return latest;
+  }
 }

@@ -154,6 +154,108 @@ void main() {
       },
     );
 
+    test('statusToEntity maps latest per-lane submissions', () {
+      final VerificationStatusDto dto = VerificationStatusDto(
+        entityId: 'u1',
+        kyc: const KycLevelDto(
+          tierCode: 'tier_0',
+          status: 'pending',
+          limits: KycLimitsDto(daily: 0, weekly: 0, monthly: 0, cashout: 0),
+        ),
+        identityVerified: false,
+        latestSubmissions: <VerificationSubmissionSummaryDto>[
+          VerificationSubmissionSummaryDto(
+            submissionType: 'identity_document',
+            status: 'rejected',
+            submittedAt: submitted,
+            reviewedAt: reviewed,
+          ),
+          VerificationSubmissionSummaryDto(
+            submissionType: 'trade_proof',
+            professionId: 'p1',
+            status: 'in_review',
+            submittedAt: submitted,
+          ),
+        ],
+        hasLatestSubmissionData: true,
+        pendingSubmissions: 1,
+        totalSubmissions: 2,
+      );
+
+      final VerificationStatus entity = VerificationMapper.statusToEntity(dto);
+
+      expect(entity.hasLatestSubmissionData, isTrue);
+      expect(
+        entity.latestIdentitySubmission!.status,
+        VerificationStatusKind.rejected,
+      );
+      expect(
+        entity.latestTradeSubmissionFor('p1')!.status,
+        VerificationStatusKind.inReview,
+      );
+      expect(entity.latestTradeSubmissionFor('other'), isNull);
+    });
+
+    test('status DTO parses latest submission projection', () {
+      final VerificationStatusDto dto = VerificationStatusDto.fromJson(
+        <String, dynamic>{
+          'entity_id': 'u1',
+          'kyc': <String, dynamic>{
+            'tier_code': 'tier_0',
+            'status': 'pending',
+            'limits': <String, dynamic>{
+              'daily': 0,
+              'weekly': 0,
+              'monthly': 0,
+              'cashout': 0,
+            },
+          },
+          'identity_verified': false,
+          'trade_verifications': <dynamic>[],
+          'latest_submissions': <dynamic>[
+            <String, dynamic>{
+              'submission_type': 'trade_proof',
+              'profession_id': 'p1',
+              'status': 'requires_resubmission',
+              'submitted_at': '2026-10-01T10:00:00Z',
+              'reviewed_at': '2026-10-02T10:00:00Z',
+            },
+          ],
+          'pending_submissions': 0,
+          'total_submissions': 1,
+        },
+      );
+
+      expect(dto.hasLatestSubmissionData, isTrue);
+      expect(dto.latestSubmissions.single.status, 'requires_resubmission');
+      expect(dto.latestSubmissions.single.professionId, 'p1');
+      expect(dto.latestSubmissions.single.reviewedAt, isNotNull);
+    });
+
+    test('old aggregate without latest_submissions fails open', () {
+      final VerificationStatusDto dto = VerificationStatusDto.fromJson(
+        <String, dynamic>{
+          'entity_id': 'u1',
+          'kyc': <String, dynamic>{
+            'tier_code': 'tier_0',
+            'status': 'pending',
+            'limits': <String, dynamic>{
+              'daily': 0,
+              'weekly': 0,
+              'monthly': 0,
+              'cashout': 0,
+            },
+          },
+          'identity_verified': false,
+          'pending_submissions': 1,
+          'total_submissions': 1,
+        },
+      );
+
+      expect(dto.hasLatestSubmissionData, isFalse);
+      expect(dto.latestSubmissions, isEmpty);
+    });
+
     test('tradeToEntity maps profession + status', () {
       final TradeVerification trade = VerificationMapper.tradeToEntity(
         const TradeVerificationDto(professionId: 'p9', status: 'unverified'),

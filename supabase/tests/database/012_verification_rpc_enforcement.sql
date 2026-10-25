@@ -14,7 +14,7 @@
 
 begin;
 set search_path to extensions, public;
-select plan(37);
+select plan(40);
 
 -- ─── 0. Fixtures ──────────────────────────────────────────────────────────────
 set role postgres;
@@ -207,7 +207,36 @@ select is(
     where entity_id = '11111111-1111-1111-1111-111111111111'),
   3, 'verification_reviews captured 3 immutable decision records');
 
--- ─── 5. Envelope contract ──────────────────────────────────────────────────────
+-- ─── 5. Latest persisted review lane projection ───────────────────────────────
+-- S2 is the newest identity_document row (rejected); S3 is the trade proof
+-- (approved). The projection must expose both independently of KYC/trade
+-- binding columns. Timestamps are made deterministic because `now()` is fixed
+-- for the whole test transaction.
+update public.verification_submissions
+   set submitted_at = case credential_id
+         when 'ffffffff-0000-0000-0000-000000000020' then now() - interval '3 hours'
+         when 'ffffffff-0000-0000-0000-000000000022' then now() - interval '2 hours'
+         when 'ffffffff-0000-0000-0000-000000000021' then now() - interval '1 hour'
+         else submitted_at
+       end
+ where entity_id = '11111111-1111-1111-1111-111111111111';
+
+select is(
+  (select count(*)::int
+     from jsonb_array_elements(public.verification_status_get(null)->'data'->'latest_submissions')),
+  2, 'latest_submissions projects one row per review lane');
+select is(
+  (select elem->>'status'
+     from jsonb_array_elements(public.verification_status_get(null)->'data'->'latest_submissions') elem
+    where elem->>'submission_type' = 'identity_document'),
+  'rejected', 'identity lane exposes the latest persisted decision');
+select is(
+  (select elem->>'status'
+     from jsonb_array_elements(public.verification_status_get(null)->'data'->'latest_submissions') elem
+    where elem->>'submission_type' = 'trade_proof'),
+  'approved', 'trade lane exposes the latest persisted decision');
+
+-- ─── 6. Envelope contract ──────────────────────────────────────────────────────
 select is(
   (select count(*)::int from jsonb_object_keys(public.verification_status_get(null))),
   4, 'status envelope has exactly 4 top-level keys');
@@ -215,7 +244,7 @@ select is(
   (public.verification_status_get(null))->>'code',
   'PLT000', 'status envelope code is PLT000');
 
--- ─── 6. Posture ─────────────────────────────────────────────────────────────────
+-- ─── 7. Posture ─────────────────────────────────────────────────────────────────
 -- EP-02-11 (migration 20260916090001) added verification_review_queue_get,
 -- verification_review_start, verification_review_audit_get and the D5 guard
 -- trigger function verification_submissions_guard_review_state.

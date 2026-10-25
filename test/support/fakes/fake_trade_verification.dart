@@ -46,6 +46,8 @@ class FakeTradeVerificationRemoteDataSource
         ..._statusResult.tradeVerifications,
         TradeVerificationDto(professionId: professionId, status: status),
       ],
+      latestSubmissions: _statusResult.latestSubmissions,
+      hasLatestSubmissionData: _statusResult.hasLatestSubmissionData,
       pendingSubmissions: _statusResult.pendingSubmissions,
       totalSubmissions: _statusResult.totalSubmissions,
     );
@@ -128,6 +130,22 @@ class FakeTradeVerificationRepository implements TradeVerificationRepository {
       nextError = null;
       throw e;
     }
+    _status = TradeVerificationStatus(
+      tradeVerifications: _status.tradeVerifications,
+      identityVerified: _status.identityVerified,
+      latestSubmissions: <VerificationSubmissionSummary>[
+        ..._status.latestSubmissions.where(
+          (VerificationSubmissionSummary row) =>
+              !(row.isTradeProof && row.professionId == professionId),
+        ),
+        VerificationSubmissionSummary(
+          submissionType: 'trade_proof',
+          professionId: professionId,
+          status: VerificationStatusKind.pending,
+          submittedAt: DateTime.fromMillisecondsSinceEpoch(1000),
+        ),
+      ],
+    );
     return VerificationSubmission(
       id: 'trade-sub-1',
       entityId: 'u1',
@@ -177,6 +195,9 @@ VerificationStatusDto tradeStatusDto({
   Map<String, String> statuses = const <String, String>{'p1': 'unverified'},
   int pendingSubmissions = 0,
   int totalSubmissions = 0,
+  List<VerificationSubmissionSummaryDto> latestSubmissions =
+      const <VerificationSubmissionSummaryDto>[],
+  bool? hasLatestSubmissionData,
 }) => VerificationStatusDto(
   entityId: entityId,
   kyc: seedKycDto(),
@@ -187,6 +208,9 @@ VerificationStatusDto tradeStatusDto({
             TradeVerificationDto(professionId: e.key, status: e.value),
       )
       .toList(growable: false),
+  latestSubmissions: latestSubmissions,
+  hasLatestSubmissionData:
+      hasLatestSubmissionData ?? latestSubmissions.isNotEmpty,
   pendingSubmissions: pendingSubmissions,
   totalSubmissions: totalSubmissions,
 );
@@ -195,6 +219,8 @@ VerificationStatusDto tradeStatusDto({
 TradeVerificationStatus tradeStatusEntity({
   bool identityVerified = false,
   Map<String, String> statuses = const <String, String>{'p1': 'unverified'},
+  List<VerificationSubmissionSummary> latestSubmissions =
+      const <VerificationSubmissionSummary>[],
 }) => TradeVerificationStatus(
   identityVerified: identityVerified,
   tradeVerifications: statuses.entries
@@ -203,4 +229,5 @@ TradeVerificationStatus tradeStatusEntity({
             TradeVerification(professionId: e.key, status: e.value),
       )
       .toList(growable: false),
+  latestSubmissions: latestSubmissions,
 );

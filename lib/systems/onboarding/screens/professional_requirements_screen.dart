@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:hivorr/app/router/route_paths.dart';
 import 'package:hivorr/data/entities/onboarding_progress.dart';
+import 'package:hivorr/data/entities/verification_status.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
@@ -102,25 +104,79 @@ class _ProfessionalRequirementsScreenState
     await _refresh();
   }
 
+  /// Finishes the registration wizard before opening the dashboard.
+  ///
+  /// Approval is the server-authoritative prerequisite for this screen to show
+  /// "Ready to earn"; only then may the onboarding completion stamp be written.
+  /// The guard would otherwise bounce an incomplete wizard back to the trade
+  /// step.
+  Future<void> _openDashboard(OnboardingProvider onboarding) async {
+    final bool complete =
+        onboarding.isCompleteAuthoritative ?? onboarding.isComplete;
+    if (!complete) {
+      if (onboarding.currentStep != OnboardingStepCode.tradeProof) {
+        await onboarding.focusStep(OnboardingStepCode.tradeProof);
+      }
+      await onboarding.advance();
+      if (!mounted || onboarding.lastError != null) return;
+    }
+    context.go(RoutePaths.dashboardOpportunities);
+  }
+
   List<ProfessionalRequirement> _items(
     OnboardingProvider onboarding,
     VerificationProvider verification,
   ) {
     final OnboardingProgress? progress = onboarding.progress;
+    final VerificationStatus? status = verification.status;
     final bool isOffer = progress?.capability == EntityCapability.offer;
-    final int bound = verification.status?.tradeVerifications.length ?? 0;
-    final bool identityVerified =
-        verification.status?.identityVerified ?? false;
-    final bool identitySubmitted = progress?.hasIdentitySubmission ?? false;
-    final bool tradeApproved = onboarding.isTradeGateOpen ?? false;
-    final bool tradeSubmitted = progress?.hasTradeProofSubmission ?? false;
+    final int bound = status?.tradeVerifications.length ?? 0;
+    final bool identityVerified = status?.identityVerified ?? false;
+    final bool backendStatusKnown = status?.hasLatestSubmissionData ?? false;
+
+    final VerificationSubmissionSummary? identityLatest =
+        status?.latestIdentitySubmission;
+    final bool identityNeedsAction =
+        identityLatest?.status.needsAction ?? false;
+    final bool identityUnderReview =
+        identityLatest != null && !identityLatest.status.isTerminal;
+    // Backend state wins when the projection is available; the local mirror is
+    // only a same-device fallback for older aggregates.
+    final bool identitySubmitted =
+        identityUnderReview ||
+        (!backendStatusKnown &&
+            (progress?.hasIdentitySubmission ?? false) &&
+            !identityNeedsAction);
+
+    final bool tradeApproved =
+        onboarding.isTradeGateOpen == true ||
+        status?.latestTradeSubmission?.status ==
+            VerificationStatusKind.approved;
+    final List<VerificationSubmissionSummary> tradeSubmissions =
+        status?.latestTradeSubmissions ??
+        const <VerificationSubmissionSummary>[];
+    final bool tradeUnderReview = tradeSubmissions.any(
+      (VerificationSubmissionSummary row) => !row.status.isTerminal,
+    );
+    final bool tradeNeedsAction =
+        !tradeApproved &&
+        !tradeUnderReview &&
+        tradeSubmissions.any(
+          (VerificationSubmissionSummary row) => row.status.needsAction,
+        );
+    final bool tradeSubmitted =
+        tradeUnderReview ||
+        (!backendStatusKnown && (progress?.hasTradeProofSubmission ?? false));
+
     return resolveProfessionalRequirements(
       isOfferFocus: isOffer,
       boundProfessions: bound,
       identityVerified: identityVerified,
       identitySubmitted: identitySubmitted,
+      identityNeedsAction: identityNeedsAction,
       tradeApproved: tradeApproved,
       tradeSubmitted: tradeSubmitted,
+      tradeNeedsAction: tradeNeedsAction,
       activitiesRoute: RoutePaths.activities,
       industryRoute: RoutePaths.onboardingIndustry,
       identityRoute: RoutePaths.onboardingIdentity,
@@ -168,8 +224,7 @@ class _ProfessionalRequirementsScreenState
                         'Your professional setup is complete — bidding is unlocked.',
                     actionButton: HivorrButton(
                       label: 'Find work',
-                      onPressed: () =>
-                          context.go(RoutePaths.dashboardOpportunities),
+                      onPressed: () => unawaited(_openDashboard(onboarding)),
                       variant: HivorrButtonVariant.primary,
                       isExpanded: true,
                     ),

@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/systems/onboarding/screens/trade_proof_step_screen.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:hivorr/systems/verification/models/trade_proof_type.dart';
 
 import '../../../support/fakes/fake_trade_verification.dart';
+import '../../../support/fakes/fake_verification.dart';
 import '../../../support/onboarding/onboarding_test_support.dart';
 
 void main() {
@@ -119,7 +121,7 @@ void main() {
       stack.provider.dispose();
     });
 
-    testWidgets('submit binds the profession id and routes to completion', (
+    testWidgets('submit binds the profession id and stays under review', (
       WidgetTester tester,
     ) async {
       final (OnboardingTestStack stack, OnboardingStepController controller) =
@@ -139,7 +141,101 @@ void main() {
         isTrue,
         reason: 'mirror flag set after a successful submission',
       );
-      expect(find.text('ONBOARDING-COMPLETE'), findsOneWidget);
+      expect(find.text('Trade proof under review'), findsOneWidget);
+      expect(find.text('Return to requirements'), findsOneWidget);
+      expect(find.text('ONBOARDING-COMPLETE'), findsNothing);
+      expect(find.text('PROFESSIONAL-REQUIREMENTS'), findsNothing);
+      expect(stack.provider.isComplete, isFalse);
+      expect(controller.canPrimary, isFalse);
+      controller.dispose();
+      stack.provider.dispose();
+    });
+
+    testWidgets('under-review state survives re-entry from persisted status', (
+      WidgetTester tester,
+    ) async {
+      final OnboardingTestStack stack = buildOnboardingStack(
+        tradeRepo: FakeTradeVerificationRepository(
+          status: tradeStatusEntity(
+            statuses: const <String, String>{'prof-sw': 'pending'},
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(
+                submissionType: 'trade_proof',
+                professionId: 'prof-sw',
+              ),
+            ],
+          ),
+        ),
+      );
+      final (_, OnboardingStepController controller) = await pumpTrade(
+        tester,
+        stack: stack,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Trade proof under review'), findsOneWidget);
+      expect(find.text('Choose file'), findsNothing);
+      expect(controller.canPrimary, isFalse);
+      controller.dispose();
+      stack.provider.dispose();
+    });
+
+    testWidgets('rejected proof offers resubmission instead of review copy', (
+      WidgetTester tester,
+    ) async {
+      final OnboardingTestStack stack = buildOnboardingStack(
+        tradeRepo: FakeTradeVerificationRepository(
+          status: tradeStatusEntity(
+            statuses: const <String, String>{'prof-sw': 'unverified'},
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(
+                submissionType: 'trade_proof',
+                professionId: 'prof-sw',
+                status: VerificationStatusKind.rejected,
+              ),
+            ],
+          ),
+        ),
+      );
+      final (_, OnboardingStepController controller) = await pumpTrade(
+        tester,
+        stack: stack,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Trade proof needs attention'), findsOneWidget);
+      expect(find.text('Choose file'), findsOneWidget);
+      expect(find.text('Trade proof under review'), findsNothing);
+      controller.dispose();
+      stack.provider.dispose();
+    });
+
+    testWidgets('approved proof exposes finish registration, not submit', (
+      WidgetTester tester,
+    ) async {
+      final OnboardingTestStack stack = buildOnboardingStack(
+        tradeRepo: FakeTradeVerificationRepository(
+          status: tradeStatusEntity(
+            statuses: const <String, String>{'prof-sw': 'approved'},
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(
+                submissionType: 'trade_proof',
+                professionId: 'prof-sw',
+                status: VerificationStatusKind.approved,
+              ),
+            ],
+          ),
+        ),
+      );
+      final (_, OnboardingStepController controller) = await pumpTrade(
+        tester,
+        stack: stack,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Trade approved'), findsOneWidget);
+      expect(find.text('Choose file'), findsNothing);
+      expect(controller.primaryLabel, 'Finish registration');
       controller.dispose();
       stack.provider.dispose();
     });

@@ -3,11 +3,16 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
+import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/systems/onboarding/screens/identity_verification_step_screen.dart';
 import 'package:hivorr/systems/onboarding/widgets/onboarding_step_controller.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
 import 'package:hivorr/systems/verification/models/picked_document.dart';
+import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 
+import '../../../support/fakes/fake_verification.dart';
 import '../../../support/onboarding/onboarding_test_support.dart';
 
 void main() {
@@ -17,6 +22,7 @@ void main() {
     WidgetTester tester, {
     OnboardingTestStack? stack,
     PickDocumentCallback? pickFile,
+    List<SingleChildWidget> providers = const <SingleChildWidget>[],
   }) async {
     final OnboardingTestStack s = stack ?? buildOnboardingStack();
     final OnboardingStepController controller = OnboardingStepController();
@@ -29,7 +35,7 @@ void main() {
         pickFile: pickFile,
       ),
       path: '/onboarding/identity',
-      providers: s.buildProviders(),
+      providers: <SingleChildWidget>[...s.buildProviders(), ...providers],
     );
     return (s, controller);
   }
@@ -235,6 +241,112 @@ void main() {
       );
       controller.dispose();
       s.provider.dispose();
+    });
+    testWidgets(
+      'persisted pending identity renders under review without form',
+      (WidgetTester tester) async {
+        final FakeVerificationRepository repo = FakeVerificationRepository()
+          ..setStatus(
+            seedStatusEntity(
+              identityVerified: false,
+              totalSubmissions: 1,
+              pendingSubmissions: 1,
+              latestSubmissions: <VerificationSubmissionSummary>[
+                seedSubmissionSummary(status: VerificationStatusKind.inReview),
+              ],
+            ),
+          );
+        final VerificationProvider verification = VerificationProvider(
+          repo: repo,
+        );
+        addTearDown(verification.dispose);
+        await verification.refreshStatus();
+        final (
+          OnboardingTestStack stack,
+          OnboardingStepController controller,
+        ) = await pumpIdentity(
+          tester,
+          providers: <SingleChildWidget>[
+            ChangeNotifierProvider<VerificationProvider>.value(
+              value: verification,
+            ),
+          ],
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Identity document under review'), findsOneWidget);
+        expect(find.text('Passport'), findsNothing);
+        expect(controller.canPrimary, isFalse);
+        controller.dispose();
+        stack.provider.dispose();
+      },
+    );
+
+    testWidgets('persisted rejected identity offers resubmission', (
+      WidgetTester tester,
+    ) async {
+      final FakeVerificationRepository repo = FakeVerificationRepository()
+        ..setStatus(
+          seedStatusEntity(
+            identityVerified: false,
+            totalSubmissions: 1,
+            pendingSubmissions: 0,
+            latestSubmissions: <VerificationSubmissionSummary>[
+              seedSubmissionSummary(status: VerificationStatusKind.rejected),
+            ],
+          ),
+        );
+      final VerificationProvider verification = VerificationProvider(
+        repo: repo,
+      );
+      addTearDown(verification.dispose);
+      await verification.refreshStatus();
+      final (
+        OnboardingTestStack stack,
+        OnboardingStepController controller,
+      ) = await pumpIdentity(
+        tester,
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<VerificationProvider>.value(
+            value: verification,
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Identity document needs attention'), findsOneWidget);
+      expect(find.text('Passport'), findsOneWidget);
+      expect(controller.primaryLabel, 'Upload & submit');
+      controller.dispose();
+      stack.provider.dispose();
+    });
+
+    testWidgets('verified identity renders the approved state', (
+      WidgetTester tester,
+    ) async {
+      final VerificationProvider verification = VerificationProvider(
+        repo: FakeVerificationRepository(identityVerified: true),
+      );
+      addTearDown(verification.dispose);
+      await verification.refreshStatus();
+      final (
+        OnboardingTestStack stack,
+        OnboardingStepController controller,
+      ) = await pumpIdentity(
+        tester,
+        providers: <SingleChildWidget>[
+          ChangeNotifierProvider<VerificationProvider>.value(
+            value: verification,
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Identity verified'), findsOneWidget);
+      expect(find.text('Passport'), findsNothing);
+      expect(controller.canPrimary, isFalse);
+      controller.dispose();
+      stack.provider.dispose();
     });
   });
 }

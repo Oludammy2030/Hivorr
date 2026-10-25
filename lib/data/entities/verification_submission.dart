@@ -47,6 +47,46 @@ enum VerificationStatusKind {
   };
 }
 
+/// The latest persisted state of one verification lane.
+///
+/// Projects the authoritative `verification_submissions` row (5-state source
+/// of truth) so the professional-facing UI can distinguish under-review from
+/// rejected without reading the queue table directly. The binding column alone
+/// cannot express these states (see [TradeVerificationStatusKind]).
+class VerificationSubmissionSummary {
+  const VerificationSubmissionSummary({
+    required this.submissionType,
+    required this.status,
+    required this.submittedAt,
+    this.professionId,
+    this.reviewedAt,
+  });
+
+  /// Server `submission_type` (`identity_document`, `certification`, or
+  /// `trade_proof`).
+  final String submissionType;
+
+  /// Trade binding this submission belongs to (null for identity documents).
+  final String? professionId;
+
+  /// Persisted review lifecycle state.
+  final VerificationStatusKind status;
+
+  /// When the submission was queued.
+  final DateTime submittedAt;
+
+  /// When the submission was decided, if terminal.
+  final DateTime? reviewedAt;
+
+  /// Whether this row belongs to the identity verification lane.
+  bool get isIdentity =>
+      submissionType == 'identity_document' ||
+      submissionType == 'certification';
+
+  /// Whether this row belongs to the trade-proof lane.
+  bool get isTradeProof => submissionType == 'trade_proof';
+}
+
 /// A single identity-document verification submission (EP-02-10).
 ///
 /// Pure Dart domain model — no framework or RPC JSON shape leaks through
