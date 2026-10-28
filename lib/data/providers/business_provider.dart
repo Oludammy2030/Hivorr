@@ -98,18 +98,23 @@ class BusinessProvider extends ChangeNotifier {
     required String registeredLegalName,
     String? cacNumber,
   }) async {
+    // `business_create` already inserts the representative membership
+    // atomically; joining again would violate the membership uniqueness
+    // constraint.
     final Business created = await _service.createBusiness(
       tradingName: tradingName,
       registeredLegalName: registeredLegalName,
       cacNumber: cacNumber,
     );
-    await _service.joinBusiness(businessId: created.id, entityId: entityId);
     await loadMine(entityId: entityId);
     return created;
   }
 
   /// Deletes the caller's membership and refreshes the list.
-  Future<void> leave({required String businessId, required String entityId}) async {
+  Future<void> leave({
+    required String businessId,
+    required String entityId,
+  }) async {
     await _service.leaveBusiness(businessId: businessId, entityId: entityId);
     await loadMine(entityId: entityId);
   }
@@ -138,15 +143,14 @@ class BusinessProvider extends ChangeNotifier {
     _submitError = null;
     notifyListeners();
     try {
-      final VerificationSubmission submission =
-          await _service.submitDocument(
-            businessId: businessId,
-            title: title,
-            bytes: bytes,
-            mimeType: mimeType,
-            fileName: fileName,
-            onProgress: onProgress,
-          );
+      final VerificationSubmission submission = await _service.submitDocument(
+        businessId: businessId,
+        title: title,
+        bytes: bytes,
+        mimeType: mimeType,
+        fileName: fileName,
+        onProgress: onProgress,
+      );
       await loadMine(entityId: entityId);
       return submission;
     } on ApiException catch (e) {

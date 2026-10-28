@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -8,7 +8,10 @@ import 'package:hivorr/core/platform/platform_file_picker.dart';
 import 'package:hivorr/core/storage/storage_config.dart';
 import 'package:hivorr/core/storage/storage_validators.dart';
 import 'package:hivorr/data/entities/business.dart';
+import 'package:hivorr/data/entities/verification_status.dart';
+import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/business_provider.dart';
+import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/shared/extensions/build_context_extensions.dart';
 import 'package:hivorr/shared/helpers/hivorr_spacing.dart';
 import 'package:hivorr/shared/layouts/hivorr_content_pane.dart';
@@ -35,7 +38,11 @@ typedef PickBusinessDocumentCallback = Future<PickedDocument?> Function();
 /// `business_verification` lane. Approval flips the business and authorizes
 /// the submitter server-side; this screen only reflects state.
 class BusinessDetailScreen extends StatefulWidget {
-  const BusinessDetailScreen({super.key, required this.businessId, this.pickFile});
+  const BusinessDetailScreen({
+    super.key,
+    required this.businessId,
+    this.pickFile,
+  });
 
   /// The `businesses.id` to display.
   final String businessId;
@@ -90,7 +97,23 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
   Future<void> _load() async {
     final String? entityId = _viewerId;
     if (entityId == null || entityId.isEmpty) return;
-    await context.read<BusinessProvider>().loadMine(entityId: entityId);
+    final BusinessProvider businessProvider = context.read<BusinessProvider>();
+    VerificationProvider? verification;
+    try {
+      verification = context.read<VerificationProvider>();
+    } on Object {
+      verification = null;
+    }
+    await businessProvider.loadMine(entityId: entityId);
+    // The review projection carries the decision notes and current business
+    // review state. Optional in tests/hosts that do not mount the provider.
+    if (verification != null) {
+      try {
+        await verification.refreshStatus();
+      } on Object {
+        // Projection is additive; the business row still renders without it.
+      }
+    }
   }
 
   Business? _business(BusinessProvider provider) {
@@ -138,6 +161,33 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
     final String? entityId = _viewerId;
     final PickedDocument? doc = _picked;
     if (entityId == null || entityId.isEmpty || doc == null) return;
+
+    BusinessVerificationEntry? review;
+    try {
+      review = context.read<VerificationProvider>().businessFor(business.id);
+    } on Object {
+      review = null;
+    }
+    final VerificationStatusKind? reviewState =
+        review?.latestSubmission?.status;
+    final bool approved =
+        business.isVerified || reviewState == VerificationStatusKind.approved;
+    if (approved ||
+        reviewState == VerificationStatusKind.pending ||
+        reviewState == VerificationStatusKind.inReview) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        HivorrSnackbar.show(
+          context,
+          message: approved
+              ? 'This business is already verified.'
+              : 'A review is already in progress.',
+          variant: HivorrSnackbarVariant.warning,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _sent = 0;
       _total = doc.bytes.length;
@@ -148,7 +198,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
       await context.read<BusinessProvider>().submitDocument(
         entityId: entityId,
         businessId: business.id,
-        title: _title.text.trim().isEmpty ? 'CAC certificate' : _title.text.trim(),
+        title: _title.text.trim().isEmpty
+            ? 'CAC certificate'
+            : _title.text.trim(),
         bytes: doc.bytes,
         mimeType: doc.mimeType,
         fileName: doc.fileName,
@@ -162,6 +214,12 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                 });
               },
       );
+      if (!mounted) return;
+      try {
+        await context.read<VerificationProvider>().refreshStatus();
+      } on Object {
+        // The queue succeeded; the projection will catch up on next refresh.
+      }
       if (!mounted) return;
       setState(() {
         _showProgress = false;
@@ -277,6 +335,31 @@ class _DetailBody extends StatelessWidget {
       );
     }
     final BusinessMembership? membership = current.membership;
+    // Optional projection: hosts/tests may not mount VerificationProvider.
+    BusinessVerificationEntry? review;
+    try {
+      review = Provider.of<VerificationProvider>(
+        context,
+        listen: true,
+      ).businessFor(current.id);
+    } on Object {
+      review = null;
+    }
+    final VerificationSubmissionSummary? latest = review?.latestSubmission;
+    final bool underReview =
+        latest?.status == VerificationStatusKind.pending ||
+        latest?.status == VerificationStatusKind.inReview;
+    final bool approved =
+        current.isVerified || latest?.status == VerificationStatusKind.approved;
+    final bool locked = underReview || approved;
+    // A rejection is the last decision, while a resubmission is the current
+    // review lane. Show the lane state so the badge never says "Rejected"
+    // while the body says the corrected evidence is under review.
+    final String headerStatus = approved
+        ? 'approved'
+        : underReview
+        ? 'pending'
+        : current.status;
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
@@ -297,7 +380,7 @@ class _DetailBody extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    BusinessStatusBadge(status: current.status),
+                    BusinessStatusBadge(status: headerStatus),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -334,51 +417,72 @@ class _DetailBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'Verification',
-                  style: context.textTheme.titleSmall,
-                ),
+                Text('Verification', style: context.textTheme.titleSmall),
                 const SizedBox(height: 4),
                 Text(
-                  current.isVerified
-                      ? 'Verified â€” hire on behalf of this business.'
+                  approved
+                      ? 'Verified — hire on behalf of this business.'
+                      : underReview
+                      ? 'Submitted — under review. An admin decision is required before this business can hire.'
                       : current.isRejected
-                      ? 'Not verified â€” review the decision and resubmit.'
+                      ? 'Not verified — review the decision and resubmit.'
                       : 'Upload registration documents to verify this business.',
                   style: context.textTheme.bodySmall?.copyWith(
                     color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: HivorrSpacing.md),
-                HivorrTextField(
-                  controller: titleController,
-                  label: 'Document title',
-                  hint: 'e.g. CAC certificate',
-                ),
-                const SizedBox(height: HivorrSpacing.md),
-                _FileCard(
-                  picked: picked,
-                  showProgress: showProgress,
-                  progress: progress,
-                  onPick: onPick,
-                  error: fieldError,
-                ),
-                const SizedBox(height: HivorrSpacing.md),
-                HivorrButton(
-                  label: 'Upload & submit',
-                  isExpanded: true,
-                  isLoading: provider.isSubmitting,
-                  onPressed: (picked != null && !provider.isSubmitting)
-                      ? () => unawaited(onSubmit(current))
-                      : null,
-                ),
-                const SizedBox(height: HivorrSpacing.sm),
-                Text(
-                  'Accepted: JPG, PNG, WebP, PDF up to 10 MB.',
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                if (latest?.decisionNotes != null &&
+                    latest!.decisionNotes!.trim().isNotEmpty) ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.sm),
+                  Text(
+                    'Reviewer notes: ${latest.decisionNotes!.trim()}',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
+                ],
+                if (locked) ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.sm),
+                  Text(
+                    approved
+                        ? 'No further documents are required.'
+                        : 'You will be notified when the review is complete.',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ] else ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.md),
+                  HivorrTextField(
+                    controller: titleController,
+                    label: 'Document title',
+                    hint: 'e.g. CAC certificate',
+                  ),
+                  const SizedBox(height: HivorrSpacing.md),
+                  _FileCard(
+                    picked: picked,
+                    showProgress: showProgress,
+                    progress: progress,
+                    onPick: onPick,
+                    error: fieldError,
+                  ),
+                  const SizedBox(height: HivorrSpacing.md),
+                  HivorrButton(
+                    label: 'Upload & submit',
+                    isExpanded: true,
+                    isLoading: provider.isSubmitting,
+                    onPressed: (picked != null && !provider.isSubmitting)
+                        ? () => unawaited(onSubmit(current))
+                        : null,
+                  ),
+                  const SizedBox(height: HivorrSpacing.sm),
+                  Text(
+                    'Accepted: JPG, PNG, WebP, PDF up to 10 MB.',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

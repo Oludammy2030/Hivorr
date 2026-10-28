@@ -36,6 +36,29 @@ class TradeVerification {
       TradeVerificationStatusKind.fromServer(status);
 }
 
+/// A business the account belongs to, with membership and review state.
+class BusinessVerificationEntry {
+  const BusinessVerificationEntry({
+    required this.businessId,
+    required this.tradingName,
+    required this.registeredLegalName,
+    required this.cacNumber,
+    required this.verificationStatus,
+    required this.role,
+    required this.isAuthorized,
+    required this.latestSubmission,
+  });
+
+  final String businessId;
+  final String tradingName;
+  final String registeredLegalName;
+  final String? cacNumber;
+  final String verificationStatus;
+  final String role;
+  final bool isAuthorized;
+  final VerificationSubmissionSummary? latestSubmission;
+}
+
 /// The full identity-verification aggregate surfaced by
 /// `verification_status_get` (EP-02-10).
 ///
@@ -49,6 +72,8 @@ class VerificationStatus {
     required this.identityVerified,
     this.tradeVerifications = const <TradeVerification>[],
     this.latestSubmissions = const <VerificationSubmissionSummary>[],
+    this.businesses = const <BusinessVerificationEntry>[],
+    this.eligibility = const <String, dynamic>{},
     this.hasLatestSubmissionData = false,
     required this.pendingSubmissions,
     required this.totalSubmissions,
@@ -72,6 +97,12 @@ class VerificationStatus {
   /// `unverified | pending | approved`; the server projects it from
   /// `verification_submissions`.
   final List<VerificationSubmissionSummary> latestSubmissions;
+
+  /// Businesses the entity belongs to.
+  final List<BusinessVerificationEntry> businesses;
+
+  /// Server-computed eligibility flags.
+  final Map<String, dynamic> eligibility;
 
   /// Whether [latestSubmissions] reflects the server projection.
   ///

@@ -18,6 +18,7 @@ import 'package:hivorr/data/providers/financial_payout_provider.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/shared/components/hivorr_dashboard_top_bar.dart';
 import 'package:hivorr/shared/components/hivorr_dialog.dart';
 import 'package:hivorr/shared/components/hivorr_section_header.dart';
@@ -102,6 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         unawaited(jobs.loadDiscovery(refresh: true));
         unawaited(hires.loadList(role: 'professional'));
       }
+      unawaited(context.read<VerificationProvider>().refreshStatus());
     } catch (_) {
       // Jobs/hires providers absent (e.g. minimal test harness) — the
       // stats card degrades to empty states instead of crashing.
@@ -109,6 +111,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _refresh(DashboardCapability capability) async {
+    VerificationProvider? verification;
+    try {
+      verification = context.read<VerificationProvider>();
+    } catch (_) {
+      // Verification provider absent (e.g. minimal test harness).
+    }
     try {
       final JobProvider jobs = context.read<JobProvider>();
       final HireProvider hires = context.read<HireProvider>();
@@ -120,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await jobs.loadDiscovery(refresh: true);
         await hires.loadList(role: 'professional');
       }
+      if (verification != null) await verification.refreshStatus();
     } catch (_) {
       // Providers absent — nothing to refresh.
     }
@@ -1967,9 +1976,9 @@ class _StatRow extends StatelessWidget {
   }
 }
 
-/// Verification Status rail card (reference). The email row follows the
-/// session confirmation state; Identity/Phone render the reference verified
-/// state until their seams exist; Bank Account links into KYC verification.
+/// Verification Status rail card (reference). Email follows the session
+/// confirmation state and Identity follows the live server projection; Bank
+/// Account links into KYC verification.
 class _ProVerificationCard extends StatelessWidget {
   const _ProVerificationCard();
 
@@ -1982,6 +1991,12 @@ class _ProVerificationCard extends StatelessWidget {
           false;
     } catch (_) {
       emailVerified = false;
+    }
+    bool identityVerified = false;
+    try {
+      identityVerified = context.watch<VerificationProvider>().identityVerified;
+    } catch (_) {
+      identityVerified = false;
     }
     return HivorrCard(
       elevation: 1,
@@ -1997,9 +2012,15 @@ class _ProVerificationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: HivorrSpacing.md),
-          const _VerifyRow(label: 'Identity', verified: true),
+          _VerifyRow(
+            label: 'Identity',
+            verified: identityVerified,
+            actionLabel: identityVerified ? null : 'Verify',
+            onAction: identityVerified
+                ? null
+                : () => context.go(RoutePaths.verificationStatus),
+          ),
           _VerifyRow(label: 'Email', verified: emailVerified),
-          const _VerifyRow(label: 'Phone', verified: true),
           _VerifyRow(
             label: 'Bank Account',
             verified: false,

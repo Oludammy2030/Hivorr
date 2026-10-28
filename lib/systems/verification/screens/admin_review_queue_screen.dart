@@ -66,6 +66,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
     'trade_proof',
     'identity_document',
     'certification',
+    'business_verification',
   ];
 
   static const List<String?> _statusOptions = <String?>[
@@ -247,19 +248,15 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
             _breadcrumbs(),
             const SizedBox(height: HivorrSpacing.md),
             HivorrEmptyState(
-              icon: Icon(
-                Icons.error_outline,
-                color: context.colorScheme.error,
-              ),
+              icon: Icon(Icons.error_outline, color: context.colorScheme.error),
               title: 'Failed to load queue',
               subtitle: provider.lastError!.message,
               actionButton: HivorrButton(
                 label: 'Retry',
                 variant: HivorrButtonVariant.outline,
                 size: HivorrButtonSize.small,
-                onPressed: () => provider.loadQueue(
-                  submissionType: _selectedType,
-                ),
+                onPressed: () =>
+                    provider.loadQueue(submissionType: _selectedType),
               ),
             ),
           ],
@@ -382,10 +379,11 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
     final String avgSub = metrics == null
         ? 'Unavailable · needs backend'
         : (metrics.avgVerificationSeconds == null
-            ? 'No decisions in window'
-            : 'Trailing ${metrics.periodDays} days');
-    final String approvedValue =
-        metrics == null ? '—' : '${metrics.approvedToday}';
+              ? 'No decisions in window'
+              : 'Trailing ${metrics.periodDays} days');
+    final String approvedValue = metrics == null
+        ? '—'
+        : '${metrics.approvedToday}';
     final String approvedSub = metrics == null
         ? 'Unavailable · needs backend'
         : 'Since UTC midnight';
@@ -395,9 +393,9 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
     final String rejectionSub = metrics == null
         ? 'Trailing 30 days · needs backend'
         : (metrics.rejectionRate == null
-            ? 'No decisions in window'
-            : 'Trailing ${metrics.periodDays} days · '
-                '${metrics.decidedTotal} decided');
+              ? 'No decisions in window'
+              : 'Trailing ${metrics.periodDays} days · '
+                    '${metrics.decidedTotal} decided');
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double maxWidth = constraints.maxWidth;
@@ -462,9 +460,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
           textInputAction: TextInputAction.search,
           onSubmitted: (String value) {
             setState(() => _query = value.trim());
-            unawaited(
-              _loadQueuePage(context.read<AdminReviewProvider>()),
-            );
+            unawaited(_loadQueuePage(context.read<AdminReviewProvider>()));
           },
           prefix: Icon(
             Icons.search,
@@ -623,10 +619,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
     if (visible.isEmpty) {
       return HivorrCard(
         child: HivorrEmptyState(
-          icon: Icon(
-            Icons.search_off,
-            color: colors.onSurfaceVariant,
-          ),
+          icon: Icon(Icons.search_off, color: colors.onSurfaceVariant),
           title: 'No matches',
           subtitle: 'Try a different search or filter.',
         ),
@@ -691,9 +684,8 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
   }
 
   Widget _nameCell(AdminReviewQueueEntry entry) {
-    final String name = entry.entityName.isNotEmpty
-        ? entry.entityName
-        : 'Unknown entity';
+    final String name = _entryDisplayName(entry);
+    final String? businessLine = _businessIdentityLine(entry);
     return Row(
       children: <Widget>[
         HivorrAvatar(
@@ -726,6 +718,17 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
+              if (businessLine != null) ...<Widget>[
+                const SizedBox(height: 2),
+                Text(
+                  businessLine,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -738,9 +741,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
   Widget _categoryCell(AdminReviewQueueEntry entry) {
     final String profession = (entry.professionName ?? '').trim();
     final String type = _typeLabel(entry.submissionType);
-    final String line = profession.isNotEmpty
-        ? '$profession · $type'
-        : type;
+    final String line = profession.isNotEmpty ? '$profession · $type' : type;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1050,9 +1051,8 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
     int total,
   ) {
     final ColorScheme colors = context.colorScheme;
-    final String name = selected.entityName.isNotEmpty
-        ? selected.entityName
-        : 'Unknown entity';
+    final String name = _entryDisplayName(selected);
+    final String? businessLine = _businessIdentityLine(selected);
     return HivorrCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1091,6 +1091,17 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
                         color: colors.onSurfaceVariant,
                       ),
                     ),
+                    if (businessLine != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        businessLine,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1172,8 +1183,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
       _selectedId = submissionId;
       _panelClosed = false;
     });
-    final AdminReviewProvider provider =
-        context.read<AdminReviewProvider>();
+    final AdminReviewProvider provider = context.read<AdminReviewProvider>();
     unawaited(provider.startReview(submissionId));
     unawaited(provider.loadAuditTrail(submissionId));
     unawaited(provider.loadReviewProfile(submissionId));
@@ -1226,11 +1236,7 @@ class _AdminReviewQueueScreenState extends State<AdminReviewQueueScreen> {
 /// submitted date. Single 16dp card padding (the old card nested a second
 /// 16dp inset). Tappable via [HivorrCard.onTap].
 class _ApplicantCard extends StatelessWidget {
-  const _ApplicantCard({
-    super.key,
-    required this.entry,
-    required this.onTap,
-  });
+  const _ApplicantCard({super.key, required this.entry, required this.onTap});
 
   final AdminReviewQueueEntry entry;
   final VoidCallback onTap;
@@ -1238,9 +1244,8 @@ class _ApplicantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = context.colorScheme;
-    final String name = entry.entityName.isNotEmpty
-        ? entry.entityName
-        : 'Unknown entity';
+    final String name = _entryDisplayName(entry);
+    final String? businessLine = _businessIdentityLine(entry);
     return HivorrCard(
       elevation: 1,
       onTap: onTap,
@@ -1275,6 +1280,17 @@ class _ApplicantCard extends StatelessWidget {
                     color: colors.onSurfaceVariant,
                   ),
                 ),
+                if (businessLine != null) ...<Widget>[
+                  const SizedBox(height: HivorrSpacing.xs),
+                  Text(
+                    businessLine,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: HivorrSpacing.xs),
                 Row(
                   children: <Widget>[
@@ -1309,8 +1325,32 @@ String _typeLabel(String type) => switch (type) {
   'trade_proof' => 'Trade proof',
   'identity_document' => 'Identity document',
   'certification' => 'Certification',
+  'business_verification' => 'Business verification',
   _ => type,
 };
+
+/// Business rows lead with the trading name; personal rows lead with the
+/// submitter's display name.
+String _entryDisplayName(AdminReviewQueueEntry entry) {
+  if (entry.submissionType == 'business_verification') {
+    final String trading = (entry.businessTradingName ?? '').trim();
+    if (trading.isNotEmpty) return trading;
+  }
+  return entry.entityName.isNotEmpty ? entry.entityName : 'Unknown entity';
+}
+
+/// Registered legal name + CAC for business rows, or `null` for personal
+/// rows. The submitter's own name is still available via [entry.entityName].
+String? _businessIdentityLine(AdminReviewQueueEntry entry) {
+  if (entry.submissionType != 'business_verification') return null;
+  final String legal = (entry.businessLegalName ?? '').trim();
+  final String cac = (entry.businessCacNumber ?? '').trim();
+  final List<String> parts = <String>[
+    if (legal.isNotEmpty) 'Registered: $legal',
+    if (cac.isNotEmpty) 'CAC $cac',
+  ];
+  return parts.isEmpty ? null : parts.join(' · ');
+}
 
 /// Server `in_review` and legacy camelCase `inReview` mean the same thing;
 /// the provider now writes the server form, this also reads old rows.

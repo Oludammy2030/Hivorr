@@ -51,23 +51,32 @@ enum VerificationStatusKind {
 ///
 /// Projects the authoritative `verification_submissions` row (5-state source
 /// of truth) so the professional-facing UI can distinguish under-review from
-/// rejected without reading the queue table directly. The binding column alone
-/// cannot express these states (see [TradeVerificationStatusKind]).
+/// rejected without reading the queue table directly.
 class VerificationSubmissionSummary {
   const VerificationSubmissionSummary({
     required this.submissionType,
     required this.status,
     required this.submittedAt,
     this.professionId,
+    this.businessId,
+    this.businessTradingName,
     this.reviewedAt,
+    this.decisionNotes,
+    this.credentialTitle,
   });
 
-  /// Server `submission_type` (`identity_document`, `certification`, or
-  /// `trade_proof`).
+  /// Server `submission_type` (`identity_document`, `certification`,
+  /// `trade_proof`, or `business_verification`).
   final String submissionType;
 
   /// Trade binding this submission belongs to (null for identity documents).
   final String? professionId;
+
+  /// Business binding this submission belongs to (for business_verification).
+  final String? businessId;
+
+  /// Business trading name for display.
+  final String? businessTradingName;
 
   /// Persisted review lifecycle state.
   final VerificationStatusKind status;
@@ -78,6 +87,12 @@ class VerificationSubmissionSummary {
   /// When the submission was decided, if terminal.
   final DateTime? reviewedAt;
 
+  /// Admin decision notes.
+  final String? decisionNotes;
+
+  /// Credential title.
+  final String? credentialTitle;
+
   /// Whether this row belongs to the identity verification lane.
   bool get isIdentity =>
       submissionType == 'identity_document' ||
@@ -85,6 +100,9 @@ class VerificationSubmissionSummary {
 
   /// Whether this row belongs to the trade-proof lane.
   bool get isTradeProof => submissionType == 'trade_proof';
+
+  /// Whether this row belongs to the business verification lane.
+  bool get isBusinessVerification => submissionType == 'business_verification';
 }
 
 /// A single identity-document verification submission (EP-02-10).

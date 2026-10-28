@@ -30,6 +30,7 @@ String reviewTypeLabel(String type) => switch (type) {
   'trade_proof' => 'Trade proof',
   'identity_document' => 'Identity document',
   'certification' => 'Certification',
+  'business_verification' => 'Business verification',
   _ => type,
 };
 
@@ -101,6 +102,24 @@ class ReviewEntityCard extends StatelessWidget {
             reviewTypeLabel(entry.submissionType),
           ),
           _row(context, 'Credential', entry.credentialName),
+          if (entry.submissionType == 'business_verification') ...<Widget>[
+            if ((entry.businessTradingName ?? '').trim().isNotEmpty)
+              _row(context, 'Business', entry.businessTradingName!.trim()),
+            if ((entry.businessLegalName ?? '').trim().isNotEmpty)
+              _row(
+                context,
+                'Registered legal name',
+                entry.businessLegalName!.trim(),
+              ),
+            if ((entry.businessCacNumber ?? '').trim().isNotEmpty)
+              _row(context, 'CAC number', entry.businessCacNumber!.trim()),
+            if ((entry.businessVerificationStatus ?? '').trim().isNotEmpty)
+              _row(
+                context,
+                'Business status',
+                reviewStatusLabel(entry.businessVerificationStatus!),
+              ),
+          ],
           _row(
             context,
             'Submitted',
@@ -112,7 +131,12 @@ class ReviewEntityCard extends StatelessWidget {
     );
   }
 
-  Widget _row(BuildContext context, String label, String value, {ColorScheme? colors}) {
+  Widget _row(
+    BuildContext context,
+    String label,
+    String value, {
+    ColorScheme? colors,
+  }) {
     final ColorScheme scheme = colors ?? context.colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: HivorrSpacing.xs),
@@ -210,9 +234,9 @@ class _ReviewDocumentPanelState extends State<ReviewDocumentPanel> {
     });
     String? url;
     try {
-      url = await context
-          .read<AdminReviewProvider>()
-          .createDocumentSignedUrl(widget.entry.credentialId);
+      url = await context.read<AdminReviewProvider>().createDocumentSignedUrl(
+        widget.entry.credentialId,
+      );
       if (!mounted) return;
       if (_isPdf) {
         final Uint8List bytes = await widget.bytesFetcher(url);
@@ -317,10 +341,7 @@ class _ReviewDocumentPanelState extends State<ReviewDocumentPanel> {
             ),
             const SizedBox(width: HivorrSpacing.sm),
             Expanded(
-              child: Text(
-                'PDF document',
-                style: context.textTheme.titleSmall,
-              ),
+              child: Text('PDF document', style: context.textTheme.titleSmall),
             ),
             if (_pageCount != null)
               Text(
@@ -395,9 +416,7 @@ class _ReviewDocumentPanelState extends State<ReviewDocumentPanel> {
       onPressed: url == null
           ? null
           : () {
-              unawaited(
-                Clipboard.setData(ClipboardData(text: url)),
-              );
+              unawaited(Clipboard.setData(ClipboardData(text: url)));
               setState(() => _copied = true);
             },
     );
@@ -470,9 +489,8 @@ class _ReviewActionsPanelState extends State<ReviewActionsPanel> {
               activeColor: context.colorScheme.primary,
               onChanged: provider.isActing
                   ? null
-                  : (bool? value) => setState(
-                      () => _requireResubmission = value ?? false,
-                    ),
+                  : (bool? value) =>
+                        setState(() => _requireResubmission = value ?? false),
             ),
             Expanded(
               child: Text(
@@ -507,7 +525,10 @@ class _ReviewActionsPanelState extends State<ReviewActionsPanel> {
     );
   }
 
-  Future<void> _decide(AdminReviewProvider provider, {required bool approved}) async {
+  Future<void> _decide(
+    AdminReviewProvider provider, {
+    required bool approved,
+  }) async {
     final String notes = _notesController.text.trim();
     if (!approved && notes.isEmpty) {
       setState(() {
@@ -676,8 +697,9 @@ class _ReviewComparisonCardState extends State<ReviewComparisonCard> {
     } catch (_) {
       users = null;
     }
-    final ManageUserDetail? registered =
-        users?.cachedDetail(widget.entry.entityId);
+    final ManageUserDetail? registered = users?.cachedDetail(
+      widget.entry.entityId,
+    );
     final bool failed =
         _noProvider || (users?.detailFailed(widget.entry.entityId) ?? false);
     return HivorrCard(
@@ -748,8 +770,7 @@ class _ReviewComparisonCardState extends State<ReviewComparisonCard> {
             _infoPair(
               context,
               label: 'Verification',
-              registered:
-                  'KYC ${_tierLabel(registered.kyc?.tierCode)}',
+              registered: 'KYC ${_tierLabel(registered.kyc?.tierCode)}',
               submitted:
                   '${reviewTypeLabel(widget.entry.submissionType)} · ${widget.entry.credentialName}',
             ),
@@ -800,14 +821,15 @@ class _ReviewComparisonCardState extends State<ReviewComparisonCard> {
   }
 
   Widget _namePair(BuildContext context, ManageUserDetail registered) {
-    final String? legal = registered.profile?.legalName?.trim().isNotEmpty ?? false
+    final String? legal =
+        registered.profile?.legalName?.trim().isNotEmpty ?? false
         ? registered.profile!.legalName!.trim()
         : null;
-    final String display = registered.profile?.displayName?.trim().isNotEmpty ?? false
+    final String display =
+        registered.profile?.displayName?.trim().isNotEmpty ?? false
         ? registered.profile!.displayName!.trim()
         : '';
-    final String registeredName =
-        legal ?? (display.isNotEmpty ? display : '—');
+    final String registeredName = legal ?? (display.isNotEmpty ? display : '—');
     final String submittedName = widget.entry.entityName.trim();
     final bool? matched = registeredName == '—' || submittedName.isEmpty
         ? null
@@ -872,10 +894,8 @@ class _ReviewComparisonCardState extends State<ReviewComparisonCard> {
         color: context.appExtension.warning,
       );
     }
-    TextStyle? valueStyle({bool muted = false}) =>
-        context.textTheme.bodyMedium?.copyWith(
-          color: muted ? colors.onSurfaceVariant : colors.onSurface,
-        );
+    TextStyle? valueStyle({bool muted = false}) => context.textTheme.bodyMedium
+        ?.copyWith(color: muted ? colors.onSurfaceVariant : colors.onSurface);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1129,8 +1149,7 @@ class ReviewProfileSections extends StatelessWidget {
 
   Widget _educationRow(BuildContext context, ReviewEducation education) {
     final List<String> detail = <String>[
-      if ((education.degree ?? '').trim().isNotEmpty)
-        education.degree!.trim(),
+      if ((education.degree ?? '').trim().isNotEmpty) education.degree!.trim(),
       if ((education.fieldOfStudy ?? '').trim().isNotEmpty)
         education.fieldOfStudy!.trim(),
     ];
@@ -1186,8 +1205,18 @@ String _reviewRange(ReviewExperience experience) {
 String _reviewMonthYear(int? year, int? month) {
   if (year == null) return '';
   const List<String> months = <String>[
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   if (month == null || month < 1 || month > 12) return '$year';
   return '${months[month - 1]} $year';

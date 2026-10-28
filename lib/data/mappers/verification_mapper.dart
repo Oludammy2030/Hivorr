@@ -60,9 +60,29 @@ abstract final class VerificationMapper {
   ) => VerificationSubmissionSummary(
     submissionType: dto.submissionType,
     professionId: dto.professionId,
+    businessId: dto.businessId,
+    businessTradingName: dto.businessTradingName,
     status: VerificationStatusKind.fromServer(dto.status),
     submittedAt: dto.submittedAt,
     reviewedAt: dto.reviewedAt,
+    decisionNotes: _truncateNotes(dto.decisionNotes),
+    credentialTitle: dto.credentialTitle,
+  );
+
+  /// Maps a business lane DTO into a domain [BusinessVerificationEntry].
+  static BusinessVerificationEntry businessToEntity(
+    BusinessVerificationEntryDto dto,
+  ) => BusinessVerificationEntry(
+    businessId: dto.businessId,
+    tradingName: dto.tradingName,
+    registeredLegalName: dto.registeredLegalName,
+    cacNumber: dto.cacNumber,
+    verificationStatus: dto.verificationStatus,
+    role: dto.role,
+    isAuthorized: dto.isAuthorized,
+    latestSubmission: dto.latestSubmission == null
+        ? null
+        : submissionSummaryToEntity(dto.latestSubmission!),
   );
 
   /// Maps a trade-verification DTO into a domain [TradeVerification].
@@ -102,6 +122,10 @@ abstract final class VerificationMapper {
         latestSubmissions: dto.latestSubmissions
             .map(submissionSummaryToEntity)
             .toList(growable: false),
+        businesses: dto.businesses
+            .map(businessToEntity)
+            .toList(growable: false),
+        eligibility: Map<String, dynamic>.from(dto.eligibility),
         hasLatestSubmissionData: dto.hasLatestSubmissionData,
         pendingSubmissions: dto.pendingSubmissions,
         totalSubmissions: dto.totalSubmissions,

@@ -83,6 +83,11 @@ class AdminReviewQueueEntry {
     this.professionName,
     this.assignedReviewer,
     this.decisionNotes,
+    this.businessId,
+    this.businessTradingName,
+    this.businessLegalName,
+    this.businessCacNumber,
+    this.businessVerificationStatus,
   });
 
   final String submissionId;
@@ -106,6 +111,13 @@ class AdminReviewQueueEntry {
   final String? professionName;
   final String? assignedReviewer;
   final String? decisionNotes;
+
+  /// Business identity for `business_verification` rows (null otherwise).
+  final String? businessId;
+  final String? businessTradingName;
+  final String? businessLegalName;
+  final String? businessCacNumber;
+  final String? businessVerificationStatus;
 }
 
 /// A single entry in the verification audit trail.

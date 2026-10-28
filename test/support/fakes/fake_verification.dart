@@ -339,6 +339,9 @@ VerificationStatus seedStatusEntity({
   int totalSubmissions = 1,
   List<VerificationSubmissionSummary> latestSubmissions =
       const <VerificationSubmissionSummary>[],
+  List<BusinessVerificationEntry> businesses =
+      const <BusinessVerificationEntry>[],
+  Map<String, dynamic> eligibility = const <String, dynamic>{},
   bool? hasLatestSubmissionData,
 }) => VerificationStatus(
   entityId: entityId,
@@ -350,6 +353,8 @@ VerificationStatus seedStatusEntity({
   identityVerified: identityVerified,
   tradeVerifications: const <TradeVerification>[],
   latestSubmissions: latestSubmissions,
+  businesses: businesses,
+  eligibility: eligibility,
   hasLatestSubmissionData:
       hasLatestSubmissionData ?? latestSubmissions.isNotEmpty,
   pendingSubmissions: pendingSubmissions,

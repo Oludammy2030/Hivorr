@@ -7,8 +7,10 @@ import 'package:hivorr/app/theme/app_theme.dart';
 import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/authentication/authentication.dart';
 import 'package:hivorr/data/entities/business.dart';
+import 'package:hivorr/data/entities/verification_status.dart';
 import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/business_provider.dart';
+import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/business_repository.dart';
 import 'package:hivorr/systems/business/screens/business_detail_screen.dart';
 import 'package:hivorr/systems/business/screens/business_form_screen.dart';
@@ -19,6 +21,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import '../../support/fakes/fake_auth.dart';
+import '../../support/fakes/fake_verification.dart';
 import '../../support/harnesses/widget_harness.dart';
 
 /// In-memory [BusinessRepository] for screen tests.
@@ -129,18 +132,60 @@ BusinessProvider providerWith({List<Business>? businesses}) {
   final FakeBusinessRepository repo = FakeBusinessRepository(
     businesses: businesses,
   );
-  return BusinessProvider(
-    service: BusinessService(repository: repo),
-  );
+  return BusinessProvider(service: BusinessService(repository: repo));
 }
 
 List<SingleChildWidget> providers(
   BusinessProvider provider, {
   FakeAuthProvider? auth,
+  VerificationProvider? verification,
 }) => <SingleChildWidget>[
   ChangeNotifierProvider<BusinessProvider>.value(value: provider),
   ChangeNotifierProvider<AuthProvider>.value(value: auth ?? sessionAuth()),
+  if (verification != null)
+    ChangeNotifierProvider<VerificationProvider>.value(value: verification),
 ];
+
+VerificationProvider verificationWith({
+  required VerificationStatusKind status,
+  String? decisionNotes,
+  String? businessStatus,
+}) {
+  final FakeVerificationRepository repo = FakeVerificationRepository()
+    ..setStatus(
+      seedStatusEntity(
+        identityVerified: true,
+        totalSubmissions: 1,
+        pendingSubmissions: status == VerificationStatusKind.inReview ? 1 : 0,
+        businesses: <BusinessVerificationEntry>[
+          BusinessVerificationEntry(
+            businessId: 'biz-1',
+            tradingName: 'Amara Foods',
+            registeredLegalName: 'Amara Foods Ltd',
+            cacNumber: 'CAC-001',
+            verificationStatus:
+                businessStatus ??
+                (status == VerificationStatusKind.approved
+                    ? 'approved'
+                    : status == VerificationStatusKind.rejected
+                    ? 'rejected'
+                    : 'pending'),
+            role: 'representative',
+            isAuthorized: status == VerificationStatusKind.approved,
+            latestSubmission: VerificationSubmissionSummary(
+              submissionType: 'business_verification',
+              status: status,
+              submittedAt: DateTime.fromMillisecondsSinceEpoch(1000),
+              businessId: 'biz-1',
+              businessTradingName: 'Amara Foods',
+              decisionNotes: decisionNotes,
+            ),
+          ),
+        ],
+      ),
+    );
+  return VerificationProvider(repo: repo);
+}
 
 void main() {
   group('BusinessListScreen', () {
@@ -225,9 +270,7 @@ void main() {
   group('BusinessDetailScreen', () {
     testWidgets('renders header and verification section', (tester) async {
       final BusinessProvider provider = providerWith(
-        businesses: <Business>[
-          businessRow(id: 'biz-1', status: 'pending'),
-        ],
+        businesses: <Business>[businessRow(id: 'biz-1', status: 'pending')],
       );
       addTearDown(provider.dispose);
       await pumpApp(
@@ -239,6 +282,115 @@ void main() {
       expect(find.text('Amara Foods Ltd'), findsOneWidget);
       expect(find.text('Pending'), findsOneWidget);
       expect(find.text('Upload & submit'), findsOneWidget);
+    });
+
+    testWidgets('under-review projection hides upload and shows notes', (
+      tester,
+    ) async {
+      final BusinessProvider provider = providerWith(
+        businesses: <Business>[businessRow(id: 'biz-1', status: 'pending')],
+      );
+      final VerificationProvider verification = verificationWith(
+        status: VerificationStatusKind.inReview,
+        decisionNotes: 'Waiting on the registry extract.',
+      );
+      addTearDown(provider.dispose);
+      addTearDown(verification.dispose);
+      await pumpApp(
+        tester,
+        const BusinessDetailScreen(businessId: 'biz-1'),
+        providers: providers(provider, verification: verification),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Submitted — under review. An admin decision is required before this business can hire.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Reviewer notes: Waiting on the registry extract.'),
+        findsOneWidget,
+      );
+      expect(find.text('Upload & submit'), findsNothing);
+    });
+
+    testWidgets(
+      'resubmission shows pending while the last decision is rejected',
+      (tester) async {
+        final BusinessProvider provider = providerWith(
+          businesses: <Business>[businessRow(id: 'biz-1', status: 'rejected')],
+        );
+        final VerificationProvider verification = verificationWith(
+          status: VerificationStatusKind.pending,
+          businessStatus: 'rejected',
+        );
+        addTearDown(provider.dispose);
+        addTearDown(verification.dispose);
+        await pumpApp(
+          tester,
+          const BusinessDetailScreen(businessId: 'biz-1'),
+          providers: providers(provider, verification: verification),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Pending'), findsOneWidget);
+        expect(find.text('Rejected'), findsNothing);
+        expect(find.text('Upload & submit'), findsNothing);
+      },
+    );
+
+    testWidgets('rejected projection reopens upload and shows decision notes', (
+      tester,
+    ) async {
+      final BusinessProvider provider = providerWith(
+        businesses: <Business>[businessRow(id: 'biz-1', status: 'rejected')],
+      );
+      final VerificationProvider verification = verificationWith(
+        status: VerificationStatusKind.rejected,
+        decisionNotes: 'CAC name does not match the registry.',
+      );
+      addTearDown(provider.dispose);
+      addTearDown(verification.dispose);
+      await pumpApp(
+        tester,
+        const BusinessDetailScreen(businessId: 'biz-1'),
+        providers: providers(provider, verification: verification),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Not verified — review the decision and resubmit.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Reviewer notes: CAC name does not match the registry.'),
+        findsOneWidget,
+      );
+      expect(find.text('Upload & submit'), findsOneWidget);
+    });
+
+    testWidgets('approved projection keeps the upload locked', (tester) async {
+      final BusinessProvider provider = providerWith(
+        businesses: <Business>[
+          businessRow(id: 'biz-1', status: 'approved', authorized: true),
+        ],
+      );
+      final VerificationProvider verification = verificationWith(
+        status: VerificationStatusKind.approved,
+      );
+      addTearDown(provider.dispose);
+      addTearDown(verification.dispose);
+      await pumpApp(
+        tester,
+        const BusinessDetailScreen(businessId: 'biz-1'),
+        providers: providers(provider, verification: verification),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Verified — hire on behalf of this business.'),
+        findsOneWidget,
+      );
+      expect(find.text('No further documents are required.'), findsOneWidget);
+      expect(find.text('Upload & submit'), findsNothing);
     });
 
     testWidgets('unknown id renders not-found empty state', (tester) async {
@@ -253,9 +405,7 @@ void main() {
       expect(find.text('Business not found'), findsOneWidget);
     });
 
-    testWidgets('visual identity uses the brand primary token', (
-      tester,
-    ) async {
+    testWidgets('visual identity uses the brand primary token', (tester) async {
       expect(AppTheme.lightTheme.colorScheme.primary, const Color(0xFF2D3FE7));
     });
   });

@@ -31,6 +31,12 @@ values (current_setting('test.a')::uuid, 'active'),
        (current_setting('test.c')::uuid, 'active')
 on conflict (id) do nothing;
 
+-- These accounts are identity-verified; trade verification remains separate.
+insert into public.entity_kyc_levels (entity_id, tier_code, status)
+select e.id, 'tier_1', 'active' from public.entities e
+on conflict (entity_id) do update
+  set tier_code = excluded.tier_code, status = excluded.status;
+
 select set_config('test.prof1',
   (select id::text from public.professions where slug = 'legal-consultant'), true);
 select set_config('test.prof1',
