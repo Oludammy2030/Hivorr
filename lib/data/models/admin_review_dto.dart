@@ -14,6 +14,11 @@
 ///   entity_avatar_path, credential_id, credential_title, credential_kind,
 ///   document_path, profession_id, profession_name, submission_type, status,
 ///   submitted_at, assigned_reviewer, decision_notes
+///
+/// Business-backed rows additionally carry `business_id`,
+/// `business_trading_name`, `business_legal_name`, `business_cac_number` and
+/// `business_verification_status`; non-business rows keep the canonical 16
+/// keys unchanged.
 class AdminReviewQueueEntryDto {
   const AdminReviewQueueEntryDto({
     required this.submissionId,
@@ -32,6 +37,11 @@ class AdminReviewQueueEntryDto {
     this.professionName,
     this.assignedReviewer,
     this.decisionNotes,
+    this.businessId,
+    this.businessTradingName,
+    this.businessLegalName,
+    this.businessCacNumber,
+    this.businessVerificationStatus,
   });
 
   factory AdminReviewQueueEntryDto.fromJson(Map<String, dynamic> json) {
@@ -52,6 +62,12 @@ class AdminReviewQueueEntryDto {
       professionName: json['profession_name'] as String?,
       assignedReviewer: json['assigned_reviewer'] as String?,
       decisionNotes: json['decision_notes'] as String?,
+      businessId: json['business_id'] as String?,
+      businessTradingName: json['business_trading_name'] as String?,
+      businessLegalName: json['business_legal_name'] as String?,
+      businessCacNumber: json['business_cac_number'] as String?,
+      businessVerificationStatus:
+          json['business_verification_status'] as String?,
     );
   }
 
@@ -71,6 +87,11 @@ class AdminReviewQueueEntryDto {
   final String? professionName;
   final String? assignedReviewer;
   final String? decisionNotes;
+  final String? businessId;
+  final String? businessTradingName;
+  final String? businessLegalName;
+  final String? businessCacNumber;
+  final String? businessVerificationStatus;
 
   static DateTime? _parseDate(Object? value) {
     if (value == null) return null;

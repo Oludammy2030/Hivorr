@@ -161,6 +161,11 @@ class AdminReviewRepositoryImpl implements AdminReviewRepository {
       professionName: dto.professionName,
       assignedReviewer: dto.assignedReviewer,
       decisionNotes: dto.decisionNotes,
+      businessId: dto.businessId,
+      businessTradingName: dto.businessTradingName,
+      businessLegalName: dto.businessLegalName,
+      businessCacNumber: dto.businessCacNumber,
+      businessVerificationStatus: dto.businessVerificationStatus,
     );
   }
 

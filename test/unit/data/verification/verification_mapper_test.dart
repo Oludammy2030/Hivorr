@@ -232,6 +232,74 @@ void main() {
       expect(dto.latestSubmissions.single.reviewedAt, isNotNull);
     });
 
+    test('status DTO parses business lanes, notes and eligibility', () {
+      final VerificationStatusDto dto = VerificationStatusDto.fromJson(
+        <String, dynamic>{
+          'entity_id': 'u1',
+          'kyc': <String, dynamic>{
+            'tier_code': 'tier_1',
+            'status': 'active',
+            'limits': <String, dynamic>{
+              'daily': 50000,
+              'weekly': 200000,
+              'monthly': 800000,
+              'cashout': 100000,
+            },
+          },
+          'identity_verified': true,
+          'trade_verifications': <dynamic>[],
+          'latest_submissions': <dynamic>[],
+          'businesses': <dynamic>[
+            <String, dynamic>{
+              'business_id': 'biz-1',
+              'trading_name': 'Amara Foods',
+              'registered_legal_name': 'Amara Foods Ltd',
+              'cac_number': 'CAC-001',
+              'verification_status': 'rejected',
+              'role': 'representative',
+              'is_authorized': false,
+              'latest_submission': <String, dynamic>{
+                'status': 'rejected',
+                'submitted_at': '2026-10-01T10:00:00Z',
+                'reviewed_at': '2026-10-02T10:00:00Z',
+                'decision_notes': 'Registry mismatch',
+              },
+            },
+          ],
+          'eligibility': <String, dynamic>{
+            'identity_verified': true,
+            'professional_eligibility': <dynamic>[],
+            'business_eligibility': <dynamic>[
+              <String, dynamic>{
+                'business_id': 'biz-1',
+                'approved': false,
+                'authorized': false,
+                'can_hire': false,
+                'can_manage': true,
+              },
+            ],
+          },
+          'pending_submissions': 0,
+          'total_submissions': 2,
+        },
+      );
+
+      final VerificationStatus entity = VerificationMapper.statusToEntity(dto);
+
+      expect(entity.businesses, hasLength(1));
+      final BusinessVerificationEntry business = entity.businesses.single;
+      expect(business.businessId, 'biz-1');
+      expect(business.tradingName, 'Amara Foods');
+      expect(business.verificationStatus, 'rejected');
+      expect(business.isAuthorized, isFalse);
+      expect(
+        business.latestSubmission!.status,
+        VerificationStatusKind.rejected,
+      );
+      expect(business.latestSubmission!.decisionNotes, 'Registry mismatch');
+      expect(entity.eligibility['identity_verified'], isTrue);
+    });
+
     test('old aggregate without latest_submissions fails open', () {
       final VerificationStatusDto dto = VerificationStatusDto.fromJson(
         <String, dynamic>{
@@ -254,6 +322,8 @@ void main() {
 
       expect(dto.hasLatestSubmissionData, isFalse);
       expect(dto.latestSubmissions, isEmpty);
+      expect(dto.businesses, isEmpty);
+      expect(dto.eligibility, isEmpty);
     });
 
     test('tradeToEntity maps profession + status', () {

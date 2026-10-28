@@ -46,9 +46,13 @@ insert into public.kyc_tiers (tier_code, name, cashout_limit)
 values ('tier_1', 'Tier 1', 100000)
 on conflict (tier_code) do update set cashout_limit = 100000, name = 'Tier 1';
 
+-- These accounts are identity-verified; trade verification remains separate.
 insert into public.entity_kyc_levels (entity_id, tier_code, status)
-values (current_setting('test.b')::uuid, 'tier_1', 'active')
-on conflict (entity_id) do nothing;
+values (current_setting('test.a')::uuid, 'tier_1', 'active'),
+       (current_setting('test.b')::uuid, 'tier_1', 'active'),
+       (current_setting('test.c')::uuid, 'tier_1', 'active')
+on conflict (entity_id) do update
+  set tier_code = excluded.tier_code, status = excluded.status;
 
 select set_config('test.prof1',
   (select id::text from public.professions limit 1), true);

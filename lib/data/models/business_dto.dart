@@ -1,7 +1,7 @@
 /// Transport shapes for the business verification lane (identity Phase 2a).
 ///
-/// Businesses and memberships are RLS-CRUD rows (no dedicated RPC); evidence
-/// flows through the extended `entity_credentials_submit` /
+/// Creation uses the atomic `business_create` RPC; reads are RLS-scoped rows.
+/// Evidence flows through the extended `entity_credentials_submit` /
 /// `verification_submit` RPCs. Null-safe parsing with server-matching
 /// defaults; never throws on unknown columns.
 class BusinessDto {

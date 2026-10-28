@@ -9,11 +9,12 @@ import 'package:hivorr/data/models/verification_submission_dto.dart';
 /// Supabase-backed implementation of [BusinessRemoteDataSource]
 /// (identity audit Phase 2a).
 ///
-/// Businesses and memberships are RLS-CRUD rows (member-scoped policies +
-/// admin policies; `anon` 0) — no dedicated RPC. Evidence flows through the
-/// extended `entity_credentials_submit` (business_document kind) and the
-/// generic `verification_submit`, unwrapped with [VerificationEnvelopeParser].
-/// This class never writes verification state directly.
+/// Creation is the atomic `business_create` RPC (business + representative
+/// membership in one transaction). Reads are member-scoped RLS rows; evidence
+/// flows through the extended `entity_credentials_submit` (business_document
+/// kind) and the generic `verification_submit`, unwrapped with
+/// [VerificationEnvelopeParser]. This class never writes verification state
+/// directly.
 class SupabaseBusinessRemoteDataSource extends BaseApiService
     implements BusinessRemoteDataSource {
   SupabaseBusinessRemoteDataSource({
@@ -66,23 +67,39 @@ class SupabaseBusinessRemoteDataSource extends BaseApiService
     required String registeredLegalName,
     String? cacNumber,
   }) => _guard(() async {
-    final Map<String, dynamic>? row = await supabase
-        .from('businesses')
-        .insert(<String, dynamic>{
-          'trading_name': tradingName,
-          'registered_legal_name': registeredLegalName,
-          'cac_number': ?cacNumber,
-        })
-        .select()
-        .maybeSingle();
-    if (row == null) {
+    // Atomic server-side: inserts the pending business and the caller's
+    // representative membership in one transaction. The client never writes
+    // verification_status.
+    final Map<String, dynamic> response = await supabase
+        .rpc<Map<String, dynamic>>(
+          'business_create',
+          params: <String, dynamic>{
+            'p_trading_name': tradingName,
+            'p_registered_legal_name': registeredLegalName,
+            if (cacNumber != null && cacNumber.trim().isNotEmpty)
+              'p_cac_number': cacNumber.trim(),
+          },
+        );
+    final Map<String, dynamic> data = VerificationEnvelopeParser.unwrap(
+      response,
+    );
+    final String id = (data['business_id'] as String?) ?? '';
+    if (id.isEmpty) {
       throw const ApiException(
         kind: ApiExceptionKind.server,
         message: 'Business could not be created.',
         code: 'PLT999',
       );
     }
-    return BusinessDto.fromJson(row);
+    return BusinessDto(
+      id: id,
+      tradingName: (data['trading_name'] as String?) ?? tradingName.trim(),
+      registeredLegalName:
+          (data['registered_legal_name'] as String?) ??
+          registeredLegalName.trim(),
+      cacNumber: (data['cac_number'] as String?)?.trim(),
+      status: (data['verification_status'] as String?) ?? 'pending',
+    );
   });
 
   @override

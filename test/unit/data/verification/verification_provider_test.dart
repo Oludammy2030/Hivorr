@@ -7,6 +7,8 @@ import 'package:hivorr/core/api/exceptions/api_exception.dart';
 import 'package:hivorr/core/notifications/models/notification_permission_status.dart';
 import 'package:hivorr/core/notifications/permission/notification_permission_manager.dart';
 import 'package:hivorr/core/notifications/providers/notification_provider.dart';
+import 'package:hivorr/data/entities/kyc_level.dart';
+import 'package:hivorr/data/entities/verification_status.dart';
 import 'package:hivorr/data/entities/verification_submission.dart';
 import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/systems/verification/models/document_type.dart';
@@ -41,6 +43,65 @@ void main() {
       expect(provider.lastError, isNull);
       provider.dispose();
     });
+  });
+
+  group('unified account projection', () {
+    test(
+      'exposes identity and business lookup from the status aggregate',
+      () async {
+        final repo = FakeVerificationRepository()
+          ..setStatus(
+            VerificationStatus(
+              entityId: 'u1',
+              kycLevel: const KycLevel(
+                tierCode: 'tier_1',
+                status: 'active',
+                limits: KycLimits(daily: 1, weekly: 1, monthly: 1, cashout: 1),
+              ),
+              identityVerified: true,
+              businesses: <BusinessVerificationEntry>[
+                BusinessVerificationEntry(
+                  businessId: 'biz-1',
+                  tradingName: 'Amara Foods',
+                  registeredLegalName: 'Amara Foods Ltd',
+                  cacNumber: 'CAC-001',
+                  verificationStatus: 'approved',
+                  role: 'representative',
+                  isAuthorized: true,
+                  latestSubmission: VerificationSubmissionSummary(
+                    submissionType: 'business_verification',
+                    status: VerificationStatusKind.approved,
+                    submittedAt: DateTime.fromMillisecondsSinceEpoch(1000),
+                    businessId: 'biz-1',
+                    businessTradingName: 'Amara Foods',
+                    decisionNotes: 'Registry extract verified',
+                  ),
+                ),
+              ],
+              eligibility: const <String, dynamic>{'identity_verified': true},
+              pendingSubmissions: 0,
+              totalSubmissions: 1,
+            ),
+          );
+        final provider = VerificationProvider(repo: repo);
+
+        await provider.refreshStatus();
+
+        expect(provider.identityVerified, isTrue);
+        expect(provider.businesses, hasLength(1));
+        final BusinessVerificationEntry? business = provider.businessFor(
+          'biz-1',
+        );
+        expect(business?.tradingName, 'Amara Foods');
+        expect(business?.isAuthorized, isTrue);
+        expect(
+          business?.latestSubmission?.decisionNotes,
+          'Registry extract verified',
+        );
+        expect(provider.businessFor('missing'), isNull);
+        provider.dispose();
+      },
+    );
   });
 
   group('submitIdentityDocument', () {

@@ -37,6 +37,8 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
   String? lastSearch;
   String? lastProfessionId;
   String? lastSort;
+  String? lastSubmissionType;
+  String? lastMetricsSubmissionType;
   bool? lastRequiresResubmission;
 
   /// Mutates the queue the fake serves (e.g. after an admin decision).
@@ -54,6 +56,7 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
     String? submissionType,
   }) async {
     metricsCallCount++;
+    lastMetricsSubmissionType = submissionType;
     if (nextError != null) throw _consumeError();
     return metricsResult ??
         AdminReviewMetrics(
@@ -83,6 +86,7 @@ class FakeAdminReviewRepository implements AdminReviewRepository {
     String? sort,
   }) async {
     queueCallCount++;
+    lastSubmissionType = submissionType;
     lastSearch = search;
     lastProfessionId = professionId;
     lastSort = sort;
@@ -178,6 +182,11 @@ AdminReviewQueueEntry adminQueueEntry({
   String? professionName = 'Plumbing',
   String? assignedReviewer,
   String? decisionNotes,
+  String? businessId,
+  String? businessTradingName,
+  String? businessLegalName,
+  String? businessCacNumber,
+  String? businessVerificationStatus,
 }) => AdminReviewQueueEntry(
   submissionId: submissionId,
   entityId: entityId,
@@ -194,6 +203,11 @@ AdminReviewQueueEntry adminQueueEntry({
   professionName: professionName,
   assignedReviewer: assignedReviewer,
   decisionNotes: decisionNotes,
+  businessId: businessId,
+  businessTradingName: businessTradingName,
+  businessLegalName: businessLegalName,
+  businessCacNumber: businessCacNumber,
+  businessVerificationStatus: businessVerificationStatus,
 );
 
 /// An audit entry fixture.

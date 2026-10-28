@@ -20,9 +20,7 @@ void main() {
       isAdmin: true,
       queue:
           queue ??
-          <AdminReviewQueueEntry>[
-            adminQueueEntry(submissionId: 'sub-1'),
-          ],
+          <AdminReviewQueueEntry>[adminQueueEntry(submissionId: 'sub-1')],
     );
     final AdminReviewProvider provider = AdminReviewProvider(repo: repo);
     // The detail screen resolves its entry from the loaded queue (the queue
@@ -51,10 +49,7 @@ void main() {
       200,
       // The notes field owns an inner scrollable; the ListView's own
       // Scrollable is the unique scrollable ancestor of any row widget.
-      scrollable: find.ancestor(
-        of: finder,
-        matching: find.byType(Scrollable),
-      ),
+      scrollable: find.ancestor(of: finder, matching: find.byType(Scrollable)),
     );
     await tester.pump();
   }
@@ -74,6 +69,36 @@ void main() {
       final FakeAdminReviewRepository repo = await pumpDetail(tester);
       expect(repo.startCallCount, greaterThanOrEqualTo(1));
       expect(repo.lastStartedId, 'sub-1');
+      await unmount(tester);
+    });
+
+    testWidgets('business submissions lead with registered identity', (
+      WidgetTester tester,
+    ) async {
+      await pumpDetail(
+        tester,
+        queue: <AdminReviewQueueEntry>[
+          adminQueueEntry(
+            submissionId: 'sub-1',
+            entityName: 'Amara Diallo',
+            submissionType: 'business_verification',
+            credentialType: 'business_document',
+            credentialName: 'CAC certificate Amara Foods',
+            businessId: 'biz-1',
+            businessTradingName: 'Amara Foods',
+            businessLegalName: 'Amara Foods Ltd',
+            businessCacNumber: 'CAC-001',
+            businessVerificationStatus: 'pending',
+          ),
+        ],
+      );
+      expect(find.text('Business: Amara Foods'), findsOneWidget);
+      expect(
+        find.text('Registered legal name: Amara Foods Ltd'),
+        findsOneWidget,
+      );
+      expect(find.text('CAC number: CAC-001'), findsOneWidget);
+      expect(find.text('Business status: Pending'), findsOneWidget);
       await unmount(tester);
     });
 
@@ -130,10 +155,7 @@ void main() {
       await tester.pump();
 
       expect(repo.rejectCallCount, 0);
-      expect(
-        find.text('A reason is required to reject.'),
-        findsOneWidget,
-      );
+      expect(find.text('A reason is required to reject.'), findsOneWidget);
       await unmount(tester);
     });
 

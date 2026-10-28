@@ -123,7 +123,10 @@ class AdminReviewProvider extends ChangeNotifier {
   /// Best-effort: failures leave the previous value and surface through
   /// [lastError] without disturbing the queue. On success the pending total
   /// is compared against the last seen value for the new-submission ping.
-  Future<void> loadMetrics({int periodDays = 30, String? submissionType}) async {
+  Future<void> loadMetrics({
+    int periodDays = 30,
+    String? submissionType,
+  }) async {
     _loadingMetrics = true;
     notifyListeners();
     try {
@@ -359,6 +362,11 @@ class AdminReviewProvider extends ChangeNotifier {
                 professionName: e.professionName,
                 assignedReviewer: e.assignedReviewer,
                 decisionNotes: e.decisionNotes,
+                businessId: e.businessId,
+                businessTradingName: e.businessTradingName,
+                businessLegalName: e.businessLegalName,
+                businessCacNumber: e.businessCacNumber,
+                businessVerificationStatus: e.businessVerificationStatus,
               );
             }
             return e;

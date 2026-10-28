@@ -79,6 +79,21 @@ class VerificationProvider extends ChangeNotifier {
   /// The latest verification aggregate, or `null` before the first fetch.
   VerificationStatus? get status => _status;
 
+  /// Whether the current entity's identity is verified.
+  bool get identityVerified => _status?.identityVerified ?? false;
+
+  /// Businesses the entity belongs to, as projected by the server.
+  List<BusinessVerificationEntry> get businesses =>
+      _status?.businesses ?? const <BusinessVerificationEntry>[];
+
+  /// The server projection for [businessId], if the entity belongs to it.
+  BusinessVerificationEntry? businessFor(String businessId) {
+    for (final BusinessVerificationEntry entry in businesses) {
+      if (entry.businessId == businessId) return entry;
+    }
+    return null;
+  }
+
   /// The assigned KYC level (also embedded in [status]).
   KycLevel? get kycLevel => _kycLevel;
 

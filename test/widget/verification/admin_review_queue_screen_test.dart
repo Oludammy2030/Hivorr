@@ -87,6 +87,38 @@ void main() {
       await unmount(tester);
     });
 
+    testWidgets('shows business identity instead of the submitter line', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreenWith(
+        tester,
+        repo: FakeAdminReviewRepository(
+          queue: <AdminReviewQueueEntry>[
+            adminQueueEntry(
+              submissionId: 'sub-1',
+              entityName: 'Amara Diallo',
+              submissionType: 'business_verification',
+              credentialType: 'business_document',
+              credentialName: 'CAC certificate Amara Foods',
+              businessId: 'biz-1',
+              businessTradingName: 'Amara Foods',
+              businessLegalName: 'Amara Foods Ltd',
+              businessCacNumber: 'CAC-001',
+              businessVerificationStatus: 'pending',
+            ),
+          ],
+        ),
+      );
+      expect(find.text('Amara Foods'), findsOneWidget);
+      expect(
+        find.text('Registered: Amara Foods Ltd · CAC CAC-001'),
+        findsOneWidget,
+      );
+      expect(find.text('Business verification'), findsWidgets);
+      expect(find.textContaining('business_verification'), findsNothing);
+      await unmount(tester);
+    });
+
     testWidgets('shows a status badge per submission', (
       WidgetTester tester,
     ) async {
@@ -109,20 +141,25 @@ void main() {
     testWidgets('renders the enterprise metrics row from real data', (
       WidgetTester tester,
     ) async {
-      final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
-        queue: <AdminReviewQueueEntry>[
-          adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
-        ],
-      )..metricsResult = const AdminReviewMetrics(
-        pendingTotal: 7,
-        inReviewTotal: 2,
-        avgVerificationSeconds: 259200,
-        approvedToday: 3,
-        decidedTotal: 10,
-        rejectedTotal: 4,
-        rejectionRate: 0.4,
-        periodDays: 30,
-      );
+      final FakeAdminReviewRepository repo =
+          FakeAdminReviewRepository(
+              queue: <AdminReviewQueueEntry>[
+                adminQueueEntry(
+                  submissionId: 'sub-1',
+                  entityName: 'Ada Lovelace',
+                ),
+              ],
+            )
+            ..metricsResult = const AdminReviewMetrics(
+              pendingTotal: 7,
+              inReviewTotal: 2,
+              avgVerificationSeconds: 259200,
+              approvedToday: 3,
+              decidedTotal: 10,
+              rejectedTotal: 4,
+              rejectionRate: 0.4,
+              periodDays: 30,
+            );
       await pumpScreenWith(tester, repo: repo);
       expect(find.text('Total Pending Reviews'), findsOneWidget);
       expect(find.text('Avg. Verification Time'), findsOneWidget);
@@ -175,9 +212,7 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('search filters the loaded queue', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('search filters the loaded queue', (WidgetTester tester) async {
       await pumpScreenWith(
         tester,
         repo: FakeAdminReviewRepository(
@@ -213,6 +248,29 @@ void main() {
       expect(find.text('In review'), findsWidgets);
       // Only the filter chip keeps the Pending label; its card is gone.
       expect(find.text('Pending'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('type chips request the business server filter and metrics', (
+      WidgetTester tester,
+    ) async {
+      final FakeAdminReviewRepository repo = FakeAdminReviewRepository(
+        queue: <AdminReviewQueueEntry>[
+          adminQueueEntry(submissionId: 'sub-1', entityName: 'Ada Lovelace'),
+        ],
+      );
+      await pumpScreenWith(tester, repo: repo);
+      final int metricsBefore = repo.metricsCallCount;
+
+      await tester.tap(
+        find.widgetWithText(HivorrChip, 'Business verification'),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(repo.lastSubmissionType, 'business_verification');
+      expect(repo.lastMetricsSubmissionType, 'business_verification');
+      expect(repo.metricsCallCount, greaterThan(metricsBefore));
       await unmount(tester);
     });
 
@@ -325,10 +383,7 @@ void main() {
         find.text('No education recorded by the applicant.'),
         findsOneWidget,
       );
-      expect(
-        find.text('No skills recorded by the applicant.'),
-        findsOneWidget,
-      );
+      expect(find.text('No skills recorded by the applicant.'), findsOneWidget);
       await unmount(tester);
     });
 

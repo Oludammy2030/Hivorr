@@ -7,6 +7,7 @@ import 'package:hivorr/data/entities/onboarding_progress.dart';
 import 'package:hivorr/data/providers/hire_provider.dart';
 import 'package:hivorr/data/providers/job_provider.dart';
 import 'package:hivorr/data/providers/onboarding_provider.dart';
+import 'package:hivorr/data/providers/verification_provider.dart';
 import 'package:hivorr/data/repositories/hire_repository.dart';
 import 'package:hivorr/data/repositories/job_repository.dart';
 import 'package:hivorr/systems/dashboard/screens/profile_screen.dart';
@@ -18,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import '../../support/fakes/fake_auth.dart';
+import '../../support/fakes/fake_verification.dart';
 
 class _StubJobService implements JobService {
   @override
@@ -26,8 +28,7 @@ class _StubJobService implements JobService {
     String? status,
     int limit = 20,
     String? cursor,
-  }) async =>
-      const JobPage(jobs: [], hasMore: false, nextCursor: null);
+  }) async => const JobPage(jobs: [], hasMore: false, nextCursor: null);
 
   @override
   Future<JobPage> listJobs({
@@ -35,8 +36,7 @@ class _StubJobService implements JobService {
     String? search,
     int limit = 20,
     String? cursor,
-  }) async =>
-      const JobPage(jobs: [], hasMore: false, nextCursor: null);
+  }) async => const JobPage(jobs: [], hasMore: false, nextCursor: null);
 
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
@@ -49,8 +49,7 @@ class _StubHireService implements HireService {
     String? status,
     int limit = 20,
     String? cursor,
-  }) async =>
-      const HirePage(hires: <Hire>[], hasMore: false, nextCursor: null);
+  }) async => const HirePage(hires: <Hire>[], hasMore: false, nextCursor: null);
 
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
@@ -79,8 +78,7 @@ class _StubOnboardingService implements OnboardingService {
 }
 
 class _SessionAuth extends FakeAuthProvider {
-  _SessionAuth(this.session)
-      : super(initialStatus: AuthStatus.authenticated);
+  _SessionAuth(this.session) : super(initialStatus: AuthStatus.authenticated);
 
   final AuthSession? session;
 
@@ -92,6 +90,7 @@ Future<void> pumpProfile(
   WidgetTester tester, {
   required String email,
   required EntityCapability capability,
+  VerificationProvider? verification,
   double width = 1440,
   double height = 900,
 }) async {
@@ -125,6 +124,10 @@ Future<void> pumpProfile(
         ChangeNotifierProvider<HireProvider>.value(value: hires),
         ChangeNotifierProvider<OnboardingProvider>.value(value: onboarding),
         ChangeNotifierProvider<AuthProvider>.value(value: auth),
+        if (verification != null)
+          ChangeNotifierProvider<VerificationProvider>.value(
+            value: verification,
+          ),
       ],
       child: MaterialApp(
         theme: AppTheme.lightTheme,
@@ -136,44 +139,47 @@ Future<void> pumpProfile(
 }
 
 void main() {
-  testWidgets('desktop shows authenticated client identity, no reference data',
-      (tester) async {
-    await pumpProfile(
-      tester,
-      email: 'amara.diallo@example.com',
-      capability: EntityCapability.hire,
-    );
-    expect(tester.takeException(), isNull);
-    expect(find.text('Profile'), findsWidgets);
-    expect(find.text('Provider'), findsNothing);
-    expect(find.text('Provider Profile'), findsNothing);
-    expect(find.text('Amara Diallo'), findsWidgets);
-    expect(find.text('amara.diallo@example.com'), findsWidgets);
-    expect(find.text('Client'), findsWidgets);
-    expect(find.text('Not provided'), findsOneWidget);
-    // Reference destructive casing shared with the professional tab.
-    expect(find.text('Sign Out'), findsOneWidget);
-    expect(find.text('Jobs Posted'), findsOneWidget);
-    // Client preferences card (local-state toggles, reference defaults).
-    expect(find.text('Preferences'), findsOneWidget);
-    expect(find.text('Email notifications'), findsOneWidget);
-    expect(find.text('Job application alerts'), findsOneWidget);
-    expect(find.text('SMS updates'), findsOneWidget);
-    expect(find.text('Weekly digest'), findsOneWidget);
-    // Forbidden reference / legacy terms.
-    expect(find.text('TechVentures Africa'), findsNothing);
-    expect(find.text('TV'), findsNothing);
-    expect(find.text('Employer'), findsNothing);
-    expect(find.text('hr@techventures.ng'), findsNothing);
-    expect(find.text('+234 801 234 5678'), findsNothing);
-    expect(find.text('11–50 employees'), findsNothing);
-    expect(find.text('Account'), findsNothing);
-    expect(find.text('Account Stats'), findsNothing);
-    expect(find.text('Rating as Employer'), findsNothing);
-  });
+  testWidgets(
+    'desktop shows authenticated client identity, no reference data',
+    (tester) async {
+      await pumpProfile(
+        tester,
+        email: 'amara.diallo@example.com',
+        capability: EntityCapability.hire,
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text('Profile'), findsWidgets);
+      expect(find.text('Provider'), findsNothing);
+      expect(find.text('Provider Profile'), findsNothing);
+      expect(find.text('Amara Diallo'), findsWidgets);
+      expect(find.text('amara.diallo@example.com'), findsWidgets);
+      expect(find.text('Client'), findsWidgets);
+      expect(find.text('Not provided'), findsOneWidget);
+      // Reference destructive casing shared with the professional tab.
+      expect(find.text('Sign Out'), findsOneWidget);
+      expect(find.text('Jobs Posted'), findsOneWidget);
+      // Client preferences card (local-state toggles, reference defaults).
+      expect(find.text('Preferences'), findsOneWidget);
+      expect(find.text('Email notifications'), findsOneWidget);
+      expect(find.text('Job application alerts'), findsOneWidget);
+      expect(find.text('SMS updates'), findsOneWidget);
+      expect(find.text('Weekly digest'), findsOneWidget);
+      // Forbidden reference / legacy terms.
+      expect(find.text('TechVentures Africa'), findsNothing);
+      expect(find.text('TV'), findsNothing);
+      expect(find.text('Employer'), findsNothing);
+      expect(find.text('hr@techventures.ng'), findsNothing);
+      expect(find.text('+234 801 234 5678'), findsNothing);
+      expect(find.text('11–50 employees'), findsNothing);
+      expect(find.text('Account'), findsNothing);
+      expect(find.text('Account Stats'), findsNothing);
+      expect(find.text('Rating as Employer'), findsNothing);
+    },
+  );
 
-  testWidgets('different professional user gets own identity, no stale data',
-      (tester) async {
+  testWidgets('different professional user gets own identity, no stale data', (
+    tester,
+  ) async {
     await pumpProfile(
       tester,
       email: 'john.adewale@example.com',
@@ -193,40 +199,76 @@ void main() {
     expect(find.text('Employer'), findsNothing);
   });
 
-  testWidgets('missing email renders honest empty states', (tester) async {
+  testWidgets('professional identity row reflects verified status', (
+    tester,
+  ) async {
+    final VerificationProvider verification = VerificationProvider(
+      repo: FakeVerificationRepository(identityVerified: true),
+    );
+    addTearDown(verification.dispose);
+    await verification.refreshStatus();
     await pumpProfile(
       tester,
-      email: '',
-      capability: EntityCapability.hire,
+      email: 'john.adewale@example.com',
+      capability: EntityCapability.offer,
+      verification: verification,
     );
+    expect(tester.takeException(), isNull);
+    expect(find.text('Identity'), findsOneWidget);
+    // Verified identity no longer offers the verification action.
+    expect(find.text('Verify'), findsNothing);
+  });
+
+  testWidgets('unverified identity row links to verification status', (
+    tester,
+  ) async {
+    final VerificationProvider verification = VerificationProvider(
+      repo: FakeVerificationRepository(),
+    );
+    addTearDown(verification.dispose);
+    await verification.refreshStatus();
+    await pumpProfile(
+      tester,
+      email: 'john.adewale@example.com',
+      capability: EntityCapability.offer,
+      verification: verification,
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('Identity'), findsOneWidget);
+    expect(find.text('Verify'), findsOneWidget);
+  });
+
+  testWidgets('missing email renders honest empty states', (tester) async {
+    await pumpProfile(tester, email: '', capability: EntityCapability.hire);
     expect(tester.takeException(), isNull);
     expect(find.text('Email not available'), findsOneWidget);
     expect(find.text('Not available'), findsOneWidget);
     expect(find.text('Client'), findsWidgets);
   });
 
-    testWidgets('preference toggles flip local state without errors',
-        (tester) async {
-      await pumpProfile(
-        tester,
-        email: 'amara.diallo@example.com',
-        capability: EntityCapability.hire,
-        width: 390,
-        height: 844,
-      );
-      expect(tester.takeException(), isNull);
-      final Finder switches = find.byType(Switch);
-      expect(switches, findsNWidgets(4));
-      expect(tester.widget<Switch>(switches.at(2)).value, isFalse);
-      await tester.ensureVisible(switches.at(2));
-      await tester.pumpAndSettle();
-      await tester.tap(switches.at(2));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      expect(tester.widget<Switch>(switches.at(2)).value, isTrue);
-    });
+  testWidgets('preference toggles flip local state without errors', (
+    tester,
+  ) async {
+    await pumpProfile(
+      tester,
+      email: 'amara.diallo@example.com',
+      capability: EntityCapability.hire,
+      width: 390,
+      height: 844,
+    );
+    expect(tester.takeException(), isNull);
+    final Finder switches = find.byType(Switch);
+    expect(switches, findsNWidgets(4));
+    expect(tester.widget<Switch>(switches.at(2)).value, isFalse);
+    await tester.ensureVisible(switches.at(2));
+    await tester.pumpAndSettle();
+    await tester.tap(switches.at(2));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(tester.widget<Switch>(switches.at(2)).value, isTrue);
+  });
 
-    testWidgets('no overflow across widths', (tester) async {
+  testWidgets('no overflow across widths', (tester) async {
     for (final double w in <double>[
       320,
       360,

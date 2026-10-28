@@ -31,6 +31,11 @@ void main() {
     String submittedAt = '2026-01-15T10:30:00Z',
     String? assignedReviewer,
     String? decisionNotes,
+    String? businessId,
+    String? businessTradingName,
+    String? businessLegalName,
+    String? businessCacNumber,
+    String? businessVerificationStatus,
   }) => <String, dynamic>{
     'id': id,
     'entity_id': entityId,
@@ -48,6 +53,11 @@ void main() {
     'submitted_at': submittedAt,
     'assigned_reviewer': assignedReviewer,
     'decision_notes': decisionNotes,
+    'business_id': ?businessId,
+    'business_trading_name': ?businessTradingName,
+    'business_legal_name': ?businessLegalName,
+    'business_cac_number': ?businessCacNumber,
+    'business_verification_status': ?businessVerificationStatus,
   };
 
   Map<String, dynamic> auditEntryData({
@@ -142,6 +152,37 @@ void main() {
       expect(second.credentialType, 'identity_document');
       expect(second.credentialName, 'ID Card');
       expect(second.status, 'in_review');
+    });
+
+    test('parses additive business identity fields', () async {
+      final source = build(<String, Object? Function(Map<String, dynamic>)>{
+        'verification_review_queue_get': (_) => ok(<String, dynamic>{
+          'submissions': <dynamic>[
+            queueEntryData(
+              submissionType: 'business_verification',
+              credentialKind: 'business_document',
+              credentialTitle: 'CAC certificate',
+              businessId: 'biz-1',
+              businessTradingName: 'Amara Foods',
+              businessLegalName: 'Amara Foods Ltd',
+              businessCacNumber: 'CAC-001',
+              businessVerificationStatus: 'pending',
+            ),
+          ],
+          'total_count': 1,
+        }),
+      });
+
+      final List<AdminReviewQueueEntryDto> entries = await source
+          .getReviewQueue(limit: 20, offset: 0);
+      final AdminReviewQueueEntryDto business = entries.single;
+
+      expect(business.submissionType, 'business_verification');
+      expect(business.businessId, 'biz-1');
+      expect(business.businessTradingName, 'Amara Foods');
+      expect(business.businessLegalName, 'Amara Foods Ltd');
+      expect(business.businessCacNumber, 'CAC-001');
+      expect(business.businessVerificationStatus, 'pending');
     });
 
     test('passes p_submission_type when non-null', () async {
@@ -478,7 +519,8 @@ void main() {
     });
   });
 
-  group('checkAdmin — canonical envelope', () {    test('parses data.is_admin true', () async {
+  group('checkAdmin — canonical envelope', () {
+    test('parses data.is_admin true', () async {
       final source = build(<String, Object? Function(Map<String, dynamic>)>{
         'platform_admin_check': (_) => ok(<String, dynamic>{'is_admin': true}),
       });

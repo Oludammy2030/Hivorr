@@ -5,11 +5,12 @@
 -- no KYC/trade cross-grant), representative authorization, the D5 guard,
 -- and stranger isolation:
 --   - 3 create+join + 1 stranger-isolation + 3 credential + 2 submit +
---   - 4 approve-propagation + 1 D5-guard + 3 reject-path + 4 diagnostics = 21.
+--   - 4 approve-propagation + 1 D5-guard + 5 reject-path +
+--   - 4 diagnostics = 23.
 
 begin;
 set search_path to extensions, public;
-select plan(21);
+select plan(23);
 
 -- ─── 0. Fixtures ─────────────────────────────────────────────────────────────
 set role postgres;
@@ -181,24 +182,45 @@ select throws_ok(
   'D5 guard blocks direct verification_status update'
 );
 
--- ─── 7. Reject path propagates nothing ───────────────────────────────────────
+-- ─── 7. Approved cannot resubmit; pending rejection cascades ─────────────────
 select set_config('test.cred2', (select (public.entity_credentials_submit(
   'business_document', 'Tax clearance Amara Foods',
   null, null, null,
   current_setting('test.biz')::uuid
 )->'data'->>'id')), true);
-select lives_ok(
+select throws_ok(
   $$ select public.verification_submit(
     current_setting('test.cred2')::uuid, 'business_verification') $$,
-  'second business document queues with explicit lane type (PLT000)'
+  'P0001', 'PLT005: This business is already verified.',
+  'approved business cannot queue another submission'
+);
+
+select set_config('test.biz2', (select public.business_create(
+  'Amara Logistics', 'Amara Logistics Ltd', 'CAC-BIZ-002'
+)->'data'->>'business_id'), true);
+select set_config('test.cred3', (select (public.entity_credentials_submit(
+  'business_document', 'CAC certificate Amara Logistics',
+  null, null, null,
+  current_setting('test.biz2')::uuid
+)->'data'->>'id')), true);
+select lives_ok(
+  $$ select public.verification_submit(
+    current_setting('test.cred3')::uuid, 'business_verification') $$,
+  'pending business queues its first submission (PLT000)'
 );
 set role service_role;
 select lives_ok(
   $$ select public.verification_review_reject(
     (select id from public.verification_submissions
-      where credential_id = current_setting('test.cred2')::uuid),
-    'Unverifiable scan', false) $$,
-  'service_role rejects the second submission (PLT000)'
+      where credential_id = current_setting('test.cred3')::uuid),
+    'Registry mismatch', false) $$,
+  'service_role rejects the pending business submission (PLT000)'
+);
+select is(
+  (select verification_status from public.businesses
+    where id = current_setting('test.biz2')::uuid),
+  'rejected',
+  'rejection moves a pending business to rejected'
 );
 select is(
   (select verification_status from public.businesses
