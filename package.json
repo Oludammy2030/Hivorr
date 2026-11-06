@@ -14,14 +14,16 @@
     "dev": "vite --host 0.0.0.0 --config vite.figma.config.ts",
     "format": "oxfmt",
     "format:check": "node scripts/format-check.mjs",
+    "hooks:install": "node scripts/install-git-hooks.mjs",
     "lint": "node scripts/lint.mjs",
     "preview": "vite preview --config vite.figma.config.ts",
     "security:deps": "pnpm audit --audit-level=high",
     "security:secrets": "node scripts/secret-scan.mjs",
     "test": "vitest run",
+    "test:push-protection": "node scripts/test-push-protection.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm check:toolchain && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "verify": "pnpm check:toolchain && pnpm lint && pnpm typecheck && pnpm test && pnpm test:push-protection && pnpm build"
   },
   "dependencies": {
     "@popperjs/core": "2.11.8",

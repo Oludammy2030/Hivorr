@@ -1,0 +1,77 @@
+name: Staging deployment gate
+
+on:
+  push:
+    branches:
+      - staging
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: staging-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-pr:
+    name: verify staging PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout policy script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Require a merged pull request into staging
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: node scripts/verify-pr-merge.mjs
+
+  build-staging-artifact:
+    name: build staging artifact
+    needs: verify-pr
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install pnpm 10.34.9
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 10.34.9
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Upload staging artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: staging-build-${{ github.sha }}
+          path: dist
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Deployment target
+        run: |
+          if [ -n "${{ vars.STAGING_DEPLOY_TARGET }}" ]; then
+            echo "Staging deployment target is configured: ${{ vars.STAGING_DEPLOY_TARGET }}"
+            echo "Deployment itself remains gated on the approved PR and this artifact."
+          else
+            echo "No staging host is configured yet. The approved PR gate and artifact are in place;"
+            echo "the hosting target is an EP-01 entry condition."
+          fi
