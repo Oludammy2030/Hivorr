@@ -31,6 +31,10 @@ cd Hivorr
 pnpm install --frozen-lockfile
 ```
 
+On **Windows**, add `--force` once (`pnpm install --force --frozen-lockfile`) so the native optional
+packages Vitest/Vite need are installed despite the Linux-only `supportedArchitectures` pin. It is
+still a frozen install and must not modify `pnpm-lock.yaml`. Linux and CI use the plain command.
+
 Expected: `Lockfile is up to date, resolution step is skipped`, exit 0. The install must not modify
 `pnpm-lock.yaml`.
 
