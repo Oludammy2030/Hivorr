@@ -1,0 +1,126 @@
+{
+  "expires": "2026-12-31",
+  "removalCondition": "Remove an entry when its file is extracted or refactored in EP-01; the whole baseline is removed when App.tsx is decomposed.",
+  "entries": [
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 1059,
+      "message": "'screen' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 1136,
+      "message": "'isTablet' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 1607,
+      "message": "'goTo' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 1696,
+      "message": "'goTo' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 1784,
+      "message": "'isTablet' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 1941,
+      "message": "'goTo' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 2106,
+      "message": "'goTo' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 2106,
+      "message": "'ProWallet' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 2192,
+      "message": "'goTo' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 2447,
+      "message": "'isDesktop' is assigned a value but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 3056,
+      "message": "'product' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 3227,
+      "message": "'SellerAnalytics' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 3354,
+      "message": "'LogisticsEarnings' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 429,
+      "message": "'role' is defined but never used. Allowed unused args must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 6,
+      "message": "'Settings' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 799,
+      "message": "'RoleSelectScreen' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 8,
+      "message": "'BookOpen' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 8,
+      "message": "'Wrench' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 9,
+      "message": "'PauseCircle' is defined but never used. Allowed unused vars must match /^_/u."
+    },
+    {
+      "file": "src/app/App.tsx",
+      "rule": "@typescript-eslint/no-unused-vars",
+      "line": 994,
+      "message": "'getRoleInitials' is defined but never used. Allowed unused vars must match /^_/u."
+    }
+  ]
+}
