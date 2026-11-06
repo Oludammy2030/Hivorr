@@ -42,25 +42,16 @@ function isMergedIntoBranch(pr) {
 }
 
 try {
-  const commit = await getJson(`/commits/${sha}`)
-  const candidates = [
-    sha,
-    ...(commit.parents || []).map((parent) => parent.sha),
-  ]
-  const seen = new Set()
-
-  for (const candidate of candidates) {
-    if (seen.has(candidate)) continue
-    seen.add(candidate)
-    const pulls = await getJson(`/commits/${candidate}/pulls`)
-    const merged = (pulls || []).find(isMergedIntoBranch)
-    if (merged) {
-      console.log(
-        `verify-pr-merge: OK - ${branch} push ${sha.slice(0, 7)} is linked to merged PR #${merged.number}`,
-      )
-      console.log(`verify-pr-merge: ${merged.html_url}`)
-      process.exit(0)
-    }
+  // Check the pushed commit itself. Do not walk parents: a new direct commit
+  // on top of a merged PR would otherwise inherit that PR's association.
+  const pulls = await getJson(`/commits/${sha}/pulls`)
+  const merged = (pulls || []).find(isMergedIntoBranch)
+  if (merged) {
+    console.log(
+      `verify-pr-merge: OK - ${branch} push ${sha.slice(0, 7)} is linked to merged PR #${merged.number}`,
+    )
+    console.log(`verify-pr-merge: ${merged.html_url}`)
+    process.exit(0)
   }
 
   console.error(

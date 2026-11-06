@@ -75,8 +75,13 @@ This does not undo the push. It does:
 - block the staging build/deployment gate, which depends on the same verification;
 - block the production deployment workflow, which depends on it.
 
-`scripts/verify-pr-merge.mjs` checks the pushed commit and its parents against the GitHub API, so
-merge-commit, squash-merge and rebase-merge histories are handled.
+`scripts/verify-pr-merge.mjs` checks the **pushed commit itself** against the GitHub API. It
+deliberately does not walk parent commits: a direct commit placed on top of a merged PR would
+otherwise inherit that PR's association and pass. Merge-commit, squash-merge and rebase-merge
+histories are handled because GitHub associates the resulting commit with the PR.
+
+The guard was tested with both a merged commit (`3b1def3`, passes) and a pushed commit with no PR
+(`b2e97c5`, fails).
 
 ## 4. Staging and production gates
 
@@ -167,8 +172,9 @@ guarantee against a determined privileged actor.
 | Force-push `main` | Rejected | Hook transcript |
 | Delete `main` | Rejected | Hook transcript |
 | Secret-shaped content on a feature branch | Rejected by the secret scan | Existing EP-00 transcript |
-| CI direct-push detection | Fails `verify-pr` | Workflow run after a seeded direct push |
-| PR-merged staging push | Passes `verify-pr` and builds artifact | Staging workflow run |
+| CI direct-push detection | Fails `verify-pr` | Guard test on unmerged `b2e97c5`; local transcript |
+| PR-merged staging push | Passes `verify-pr` and builds artifact | Protected branch guard run 42264089981; Staging deployment gate run 42264089978 |
+| PR-merged staging push (negative control) | Merged commit `3b1def3` passes the guard | `verify-pr-merge.mjs` output |
 | Production without founder/confirmation | Refused | Manual workflow test |
 
 ## 9. Rollback
