@@ -1,0 +1,7 @@
+{
+  "protected": ["main", "staging"],
+  "production": "main",
+  "staging": "staging",
+  "branchPrefixes": ["feature/", "fix/", "chore/", "docs/", "test/", "dependabot/"],
+  "flow": "feature/* -> PR -> staging -> PR -> main"
+}
