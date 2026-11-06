@@ -1,25 +1,27 @@
 #!/bin/sh
-# Pre-push guard: refuse to publish anything that looks like a credential.
+# Pre-push guard: protected-branch policy plus secret scan.
 #
 # Enable once per clone:
 #   git config core.hooksPath .githooks
+# or:
+#   pnpm hooks:install
 #
-# See scripts/secret-scan.mjs and EP-00-005 finding F-05-01.
+# See scripts/pre-push.mjs and documents/Engineering-Execution/BRANCH_PROTECTION.md.
 
 root=$(git rev-parse --show-toplevel) || exit 1
 
 if command -v node >/dev/null 2>&1; then
-  node "$root/scripts/secret-scan.mjs"
+  node "$root/scripts/pre-push.mjs"
   status=$?
 else
-  echo "pre-push: node not found - secret scan skipped" >&2
+  echo "pre-push: node not found - policy checks cannot run" >&2
   echo "pre-push: install the pinned toolchain (mise) before pushing" >&2
   status=1
 fi
 
 if [ "$status" -ne 0 ]; then
   echo "" >&2
-  echo "pre-push: push blocked by the local secret scan." >&2
+  echo "pre-push: push blocked." >&2
   exit 1
 fi
 

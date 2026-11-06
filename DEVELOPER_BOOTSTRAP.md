@@ -38,11 +38,17 @@ still a frozen install and must not modify `pnpm-lock.yaml`. Linux and CI use th
 Expected: `Lockfile is up to date, resolution step is skipped`, exit 0. The install must not modify
 `pnpm-lock.yaml`.
 
-Enable the local pre-push secret guard once per clone:
+Enable the local pre-push policy and secret guard once per clone:
 
 ```sh
-git config core.hooksPath .githooks
+pnpm hooks:install
+# equivalent to: git config --local core.hooksPath .githooks
 ```
+
+The hook blocks direct pushes to `main` and `staging`, force-pushes and deletions. Work on a
+`feature/*`, `fix/*`, `chore/*`, `docs/*` or `test/*` branch and open a pull request. The flow is
+`feature/* → PR → staging → PR → main`. See
+`documents/Engineering-Execution/BRANCH_PROTECTION.md`.
 
 ## 3. Verify
 
@@ -88,6 +94,7 @@ a network, a tunnel or the public internet; it has no authentication or producti
 | `pnpm build` | The Figma Make/Vite build is broken. |
 | `pnpm security:deps` | A High or Critical advisory is present. |
 | `pnpm security:secrets` | A tracked file matches a known credential shape. |
+| `git push origin main` / `staging` | The destination is a protected branch. Push a working branch and open a PR. |
 
 ## 5. Windows note
 

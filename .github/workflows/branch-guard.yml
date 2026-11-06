@@ -1,0 +1,32 @@
+name: Protected branch guard
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: branch-guard-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-pr:
+    name: verify merged pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout policy script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Verify push came from a merged PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: node scripts/verify-pr-merge.mjs
