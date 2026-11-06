@@ -1,0 +1,4 @@
+﻿
+> @figma/my-make-file@0.0.1 typecheck <repo>
+> tsc --noEmit
+

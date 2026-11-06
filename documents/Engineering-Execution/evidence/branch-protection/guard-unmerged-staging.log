@@ -1,0 +1,8 @@
+﻿node : verify-pr-merge: BLOCKED - staging push 8fd53aa has no merged pull request into staging.
+At line:1 char:586
++ ... 6e54405e8'; node scripts/verify-pr-merge.mjs *> "$dir\guard-unmerged- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (verify-pr-merge...t into staging.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Protected branches accept changes through pull requests only. See documents/Engineering-Execution/BRANCH_PROTECTION.md.
