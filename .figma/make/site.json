@@ -1,0 +1,10 @@
+{
+  "description": "Connect employers with professionals for physical and digital services through a streamlined marketplace, ensuring trust, speed, and simplicity.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

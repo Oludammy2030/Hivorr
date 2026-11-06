@@ -1,0 +1,8 @@
+/*
+ * Hivorr typography — two families only (AGENTS.md §2.6).
+ *   Display: 'Plus Jakarta Sans' — headings, numbers, brand, buttons
+ *   Body:    'Inter'             — paragraphs, inputs, tables
+ * Do not introduce another family.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');

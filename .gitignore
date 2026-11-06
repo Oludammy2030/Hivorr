@@ -1,0 +1,44 @@
+# Hivorr - files that must never be committed.
+# Enforced from the first commit (v0.0.1-bootstrap, EP-00-001).
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+*.tsbuildinfo
+
+# Environment and secrets - never commit a real one
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
+.blob-report/
+
+# Tool caches
+.vite/
+.cache/
+.turbo/
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
