@@ -3,24 +3,30 @@
 | Field | Value |
 | --- | --- |
 | **Document** | `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` |
-| **Version** | 2.0 |
-| **Date** | 4 November 2026 |
-| **Status** | **APPROVED — 4 November 2026.** Binding. |
+| **Version** | 2.1 |
+| **Date** | 6 November 2026 |
+| **Status** | **APPROVED — 6 November 2026.** Binding. |
 | **Owner** | Founder (AfriNova) for business risk, security posture and approval gates. Architect for technical content. |
 | **Applies to** | Every human contributor and every AI coding agent that reads, designs, writes, reviews, tests, deploys or documents code for Hivorr. |
 | **Review cycle** | Every six months, and on any trigger listed in §13.5. |
-| **Supersedes** | Version 1.3 of this document. Versions 1.0–1.3 were proposals and were never binding; version 2.0 is the first approved version. |
+| **Supersedes** | Version 2.0 of this document. Versions 1.0–1.3 were proposals and were never binding; version 2.0 was the first approved version. Version 2.1 adds §19, Audit Readiness by Design, and extends `QUA-37` and `AI-21` with audit-readiness conditions. It removes or weakens no existing rule. |
 | **Companion documents** | `VISION.md`, `ARCHITECTURE.md`, `Unified-Account-and-Activity-Permission-Matrix.md`, `Database-Migration-and-Supabase-Data-API-Rules.md`, `VISUAL-IDENTITY.md`, `AGENTS.md` |
 
-> **Status note.** Approved by the founder on **4 November 2026**, version 2.0 as written. Every rule
+> **Status note.** Approved by the founder on **6 November 2026**, version 2.1. Every rule
 > marked **[STD]** binds from that date; every rule marked **[REC]** is the expected default; every
-> **[REVIEW]** and **[FOUNDER]** rule is now a gate in the process described in §13. The change
+> **[REVIEW]** and **[FOUNDER]** rule is a gate in the process described in §13. The change
 > classes in §1.4, the gate set in §13.4 and the exceptions register in §13.3 are binding with it.
+>
+> Version 2.1 adds **§19, Audit Readiness by Design**. It introduces the `AUD-` and `TRC-` rule
+> series, the six audit readiness checkpoints (`AR-0`–`AR-5`), the requirement classes `R1`–`R5`,
+> and the traceability template in Appendix D. It removes or weakens no rule in §2–§18; `QUA-37` and
+> `AI-21` gain the conditions recorded in §17, and every existing condition still applies. It does not
+> settle any **[OPEN]** item and does not create a legal, regulatory or contractual obligation. The
+> approval itself is recorded in §18.
 >
 > Approval of this document does **not** settle any **[OPEN]** item in §16 or `ARCHITECTURE.md` §16.4,
 > does **not** approve any phase of engineering work, and does **not** authorise a production release.
-> Those remain separate acts by the founder or architect named in Document control, and the approval
-> itself is recorded in §18.
+> Those remain separate acts by the founder or architect named in Document control.
 
 ---
 
@@ -29,16 +35,21 @@
 Four reading paths. Read the one that matches what you are about to do.
 
 **Starting work on a feature.**
-§2 (principles) → §3 (may I use this technology) → §4–§8 (the area you are touching) → §10
-(quality and tests) → §12 if you are an AI agent.
+§2 (principles) → §19.2–§19.5 (requirement classes, impact note, controls) → §3 (may I use this
+technology) → §4–§8 (the area you are touching) → §10 (quality and tests) → §12 if you are an AI
+agent.
 
 **Reviewing someone else's work.**
 Appendix B (one-page checklist) → the section for the area being changed → §13.1 (which class of
-change is this) → §10.6 (review requirements).
+change is this) → §19.12 (audit readiness gates) → §10.6 (review requirements).
 
 **Approving a release.**
-§9.4–§9.6 (production protection, migration gate, rollback) → §13.1 → the release record fields in
-§9.6.
+§9.4–§9.6 (production protection, migration gate, rollback) → §19.12 (AR-4) → §13.1 → the release
+record fields in §9.6.
+
+**Preparing for, or responding to, an external assessment.**
+§19.13 (external audit preparation) → §19.11–§19.12 (traceability and gates) → §11.3 (audit trail)
+→ §13.3 (exceptions and deviations) → §16 (open decisions).
 
 **Resolving a disagreement about what is allowed.**
 §1.3 (authority map) → §1.4 (the four labels) → §15 (recorded conflicts) → §16 (open decisions).
@@ -73,6 +84,8 @@ In scope:
 - Environment separation, production protection, deployment records and rollback.
 - Code quality, testing, security testing and code review.
 - Monitoring, logging, audit, vulnerability management and incident response.
+- Audit readiness by design: requirement sources, requirement-to-control-to-evidence traceability,
+  audit readiness gates, and the evidence needed for independent assessment.
 - The obligations of AI coding agents.
 - Governance: the four decision classes, deviations, enforcement and amendment.
 
@@ -83,7 +96,11 @@ Out of scope — governed elsewhere, cited rather than restated:
 - Account model, capabilities, verification lanes, admin scopes — the permission matrix.
 - SQL mechanics, grants, RLS policy syntax, migration tooling — the database rules.
 - Colour, typography, spacing, component anatomy — the prototype, then `VISUAL-IDENTITY.md`.
-- Legal, tax, regulatory and funds-custody questions — founder and counsel.
+- Legal, tax, regulatory and funds-custody questions, and the interpretation of a statute, a
+  regulator's guidance or a VFD onboarding document — founder and counsel.
+
+Audit readiness does not create a new governance document. §19 is the authoritative engineering
+standard for it; legal and contractual interpretation remains outside this document.
 
 ### Ownership and review requirements
 
@@ -147,7 +164,7 @@ speaking about its own subject.
 | How is the database reached, changed, granted and tested? | `Database-Migration-and-Supabase-Data-API-Rules.md` | Apply it. Never restate SQL mechanics. |
 | What does it look like? | The prototype, then `VISUAL-IDENTITY.md` | Protect it. Never override it. |
 | How does an AI agent behave on this project? | `AGENTS.md` | Extend with engineering and security detail. |
-| **How is engineering work done, verified and gated?** | **This document** | **Authoritative.** |
+| **How is engineering work done, verified, evidenced and gated?** | **This document** | **Authoritative.** |
 
 **GOV-01 [STD]** Where this document and `ARCHITECTURE.md` disagree about *what the system is*,
 `ARCHITECTURE.md` governs, and the disagreement is recorded in §15.
@@ -230,9 +247,11 @@ breaking references.
 | `AUT-` | Authentication and authorisation | `OPS-` | Monitoring and incidents |
 | `DAT-` | Database and data protection | `AI-` | AI coding agent compliance |
 | `API-` | API and integration security | `GOV-` | Governance and enforcement |
+| `AUD-` | Audit readiness by design | `TRC-` | Requirement-to-control-to-evidence traceability |
 
 A review comment should say `SEC-14`, not "the XSS bit". A deviation record must name the rule it
-deviates from.
+deviates from. `AUD-` rules govern audit readiness (§19); `TRC-` rules govern the traceability record
+that connects a requirement to its control and evidence (§19.11).
 
 ---
 
@@ -340,6 +359,11 @@ contributor cannot find a rule, the correct question is not "is this allowed?" b
 does this serve, and which does it violate?" A change that satisfies the letter of every rule while
 violating §2.1 is still wrong, and a reviewer should say so.
 
+**ENG-19 [STD]** A control that cannot be evidenced is treated as absent. Design the control so that it
+produces the record of its own operation, and record that record where the phase's evidence index can
+find it (§19.8, §19.11). This is the audit-readiness application of §2.1: the evidence belongs in the
+layer that cannot be bypassed, not in a manual step remembered after the fact.
+
 ### 2.8 The principles as tests
 
 A reviewer can apply each principle as a question with a yes/no answer.
@@ -352,6 +376,7 @@ A reviewer can apply each principle as a question with a yes/no answer.
 | Scalability without complexity | What measurement justifies this infrastructure? If there is none, remove it. |
 | Performance and reliability | What happens on a slow network, a timeout, a retry, and a duplicate delivery? |
 | Consistency | Which approved document authorises this? If none, which decision class does it fall in? |
+| Audit readiness | If an assessor asked for the requirement, the control and the evidence, could I produce all three from records made during the work? If not, the control is not yet assessable. |
 
 ---
 
@@ -1941,6 +1966,9 @@ which governs UI work specifically.
 | 8 | Logs contain no personal data or secret; errors carry a correlation id. |
 | 9 | Any deviation is recorded (§13.2). |
 | 10 | The rollback position is understood. |
+| 11 | Any R1/R2 question engaged by the change is classified and, if unresolved, recorded as **[OPEN]** (§19.2–§19.3). |
+| 12 | The control has a test that fails if the control is removed, and the test execution is retained (§19.9). |
+| 13 | The traceability record is updated, or the change states why no record is required (§19.11, TRC-02). |
 
 ### 10.9 Documentation obligations
 
@@ -2261,6 +2289,12 @@ or reported.
 | 8 | Did I add a dependency, and did I justify it? |
 | 9 | Did I leave an **[OPEN]** decision looking decided? |
 | 10 | Does my report separate what I verified from what I assumed? |
+| 11 | Did I classify each requirement I relied on, and avoid presenting a recommendation as a legal or contractual obligation? |
+| 12 | Did I produce the evidence and update the traceability record, or state why the change does not need one? |
+
+**Audit readiness.** The twelve mandatory behaviours in §19.14 (`AI-22`) are part of this section's
+obligations. They apply to every agent, including a sub-agent, and are reported under the AI-17 report
+fields rather than as a separate status.
 
 ---
 
@@ -2303,6 +2337,10 @@ nearest listed change and states the analogy in the pull request.
 | Changing a CI gate, test threshold or lint rule | **[REVIEW]** | Architect |
 | Lowering `minimumReleaseAge` or bypassing the lockfile | **[FOUNDER]** | Founder |
 | Adding the test toolchain (Vitest, Playwright, Testcontainers) | **[REVIEW]** | Architect |
+| A new control that implements an R1 or R2 requirement | **[REVIEW]** | Architect and founder, because the requirement class and applicability are founder decisions (§19.2) |
+| A change that implements an R3 control on critical logic (QUA-35) | **[REVIEW]** | Architect or security reviewer, with a traceability record (TRC-01) |
+| A change to the audit event schema, audit store or retention | **[REVIEW]** | Architect and founder |
+| An external assessment pack or a public statement about audit, compliance or certification | **[FOUNDER]** | Founder — an agent may assemble evidence but may not make the claim (AUD-03, AUD-85) |
 | Changing this document | **[FOUNDER]** | Founder |
 | Changing `ARCHITECTURE.md`, the matrix, the database rules or `VISUAL-IDENTITY.md` | **[FOUNDER]** | Founder |
 | Routine secret rotation on schedule | Operational | Recorded; no approval needed |
@@ -2405,6 +2443,9 @@ current state; it does not authorise new work that depends on it.
 | Policy tests | RLS that allows or denies incorrectly | CI |
 | Required reviewers | Unreviewed change on a sensitive area | Repository settings |
 | Production approval | Any deployment without founder approval | Environment protection |
+| Traceability completeness | A change to critical logic with no requirement record, control or evidence (§19.11) | Review checklist, CI report |
+| Audit readiness gate | A phase, release or assessment pack that has not passed the applicable AR gate (§19.12) | Phase gate, release checklist, assessment pack |
+| Evidence index | A control that cannot be located in the evidence index (§19.8) | Phase close-out |
 
 **GOV-20 [STD]** A gate is not bypassed. If a gate is wrong, it is fixed deliberately, with a reason,
 through review. Bypassing a gate is an incident, not a shortcut.
@@ -2428,6 +2469,7 @@ produces a changelog entry even when nothing changes.
 | A security incident, internal or external | OPS-31 |
 | A major framework or runtime upgrade | §3.2 and §10 assumptions change |
 | A change to funds custody, KYC or retention | §6.8, §6.9, §5 obligations change |
+| A new statute, regulator guidance or VFD onboarding requirement | §19.2 requirement classes and the traceability register may change |
 | A change to any companion document | §1.3 authority map may need updating |
 
 ### 13.6 Amendment
@@ -2560,6 +2602,8 @@ is kept so that the history is visible.
 | 9 | `package.json` declared `@types/react` `^19.0.0` against `react` `18.3.1`, and five dev-only entries used caret ranges although `ARCHITECTURE.md` §2.5 says every dependency is pinned exactly. | The type definitions described a different runtime than the one shipped. Types may accept code that fails at runtime, or reject code that works. | Pin `@types/react` and `@types/react-dom` to the React 18 line until React is upgraded, and pin the caret dev entries (EX-08, EX-18). | **Resolved 3 November 2026** - `@types/react` `18.3.31`, `@types/react-dom` `18.3.7`, and all five dev entries pinned exactly. Not yet type-checked, because no Node runtime is available here (EX-19). |
 | 10 | `package.json` had no `test`, `typecheck` or `lint` script; only `build`, `dev`, `preview` and `format`. | The pipeline in `ARCHITECTURE.md` §12.2 assumes stages that have no script to run. | Add the scripts when the toolchain is added (EX-10). | **Partly resolved 3 November 2026** - `typecheck` (`tsc --noEmit`) is added; it needs no new dependency. `test` still needs Vitest and `lint` still needs a linter, both of which are dependency additions recorded as EX-10. |
 | 11 | This document requires gates (GOV-19) that depend on version control, CI and protected branches; the repository has no commits and no CI. | The standards are unenforceable as written. | Resolve EX-12 before implementation begins; state the gap in every release record until then. | **Partly resolved 4 November 2026** - `.git` exists on `main`, but there is no commit, no branch protection and no CI. The gap stays open |
+| 12 | §19 introduces audit readiness gates AR-0–AR-5, while `ENGINEERING_EXECUTION_STRUCTURE.md` already defines phase gates G0–G5. | Two gate ladders could be read as two approvals for the same work, or as a way to pass one and ignore the other. | State that AR gates are evidence checkpoints inside the existing G gates, not a second approval; map each AR gate to the G gate it supports. | **Resolved 6 November 2026** - §19.12 states the relationship, and `ENGINEERING_EXECUTION_STRUCTURE.md` §7 and §8.2 now cross-reference it. No new approval authority was created. |
+| 13 | §19 requires an R2 record for every VFD contractual or onboarding requirement, but the full written VFD onboarding set has not been received. | An R2 control could be claimed from a remembered conversation or a provider's general security page, which would be a false compliance claim. | Record VFD onboarding as **[OPEN]**; create R2 records only from documents actually received, with the version and date. | **Open 6 November 2026** - tracked as §16 #23. No R2 control is claimed until the documents are received and reviewed. |
 
 ---
 
@@ -2593,10 +2637,52 @@ Nothing here may be implemented as though it were decided, except where a row is
 | 18 | **CI provider and repository hosting** — **DECIDED 4 November 2026:** GitHub and GitHub Actions; private repository; protected `main`; native secret and dependency scanning; `staging`/`production` as definitions only; no deployment in EP-00. Kept so cross-references stay valid. | Nothing — settled | Founder | Recorded in `ARCHITECTURE.md` §16.4 #25 and EP-00-000 |
 | 19 | **Incident severity definitions and on-call expectations** | OPS-14 | Founder | The four-level table in OPS-14, confirmed for a small team |
 | 20 | **Whether `partners.` may ever hold an activity capability** | §4.6 of `ARCHITECTURE.md`, matrix §9.4 | Founder | No — `ARCHITECTURE.md` §7.4 already says no |
+| 21 | **External audit programme** — which assessments are commissioned, in what order, by which assessor, at what cadence and budget. VAPT is already proposed (QUA-27, §16 #12); this row covers the data-protection, financial-control, API/infrastructure and access-control assessments in §19.13 | AR-5; assessment scheduling; any public statement about assurance | Founder | Start with a VAPT and an access-control review before public launch; add financial-control and data-protection assessments once the custody and processing models are confirmed. Cadence and vendor remain founder decisions. |
+| 22 | **Who may declare Hivorr "audit-ready"** — and in what scope. §19.12 defines the readiness gate but not the person who may speak for the company | AUD-03, AUD-78, AUD-85; every external communication | Founder | Founder only, in writing, with the scope and date named. No agent, contributor or document may make the statement. |
+| 23 | **VFD onboarding and contractual requirements** — the full written set, the version received, and which requirements bind Hivorr | Every R2 record; provider integration controls; reconciliation and custody obligations | Founder with counsel | Do not assume. Request the written onboarding pack and the signed agreement, record each requirement as R2 with its source clause, and leave the rest **[OPEN]** (§19.2, §16 #13 row in §15). |
+| 24 | **Data-protection assessment scope** — the jurisdictions, processing activities and data classes in scope, and whether a DPIA is required | AUD-32–AUD-40; the data-protection assessment in §19.13 | Founder with counsel | Record the processing inventory first; commission the assessment against the recorded scope, not a generic template. |
+| 25 | **KYC/AML applicability** — whether Hivorr carries direct AML, CTF, sanctions or customer-due-diligence obligations, or only contractual obligations through VFD, and which entity reports | AUD-41–AUD-48; verification-lane design; monitoring and escalation | Founder with counsel | Treat every AML/KYC obligation as **[OPEN]** until counsel confirms applicability. Do not build a reporting path to an authority on an assumption. |
+| 26 | **Evidence retention period** — how long assessment evidence and traceability records are kept, separately from the audit-log retention in #10 | AUD-57, AUD-86; assessment packs | Founder | Retain for the longest period that any applicable R1/R2 obligation requires, once known; until then, retain and do not purge. |
 
 ---
 
 ## 17. Changelog
+
+### 6 November 2026 — version 2.1, audit readiness by design
+
+**Approved** — 6 November 2026 by the founder, version 2.1 as written. This is an additive amendment
+to version 2.0. It adds §19 and the cross-references needed to make it operative. It removes or
+weakens no rule in §2–§18; `QUA-37` and `AI-21` gain the conditions recorded below, and every existing
+condition still applies. It does not settle any **[OPEN]** item and creates no legal, regulatory or
+contractual obligation.
+
+**What changed**
+
+- Front matter: version 2.1, dated 6 November 2026; the supersedes note records that 2.1 adds §19
+  without changing existing rule meanings.
+- Added §19, **Audit readiness by design**: requirement classes R1–R5 (§19.2), the pre-implementation
+  impact note (§19.3), the secure-engineering, financial-integrity, data-protection, KYC/AML,
+  audit-trail, testing and infrastructure baselines (§19.4–§19.10), the `TRC-` traceability rules
+  (§19.11), the AR-0–AR-5 gates (§19.12), external-assessment preparation (§19.13), the twelve
+  mandatory AI-agent behaviours (`AI-22`, §19.14), and the boundaries of the section (§19.15).
+- Added `AUD-` and `TRC-` to the rule-prefix table (§1.6).
+- Added `ENG-19` and an audit-readiness test to §2.8.
+- Added three conditions to the definition of done (`QUA-37`) and two questions to the agent
+  self-check (`AI-21`).
+- Added change classes in §13.1 and enforcement gates in §13.4 for audit-readiness work.
+- Recorded §15 #12 (AR gates versus G gates) and #13 (VFD requirements not received).
+- Added open decisions §16 #21–#26: the external audit programme, the person who may declare
+  readiness, the missing VFD onboarding set, the data-protection assessment scope, KYC/AML
+  applicability, and evidence retention.
+- Added Appendix D, the audit-readiness impact note and traceability template.
+- Updated Appendix A and Appendix B for §19.
+
+**What approval does not do**
+
+- It does not assert that Hivorr is compliant, certified, audited or secure (AUD-03, AUD-91).
+- It does not settle VFD onboarding requirements, KYC/AML applicability, retention periods or audit
+  scope. Those remain **[OPEN]** in §16 and require founder and counsel.
+- It does not approve any phase, work package or production release.
 
 ### 4 November 2026 — #18 decided and EX-10 split recorded
 
@@ -2778,27 +2864,551 @@ Supabase RLS and API-key documentation; PostgreSQL 16 row-security documentation
 
 ## 18. Approval
 
-**Approved.** The founder approved this document on 4 November 2026. Approval covers the governance
-model (§1), the engineering principles (§2), the technical standards (§3–§13), the external
+**Approved.** The founder approved this document on 4 November 2026 as version 2.0, and approved the
+version 2.1 amendment on 6 November 2026. Approval covers the governance model (§1), the engineering
+principles (§2), the technical standards (§3–§13), the audit-readiness standard (§19), the external
 references (§14) and the registers in §15–§17.
 
 | Field | Value |
 | --- | --- |
 | **Approved by** | Founder (AfriNova) |
-| **Date** | 4 November 2026 |
-| **Version approved** | 2.0 |
+| **Date** | 4 November 2026 (version 2.0); 6 November 2026 (version 2.1 amendment) |
+| **Version approved** | 2.1 |
 | **Conditions of approval** | None recorded. The **[OPEN]** items in §16 remain open and are unaffected by this approval. |
 | **Next scheduled review** | 4 May 2027, and on any trigger in §13.5 |
 
+**What version 2.1 changed.** It added §19 and extended `QUA-37` and `AI-21` with audit-readiness
+conditions. It removed or weakened no rule in §2–§18: every existing condition still applies. The
+`AUD-` and `TRC-` rules bind from 6 November 2026, and the `AR-0`–`AR-5` gates apply from that date to
+work not yet through the corresponding phase gate. Existing work is not retroactively failed; where an
+AR gate was not applied, the gap is recorded under AUD-77 and remediated in the phase it belongs to.
+
 **What approval does not do.** It does not settle any **[OPEN]** decision in §16 or in
 `ARCHITECTURE.md` §16.4, does not approve any phase or work package in
-`ENGINEERING_EXECUTION_STRUCTURE.md`, and does not authorise a production release. Each of those is a
-separate act by the founder or architect named in Document control, and by the person named in
-`ENGINEERING_EXECUTION_STRUCTURE.md` §5.2.
+`ENGINEERING_EXECUTION_STRUCTURE.md`, does not authorise a production release, and does not assert that
+Hivorr is compliant, certified or audited. Each of those is a separate act by the founder or architect
+named in Document control, and by the person named in `ENGINEERING_EXECUTION_STRUCTURE.md` §5.2.
 
 **Changing an approved version.** A change to a **[STD]** rule requires founder approval (`GOV-24`).
 A change to a **[REC]** rule's wording that does not change its meaning may be made by the architect
 and recorded in §17. Every change produces a changelog entry (§13.5).
+
+---
+
+## 19. Audit readiness by design
+
+Audit readiness is not an activity performed before an assessment. It is a property of how work is
+designed, built, tested and recorded. A control that cannot be evidenced is, for assessment purposes,
+a control that does not exist.
+
+This section does not create a second compliance framework, does not interpret a law or a contract, and
+does not certify anything. It makes the work that §2–§13 already requires **traceable**: every
+requirement is identified, classified and connected to the control that satisfies it and the evidence
+that proves the control operated.
+
+**AUD-01 [STD]** Audit readiness by design means that, for every requirement in scope:
+
+1. the requirement is identified and classified (§19.2);
+2. the control that satisfies it is named and implemented (§19.4–§19.10);
+3. the evidence that the control exists and operated is produced as part of the work (§19.8);
+4. the three are connected in a traceability record (§19.11); and
+5. the connection survives review, release and the departure of the person who made it.
+
+**AUD-02 [STD]** Evidence is produced when the work is done, not reconstructed when an assessor asks.
+A screenshot taken during the assessment is a claim, not evidence that the control operated at the
+time.
+
+**AUD-03 [STD]** No document, release note, marketing statement or agent report may describe Hivorr as
+compliant, certified, audited or "audit-ready" unless the specific scope, the assessor, the date and
+the evidence are named. Readiness is a state of the work; a clean assessment is an opinion expressed
+by an independent party, and neither is promised by this section (GOV-29).
+
+**AUD-04 [STD]** This section applies to every change that touches money, identity, personal data,
+authentication, authorisation, third parties, production infrastructure or the audit log, and to every
+phase gate in `ENGINEERING_EXECUTION_STRUCTURE.md`. A change outside that scope still follows §19.2 and
+§19.14; it may use the short form of §19.3.
+
+### 19.1 What "assessable" means
+
+**AUD-05 [REC]** A control is assessable when a reviewer who did not build it can answer four
+questions from the repository and the evidence store alone:
+
+| Question | The evidence that answers it |
+| --- | --- |
+| What was required, and who required it? | The requirement record, with its class and source (§19.2) |
+| What control implements it? | The rule or design decision that names the control, and the code or configuration that applies it |
+| How do we know the control operated? | A test that fails when the control is removed, and an execution record (§19.9) |
+| Who owns it, and when was it last checked? | The traceability record's owner, review date and status (§19.11) |
+
+### 19.2 Requirement sources and classification
+
+Every requirement carries exactly one class. The class determines what evidence is credible and what
+may be claimed. A requirement that has not been classified is not yet a requirement; it is an
+assumption.
+
+| Class | Name | Established by | What it obliges Hivorr to do | Evidence standard |
+| --- | --- | --- | --- | --- |
+| **R1** | Statutory or regulatory | A statute, regulation, regulator's published rule or licence condition | Only what founder and counsel have confirmed applies to Hivorr, in the jurisdiction and activity concerned | The instrument or rule cited by name and date; a written applicability note; the control; the evidence |
+| **R2** | VFD contractual or onboarding | The signed VFD agreement, or a VFD onboarding requirement received in writing | Only the requirement actually received in writing, for the activity it covers | The clause or onboarding item, dated and versioned; the control; the evidence |
+| **R3** | Internal Hivorr standard | This document, `ARCHITECTURE.md`, the permission matrix, the database rules, `VISUAL-IDENTITY.md` | The rule as written, with its `[STD]`, `[REC]`, `[REVIEW]` or `[FOUNDER]` label | The rule identifier; the control; the test; the evidence |
+| **R4** | Industry best practice | OWASP, NIST, ISO, a vendor's security guidance, a peer's published practice | Nothing by itself. It becomes obligatory only where an R3 rule adopts it (GOV-27) | The reference and version; the adopting rule; the evidence |
+| **R5** | Recommended improvement | A contributor, reviewer or agent proposal | Nothing until the founder or architect approves it through §13.1 or §13.6 | The proposal; the decision; the owner; the date |
+
+**AUD-06 [STD]** A requirement record states its class. A statement that a practice is "required" without
+a class is either reclassified or removed.
+
+**AUD-07 [STD]** An **R1** requirement is not asserted by an engineer, an agent or this document. It is
+recorded only after founder and counsel have confirmed its applicability. Until then it is an
+**[OPEN]** item, described as "potentially applicable", and no control is presented as satisfying it.
+
+**AUD-08 [STD]** An **R2** requirement is recorded only from a document Hivorr has actually received.
+A remembered onboarding conversation, a sales deck, a provider's general security page or an agent's
+assumption about what VFD "probably" requires is not an R2 requirement.
+
+**AUD-09 [STD]** An **R4** reference is never presented as an obligation. "OWASP recommends" and "Hivorr
+requires" are different sentences, and a report may not merge them (GOV-27–GOV-29).
+
+**AUD-10 [STD]** An **R5** recommendation is labelled as a recommendation and assigned an owner. It is
+not implemented as though approved, and it does not appear in an assessment pack as a control.
+
+**AUD-11 [STD]** Every R1 and R2 requirement record includes: the source document, the version or date
+received, the activity and jurisdiction it applies to, the person who confirmed applicability, and the
+review date. A requirement whose source cannot be produced is downgraded to **[OPEN]**.
+
+**AUD-12 [REC]** Requirement sources are re-checked when §13.5 triggers a review, when VFD onboarding
+documents change, when a new activity or market is added, and before every external assessment. A
+requirement does not become permanent because it was once recorded.
+
+### 19.3 Pre-implementation analysis
+
+**AUD-13 [STD]** Before implementation begins, a change in the AUD-04 scope produces a short
+**audit-readiness impact note**. It is written before code, attached to the issue or pull request, and
+kept with the change. It is not a business case and not a legal opinion.
+
+**AUD-14 [STD]** The impact note answers, at minimum:
+
+| Field | What it records |
+| --- | --- |
+| **Requirement classes engaged** | Which of R1–R5 are touched, and by what |
+| **Data touched** | Classes from DAT-31 — public, internal, personal, sensitive personal, financial, secret — and whether any leaves the platform |
+| **Money movement** | Whether value moves, is held, is split, is reversed or is reconciled, and which ledger invariant applies |
+| **Identity and access** | Whether authentication, capability, grant, admin scope or verification changes |
+| **Third parties** | Every provider, the data sent, the direction, and the failure behaviour |
+| **Audit events** | Which actions become auditable, and the event names |
+| **Retention** | Whether the change creates a record whose retention is undecided |
+| **Evidence to produce** | The tests, records and artefacts that will prove the control operated |
+| **Open questions** | Every question that needs founder, counsel or VFD before implementation |
+| **Owner** | The person accountable for the note and its evidence |
+
+**AUD-15 [STD]** A question that needs founder, counsel or VFD is recorded as **[OPEN]** and routed to
+§16 or `ARCHITECTURE.md` §16.4. It is not answered by the implementer, and the implementation does not
+assume an answer.
+
+**AUD-16 [STD]** If the impact note cannot be completed because a requirement is unknown, implementation
+of the affected part stops. Work that does not depend on the unknown may proceed, provided the boundary
+is stated.
+
+**AUD-17 [REC]** The impact note is reviewed with the change. A reviewer checks that every control it
+promised is present, and that every open question is still open or has a recorded decision.
+
+**AUD-18 [REC]** The template in Appendix D is the short form of this note. A copy is kept in the
+evidence index for the phase, not only in the pull request.
+
+### 19.4 Secure engineering baseline
+
+**AUD-19 [STD]** The controls in §4–§7 are the engineering baseline. Audit readiness does not replace
+them, relax them or duplicate them. A traceability record points at the rule that already requires the
+control; it does not restate the control in different words.
+
+**AUD-20 [STD]** A new surface — endpoint, webhook, upload path, admin screen, background job, provider
+integration — has a recorded threat analysis before it is built. The analysis names the assets, the
+actors, the trust boundaries, the abuse cases and the control for each (`ARCHITECTURE.md` §10.13).
+
+**AUD-21 [STD]** A design decision that affects a control is recorded where the decision lives: an
+architectural decision in `ARCHITECTURE.md`, a permission decision in the matrix, a schema decision in
+its migration, a deviation in §13.3. §19 does not become a second decision register (QUA-39).
+
+**AUD-22 [REC]** OWASP ASVS 5.0.0 is used as a checklist for coverage, not as a certificate. A control
+that maps to an ASVS item is recorded as mapped, not as verified by ASVS (GOV-29).
+
+**AUD-23 [REC]** Where a control is deliberately absent, the record states the exposure, the
+compensating control, the owner and the expiry, using OPS-19. "Not applicable" is a finding waiting to
+be challenged; it needs a reason.
+
+### 19.5 Financial and wallet integrity
+
+**FACT** The financial architecture is a double-entry ledger as the source of truth, append-only
+entries, derived balances, idempotent provider callbacks, verified webhooks and reconciliation alerts
+(`ARCHITECTURE.md` §9.10, DAT-07, ENG-15, API-22, API-24–API-29).
+
+**AUD-24 [STD]** Every movement of value is traceable end to end: the provider event or user action,
+the idempotency key, the ledger entry or entries, the resulting derived balance, the audit event and
+the reconciliation record. A movement that cannot be traced is an incident.
+
+**AUD-25 [STD]** A derived balance is never the evidence of a movement. The evidence is the ledger
+entry, its paired entry, the provider reference and the audit record. A screen that displays a balance
+is not a control.
+
+**AUD-26 [STD]** Idempotency is tested, not assumed. A test applies the same provider event twice and
+proves that value moves once (API-26). The execution record is retained.
+
+**AUD-27 [STD]** Reconciliation is scheduled and evidence-producing. Every run records the period, the
+source totals, the ledger totals, the differences, the owner of each difference and its resolution.
+An unreconciled difference is an open finding, not a rounding note.
+
+**AUD-28 [STD]** Dual control applies to the high-risk financial actions the matrix names (`matrix`
+§14.3, AUT-35). The evidence shows both actors, both timestamps and the action, not a shared login.
+
+**AUD-29 [STD]** A manual adjustment to a production ledger, balance or fee is prohibited except through
+a documented, approved, audited operation with a named reason and a reversing entry. A direct database
+edit is not an adjustment; it is an incident (`DAT-46`).
+
+**AUD-30 [STD]** Segregation of Hivorr funds from customer funds, and the custody model that applies,
+is recorded only as an **R1** or **R2** requirement after founder and counsel confirm it. This document
+does not assert a custody model, a safeguarding rule or a settlement obligation.
+
+**AUD-31 [REC]** A financial control matrix lists each control, the risk it addresses, the rule that
+requires it, the test that proves it, the evidence it produces and its owner. It is reviewed at AR-4 and
+before every financial-control assessment.
+
+### 19.6 Data protection and privacy
+
+**FACT** Data is classified before storage (DAT-31–DAT-33). Retention is **[OPEN]** and, until decided,
+the position is retain, do not delete (DAT-34). Account closure is not deletion (DAT-35).
+
+**AUD-32 [STD]** A data inventory exists for every environment above local. It records each store, the
+data classes it holds, the purpose, the owner, the retention status and every recipient outside the
+platform. A field with no inventory entry has no approved purpose.
+
+**AUD-33 [STD]** Each processing activity has a recorded purpose and its lawful basis or equivalent. The
+basis is an **R1** determination made by founder and counsel; engineering records the decision and
+implements the control, and does not choose the basis.
+
+**AUD-34 [STD]** A data-subject request — access, correction, deletion, restriction, objection — has a
+documented handling path with a case record, the identity check performed, the decision, the action
+taken and the date. A request handled only in an inbox is not evidenced.
+
+**AUD-35 [STD]** Deletion is not built until retention and deletion obligations are decided. When they
+are, deletion covers the database, object storage, backups' practical reach, search indexes and derived
+copies, and produces an audited record (DAT-36).
+
+**AUD-36 [STD]** Every processor that receives personal data is recorded with the data sent, the
+direction, the location, the contractual instrument, the security evidence available and the exit path
+(API-19, DAT-33). A processor with no record is an unapproved transfer.
+
+**AUD-37 [STD]** A cross-border transfer is recorded only as an **R1** or **R2** requirement after
+founder and counsel confirm the applicable mechanism. Engineering does not infer a transfer mechanism
+from a provider's region setting.
+
+**AUD-38 [STD]** A privacy impact assessment is produced before a change that introduces a new class of
+personal data, a new recipient, a new purpose, profiling, or a materially different retention period.
+Its findings and decisions are retained.
+
+**AUD-39 [STD]** A personal-data breach has a documented response: detection, containment, assessment,
+the decision on notification, the recipients, the content and the timing. Statutory notification
+deadlines are **R1** items to be confirmed by counsel, not values an agent supplies from memory.
+
+**AUD-40 [REC]** Privacy controls are tested like any other control: a test proves that an unauthorised
+actor cannot read the data, that redaction removes the value, and that deletion reaches every copy it
+claims to reach.
+
+### 19.7 KYC and AML support
+
+**FACT** Hivorr's account model has verification lanes and KYC tiers, and earning activities require
+both the applicable lane and the required tier (`AGENTS.md` Rule 3, `matrix` §9.3, §13.4). Whether a
+particular AML, CTF, sanctions or customer-due-diligence obligation applies to Hivorr, directly or
+through VFD, is an **R1** or **R2** question that is not settled by this document.
+
+**AUD-41 [STD]** Identity and verification data is **sensitive personal** data (DAT-31). It is stored in
+a private store, read through short-lived signed access, and every read is audited (OPS-11).
+
+**AUD-42 [STD]** Every verification decision records the actor, the actor type, the timestamp, the
+evidence reference, the decision, the reason and the tier or lane affected. A decision that exists only
+as a status field is not evidenced.
+
+**AUD-43 [STD]** The evidence relied on for a verification decision is retained with the decision, in a
+form that can be produced without reconstructing it from a user's account.
+
+**AUD-44 [STD]** Sanctions, politically-exposed-person and adverse-media screening is built only to the
+extent an **R1** or **R2** requirement demands it, and only where the selected provider actually offers
+it. Provider capability is verified from the provider's documentation or contract, never assumed.
+
+**AUD-45 [STD]** Transaction-monitoring rules, thresholds and risk scores are documented, versioned and
+auditable. A rule change is a reviewed change with a reason and an effective date, not a silent tuning.
+
+**AUD-46 [STD]** The escalation path for a suspicious transaction or customer is documented, names the
+decision-maker, and produces a record. Whether a suspicion must be reported to an authority, to VFD, or
+to neither is an **R1**/**R2** determination by founder and counsel.
+
+**AUD-47 [STD]** KYC and verification records are retained for the period counsel sets. Until that period
+is set, they are retained and not purged (DAT-34). No agent invents a retention number.
+
+**AUD-48 [REC]** A KYC control matrix records each requirement, its class and source, the control, the
+evidence, the owner and the last test. It is reviewed before every financial-control or access-control
+assessment.
+
+### 19.8 Audit trails and evidence
+
+**FACT** The audit log is append-only, separate from application logs, written inside the transaction,
+and never updated or deleted by application code (OPS-09–OPS-13, `ARCHITECTURE.md` §10.9, `matrix`
+§11.6).
+
+**AUD-49 [STD]** Every action on the OPS-11 list emits an audit event with the schema in §11.3. An
+action that changes money, access, identity, verification or a production environment without an audit
+event is a defect, not an observability gap.
+
+**AUD-50 [STD]** The audit event and the effect commit or roll back together (OPS-09). A record written
+after the commit, or by a separate best-effort call, is not evidence that the effect occurred.
+
+**AUD-51 [STD]** The audit store is access-controlled, append-only in practice as well as in policy, and
+its access is itself audited. An actor who can edit the audit log can defeat every other control in
+this section.
+
+**AUD-52 [STD]** Audit timestamps use a single time source in UTC, synchronised to a known reference.
+A timestamp whose source is unknown cannot order two events.
+
+**AUD-53 [STD]** Evidence is stored in the phase's evidence index with a stable identifier, the date,
+the commit or artifact digest, the environment, the command or procedure that produced it, and the
+result. A file named `screenshot-final.png` is not evidence.
+
+**AUD-54 [STD]** Evidence is immutable once recorded. A correction is a new evidence item that
+supersedes the old one; the old item is retained.
+
+**AUD-55 [STD]** Simulated, illustrative or synthesised evidence is labelled as such. It is never
+presented as a record of a real run. A demonstration environment is not production evidence.
+
+**AUD-56 [STD]** Evidence contains no secret and no unnecessary personal data. Where a record must show
+that a value was present, it shows a hash, a redacted form or a reference, not the value (OPS-12).
+
+**AUD-57 [REC]** Evidence retention follows the audit-retention decision when it is made (§16 #10).
+Until then, evidence is retained. Deleting an assessment record before the assessment is a defect.
+
+**AUD-58 [REC]** The evidence index is reviewed at each phase gate. An evidence item that cannot be
+located is treated as missing, not as present.
+
+### 19.9 Testing and verification
+
+**FACT** Security testing is required by QUA-24–QUA-28, and a change to critical logic merges on an
+automated test that fails when the protection is removed (QUA-36).
+
+**AUD-59 [STD]** Every control has a test that fails if the control is removed or inverted. A test that
+passes with the control deleted proves the test, not the control.
+
+**AUD-60 [STD]** Every access-control test includes the deny path: an actor without the capability, an
+actor from the wrong tenant, an actor whose grant was revoked, and an unauthenticated caller where the
+endpoint is not public.
+
+**AUD-61 [STD]** Financial invariants are tested directly: debits equal credits, a replay does not
+double a balance, a failed provider call leaves no half-completed operation, and reconciliation reports
+the difference it is given.
+
+**AUD-62 [STD]** Migration tests prove that the schema applies from empty and from the previous
+production state, and that RLS denies the cases it is meant to deny (DEP-21, `database rules` §9.4,
+§11.4).
+
+**AUD-63 [STD]** Restore drills produce a record: the backup used, the restore point, the measured
+recovery time, the verification performed and the person who performed it (DAT-40, DEP-26).
+
+**AUD-64 [STD]** The execution record of a test — the CI run, the artifact, the log and the result — is
+retained with the commit or release it verifies. A green badge on a branch that no longer exists is not
+evidence.
+
+**AUD-65 [STD]** Independent testing, including a penetration test, is recorded with its scope,
+methodology, findings, severity, remediation and retest. It does not replace an external audit, and a
+clean penetration test is not a compliance opinion (QUA-27).
+
+**AUD-66 [REC]** A control-test traceability matrix maps each R1, R2 and critical R3 control to its
+test, its last execution and its evidence. It is the first artefact an assessor should be given.
+
+### 19.10 Infrastructure and deployment security
+
+**FACT** Production is protected by per-release founder approval, promotion from staging, a separate
+migration job, recorded deployment details and a rehearsed rollback (DEP-13–DEP-27).
+
+**AUD-67 [STD]** An environment inventory records every environment, its purpose, its owner, the data
+classes it holds, whether it is internet-reachable, and its connection to production. An environment
+that is not inventoried is treated as production for access purposes.
+
+**AUD-68 [STD]** Production access is least-privilege, individually attributable and reviewed on a
+schedule. Shared accounts, standing administrator access and unowned credentials are findings
+(API-18, AUT-30).
+
+**AUD-69 [STD]** Infrastructure and configuration changes are made through versioned, reviewed change
+records or infrastructure as code, not by editing a running host (DEP-16). The change record is the
+evidence.
+
+**AUD-70 [STD]** Every production deployment produces the DEP-23 record, including the approval, the
+artifact digest, the migration set, the configuration version and the rollback position. The record is
+evidence; the chat message approving it is not.
+
+**AUD-71 [STD]** Vulnerability scanning, dependency advisories and patch actions retain their results
+and their remediation dates (OPS-17–OPS-20, QUA-24). An accepted risk has an owner and an expiry
+(OPS-19).
+
+**AUD-72 [STD]** Monitoring and alerting configuration is versioned, and every alert has a recorded
+test that proves it fires (OPS-15). An untested alert is an assumption.
+
+**AUD-73 [STD]** Backup configuration records what is backed up, how often, where the copy lives, who
+can delete it and when it was last restored (DAT-38–DAT-42). A backup that has never been restored is
+a hypothesis.
+
+**AUD-74 [REC]** An asset and endpoint inventory records every public hostname, API surface, webhook and
+storage bucket, its owner and its data class. It is reviewed before every API and infrastructure
+assessment.
+
+### 19.11 Requirement-to-control-to-evidence traceability
+
+**TRC-01 [STD]** Every R1 and R2 requirement, and every R3 rule that governs critical logic (QUA-35),
+has a traceability record with the fields below. The record is the unit an assessor samples.
+
+| Field | Content |
+| --- | --- |
+| **Requirement ID** | `REQ-###`, stable for the life of the requirement |
+| **Class** | R1, R2, R3, R4 or R5 (§19.2) |
+| **Source** | The instrument, contract clause, rule identifier or decision, with version or date |
+| **Requirement** | One sentence, in the source's terms and without embellishment |
+| **Applicability** | The activity, jurisdiction, environment and data class it covers |
+| **Control** | The rule identifier and the design decision or code that implements the control |
+| **Test** | The test or procedure that proves the control operates, and where it runs |
+| **Evidence** | The evidence identifier(s) and where they are stored |
+| **Owner** | The person accountable for the control and its evidence |
+| **Status** | Implemented, partially implemented, not implemented, or not applicable with a reason |
+| **Last verified** | The date of the most recent test execution or review |
+| **Gaps** | Every known gap, its risk, its compensating control and its expiry |
+
+**TRC-02 [STD]** A traceability record is created or updated in the same change that creates or alters
+the control. It is not a separate documentation phase after the work.
+
+**TRC-03 [STD]** A record's status is **implemented** only when the control exists, the test exists and
+the evidence exists. Two of three is **partially implemented**, and the missing part is named.
+
+**TRC-04 [STD]** A gap is recorded as a gap. It is not closed by reclassifying the requirement, by
+narrowing its scope after the fact, or by pointing at a policy that says the right thing without a
+control that does it.
+
+**TRC-05 [STD]** A traceability record is not deleted when a requirement stops applying. It is marked
+superseded, with the date and the reason, so that the history remains auditable.
+
+**TRC-06 [REC]** The traceability register is reviewed at AR-2, AR-4 and AR-5, and whenever a
+requirement source changes. The review records who checked it and what changed.
+
+### 19.12 Audit readiness gates
+
+These gates sit alongside the G0–G5 phase gates in `ENGINEERING_EXECUTION_STRUCTURE.md`. They do not
+replace them, and passing a gate here does not approve a phase or a release.
+
+| Gate | When it applies | Question it answers | Minimum evidence | Who signs |
+| --- | --- | --- | --- | --- |
+| **AR-0** | Architecture and design, before implementation | Are the requirements identified and classified, and does the design name a control for each? | Impact note, threat analysis, requirement records, open-question list | Architect; founder for R1/R2 conflicts |
+| **AR-1** | Feature implementation, before review | Is each promised control implemented, with a test that fails if it is removed? | Code, tests, test execution, updated traceability | Author, verified by the reviewer |
+| **AR-2** | Security and privacy verification | Do the controls actually deny, redact, retain and audit as claimed? | Deny-path tests, privacy checks, audit-event samples, evidence index entries | Security reviewer; founder where R1/R2 is engaged |
+| **AR-3** | Integration security, before a provider is enabled | Is the third party authenticated, minimised, failure-safe and reconcilable? | Provider record, signature and replay tests, failure tests, reconciliation evidence | Architect and founder (`API-29`) |
+| **AR-4** | Pre-production, before a release is approved | Is the evidence complete enough that a reviewer who was not involved could reach the same conclusion? | Traceability register, deployment record, restore drill, vulnerability status, open findings | Founder, with the release approval (DEP-23) |
+| **AR-5** | External audit readiness, before an assessment | Can the assessment pack be produced from records that already exist, without new assertions? | Assessment pack, evidence index, gap register, scope statement | Founder |
+
+**AUD-75 [STD]** A gate is passed on evidence, not on assertion. "Reviewed" without a record, "tested"
+without a result, and "considered" without a decision do not pass a gate.
+
+**AUD-76 [STD]** A gate that cannot be passed is recorded as not passed, with the reason, the owner and
+the date it will be revisited. It is not waived by silence, and it is not marked passed with a caveat
+buried in a comment.
+
+**AUD-77 [STD]** A gate applies at the point the work reaches it. Retrofitting AR-0 evidence after
+implementation is a finding, unless the change is explicitly an audit-readiness remediation with that
+fact recorded.
+
+**AUD-78 [STD]** AR-5 is a readiness gate, not a prediction. It confirms that the pack exists and is
+consistent; it does not assert that an assessor will find no issues, and it does not authorise a public
+claim (AUD-03).
+
+**AUD-79 [REC]** Gate evidence is stored in the evidence index for the phase, using the identifier
+pattern in `ENGINEERING_EXECUTION_STRUCTURE.md` §8.2, so that `EP-01-070`-style references remain
+stable.
+
+### 19.13 Preparing for an external assessment
+
+The assessments Hivorr should expect are listed below. Each is a different lens on the same evidence;
+the pack is assembled from the traceability register and the evidence index, not written from scratch.
+
+| Assessment | What it typically examines | Hivorr artefacts it draws on | Owner |
+| --- | --- | --- | --- |
+| **VAPT** — vulnerability assessment and penetration test | Authentication, authorisation, injection, session handling, business-logic abuse, infrastructure exposure | Threat analyses (AR-0), deny-path tests, IDOR and privilege-escalation sweeps (QUA-25), dependency and secret scans, prior findings and retests | Architect |
+| **Data-protection assessment** | Data inventory, lawful basis, minimisation, retention, subject requests, processors, cross-border transfers, breach response | Data inventory (AUD-32), processing records (AUD-33), request cases (AUD-34), processor register (AUD-36), PIA (AUD-38), breach procedure (AUD-39) | Founder with counsel |
+| **Financial-control assessment** | Ledger integrity, reconciliation, dual control, provider settlement, manual adjustments, access to financial functions | Ledger and reconciliation evidence (AUD-24–AUD-29), financial control matrix (AUD-31), audit samples (AUD-49), deployment and access records | Founder |
+| **API and infrastructure assessment** | Contract, authentication, rate limits, webhook verification, secret management, environment isolation, logging, backup | OpenAPI contract and diff, webhook tests, secret-management record, environment inventory (AUD-67), alert tests (AUD-72), restore drills (AUD-73) | Architect |
+| **Access-control assessment** | Capability model, least privilege, admin scopes, dual control, break-glass, access reviews, joiner/mover/leaver | Matrix and enforcement tests, grant-change audit, access reviews (AUD-68), break-glass records (AUT-36), dual-control evidence (AUD-28) | Founder |
+
+**AUD-80 [STD]** An assessment pack is assembled from records that already exist. If an artefact has to
+be created for the assessment, the pack states that it was created late and why. A pack that presents
+late-created artefacts as contemporaneous evidence is a misrepresentation.
+
+**AUD-81 [STD]** The pack begins with a scope statement: what was assessed, what was excluded, the
+period covered, the environments and the version or commit. An assessment of an unnamed scope cannot be
+relied on.
+
+**AUD-82 [STD]** An external assessor receives scoped, time-boxed, logged access to the minimum
+environment needed. The access is granted by the founder, recorded, and revoked at the end of the
+engagement (AUT-36).
+
+**AUD-83 [STD]** Findings are tracked to closure with an owner, a severity, a remediation date and a
+retest. A finding is not closed by disagreement alone; if the risk is accepted, it is recorded under
+OPS-19 with an expiry.
+
+**AUD-84 [STD]** A management response is factual and specific. It does not claim a control that the
+evidence does not show, does not describe a plan as if it were implemented, and does not dispute a
+finding without a record.
+
+**AUD-85 [STD]** No agent, contributor or document may describe an assessment as passed, clean,
+successful or certified before the assessor's written report says so, and then only within the scope
+the report names.
+
+**AUD-86 [REC]** After an assessment, the traceability register is updated with every finding, the
+control that changed, and the evidence of the retest. The next pack starts from that register.
+
+### 19.14 Obligations of AI coding agents
+
+**AI-22 [STD]** Every AI coding agent follows the twelve behaviours below. They are mandatory in
+addition to §12, and a failure is reported under AI-16–AI-19 rather than hidden.
+
+| # | Behaviour | Why it matters | Related rule |
+| --- | --- | --- | --- |
+| 1 | Inspect the governing documents and the existing implementation before proposing a change | An invented requirement or a duplicated control cannot be evidenced | AI-01, AI-02 |
+| 2 | Classify every requirement it relies on as R1–R5, and state the class | A recommendation presented as law is a false claim | AUD-06–AUD-10 |
+| 3 | Produce the audit-readiness impact note before writing code for an in-scope change | Controls designed after the fact are usually missing | AUD-13–AUD-18 |
+| 4 | Never invent a statute, regulator requirement, VFD requirement, provider capability or security guarantee | Fabricated compliance is worse than a gap | AUD-07, AUD-08, AI-15 |
+| 5 | Record an unknown as **[OPEN]** and route it to the correct register instead of assuming an answer | An assumed answer becomes an unaudited control | AUD-15, AI-17 |
+| 6 | Implement the control and a test that fails if the control is removed | An untested control is a claim | AUD-59, QUA-36 |
+| 7 | Produce the evidence as part of the work, with the identifier, date, commit and environment | Reconstructed evidence is not evidence | AUD-02, AUD-53 |
+| 8 | Update the traceability record in the same change | A control that is not mapped is invisible to an assessor | TRC-02 |
+| 9 | Separate what was verified from what was assumed in its report | A confident report is not a verified one | AI-16 |
+| 10 | State any gate it could not pass, and why, rather than marking it passed | A false pass removes the only warning | AUD-76 |
+| 11 | Never describe Hivorr, a feature or a release as compliant, certified, audited or secure | Only an independent assessment can support that, within its scope | AUD-03, AI-14 |
+| 12 | Escalate every R1 or R2 question, every irreversible action and every conflict between documents to the founder or architect | These are decisions, not implementation details | AUD-15, GOV-23, AI-18, AI-19 |
+
+**AUD-87 [STD]** An agent's completion report states, for each control it touched, the requirement
+class, the control, the test and the evidence. A report that says only "implemented" does not satisfy
+this rule.
+
+**AUD-88 [STD]** An agent that cannot determine the class of a requirement stops and asks. Guessing
+between R1 and R5 is not permitted, because the two carry different obligations.
+
+### 19.15 Boundaries and what this section does not do
+
+**AUD-89 [STD]** This section does not create a legal, regulatory or contractual obligation. It records
+how Hivorr will demonstrate that it meets obligations that are established elsewhere, by a source that
+is named and classified.
+
+**AUD-90 [STD]** This section does not replace counsel, VFD onboarding, a data-protection authority's
+guidance or an independent assessor. Where they disagree with a record here, the record is corrected;
+the external source is not edited to match the record (GOV-25).
+
+**AUD-91 [STD]** This section does not certify Hivorr, does not promise a clean assessment and does not
+convert a Hivorr standard into an industry certification. A reference to ASVS, OWASP or any other
+framework remains a reference (GOV-27–GOV-29).
+
+**AUD-92 [REC]** When a new statute, regulator guidance or VFD requirement is received, it is added as
+an R1 or R2 record with its source and applicability note, and the affected traceability records are
+reviewed. The document is not rewritten around it.
 
 ---
 
@@ -2818,6 +3428,10 @@ and recorded in §17. Every change produces a changelog entry (§13.5).
 | **J** | Monitoring and incident management | §11 |
 | **K** | AI coding agent compliance | §12 |
 | — | Governance and enforcement | §1, §13 |
+| — | Audit readiness by design | §19 |
+| — | Requirement classes and traceability | §19.2, §19.11 |
+| — | Audit readiness gates AR-0–AR-5 | §19.12 |
+| — | External assessment preparation | §19.13 |
 | — | Research and accuracy | §14 |
 | — | Document control | Front matter, §17 |
 | — | Approval record | §18 |
@@ -2872,6 +3486,21 @@ One page. If a change fails any item, it does not merge.
 - [ ] New alerts have an owner and a runbook (§11.1).
 - [ ] The rollback position is clear (§9.6).
 
+**Audit readiness**
+
+- [ ] Every requirement relied on is classified R1–R5, and an R4 or R5 item is not presented as an
+      obligation (§19.2).
+- [ ] Every R1/R2 question is recorded as **[OPEN]** unless founder and counsel have confirmed it
+      (§19.2).
+- [ ] The impact note exists for an in-scope change, and its open questions are still visible (§19.3).
+- [ ] Each new control has a test that fails if the control is removed, and the test execution is
+      retained (§19.9).
+- [ ] Money, identity, access and personal-data actions emit the audit event the rule requires
+      (§19.5–§19.8).
+- [ ] The traceability record is updated, with control, test, evidence, owner and gaps (§19.11).
+- [ ] No statement claims compliance, certification or a clean assessment (§19.13).
+- [ ] The applicable AR gate has been passed on evidence, or its failure is recorded (§19.12).
+
 ---
 
 ## Appendix C — Deviation record template
@@ -2894,4 +3523,62 @@ Copy this into §13.3 when a **[STD]** rule cannot be followed.
 
 A deviation record is not a waiver of the rule's intent. It is a dated acknowledgement that the
 intent is not yet met, with a named person responsible for meeting it.
+
+---
+
+## Appendix D — Audit-readiness impact note and traceability template
+
+Copy the impact note before implementation (§19.3), and the traceability record into the phase's
+register (`TRC-01`, §19.11). Both are evidence; neither replaces the rule that requires the control.
+
+### D.1 Impact note, before implementation
+
+```markdown
+| Field | Content |
+| --- | --- |
+| Change | <one sentence: what is being built or changed> |
+| Owner | <name> |
+| Requirement classes engaged | <R1 / R2 / R3 / R4 / R5, and the source of each> |
+| Data touched | <DAT-31 classes; state whether any data leaves the platform> |
+| Money movement | <value moved, held, split, reversed or reconciled; ledger invariant> |
+| Identity and access | <authentication, capability, grant, admin scope or verification change> |
+| Third parties | <provider, data sent, direction, failure behaviour, exit path> |
+| Audit events | <action and event name for each new auditable action> |
+| Retention | <record created, and whether retention is decided> |
+| Evidence to produce | <test, record or artefact that will prove the control operated> |
+| Open questions | <question, who must answer, and the register it is recorded in> |
+| Gate | <AR-0 to AR-5, and the phase gate it supports> |
+```
+
+### D.2 Traceability record
+
+```markdown
+| Field | Content |
+| --- | --- |
+| Requirement ID | REQ-### |
+| Class | R1 / R2 / R3 / R4 / R5 |
+| Source | <instrument, contract clause, rule ID or decision — with version or date> |
+| Requirement | <one sentence, in the source's terms> |
+| Applicability | <activity, jurisdiction, environment, data class> |
+| Control | <rule ID and the design decision or code that implements it> |
+| Test | <test or procedure, and where it runs> |
+| Evidence | <evidence ID(s), and where they are stored> |
+| Owner | <name> |
+| Status | Implemented / partially implemented / not implemented / not applicable with reason |
+| Last verified | <date> |
+| Gaps | <gap, risk, compensating control, expiry> |
+```
+
+### D.3 Rules for using the template
+
+1. A record with a status of **implemented** must have a control, a test and evidence. Two out of three
+   is **partially implemented**, and the missing part is named (`TRC-03`).
+2. An **R1** or **R2** record names the person who confirmed applicability. Without that name, it is an
+   **[OPEN]** item, not a requirement (`AUD-07`, `AUD-08`).
+3. An **R4** or **R5** item is labelled as such in the register and is never counted as a control in an
+   assessment pack (`AUD-09`, `AUD-10`).
+4. Evidence is identified by where it lives and what produced it, not by a filename alone (`AUD-53`).
+5. A gap is recorded as a gap. It is not closed by narrowing the requirement after the fact (`TRC-04`).
+6. A superseded record is retained and marked, not deleted (`TRC-05`).
+
 

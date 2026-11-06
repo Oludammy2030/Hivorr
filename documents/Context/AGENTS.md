@@ -4,6 +4,9 @@
 > This document supersedes both the previous project `AGENTS.md` and the legacy `AGENT.md`.
 > Its visual rules are derived from the new prototype, which is the visual authority for Hivorr.
 > Items marked **OPEN** remain undecided and are not approved requirements.
+> **Cross-reference update — 6 November 2026:** §0, §3 and §6 now point at
+> `ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` §19 (audit readiness by design). No rule in this
+> document changed meaning; the binding policy lives in the standards.
 
 ---
 
@@ -69,7 +72,7 @@ Read, in this order:
 1. `documents/Context/VISION.md` — approved product direction.
 2. `documents/Context/ARCHITECTURE.md` — approved technical foundation.
 3. `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` — engineering, security and
-   quality standards, and the gates every change passes.
+   quality standards, the gates every change passes, and the audit-readiness standard in §19.
 4. This document — AI working rules, visual preservation, and vocabulary.
 5. The prototype in `src/app/` — the reference implementation of the intended experience.
 
@@ -316,6 +319,11 @@ Going forward:
   ambiguous.
 - **Prototype fidelity.** When building a screen, match the prototype's structure, colour
   relationships, and hierarchy — not merely its general appearance.
+- **Audit readiness.** Before implementing a change that touches money, identity, personal data,
+  authentication, authorisation, third parties, production infrastructure or the audit log, write the
+  impact note in standards §19.3. Classify every requirement you rely on as R1–R5 (§19.2); never
+  present a recommendation as a legal, regulatory or VFD requirement; produce the evidence and update
+  the traceability record (§19.8, §19.11). The detailed rules live in the standards, not here.
 
 ---
 
@@ -386,6 +394,9 @@ A UI task is complete only when:
 5. Keyboard focus is visible. Contrast is exactly the prototype's; every pair that falls short of 4.5:1 is recorded in `VISUAL-IDENTITY.md` §24 and is not altered.
 6. No unreachable screens, dead controls, or duplicated primitives were added.
 7. Any deliberate divergence from the prototype is documented and approved.
+8. Audit readiness: any R1/R2 question is classified and recorded as **[OPEN]** if unresolved, each
+   new control has a test that fails if it is removed, and the traceability record is updated
+   (standards §19.2–§19.11).
 
 ---
 

@@ -19,6 +19,12 @@
 > Approval of this document does **not** approve any phase for build, does **not** approve the
 > standards document, does **not** settle any **[OPEN]** item, and does **not** authorise a production
 > release (§14). Those remain separate acts by the person named in §5.2.
+>
+> **Cross-reference update — 6 November 2026.** §7.1 now maps the audit-readiness gates `AR-0`–`AR-5`
+> in `ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` §19.12 to the existing G0–G5 gates, §7.2 adds the
+> audit-readiness evidence types, and §8.2 adds the audit-readiness impact field. The AR gates are
+> evidence checkpoints inside the G gates, not a second approval ladder. No phase, gate, approver or
+> work-package field's meaning changed.
 
 ---
 
@@ -687,6 +693,11 @@ launch is BD-D04 and `ARCHITECTURE.md` §16.4 #3, both **[OPEN]**.
 **[PROPOSED]** Every work package passes the same six gates. A gate is not a meeting; it is a
 condition with evidence. Skipping a gate is a deviation and follows `GOV-12`–`GOV-15`.
 
+**[DECIDED]** The audit-readiness gates `AR-0`–`AR-5` in `standards` §19.12 are evidence checkpoints
+**inside** these gates, not a second approval ladder. `AR-0` supports G0, `AR-1` supports G1, `AR-2`
+and `AR-3` support G2, `AR-4` supports G4, and `AR-5` supports a phase exit or an external assessment.
+Passing an AR gate does not pass the G gate it supports; the G gate still requires its own approver.
+
 | Gate | Name | Purpose | Required evidence | Approver | On failure |
 | --- | --- | --- | --- | --- | --- |
 | **G0** | Ready | The work is defined, classified and unblocked before code is written | Work-package record with objective, class (`GOV-09`), scope, reuse check, test plan and rollback; every `[OPEN]` decision it depends on is settled | Architect | Do not start. Return to definition. |
@@ -705,6 +716,9 @@ condition with evidence. Skipping a gate is a deviation and follows `GOV-12`–`
 - a staging URL and the artifact digest deployed to it;
 - a signed founder approval record;
 - a migration file and its `db diff` output;
+- a requirement-to-control-to-evidence traceability record and the evidence it points to
+  (`standards` §19.11);
+- an audit-readiness impact note, where the change is in the scope of `standards` §19.3;
 - a measurement with its method stated.
 
 Evidence is **not**: a sentence in a status field, a screenshot without a commit, a verbal approval,
@@ -751,7 +765,8 @@ of this document is retired; no identifier in either form is reused.
 | **Reuse check** | What existing code, component, service, utility, schema or adapter was inspected, and why it could not be reused (`ENG-03`, `AI-02`) |
 | **Dependencies** | Other work packages, decisions and provider prerequisites |
 | **Test plan** | The tests that will fail before and pass after, including every deny branch |
-| **Evidence** | What artifact will prove completion at G2 |
+| **Evidence** | What artifact will prove completion at G2, including the traceability record where `standards` §19.11 requires one |
+| **Audit-readiness impact** | The requirement classes engaged, the data classes touched, the audit events produced, the AR gate that applies and any R1/R2 question that remains `[OPEN]` (`standards` §19.3) |
 | **Rollback** | How the change is reverted, including any data consideration |
 | **Approver** | The role required by `GOV-09` |
 
@@ -924,6 +939,20 @@ This table exists so the correction is auditable and does not have to be redisco
 ---
 
 ## 13. Changelog
+
+### 6 November 2026 — cross-reference update, audit readiness
+
+`ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` version 2.1 added §19, audit readiness by design.
+This document now points at it; no phase, gate, approver or work-package field changed meaning.
+
+**What changed.** §7.1 maps `AR-0`–`AR-5` to the existing G0–G5 gates and states that the AR gates are
+evidence checkpoints, not a second approval ladder. §7.2 adds the traceability record and impact note
+to the list of acceptable evidence. §8.2 adds the **audit-readiness impact** field to the work-package
+record. The status note records the update.
+
+**What did not change.** The six gates, their approvers, the failure behaviour, the deviation rule, the
+evidence rule, the phase sequence and the work-package identifier convention are unchanged. No
+`[OPEN]` decision was settled and no phase was approved.
 
 ### 4 November 2026 — version 2.0, identifier convention amended
 
