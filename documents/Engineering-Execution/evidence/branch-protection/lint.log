@@ -1,0 +1,5 @@
+﻿
+> @figma/my-make-file@0.0.1 lint <repo>
+> node scripts/lint.mjs
+
+lint: OK  20 known baseline violation(s), 0 new; 0 stale

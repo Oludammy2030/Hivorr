@@ -1,0 +1,12 @@
+﻿
+> @figma/my-make-file@0.0.1 test:push-protection <repo>
+> node scripts/test-push-protection.mjs
+
+PASS  permitted feature push succeeds
+PASS  direct main push is rejected
+PASS  force push to main is rejected
+PASS  deleting main is rejected
+PASS  direct staging push is rejected
+PASS  secret-shaped content is rejected on a feature push
+
+All push-protection checks passed.

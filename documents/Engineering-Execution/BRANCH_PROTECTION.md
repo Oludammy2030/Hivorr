@@ -177,7 +177,29 @@ guarantee against a determined privileged actor.
 | PR-merged staging push (negative control) | Merged commit `3b1def3` passes the guard | `verify-pr-merge.mjs` output |
 | Production without founder/confirmation | Refused | Manual workflow test |
 
-## 9. Rollback
+## 9. Applied evidence — 2026-11-06
+
+| Evidence | Result |
+|---|---|
+| `staging` created at `c7dd301`, the same SHA as `main` | No history rewritten; branch created through the GitHub API |
+| PR #14 — `feature/push-protection` → `staging` | Merged as `3b1def3`; CI green 42263718088; guard 42264089981; staging gate 42264089978 |
+| PR #15 — `fix/branch-guard-parent-walk` → `staging` | Merged as `708dad2`; CI green 42266139189; guard 42266769874; staging gate 42266769990 |
+| PR #16 — `staging` → `main` | Merged as `d3b60d7`; CI green 42268369387; main guard 42268369409 |
+| Permitted feature push | Succeeded (`test/evidence-permitted`, SHA `8fd53aa`), then branch deleted |
+| Direct `main` push attempt | Rejected locally with `BLOCKED - direct update to a protected branch`; transcript retained |
+| Guard on merged staging commit | Passed (`708dad2`) |
+| Guard on unmerged commit | Blocked (`8fd53aa`) |
+| Unit tests | 18 passed |
+| Integration harness | 6/6 checks passed |
+
+Sanitized transcripts are in
+`documents/Engineering-Execution/evidence/branch-protection/`. They include the hook install, the
+rejection, the permitted feature push, the merged/unmerged guard checks and the branch list.
+
+The merged PRs confirm that the approved flow was used for this implementation itself: feature →
+staging → main, with no direct push to either protected branch.
+
+## 10. Rollback
 
 - Remove the hook wiring: `git config --local --unset core.hooksPath`.
 - Revert `.githooks/pre-push`, `scripts/pre-push.mjs`, `scripts/lib/push-policy.mjs`,
