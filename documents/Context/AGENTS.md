@@ -7,6 +7,9 @@
 > **Cross-reference update — 6 November 2026:** §0, §3 and §6 now point at
 > `ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` §19 (audit readiness by design). No rule in this
 > document changed meaning; the binding policy lives in the standards.
+> **Application security update — 6 November 2026:** §0, §1, §4A and §6 now point at
+> `OWASP_APPLICATION_SECURITY_STANDARD.md`, the AfriNova-wide OWASP baseline applied through the
+> Hivorr standards. §4A is mandatory for every change in its stated scope.
 
 ---
 
@@ -40,6 +43,9 @@ reflected through hot reload.
   migration, grant, RLS, and Supabase Data API governance
 - `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` — engineering, security,
   quality and technical-decision standards: how work is done, verified and gated
+- `documents/Context/OWASP_APPLICATION_SECURITY_STANDARD.md` — AfriNova-wide OWASP application
+  security baseline: mandatory control requirements, OWASP mappings, evidence expectations, and
+  agent obligations for security-relevant work
 - `vite.figma.config.ts` — Figma Make wrapper configuration
 - `.mise.toml` — toolchain versions
 
@@ -54,6 +60,8 @@ unless the user requests otherwise. In order of concern:
 - `Database-Migration-and-Supabase-Data-API-Rules.md` — how the database is reached and changed.
 - `ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` — how engineering work is done, reviewed,
   tested and gated.
+- `OWASP_APPLICATION_SECURITY_STANDARD.md` — the AfriNova-wide application security baseline,
+  applied through the engineering standards; mandatory when a change is in its stated scope (§4A).
 - `VISUAL-IDENTITY.md` — the written visual reference derived from the prototype.
 
 `guidelines/Guidelines.md` is a pointer to these documents and holds no rules of its own.
@@ -73,8 +81,10 @@ Read, in this order:
 2. `documents/Context/ARCHITECTURE.md` — approved technical foundation.
 3. `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` — engineering, security and
    quality standards, the gates every change passes, and the audit-readiness standard in §19.
-4. This document — AI working rules, visual preservation, and vocabulary.
-5. The prototype in `src/app/` — the reference implementation of the intended experience.
+4. `documents/Context/OWASP_APPLICATION_SECURITY_STANDARD.md` — the AfriNova-wide OWASP baseline,
+   mandatory for any change in the scope listed in §4A.
+5. This document — AI working rules, visual preservation, and vocabulary.
+6. The prototype in `src/app/` — the reference implementation of the intended experience.
 
 ---
 
@@ -87,6 +97,7 @@ Read, in this order:
 | Intended experience and workflows | The prototype |
 | **Visual identity** | **The prototype** |
 | **Engineering, security and quality standards** | **`documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md`** |
+| **Application security baseline (AfriNova-wide)** | **`documents/Context/OWASP_APPLICATION_SECURITY_STANDARD.md`**, applied through the engineering standards; the stricter control governs a difference |
 | **AI working rules, visual preservation, vocabulary** | **This document** |
 | **Database mechanics, migrations, grants, RLS** | **`documents/Context/Database-Migration-and-Supabase-Data-API-Rules.md`** |
 | **Stack, language, styling** | **Decided — the prototype's stack: React 18 + Vite 6 + TypeScript + Tailwind CSS 4** |
@@ -369,6 +380,63 @@ before posting a job, and a professional browses open work. Settled 3 November 2
 
 ---
 
+## 4A. Mandatory Application Security Standard
+
+**Rule 7 — AfriNova OWASP baseline.** `documents/Context/OWASP_APPLICATION_SECURITY_STANDARD.md`
+is the AfriNova-wide application security baseline, approved by the founder on 6 November 2026 and
+recorded in its §8.1. It is applied through
+`ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` for Hivorr. Where the two differ and both apply,
+the stricter control governs; record the difference in the standard's §9 and the Hivorr standards
+§15, and stop if the choice is material. This section is the operative agent instruction; the
+detailed requirements live in the standard.
+
+**When it is mandatory.** This section applies whenever a task does any of the following:
+
+- creates or modifies a feature, screen, endpoint, worker or integration;
+- creates or modifies an API, request or response contract, webhook or third-party call;
+- touches authentication, authorisation, sessions, tokens, credentials, passwords or permissions;
+- handles user data, personal data, identity data, financial data, payment or payout logic;
+- touches the database, a schema migration, a query, a policy, a grant or a data-access path;
+- adds, removes, upgrades or configures a dependency, build step, CI job or deployment;
+- reviews, refactors, tests or documents any of the above.
+
+If you cannot tell whether a task is in scope, ask before editing. Do not assume the smaller scope.
+
+**Required agent behaviour.**
+
+- Inspect the existing controls and the governing documents before changing anything.
+- Preserve existing controls. Never remove, weaken, bypass or disable one to make a change easier.
+- Never bypass authentication or authorisation, and never add a test-only login, debug token,
+  permission skip or client-side check in place of a server-side one.
+- Never expose, print, commit, log or copy a secret, key, token or connection string. If one is
+  found, report its location and type only and recommend rotation.
+- Never introduce an insecure pattern or dependency: no known High/Critical vulnerability, no
+  unmaintained package, no unreviewed install script, no custom crypto, no unsafe sink.
+- Assess architectural security impact before changing a trust boundary, data flow, permission model
+  or integration. State asset, actor, entry point, threat, control and residual risk.
+- Recommend and add the test that proves each security control, including the deny path.
+- Report suspected vulnerabilities and gaps to the founder or architect with impact, preconditions,
+  proposed fix and test. Do not silently fix them in an unrelated change.
+- Explain conflicts with a secure alternative: state the requirement, the conflict, the risk and at
+  least one secure option. Do not implement the insecure option first and mention the risk after.
+- Classify legal, regulatory and contractual requirements as R1–R5 (standards §19.2), and record
+  unknowns as **[OPEN]** rather than inventing a policy, threshold or obligation.
+- Never describe work, a feature or a release as secure, compliant, certified, hardened or
+  production-ready. State what was verified and how.
+- Treat AI-generated code exactly like human-authored code for review, test and evidence purposes.
+
+**Stop conditions.** Stop and ask when the change would weaken or remove a control, needs an
+unapproved secret or privileged role, depends on an **[OPEN]** decision, hits a material document
+conflict, needs production data or a live third-party side effect, or cannot be tested or evidenced.
+
+**Reporting.** A completion report for security-relevant work states: files and trust boundary
+changed; the `AFS-` and `ENG-`/`SEC-`/`AUT-` rules applied; existing controls inspected and
+preserved; tests run with results; evidence with date and environment; residual risk and open
+decisions; conflicts or assumptions; and confirmation that no secret or production personal data was
+exposed. "Implemented" or "secured" alone is not a report.
+
+---
+
 ## 5. Unified Account & Vocabulary
 
 - The authoritative account and permission model is
@@ -397,6 +465,9 @@ A UI task is complete only when:
 8. Audit readiness: any R1/R2 question is classified and recorded as **[OPEN]** if unresolved, each
    new control has a test that fails if it is removed, and the traceability record is updated
    (standards §19.2–§19.11).
+9. Application security: where the change falls in §4A, the applicable
+   `OWASP_APPLICATION_SECURITY_STANDARD.md` requirements are satisfied or an approved deviation is
+   recorded, and the §4A report fields are complete.
 
 ---
 

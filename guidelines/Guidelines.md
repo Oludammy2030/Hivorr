@@ -15,8 +15,10 @@ Read these, in this order:
    — how the database is reached and changed.
 5. [`ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md`](../documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md)
    — how engineering work is done, reviewed, tested and gated.
-6. [`VISUAL-IDENTITY.md`](../documents/Context/VISUAL-IDENTITY.md) — the written visual reference.
-7. [`AGENTS.md`](../documents/Context/AGENTS.md) — the AI development directive.
+6. [`OWASP_APPLICATION_SECURITY_STANDARD.md`](../documents/Context/OWASP_APPLICATION_SECURITY_STANDARD.md)
+   — the AfriNova-wide application security baseline, applied through the engineering standards.
+7. [`VISUAL-IDENTITY.md`](../documents/Context/VISUAL-IDENTITY.md) — the written visual reference.
+8. [`AGENTS.md`](../documents/Context/AGENTS.md) — the AI development directive.
 
 Three rules are worth repeating here because they are absolute:
 
