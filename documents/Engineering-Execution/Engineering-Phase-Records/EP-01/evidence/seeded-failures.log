@@ -1,0 +1,81 @@
+# Evidence — seeded-failure proofs and document gates
+
+Captured: 2026-11-06. The plan's testing strategy (§15, T1–T14) requires that every gate can fail.
+Three gates were deliberately broken and detected; all fixtures were removed afterwards.
+
+---
+
+## 1. Structural document gates (T1, T3, T7, T12, and status honesty)
+
+A temporary harness outside the repository read the record and checked:
+
+| Check | Meaning | Result |
+|---|---|---|
+| `SEC` | All 11 sections present | PASS — all 11 |
+| `C-ROWS` | C1–C14 rows | PASS — 14 of 14 |
+| `DEC-ROWS` | The 16 required decision rows | PASS — 16 of 16 |
+| `BLOCK-ROWS` | Items `002`–`072` in the blocker matrix | PASS — 38 of 38 |
+| `STATUS` | Phase status is exactly `Blocked` | PASS |
+| `PENDING` | Unresolved decisions marked with an owner | PASS — 33 markers |
+| `SIGNED-OUT` | Signature block is pending, not invented | PASS |
+| `PROTECT-CLAIM` | No unsupported claim that `main` is protected | PASS |
+
+```text
+--- summary ---
+record failing checks: 0 (expected 0)
+result: PASS
+```
+
+## 2. Seeded failure — C8 criterion row removed
+
+A copy of the record with the `C8` row deleted was checked with the same harness.
+
+```text
+[seeded: C8 row removed]
+  FAIL  C-ROWS         13 of 14
+seeded C8 removal detected: yes
+```
+
+The gate detects a missing EP-00 exit criterion. **Fixture discarded; the record was never modified.**
+
+## 3. Seeded failure — blocker row removed
+
+A copy of the record with the `023` row deleted was checked with the same harness.
+
+```text
+[seeded: 023 blocker row removed]
+  FAIL  BLOCK-ROWS     37 of 38
+seeded blocker removal detected: yes
+```
+
+The gate detects an incomplete blocker matrix. **Fixture discarded.**
+
+## 4. Seeded failure — secret scan (real control, real scanner)
+
+A fixture containing a fake GitHub-token shape was written outside the repository and scanned with
+the repository's own scanner.
+
+```text
+$ node scripts/secret-scan.mjs "C:\Users\HP\AppData\Local\Temp\opencode\seeded-secret.txt"
+secret-scan: blocked - possible credential(s) detected
+
+  C:\Users\HP\AppData\Local\Temp\opencode\seeded-secret.txt:2  [github-token]
+
+Remove the value, rotate it if it was ever real, and commit again.
+This is a local guard, not a substitute for provider-side scanning.
+
+(exit 1)
+```
+
+The fixture was deleted immediately after the run. The scanner over the staged working set is clean;
+see the final scan output recorded in the commit evidence.
+
+## 5. Fixture hygiene
+
+| Fixture | Location | Removed |
+|---|---|---|
+| Gate harness | `%LOCALAPPDATA%\Temp\opencode\ep01001-gates.mjs` | Outside the repository; never committed, never staged |
+| Seeded secret | `%LOCALAPPDATA%\Temp\opencode\seeded-secret.txt` | Deleted after the failing run |
+| Modified record copies | In memory only | Never written to disk |
+
+No seeded fixture exists inside the repository, in any commit, or in the working tree.
