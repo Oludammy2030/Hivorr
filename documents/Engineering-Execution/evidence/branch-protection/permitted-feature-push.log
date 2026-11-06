@@ -1,0 +1,18 @@
+﻿secret-scan: clean (183 file(s) scanned)
+pre-push: policy checks passed
+git : remote: 
+At line:1 char:232
++ ... ush probe"; git push origin HEAD:refs/heads/test/evidence-permitted * ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (remote: :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+remote: Create a pull request for 'test/evidence-permitted' on GitHub by visiting:        
+remote:      https://github.com/Oludammy2030/Hivorr/pull/new/test/evidence-permitted        
+remote: 
+remote: GitHub found 24 vulnerabilities on Oludammy2030/Hivorr's default branch (8 high, 12 moderate, 4 low). To find 
+out more, visit:        
+remote:      https://github.com/Oludammy2030/Hivorr/security/dependabot        
+remote: 
+To https://github.com/Oludammy2030/Hivorr.git
+ * [new branch]      HEAD -> test/evidence-permitted

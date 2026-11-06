@@ -1,0 +1,6 @@
+﻿
+> @figma/my-make-file@0.0.1 hooks:install <repo>
+> node scripts/install-git-hooks.mjs
+
+hooks:install: OK - core.hooksPath=.githooks
+hooks:install: pre-push now blocks direct pushes to main and staging.

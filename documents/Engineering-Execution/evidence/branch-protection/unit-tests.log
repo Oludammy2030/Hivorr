@@ -1,0 +1,13 @@
+﻿
+> @figma/my-make-file@0.0.1 test <repo>
+> vitest run
+
+
+ RUN  v4.1.12 <repo>
+
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  19:14:49
+   Duration  922ms (transform 215ms, setup 0ms, import 330ms, tests 383ms, environment 0ms)
+

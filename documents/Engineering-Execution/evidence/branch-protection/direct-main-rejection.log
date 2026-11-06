@@ -1,0 +1,22 @@
+﻿git : pre-push: BLOCKED - direct update to a protected branch.
+At line:1 char:184
++ ... ion probe"; git push origin HEAD:main *> "$dir\direct-main-rejection. ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (pre-push: BLOCK...otected branch.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  main: direct-push
+
+Protected branches are updated through pull requests only:
+  feature/* -> PR -> staging -> PR -> main
+
+Push your work to a feature branch instead:
+  git push origin HEAD:refs/heads/feature/<short-name>
+
+If you believe this is an emergency, do not bypass the hook. Ask the
+founder/architect to record the exception and use the GitHub UI merge path.
+See documents/Engineering-Execution/BRANCH_PROTECTION.md.
+
+pre-push: push blocked.
+error: failed to push some refs to 'https://github.com/Oludammy2030/Hivorr.git'
