@@ -2,7 +2,7 @@
 
 Task: **EP-00-001 — Toolchain, lockfile and first commit**
 Recorded: 2026-11-06
-Status: decisions applied; `EP-00-001` remains **In build** pending commit identity and architect review.
+Status: **`Verified`** — G2 acceptance recorded 2026-11-06 (§G2 below). The phase remains `In build`.
 
 This record exists because the approved Task Implementation Plan (§13 "Platform honesty", §20)
 requires every pre-implementation decision to be written down where the next contributor looks,
@@ -39,8 +39,9 @@ install. The clean-clone replay (T10) reproduces the same command sequence from 
 ## PC-02 — Commit identity
 
 Name: `Prince Abidemi Oluwadamilare` (governance signatory on `EP-00-000`).
-Email: **pending** — not supplied, and an agent must not invent or impersonate one (plan §20.2).
-Set with `git config --local` only. No commit exists until this is supplied.
+Email: `oludammy2030@gmail.com`.
+Set with `git config --local` only. Author and committer of `8029466` and tagger of
+`v0.0.1-bootstrap`; the identity was supplied by the founder and was not invented by an agent.
 
 ---
 
@@ -91,4 +92,63 @@ prerequisite for T3, not a widening of `EP-00-001`.
 | T6 staged scan | Pass — 102 paths, no denied path, no credential-shaped string; seeded fixture proved the check can fail |
 | T7 LFS | Pass — `git add -A` completed against `git-lfs/3.8.1` |
 | T8 protected files | Expected delta only — `pnpm-lock.yaml`, `.gitignore`, `.gitattributes`, plus the two `EP-00-012` source fixes |
-| T9 / T10 | Blocked on PC-02 (no commit can exist yet) |
+| T9 history integrity | Pass with a recorded delta — annotated tag `v0.0.1-bootstrap` resolves to `8029466`, the bootstrap commit; `HEAD` has since advanced (see §G2.2) |
+| T10 clean-clone replay | Pass under PC-01 — frozen install and typecheck exit 0 without `--force`; build exits 0 only after `--force --frozen-lockfile`, lockfile hash unchanged |
+
+---
+
+## G2 — Acceptance record
+
+**Accepted:** 2026-11-06 by Prince Abidemi Oluwadamilare, holding the architect and founder roles
+(`EES` §5.1 — the roles are recorded separately and are not merged; the `DEV-001` second-reviewer
+arrangement remains the compensating control).
+
+Class: `[REVIEW]`. This is the G1 → G2 transition for `EP-00-001`.
+
+### G2.1 — Accepted deviation: Windows build parity (PC-01)
+
+`T10` as written ("frozen install → typecheck → build") does not pass on the Windows workstation,
+because `supportedArchitectures.os: [linux]` filters the native optional packages. Reproduced from
+a clean clone at the tag:
+
+| Step | Result |
+|---|---|
+| `pnpm install --frozen-lockfile` | exit 0, lockfile unchanged |
+| `pnpm typecheck` | exit 0 |
+| `pnpm build` | exit 1 — `Cannot find module @rollup/rollup-win32-x64-msvc` |
+| `pnpm install --force --frozen-lockfile` then `pnpm build` | exit 0 — `dist/` 4 files, 611,906 bytes |
+
+**Accepted on the basis that** the lockfile is provably unchanged before and after `--force`
+(`DAF9AC73BCE30FCD6C94027CFD03582FF4196021FE4477611DC32B8EA9E27167`), so the committed artefact is
+not platform-tainted, and CI on Linux — the reference environment — is unaffected. The gap is local
+only and is re-examined in `EP-00-002` (CI/local parity), which is the correct owner.
+
+### G2.2 — Accepted deviation: tag does not point at `HEAD`
+
+`T9` checks that the annotated tag resolves to `HEAD`. At tagging time it did. `HEAD` then advanced
+by one documentation commit, `e96ed89` (`docs(ep-00-000): approve DoD with recorded FA-14
+exception`), which does not belong to the `EP-00-001` change surface.
+
+**Accepted on the basis that** the tag correctly marks the bootstrap tree (`8029466`, 103 paths), and
+re-pointing it at a later governance commit would misrepresent what `v0.0.1-bootstrap` contains. The
+check is read as "resolved to `HEAD` at tagging time"; the delta is permanent and intentional.
+
+### G2.3 — Accepted inclusion: `EP-00-012`
+
+The bootstrap commit contains the `EP-00-012` type fixes (`src/app/App.tsx`,
+`vite.figma.config.ts`) and its work-package record. This exceeds the original two-file change
+surface (`.gitignore` comment + generated `pnpm-lock.yaml`) and is accepted because the fixes were
+required for `T3` to pass at all, were approved as a separate bounded package, and contain no visual
+or behavioural change and no type suppression.
+
+### G2.4 — Tag provenance corrected
+
+The original annotated tag object (`e5752d2`) stated that pnpm `10.34.3` was executed. Every
+verification run used `10.34.9`, the repository pin. With no remote, no consumer and no CI depending
+on the tag object, it was deleted and re-created at the same commit (`8029466`) with the corrected
+toolchain line. New tag object: `e6fcd38`. The tagged tree is byte-identical.
+
+### G2.5 — Status
+
+`EP-00-001` moves `Ready` → `Verified`. `EX-19` and the commit half of `EX-12` are closed. The phase
+remains `In build` (`QUA-37`). `EP-00-002` is the next item and inherits the PC-01 parity gap.

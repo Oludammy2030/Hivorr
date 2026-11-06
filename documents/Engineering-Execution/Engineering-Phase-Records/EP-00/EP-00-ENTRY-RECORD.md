@@ -243,7 +243,7 @@ Statuses use the `EES` §9.1 vocabulary only. The phase is `In build`; item-leve
 
 | Item | Name | Status | Blockers | Owner | Clearing condition |
 |---|---|---|---|---|---|
-| **EP-00-001** | Toolchain, lockfile and first commit | `Ready` | None — toolchain provisioned 2026-11-04 | Executing owner | Frozen install, typecheck, build, first commit and tag |
+| **EP-00-001** | Toolchain, lockfile and first commit | `Verified` | None | Executing owner | **Met 2026-11-06** — commit `8029466`, annotated tag `v0.0.1-bootstrap`, G2 recorded in the task decision log |
 | **EP-00-002** | Toolchain contract and CI/local parity | `Not started` | `EP-00-001`; CI half deferred to `EP-00-006` | Developer; architect | `001` complete; `packageManager`/`engines` drafted |
 | **EP-00-003** | Vitest, scripts and proven-failing test | `Not started` | `001`, `002`; architect approval of the test toolchain (`GOV-09`); versions ≥7 days (`TEC-09`) | Architect; developer | Written `[REVIEW]` approval; `001`/`002` complete |
 | **EP-00-004** | Linter, format check and baseline register | `Not started` | `001`, `002`; linter selection and rule set decided within `004` | Architect; developer | `001`/`002` complete; linter and rule set approved in `004` |
@@ -258,7 +258,7 @@ Statuses use the `EES` §9.1 vocabulary only. The phase is `In build`; item-leve
 **Notes.**
 
 - `EP-00-005` is a founder act, not engineering work. It is `Ready` but must not create a deployment or a deploy workflow.
-- `EP-00-001` is now `Ready`: the toolchain prerequisite is met (Node v22.23.4, pnpm 10.34.3). It is no longer `Blocked`.
+- `EP-00-001` is `Verified` as of 2026-11-06: frozen install, typecheck, build, first commit and annotated tag all evidenced, G2 accepted. The Windows `--force` parity gap is accepted and carried into `EP-00-002`.
 - The critical path remains `001 → 002 → 003/004 → 006 → 008 → 007 → 010 → 011`, with `005` gating `006`–`008`.
 - Exactly one phase is `In build` (`ED-03`): EP-00. EP-01 remains `Not started`.
 
@@ -366,6 +366,7 @@ At signature, the founder states:
 | **0.7** | 2026-11-04 | mise 2026.11.0 installed and trusted; Node 22.23.4 installed via mise. `mise install` blocked on `npm:pnpm@10.34.3` by the `no-downgrade` trust policy; no bypass applied. Risk R-O added; evidence E14 added. | AI implementation agent | mise installation authorised by the founder, 2026-11-04 |
 | **0.8** | 2026-11-04 | pnpm pin amended from `10.34.3` to `10.34.9` in `.mise.toml` because `10.34.3` lacks npm attestation. `10.34.9` is a same-line patch published by GitHub Actions with attestation, 10 days old. `mise install` completed; risk R-O closed; evidence E15 added. No trust exclusion or `npm.shell_out` bypass used. | AI implementation agent | Founder approved the pin amendment, 2026-11-04 |
 | **0.9** | 2026-11-06 | `EP-00-000` DoD approved by the project lead with the FA-14 recorded exception; TV-13 seeded-failure proof executed; evidence E16 added. | AI implementation agent | Project lead approval, 2026-11-06 |
+| **0.10** | 2026-11-06 | `EP-00-001` executed and moved `Ready` → `Verified` (G2). Commit `8029466`, annotated tag `v0.0.1-bootstrap` (corrected object `e6fcd38`), lockfile regenerated to exact 53 + 9 parity. Three deviations accepted: Windows `--force` build parity (PC-01), tag not at `HEAD`, `EP-00-012` type fixes inside the bootstrap commit. Evidence E17 added. Phase remains `In build`. | AI implementation agent | Architect/founder G2 acceptance, 2026-11-06 |
 
 **Deviation note.** The approved implementation plan said: "If #18 or any ruling is not provided, stop at step 3. Do not draft a speculative record." The draft was created under the alternative the plan identified as requiring explicit approval: create the artifact in `Blocked` form with `PENDING` placeholders. No decision was invented, no default was chosen, and the phase was not marked `In build` until the approvals existed. The deviation is now accepted by the same 2026-11-04 approval and is recorded here for audit.
 
@@ -389,8 +390,9 @@ At signature, the founder states:
 | E14 | `mise` verification | **Recorded** 2026-11-04 — mise `2026.11.0`; `mise ls` shows `node 22.23.4` and `npm:pnpm 10.34.9` installed |
 | E15 | mise-managed pnpm verification | **Recorded** 2026-11-04 — `mise exec -- node -v` = `v22.23.4`; `mise exec -- pnpm -v` = `10.34.9`; `mise which pnpm` resolves to the mise install |
 | E16 | `EP-00-000` DoD approval | **Approved** 2026-11-06 by Prince Abidemi Oluwadamilare, with the FA-14 recorded exception; see the DoD §9 approval record |
+| E17 | `EP-00-001` execution and G2 | **Recorded** 2026-11-06 — commit `8029466` (103 paths); annotated tag `v0.0.1-bootstrap` → `8029466`; frozen install, typecheck and build pass; clean-clone replay pass under PC-01; acceptance in `documents/Task-Implementation/EP-00/EP-00-001 — Decision record and amendment log.md` §G2 |
 
 ---
 
 **Record status:** `Verified` — approved by role on 2026-11-04; phase `In build`.
-**Next action:** Start `EP-00-001` (frozen install, typecheck, build, first commit and tag) now that the toolchain is present and mise-managed. `EP-00-005` remains a founder act: create the remote and configure the host per #18. `DEV-001` is filed; no further action is required before `EP-00-007`.
+**Next action:** Start `EP-00-002` (toolchain contract and CI/local parity) from commit `8029466`; it inherits the accepted Windows `--force` parity gap from `EP-00-001`. `EP-00-005` remains a founder act: create the remote and configure the host per #18. `DEV-001` is filed; no further action is required before `EP-00-007`.
