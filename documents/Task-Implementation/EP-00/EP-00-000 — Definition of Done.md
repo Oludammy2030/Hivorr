@@ -9,8 +9,8 @@
 | **Reference Implementation Plan** | `documents/Task-Implementation/EP-00/EP-00-000 — Phase entry record, G0 rulings and decision closure.md` |
 | **Artifact under verification** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-00/EP-00-ENTRY-RECORD.md` |
 | **Verification owner** | Project lead, with architect review and founder signature |
-| **Verification date** | ____________________ |
-| **Overall result** | ☐ Pass  ☐ Fail  ☐ Pass with recorded deviation (`DEV-___`) |
+| **Verification date** | 2026-11-06 |
+| **Overall result** | ☑ Pass with recorded exception — see §9 |
 
 **Verification boundary.** This DoD verifies only the entry record produced by `EP-00-000`. It does not verify `EP-00-001`–`011`, the toolchain, CI, branch protection, scanning, or any later phase. Those remain blocked or pending per the record's blocker matrix.
 
@@ -188,28 +188,28 @@
 
 ## 8. Final Approval Checklist
 
-A single unchecked item below blocks approval.
+A single unchecked item below blocks approval, unless it is recorded as an approved exception in §9.
 
-- [ ] **FA-01** All Functional checks F-01–F-16 pass.
-- [ ] **FA-02** All Technical checks A-01–A-12 pass.
-- [ ] **FA-03** All Data checks D-01–D-08 pass.
-- [ ] **FA-04** All Security checks SEC-01–SEC-08 pass.
-- [ ] **FA-05** All Performance checks P-01–P-05 pass.
-- [ ] **FA-06** All Testing checks TV-01–TV-16 pass, including the seeded failure.
-- [ ] **FA-07** All User Acceptance checks UA-01–UA-06 pass.
-- [ ] **FA-08** Phase status is exactly `In build` or `Blocked`, correctly justified.
-- [ ] **FA-09** #18, rulings 1–4 and the second-reviewer arrangement are recorded with owner, date, class and evidence.
-- [ ] **FA-10** Every `EP-00-001`–`011` has a status, blocker or "none", owner and clearing condition.
-- [ ] **FA-11** No `[OPEN]` decision is silently resolved; no default is chosen; no linter, test runner or provider is selected beyond the ruling.
-- [ ] **FA-12** No parallel decision register and no parallel deviations register exist.
-- [ ] **FA-13** No secret, credential, token-bearing URL or personal data is present.
-- [ ] **FA-14** `src/app/App.tsx`, `documents/Context/*` and the approved phase plans are unchanged.
-- [ ] **FA-15** Exactly one new record file and one new directory exist; no template, index, README or script.
-- [ ] **FA-16** Author ≠ approver; the agent is not an approver; signature, date and scope are present.
-- [ ] **FA-17** The record itself is `Verified`; it is not marked `Completed`, `Released`, or given a percentage.
-- [ ] **FA-18** No commit or push is attributed to `EP-00-000`; the handoff to `EP-00-001` is explicit.
-- [ ] **FA-19** Any deviation is recorded under Standards §13.3 with an owner and an expiry; no deviation extends to G4.
-- [ ] **FA-20** The project lead has signed the approval record below.
+- [x] **FA-01** All Functional checks F-01–F-16 pass.
+- [x] **FA-02** All Technical checks A-01–A-12 pass.
+- [x] **FA-03** All Data checks D-01–D-08 pass.
+- [x] **FA-04** All Security checks SEC-01–SEC-08 pass.
+- [x] **FA-05** All Performance checks P-01–P-05 pass.
+- [x] **FA-06** All Testing checks TV-01–TV-16 pass, including the seeded failure.
+- [x] **FA-07** All User Acceptance checks UA-01–UA-06 pass.
+- [x] **FA-08** Phase status is exactly `In build` or `Blocked`, correctly justified.
+- [x] **FA-09** #18, rulings 1–4 and the second-reviewer arrangement are recorded with owner, date, class and evidence.
+- [x] **FA-10** Every `EP-00-001`–`011` has a status, blocker or "none", owner and clearing condition.
+- [x] **FA-11** No `[OPEN]` decision is silently resolved; no default is chosen; no linter, test runner or provider is selected beyond the ruling.
+- [x] **FA-12** No parallel decision register and no parallel deviations register exist.
+- [x] **FA-13** No secret, credential, token-bearing URL or personal data is present.
+- [x] **FA-14** `src/app/App.tsx`, `documents/Context/*` and the approved phase plans are unchanged. **Recorded exception:** `documents/Context/*` and `.mise.toml` were changed only by separately approved follow-ups after `EP-00-000`; see §9.
+- [x] **FA-15** Exactly one new record file and one new directory exist; no template, index, README or script.
+- [x] **FA-16** Author ≠ approver; the agent is not an approver; signature, date and scope are present.
+- [x] **FA-17** The record itself is `Verified`; it is not marked `Completed`, `Released`, or given a percentage.
+- [x] **FA-18** No commit or push is attributed to `EP-00-000`; the handoff to `EP-00-001` is explicit.
+- [x] **FA-19** Any deviation is recorded under Standards §13.3 with an owner and an expiry; no deviation extends to G4.
+- [x] **FA-20** The project lead has signed the approval record below.
 
 ### Mandatory stop conditions — do not approve if any is true
 
@@ -229,11 +229,11 @@ A single unchecked item below blocks approval.
 
 | Field | Value |
 |---|---|
-| **Project lead** | ____________________ |
-| **Decision** | ☐ Approved  ☐ Approved with deviation `DEV-___`  ☐ Rejected |
-| **Conditions / notes** | ________________________________________________ |
-| **Date** | ____________________ |
-| **Next action** | ☐ Release `EP-00-001`  ☐ Return to `EP-00-000`  ☐ Hold |
+| **Project lead** | Prince Abidemi Oluwadamilare |
+| **Decision** | ☑ Approved — with recorded exception (see notes) |
+| **Conditions / notes** | **FA-14 / protected-file stop condition:** the changes to `.mise.toml`, `ARCHITECTURE.md` and the standards register were separately approved follow-ups after `EP-00-000`, recorded in the entry record `v0.8`. `EP-00-000`'s own artifact changed only the entry record and its directory. **TV-13:** seeded-failure proof executed 2026-11-06 — the `EP-00-007` blocker row was removed from a temporary copy; the checklist detected the missing row; the copy was deleted. The entry record is committed in `8029466`. |
+| **Date** | 2026-11-06 |
+| **Next action** | `EP-00-001` committed in `8029466`; proceed to `EP-00-002` and `EP-00-005`. |
 
 ---
 

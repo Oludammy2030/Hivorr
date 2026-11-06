@@ -5,7 +5,7 @@
 | **Document ID** | `EP-00-000` |
 | **Phase** | `EP-00` — Execution Readiness |
 | **Task name** | Phase entry record, G0 rulings and decision closure |
-| **Record version** | `0.8` — pnpm pin amended to 10.34.9 |
+| **Record version** | `0.9` — DoD approved |
 | **Record status** | `Verified` — reviewed and approved by role on 2026-11-04 |
 | **Phase status** | **`In build`** |
 | **Class** | `[FOUNDER]` — confirmed 2026-11-04 |
@@ -365,6 +365,7 @@ At signature, the founder states:
 | **0.6** | 2026-11-04 | Toolchain provisioned: Node v22.23.4 and pnpm 10.34.3, matching `.mise.toml`. `EP-00-001` moved to `Ready`; risk R-E closed; evidence E13 added. | AI implementation agent | Toolchain provisioning authorised by the founder, 2026-11-04 |
 | **0.7** | 2026-11-04 | mise 2026.11.0 installed and trusted; Node 22.23.4 installed via mise. `mise install` blocked on `npm:pnpm@10.34.3` by the `no-downgrade` trust policy; no bypass applied. Risk R-O added; evidence E14 added. | AI implementation agent | mise installation authorised by the founder, 2026-11-04 |
 | **0.8** | 2026-11-04 | pnpm pin amended from `10.34.3` to `10.34.9` in `.mise.toml` because `10.34.3` lacks npm attestation. `10.34.9` is a same-line patch published by GitHub Actions with attestation, 10 days old. `mise install` completed; risk R-O closed; evidence E15 added. No trust exclusion or `npm.shell_out` bypass used. | AI implementation agent | Founder approved the pin amendment, 2026-11-04 |
+| **0.9** | 2026-11-06 | `EP-00-000` DoD approved by the project lead with the FA-14 recorded exception; TV-13 seeded-failure proof executed; evidence E16 added. | AI implementation agent | Project lead approval, 2026-11-06 |
 
 **Deviation note.** The approved implementation plan said: "If #18 or any ruling is not provided, stop at step 3. Do not draft a speculative record." The draft was created under the alternative the plan identified as requiring explicit approval: create the artifact in `Blocked` form with `PENDING` placeholders. No decision was invented, no default was chosen, and the phase was not marked `In build` until the approvals existed. The deviation is now accepted by the same 2026-11-04 approval and is recorded here for audit.
 
@@ -387,6 +388,7 @@ At signature, the founder states:
 | E13 | Toolchain verification | **Recorded** 2026-11-04 — `node -v` = `v22.23.4`; `pnpm -v` = `10.34.3` |
 | E14 | `mise` verification | **Recorded** 2026-11-04 — mise `2026.11.0`; `mise ls` shows `node 22.23.4` and `npm:pnpm 10.34.9` installed |
 | E15 | mise-managed pnpm verification | **Recorded** 2026-11-04 — `mise exec -- node -v` = `v22.23.4`; `mise exec -- pnpm -v` = `10.34.9`; `mise which pnpm` resolves to the mise install |
+| E16 | `EP-00-000` DoD approval | **Approved** 2026-11-06 by Prince Abidemi Oluwadamilare, with the FA-14 recorded exception; see the DoD §9 approval record |
 
 ---
 
