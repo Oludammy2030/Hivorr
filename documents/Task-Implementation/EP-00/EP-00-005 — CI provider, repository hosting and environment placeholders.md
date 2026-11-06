@@ -88,3 +88,22 @@ Founder (`[FOUNDER]`) for decision #18 and for F-05-01's cost choice. Architect 
 - `EP-00-007`: enable protection and export the settings as evidence; verify visibility at the same time.
 - `EP-00-010`: index this record, the `git ls-remote` output and the API status output.
 - No environment placeholders were created; `staging` and `production` remain definitions only, as `EP-00` requires.
+
+---
+
+### Amendment — 2026-11-06 (finding resolution)
+
+Recorded on the project lead's instruction. Scope, tests and evidence above are unchanged; this section closes two findings and restates one.
+
+**F-05-01 — secret scanning: resolved locally, with an expiry.** Approved option: a local pre-push guard instead of the paid GitHub feature. Added `scripts/secret-scan.mjs` and `.githooks/pre-push`, enabled with `git config core.hooksPath .githooks`.
+
+- **Proven to block:** a non-live fixture (`ghp_` + 36 zeros) staged in the tree caused `git push` to fail with `pre-push: push blocked by the local secret scan`, exit 1. The fixture was removed and never committed.
+- **Proven to pass:** with the fixture removed, the scan reports `clean (124 file(s) scanned)` and the push proceeds.
+- **Limits, stated plainly:** it matches common credential shapes only, it scans tracked **content**, not history, and a contributor who never enables `core.hooksPath` is unprotected. It is a guard, not a guarantee, and is not equivalent to provider-side scanning.
+- **Expiry / owner:** revisit when GitHub Secret Protection or a CI scanning stage is approved — at the latest in `EP-00-008`. Owner: project lead.
+
+**F-05-02 and F-05-03 — dependency advisories: resolved by `EP-00-013`.** A project-lead-approved scope amendment allowed the pinned packages to move to their patched versions within the installed major line. `pnpm audit` went from **54 advisories (1 critical, 27 high)** to **0**, with the bundle hashes unchanged and `typecheck`, `build` and `--frozen-lockfile` all green. See that record for the package table and the Rollup/Vite compatibility finding.
+
+**F-05-04 — Dependabot pull request #1 is superseded.** The remediation used the same or newer patched versions. The pull request should be closed, not merged.
+
+**F-05-05 — branch protection `HTTP 403`** stands unchanged and is still owed to `EP-00-007`.
