@@ -24,6 +24,29 @@ $ gh run list --repo Oludammy2030/Hivorr --limit 8 \
 
 The current `main` HEAD (`1abdbb5`) is green on both the pipeline and the branch guard.
 
+### 1.1 Pull-request run for this record
+
+```text
+$ gh run view 42289296520 --repo Oludammy2030/Hivorr \
+    --json conclusion,headSha,workflowName,url
+{"conclusion":"success","headSha":"8210f9804c19f129e3e71aa60bb66a72a6e6cc28",
+ "url":"https://github.com/Oludammy2030/Hivorr/actions/runs/42289296520","workflowName":"CI"}
+```
+
+Trigger: `pull_request` for PR #19 (`docs/ep-01-001-entry-record` → `staging`).
+All six jobs passed: `install`, `lint and format check`, `typecheck`, `test`, `build`,
+`secret and dependency scan`.
+
+```text
+$ gh pr view 19 --repo Oludammy2030/Hivorr \
+    --json number,baseRefName,headRefName,state,mergeable,reviewDecision
+{"baseRefName":"staging","headRefName":"docs/ep-01-001-entry-record","mergeable":"MERGEABLE",
+ "number":19,"reviewDecision":"","state":"OPEN"}
+```
+
+`reviewDecision` is empty: no review has been recorded. The run proves the pipeline passes; it does
+not constitute review, approval or G2.
+
 ## 2. The EP-00 evidence run
 
 ```text

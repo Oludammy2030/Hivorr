@@ -5,7 +5,7 @@
 | **Document ID** | `EP-01-001` |
 | **Phase** | `EP-01` — Core Platform Foundation & Infrastructure |
 | **Task name** | Entry gate closure and decision register |
-| **Record version** | `0.1` — initial draft |
+| **Record version** | `0.2` — CI evidence attached |
 | **Record status** | `In review` — drafted and self-checked; architect review and founder signature outstanding |
 | **Phase status** | **`Blocked`** |
 | **Class** | `[FOUNDER]` |
@@ -469,6 +469,7 @@ approver role (`EES` §5.6, `AI-20`).
 | Version | Date | Change | Author | Approval |
 |---|---|---|---|---|
 | **0.1** | 2026-11-06 | Initial draft. EP-00 exit re-verified; 16 decisions recorded as `PENDING` with owners; §4.3 rulings recorded as `PENDING`; 38-item blocker matrix; phase set to `Blocked`. No decision invented, no default adopted, no register edited. | AI implementation agent | None — draft only |
+| **0.2** | 2026-11-06 | CI evidence attached. Commit `8210f98` pushed on `docs/ep-01-001-entry-record`; PR #19 opened into `staging`; CI run `42289296520` green on all six jobs. §11.3 E12 updated from "does not exist" to the recorded run and E13 added for the pull request. No decision outcome, status, blocker or signature changed. | AI implementation agent | None — draft only |
 
 ### 11.3 Evidence attached to this record
 
@@ -485,13 +486,11 @@ approver role (`EES` §5.6, `AI-20`).
 | E9 | Phase-status determination (§9) | This record | `Blocked` |
 | E10 | Architect review | — | **Does not exist** |
 | E11 | Founder signature | — | **Does not exist** |
-| E12 | CI run for this record's commit | — | **Does not exist yet** — a run can exist only after the change is pushed |
+| E12 | CI run for this record's commit | PR #19 | **Recorded** — CI `42289296520`, success, six jobs, on commit `8210f98`, branch `docs/ep-01-001-entry-record` into `staging` |
+| E13 | Pull request for this record | [PR #19](https://github.com/Oludammy2030/Hivorr/pull/19) | **Open** — `MERGEABLE`; no review decision recorded |
 
 ---
 
 **Record status:** `In review` — drafted and self-checked; unsigned.
 **Phase status:** `Blocked` — thirteen items outstanding in §9.3, each with a named owner.
-**Next action:** the architect rules R1–R2 and records the `[REVIEW]` decisions; the founder decides
-`#1`, `#17`, `#14`, the second reviewer and the EP-00 exit basis. When §9.1 is fully satisfied, this
-record is re-issued as version `0.2` with the outcomes folded in and signed; only then may `002`
-start.
+**Next action:** PR #19 is open into `staging` with green CI. The architect rules R1–R2 and records the `[REVIEW]` decisions; the founder decides `#1`, `#17`, `#14`, the second reviewer and the EP-00 exit basis. When §9.1 is fully satisfied, this record is re-issued as version `0.3` with the outcomes folded in and signed; only then may `002` start.
