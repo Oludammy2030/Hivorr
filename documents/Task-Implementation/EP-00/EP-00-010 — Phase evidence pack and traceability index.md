@@ -43,7 +43,7 @@
 | **C5** | Test gate works | `test.log`, `seeded-test-failure.log`, CI run 42255635543 | **Met** |
 | **C6** | Lint and format gate works | `lint.log`, `format.log`, seeded failures, `.lint-baseline.json`, App hash equality | **Met** |
 | **C7** | Pipeline blocks per stage | Five seeded runs: 42255323075, 42255491891, 42256095641, 42255635543, 42255596119; green 42257026623 | **Met** |
-| **C8** | `main` is protected | GitHub API 403; direct pushes succeeded | **UNMET** — paid host capability |
+| **C8** | `main` is protected | GitHub API 403 for both branch protection and ruleset creation; direct pushes succeeded | **UNMET** — paid host capability |
 | **C9** | Supply chain watched | `secrets.log`, `deps.log`, CI secret run 42256348422, scratch High-advisory failure | **Met** (provider-native scanning unavailable; CI/local control in force) |
 | **C10** | First commit exists and tagged | Tag `v0.0.1-bootstrap` → `8029466`; green run on `1668c30` | **Partially met** — tag and SHA are exact; no green run can exist on the tag because the pipeline did not exist then |
 | **C11** | A newcomer can work | `DEVELOPER_BOOTSTRAP.md`; clean-clone transcript; dev server HTTP 200 | **Met** |

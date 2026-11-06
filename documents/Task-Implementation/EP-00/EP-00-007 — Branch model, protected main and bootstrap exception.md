@@ -23,12 +23,21 @@
 2. **Read repository rulesets** through `GET /repos/Oludammy2030/Hivorr/rulesets`.
    Result: `HTTP 403` — the ruleset endpoint is unavailable for the same plan reason.
 
-3. **Direct-push check.** Several ordinary `git push origin main` operations succeeded during this
+3. **Attempted to create a ruleset** through `POST /repos/Oludammy2030/Hivorr/rulesets`, as an
+   alternative enforcement mechanism. Result: `HTTP 403` with the same plan message:
+
+   ```json
+   {"message":"Upgrade to GitHub Pro or make this repository public to enable this feature.","documentation_url":"https://docs.github.com/rest/repos/rules#create-a-repository-ruleset","status":"403"}
+   ```
+
+   This confirms the block is the account plan, not the classic branch-protection endpoint alone.
+
+4. **Direct-push check.** Several ordinary `git push origin main` operations succeeded during this
    work (for example `6aac68f..673b71c` and `673b71c..1668c30`). A successful direct push is negative
    proof that `main` is **not** protected. No force-push was attempted against the real history,
    because it would be destructive; the capability is absent for the same reason.
 
-4. **Repository visibility** is correctly `private`; the founder decision #18 forbids making it public
+5. **Repository visibility** is correctly `private`; the founder decision #18 forbids making it public
    to obtain the free feature.
 
 ### Why this is blocked, not failed

@@ -18,8 +18,8 @@ EP-00 is implemented to the limit of what the repository and the executing accou
 conditions are not met:
 
 1. `main` is not protected. GitHub returns `403 — Upgrade to GitHub Pro or make this repository public
-   to enable this feature.` Decision #18 requires a private repository, and no engineering change can
-   create a paid host capability.
+   to enable this feature.` for both classic branch protection and repository rulesets. Decision #18
+   requires a private repository, and no engineering change can create a paid host capability.
 2. G5 is a founder signature. It cannot be inferred from completed tasks, and the person signing it
    has not reviewed the evidence pack or accepted the residual risk.
 
