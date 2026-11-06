@@ -1,0 +1,4 @@
+﻿
+> @figma/my-make-file@0.0.1 typecheck <home>\AppData\Local\Temp\ep00-clean-clone
+> tsc --noEmit
+

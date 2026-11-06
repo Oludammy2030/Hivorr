@@ -1,0 +1,10 @@
+﻿mise : toolchain: FAILED G the pinned contract is not satisfied
+At line:1 char:690
++ ... rse -Force; mise exec -- node scripts/version-parity.mjs --node=20.0. ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (toolchain: FAIL...s not satisfied:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  - pnpm is 10.34.3; packageManager pins 10.34.9
+  - Node is 20.0.0; engines.node requires >=22.0.0 <23
+Install the pinned toolchain (see DEVELOPER_BOOTSTRAP.md) and retry.

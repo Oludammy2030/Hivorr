@@ -10,8 +10,8 @@
 | **Artifact under verification** | `src/app/App.tsx` (type-level corrections) and `vite.figma.config.ts` (one annotation), committed in `8029466` |
 | **Task class** | `[FOUNDER]` - the change touches the visual authority (`GOV-09`) |
 | **Verification owner** | Project lead, with architect review (`QUA-29`/`QUA-31`) and founder approval |
-| **Verification date** | `[to be recorded on the verification run]` |
-| **Overall result** | `[Pending verification]` |
+| **Verification date** | 2026-11-06 |
+| **Overall result** | `Verified` — see the approval record in §9 and the work-package record. Architect review remains covered by `DEV-001`. |
 
 **Verification boundary.** This DoD verifies only the four type-level corrections produced by `EP-00-012` and their non-effect on the prototype. It does not verify `EP-00-001`'s lockfile, commit identity or tag; `EP-00-002`-`011`; CI; branch protection; scanning; or any database, API, worker or product capability. Nothing outside the two named source files is in scope.
 
@@ -240,11 +240,11 @@ A single unchecked item below blocks approval, unless it is recorded as an appro
 
 | Field | Value |
 |---|---|
-| **Project lead** | `[name]` |
-| **Decision** | `[Approved / Approved with recorded exception / Rejected]` |
-| **Conditions / notes** | `[record any exception, seeded-failure proof, or residual risk accepted]` |
-| **Date** | `[YYYY-MM-DD]` |
-| **Next action** | `[e.g. unblock EP-00-001 T3 and proceed to EP-00-002]` |
+| **Project lead** | Prince Abidemi Oluwadamilare |
+| **Decision** | Approved, with the recorded `DEV-001` review gap |
+| **Conditions / notes** | Typecheck exit 0 with no suppression; build exit 0; 15/15 fact verification; seeded regression reproduced 18 errors. No architect review is claimed; `QUA-29`/`QUA-31` are covered only by the time-boxed deviation `DEV-001`. The four corrections live inside root commit `8029466`, so the review artefact is `git show 8029466 -- src/app/App.tsx vite.figma.config.ts`. |
+| **Date** | 2026-11-06 |
+| **Next action** | Proceed to `EP-00-002`; settle or re-deviate the second reviewer before EP-01 auth/capability/migration work. |
 
 ---
 

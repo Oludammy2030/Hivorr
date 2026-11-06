@@ -7,7 +7,7 @@
 | **Phase** | `EP-00` — Execution Readiness |
 | **Objective** | Remove the known vulnerabilities from the pinned dependency tree without changing application behaviour, so the dependency gate required by `EP-00-006`/`EP-00-008` can be green on the bootstrap commit. |
 | **Class** | `[REVIEW]` — supply-chain change (`TEC-08`, `TEC-09`, `SEC-54`). Opened as a scope amendment to `EP-00`, which otherwise forbids dependency changes (`EP-00` §8.3, `TEC-17`); approved by the project lead on 2026-11-06. |
-| **Status** | `In review` — implemented and verified; awaiting architect review before merge. |
+| **Status** | `Verified` — implemented, verified and committed; `pnpm audit` reports zero known advisories after the follow-up `minimatch` override. Formal architect review remains covered by the time-boxed deviation `DEV-001`. |
 | **Origin** | `EP-00-005` findings `F-05-02` and `F-05-03`. Enabling Dependabot surfaced 30+ advisories in the pinned tree, including High and Critical severities. |
 
 ### Scope — in
@@ -91,3 +91,14 @@ Architect, `[REVIEW]`, for the supply-chain diff and the lockfile shape. The sco
 - Do **not** merge Dependabot pull requests created before this change; they are superseded.
 - Re-run `pnpm audit` in `EP-00-006` as the dependency gate, and in `EP-00-008` as the scanning evidence.
 - Record the Vite/Rollup pairing constraint in `EP-00-002`.
+
+---
+
+### Amendment — 2026-11-06 (zero-advisory close-out)
+
+The lint toolchain added by `EP-00-004` introduced one Moderate `minimatch` advisory
+(`GHSA-...`, patched at `11.0.1`). An exact `pnpm.overrides.minimatch = "11.0.1"` was applied, within
+the same remediation pattern as the rest of this record. `pnpm install --frozen-lockfile`,
+`pnpm audit --audit-level=high`, `pnpm lint`, `pnpm test`, `pnpm typecheck` and `pnpm build` all pass.
+`pnpm audit` now reports **No known vulnerabilities found**. The override is a single exact pin; no
+new package was added and no application code changed. The commit is `1668c30`.

@@ -1,0 +1,13 @@
+﻿
+> @figma/my-make-file@0.0.1 test <home>\AppData\Local\Temp\ep00-clean-clone
+> vitest run
+
+
+ RUN  v4.1.12 <clean-clone>
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  17:40:58
+   Duration  933ms (transform 70ms, setup 0ms, import 178ms, tests 365ms, environment 0ms)
+

@@ -1,0 +1,6 @@
+﻿
+> @figma/my-make-file@0.0.1 security:deps <repo>
+> pnpm audit --audit-level=high
+
+1 vulnerabilities found
+Severity: 1 moderate

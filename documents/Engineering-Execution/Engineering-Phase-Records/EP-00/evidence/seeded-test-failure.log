@@ -1,0 +1,44 @@
+﻿
+> @figma/my-make-file@0.0.1 test <repo>
+> vitest run
+
+
+ RUN  v4.1.12 <repo>
+
+ G tests/readiness.test.ts (8 tests | 1 failed) 382ms
+     + blocks a non-live GitHub-shaped token 118ms
+mise : 
+At line:1 char:252
++ ... t-scan.mjs; mise exec -- pnpm test *> "$dir\seeded-test-failure.log"; ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+GGGGGGG Failed Tests 1 GGGGGGG
+
+ FAIL  tests/readiness.test.ts > secret-scan control > blocks a non-live GitHub-shaped token
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ G tests/readiness.test.ts:119:27
+    117|     )
+    118|     const result = runSecretScan(fixture)
+    119|     expect(result.status).toBe(1)
+       |                           ^
+    120|     expect(result.stderr).toContain("github-token")
+    121|   })
+
+GGGGGGGGGGGGGGGGGGGGGGGG[1/1]G
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  17:37:23
+   Duration  1.06s (transform 78ms, setup 0ms, import 166ms, tests 382ms, environment 0ms)
+
+GELIFECYCLEG Test failed. See above for more details.

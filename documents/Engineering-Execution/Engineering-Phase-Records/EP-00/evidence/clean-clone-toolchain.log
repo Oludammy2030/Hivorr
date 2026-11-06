@@ -1,0 +1,6 @@
+﻿
+> @figma/my-make-file@0.0.1 check:toolchain <home>\AppData\Local\Temp\ep00-clean-clone
+> node scripts/version-parity.mjs
+
+toolchain: OK G node 22.23.4, pnpm 10.34.9
+toolchain: contract node >=22.0.0 <23, pnpm 10.34.9

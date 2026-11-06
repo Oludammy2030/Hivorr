@@ -1,0 +1,6 @@
+﻿
+> @figma/my-make-file@0.0.1 typecheck <repo>
+> tsc --noEmit
+
+src/ep00-type-seed.ts(1,14): error TS2322: Type 'number' is not assignable to type 'string'.
+GELIFECYCLEG Command failed with exit code 2.

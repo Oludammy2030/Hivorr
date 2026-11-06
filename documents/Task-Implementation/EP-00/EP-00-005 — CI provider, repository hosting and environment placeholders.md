@@ -7,7 +7,7 @@
 | **Phase** | `EP-00` — Execution Readiness |
 | **Objective** | Record the host and CI provider decided under #18, create the private remote, prove the pushed tree matches the reviewed tree, and enable the native security features the later items depend on. |
 | **Class** | `[FOUNDER]` — repository hosting and CI provider (decision #18, `ARCHITECTURE.md` §16.4 #25). |
-| **Status** | `In review` — remote created, tree pushed and verified; scanning partially enabled; one plan conflict raised in § Findings. |
+| **Status** | `Verified` — remote created, tree pushed and verified; scanning gap resolved by the local + CI controls recorded in `EP-00-008`; branch protection remains a separate blocked item in `EP-00-007`. Implementation and evidence recorded 2026-11-06. |
 | **Origin** | `EP-00-000` decision #18: GitHub and GitHub Actions, private repository, protected `main`, native scanning. `EP-00` §9 places `EP-00-005` before `EP-00-006`. |
 
 ### Scope — in

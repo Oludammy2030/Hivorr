@@ -1,0 +1,18 @@
+﻿
+> @figma/my-make-file@0.0.1 format:check <repo>
+> node scripts/format-check.mjs
+
+mise : format:check: FAILED G 6 changed file(s) checked
+At line:1 char:118
++ ... 2};"; try { mise exec -- pnpm format:check *> "$dir\seeded-format-fai ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (format:check: F...file(s) checked:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Checking formatting...
+src/ep00-format-seed.ts (0ms)
+
+Format issues found in above 1 files. Run without `--check` to fix.
+Finished in 5ms on 6 files using 8 threads.
+Run `pnpm format` on the changed files and commit the result.
+GELIFECYCLEG Command failed with exit code 1.

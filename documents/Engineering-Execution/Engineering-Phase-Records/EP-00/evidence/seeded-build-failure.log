@@ -1,0 +1,30 @@
+﻿
+> @figma/my-make-file@0.0.1 build <repo>
+> vite build --config vite.figma.config.ts
+
+mise : [31mfailed to load config from <repo>\vite.figma.config.ts[39m
+At line:1 char:249
++ ... $original); mise exec -- pnpm build *> "$dir\seeded-build-failure.log ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([31mfailed to ....config.ts[39m:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31merror during build:
+Error: EP-00 seeded build failure
+    at 
+file:///<repo>/node_modules/.vite-temp/vite.figma.config.ts.timestamp-1793983116510-3cc4941fd94bc.mjs:30:7
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async loadConfigFromBundledFile (file:///<repo>/node_modules/.pnpm/vite@6.4.5_@types+node@22.2_031734
+51c9ecf6e029d711f64dfe2aaf/node_modules/vite/dist/node/chunks/dep-CkSfqg8D.js:49778:15)
+    at async bundleAndLoadConfigFile (file:///<repo>/node_modules/.pnpm/vite@6.4.5_@types+node@22.2_03173451
+c9ecf6e029d711f64dfe2aaf/node_modules/vite/dist/node/chunks/dep-CkSfqg8D.js:49621:22)
+    at async loadConfigFromFile (file:///<repo>/node_modules/.pnpm/vite@6.4.5_@types+node@22.2_03173451c9ecf
+6e029d711f64dfe2aaf/node_modules/vite/dist/node/chunks/dep-CkSfqg8D.js:49584:44)
+    at async resolveConfig (file:///<repo>/node_modules/.pnpm/vite@6.4.5_@types+node@22.2_03173451c9ecf6e029
+d711f64dfe2aaf/node_modules/vite/dist/node/chunks/dep-CkSfqg8D.js:49079:24)
+    at async createBuilder (file:///<repo>/node_modules/.pnpm/vite@6.4.5_@types+node@22.2_03173451c9ecf6e029
+d711f64dfe2aaf/node_modules/vite/dist/node/chunks/dep-CkSfqg8D.js:47054:18)
+    at async CAC.<anonymous> (file:///<repo>/node_modules/.pnpm/vite@6.4.5_@types+node@22.2_03173451c9ecf6e0
+29d711f64dfe2aaf/node_modules/vite/dist/node/cli.js:862:23)[39m
+GELIFECYCLEG Command failed with exit code 1.

@@ -396,3 +396,32 @@ At signature, the founder states:
 
 **Record status:** `Verified` — approved by role on 2026-11-04; phase `In build`.
 **Next action:** Start `EP-00-002` (toolchain contract and CI/local parity) from commit `8029466`; it inherits the accepted Windows `--force` parity gap from `EP-00-001`. `EP-00-005` remains a founder act: create the remote and configure the host per #18. `DEV-001` is filed; no further action is required before `EP-00-007`.
+
+---
+
+### Amendment — 2026-11-06 (EP-00 implementation status)
+
+The blocker matrix in §8 is superseded by the executed work recorded in
+`documents/Task-Implementation/EP-00/`. Current position:
+
+| Item | Status | Evidence / blocker |
+|---|---|---|
+| `EP-00-001` | `Verified` | Commit `8029466`, tag `v0.0.1-bootstrap` |
+| `EP-00-002` | `Verified` | `packageManager`/`engines`, parity gate, CI install job |
+| `EP-00-003` | `Verified` | Vitest, 8 tests, seeded failure, CI test job |
+| `EP-00-004` | `Verified` | ESLint + baseline, changed-files format gate |
+| `EP-00-005` | `Verified` | Private remote, pushed tree, Dependabot status |
+| `EP-00-006` | `Verified` | Green CI run 42257026623 + five seeded-failure runs |
+| `EP-00-007` | **`Blocked`** | GitHub 403: private-repo protection requires Pro (paid) |
+| `EP-00-008` | `Verified` | Local + CI secret scan, audit, seeded secret failure |
+| `EP-00-009` | `Verified` | `DEVELOPER_BOOTSTRAP.md`, clean-clone replay |
+| `EP-00-010` | `Verified` | Evidence index created; it states the unmet items |
+| `EP-00-011` | **`Blocked`** | G5 founder signature; depends on `007` |
+| `EP-00-012` | `Verified` | Type-only corrections in `8029466` |
+| `EP-00-013` | `Verified` (implementation) | Zero-advisory audit; `DEV-001` review gap |
+
+The phase is **not** closed. C8 (protected `main`) and C14 (signed G5) are unmet; C10's tag-run
+linkage is partially met because the tag predates the pipeline. See
+`documents/Task-Implementation/EP-00/EP-00-010 — Phase evidence pack and traceability index.md`.
+
+The record above remains unchanged as the record of 2026-11-04.

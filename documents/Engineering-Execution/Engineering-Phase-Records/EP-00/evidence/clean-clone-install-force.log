@@ -1,0 +1,29 @@
+﻿GWARNG using --force I sure hope you know what you are doing
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +455
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 455, reused 358, downloaded 0, added 0
+Progress: resolved 455, reused 434, downloaded 0, added 88
+Progress: resolved 455, reused 434, downloaded 0, added 119
+Progress: resolved 455, reused 434, downloaded 0, added 167
+Progress: resolved 455, reused 434, downloaded 2, added 255
+Progress: resolved 455, reused 434, downloaded 18, added 287
+Progress: resolved 455, reused 434, downloaded 19, added 326
+Progress: resolved 455, reused 434, downloaded 20, added 382
+Progress: resolved 455, reused 434, downloaded 20, added 408
+Progress: resolved 455, reused 434, downloaded 20, added 451
+Progress: resolved 455, reused 434, downloaded 20, added 452
+Progress: resolved 455, reused 434, downloaded 20, added 453
+Progress: resolved 455, reused 434, downloaded 21, added 454
+Progress: resolved 455, reused 434, downloaded 21, added 455
+Progress: resolved 455, reused 434, downloaded 21, added 455, done
+
+G Warning GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+G                                                                              G
+G   Ignored build scripts: @tailwindcss/oxide@4.1.12, esbuild@0.25.10.         G
+G   Run "pnpm approve-builds" to pick which dependencies should be allowed     G
+G   to run scripts.                                                            G
+G                                                                              G
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+Done in 16.1s using pnpm v10.34.9
