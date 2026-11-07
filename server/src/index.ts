@@ -9,3 +9,21 @@
 
 export const SERVER_PACKAGE_NAME = "@hivorr/server" as const
 export const API_VERSION = "v1" as const
+
+export { createApplication } from "./app"
+export {
+  loadConfig,
+  parseConfig,
+  ConfigurationError,
+  API_CONFIG,
+} from "./config"
+export type { ApiConfig, DeploymentEnvironment } from "./config"
+export { can, computeCapabilities, CAPABILITY_IDS } from "./domain/capabilities"
+export type {
+  AccessContext,
+  CapabilityId,
+  GrantId,
+} from "./domain/capabilities"
+export { ApiError, toErrorBody } from "./common/errors"
+export type { ApiErrorBody, ApiErrorCode } from "./common/errors"
+export { resolveCorrelationId } from "./common/correlation"
