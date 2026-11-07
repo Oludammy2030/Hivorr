@@ -216,7 +216,7 @@ recommendation.
 | `#1` | Managed Postgres provider — Neon, Supabase or RDS | `ARCHITECTURE.md` §16.4 `#1` | `PENDING` | `[FOUNDER]` | Founder + architect | — | None supplied | `020`–`026`, `060`, `062` | Fold into §16.4 `#1` when decided |
 | `#17` | Hosting platform, DNS provider, TLS issuance | `ARCHITECTURE.md` §16.4 `#17` | `PENDING` | `[FOUNDER]` | Founder + architect | — | None supplied | `041`, `054`, `060`, `063` | Fold into §16.4 `#17` |
 | `#14` | Sign-in identifier — email-first, phone-first, or either | `ARCHITECTURE.md` §16.4 `#14` | `PENDING` | `[FOUNDER]` | Founder | — | None supplied | `031`, `032`, `053` | Fold into §16.4 `#14` |
-| `EES §11.2 #2` / `DEV-001` | Second reviewer for EP-01 authentication, capability and migration changes — appoint, or re-deviate | `EES` §11.2 `#2`; `standards` §13.3 `DEV-001` | `PENDING` — `DEV-001` in force, time-boxed, not replaced | `[FOUNDER]` | Founder + architect | — | `standards` §13.3 `DEV-001` (approved 2026-11-04) | `023`, `025`, `030`–`036` | Appointment, or a complete `GOV-13` re-deviation with expiry; no G4 extension |
+| `EES §11.2 #2` / `DEV-001` | Second reviewer for EP-01 authentication, capability and migration changes — appoint, or re-deviate | `EES` §11.2 `#2`; `standards` §13.3 `DEV-001` | `PENDING` — `DEV-001` in force, time-boxed, not replaced. **Founder statement 2026-11-07: no second reviewer exists; the founder is the only person holding the architect and founder roles.** That is a statement of fact, not a decision, and it satisfies neither `QUA-29` nor `QUA-31` | `[FOUNDER]` | Founder + architect | — | `standards` §13.3 `DEV-001` (approved 2026-11-04); founder statement 2026-11-07 | `023`, `025`, `030`–`036` | Appointment is unavailable while no second person exists; the only remaining route is a complete `GOV-13` deviation with an owner and expiry; no G4 extension |
 | EP-00 exit basis | Whether the recorded C8 compensating control, C10 partial and unsigned C14 are an accepted basis for opening EP-01, or EP-00 must complete first | This record §3; `EP-00-011` §6 | **`RECORDED`** — EP-00 closed 2026-11-07; G5 signed; C8 accepted as `DEV-002`; C10 limitation accepted; C14 met | `[FOUNDER]` | Founder | 2026-11-07 | `EP-00-011` §6; `standards` §13.3 `DEV-002`; `protection-403.log` | The phase status itself | Complete; `DEV-002` must be closed or renewed before EP-01 G5 |
 | Phase opening | EP-01 opened for build | `EES` §5.2, §9.2 | `PENDING` | `[FOUNDER]` | Founder | — | None supplied | Every item | Signature in §11 |
 | `standards #1` | Validation and client-data library — confirm the `zod` recommendation | `standards` §16 `#1` | `PENDING` | `[REVIEW]` | Architect | — | None supplied | `003`, `011` | Fold into `standards` §16 `#1` |
@@ -231,6 +231,12 @@ recommendation.
 | Technical selections | DB driver, migration runner, queue, OpenAPI generator, boundary lint | `EP-01` §9 `002` and `021` dependencies | `PENDING` | `[REVIEW]` | Architect | — | None supplied | `002`, `014`, `021` | Named in `002`'s G0 record when decided |
 
 ### 5.1 Deliberately not carried as entry blockers
+
+> **Founder statement — 2026-11-07.** In the implementation session on 2026-11-07 the founder
+> stated: *"there is no second reviewer for now, am the only one."* This is recorded as a fact, not
+> as a decision. It means the second-reviewer row above cannot be cleared by appointment, and that
+> the only remaining route is a `GOV-13` deviation approved by the founder with an owner and an
+> expiry. It does not waive `QUA-29` or `QUA-31`, and it does not change the phase status.
 
 Examined and excluded so scope does not expand: `standards` §16 `#4` (MFA policy — EP-01 builds
 MFA-*ready schema* only, no MFA flow), `#5` (rate-limit thresholds — belongs to `042`), `#10` (log
@@ -396,7 +402,7 @@ recorded in `EP-00-011` §3 and §6 and in `standards` §13.3.
 | 1 | `#1` managed Postgres provider | Founder + architect | Written decision; fold into §16.4 `#1` |
 | 2 | `#17` hosting, DNS and TLS | Founder + architect | Written decision; fold into §16.4 `#17` |
 | 3 | `#14` sign-in identifier | Founder | Written decision; fold into §16.4 `#14` |
-| 4 | Second reviewer for EP-01 | Founder + architect | Appointment, or a complete `GOV-13` re-deviation with expiry and no G4 extension |
+| 4 | Second reviewer for EP-01 | Founder + architect | No second reviewer exists (founder statement, 2026-11-07), so appointment is unavailable. Clearing requires a complete `GOV-13` deviation with an owner and expiry; no G4 extension |
 | 5 | `standards` §16 `#1`,`#2`,`#3`,`#6`,`#8`,`#9` | Architect (+ founder where noted) | Written decisions; fold into `standards` §16 |
 | 6 | `EX-10` residual — Playwright, Testcontainers, Testing Library | Architect | `GOV-09` approval recorded |
 | 7 | §4.3 rulings R1 and R2 | Architect | Rulings recorded verbatim in this record §6 |
@@ -492,7 +498,9 @@ recorded in §5. It does **not** approve this record, does not open EP-01, and d
 
 **Signature limitation.** No signature of *this record* is recorded. This document must not be read
 as an approval, a phase opening, or a claim that EP-01 is open. The author is an AI agent and cannot
-hold an approver role (`EES` §5.6, `AI-20`).
+hold an approver role (`EES` §5.6, `AI-20`). No independent second human reviewer exists: the founder
+stated on 2026-11-07 that he is the only person holding the roles (§5.1). That statement is a fact,
+not a waiver of `QUA-29` or `QUA-31`.
 
 ### 11.2 Amendment log
 
@@ -500,7 +508,7 @@ hold an approver role (`EES` §5.6, `AI-20`).
 |---|---|---|---|---|
 | **0.1** | 2026-11-06 | Initial draft. EP-00 exit re-verified; 16 decisions recorded as `PENDING` with owners; §4.3 rulings recorded as `PENDING`; 38-item blocker matrix; phase set to `Blocked`. No decision invented, no default adopted, no register edited. | AI implementation agent | None — draft only |
 | **0.2** | 2026-11-06 | CI evidence attached. Commit `8210f98` pushed on `docs/ep-01-001-entry-record`; PR #19 opened into `staging`; CI run `42289296520` green on all six jobs. §11.3 E12 updated from "does not exist" to the recorded run and E13 added for the pull request. No decision outcome, status, blocker or signature changed. | AI implementation agent | None — draft only |
-| **0.3** | 2026-11-07 | EP-00 G5 signed and `DEV-002` recorded; EP-00 exit basis moved to `RECORDED`; §3 criteria C8/C10/C14 dispositions updated; §3.2, §4.3, §5, §9.1–§9.4, §10.1 and §11.1 re-issued; E12 refreshed and E14 added. EP-01 remains `Blocked` on `#1`, `#17`, `#14`, the second reviewer and the G0 rulings. No `[OPEN]` decision was settled and this record's own approvals remain `PENDING`. | AI implementation agent | None — draft only |
+| **0.3** | 2026-11-07 | EP-00 G5 signed and `DEV-002` recorded; EP-00 exit basis moved to `RECORDED`; §3 criteria C8/C10/C14 dispositions updated; §3.2, §4.3, §5, §5.1, §9.1–§9.4, §10.1 and §11.1 re-issued; E12 refreshed, E14 and E15 added. The founder's 2026-11-07 statement that no second reviewer exists is recorded as fact, not as a waiver. EP-01 remains `Blocked` on `#1`, `#17`, `#14`, the second reviewer and the G0 rulings. No `[OPEN]` decision was settled and this record's own approvals remain `PENDING`. | AI implementation agent | None — draft only |
 
 ### 11.3 Evidence attached to this record
 
@@ -520,6 +528,7 @@ hold an approver role (`EES` §5.6, `AI-20`).
 | E12 | CI run for this record's commits | PR #19 | **Recorded** — run `42340031780`, success, all six jobs, on commit `a7ddca3` (v0.3), branch `docs/ep-01-001-entry-record` into `staging`; earlier run `42289296520` green on `8210f98` (v0.2). Later evidence-only commits are covered by the same PR checks |
 | E13 | Pull request for this record | [PR #19](https://github.com/Oludammy2030/Hivorr/pull/19) | **Open** — `MERGEABLE`; all six CI jobs green; no review decision recorded |
 | E14 | EP-00 G5 signature and C8 acceptance | `EP-00-011` §6; `standards` §13.3 `DEV-002`; `EP-00-011` §3–§4 | **Recorded** — signed 2026-11-07 by Prince Abidemi Oluwadamilare (founder and architect roles, separately recorded); EP-00 closed; C10 limitation and residual risks R-1–R-6 accepted; R-3 resolved |
+| E15 | Founder statement on the second reviewer | This record §5, §5.1, §9.3 | **Recorded** — 2026-11-07: no second reviewer exists; the founder is the only person holding the architect and founder roles. Recorded as fact; satisfies neither `QUA-29` nor `QUA-31` |
 
 ---
 
