@@ -1,5 +1,8 @@
 packages:
   - '.'
+  - 'apps/*'
+  - 'server'
+  - 'packages/*'
 supportedArchitectures:
   os:
     - linux

@@ -31,9 +31,16 @@ cd Hivorr
 pnpm install --frozen-lockfile
 ```
 
-On **Windows**, add `--force` once (`pnpm install --force --frozen-lockfile`) so the native optional
-packages Vitest/Vite need are installed despite the Linux-only `supportedArchitectures` pin. It is
-still a frozen install and must not modify `pnpm-lock.yaml`. Linux and CI use the plain command.
+On **Windows**, the repository pins `supportedArchitectures` to Linux for CI. Install the Windows
+native optional packages for local Vitest/Vite runs without changing the lockfile:
+
+```sh
+pnpm install --force --frozen-lockfile --config.supportedArchitectures.os=win32 --config.supportedArchitectures.cpu=x64
+```
+
+If Windows refuses the symlinked store (`EPERM`), use a hoisted store for the local install:
+`pnpm install --force --no-frozen-lockfile --node-linker=hoisted --config.supportedArchitectures.os=win32 --config.supportedArchitectures.cpu=x64`.
+Do not commit a `.npmrc` that changes the store layout for CI.
 
 Expected: `Lockfile is up to date, resolution step is skipped`, exit 0. The install must not modify
 `pnpm-lock.yaml`.
@@ -57,10 +64,11 @@ Run the same gates CI runs, in the same order:
 ```sh
 pnpm check:toolchain   # node/pnpm parity
 pnpm lint              # ESLint + the written baseline
+pnpm lint:boundaries   # no cross-app or app-to-server imports
 pnpm format:check      # oxfmt on changed files only
 pnpm typecheck         # tsc --noEmit
 pnpm test              # Vitest
-pnpm build             # vite.figma.config.ts
+pnpm build:all         # root web bundle + control/staff/partner
 ```
 
 Or run the sequence with one command:
@@ -69,17 +77,21 @@ Or run the sequence with one command:
 pnpm verify
 ```
 
-Expected: every command exits 0. The build emits `dist/`. `dist/` is ignored and is never committed.
+Expected: every command exits 0. The build emits `dist/` for the main web bundle and
+`dist/portals/{control,staff,partner}/`. `dist/` is ignored and is never committed.
 
 ### Optional: local dev server
 
 ```sh
 pnpm dev
+pnpm --filter @hivorr/app-control dev
+pnpm --filter @hivorr/app-staff dev
+pnpm --filter @hivorr/app-partner dev
 ```
 
-It binds `0.0.0.0:8443` (or `$PORT`). This is a **local development tool only**. Do not expose it to
-a network, a tunnel or the public internet; it has no authentication or production hardening
-(`DEP-31`, `EX-16`).
+The root server binds `0.0.0.0:8443` (or `$PORT`). The portal apps default to Vite's next free port.
+These are **local development tools only**. Do not expose them to a network, a tunnel or the public
+internet; they have no authentication or production hardening (`DEP-31`, `EX-16`).
 
 ## 4. What fails, and why
 
@@ -88,10 +100,11 @@ a network, a tunnel or the public internet; it has no authentication or producti
 | `pnpm install --frozen-lockfile` | The lockfile and `package.json` disagree. Fix `package.json` intentionally and regenerate; never hand-edit the lockfile. |
 | `pnpm check:toolchain` | Node is not 22.x or pnpm is not exactly `10.34.9`. |
 | `pnpm lint` | A violation is not in `.lint-baseline.json`, or the baseline has expired. |
+| `pnpm lint:boundaries` | An app imports another app or the server, or a shared package imports UI/server code. |
 | `pnpm format:check` | A **changed** JavaScript/TypeScript file is not `oxfmt` formatted. Untouched files, including the prototype, are not reformatted. |
 | `pnpm typecheck` | A real TypeScript error exists. Do not add `@ts-ignore`; ask for a bounded fix. |
 | `pnpm test` | An asserted behaviour regressed. |
-| `pnpm build` | The Figma Make/Vite build is broken. |
+| `pnpm build:all` | The root Figma Make/Vite build or a portal bundle is broken. |
 | `pnpm security:deps` | A High or Critical advisory is present. |
 | `pnpm security:secrets` | A tracked file matches a known credential shape. |
 | `git push origin main` / `staging` | The destination is a protected branch. Push a working branch and open a PR. |

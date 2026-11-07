@@ -1,0 +1,10 @@
+/*
+ * Scaffold-only layout. This is not a product screen and defines no colour,
+ * font family, or design token. Product UI arrives through `packages/design`
+ * after the EP-01-051 extraction.
+ */
+.portal-foundation {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
