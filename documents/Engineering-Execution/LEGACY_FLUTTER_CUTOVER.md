@@ -1,9 +1,9 @@
 # Legacy Flutter Cutover Runbook
 
-**Status:** **Immediate detach approved and executed on 7 November 2026.** The web CNAME records for
-`hivorr.com` and `staging.hivorr.com` were deleted, and the two Flutter Pages custom domains were
-removed. Both hostnames are now unavailable. No mail or ownership record was changed. The remaining
-action is to revoke the Cloudflare tokens used for the operation.
+**Status:** **Immediate detach and decommission complete.** The web CNAME records for `hivorr.com`
+and `staging.hivorr.com` were deleted, the two Flutter Pages custom domains were removed, and the
+two Flutter Pages projects were deleted. Both hostnames and both `*.pages.dev` subdomains are
+unavailable. No mail or ownership record was changed. No Flutter rollback target remains.
 **Selected path:** immediate detach. `hivorr.com` and `staging.hivorr.com` will be disconnected from
 the Flutter origin and will be unavailable until the React production deployment is ready. No
 maintenance page is being deployed under this decision.
@@ -280,5 +280,5 @@ Decommissioning is irreversible. It is a separate approval from the cutover.
 | 3 - Production preparation | **Blocked** |
 | 4 - Staged cutover | **Superseded by immediate detach** |
 | 4a - Immediate detach | **Complete 7 November 2026** — DNS records deleted, Pages custom domains removed |
-| 5 - Verification | **Complete** — both hostnames have no web record and fail to resolve |
-| 6 - Decommission | Not started |
+| 5 - Verification | **Complete** — both hostnames and both `*.pages.dev` subdomains unavailable |
+| 6 - Decommission | **Complete 7 November 2026** — Flutter Pages projects deleted; no rollback target remains |
