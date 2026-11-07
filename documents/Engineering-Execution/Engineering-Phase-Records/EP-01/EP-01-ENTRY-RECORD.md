@@ -5,8 +5,8 @@
 | **Document ID** | `EP-01-001` |
 | **Phase** | `EP-01` — Core Platform Foundation & Infrastructure |
 | **Task name** | Entry gate closure and decision register |
-| **Record version** | `0.5` — entry gate closed; EP-01 opened; `R-P1` resolved |
-| **Record status** | `Approved` — architect review and founder signature recorded 2026-11-07 |
+| **Record version** | `0.6` — entry gate closed; EP-01 opened; `R-P1` resolved; `EP-01-001` verified |
+| **Record status** | `Verified` — verified against the DoD 2026-11-07 (v1.1, approved with recorded exception) |
 | **Phase status** | **`Ready`** — all nine §9.3 items settled or explicitly accepted |
 | **Class** | `[FOUNDER]` |
 | **Author** | AI implementation agent (drafting role) |
@@ -370,7 +370,8 @@ No item may move to `Ready` until its own G0 record exists (`EES` §7.1, §8.2).
 
 **Notes.**
 
-- `001` is this record. It is `Approved` at version `0.4`, and it is not the phase-closure record.
+- `001` is this record. It is `Verified` at version `0.6` against the DoD v1.1, and it is not the
+  phase-closure record.
 - The critical path in EP-01 §6.2 begins `001 → 002 → 003 → 020 …`; `001` is `Ready`, so `002` may
   start.
 - `040` no longer needs the no-op adapter: `standards` §16 `#9` records Sentry with PII scrubbing
@@ -475,6 +476,12 @@ runner; Playwright, Testcontainers and Testing Library; the visual-regression ba
 diff stage; migration lint and `db diff`; staging topology; build-once artifact digests. The entry
 decisions this record listed as pending are recorded in §5.
 
+**Carried condition — `TEC-12`.** The decisions name vendors: Supabase (`#1`), Cloudflare and Fly.io
+(`#17`), Doppler (`standards` §16 `#8`) and Sentry (`#9`). Each records a **choice, not an
+integration**. Before `020`, `040` or `043` integrates any of them, a `TEC-12` approval must record
+what data leaves the system, where it goes, the legal basis, the processing terms, the failure
+behaviour and the exit path. None of that is asserted by this record, and none of it is decided.
+
 ### 10.4 Conflicts and findings recorded, not resolved
 
 1. **Register fold-in vs. scope guard.** `QUA-38`/`QUA-39` require a settled decision to be folded
@@ -524,8 +531,8 @@ is what `DEV-003` records.
 
 **Basis of the signature.** The founder approved the entry decisions on 2026-11-07 with the
 instruction to settle everything required to open EP-01 without a second reviewer and without a
-later block. The options recorded in §5 are the ones put to the founder in `EP-01-DECISION-PACK.md`;
-the pack is a working document and does not itself decide anything.
+later block. The options recorded in §5 are the ones put to the founder in
+`evidence/decision-pack.md`; the pack is evidence of what was put to him, not a decision source.
 
 **Signature limitation.** This record is signed by the founder in both governance roles. The author
 is an AI agent and cannot hold an approver role (`EES` §5.6, `AI-20`). No independent second human
@@ -541,6 +548,7 @@ and it does not amend `QUA-29` or `QUA-31`.
 | **0.3** | 2026-11-07 | EP-00 G5 signed and `DEV-002` recorded; EP-00 exit basis moved to `RECORDED`; §3 criteria C8/C10/C14 dispositions updated; §3.2, §4.3, §5, §5.1, §9.1–§9.4, §10.1 and §11.1 re-issued; E12 refreshed, E14 and E15 added. The founder's 2026-11-07 statement that no second reviewer exists is recorded as fact, not as a waiver. EP-01 remains `Blocked` on `#1`, `#17`, `#14`, the second reviewer and the G0 rulings. No `[OPEN]` decision was settled and this record's own approvals remain `PENDING`. | AI implementation agent | None — draft only |
 | **0.4** | 2026-11-07 | Entry gate closed on the founder's instruction. `DEV-003` recorded; `#1` (Supabase), `#17` (Cloudflare/Fly.io) and `#14` (email-first) decided; six `standards` §16 rows decided; `EX-10` residual approved in full; rulings R1 and R2 recorded; five technical selections named. §3, §5, §5.1, §6, §7, §9.1–§9.4, §10.1, §10.3–§10.5 and §11 re-issued. Register fold-in performed as a separate act. Phase status `Ready`; `002` may start. | AI implementation agent | Founder, 2026-11-07 §11.1 |
 | **0.5** | 2026-11-07 | Factual amendment: `R-P1` resolved. The pinned toolchain was restored on the workstation by adding `%LOCALAPPDATA%\mise\shims` and `mise\bin` to the User `PATH`; node 22.23.4 and pnpm 10.34.9 now resolve, parity passes and `pnpm verify` exits 0. §4.3 and §10.1 updated; E19 added; `evidence/local-gates.log` §6 records the run. No decision changed, no rule changed meaning, no register edited, and the phase status is unchanged. | AI implementation agent | Founder instruction 2026-11-07 (“fix it”); no decision re-signed |
+| **0.6** | 2026-11-07 | `EP-01-001` verified. The decision pack moved to `evidence/decision-pack.md`; the DoD was amended to v1.1 (scope change note, eleven reworded checks, two narrowed stop conditions) and approved with recorded exception; §8 note for `001` set to `Verified`; `TEC-12` carried as a condition on `020`, `040` and `043`; E20 added. No decision changed and the phase status remains `Ready`. | AI implementation agent | Founder, 2026-11-07 — DoD §9 |
 
 ### 11.3 Evidence attached to this record
 
@@ -565,10 +573,11 @@ and it does not amend `QUA-29` or `QUA-31`.
 | E17 | Register fold-in | `ARCHITECTURE.md` §16.4 `#1`, `#14`, `#17`, §9.7, §16.6 | **Recorded** — separate act, 2026-11-07, with a changelog entry |
 | E18 | This record's own approval | This record §11.1 | **Recorded** — architect and founder roles approved 2026-11-07 by Prince Abidemi Oluwadamilare, recorded separately; no independent second reviewer |
 | E19 | Local pinned toolchain restored | `evidence/local-gates.log` §6 | **Recorded** — 2026-11-07: node 22.23.4, pnpm 10.34.9, parity OK, `pnpm verify` exit 0 |
+| E20 | DoD verification | `EP-01-001 — Definition of Done.md` v1.1 §8–§9 | **Recorded** — 2026-11-07: `Pass with recorded exception`; checks FA-01–FA-26 ticked; exceptions listed in §9 |
 
 ---
 
-**Record version:** `0.5` — entry gate closed; EP-01 opened; `R-P1` resolved.
-**Record status:** `Approved` — architect and founder approvals recorded 2026-11-07 in §11.1.
+**Record version:** `0.6` — entry gate closed; EP-01 opened; `R-P1` resolved; `EP-01-001` verified.
+**Record status:** `Verified` — verified against the DoD v1.1 on 2026-11-07, approved with recorded exception.
 **Phase status:** **`Ready`** — all nine §9.3 items settled or explicitly accepted.
-**Next action:** `002` may start. `DEV-002` and `DEV-003` remain in force and both end at the EP-01 `G5` closure record or earlier; neither extends to `G4`. The pinned toolchain resolves locally as of 2026-11-07 (`pnpm verify` exit 0); CI on Linux remains the shared reference.
+**Next action:** `002` may start. `DEV-002` and `DEV-003` remain in force and both end at the EP-01 `G5` closure record or earlier; neither extends to `G4`. `TEC-12` approval precedes any integration of Supabase, Cloudflare, Fly.io, Doppler or Sentry.
