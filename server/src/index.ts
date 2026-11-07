@@ -28,3 +28,25 @@ export type {
 export { ApiError, toErrorBody } from "./common/errors"
 export type { ApiErrorBody, ApiErrorCode } from "./common/errors"
 export { resolveCorrelationId } from "./common/correlation"
+export {
+  createSessionToken,
+  hashSessionToken,
+  hashPassword,
+  verifyPassword,
+  IdentityService,
+} from "./modules/identity/identity.service"
+export type {
+  IssuedSession,
+  RegisterInput,
+  RegistrationResult,
+  RequestContext,
+  SessionResult,
+  SignInInput,
+} from "./modules/identity/identity.service"
+export {
+  buildSessionCookie,
+  clearSessionCookie,
+  sessionCookieName,
+  sessionPolicy,
+} from "./modules/identity/session-policy"
+export { resolveAudience } from "./modules/identity/portal"

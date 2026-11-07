@@ -25,6 +25,7 @@
     "verify:backend-target": "node scripts/verify-backend-target.mjs",
     "test": "vitest run",
     "test:db": "node scripts/test-db-migrations.mjs",
+    "test:identity": "vitest run tests/identity-integration.test.ts",
     "test:push-protection": "node scripts/test-push-protection.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

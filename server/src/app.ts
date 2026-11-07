@@ -1,5 +1,6 @@
 import "reflect-metadata"
 
+import fastifyCookie from "@fastify/cookie"
 import { NestFactory } from "@nestjs/core"
 import {
   FastifyAdapter,
@@ -7,6 +8,7 @@ import {
 } from "@nestjs/platform-fastify"
 
 import { AppModule } from "./app.module"
+import { ApiErrorFilter } from "./common/api-error.filter"
 import { resolveCorrelationId } from "./common/correlation"
 import { loadConfig, type ApiConfig } from "./config"
 
@@ -30,6 +32,8 @@ export async function createApplication(
     { logger: config.logLevel === "silent" ? false : ["error", "warn"] },
   )
 
+  await app.register(fastifyCookie)
+  app.useGlobalFilters(new ApiErrorFilter())
   app.setGlobalPrefix("v1")
 
   if (config.corsAllowedOrigins.length > 0) {
