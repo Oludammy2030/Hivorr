@@ -30,7 +30,7 @@ Establish the architecture, module boundaries, server-side enforcement path and 
 **No user-facing business capability is delivered by EP-01.** It is the engineering bedrock that makes every later capability buildable, testable, deployable and auditable. What becomes true is narrower and deliberately so:
 
 - An account can exist and sign in.
-- A session is issued for the correct surface (`app`, `control`, `staff`, `partners`) and rejected elsewhere.
+- A session is issued for the correct surface (`app`, `control`, `staff`, `partner`) and rejected elsewhere.
 - An activity can be activated and its state is real.
 - The server can allow or deny an action from computed capabilities, not from the client.
 - Every privileged or state-changing action leaves an append-only audit record.
@@ -78,7 +78,7 @@ This enables the roadmap's Phase 0 foundation work and the Phase 1 entry conditi
 
 ### 4.1 In scope
 
-- Monorepo and workspace topology; `server/`, `packages/design`, `packages/shared`, `packages/api-client`, `apps/control`, `apps/staff`, `apps/partners`.
+- Monorepo and workspace topology; `server/`, `packages/design`, `packages/shared`, `packages/api-client`, `apps/control`, `apps/staff`, `apps/partner`.
 - NestJS + Fastify API, worker process, PostgreSQL-backed queue and transactional outbox contract.
 - PostgreSQL 16 schema-per-module, migration runner, five-role model, RLS scaffolding.
 - Identity and authentication foundation: accounts, users, credentials, sessions, devices, memberships, grants, session audiences, MFA-ready schema.
@@ -103,7 +103,7 @@ This enables the roadmap's Phase 0 foundation work and the Phase 1 entry conditi
 
 Two statements in the approved phase scope need an explicit architect ruling before work starts. They are recorded here rather than resolved silently:
 
-1. **"Five frontend bundles."** `ARCHITECTURE.md` §8.12 enumerates **four** bundles (`web`, `control`, `staff`, `partners`) and treats `staging` as a deployment target. This plan follows the architecture: **four bundles, five deployments**. The wording must be confirmed at G0.
+1. **"Five frontend bundles."** Resolved 2026-11-07 by architecture revision 3 and `EP-01-ENTRY-RECORD.md` §6.3: Hivorr has **four bundles** (`web`, `control`, `staff`, `partner`) and **eight deployments**, one per bundle in staging and production. The partner host is `partner.hivorr.com` / `partner.staging.hivorr.com`. The earlier “four bundles, five deployments” reading and the `partners.` spelling are superseded.
 2. **"Screens extracted from `App.tsx` without visual change."** Extracting all 82 screens would be a rewrite and would violate bounded scope. This plan establishes the design package and extracts **only the screens and primitives the vertical slice uses**. Later phases extract on touch, as the architecture requires. The architect must confirm this reading at G0.
 
 ---
@@ -151,7 +151,7 @@ Two statements in the approved phase scope need an explicit architect ruling bef
 | Session/capability context | Account, active activities, capability list for presentation only, audience. |
 | Auth screens | Sign-in, registration, reset/verification capture state. |
 | Activity switcher/activation | Lists only activated activities and the activation affordance. |
-| Four bundles | `web`, `control`, `staff`, `partners`, each with its own entry and deployment target. |
+| Four bundles | `web`, `control`, `staff`, `partner`, each with its own entry and deployment target. |
 
 ### 5.4 Test and quality stack
 
@@ -296,7 +296,7 @@ Each item is a candidate work package under the EES §8 protocol. Before it reac
 - **Objective:** Extend the pnpm workspace so the root web app, `server/`, shared packages and privileged apps build together without breaking Figma Make.
 - **Engineering purpose:** Establishes the architectural structure and makes import boundaries enforceable from the first commit.
 - **Dependencies:** EP-01-001; technical selections recorded (DB driver, migration runner, queue, OpenAPI generator, test stack, boundary lint).
-- **Expected outcome:** `server/`, `packages/design|shared|api-client`, `apps/control|staff|partners` exist with package names, tsconfig references and boundary lint; root build and typecheck are green; the Figma preview is unchanged.
+- **Expected outcome:** `server/`, `packages/design|shared|api-client`, `apps/control|staff|partner` exist with package names, tsconfig references and boundary lint; root build and typecheck are green; the Figma preview is unchanged.
 - **Priority:** Critical · **Status:** `Not started`
 - **Reasoning:** Planning — Extremely High · Coding — High
 
@@ -553,8 +553,8 @@ Each item is a candidate work package under the EES §8 protocol. Before it reac
 - **Reasoning:** Planning — High · Coding — High
 
 #### EP-01-054 — Four-bundle build and deployment targets
-- **Objective:** Produce four independent bundles (`web`, `control`, `staff`, `partners`) with per-app entries, shared packages and enforced import boundaries.
-- **Engineering purpose:** Makes the four entry points real deployment units without creating a second backend or a second user population.
+- **Objective:** Produce four independent bundles (`web`, `control`, `staff`, `partner`) with per-app entries, shared packages and enforced import boundaries.
+- **Engineering purpose:** Makes the four portal bundles real deployment units without creating a second backend or a second user population.
 - **Dependencies:** EP-01-002, EP-01-052.
 - **Expected outcome:** All four bundles build in CI on every PR; no bundle imports another app; privileged bundles carry `noindex` metadata; the root web bundle stays within the route-JS budget; the Figma Make preview is unaffected.
 - **Priority:** High · **Status:** `Not started`
@@ -565,10 +565,10 @@ Each item is a candidate work package under the EES §8 protocol. Before it reac
 ### Stage G — Environments and delivery
 
 #### EP-01-060 — Environment topology and staging provisioning
-- **Objective:** Provision `local`, `staging` (and the reserved `production` definition) with isolated databases, credentials, secrets and hostnames, matching the architecture's five deployments.
-- **Engineering purpose:** Establishes environment isolation and the staging topology that EP-01 exits on.
+- **Objective:** Provision `local`, `staging` (and the reserved `production` definition) with isolated databases, credentials, secrets and hostnames, matching the architecture's **eight deployments** (four portals in each hosted environment).
+- **Engineering purpose:** Establishes environment isolation and the integrated staging ecosystem that EP-01 exits on.
 - **Dependencies:** EP-01-001 (#17 hosting/DNS/TLS), EP-01-020, EP-01-043.
-- **Expected outcome:** `staging.hivorr.com` and the three privileged hostnames resolve with valid TLS; staging has its own database, roles, secrets and cookie domain; no credential is shared with local or production; the topology is recorded as code or as a reproducible runbook.
+- **Expected outcome:** `staging.hivorr.com`, `control.staging.hivorr.com`, `staff.staging.hivorr.com` and `partner.staging.hivorr.com` resolve with valid TLS; staging has its own database, roles, secrets and session issuer; no credential is shared with local or production; Cloudflare Access protects the control and staff staging hosts; the topology is recorded as code or as a reproducible runbook.
 - **Priority:** Critical · **Status:** `Not started`
 - **Reasoning:** Planning — Extremely High · Coding — Medium
 
@@ -673,7 +673,7 @@ Recorded so the exit gate is not overread:
 - That verification, KYC or document handling works — none exists yet.
 - That money can move, be held, split or reconciled — no finance code exists.
 - That any of the six activity experiences is usable — only activation state exists.
-- That `control`, `staff` or `partners` perform their functions — only their bundles and hosts exist.
+- That `control`, `staff` or `partner` perform their functions - only their bundles and hosts exist.
 - That the system is production-ready — EP-01 exits on staging, and G4 is a later phase.
 
 ## 15. Transition handed to EP-02

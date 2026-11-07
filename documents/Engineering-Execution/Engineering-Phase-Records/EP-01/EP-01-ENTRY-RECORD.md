@@ -285,6 +285,17 @@ writing on 2026-11-07 and are recorded verbatim in §6.1 and §6.2.
 | **Effect of no ruling** | `050`–`053` cannot start; the extraction boundary stays unconfirmed |
 | **Evidence** | This record; `AGENTS.md` §3 |
 
+### 6.3 Amendment to R1 — eight deployments
+
+| Field | Value |
+|---|---|
+| **Status** | `RECORDED` — supersedes R1 |
+| **Reason** | The founder clarified on 2026-11-07 that Hivorr has four functional portals in two hosted environments, and approved the revised architecture on the same date. |
+| **Ruling** | Four bundles (`web`, `control`, `staff`, `partner`) and **eight deployments**: each bundle in staging and production. The partner host is `partner.hivorr.com` / `partner.staging.hivorr.com`. The earlier `partners.` spelling and the “five deployments” reading are superseded. |
+| **Effect** | `002` and `054` build four bundles; `060` provisions eight hosts. No phase status change. |
+| **Evidence** | `ARCHITECTURE.md` revision 3 §4.0, §4.1, §8.12; this amendment |
+| **Decided by** | Founder — 2026-11-07 |
+
 ---
 
 ## 7. Second reviewer
@@ -549,6 +560,7 @@ and it does not amend `QUA-29` or `QUA-31`.
 | **0.4** | 2026-11-07 | Entry gate closed on the founder's instruction. `DEV-003` recorded; `#1` (Supabase), `#17` (Cloudflare/Fly.io) and `#14` (email-first) decided; six `standards` §16 rows decided; `EX-10` residual approved in full; rulings R1 and R2 recorded; five technical selections named. §3, §5, §5.1, §6, §7, §9.1–§9.4, §10.1, §10.3–§10.5 and §11 re-issued. Register fold-in performed as a separate act. Phase status `Ready`; `002` may start. | AI implementation agent | Founder, 2026-11-07 §11.1 |
 | **0.5** | 2026-11-07 | Factual amendment: `R-P1` resolved. The pinned toolchain was restored on the workstation by adding `%LOCALAPPDATA%\mise\shims` and `mise\bin` to the User `PATH`; node 22.23.4 and pnpm 10.34.9 now resolve, parity passes and `pnpm verify` exits 0. §4.3 and §10.1 updated; E19 added; `evidence/local-gates.log` §6 records the run. No decision changed, no rule changed meaning, no register edited, and the phase status is unchanged. | AI implementation agent | Founder instruction 2026-11-07 (“fix it”); no decision re-signed |
 | **0.6** | 2026-11-07 | `EP-01-001` verified. The decision pack moved to `evidence/decision-pack.md`; the DoD was amended to v1.1 (scope change note, eleven reworded checks, two narrowed stop conditions) and approved with recorded exception; §8 note for `001` set to `Verified`; `TEC-12` carried as a condition on `020`, `040` and `043`; E20 added. No decision changed and the phase status remains `Ready`. | AI implementation agent | Founder, 2026-11-07 — DoD §9 |
+| **0.7** | 2026-11-07 | Architecture revision 3: Hivorr has four functional portals (main, control, staff, partner) in two hosted environments. R1 is superseded by §6.3: four bundles, eight deployments; partner host is `partner.hivorr.com` / `partner.staging.hivorr.com`. No phase status change and no other decision reopened. | AI implementation agent | Founder, 2026-11-07 — architecture approval |
 
 ### 11.3 Evidence attached to this record
 

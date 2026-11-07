@@ -78,6 +78,13 @@ describe("EP-00 repository contract", () => {
     const ranges = []
     for (const section of ["dependencies", "devDependencies"]) {
       for (const [name, specifier] of Object.entries(manifest[section] ?? {})) {
+        // Internal workspace packages are linked, not downloaded, and have no
+        // publishable version range. Every external dependency is still pinned.
+        if (
+          name.startsWith("@hivorr/") &&
+          String(specifier).startsWith("workspace:")
+        )
+          continue
         if (!/^\d+\.\d+\.\d+(?:-[\w.]+)?$/.test(String(specifier))) {
           ranges.push(`${section}/${name}: ${specifier}`)
         }

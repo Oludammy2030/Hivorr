@@ -29,6 +29,9 @@
   },
   "include": [
     "src",
+    "apps",
+    "packages",
+    "server",
     "vite.config.ts",
     "vite.figma.config.ts"
   ]

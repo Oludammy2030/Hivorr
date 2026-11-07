@@ -75,6 +75,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Workspace boundaries
+        run: pnpm lint:boundaries
+
       - name: Format changed files
         run: pnpm format:check
 
@@ -157,7 +160,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm build
+        run: pnpm build:all
 
   security:
     name: secret and dependency scan
