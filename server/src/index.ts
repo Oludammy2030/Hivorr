@@ -16,6 +16,7 @@ export {
   parseConfig,
   ConfigurationError,
   API_CONFIG,
+  databaseUrlMatchesProjectRef,
 } from "./config"
 export type { ApiConfig, DeploymentEnvironment } from "./config"
 export { can, computeCapabilities, CAPABILITY_IDS } from "./domain/capabilities"

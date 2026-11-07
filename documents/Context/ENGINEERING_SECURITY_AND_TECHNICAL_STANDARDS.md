@@ -1676,6 +1676,12 @@ rejected by another, independent of the hostname (`ARCHITECTURE.md` §5.4).
 `control.staging.hivorr.com` and `staff.staging.hivorr.com` at the edge. It is additional to backend
 authentication and authorisation, never a replacement for either (`ARCHITECTURE.md` §10.12).
 
+**DEP-37 [STD]** Staging and production use independent Supabase projects. A deployment must fail
+closed unless `BACKEND_ENVIRONMENT` equals `HIVORR_ENV`, `SUPABASE_PROJECT_REF` matches the
+environment's recorded reference, `DATABASE_URL` belongs to that reference, and the staging and
+production references differ (`ARCHITECTURE.md` §11.2.1, `database rules` §10.1.1). The verification
+script prints only the environment and public project reference.
+
 ### 9.2 Configuration and secrets per environment
 
 **DEP-05 [STD]** Configuration is injected at deploy time, validated at boot, and fails closed. A

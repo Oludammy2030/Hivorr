@@ -1139,8 +1139,8 @@ Rules:
 | --- | --- | --- | --- |
 | Local | Containerised Postgres (or `supabase start`) | Synthetic seed | Development, `db reset` |
 | CI | Ephemeral container | Synthetic fixtures | Migration + policy tests |
-| Staging | Dedicated instance / persistent branch | Anonymised or synthetic | Pre-production verification |
-| Production | Dedicated instance | Real | Live |
+| Staging | Dedicated Supabase project | Synthetic | Pre-production verification |
+| Production | Dedicated Supabase project | Real | Live |
 
 Rules:
 
@@ -1149,6 +1149,29 @@ Rules:
 - **Production credentials exist only in production's secret store.**
 - **Staging is structurally identical to production.** Same migrations, same extensions, same roles.
   It may differ in data volume and configuration values.
+
+#### 10.1.1 Independent Supabase projects
+
+**[HIVORR]** Staging and production are **separate Supabase projects**, not two branches of one
+project and not two schemas in one database.
+
+| Environment | Project reference | Status |
+| --- | --- | --- |
+| Production | `ahyizcwidkwyowroeqfp` | Verified 7 November 2026 — DNS resolves; REST endpoint returned `401` without a key |
+| Staging | *not yet recorded in the repository* | Pending — the founder confirmed a new project exists; its reference must be recorded before provisioning |
+| Production (retired) | `fxpcgtetvzlexbptqiwp` | Deleted by the founder; historical only |
+| Staging (retired) | `cgxkiczmwzydhoroclvf` | Deleted by the founder; historical only |
+
+A deployment must fail closed unless:
+
+- `BACKEND_ENVIRONMENT` equals `HIVORR_ENV`;
+- `SUPABASE_PROJECT_REF` equals the environment's recorded project reference;
+- `DATABASE_URL` belongs to that reference;
+- `EXPECTED_SUPABASE_PROJECT_REF` matches the selected project;
+- staging and production references are different.
+
+`scripts/verify-backend-target.mjs` performs these checks before deployment. It prints the
+environment and project reference only; it never prints the connection string.
 
 ### 10.2 Credentials and connection
 

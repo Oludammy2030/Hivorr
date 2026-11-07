@@ -22,6 +22,7 @@
     "preview": "vite preview --config vite.figma.config.ts",
     "security:deps": "pnpm audit --audit-level=high",
     "security:secrets": "node scripts/secret-scan.mjs",
+    "verify:backend-target": "node scripts/verify-backend-target.mjs",
     "test": "vitest run",
     "test:push-protection": "node scripts/test-push-protection.mjs",
     "test:watch": "vitest",

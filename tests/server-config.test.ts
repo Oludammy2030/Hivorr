@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { parseConfig, ConfigurationError } from "../server/src/config"
+import {
+  ConfigurationError,
+  databaseUrlMatchesProjectRef,
+  parseConfig,
+} from "../server/src/config"
 
 describe("API configuration", () => {
   it("parses a test environment with development defaults", () => {
@@ -28,16 +32,47 @@ describe("API configuration", () => {
   it("accepts an explicit production configuration", () => {
     const config = parseConfig({
       HIVORR_ENV: "production",
-      DATABASE_URL: "postgres://user:pass@db.example/hivorr",
+      BACKEND_ENVIRONMENT: "production",
+      SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+      DATABASE_URL:
+        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
       SESSION_ISSUER: "hivorr-production",
       API_PORT: "8080",
       CORS_ALLOWED_ORIGINS: "https://hivorr.com, https://control.hivorr.com",
     })
     expect(config.port).toBe(8080)
+    expect(config.backendEnvironment).toBe("production")
+    expect(config.supabaseProjectRef).toBe("abcdefghijklmnopqrst")
     expect(config.corsAllowedOrigins).toEqual([
       "https://hivorr.com",
       "https://control.hivorr.com",
     ])
+  })
+
+  it("rejects a backend environment that does not match the deployment", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "staging",
+        BACKEND_ENVIRONMENT: "production",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        SESSION_ISSUER: "hivorr-staging",
+      }),
+    ).toThrow(ConfigurationError)
+  })
+
+  it("rejects a database URL that belongs to another project", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "staging",
+        BACKEND_ENVIRONMENT: "staging",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.zyxwvutsrqponmlkjihg.supabase.co:5432/postgres",
+        SESSION_ISSUER: "hivorr-staging",
+      }),
+    ).toThrow(ConfigurationError)
   })
 
   it("never echoes a supplied value in a configuration error", () => {
@@ -47,5 +82,26 @@ describe("API configuration", () => {
     } catch (error) {
       expect(String(error)).not.toContain("super-secret")
     }
+  })
+
+  it("matches direct and pooler database URLs to their project reference", () => {
+    expect(
+      databaseUrlMatchesProjectRef(
+        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        "abcdefghijklmnopqrst",
+      ),
+    ).toBe(true)
+    expect(
+      databaseUrlMatchesProjectRef(
+        "postgresql://postgres.abcdefghijklmnopqrst:fake@aws-0-eu-west-1.pooler.supabase.com:6543/postgres",
+        "abcdefghijklmnopqrst",
+      ),
+    ).toBe(true)
+    expect(
+      databaseUrlMatchesProjectRef(
+        "postgresql://postgres:fake@db.zyxwvutsrqponmlkjihg.supabase.co:5432/postgres",
+        "abcdefghijklmnopqrst",
+      ),
+    ).toBe(false)
   })
 })

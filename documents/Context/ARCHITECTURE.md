@@ -1541,6 +1541,40 @@ Each hosted environment runs four applications, one API, one worker, and one dat
 9. **Staging accounts and grants are separate.** A production staff or admin grant does not exist in
    staging except as a synthetic seeded identity with its own credentials.
 
+#### 11.2.1 Supabase project separation
+
+**[DECIDED]** Staging and production use **two independent Supabase projects**. There is no shared
+project, no shared database, no shared API key, and no fallback from one to the other.
+
+| Environment | Supabase project reference | Status |
+| --- | --- | --- |
+| Production | `ahyizcwidkwyowroeqfp` | **Verified 7 November 2026** — DNS resolves; REST endpoint returned `401` without a key |
+| Staging | *not yet recorded in the repository* | **Pending** — founder confirmed a new project exists; the reference must be recorded before staging provisioning |
+| Production (retired) | `fxpcgtetvzlexbptqiwp` | Deleted by the founder; the live Flutter bundle still embeds it |
+| Staging (retired) | `cgxkiczmwzydhoroclvf` | Deleted by the founder; the live Flutter bundle still embeds it |
+
+The two retired references are recorded only as historical evidence. They must not be used or
+recreated.
+
+**Enforced configuration contract.**
+
+- `HIVORR_ENV` is `staging` or `production`.
+- `BACKEND_ENVIRONMENT` is required and must equal `HIVORR_ENV`.
+- `SUPABASE_PROJECT_REF` is required and must match the environment's project reference.
+- `DATABASE_URL` must belong to `SUPABASE_PROJECT_REF`: a direct Supabase host
+  `db.<ref>.supabase.co`, or a pooler username containing the project reference.
+- `EXPECTED_SUPABASE_PROJECT_REF` is supplied by the deployment environment and must equal
+  `SUPABASE_PROJECT_REF`.
+- `scripts/verify-backend-target.mjs` refuses a deployment when any of the above fails, when staging
+  and production references are identical, or when the deployment points at the other environment's
+  project.
+- The API configuration refuses to start in staging or production if the environment, project
+  reference, or database URL is missing or inconsistent.
+
+**Production credentials are never placed in a staging build, workflow, secret namespace, or
+developer workstation.** A production connection string is stored only in the production secret
+store. The database password is never committed, logged, or pasted into an issue.
+
 ### 11.3 What staging must mirror
 
 **[DECIDED]** Staging is only useful if it can catch production failures:
