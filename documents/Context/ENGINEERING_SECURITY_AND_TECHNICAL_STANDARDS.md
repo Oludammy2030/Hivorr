@@ -2399,7 +2399,7 @@ treats them as precedent, and so that the exit condition is visible.
 | **EX-07** | `@mui/material`, `@mui/icons-material`, `@emotion/react`, `@emotion/styled`, `@popperjs/core`, `react-popper` were installed and unused | Dead weight, not adopted | `package.json` | **Partly resolved 3 November 2026** - the four MUI/emotion entries are removed from `package.json`; the lockfile still resolves them until `pnpm install` runs (EX-19). `@popperjs/core` and `react-popper` remain, removed when the prototype is retired (`ARCHITECTURE.md` §2.4) |
 | **EX-08** | `@types/react` was `^19.0.0` while `react` is `18.3.1` | Types described a different runtime than the one shipped | `package.json` | **Resolved 3 November 2026** - `@types/react` `18.3.31` and `@types/react-dom` `18.3.7`, the latest 18.x definitions, matching React 18.3.1 |
 | **EX-09** | `skipLibCheck: true` | Present; masks type errors inside dependencies | `tsconfig.json` | Reconsidered when the dependency tree is pruned |
-| **EX-10** | No test tooling is installed | Approved strategy, unbuilt work | `package.json` | **Ruling 2, 4 November 2026:** EP-00 partially closes this row — Vitest runner only (`EP-00-003`); Playwright, Testcontainers and component-test DOM remain EP-01 work against this row. The row stays open until the EP-01 residual lands. |
+| **EX-10** | No test tooling is installed | Approved strategy, unbuilt work | `package.json` | **Ruling 2, 4 November 2026:** EP-00 partially closes this row — Vitest runner only (`EP-00-003`); Playwright, Testcontainers and component-test DOM remain EP-01 work against this row. **Ruling 3, 7 November 2026:** the EP-01 residual is approved in full — Playwright (end-to-end), Testcontainers (integration, including the RLS policy tests) and Testing Library (component DOM). The row closes when all three are installed and their gates run in CI. |
 | **EX-11** | No content security policy is served today | The header contract is specified, not implemented | All hosts | CSP is served from the edge before the first public release |
 | **EX-12** | The repository is initialised but has no history: `.git` exists on branch `main` with zero commits and every file untracked | No commit provenance, no branch protection, no CI trigger, no review enforcement | Whole project | **Partly resolved 4 November 2026** - `.git` exists and `main` is the current branch (verified with `git rev-parse --is-inside-work-tree` and `git log`). Still open: the first commit, a branch model, protected `main` and CI. §9 and §10.6 cannot be enforced until then |
 | **EX-13** | `guidelines/Guidelines.md` is an unedited Figma Make template | It contains no project rules, though `AGENTS.md` points to it | `guidelines/Guidelines.md` | **Resolved 3 November 2026** — replaced with a pointer to the approved documents; the row is kept for history (§15 #3) |
@@ -2434,6 +2434,18 @@ treats them as precedent, and so that the exit condition is visible.
 | **Compensating control** | The local `.githooks/pre-push` hook rejects direct pushes to protected branches; the CI `Protected branch guard` workflow (`.github/workflows/branch-guard.yml`) runs `scripts/verify-pr-merge.mjs` on every push to `main`/`staging`; the staging and production deployment workflows gate promotion; the founder reviews every diff; `QUA-29`/`QUA-31` review is covered by `DEV-001` for EP-00. The limits are stated in `BRANCH_PROTECTION.md` §5–§6. These are compensating controls, **not** protection, and must never be described as protection. |
 | **Owner** | Prince Abidemi Oluwadamilare (Founder) |
 | **Expiry** | Ends when host-enforced protection of `main` and `staging` exists, or when the EP-01 G5 closure record is signed, whichever is earlier. It does **not** extend to `G4` (production release), which has no deviation path (`EES` §7.3). |
+| **Approval** | Founder (Prince Abidemi Oluwadamilare), 2026-11-07 |
+
+| Field | Value |
+| --- | --- |
+| **ID** | `DEV-003` |
+| **Rule** | `QUA-29` — "No change reaches `main` without review by someone other than its author. Self-merge is prohibited on `main`." and `QUA-31` — "A pull request that changes authentication, authorisation, money, migrations, crypto, uploads, webhooks or CI configuration requires two reviewers, one of whom is the architect or a named security reviewer (AUT-39)." |
+| **Scope** | EP-01 pull requests that change authentication, authorisation, session handling, identity or capability computation, a schema migration, a deployment workflow or CI configuration — items `023`, `025`, `030`–`036`, `041`, `043`, `060`, `063` and `071`, and the CI configuration those items introduce. It waives no rule, gate, branch or repository control outside that scope, and it does **not** apply to `G4`. |
+| **Reason** | The project is a one-person team plus AI agents. The founder is the only person who holds the architect role and the only person who holds the founder role (`EES` §5.1), and the founder stated on 2026-11-07 that no second reviewer exists. `QUA-31` requires two reviewers, one of whom is the architect or a named security reviewer; one person cannot occupy both seats, and no appointment is possible while no second person exists. `QUA-29`'s self-merge limb separately blocks the founder merging a document change the founder authored. `DEV-001` does not cover this scope: it is limited to EP-00 CI configuration (`EP-00-006`–`EP-00-008`). |
+| **Risk** | A defect in an authentication, capability, migration, deployment or CI change could merge with one human review, and on some changes the author and the approver are the same person. The exposure is to repository history and to pre-release environments only: no staging or production environment exists at the time this deviation is recorded, and no customer, personal or financial data is processed in EP-01. A migration defect is the highest-consequence case, because a wrong grant or policy is silent until a deny path is exercised. |
+| **Compensating control** | The founder reads every diff, not its description (`QUA-30`), against the `QUA-33` checklist; the agent produces an independent review pass on each pull request and records it there; every gate has a seeded-failure proof; CI enforces type check, lint, format, unit tests, secret scan, dependency scan, migration lint and `db diff`; the `.githooks/pre-push` hook and the CI `Protected branch guard` reject direct pushes to `main` and `staging`; no change is self-approved — where the founder is the author, an agent records the review and the founder still cannot merge without the CI gate passing; migration items additionally pass the `Database-Migration-and-Supabase-Data-API-Rules.md` §9–§10 checklist and are applied to staging before production; deployment changes require founder approval per `ARCHITECTURE.md` §12.3. `DEV-002` remains the only statement about host protection; these are compensating controls, **not** protection. |
+| **Owner** | Prince Abidemi Oluwadamilare (Founder) |
+| **Expiry** | Ends when a second reviewer is appointed, or when the EP-01 `G5` closure record is signed, whichever is earlier. It does **not** extend to `G4` (production release), which has no deviation path (`EES` §7.3). Reviewed at each document review cycle (`GOV-16`). |
 | **Approval** | Founder (Prince Abidemi Oluwadamilare), 2026-11-07 |
 
 **GOV-18 [STD]** An entry in this register is not permission to extend the exception. It describes the
@@ -2629,15 +2641,15 @@ Nothing here may be implemented as though it were decided, except where a row is
 
 | # | Decision | Blocks | Owner | Proposed default |
 | --- | --- | --- | --- | --- |
-| 1 | **Validation and client-data library** — none is installed; `ARCHITECTURE.md` §16.3 #11 recommends `zod` and TanStack Query, which still need sign-off | Every request validator; error shape consistency (SEC-28, PER-16) | Architect | Confirm the `ARCHITECTURE.md` §16.3 #11 recommendations, then choose once and share types between client and server |
-| 2 | **API versioning scheme** — path version, header, or additive-only | The first public contract (API-05) | Architect | Additive-only within v1; a new major path only for a breaking change |
-| 3 | **Session lifetimes** — absolute and idle timeouts per audience | Session creation (AUT-14) | Founder + architect | Short absolute lifetime on privileged hosts, longer on `hivorr.com` |
+| 1 | **Validation and client-data library** — none is installed — **DECIDED 7 November 2026:** adopt `zod` for validation and TanStack Query for server state; both confirmed as recommended in `ARCHITECTURE.md` §16.3 #11 | Every request validator; error shape consistency (SEC-28, PER-16) | Architect | Decided: one validator shared between client and server; TanStack Query owns server-state caching. Not yet installed — installation is EP-01 work (`003`, `011`) |
+| 2 | **API versioning scheme** — **DECIDED 7 November 2026:** additive-only within v1; a new major path only for a breaking change | The first public contract (API-05) | Architect | Decided: no version segment in the path; a breaking change creates a new major path and the old path is retired on a recorded date |
+| 3 | **Session lifetimes** — **DECIDED 7 November 2026:** public audience 12 h absolute / 30 min idle; privileged audiences (`control.`, `staff.`, `partners.`) 8 h absolute / 15 min idle; a privileged session requires re-authentication to start | Session creation (AUT-14) | Founder + architect | Decided per §5.4's short-lifetime-on-privileged-hosts rule. Idle timeout applies across tabs. Values are configuration, not code constants |
 | 4 | **MFA policy for ordinary accounts and financial step-up** | Authentication UX; high-value actions (AUT-21) | Founder | Optional at MVP on `hivorr.com`; step-up required above a KYC-tier threshold |
 | 5 | **Rate-limit thresholds per endpoint class** | API-12; abuse posture | Architect | Conservative defaults, tuned from staging measurements |
-| 6 | **CSP posture given EX-01** — accept `style-src 'unsafe-inline'` until migration, or restrict inline styles first | Every host's headers (SEC-49) | Architect + founder | Accept the exception, record it, migrate styles as files are touched |
+| 6 | **CSP posture given EX-01/EX-02** — **DECIDED 7 November 2026:** accept `style-src 'unsafe-inline'` until the inline styles are migrated; `script-src` stays strict and no user-supplied HTML is ever rendered | Every host's headers (SEC-49) | Architect + founder | Decided: `EX-02` remains the record of the exception; the policy tightens when `EX-01` completes. Re-reviewed at each document review cycle |
 | 7 | **Media origin for user uploads** — a dedicated cookieless host, or the app origin with strict headers | SEC-15, SEC-36 | Founder | Dedicated cookieless origin, recorded in `ARCHITECTURE.md` §4 |
-| 8 | **Secret manager** — provider choice, rotation mechanism | DAT-23, API-33, every environment | Founder + architect | A managed secret store with per-environment scoping |
-| 9 | **Error tracking and APM vendor** — and whether it receives personal data | OPS-01, §11.1 | Founder | Self-hosted or region-appropriate, with PII scrubbing configured before first use |
+| 8 | **Secret manager** — **DECIDED 7 November 2026:** Doppler as the managed secret store, with per-environment scoping and rotation; break-glass access held by the founder | DAT-23, API-33, every environment | Founder + architect | Decided: no secret in a repository file, an image or a log. Rotation is recorded per secret. A local developer uses a scoped development config, never production values |
+| 9 | **Error tracking and APM vendor** — **DECIDED 7 November 2026:** Sentry, with PII scrubbing configured before first use and `sendDefaultPii` disabled | OPS-01, §11.1 | Founder | Decided: the vendor may receive error traces and correlation ids, not personal data. Scrubbing is verified by a test that sends a deliberately sensitive field and asserts it is absent |
 | 10 | **Log and audit retention periods** | OPS-08, OPS-13 | Founder + counsel | Application logs short; audit log long; both stated numerically |
 | 11 | **Vulnerability remediation SLAs** | OPS-18 | Founder | 7 / 30 / 90 days by severity, as proposed |
 | 12 | **Penetration test vendor and cadence** | QUA-27 | Founder | Independent test before public launch, annually thereafter |
@@ -2659,6 +2671,25 @@ Nothing here may be implemented as though it were decided, except where a row is
 ---
 
 ## 17. Changelog
+
+### 7 November 2026 — `DEV-003` and the EP-01 entry decisions recorded
+
+Recorded `DEV-003` in §13.3: a time-boxed deviation from `QUA-29` and `QUA-31` for EP-01 pull
+requests that change authentication, authorisation, session handling, identity, capability
+computation, schema migrations, deployment workflows or CI configuration. The reason is that no
+second reviewer exists and one person cannot occupy both the architect and security-reviewer seats.
+It ends when a second reviewer is appointed or when the EP-01 `G5` closure record is signed,
+whichever is earlier, and does not extend to `G4`.
+
+Also decided, on the founder's instruction of 7 November 2026: §16 #1 (`zod` and TanStack Query),
+#2 (additive-only within v1), #3 (public 12 h / 30 min idle; privileged 8 h / 15 min idle, with
+re-authentication), #6 (accept `style-src 'unsafe-inline'` until `EX-01` completes), #8 (Doppler as
+the managed secret store) and #9 (Sentry, with PII scrubbing before first use). Recorded ruling 3
+against `EX-10`: the EP-01 residual — Playwright, Testcontainers and Testing Library — is approved in
+full; the row closes when all three are installed and gated in CI.
+
+No rule changed meaning beyond the two named in `DEV-003`. No **[OPEN]** item outside §16 was
+settled, and no compliance, security or readiness claim is made.
 
 ### 7 November 2026 — deviation `DEV-002` recorded
 
