@@ -2484,11 +2484,11 @@ those requires explicit founder approval.
 
 **Current position (7 November 2026):** Stage 0 is complete for the portal/hostname decision;
 Stage 1 is complete; Stage 2 is complete; Stage 3 has started with the API bootstrap, configuration
-contract, health endpoints, capability engine, and their tests. Stages 4–10 are not started. The
-repository has no database, migrations, worker, provider adapters, portal screens, or working
-staging/production deployment from this codebase. The live main and staging hostnames were detached
-from the legacy Flutter origin on 7 November 2026 and are currently unavailable; the React production
-deployment does not exist yet.
+contract, health endpoints, capability engine, database baseline (module schemas, platform tables,
+roles, grants, append-only audit), and their tests. Stages 4–10 are not started. The repository has no
+worker, identity schema, provider adapters, portal screens, or working staging/production deployment
+from this codebase. The live main and staging hostnames were detached from the legacy Flutter origin
+on 7 November 2026 and are currently unavailable; the React production deployment does not exist yet.
 
 ---
 

@@ -16,6 +16,8 @@ export default tseslint.config(
       "dist/**",
       "node_modules/**",
       ".figma/**",
+      "supabase/.temp/**",
+      "supabase/.branches/**",
       "coverage/**",
       "pnpm-lock.yaml",
     ],
