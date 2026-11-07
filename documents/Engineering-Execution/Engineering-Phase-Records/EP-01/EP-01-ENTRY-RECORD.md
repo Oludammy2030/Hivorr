@@ -5,18 +5,25 @@
 | **Document ID** | `EP-01-001` |
 | **Phase** | `EP-01` — Core Platform Foundation & Infrastructure |
 | **Task name** | Entry gate closure and decision register |
-| **Record version** | `0.2` — CI evidence attached |
-| **Record status** | `In review` — drafted and self-checked; architect review and founder signature outstanding |
-| **Phase status** | **`Blocked`** |
+| **Record version** | `0.3` — EP-00 G5 signed; C8 accepted via `DEV-002` |
+| **Record status** | `In review` — drafted and self-checked; the EP-01 record's own architect review and founder signature remain outstanding |
+| **Phase status** | **`Blocked`** — EP-00 has exited, but `#1`, `#17`, `#14`, the second reviewer and the G0 rulings are still pending |
 | **Class** | `[FOUNDER]` |
 | **Author** | AI implementation agent (drafting role) |
 | **Date drafted** | 2026-11-06 |
-| **Approvers** | Architect / project technical owner (`[REVIEW]`); Founder (`[FOUNDER]`) — both `PENDING` |
+| **Date updated** | 2026-11-07 |
+| **Approvers** | Architect / project technical owner (`[REVIEW]`); Founder (`[FOUNDER]`) — both `PENDING` for this record |
 
 > **What this record is.** It records the true starting position of EP-01, re-verifies EP-00's exit
 > evidence criterion by criterion, lists every decision EP-01 depends on by reference to the register
 > that owns it, and sets EP-01 to one status. It approves nothing, decides nothing, signs nothing and
 > creates no runtime asset.
+>
+> **Update — 2026-11-07.** EP-00's G5 was signed by the founder on 2026-11-07. C8 is accepted as
+> `DEV-002` in `standards` §13.3; C10 is accepted as a recorded limitation; C14 is met. EP-00 has
+> therefore exited. This record's *own* EP-01 entry gate is not met: `#1`, `#17`, `#14`, the second
+> reviewer and the G0 rulings remain `PENDING`, so EP-01 stays `Blocked`.
+
 
 ---
 
@@ -34,9 +41,9 @@
 | **Author role** | Developer (AI agent, drafting only) |
 | **Reviewer role** | Architect / project technical owner |
 | **Approver role** | Founder |
-| **Signature state** | `UNSIGNED` — architect review `PENDING`; founder signature `PENDING` |
-| **Decision state** | 0 of 16 recorded; 16 pending, each with a named owner |
-| **Phase state** | `Blocked` — see §9 |
+| **Signature state** | `UNSIGNED` — architect review `PENDING`; founder signature `PENDING` for this record. The EP-00 G5 is `SIGNED` separately (2026-11-07). |
+| **Decision state** | 1 of 16 recorded (the EP-00 exit basis); 15 pending, each with a named owner |
+| **Phase state** | `Blocked` — see §9; EP-00 has exited but EP-01's own entry gate is not met |
 
 ---
 
@@ -49,15 +56,16 @@ the owning document wins and the conflict is recorded, not resolved (`GOV-05`).
 |---|---|---|
 | `documents/Engineering-Execution/Engineering-Phase-Plan/EP-01 — Core Platform Foundation & Infrastructure.md` | Approved phase plan | §1 phase definition and entry gate; §4.2 out of scope; §4.3 scope readings; §5.2 module disposition; §7 dependencies; §9 items `001`–`072`; §12–§13 expected outcome and completion criteria |
 | `documents/Engineering-Execution/Engineering-Execution-Structure/ENGINEERING_EXECUTION_STRUCTURE.md` | v2.0, approved 2026-11-04 | §5.1 roles, §5.2 decision rights, §5.6 AI boundaries; §7.1 G0–G5, §7.2 evidence, §7.3 gate exceptions; §8.1–§8.5 work-package protocol; §9.1–§9.3 status vocabulary and evidence rule; §10 ED-01–ED-10; §11.1–§11.2 open decisions |
-| `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` | v2.1, approved 2026-11-06 | §1.4 governance classes; §1.5–§1.6 rule application and identifiers; §13.2 deviations; §13.3 accepted exceptions (`EX-02`, `EX-10`, `DEV-001`); §13.4 enforcement; §16 `#1`,`#2`,`#3`,`#6`,`#8`,`#9`,`#16`; §19.3 AR-0 impact note; §19.2 requirement classes |
+| `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` | v2.1, approved 2026-11-06; §13.3 `DEV-002` added 2026-11-07 | §1.4 governance classes; §1.5–§1.6 rule application and identifiers; §13.2 deviations; §13.3 accepted exceptions (`EX-02`, `EX-10`, `DEV-001`, `DEV-002`); §13.4 enforcement; §16 `#1`,`#2`,`#3`,`#6`,`#8`,`#9`,`#16`; §19.3 AR-0 impact note; §19.2 requirement classes |
 | `documents/Context/ARCHITECTURE.md` | Approved | §4.9 hostnames and same-origin API; §5.4 session audiences; §8.12 bundles; §9.2 modules; §9.4 database strategy; §9.6 RLS; §10.2 enforcement layers; §11 environments; §12.1 branching, §12.3 environment protection, §12.7 artifact provenance; §14.1 layout; §16.3 recommendations; §16.4 `#1`,`#14`,`#17`,`#25` |
 | `documents/Context/AGENTS.md` | Approved 2026-11-01 | §1 source-of-truth hierarchy; §3 bounded scope and reuse; §4A OWASP obligations; §7 open decisions |
 | `documents/Context/Database-Migration-and-Supabase-Data-API-Rules.md` | Approved | Not engaged by this task — no schema, migration, grant or policy work is performed |
 | `documents/Context/Unified-Account-and-Activity-Permission-Matrix.md` | Approved | Not engaged by this task — no capability or permission is implemented |
 | `documents/Engineering-Execution/Engineering-Phase-Records/EP-00/EP-00-ENTRY-RECORD.md` | `Verified`, 2026-11-04 | §3 entry-gate verification; §5 decision closure; §8 blocker matrix; §11 signature |
 | `documents/Task-Implementation/EP-00/EP-00-010 — Phase evidence pack and traceability index.md` | `Verified` for the index | §1 work-package evidence; §2 completion criteria C1–C14; §3 run index; §4 commit and tag evidence |
-| `documents/Task-Implementation/EP-00/EP-00-011 — G5 phase closure record.md` | `Blocked — HOLD` | §3 incomplete items; §4 residual risks; §5 EP-01 entry conditions; §6 unsigned signature block |
+| `documents/Task-Implementation/EP-00/EP-00-011 — G5 phase closure record.md` | `Verified` — G5 signed 2026-11-07 | §1 closure decision; §3 dispositions; §4 accepted residual risks; §5 EP-01 entry conditions; §6 signature |
 | `documents/Engineering-Execution/BRANCH_PROTECTION.md` | Implemented 2026-11-06 | §2 local pre-push control; §3 CI-side guard; §5 GitHub Free capability findings; §6 limitations; §8–§9 tests and evidence |
+| `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` §13.3 `DEV-002` | Recorded 2026-11-07 | C8 acceptance; compensating controls; condition-based expiry; no G4 extension |
 
 **Register ownership.** This record is not a decision register. Each settled decision must be folded
 into the register that owns it (`QUA-38`, `QUA-39`). `ARCHITECTURE.md` §16.4 remains the single
@@ -75,17 +83,21 @@ EP-01 §1 defines the entry gate as:
 
 | # | Entry-gate condition | State | Evidence |
 |---|---|---|---|
-| 1 | EP-00 exit evidenced (its own exit gate and C1–C14) | **Not met** | §3.1 below: C8 unmet, C14 unmet, C10 partially met |
+| 1 | EP-00 exit evidenced (its own exit gate and C1–C14) | **Met** | §3.1 below: G5 signed 2026-11-07 (`EP-00-011` §6); C8 accepted as `DEV-002`; C10 accepted as a recorded limitation; C14 met |
 | 2 | Managed Postgres provider decided (`#1`) | **Not met** | `ARCHITECTURE.md` §16.4 `#1` — `[OPEN]`; no written decision supplied |
 | 3 | Hosting, DNS and TLS decided (`#17`) | **Not met** | `ARCHITECTURE.md` §16.4 `#17` — `[OPEN]`; no written decision supplied |
 | 4 | Sign-in identifier decided (`#14`) | **Not met** | `ARCHITECTURE.md` §16.4 `#14` — `[OPEN]`; no written decision supplied |
 
-**Result.** The entry gate is **not met**. EP-01 does not open. See §9.
+**Result.** The entry gate is **not met**. EP-00 has exited, but EP-01 does not open: `#1`, `#17` and
+`#14` remain `PENDING`, and the second-reviewer arrangement and the G0 rulings are also outstanding.
+See §9.
+
 
 ### 3.1 EP-00 exit verification — C1–C14
 
-Every row was checked against an artifact on 2026-11-06. Where a command could not be re-executed in
-this environment, the row says so rather than presenting the prior artifact as a fresh result.
+Every row was checked against an artifact on 2026-11-06 and dispositioned on 2026-11-07. Where a
+command could not be re-executed in this environment, the row says so rather than presenting the
+prior artifact as a fresh result.
 
 | # | EP-00 criterion | Artifact inspected today | Result |
 |---|---|---|---|
@@ -96,25 +108,32 @@ this environment, the row says so rather than presenting the prior artifact as a
 | **C5** | Test gate works | `vitest run` → 2 files, 18 tests passed (today); seeded failure run `42255635543` | **Met** |
 | **C6** | Lint and format gate works | `node scripts/lint.mjs` → 20 baseline, 0 new, 0 stale (today); `App.tsx` diff empty | **Met** |
 | **C7** | Pipeline blocks per stage | Six seeded-failure runs `42255323075`, `42255491891`, `42256095641`, `42255635543`, `42255596119`, `42256348422`; green run `42272912504` on `1abdbb5` | **Met** |
-| **C8** | `main` is protected | `gh api …/branches/main/protection` → `403` "Upgrade to GitHub Pro or make this repository public…" (reproduced today); `BRANCH_PROTECTION.md` §5–§6 | **Unmet** — host capability, not an engineering defect |
-| **C9** | Supply chain watched | `node scripts/secret-scan.mjs` → clean, 193 files (today); CI `secret and dependency scan` job; `EP-00-010` C9 | **Met** — local/pre-push control, not provider-native scanning |
-| **C10** | First commit exists and is tagged | Tag object `e6fcd38` → commit `8029466`; 103 files / 30,055 insertions; green run `42257026623` targets `1668c30`, not `8029466` | **Partially met** — tag and SHA exact; no run can exist on the tag |
+| **C8** | `main` is protected | `gh api …/branches/main/protection` → `403` "Upgrade to GitHub Pro or make this repository public…" (reproduced 2026-11-06); `BRANCH_PROTECTION.md` §5–§6; `standards` §13.3 `DEV-002` | **Accepted 2026-11-07** — not met; the founder accepted the gap as `DEV-002` with compensating controls and a condition-based expiry. This is not a claim that `main` is protected. |
+| **C9** | Supply chain watched | `node scripts/secret-scan.mjs` → clean, 193 files (2026-11-06); CI `secret and dependency scan` job; `EP-00-010` C9 | **Met** — local/pre-push control, not provider-native scanning |
+| **C10** | First commit exists and is tagged | Tag object `e6fcd38` → commit `8029466`; 103 files / 30,055 insertions; green run `42257026623` targets `1668c30`, not `8029466` | **Partially met — accepted 2026-11-07** — tag and SHA exact; the tag predates CI, so no run can exist on it without rewriting provenance |
 | **C11** | A newcomer can work | `DEVELOPER_BOOTSTRAP.md`; `EP-00-010` C11 and clean-clone transcript | **Met** |
 | **C12** | No visual, copy or behavioural change in the prototype | `git diff --stat v0.0.1-bootstrap..HEAD -- src/app/App.tsx` → empty; `git status` shows no tracked modification | **Met** |
 | **C13** | Evidence complete | `EP-00-010` index; every row links an artifact or is marked unmet | **Met** |
-| **C14** | Closure signed | `EP-00-011` §6 — "No signature is recorded"; status `Blocked — HOLD` | **Unmet** |
+| **C14** | Closure signed | `EP-00-011` §6 — signed by Prince Abidemi Oluwadamilare, founder and architect, 2026-11-07; status `Verified`, phase outcome `Closed` | **Met** |
 
-**Result.** EP-00 is **not exited**: C8 and C14 are unmet; C10 is partially met. The local
-pre-push hook and the CI `verify-pr` guard are a compensating control (`BRANCH_PROTECTION.md` §6),
-not protection; they do not convert C8 into a pass.
+**Result.** EP-00 **has exited** (G5 signed 2026-11-07): twelve criteria are met, C8 is accepted by
+the recorded deviation `DEV-002`, and C10 is accepted as a recorded limitation. The local pre-push
+hook and the CI `verify-pr` guard are a compensating control (`BRANCH_PROTECTION.md` §6), not
+protection; neither this record nor `DEV-002` converts C8 into a pass.
+
 
 ### 3.2 What EES §7.3 means here
 
 `EES §7.3`: a gate may be passed by deviation only, with a `GOV-13` record and an expiry; **a
-deviation on G4 or on a `[FOUNDER]` decision is invalid**. G5 is a founder signature. Therefore this
-record cannot construct a deviation that opens EP-01 around an unsigned G5. Only the founder can
-change this position, and only by exiting EP-00 or by amending the execution rule itself — neither
-of which an agent may do.
+deviation on G4 or on a `[FOUNDER]` decision is invalid**. G5 is a founder signature. It was signed
+on 2026-11-07, so EP-00's exit is no longer an unsigned founder act. The C8 gap was not converted
+into a pass by an agent: the founder accepted it as `DEV-002`, in `standards` §13.3, with an owner,
+compensating controls, a condition-based expiry and no G4 extension.
+
+That does not open EP-01. The phase-opening act is separate and remains `PENDING`, as do `#1`, `#17`,
+`#14`, the second reviewer and the G0 rulings. `DEV-002` does not authorise EP-01 work, and it does
+not make `main` protected.
+
 
 ---
 
@@ -173,9 +192,9 @@ server, no schema and no authentication**; EP-00 has not exited."*
 | No CI | Six-job pipeline plus branch guard and two deployment workflows, all present | Item `004` extends an existing pipeline rather than creating one |
 | No test runner | Vitest installed; 18 tests across 2 files | Item `003` publishes contracts into an existing runner |
 | No lint | ESLint gate with a reviewed baseline | Item `004` extends the existing gate |
-| No branch model | `main`/`staging` with hook and CI guard (`BRANCH_PROTECTION.md`) | C8 remains unmet; the control is compensating only |
+| No branch model | `main`/`staging` with hook and CI guard (`BRANCH_PROTECTION.md`) | C8 remains unmet; accepted 2026-11-07 as `DEV-002`; the control is compensating only |
 | No server, no schema, no authentication | Still true | Unchanged |
-| EP-00 has not exited | **Still true** — C8, C14 unmet; C10 partial | Unchanged; this is why the phase is `Blocked` |
+| EP-00 has not exited | **No longer true** — G5 signed 2026-11-07; C8 accepted as `DEV-002`; C10 limitation accepted; C14 met | The plan is not edited; EP-01 still stays `Blocked` on its own entry decisions |
 | Toolchain available as pinned | `mise` missing; Node 26 on PATH; `pnpm` absent | New drift, R-P1; local build claims cannot be made |
 
 **R-P1 in detail.** `scripts/version-parity.mjs` cannot resolve `pnpm.cmd`, and `mise` is not on
@@ -188,8 +207,9 @@ This must be restored before any item that requires a local build.
 ## 5. Decision closure
 
 **Status key:** `RECORDED` = decision text, approver and date exist; `PENDING` = no decision exists
-and no default has been adopted. No decision was supplied in writing for this draft; therefore
-every row is `PENDING` with a named owner. Nothing below is a recommendation.
+and no default has been adopted. In this version one decision was supplied in writing: the EP-00 exit
+basis, recorded on 2026-11-07. Every other row remains `PENDING` with a named owner. Nothing below is a
+recommendation.
 
 | Owning ID | Decision | Owning register | Outcome | Class | Owner | Date | Evidence | Blocks | Follow-up |
 |---|---|---|---|---|---|---|---|---|---|
@@ -197,7 +217,7 @@ every row is `PENDING` with a named owner. Nothing below is a recommendation.
 | `#17` | Hosting platform, DNS provider, TLS issuance | `ARCHITECTURE.md` §16.4 `#17` | `PENDING` | `[FOUNDER]` | Founder + architect | — | None supplied | `041`, `054`, `060`, `063` | Fold into §16.4 `#17` |
 | `#14` | Sign-in identifier — email-first, phone-first, or either | `ARCHITECTURE.md` §16.4 `#14` | `PENDING` | `[FOUNDER]` | Founder | — | None supplied | `031`, `032`, `053` | Fold into §16.4 `#14` |
 | `EES §11.2 #2` / `DEV-001` | Second reviewer for EP-01 authentication, capability and migration changes — appoint, or re-deviate | `EES` §11.2 `#2`; `standards` §13.3 `DEV-001` | `PENDING` — `DEV-001` in force, time-boxed, not replaced | `[FOUNDER]` | Founder + architect | — | `standards` §13.3 `DEV-001` (approved 2026-11-04) | `023`, `025`, `030`–`036` | Appointment, or a complete `GOV-13` re-deviation with expiry; no G4 extension |
-| EP-00 exit basis | Whether the recorded C8 compensating control, C10 partial and unsigned C14 are an accepted basis for opening EP-01, or EP-00 must complete first | This record §3; `EP-00-011` §6 | `PENDING` | `[FOUNDER]` | Founder | — | `EP-00-011` unsigned; `protection-403.log` | The phase status itself | Not a deviation path (`EES §7.3`); requires an explicit founder act |
+| EP-00 exit basis | Whether the recorded C8 compensating control, C10 partial and unsigned C14 are an accepted basis for opening EP-01, or EP-00 must complete first | This record §3; `EP-00-011` §6 | **`RECORDED`** — EP-00 closed 2026-11-07; G5 signed; C8 accepted as `DEV-002`; C10 limitation accepted; C14 met | `[FOUNDER]` | Founder | 2026-11-07 | `EP-00-011` §6; `standards` §13.3 `DEV-002`; `protection-403.log` | The phase status itself | Complete; `DEV-002` must be closed or renewed before EP-01 G5 |
 | Phase opening | EP-01 opened for build | `EES` §5.2, §9.2 | `PENDING` | `[FOUNDER]` | Founder | — | None supplied | Every item | Signature in §11 |
 | `standards #1` | Validation and client-data library — confirm the `zod` recommendation | `standards` §16 `#1` | `PENDING` | `[REVIEW]` | Architect | — | None supplied | `003`, `011` | Fold into `standards` §16 `#1` |
 | `standards #2` | API versioning scheme | `standards` §16 `#2` | `PENDING` | `[REVIEW]` | Architect | — | None supplied | `011`, `013` | Fold into `standards` §16 `#2` |
@@ -268,9 +288,9 @@ been supplied in writing; both are recorded here as `PENDING` with the ruling te
 
 ### 7.1 Expiry test against this record's date
 
-| Limb | Test on 2026-11-06 | Result |
+| Limb | Test on 2026-11-07 | Result |
 |---|---|---|
-| Date limb — no later than 2026-12-31 | 2026-11-06 < 2026-12-31 | Not yet reached |
+| Date limb — no later than 2026-12-31 | 2026-11-07 < 2026-12-31 | Not yet reached |
 | Scope limb — before EP-01 touches authentication, capability or migration code | EP-01 has not started; the first such item is `023` (identity schema), then `025`, `030`–`036` | **Binds at `023`** |
 
 **Consequence.** `DEV-001` is still valid today, but it expires before `023`. Items `023`, `025` and
@@ -344,44 +364,49 @@ The logic is the approved plan §6.3, applied line by line.
 
 | Condition | State |
 |---|---|
-| EP-00 exit evidenced (G5 signed, C1–C14 met or accepted) | **No** — C8 unmet, C14 unmet, C10 partially met |
+| EP-00 exit evidenced (G5 signed, C1–C14 met or accepted) | **Yes** — G5 signed 2026-11-07; C8 accepted as `DEV-002`; C10 accepted as a recorded limitation; C14 met |
 | `#1` managed Postgres provider recorded | **No** — `PENDING` |
 | `#17` hosting/DNS/TLS recorded | **No** — `PENDING` |
 | `#14` sign-in identifier recorded | **No** — `PENDING` |
 | Second reviewer settled for EP-01 | **No** — `DEV-001` in force, expires before `023` |
 | §4.3 rulings R1 and R2 recorded | **No** — both `PENDING` |
-| Local hook present but host protection absent | **Yes** — a compensating control only; does not satisfy C8 |
-| Record drafted with `PENDING` rows | **Yes** — 16 of 16 pending |
+| Local hook present but host protection absent | **Yes** — a compensating control only; accepted as `DEV-002`, does not satisfy C8 |
+| Record drafted with `PENDING` rows | **Yes** — 15 of 16 pending; the EP-00 exit basis is `RECORDED` |
 
 ### 9.2 Result
 
 **Phase status: `Blocked`.**
 
-Per `EES` §9.2, `Blocked` is reachable from any state and returns to the state it left: EP-01
-remains at `Not started` for every item, and this record is what explains why. EP-01 does not
-become `In build`.
+EP-00 has exited (G5 signed 2026-11-07). EP-01 does not open because its own entry conditions are
+unmet. Per `EES` §9.2, `Blocked` is reachable from any state and returns to the state it left: EP-01
+remains at `Not started` for every item, and this record is what explains why. EP-01 does not become
+`In build`.
+
+This is not a continuation of EP-00's blockers. C8, C10 and C14 are resolved for EP-00 through
+`DEV-002`, the accepted limitation and the G5 signature. The remaining blockers belong to EP-01.
 
 ### 9.3 Missing items and owners
 
+**Resolved on 2026-11-07 (EP-00):** the G5 signature (C14); the C8 acceptance via `DEV-002`; the C10
+limitation; and the architect review of `EP-00-012`, `EP-00-013` and the CI configuration. These are
+recorded in `EP-00-011` §3 and §6 and in `standards` §13.3.
+
 | # | Missing | Owner | Clearing condition |
 |---|---|---|---|
-| 1 | EP-00 G5 signature (`C14`) | Founder | Review `EP-00-010` and `EP-00-011`; sign the closure statement with accepted residual risks |
-| 2 | Host-enforced protection of `main` (`C8`) | Founder | Upgrade to GitHub Pro, approve a host change, or approve a visibility change; then apply the settings listed in `EP-00-007` |
-| 3 | Acceptance of the C10 tag/CI asymmetry | Architect | Record the limitation as accepted, or authorise a new tagged commit (rewriting the existing tag is not permitted) |
-| 4 | Review of `EP-00-012`, `EP-00-013` and the CI configuration | Architect | Record the review under `DEV-001` or appoint the second reviewer |
-| 5 | `#1` managed Postgres provider | Founder + architect | Written decision; fold into §16.4 `#1` |
-| 6 | `#17` hosting, DNS and TLS | Founder + architect | Written decision; fold into §16.4 `#17` |
-| 7 | `#14` sign-in identifier | Founder | Written decision; fold into §16.4 `#14` |
-| 8 | Second reviewer for EP-01 | Founder + architect | Appointment, or a complete `GOV-13` re-deviation with expiry and no G4 extension |
-| 9 | `standards` §16 `#1`,`#2`,`#3`,`#6`,`#8`,`#9` | Architect (+ founder where noted) | Written decisions; fold into `standards` §16 |
-| 10 | `EX-10` residual — Playwright, Testcontainers, Testing Library | Architect | `GOV-09` approval recorded |
-| 11 | §4.3 rulings R1 and R2 | Architect | Rulings recorded verbatim in this record §6 |
-| 12 | Technical selections — DB driver, migration runner, queue, OpenAPI generator, boundary lint | Architect | Recorded, then consumed by `002`, `014`, `021` |
-| 13 | Phase opening | Founder | Signature in §11 after items 1–12 are settled or explicitly accepted |
+| 1 | `#1` managed Postgres provider | Founder + architect | Written decision; fold into §16.4 `#1` |
+| 2 | `#17` hosting, DNS and TLS | Founder + architect | Written decision; fold into §16.4 `#17` |
+| 3 | `#14` sign-in identifier | Founder | Written decision; fold into §16.4 `#14` |
+| 4 | Second reviewer for EP-01 | Founder + architect | Appointment, or a complete `GOV-13` re-deviation with expiry and no G4 extension |
+| 5 | `standards` §16 `#1`,`#2`,`#3`,`#6`,`#8`,`#9` | Architect (+ founder where noted) | Written decisions; fold into `standards` §16 |
+| 6 | `EX-10` residual — Playwright, Testcontainers, Testing Library | Architect | `GOV-09` approval recorded |
+| 7 | §4.3 rulings R1 and R2 | Architect | Rulings recorded verbatim in this record §6 |
+| 8 | Technical selections — DB driver, migration runner, queue, OpenAPI generator, boundary lint | Architect | Recorded, then consumed by `002`, `014`, `021` |
+| 9 | Phase opening | Founder | Signature in §11 after items 1–8 are settled or explicitly accepted |
 
 ### 9.4 What this record does not do
 
-- It does not exit EP-00, sign G5, or claim that `main` is protected.
+- It did not exit EP-00 or sign G5; those acts are recorded in `EP-00-011` §6 on 2026-11-07. It does
+  not claim that `main` is protected: C8 is accepted only as `DEV-002`.
 - It does not resolve any `[OPEN]` decision or adopt any default.
 - It does not open EP-01 for build, and it cannot: the phase-opening act is a founder signature.
 - It does not create a database, API, worker, module, package, bundle, screen or configuration.
@@ -397,12 +422,12 @@ become `In build`.
 | # | Risk | Impact | Owner | Handling |
 |---|---|---|---|---|
 | **R-P1** | Pinned toolchain unavailable locally: `mise` not on `PATH`, global Node 26.13.0, no `pnpm`; `scripts/version-parity.mjs` fails | Local build/parity claims cannot be made; "works on my machine" drift | Developer; architect | CI on Linux is the reference. Restore the pin before any item needing a local build. Do not lower a supply-chain control to compensate |
-| **R-P2** | EP-00 cannot exit: C8 needs a paid host capability or a visibility/host change that contradicts decision #18 | EP-01 cannot open; every dependent item idles | Founder | Decide between GitHub Pro, a host change, or an explicit recorded acceptance with compensating controls |
+| **R-P2** | EP-00 exit needed a paid host capability or a visibility/host change that contradicts decision #18 | EP-01 could not open while EP-00 was unsigned | Founder | **Resolved 2026-11-07** — EP-00 closed through G5; C8 accepted as `DEV-002` in `standards` §13.3 with compensating controls and a condition-based expiry. Not a claim that `main` is protected |
 | **R-P3** | `DEV-001` expires before `023` | Authentication, capability and migration changes would merge without a second reviewer | Founder + architect | Appoint a reviewer or record a new time-boxed deviation before `023` |
 | **R-P4** | Two evidence roots exist (`Engineering-Phase-Records/EP-00/evidence/` and `Engineering-Execution/evidence/`) | `070` may index an inconsistent set | Architect | Recorded as a finding; `070` adopts one convention. Not fixed here |
 | **R-P5** | Register fold-in conflicts with EP-01 §4.2, which forbids editing `ARCHITECTURE.md` | Settled decisions could live only in this record, creating a second source of truth | Architect + founder | Perform the fold-in as a separate recorded act (§10.4). Never edit the register from inside an EP-01 task |
-| **R-P6** | C10 is permanently partial: the tag predates CI | A third party cannot see a green run on the tagged SHA | Architect | Accept the limitation in writing, or authorise a new tagged commit; history is not rewritten |
-| **R-P7** | Sixteen decisions are pending in one record | The entry record becomes the bottleneck for the whole phase | Founder + architect | Decide in the owner order in §9.3; each item unblocks on its own decision, not on the whole set |
+| **R-P6** | C10 is permanently partial: the tag predates CI | A third party cannot see a green run on the tagged SHA | Architect | **Accepted 2026-11-07** as the recorded C10 limitation in `EP-00-011` §1 and §3; history and the tag are not rewritten |
+| **R-P7** | Fifteen decisions are pending in one record | The entry record becomes the bottleneck for the whole phase | Founder + architect | Decide in the owner order in §9.3; each item unblocks on its own decision, not on the whole set |
 
 ### 10.2 Carried from EP-00 — do not rebuild
 
@@ -457,12 +482,17 @@ record, its evidence transcripts and the approved plan and DoD that precede it.
 | Role | Name | Decision | Scope of approval | Date |
 |---|---|---|---|---|
 | **Author** | AI implementation agent (drafting role) | Drafted and self-checked | Record text and evidence only; no decision approved | 2026-11-06 |
-| **Architect / project technical owner** | — | **PENDING** | Fidelity, completeness, class and scope; rulings R1–R2; §5 architect rows | — |
-| **Founder** | — | **PENDING** | `#1`, `#17`, `#14`, second reviewer, EP-00 exit basis, phase status, class `[FOUNDER]` | — |
+| **Architect / project technical owner** | — | **PENDING** | Fidelity, completeness, class and scope of *this record*; rulings R1–R2; §5 architect rows | — |
+| **Founder** | — | **PENDING** | *This record*: `#1`, `#17`, `#14`, second reviewer, phase status, class `[FOUNDER]` | — |
 
-**Signature limitation.** No signature is recorded. This document must not be read as an approval, a
-phase opening, or a claim that EP-00 is complete. The author is an AI agent and cannot hold an
-approver role (`EES` §5.6, `AI-20`).
+**Separate act, not an approval of this record.** The founder signed EP-00's G5 on 2026-11-07
+(`EP-00-011` §6) and accepted C8 as `DEV-002`. That closes EP-00 and settles the EP-00 exit basis
+recorded in §5. It does **not** approve this record, does not open EP-01, and does not decide `#1`,
+`#17`, `#14`, the second reviewer or the §4.3 G0 rulings.
+
+**Signature limitation.** No signature of *this record* is recorded. This document must not be read
+as an approval, a phase opening, or a claim that EP-01 is open. The author is an AI agent and cannot
+hold an approver role (`EES` §5.6, `AI-20`).
 
 ### 11.2 Amendment log
 
@@ -470,6 +500,7 @@ approver role (`EES` §5.6, `AI-20`).
 |---|---|---|---|---|
 | **0.1** | 2026-11-06 | Initial draft. EP-00 exit re-verified; 16 decisions recorded as `PENDING` with owners; §4.3 rulings recorded as `PENDING`; 38-item blocker matrix; phase set to `Blocked`. No decision invented, no default adopted, no register edited. | AI implementation agent | None — draft only |
 | **0.2** | 2026-11-06 | CI evidence attached. Commit `8210f98` pushed on `docs/ep-01-001-entry-record`; PR #19 opened into `staging`; CI run `42289296520` green on all six jobs. §11.3 E12 updated from "does not exist" to the recorded run and E13 added for the pull request. No decision outcome, status, blocker or signature changed. | AI implementation agent | None — draft only |
+| **0.3** | 2026-11-07 | EP-00 G5 signed and `DEV-002` recorded; EP-00 exit basis moved to `RECORDED`; §3 criteria C8/C10/C14 dispositions updated; §3.2, §4.3, §5, §9.1–§9.4, §10.1 and §11.1 re-issued; E14 added. EP-01 remains `Blocked` on `#1`, `#17`, `#14`, the second reviewer and the G0 rulings. No `[OPEN]` decision was settled and this record's own approvals remain `PENDING`. | AI implementation agent | None — draft only |
 
 ### 11.3 Evidence attached to this record
 
@@ -481,16 +512,18 @@ approver role (`EES` §5.6, `AI-20`).
 | E4 | Local gates — typecheck, tests, lint, secret scan, toolchain parity failure | `evidence/local-gates.log` | Recorded |
 | E5 | Seeded-failure proofs | `evidence/seeded-failures.log` | Recorded |
 | E6 | Entry-gate verification (§3) | This record | Recorded |
-| E7 | Decision register (§5) | This record | 16 of 16 `PENDING` |
+| E7 | Decision register (§5) | This record | 1 of 16 `RECORDED`; 15 of 16 `PENDING` |
 | E8 | Blocker matrix (§8) | This record | Complete for `002`–`072` |
 | E9 | Phase-status determination (§9) | This record | `Blocked` |
-| E10 | Architect review | — | **Does not exist** |
-| E11 | Founder signature | — | **Does not exist** |
+| E10 | Architect review of *this record* | — | **Does not exist** |
+| E11 | Founder signature of *this record* | — | **Does not exist** |
 | E12 | CI run for this record's commit | PR #19 | **Recorded** — CI `42289296520`, success, six jobs, on commit `8210f98`, branch `docs/ep-01-001-entry-record` into `staging` |
 | E13 | Pull request for this record | [PR #19](https://github.com/Oludammy2030/Hivorr/pull/19) | **Open** — `MERGEABLE`; no review decision recorded |
+| E14 | EP-00 G5 signature and C8 acceptance | `EP-00-011` §6; `standards` §13.3 `DEV-002`; `EP-00-011` §3–§4 | **Recorded** — signed 2026-11-07 by Prince Abidemi Oluwadamilare (founder and architect roles, separately recorded); EP-00 closed; C10 limitation and residual risks R-1–R-6 accepted; R-3 resolved |
 
 ---
 
-**Record status:** `In review` — drafted and self-checked; unsigned.
-**Phase status:** `Blocked` — thirteen items outstanding in §9.3, each with a named owner.
-**Next action:** PR #19 is open into `staging` with green CI. The architect rules R1–R2 and records the `[REVIEW]` decisions; the founder decides `#1`, `#17`, `#14`, the second reviewer and the EP-00 exit basis. When §9.1 is fully satisfied, this record is re-issued as version `0.3` with the outcomes folded in and signed; only then may `002` start.
+**Record version:** `0.3` — EP-00 G5 signed; C8 accepted via `DEV-002`.
+**Record status:** `In review` — drafted and self-checked; this record's own architect review and founder signature remain `PENDING`.
+**Phase status:** `Blocked` — nine items outstanding in §9.3, each with a named owner. EP-00 has exited; EP-01's own entry gate has not.
+**Next action:** PR #19 is open into `staging` with green CI. `#1`, `#17`, `#14`, the second reviewer and the §4.3 G0 rulings remain `PENDING`. When §9.1 is fully satisfied, this record is re-issued as version `0.4` with the outcomes folded in and signed; only then may `002` start.
