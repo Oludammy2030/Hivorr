@@ -1,0 +1,41 @@
+# Evidence — repository protection state (EP-00 criterion C8)
+
+Captured: 2026-11-06. Read-only GitHub REST reads through the authenticated GitHub CLI.
+No settings were changed; no protection attempt was made beyond the read.
+
+---
+
+## 1. Repository metadata
+
+```text
+$ gh repo view Oludammy2030/Hivorr --json visibility,defaultBranchRef,isPrivate
+{"defaultBranchRef":{"name":"main"},"isPrivate":true,"visibility":"PRIVATE"}
+```
+
+## 2. Classic branch protection
+
+```text
+$ gh api repos/Oludammy2030/Hivorr/branches/main/protection
+{"message":"Upgrade to GitHub Pro or make this repository public to enable this feature.",
+ "documentation_url":"https://docs.github.com/rest/branches/branch-protection#get-branch-protection",
+ "status":"403"}
+gh: Upgrade to GitHub Pro or make this repository public to enable this feature. (HTTP 403)
+```
+
+## 3. Interpretation
+
+- C8 is **unmet**: the host refuses protection on a private repository on the current plan.
+- The refusal is a plan capability, not a configuration defect. It cannot be fixed from the
+  repository, a workflow or a hook.
+- The compensating control in force is documented in
+  `documents/Engineering-Execution/BRANCH_PROTECTION.md`: a committed local pre-push hook
+  (`.githooks/pre-push` → `scripts/pre-push.mjs`), a CI-side `verify-pr` guard
+  (`.github/workflows/branch-guard.yml` → `scripts/verify-pr-merge.mjs`), and the deployment
+  gates that depend on it.
+- `BRANCH_PROTECTION.md` §6 states the limits: a user with write/admin access can push through
+  the API or another clone, can force-push, and the CI guard detects a bypass only after it
+  happened. The control is defence in depth against accidental pushes, **not** server-side
+  protection.
+- Clearing C8 requires a founder decision: upgrade to GitHub Pro (paid), approve a change of
+  host, or approve a visibility change. Decision #18 currently fixes a private repository, so
+  the visibility route contradicts a recorded founder decision and cannot be taken by an agent.

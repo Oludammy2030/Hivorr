@@ -1,0 +1,80 @@
+# Evidence — CI runs
+
+Captured: 2026-11-06 through the authenticated GitHub CLI. Read-only.
+
+---
+
+## 1. Recent runs
+
+```text
+$ gh run list --repo Oludammy2030/Hivorr --limit 8 \
+    --json databaseId,workflowName,headBranch,headSha,conclusion,createdAt
+```
+
+| Run | Workflow | Branch | Head SHA | Result | Created |
+|---|---|---|---|---|---|
+| 42272912504 | CI | `main` | `1abdbb5` | success | 2026-11-06T18:41:03Z |
+| 42272912469 | Protected branch guard | `main` | `1abdbb5` | success | 2026-11-06T18:41:03Z |
+| 42272018636 | CI | `staging` | `c6d7cdf` | success | 2026-11-06T18:35:03Z |
+| 42271282034 | CI | `staging` | `c6d7cdf` | success | 2026-11-06T18:30:12Z |
+| 42271282003 | Protected branch guard | `staging` | `c6d7cdf` | success | 2026-11-06T18:30:12Z |
+| 42271281998 | Staging deployment gate | `staging` | `c6d7cdf` | success | 2026-11-06T18:30:12Z |
+| 42270543897 | CI | `docs/branch-protection-evidence` | `ece0496` | success | 2026-11-06T18:25:15Z |
+| 42268369409 | Protected branch guard | `main` | `d3b60d7` | success | 2026-11-06T18:11:07Z |
+
+The current `main` HEAD (`1abdbb5`) is green on both the pipeline and the branch guard.
+
+### 1.1 Pull-request run for this record
+
+```text
+$ gh run view 42289296520 --repo Oludammy2030/Hivorr \
+    --json conclusion,headSha,workflowName,url
+{"conclusion":"success","headSha":"8210f9804c19f129e3e71aa60bb66a72a6e6cc28",
+ "url":"https://github.com/Oludammy2030/Hivorr/actions/runs/42289296520","workflowName":"CI"}
+```
+
+Trigger: `pull_request` for PR #19 (`docs/ep-01-001-entry-record` → `staging`).
+All six jobs passed: `install`, `lint and format check`, `typecheck`, `test`, `build`,
+`secret and dependency scan`.
+
+```text
+$ gh pr view 19 --repo Oludammy2030/Hivorr \
+    --json number,baseRefName,headRefName,state,mergeable,reviewDecision
+{"baseRefName":"staging","headRefName":"docs/ep-01-001-entry-record","mergeable":"MERGEABLE",
+ "number":19,"reviewDecision":"","state":"OPEN"}
+```
+
+`reviewDecision` is empty: no review has been recorded. The run proves the pipeline passes; it does
+not constitute review, approval or G2.
+
+## 2. The EP-00 evidence run
+
+```text
+$ gh run view 42257026623 --repo Oludammy2030/Hivorr \
+    --json databaseId,headSha,conclusion,status,workflowName,createdAt
+{"conclusion":"success","createdAt":"2026-11-06T16:56:35Z","databaseId":42257026623,
+ "headSha":"1668c304df446e4cce0612d1f6c2537f5965c767","status":"completed","workflowName":"CI"}
+```
+
+This is the green run recorded in `EP-00-010` §3. It targets `1668c30`, the evidence commit —
+**not** the bootstrap tag commit `8029466`. That is the recorded C10 asymmetry: the tag predates
+the pipeline, so no run can exist on the tag without rewriting history or the tag.
+
+## 3. Seeded-failure runs (EP-00 C7), as recorded
+
+From `EP-00-010` §3, not re-executed here:
+
+| Stage | Run |
+|---|---|
+| install | 42255323075 |
+| lint | 42255491891 |
+| typecheck | 42256095641 |
+| test | 42255635543 |
+| build | 42255596119 |
+| secret scan | 42256348422 |
+
+## 4. CI job set
+
+`.github/workflows/ci.yml` defines six jobs: `install` (frozen lockfile and toolchain parity),
+`lint and format check`, `typecheck`, `test`, `build`, and `secret and dependency scan`.
+No job is skipped, path-filtered or marked `continue-on-error`.

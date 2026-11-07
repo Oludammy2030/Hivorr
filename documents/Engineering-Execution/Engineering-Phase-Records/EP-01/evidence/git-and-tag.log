@@ -1,0 +1,95 @@
+# Evidence — git history, tag and prototype integrity
+
+Captured: 2026-11-06, local workstation (Windows), repository `C:\Project\Hivorr`.
+All commands are read-only. Output is reproduced verbatim except where marked "(abbreviated)".
+
+---
+
+## 1. History
+
+```text
+$ git log --oneline -20
+1abdbb5 Merge PR #18: push-protection evidence
+c6d7cdf Merge PR #17: push-protection evidence
+ece0496 docs(git): attach push-protection evidence
+d3b60d7 Merge PR #16: protected branch push policy
+708dad2 Merge PR #15: tighten branch guard
+a36c650 fix(git): reject direct commits on top of merged PRs
+3b1def3 Merge PR #14: protected branch push policy
+6d94b87 feat(git): block direct pushes to protected branches
+c7dd301 docs(ep-00-007): record the ruleset 403 attempt
+c207929 docs(ep-00): record implementation, evidence and the two external blockers
+1668c30 chore(security): override minimatch to the patched line
+673b71c docs(ep-00-009): record the Windows frozen-install note
+71329f6 chore(ep-00): add toolchain contract, test and lint gates, CI pipeline and bootstrap
+6aac68f chore(security): add local pre-push secret scan (EP-00-005)
+330a48e chore(deps): move flagged packages to patched versions (EP-00-013)
+fa0c1b8 docs(ep-00-005): record repository hosting, first push and scanning findings
+f0edfe3 docs(ep-00-012): close prototype typecheck remediation
+dd80b34 docs(security): ratify AfriNova OWASP application security standard v1.0
+46607bf docs: add VFD/PSL API reference and documentation audit
+2bf4d35 docs(standards): add audit readiness by design as v2.1
+```
+
+```text
+$ git rev-parse HEAD
+1abdbb55b4113c2477f95ef1e13d1e9d7e578c91
+
+$ git rev-parse v0.0.1-bootstrap
+e6fcd389036615e6f02e04a8d60a020d2dcdba82
+
+$ git rev-parse 'v0.0.1-bootstrap^{}'
+80294661ef138c8dc0aaa8b5098998d690deae3c
+```
+
+## 2. Bootstrap tag contents
+
+```text
+$ git show --stat --oneline v0.0.1-bootstrap
+tag v0.0.1-bootstrap
+
+v0.0.1-bootstrap - EP-00-001 toolchain, lockfile and first commit
+
+Root commit of the Hivorr repository, tagged at the end of EP-00-001.
+
+Toolchain executed: Node 22.23.4, pnpm 10.34.9 on the Windows workstation,
+matching the repository pin (.mise.toml: Node 22 / pnpm 10.34.9).
+[... tag message continues; see git show for the full text ...]
+
+8029466 chore(ep-00-001): regenerate lockfile and create the bootstrap commit
+103 files changed, 30055 insertions(+)
+```
+
+## 3. Prototype integrity
+
+```text
+$ git diff --stat v0.0.1-bootstrap..HEAD -- src/app/App.tsx
+(no output — empty diff)
+```
+
+## 4. Branches
+
+```text
+$ git branch -a
+* main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/dependabot/npm_and_yarn/dot-figma/backup/react-router-7.18.2
+  remotes/origin/dependabot/npm_and_yarn/dot-figma/backup/vite-6.4.5
+  remotes/origin/main
+  remotes/origin/staging
+
+$ git rev-parse --abbrev-ref HEAD
+main
+```
+
+## 5. Working tree before this task's artifacts
+
+```text
+$ git status --porcelain=v1
+?? documents/Task-Implementation/EP-01/
+```
+
+The only working-tree change is the untracked `documents/Task-Implementation/EP-01/` directory
+holding the approved plan and DoD. No tracked file is modified, added or deleted, so
+`documents/Context/*`, both phase plans, `src/app/App.tsx`, `package.json`, `pnpm-lock.yaml`
+and every workflow are unchanged at the time of capture.

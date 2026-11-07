@@ -1,0 +1,74 @@
+# Evidence — local gates executed for this record
+
+Captured: 2026-11-06, local workstation. The pinned toolchain (`mise`, Node 22, pnpm 10.34.9)
+was not executable in this session, so the underlying Node entry points were invoked directly.
+That substitution is recorded, not hidden.
+
+---
+
+## 1. Typecheck
+
+```text
+$ node node_modules/typescript/bin/tsc --noEmit
+(exit 0, no output)
+```
+
+Equivalent to `pnpm typecheck` (`tsc --noEmit`).
+
+## 2. Tests
+
+```text
+$ node node_modules/vitest/vitest.mjs run
+
+ RUN  v4.1.12 C:/Project/Hivorr
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  21:25:22
+   Duration  1.74s (transform 313ms, setup 0ms, import 412ms, tests 807ms, environment 0ms)
+```
+
+## 3. Lint gate
+
+```text
+$ node scripts/lint.mjs
+lint: OK — 20 known baseline violation(s), 0 new; 0 stale
+```
+
+Baseline expires 2026-12-31; 20 accepted entries remain, all from the prototype.
+
+## 4. Secret scan
+
+```text
+$ node scripts/secret-scan.mjs
+secret-scan: clean (193 file(s) scanned)
+```
+
+The scanner inspects git-tracked files. New files were therefore also scanned by explicit path
+before commit; see `seeded-failures.log`.
+
+## 5. Toolchain parity — FAILED (environment finding)
+
+```text
+$ node scripts/version-parity.mjs
+toolchain: cannot read pnpm.cmd version: Command failed: pnpm.cmd --version
+'pnpm.cmd' is not recognized as an internal or external command,
+operable program or batch file.
+```
+
+```text
+$ pnpm -v
+pnpm : The term 'pnpm' is not recognized ...
+$ mise --version
+mise : The term 'mise' is not recognized ...
+$ node -v
+v26.13.0
+```
+
+`.mise.toml` pins `node = "22"` and `npm:pnpm = "10.34.9"`. Neither is available on PATH in this
+session; the shims directory exists (`%LOCALAPPDATA%\mise\shims`) but the `mise` executable is
+missing, so the shims cannot resolve a version. The global Node on PATH is 26.13.0.
+
+**Consequence.** Local `pnpm`-based parity cannot be claimed for this task. CI on Linux, which
+uses the pinned Node 22 / pnpm 10.34.9, remains the reference environment. This is recorded as
+residual risk R-P1 and must be restored before any EP-01 item that needs a local build.

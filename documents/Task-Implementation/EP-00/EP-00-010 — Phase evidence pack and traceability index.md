@@ -12,6 +12,12 @@
 
 > This index does not turn an unmet criterion into a met one. C8, C14 and the tag-run part of C10 are
 > explicitly unmet; EP-00 is therefore not closed. See `EP-00-011`.
+>
+> **Superseded — 2026-11-07.** This index is the dated **2026-11-06** snapshot and is not rewritten.
+> EP-00's G5 was signed on 2026-11-07 (`EP-00-011` §6, version 0.2). C8 is accepted as `DEV-002` in
+> `standards` §13.3, the C10 limitation is accepted, C14 is met, and EP-00 is closed. Sections 1 and 6
+> below therefore record the position before that act, not the current phase status. The closure
+> record is authoritative for status; the artifacts indexed here are unchanged.
 
 ## 1. Work-package evidence
 
