@@ -2,8 +2,8 @@
 
 > **STATUS: APPLIED — 2026-11-07.** The founder approved the entry gate on 2026-11-07 and the
 > outcomes are recorded in `standards` §13.3 (`DEV-003`), `standards` §16, `ARCHITECTURE.md` §16.4
-> and `EP-01-ENTRY-RECORD.md` v0.4. This file is kept as the record of **what was put to the founder**,
-> not as a source of decisions — the owning registers and the entry record govern.
+> and `EP-01-ENTRY-RECORD.md` v0.6. This file is evidence of **what was put to the founder**, not a
+> source of decisions — the owning registers and the entry record govern.
 
 **Purpose.** EP-01 is `Blocked` on nine items (`EP-01-ENTRY-RECORD.md` §9.3). This pack turns eight
 of them into a single sitting of ticks and one signature; the ninth is the phase-opening signature
