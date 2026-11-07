@@ -1,9 +1,14 @@
 # Legacy Flutter Cutover Runbook
 
-**Status:** Approved plan, not started. No DNS, hosting, certificate, or deployment change has been
-made.
+**Status:** **Immediate detach approved by the founder on 7 November 2026. Not executed.** Cloudflare
+access is not available in this environment, so no DNS, hosting, certificate, or deployment change has
+been made.
+**Selected path:** immediate detach. `hivorr.com` and `staging.hivorr.com` will be disconnected from
+the Flutter origin and will be unavailable until the React production deployment is ready. No
+maintenance page is being deployed under this decision.
 **Scope:** Retire the legacy Flutter applications currently serving `hivorr.com` and
-`staging.hivorr.com`, and hand both hostnames to the React ecosystem without taking Hivorr offline.
+`staging.hivorr.com`, detach their custom domains, and preserve the old deployment as a rollback
+target.
 **Owner:** Founder. Execution requires Cloudflare access; an AI agent must not perform a step without
 explicit approval and the relevant access.
 
@@ -168,6 +173,33 @@ Perform one hostname group at a time, with verification between groups.
 
 **Do not delete the legacy custom domains or DNS records in this phase.**
 
+### 9.5 Immediate detach — selected path
+
+The founder selected immediate detach on 7 November 2026. This path does **not** wait for the React
+production deployment and does **not** deploy a maintenance page. The two hostnames will be
+unavailable until React is ready.
+
+Execute only with Cloudflare access and founder confirmation:
+
+1. Record the current DNS records, custom domains, and Flutter deployment ID.
+2. Remove `hivorr.com` and `www.hivorr.com` from the Flutter Pages/Worker custom-domain list.
+3. Remove `staging.hivorr.com` from the Flutter Pages/Worker custom-domain list.
+4. Remove or park only the web-serving DNS records (`A`, `AAAA`, or `CNAME`) for `hivorr.com`,
+   `www.hivorr.com`, and `staging.hivorr.com`.
+5. **Do not remove `MX`, `TXT`, SPF, DKIM, DMARC, or verification records.** Mail and domain
+   ownership must remain intact.
+6. Verify that both hostnames no longer serve the Flutter application. A DNS failure, an empty
+   response, or a Cloudflare "no origin" response is the expected outcome of this chosen path.
+7. Keep the Flutter project, build, and custom-domain configuration documented as the rollback
+   position. Do not delete the Flutter project yet.
+8. Record the detach time, the operator, the DNS changes, and the verification output.
+
+**Rollback:** restore the recorded DNS records and reattach the custom domains to the preserved
+Flutter project. This restores the old application, not the new backend.
+
+**Consequence:** there is no product at `hivorr.com` or `staging.hivorr.com` after this step. The new
+Supabase projects are unaffected; they are backend services, not web hosts.
+
 ---
 
 ## 10. Phase 5 — Post-cutover verification
@@ -241,10 +273,11 @@ Decommissioning is irreversible. It is a separate approval from the cutover.
 
 | Phase | Status |
 |---|---|
-| 0 — Inventory and preserve | **Not started** — legacy host project unidentified |
-| 1 — Freeze | **Not started** |
-| 2 — React staging | **Blocked** — no staging ecosystem exists |
-| 3 — Production preparation | **Blocked** |
-| 4 — Cutover | **Not started** |
-| 5 — Verification | **Not started** |
-| 6 — Decommission | **Not started** |
+| 0 - Inventory and preserve | **Required now** — Cloudflare access and the legacy project must be identified |
+| 1 - Freeze | Not started |
+| 2 - React staging | **Blocked** — no staging ecosystem exists |
+| 3 - Production preparation | **Blocked** |
+| 4 - Staged cutover | **Superseded by immediate detach** |
+| 4a - Immediate detach | **Approved 7 November 2026 — not executed; no Cloudflare access** |
+| 5 - Verification | Not started |
+| 6 - Decommission | Not started |
