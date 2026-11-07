@@ -1549,12 +1549,13 @@ project, no shared database, no shared API key, and no fallback from one to the 
 | Environment | Supabase project reference | Status |
 | --- | --- | --- |
 | Production | `ahyizcwidkwyowroeqfp` | **Verified 7 November 2026** — DNS resolves; REST endpoint returned `401` without a key |
-| Staging | *not yet recorded in the repository* | **Pending** — founder confirmed a new project exists; the reference must be recorded before staging provisioning |
+| Staging | `hkswhaltyqfqkgswukfs` | **Verified 7 November 2026** — DNS resolves; REST endpoint returned `401` without a key |
 | Production (retired) | `fxpcgtetvzlexbptqiwp` | Deleted by the founder; the live Flutter bundle still embeds it |
 | Staging (retired) | `cgxkiczmwzydhoroclvf` | Deleted by the founder; the live Flutter bundle still embeds it |
 
-The two retired references are recorded only as historical evidence. They must not be used or
-recreated.
+The active references are also recorded in `config/backend-projects.json`, which the deployment
+preflight reads. The two retired references are recorded only as historical evidence. They must not
+be used or recreated.
 
 **Enforced configuration contract.**
 

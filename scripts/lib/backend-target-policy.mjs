@@ -19,7 +19,7 @@ function databaseUrlMatchesProjectRef(databaseUrl, projectRef) {
   }
 }
 
-export function verifyBackendTarget(env) {
+export function verifyBackendTarget(env, references = {}) {
   const issues = []
   const deployment = env.HIVORR_ENV
 
@@ -38,12 +38,13 @@ export function verifyBackendTarget(env) {
     issues.push("SUPABASE_PROJECT_REF is required")
   }
 
-  const expectedRef = env.EXPECTED_SUPABASE_PROJECT_REF
+  const expectedRef =
+    references[deployment] ?? env.EXPECTED_SUPABASE_PROJECT_REF
   if (!expectedRef) {
     issues.push("EXPECTED_SUPABASE_PROJECT_REF is required")
   } else if (projectRef && projectRef !== expectedRef) {
     issues.push(
-      "SUPABASE_PROJECT_REF does not match EXPECTED_SUPABASE_PROJECT_REF",
+      "SUPABASE_PROJECT_REF does not match the expected environment reference",
     )
   }
 
@@ -56,8 +57,9 @@ export function verifyBackendTarget(env) {
     issues.push("DATABASE_URL does not belong to SUPABASE_PROJECT_REF")
   }
 
-  const stagingRef = env.STAGING_SUPABASE_PROJECT_REF
-  const productionRef = env.PRODUCTION_SUPABASE_PROJECT_REF
+  const stagingRef = references.staging ?? env.STAGING_SUPABASE_PROJECT_REF
+  const productionRef =
+    references.production ?? env.PRODUCTION_SUPABASE_PROJECT_REF
   if (stagingRef && productionRef && stagingRef === productionRef) {
     issues.push("staging and production must not share a Supabase project")
   }

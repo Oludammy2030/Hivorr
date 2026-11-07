@@ -1158,9 +1158,12 @@ project and not two schemas in one database.
 | Environment | Project reference | Status |
 | --- | --- | --- |
 | Production | `ahyizcwidkwyowroeqfp` | Verified 7 November 2026 — DNS resolves; REST endpoint returned `401` without a key |
-| Staging | *not yet recorded in the repository* | Pending — the founder confirmed a new project exists; its reference must be recorded before provisioning |
+| Staging | `hkswhaltyqfqkgswukfs` | Verified 7 November 2026 — DNS resolves; REST endpoint returned `401` without a key |
 | Production (retired) | `fxpcgtetvzlexbptqiwp` | Deleted by the founder; historical only |
 | Staging (retired) | `cgxkiczmwzydhoroclvf` | Deleted by the founder; historical only |
+
+The active references are recorded in `config/backend-projects.json`. The deployment preflight reads
+that manifest; it does not trust a free-text environment value.
 
 A deployment must fail closed unless:
 

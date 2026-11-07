@@ -26,6 +26,19 @@ describe("backend target isolation", () => {
     })
   })
 
+  it("uses the committed project references when supplied", () => {
+    const result = verifyBackendTarget(
+      {
+        ...base,
+        EXPECTED_SUPABASE_PROJECT_REF: "",
+        STAGING_SUPABASE_PROJECT_REF: "",
+        PRODUCTION_SUPABASE_PROJECT_REF: "",
+      },
+      { staging: stagingRef, production: productionRef },
+    )
+    expect(result.ok).toBe(true)
+  })
+
   it("rejects a staging deployment pointed at production", () => {
     const result = verifyBackendTarget({
       ...base,
