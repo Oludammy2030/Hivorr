@@ -43,6 +43,8 @@ reflected through hot reload.
   migration, grant, RLS, and Supabase Data API governance
 - `documents/Context/ENGINEERING_SECURITY_AND_TECHNICAL_STANDARDS.md` — engineering, security,
   quality and technical-decision standards: how work is done, verified and gated
+- `documents/Engineering-Execution/LEGACY_FLUTTER_CUTOVER.md` — approved staged cutover of the
+  legacy Flutter hosts to the React ecosystem
 - `documents/Context/OWASP_APPLICATION_SECURITY_STANDARD.md` — AfriNova-wide OWASP application
   security baseline: mandatory control requirements, OWASP mappings, evidence expectations, and
   agent obligations for security-relevant work

@@ -1,10 +1,14 @@
 # ARCHITECTURE.md — Hivorr Technical Architecture
 
-> **STATUS: REVISED — 3 November 2026 (revision 2).**
-> This revision replaces the 1 November 2026 revision **in place**. That revision was not archived
-> separately and no copy of it is retained; its substance is carried forward in §16.6 and Appendix A,
-> which record what was retained, corrected, restructured, and removed. The pre-1-November original
-> (the Flutter-era document, 178 lines) is preserved unchanged at
+> **STATUS: REVISED — 7 November 2026 (revision 3).**
+> This revision replaces revision 2 **in place**. It records the founder-approved environment
+> architecture: **four applications across two hosted environments, eight deployments**, a
+> staging-first, build-once release process, and a funded, founder-approved production gate. It also
+> records the staged retirement of the legacy Flutter applications that currently serve
+> `hivorr.com` and `staging.hivorr.com`.
+>
+> Revision 2 replaced the 1 November 2026 revision in place. The pre-1-November original (the
+> Flutter-era document, 178 lines) is preserved unchanged at
 > `C:\Users\user\Downloads\ARCHITECTURE.md` and is described in Appendix A.
 >
 > This document is derived from four sources, in this order of authority:
@@ -38,42 +42,36 @@
 
 ### 1.1 The shape, in one paragraph
 
-**[DECIDED]** Hivorr is **one product with five application entry points and one backend**: a
-modular-monolith TypeScript API, one worker process, and one PostgreSQL database per environment.
-The main product — all six user activities — lives at `hivorr.com`. Three narrow, separately
-deployed surfaces sit beside it (`control`, `staff`, `partners`), and staging sits at
-`staging.hivorr.com`. All five are clients of the same API and the same identity service. None of
-them is a second backend, a second database, or a second user population.
+**[DECIDED]** Hivorr is **one product with four applications across two hosted environments and one
+backend per environment**: a modular-monolith TypeScript API, one worker process, and one PostgreSQL
+database per environment. The main product — all six user activities — lives at `hivorr.com`. Three
+narrow, separately deployed surfaces sit beside it (`control`, `staff`, `partner`). Staging carries
+the same four applications at `staging.hivorr.com`, `control.staging.hivorr.com`,
+`staff.staging.hivorr.com`, and `partner.staging.hivorr.com`. That is **four applications and eight
+deployments**. All eight are clients of the same API and identity service *within their environment*.
+None is a second backend, a second database, a second user population, or a route into the other
+environment.
 
 ```
-        hivorr.com            control.*        staff.*         partners.*
-        (6 activities)        (governance)     (operations)    (affiliates)
-              │                   │               │               │
-              └───────────────────┴───────┬───────┴───────────────┘
-                                          │ HTTPS / JSON (OpenAPI)
-                              ┌───────────▼────────────┐
-                              │  API (NestJS + Fastify)│  stateless, one deployable
-                              │  modules · service     │
-                              │  layer · capability    │
-                              │  checks · transactions │
-                              └──┬────────┬────────┬───┘
-                                 │        │        │
-                    ┌────────────▼──┐ ┌───▼────┐ ┌─▼──────────────────┐
-                    │ PostgreSQL    │ │ Worker │ │ Object storage     │
-                    │ (system of    │ │ jobs,  │ │ Cloudflare R2      │
-                    │  record)      │ │hooks   │ │ public + private   │
-                    └───────────────┘ └───┬────┘ └────────────────────┘
-                                          │
-                    ┌─────────────────────▼──────────────────────────┐
-                    │ External: Paystack · Flutterwave · Termii SMS   │
-                    │ · transactional email · maps/geo (later)        │
-                    └────────────────────────────────────────────────┘
+        PRODUCTION                                  STAGING
+ hivorr.com        control.hivorr.com        staging.hivorr.com      control.staging.hivorr.com
+ staff.hivorr.com  partner.hivorr.com       staff.staging...        partner.staging...
+        │                  │                          │                        │
+        └────────┬─────────┘                          └───────────┬────────────┘
+                 │ same-origin /api/*                            │ same-origin /api/*
+     ┌───────────▼────────────┐                     ┌─────────────▼────────────┐
+     │ Production API + worker│                     │ Staging API + worker      │
+     │ Production PostgreSQL  │                     │ Staging PostgreSQL        │
+     │ Production R2          │                     │ Staging R2                │
+     │ VFD live · live email  │                     │ VFD test · capture email  │
+     └────────────────────────┘                     └───────────────────────────┘
 ```
 
 The frontend is a React single-page application in the prototype's stack (§2.1, §8). It is built as
-**one shared component library and one shared design system, consumed by five separate application
-bundles** (§8.12). The bundles are separate so that `control` code can never ship to `partners`, and
-`partners` code can never ship to `hivorr.com`.
+**one shared component library and one shared design system, consumed by four separate application
+bundles** (§8.12). Each bundle is deployed independently to its production and staging hosts. The
+bundles are separate so that `control` code can never ship to `partner`, and `partner` code can
+never ship to `hivorr.com`.
 
 ### 1.2 Why a modular monolith
 
@@ -91,29 +89,30 @@ without redesign (§9.3, §13.2).
 **[DECIDED]** Microservices · event streaming · GraphQL · a separate backend per entry point · a
 second database · offline sync · micro-frontends · a generic workflow engine · a plugin runtime.
 
-### 1.4 The three trust tiers
+### 1.4 The four applications and their environments
 
-The five entry points are not equivalent, and the architecture says so explicitly rather than
-relying on a subdomain to imply it.
+The four applications are not equivalent, and the architecture says so explicitly rather than
+relying on a subdomain to imply it. Each has a production deployment and a staging deployment.
 
-| Tier | Entry points | Who | Trust |
-| --- | --- | --- | --- |
-| **Public product** | `hivorr.com` | Any registered account | Standard session; all six activities; never admin |
-| **Internal operations** | `staff.hivorr.com` | Appointed Hivorr staff | Standard session + staff grant + MFA; job-scoped |
-| **Privileged governance** | `control.hivorr.com` | Founder, authorised developer | Strictest session + mandatory MFA; narrow scopes |
-| **External partnership** | `partners.hivorr.com` | Approved affiliates and partners | Partner session; no activity capabilities, no wallet |
-| **Non-production** | `staging.hivorr.com` | Authorised testers | Isolated credentials; never reaches production data |
+| Tier | Production | Staging | Who | Trust |
+| --- | --- | --- | --- | --- |
+| **Public product** | `hivorr.com` | `staging.hivorr.com` | Any registered account | Standard session; all six activities; never admin |
+| **Internal operations** | `staff.hivorr.com` | `staff.staging.hivorr.com` | Appointed Hivorr staff | Standard session + staff grant + MFA; job-scoped |
+| **Privileged governance** | `control.hivorr.com` | `control.staging.hivorr.com` | Founder, authorised developer | Strictest session + mandatory MFA; narrow scopes |
+| **External partnership** | `partner.hivorr.com` | `partner.staging.hivorr.com` | Approved affiliates and partners | Partner session; no activity capabilities, no wallet |
 
-Subdomain separation is an **organisational and deployment** boundary. It is not, by itself, a
-security control (§10.12).
+The staging column is non-production and must never share data, credentials, signing keys, payment
+accounts, buckets, or queues with the production column (§11). A subdomain is an **organisational
+and deployment** boundary. It is not, by itself, a security control (§10.12).
 
 ### 1.5 How to read the rest of this document
 
-§2 fixes the technology. §3 draws the system boundaries. §4 defines the entry points. §5–§7 define
-the account, the six activities, and the three privileged surfaces. §8–§9 define the frontend and
-the backend. §10 defines security. §11–§12 define environments and release governance. §13 defines
-how the system grows. §14–§15 define the repository and its dependencies. §16 records every decision,
-every open question, and every conflict this revision found.
+§2 fixes the technology. §3 draws the system boundaries. §4 defines the four portals and their
+environments. §5–§7 define the account, the six activities, and the three privileged surfaces. §8–§9
+define the frontend and the backend. §10 defines security. §11–§12 define environments and release
+governance. §13 defines how the system grows. §14–§15 define the repository and its dependencies.
+§16 records every decision, every open question, and every conflict this revision found. §17 records
+the implementation roadmap.
 
 ---
 
@@ -166,10 +165,10 @@ authorisation is a declarative guard rather than a per-route convention.
 **[DECIDED]** PostgreSQL 16 — relational integrity, `numeric` arithmetic, row-level security, and
 advisory locks are all load-bearing here.
 
-**[OPEN]** The **managed provider** is not chosen: Neon, Supabase, or RDS (`§16.4 #1`). If Supabase
-is chosen, it is used as managed Postgres only — Data API and GraphQL disabled, Supabase Auth not
-used, no Supabase key in any client (database rules §2.4, Position A, adopted 3 November 2026).
-Nothing in this document depends on which provider is selected.
+**[DECIDED 7 November 2026]** The managed provider is **Supabase**, used as managed PostgreSQL only
+(`§16.4 #1`). The Data API and GraphQL are disabled, Supabase Auth is not used, and no Supabase key
+ships in any client (database rules §2.4, Position A). Staging and production use separate Supabase
+projects with separate credentials.
 
 ### 2.4 What is present but not adopted
 
@@ -209,15 +208,15 @@ the Figma Make file.
 
 | # | Component | Responsibility | Status |
 | --- | --- | --- | --- |
-| 1 | **Web app** (`hivorr.com`) | The six user activities, shared wallet, messaging, profile, activity switcher. | Exists as prototype |
-| 2 | **Control app** (`control.hivorr.com`) | Founder governance, developer operations, review queues, configuration, audit. | New — §7.2 |
-| 3 | **Staff app** (`staff.hivorr.com`) | Job-scoped operational work: support, verification, operations, marketing. | New — §7.3 |
-| 4 | **Partner app** (`partners.hivorr.com`) | Affiliate and partner applications, referral and commission tracking. | New — §7.4 |
+| 1 | **Web app** (`hivorr.com`, `staging.hivorr.com`) | The six user activities, shared wallet, messaging, profile, activity switcher. | Exists as prototype; no deployment from this repository yet |
+| 2 | **Control app** (`control.hivorr.com`, `control.staging.hivorr.com`) | Founder governance, developer operations, review queues, configuration, audit. | New — §7.2 |
+| 3 | **Staff app** (`staff.hivorr.com`, `staff.staging.hivorr.com`) | Job-scoped operational work: support, verification, operations, marketing. | New — §7.3 |
+| 4 | **Partner app** (`partner.hivorr.com`, `partner.staging.hivorr.com`) | Affiliate and partner applications, referral and commission tracking. | New — §7.4 |
 | 5 | **API** | Authentication, authorisation, domain logic, financial operations, admin/staff/partner operations. | New |
 | 6 | **Worker** | Webhooks, notifications, escrow release, payouts, reconciliation, media scanning, referral accrual. | New |
-| 7 | **PostgreSQL** | Single system of record. Module-scoped schemas, ledger, audit log. | New |
+| 7 | **PostgreSQL** | One system of record per environment. Module-scoped schemas, ledger, audit log. | New |
 | 8 | **Object storage** | Product media, avatars, contracts, KYC documents, proof of delivery. Private by default. | New |
-| 9 | **CDN** | Static bundles for all five entry points, public media. | New |
+| 9 | **CDN / edge** | Static bundles for all eight deployments, public media, TLS, HSTS, `noindex` for privileged hosts. | Cloudflare — decided 7 November 2026 |
 | 10 | **Payment providers** | **VFD** — single payment and custody partner: collections, escrow balances, payouts. Founder decision, 3 November 2026. Replaces the previous Paystack/Flutterwave arrangement. Conditions in `documents/Business-Roadmap/Business-Development-Roadmap.md` BD-D11. | New |
 | 11 | **Messaging providers** | SMS OTP (Termii), transactional email. | New |
 | 12 | **Maps / geo** | Geocoding and radius dispatch. | Deferred — not in the prototype |
@@ -233,7 +232,7 @@ built against it. The accepted risk and its mitigations are recorded in the busi
 
 ### 3.2 What each entry point may reach
 
-| Capability | `hivorr.com` | `staff.*` | `control.*` | `partners.*` |
+| Capability | `hivorr.com` | `staff.*` | `control.*` | `partner.*` |
 | --- | --- | --- | --- | --- |
 | Six activity capabilities | Yes (activated) | No | No (unless separately activated as a user) | No |
 | Own wallet | Yes | No | No | No |
@@ -245,39 +244,107 @@ built against it. The accepted risk and its mitigations are recorded in the busi
 | Referral / commission records | Own referral code only | Scoped | Yes | Own programme only |
 | Infrastructure / deployment | No | No | Developer scope only | No |
 
+Each staging application has the same capability boundary as its production counterpart, but its
+sessions, credentials, data, and signing keys are environment-local (§11). Staging never grants a
+capability that the production seed does not grant, and never reaches a production resource.
+
 ### 3.3 Boundaries that are not negotiable
 
 **[DECIDED]**
 
-1. **One database.** Six activities, three privileged surfaces, and one identity share one database
-   per environment. No per-activity database, no per-activity auth system.
-2. **One identity service.** Every entry point authenticates against the same identity module. A
-   second credential store is forbidden.
-3. **One API.** The privileged surfaces are not a second backend. They call the same API with
-   different scopes.
+1. **One database per environment.** Six activities, three privileged surfaces, and one identity
+   share one database per environment. No per-activity database, no per-activity auth system, and no
+   database shared between staging and production.
+2. **One identity service per environment.** Every application authenticates against the same
+   identity module in its environment. A second credential store is forbidden.
+3. **One API per environment.** The privileged surfaces are not a second backend. They call the same
+   API with different scopes.
 4. **No client is trusted.** Every boundary in §3.2 is enforced server-side. The client's route,
    bundle, or subdomain proves nothing.
 5. **No cross-module table access.** A module reads only its own schema (§9.2).
+6. **No cross-environment access.** A staging credential, session, signing key, bucket, queue, or
+   provider key cannot reach production, and the reverse is also forbidden (§11.2).
 
 ---
 
 ## 4. Domain and Subdomain Structure
 
-### 4.1 The five entry points
+### 4.0 One ecosystem, four portals
 
-**[DECIDED]** by founder instruction, 3 November 2026.
+**[DECIDED 7 November 2026]** Hivorr is **one integrated AI-powered professional services
+ecosystem**, not four products, four businesses, or four independent applications. It has four
+functional portals. Each portal is an access surface over the same environment's shared identity,
+API, database, audit log, and business services.
 
-| Domain | Purpose | Access | Trust tier |
-| --- | --- | --- | --- |
-| `hivorr.com` | Main Hivorr ecosystem | All six core activities | Public product |
-| `staging.hivorr.com` | Staging environment | Authorised testing and review | Non-production |
-| `control.hivorr.com` | Administrative platform | Founder and explicitly authorised developer | Privileged governance |
-| `staff.hivorr.com` | Internal staff portal | Officially appointed Hivorr staff | Internal operations |
-| `partners.hivorr.com` | External partnership portal | Approved affiliates and partners | External partnership |
+| Portal | Purpose | Primary users | Production | Staging |
+| --- | --- | --- | --- | --- |
+| **Main** | Marketplace and service activities | Clients, professionals, sellers, logistics providers | `hivorr.com` | `staging.hivorr.com` |
+| **Control** | Governance and system control | Founder, explicitly authorised administrators and technical personnel | `control.hivorr.com` | `control.staging.hivorr.com` |
+| **Staff** | Internal daily operations | Appointed Hivorr staff, by job function | `staff.hivorr.com` | `staff.staging.hivorr.com` |
+| **Partner** | Affiliation and external partnerships | Approved partners, affiliates, partner organisations | `partner.hivorr.com` | `partner.staging.hivorr.com` |
 
-These are **distinct application entry points, not distinct user identities** (§5). A person may hold
-an ordinary Hivorr account and a staff grant at the same time; the grants are separate, and neither
-implies the other.
+**Main portal.** Registration, sign-in, profiles, account management, the six activities (Buy,
+Hire, Errand, Sell, Offer Services, Provide Logistics), job posting and applications, product
+listings and purchases, errands, logistics, messaging, notifications, wallet and payment
+experiences, quotations and transaction documents, verification interfaces, and the activity
+switcher. It is the primary user-facing business platform.
+
+**Control portal.** Business and platform oversight, administrative governance, account
+administration, verification approval and oversight, platform configuration and business rules,
+system-wide permissions, financial and transaction oversight, marketplace and service governance,
+operational performance, authorised administrative privileges, security and audit oversight,
+integrations, and critical system configuration. It is **not** the staff workspace and **not** a
+customer-facing marketplace. Access is limited to the founder and explicitly authorised
+administrators/technical personnel, enforced by backend authentication, scoped capabilities, MFA,
+and an edge access layer.
+
+**Staff portal.** Customer support, user enquiries and complaints, transaction and payment support,
+verification case processing, marketplace support, professional/client assistance, order and
+delivery support, operational monitoring, escalation, internal task management, operational
+reporting, and service coordination. Staff receive job-specific permissions. A support officer does
+not automatically receive financial-configuration or platform-wide authority, and staff never
+receive `admin.*` or control-portal access by default.
+
+**Partner portal.** Partner registration and applications, affiliate onboarding, partner profiles
+and account management, referral activities and tracking, partnership performance, commission
+tracking, partner earnings and payment information, partnership reports, communication, and
+approved partnership arrangements. Partners see only their own organisation's records. They never
+access internal staff operations, administrative controls, or another partner's confidential data,
+and a partner session carries no activity capability or wallet.
+
+**What is shared, and what is not.**
+
+| Shared across the portals | Portal-specific |
+| --- | --- |
+| Identity, credentials, sessions, devices, memberships, grants | Application shell, navigation, and visual emphasis |
+| API, domain services, capability engine, audit log, outbox | Capability scope and job/admin/partner grants |
+| Database per environment, ledger, verification cases, notifications | Read models and queue views |
+| Design system, status language, security controls | Portal routes and permitted actions |
+
+The rule is: if two portals need the same business concept, it is shared once in the API and
+database. It is never copied into a portal "to keep them independent". Independence is an access and
+permission boundary, not a data-duplication licence.
+
+### 4.1 The eight deployments
+
+**[DECIDED]** by founder instruction, 7 November 2026. Four applications, each deployed to a
+production host and a staging host.
+
+| Environment | Domain | Application | Access | Trust tier |
+| --- | --- | --- | --- | --- |
+| Production | `hivorr.com` | Main Hivorr platform | All six core activities | Public product |
+| Production | `control.hivorr.com` | Administrative platform | Founder and explicitly authorised developer | Privileged governance |
+| Production | `staff.hivorr.com` | Internal staff portal | Officially appointed Hivorr staff | Internal operations |
+| Production | `partner.hivorr.com` | External partnership portal | Approved affiliates and partners | External partnership |
+| Staging | `staging.hivorr.com` | Main Hivorr platform | Authorised testers and founder | Non-production |
+| Staging | `control.staging.hivorr.com` | Administrative platform | Authorised testers and founder | Non-production |
+| Staging | `staff.staging.hivorr.com` | Internal staff portal | Authorised testers and founder | Non-production |
+| Staging | `partner.staging.hivorr.com` | External partnership portal | Authorised testers and founder | Non-production |
+
+These are **eight deployments of four applications, not eight user populations** (§5). A person may
+hold an ordinary Hivorr account and a staff grant at the same time; the grants are separate, and
+neither implies the other. The staging applications are one integrated ecosystem: they share the
+staging API, staging identity service, and staging database, and they are tested together.
 
 ### 4.2 `hivorr.com` — the main application
 
@@ -296,15 +363,23 @@ implies the other.
 forbidden: it would fragment one account into six, which is the single thing the account model exists
 to prevent (`matrix` §2, §5.4).
 
-### 4.3 `staging.hivorr.com` — staging
+### 4.3 The staging ecosystem
 
-**[DECIDED]** The only hosted non-production environment (§11). It runs the same build pipeline as
-production, against staging services and a staging database. It is never linked from the production
-product and never shares credentials, buckets, keys, or payment accounts with it.
+**[DECIDED]** `staging.hivorr.com` is the **staging deployment of the main application**, not the
+name of the whole environment. The staging environment comprises all four staging hosts in §4.1.
+
+- It runs the same build pipeline as production, against staging services and a staging database.
+- It is never linked from the production product and never shares credentials, buckets, signing
+  keys, queues, or payment accounts with it.
+- The four staging applications are deployed as one release and tested as one ecosystem. A change
+  that touches verification, disputes, referrals, accounts, or permissions must be tested across the
+  affected staging hosts before it can be considered for production.
+- It is `noindex` and crawler-disallowed on every host, including `staging.hivorr.com`.
 
 ### 4.4 `control.hivorr.com` — the administrative platform
 
-**[DECIDED]** The restricted administrative environment.
+**[DECIDED]** The restricted administrative environment, deployed at `control.hivorr.com` and
+`control.staging.hivorr.com`.
 
 Access is limited to:
 
@@ -331,21 +406,29 @@ business decisions. Concretely:
 individual account, time-boxed, MFA-protected, and audited on every use. It is not a superuser role
 and it is not "admin".
 
+**[RECOMMENDED]** Cloudflare Access protects both control hosts at the edge, in addition to the
+application's own authentication, MFA, and server-side capability checks. The edge layer reduces
+exposure; it never replaces authorisation.
+
 ### 4.5 `staff.hivorr.com` — the staff portal
 
 **[DECIDED]** Reserved for officially appointed Hivorr personnel: marketing, operations, customer
-support, verification officers, and other authorised staff.
+support, verification officers, and other authorised staff. Deployed at `staff.hivorr.com` and
+`staff.staging.hivorr.com`.
 
 - **Staff access is controlled through job-specific permissions** (§10.6).
 - **A staff member does not automatically receive administrator privileges.** Staff and admin are
   different grants; holding one never implies the other.
 - Staff never reach `control.hivorr.com` unless they separately hold a control grant.
 - Staff never gain activity capabilities from a staff grant.
+- **[RECOMMENDED]** Cloudflare Access protects both staff hosts at the edge, in addition to the
+  application's own authentication and MFA.
 
-### 4.6 `partners.hivorr.com` — the partnership portal
+### 4.6 `partner.hivorr.com` — the partnership portal
 
 **[DECIDED]** Reserved for external partnership programmes: affiliates, referral programmes,
-business partnerships, partnership applications, and commission and referral tracking.
+business partnerships, partnership applications, and commission and referral tracking. Deployed at
+`partner.hivorr.com` and `partner.staging.hivorr.com`.
 
 - It **must not become an alternative entry point for the six core activities.** A partner session
   cannot place an order, publish a listing, accept an errand, or touch a wallet.
@@ -353,54 +436,75 @@ business partnerships, partnership applications, and commission and referral tra
 - **[RECOMMENDED]** Partner identity is a **partner membership** on the same identity service, not a
   second account system. An individual who is also an ordinary Hivorr user keeps one account and two
   separate grants.
+- The partner hosts are application-authenticated; edge access is optional because external partner
+  onboarding must remain usable.
 
-### 4.7 Rules that apply to all five
+### 4.7 Rules that apply to all eight deployments
 
 **[DECIDED]**
 
-1. **One API, one identity service, one database per environment.** No entry point gets its own
-   backend.
-2. **Each entry point has its own session audience** (§10.3). A session issued for one entry point is
-   rejected by the others.
-3. **No entry point is a security boundary by virtue of its hostname.** Authorisation is enforced
+1. **One API, one identity service, and one database per environment.** No application gets its own
+   backend, and no environment reaches another environment's backend.
+2. **Each application has its own session audience** (§10.3). A session issued for one application is
+   rejected by the others. Every session is also bound to its environment; a staging session is
+   rejected by production even if the hostname were somehow reached.
+3. **No host is a security boundary by virtue of its hostname.** Authorisation is enforced
    server-side, per request (§10.12).
-4. **Cross-origin is explicit.** Each entry point has an exact CORS allowlist entry; no wildcard, no
+4. **Cross-origin is explicit.** Each host has an exact CORS allowlist entry; no wildcard and no
    `*.hivorr.com`. In the browser path there is no cross-origin call at all — see §4.9 — so the
    allowlist governs the edge-to-origin hop and any future public surface.
-5. **`staging.` is not a prefix on production.** Staging has its own credentials and its own session
-   audience; a staging session can never be replayed against production.
-6. **TLS everywhere, HSTS on every host**, including `control.` and `staff.`.
-7. **No directory listing, no `robots` index for privileged hosts.** `control.`, `staff.`, and
-   `partners.` are `noindex` and are not linked from the public product.
+5. **Staging is a separate environment, not a prefix added to production.** Staging has its own
+   database, credentials, signing keys, buckets, queues, and payment test account. A staging session
+   can never be replayed against production.
+6. **TLS everywhere, HSTS on every host**, including the privileged and staging hosts.
+7. **No index for privileged or staging hosts.** `control.`, `staff.`, `partner.`,
+   `control.staging.`, `staff.staging.`, `partner.staging.`, and `staging.` are `noindex`,
+   serve `Disallow: /`, and are not linked from the public product.
+8. **No additional subdomain is introduced without founder approval.** The eight hosts in §4.1 are
+   the complete set.
+9. **The legacy Flutter deployments are not the architecture.** Until the staged cutover in §12.10
+   completes, `hivorr.com` and `staging.hivorr.com` may still be served by the legacy applications.
+   That is a recorded transitional state, not a second supported architecture.
 
 ### 4.8 DNS, TLS and hosting
 
-**[OPEN]** The DNS provider, TLS issuance method, and hosting platform for each entry point are not
-chosen. This document defines the required topology, not the vendor. **No DNS, certificate, or
-hosting configuration was changed in producing this revision.**
+**[DECIDED 7 November 2026]** Cloudflare provides DNS, TLS, and the edge. Cloudflare Pages serves the
+four static application bundles in each environment. Fly.io runs the API and worker. Supabase
+provides managed PostgreSQL only (Position A); the Data API, Supabase Auth, and Supabase Storage are
+not used. Cloudflare R2 provides object storage.
 
-**[RECOMMENDED]** All five hostnames resolve to the same CDN/edge provider, with each app's static
-bundle served from its own path prefix or its own project. `staging.` is a separate deployment
-target, not a rewrite rule.
+**Verified state on 7 November 2026 — not the target state:**
+
+- `hivorr.com` and `staging.hivorr.com` resolve through Cloudflare.
+- Both currently serve the **legacy Flutter application**, not this repository's React build.
+- `www.hivorr.com`, `control.hivorr.com`, `staff.hivorr.com`, `partner.hivorr.com`, and all three
+  privileged staging hosts have no DNS record yet.
+- The legacy hosts do not send HSTS, CSP, frame protection, or a permissions policy.
+  `staging.hivorr.com` is currently indexable. Both conditions are corrected before cutover.
+
+**No DNS, certificate, hosting, or deployment configuration was changed in producing this revision.**
+The cutover is a separate, approved operation with a rollback position (§12.10).
+
+**TLS constraint.** `control.staging.hivorr.com`, `staff.staging.hivorr.com`, and
+`partner.staging.hivorr.com` are second-level subdomains. Cloudflare Universal SSL normally covers
+only the apex and a first-level wildcard, so these names require Advanced Certificate Manager, Total
+TLS, or an equivalent certificate. This is a founder cost decision and is recorded in §16.4 #26.
+Until it is settled, the required names are not provisioned.
+
+**[RECOMMENDED]** Each application has its own Cloudflare Pages project per environment, with an
+explicit custom domain. `staging.` is a separate deployment target, not a rewrite rule.
 
 ### 4.9 API host and canonical hostnames
 
-**[RECOMMENDED]** — the two hostname questions §4.7 leaves implicit. They are recorded here because
-both get decided by accident during DNS setup otherwise, and one of them would quietly break §5.4.
-
-**The API does not get a public hostname.** §4.7 #4 requires a CORS allowlist per entry point, which
-implies the API is cross-origin — and a cross-origin API on `api.hivorr.com` would force every
-session cookie to `SameSite=None` and to be scoped to the API host instead of the app host. That
-collapses the isolation §5.4 depends on: the browser would send *every* audience's cookie to
-`api.hivorr.com` on *every* request, from any origin, and audience separation would survive only in
-the server-side check.
+**[DECIDED]** — the API has no public hostname in either environment.
 
 | Rule | Detail |
 | --- | --- |
-| Browser path | Each entry point serves `/api/*` **same-origin**, rewritten at the edge to the API origin. |
-| Origin hostname | The API has an internal origin hostname reachable only from the edge — not resolvable by a browser, not in any bundle. |
+| Browser path | Each of the eight hosts serves `/api/*` **same-origin**, rewritten at the Cloudflare edge to that environment's Fly.io API origin. |
+| Origin hostname | The API has an internal origin hostname reachable only from the edge — not resolvable by a browser and not present in any bundle. |
 | Consequence | No CORS in the browser path at all; §4.7 #4 remains as a defence-in-depth allowlist for the edge hop. |
-| Cookies | Stay **host-only on the app host**, `SameSite=Lax`, `__Host-` prefix — exactly §5.4, unchanged. |
+| Cookies | Stay **host-only on the application host**, `SameSite=Lax`, `__Host-` prefix — exactly §5.4. |
+| Environment binding | Each environment has its own API origin, signing keys, and session issuer. A staging `/api` rewrite never points at production. |
 | If a public API is ever required | It is a **separate, scoped surface** with its own credentials (§9.9), not this API opened to the internet. |
 
 **Canonical hostnames.**
@@ -408,15 +512,12 @@ the server-side check.
 | Rule | Detail |
 | --- | --- |
 | Apex canonical | `hivorr.com` is canonical. `www.hivorr.com` issues a single **301 to the apex**, at the edge, before any application logic runs. |
-| Privileged hosts | `control.`, `staff.`, `partners.`, and `staging.` are canonical on the bare subdomain. No `www.` variant exists for any of them. |
+| Privileged and staging hosts | `control.`, `staff.`, `partner.`, `staging.`, and the three `*.staging.` hosts are canonical on the bare subdomain. No `www.` variant exists for any of them. |
 | One host per environment | An environment is never a path on a production host. `hivorr.com/staging` is forbidden. |
-| No wildcard DNS | Each hostname is an explicit record. No `*.hivorr.com`, so a new subdomain cannot appear by accident and no wildcard certificate is needed. |
+| No wildcard DNS | Each hostname is an explicit record. No `*.hivorr.com` and no `*.staging.hivorr.com`, so a new subdomain cannot appear by accident. Certificate coverage is explicit. |
 | Redirects | Only `GET`/`HEAD` are redirected across hosts. A `POST` is never redirected — it would drop the body — and API requests are never redirected. |
 | HSTS | `max-age=31536000; includeSubDomains` on every host. **`preload` is a later, deliberate step**: it is effectively irreversible and commits every future subdomain to HTTPS. |
-| `robots` | `control.`, `staff.`, `partners.`, and `staging.` serve `Disallow: /` and `noindex` (§4.7 #7). `hivorr.com` is indexable. |
-
-**[OPEN]** Which hostname the edge rewrites `/api` to, and whether the API origin is public at all,
-follow from the hosting decision (§16.4 #17) and are not settled here.
+| `robots` | Every privileged and staging host serves `Disallow: /` and `noindex` (§4.7 #7). Only `hivorr.com` is indexable. |
 
 ---
 
@@ -467,21 +568,24 @@ zero grants. Neither implies the other (`matrix` §14.4).
 
 ### 5.4 Sessions and session audiences
 
-**[RECOMMENDED]** — this extends the previous revision's session design to five entry points.
+**[DECIDED]** — four session audiences, each bound to an application and an environment.
 
 | Rule | Detail |
 | --- | --- |
 | Cookie scope | **Host-only**, `Secure`, `httpOnly`, `SameSite=Lax`, `Path=/`, `__Host-` prefix. No `Domain=.hivorr.com`. |
-| Audience | Every session record carries an audience: `app`, `control`, `staff`, `partners`. |
-| Validation | The API rejects a session whose audience does not match the endpoint's audience. |
+| Audience | Every session record carries an audience: `app`, `control`, `staff`, `partner`. |
+| Environment | Every session record also carries `staging` or `production`, a distinct issuer, and a key signed with that environment's key. A staging session is invalid in production. |
+| Validation | The API rejects a session whose audience, environment, or issuer does not match the endpoint. |
+| Cookie names | Distinct per host (for example `__Host-hivorr_app_sid` and `__Host-hivorr_control_sid`) so accidental reuse is visible in logs and impossible in the browser. |
 | Rotation | Short-lived access token (10–15 min) plus a rotating refresh token; reuse detection revokes the family. |
 | Devices | One server-side session record per device, revocable, with a "signed-in devices" screen in the main app. |
 | Bearer | Bearer-token support is designed in from the start for a future mobile client. |
 
 **Why host-only and not a shared parent-domain cookie.** A shared `.hivorr.com` cookie means an XSS
-or a compromised dependency on `partners.` — the lowest-trust, externally facing surface — yields a
-valid main-product session. Host-only cookies cost one extra sign-in on the privileged hosts, which
-is desirable there anyway because they require MFA. The trade is deliberate.
+or a compromised dependency on `partner.` — the lowest-trust, externally facing surface — yields a
+valid main-product session. It would also cross the environment boundary if the cookie were ever set
+on a parent domain. Host-only cookies cost one extra sign-in on the privileged hosts, which is
+desirable there anyway because they require MFA. The trade is deliberate.
 
 ### 5.5 What is never an account
 
@@ -641,16 +745,18 @@ attributed to an activity so the statement stays legible without fragmenting the
 
 ### 7.1 Three non-user surfaces, one identity service
 
-**[DECIDED]** `control`, `staff`, and `partners` are **not** activities, not dashboards, and not
-account types. They are separate applications that call the same API with different scopes.
+**[DECIDED]** `control`, `staff`, and `partner` are **not** activities, not dashboards, and not
+account types. They are separate applications that call the same API with different scopes. Each is
+deployed to production and staging (§4.1); the staging copies exist so cross-application workflows can
+be tested before production.
 
 The reason they are separate applications rather than routes inside `hivorr.com`:
 
 | Reason | Consequence |
 | --- | --- |
-| Blast radius | `partners` is externally facing and lower-trust; it must not ship admin code or share a session cookie (§5.4). |
+| Blast radius | `partner` is externally facing and lower-trust; it must not ship admin code or share a session cookie (§5.4). |
 | Bundle size | `control` ships review queues and audit tooling no ordinary user ever downloads. |
-| Independent release cadence | A support-portal fix must not require a product release. |
+| Independent deployment target | A privileged surface has its own build and host, while releases remain coordinated (§12.9). |
 | Auditability | Every request from a privileged host is tagged with its audience, making privileged activity trivially separable in logs. |
 | Least privilege by default | A bundle that cannot contain a capability is a weaker target than one that merely hides it. |
 
@@ -693,7 +799,7 @@ should never read as an administrator action.
 function; time-bound where the role is temporary; MFA-protected; and revoked on role change. **A
 staff member does not automatically receive administrator privileges.**
 
-### 7.4 Partner platform — `partners.hivorr.com`
+### 7.4 Partner platform — `partner.hivorr.com`
 
 **[DECIDED]** External partnership programmes only.
 
@@ -800,7 +906,7 @@ accent, label, navigation, and mobile destinations; it is the model for the acti
 ### 8.4 Shared design system
 
 **[DECIDED]** The design system is the prototype's tokens plus the prototype's primitives. It is
-published as one package consumed by all five apps (§14.3), so `control`, `staff`, and `partners`
+published as one package consumed by all four applications (§14.3), so `control`, `staff`, and `partner`
 look like Hivorr without re-implementing it.
 
 - **Tokens**: `theme.css` custom properties (`--hivorr-*`) plus Tailwind utilities exposed through
@@ -932,33 +1038,34 @@ baseline is the prototype's current output, captured before the first extraction
   met by splitting per activity route, not by a custom module loader.
 - **[RECOMMENDED]** A content security policy is applied at the CDN/edge, not only in meta tags.
 
-### 8.12 Five application bundles
+### 8.12 Four application bundles, eight deployments
 
-**[RECOMMENDED]** — the main frontend decision this revision adds, and the one that needs founder
-sign-off.
+**[DECIDED 7 November 2026]** — four application bundles, each deployed to a production host and a
+staging host.
 
-| App | Host | Ships | Does not ship |
-| --- | --- | --- | --- |
-| `web` | `hivorr.com` | six activity shells, wallet, messaging, profile, switcher | review queues, audit tooling, engineering tools |
-| `control` | `control.hivorr.com` | review queues, configuration, audit, engineering views | product checkout, seller tools |
-| `staff` | `staff.hivorr.com` | support, verification, operations, marketing tools | financial configuration, engineering tools |
-| `partners` | `partners.hivorr.com` | applications, referrals, commission | any activity capability, any wallet |
+| App | Production host | Staging host | Ships | Does not ship |
+| --- | --- | --- | --- | --- |
+| `web` | `hivorr.com` | `staging.hivorr.com` | six activity shells, wallet, messaging, profile, switcher | review queues, audit tooling, engineering tools |
+| `control` | `control.hivorr.com` | `control.staging.hivorr.com` | review queues, configuration, audit, engineering views | product checkout, seller tools |
+| `staff` | `staff.hivorr.com` | `staff.staging.hivorr.com` | support, verification, operations, marketing tools | financial configuration, engineering tools |
+| `partner` | `partner.hivorr.com` | `partner.staging.hivorr.com` | applications, referrals, commission | any activity capability, any wallet |
 
 All four consume `packages/design`, `packages/shared`, and `packages/api-client`. Each has its own
-Vite entry, its own `index.html`, and its own deployment target. They share a repository and a
-pipeline, not a bundle.
+Vite entry, its own `index.html`, and its own deployment target in each environment. They share a
+repository and a pipeline, not a bundle.
 
-**Why not one app with host-based routing.** A single bundle means `partners.` downloads admin code
+**Why not one app with host-based routing.** A single bundle means `partner.` downloads admin code
 and `control.` downloads checkout code. Host-based routing also makes it easy to reach a privileged
 route by mistake, because the route exists in the build. Separate bundles make the privileged
-surfaces smaller targets and independent release units.
+surfaces smaller targets and independent build units.
 
 **Why not micro-frontends.** No runtime composition, no module federation, no remote entry points.
 Shared source, separate builds. That is enough.
 
-**Cost, stated honestly.** Four build targets and four deployment configurations are more work than
-one. The cost is accepted because `partners` is externally facing and `control` is the highest-value
-target in the system.
+**Cost, stated honestly.** Four build targets and eight deployment configurations are more work than
+one. The cost is accepted because `partner` is externally facing and `control` is the highest-value
+target in the system. Releases are still coordinated (§12.9): a bundle is a separate build unit, not
+an independently released product.
 
 ---
 
@@ -983,7 +1090,7 @@ Rules:
 - Controllers never touch a repository directly.
 - Domain code never imports HTTP, ORM, or provider SDKs.
 - Every mutating service method opens an explicit database transaction.
-- Provider SDKs (Paystack, Termii, R2) are reached only through adapters in `integrations/`.
+- Provider SDKs (VFD, Termii, R2) are reached only through adapters in `integrations/`.
 
 ### 9.2 Modules
 
@@ -1112,7 +1219,7 @@ capabilities = f(
 | --- | --- |
 | Style | REST/JSON, resource-oriented, versioned at `/v1` |
 | Contract | OpenAPI 3.1 generated from code; TypeScript client generated for each app |
-| Audience | Every endpoint declares its audience (`app` · `control` · `staff` · `partners`) |
+| Audience | Every endpoint declares its audience (`app` · `control` · `staff` · `partner`) |
 | Pagination | Cursor-based, stable ordering |
 | Errors | Stable machine codes plus a human message; never a bare 500 |
 | Money mutations | `Idempotency-Key` required; replay returns the original result |
@@ -1123,7 +1230,7 @@ capabilities = f(
 | Realtime | Server-Sent Events for notifications and delivery status; WebSocket for chat when needed |
 | GraphQL | Not at MVP |
 
-**Deliberate omission:** no public partner API at MVP. `partners.hivorr.com` is a partner *portal*,
+**Deliberate omission:** no public partner API at MVP. `partner.hivorr.com` is a partner *portal*,
 not a partner *API*. If an API is added later it becomes a separate, scoped surface, not the internal
 API opened up.
 
@@ -1149,7 +1256,7 @@ ledger_account (id, owner_type, owner_id, kind)
   fragmenting the balance.
 - Escrow lifecycle: `held → released` or `held → refunded`, plus dispute states. Release is a
   scheduled worker job after the approved holding period.
-- Paystack primary, Flutterwave secondary, both behind one `PaymentProvider` interface. NIBSS name
+- VFD is the single payment and custody provider behind one `PaymentProvider` interface. NIBSS name
   enquiry for payout-account verification.
 - Deposit webhooks enforce `Payer Name == Entity Profile Name` (`AGENTS.md` Rule 3).
 - Payouts only to bound, pre-verified bank accounts.
@@ -1238,12 +1345,13 @@ decision is made server-side, inside a transaction, from data the server owns.
 
 ### 10.3 Centralised identity, isolated sessions
 
-**[DECIDED]** One identity service; four session audiences (§5.4).
+**[DECIDED]** One identity service per environment; four session audiences (§5.4).
 
 | Rule | Reason |
 | --- | --- |
-| Host-only cookies, no parent-domain cookie | A compromise on `partners.` must not yield a product session |
+| Host-only cookies, no parent-domain cookie | A compromise on `partner.` must not yield a product session, and a cookie must never cross environments |
 | Session audience checked on every request | A stolen `app` session must not open `control.` |
+| Session environment/issuer checked on every request | A staging session must not open production, even through a misconfigured edge |
 | Distinct cookie names per host | Prevents accidental reuse and makes logs unambiguous |
 | Refresh-token reuse detection revokes the family | Limits the value of a stolen token |
 | Privileged sessions are shorter-lived | §10.8 |
@@ -1298,10 +1406,13 @@ grants. There is no "Seller permission", only `market.sell` plus the seller lane
 
 | Surface | MFA |
 | --- | --- |
-| `hivorr.com` | Optional at MVP; available to every account |
-| `staff.hivorr.com` | **Mandatory** TOTP |
-| `control.hivorr.com` | **Mandatory** TOTP; optional IP allowlist for the founder |
-| `partners.hivorr.com` | **Mandatory** TOTP for commission payout access |
+| `hivorr.com` / `staging.hivorr.com` | Optional at MVP; available to every account |
+| `staff.hivorr.com` / `staff.staging.hivorr.com` | **Mandatory** TOTP |
+| `control.hivorr.com` / `control.staging.hivorr.com` | **Mandatory** TOTP; optional IP allowlist for the founder; Cloudflare Access at the edge |
+| `partner.hivorr.com` / `partner.staging.hivorr.com` | **Mandatory** TOTP for commission payout access |
+
+Staging privileged accounts are separate accounts with separate grants; a production staff or admin
+grant does not exist in staging unless it is seeded there under a synthetic identity.
 
 **[RECOMMENDED]** TOTP at MVP, WebAuthn when a second factor is added. Recovery codes are single-use
 and stored hashed.
@@ -1332,7 +1443,7 @@ target id, before/after summary, IP, user agent, correlation id, timestamp.
 
 **[DECIDED]**
 
-- TLS 1.2+ everywhere; HSTS on all five hosts.
+- TLS 1.2+ everywhere; HSTS on all eight hosts.
 - Encryption at rest for the database and buckets; field-level encryption for bank details.
 - Secrets in a managed secret store with rotation; no secret in any client bundle.
 - Strict CORS allowlist per entry point; CSP; no third-party scripts on authenticated pages.
@@ -1346,13 +1457,13 @@ target id, before/after summary, IP, user agent, correlation id, timestamp.
 
 **[DECIDED]** This is stated explicitly because it is the most likely misreading of §4.
 
-A subdomain changes **what is deployed where**, and that is genuinely useful: `partners.` ships no
+A subdomain changes **what is deployed where**, and that is genuinely useful: `partner.` ships no
 admin code, and `control.` can be network-restricted. But a hostname is a DNS record, not an
 authorisation check. Everything that actually protects the system is server-side:
 
 | Control | Enforced by |
 | --- | --- |
-| Who may call an endpoint | Session audience + capability check in the service layer |
+| Who may call an endpoint | Session audience + environment/issuer + capability check in the service layer |
 | Which rows are visible | Ownership/party scope + RLS |
 | Which money may move | KYC tier + verification lane + ledger invariants + idempotency |
 | Which grant exists | Grant records, audited, revocable |
@@ -1360,6 +1471,8 @@ authorisation check. Everything that actually protects the system is server-side
 
 If `control.hivorr.com` were served from `hivorr.com/control` tomorrow, the security posture would be
 unchanged. The reverse is also true: a separate hostname would not save a system that trusted it.
+Cloudflare Access on the control and staff hosts is an additional exposure-reduction layer, not a
+substitute for any row in this table.
 
 ### 10.13 Threat model
 
@@ -1369,6 +1482,8 @@ unchanged. The reverse is also true: a separate hostname would not save a system
 | Horizontal privilege escalation (IDOR) | Capability checks + `owner_account_id` + RLS |
 | Cross-activity leakage | Activity-scoped queries; no "all data" endpoints |
 | Cross-audience leakage | Session audience + separate bundles + CORS allowlist |
+| Cross-environment leakage | Separate API/DB/keys/buckets + environment-bound session issuer + network egress controls |
+| Legacy origin remains authoritative | Controlled cutover with DNS/domain detachment, verification, and a preserved rollback position (§12.10) |
 | Staff overreach | Job-scoped grants, no default admin, audited actions |
 | Developer overreach | `platform.engineering` excludes money and PII; dual control on production changes |
 | Partner pivot into the product | Partner sessions carry no activity capability |
@@ -1384,44 +1499,59 @@ unchanged. The reverse is also true: a separate hostname would not save a system
 
 ## 11. Development, Staging and Production Environments
 
-### 11.1 The three environments
+### 11.1 Two hosted environments plus local development
 
-**[DECIDED]**
+**[DECIDED]** There are two hosted environments, staging and production, plus local development.
+Each hosted environment runs four applications, one API, one worker, and one database.
 
 | | Development | Staging | Production |
 | --- | --- | --- | --- |
-| Purpose | Local implementation and testing; controlled source changes | Hosted testing, QA, founder review | Live product |
-| Web | `localhost:8443` (Vite) | `staging.hivorr.com` | `hivorr.com` + `control.` `staff.` `partners.` |
-| API | local process | staging deployment | production deployment |
-| Database | local Postgres container | **staging database only** | **production database only** |
-| Storage | local or a dev bucket | staging buckets | production buckets |
-| Payments | provider test mode | provider test mode | provider live mode |
-| SMS / email | captured, never sent | captured or test recipients | live |
+| Purpose | Local implementation and testing; controlled source changes | Integrated testing, QA, founder review | Live product |
+| Applications | `localhost:8443` (Vite) | `staging.hivorr.com`, `control.staging.hivorr.com`, `staff.staging.hivorr.com`, `partner.staging.hivorr.com` | `hivorr.com`, `control.hivorr.com`, `staff.hivorr.com`, `partner.hivorr.com` |
+| API | local process | staging Fly.io app | production Fly.io app |
+| Database | local Postgres container | **staging Supabase project only** | **production Supabase project only** |
+| Storage | local or a dev bucket | staging R2 buckets | production R2 buckets |
+| Payments | provider test mode | VFD test/sandbox only | VFD live only |
+| SMS / email | captured, never sent | captured or approved test recipients | live |
 | Data | synthetic seeds | synthetic or anonymised | real |
 | Access | the developer | authorised testers + founder | the public, with founder-gated release |
+| Edge protection | none | Cloudflare Access on control/staff | Cloudflare Access on control/staff |
 
-### 11.2 Data isolation rules
+### 11.2 Isolation rules
 
 **[DECIDED]** — these are not guidelines.
 
 1. **No production data in development or staging**, ever. Not a dump, not a sample, not "just one
-   table".
+   table". Staging seeds are synthetic.
 2. **No shared credentials** across environments. Separate database users, separate API keys,
-   separate payment accounts, separate buckets, separate signing keys.
-3. **No shared secrets file.** Each environment has its own secret store namespace.
-4. **Staging never calls a production service.** If a provider cannot be sandboxed, the call is
-   intercepted and recorded.
-5. **Staging is not publicly linked** and is `noindex`.
+   separate payment accounts, separate buckets, separate signing keys, separate queue namespaces.
+3. **No shared secrets file or secret namespace.** Each environment has its own secret store
+   namespace and its own runtime identity.
+4. **Separate session issuers and signing keys.** A staging session is cryptographically invalid in
+   production, independent of the hostname.
+5. **Staging never calls a production service.** If a provider cannot be sandboxed, the call is
+   intercepted and recorded. Staging egress to production resources is blocked at the infrastructure
+   level, not by convention.
+6. **Separate databases.** A staging migration never touches the production database, and a
+   production connection string never exists in a staging secret store.
+7. **Separate object storage and queues.** Staging buckets and queues are distinct from production;
+   no shared bucket prefix or queue name.
+8. **Staging is not publicly linked** and is `noindex` on every host, including
+   `staging.hivorr.com`.
+9. **Staging accounts and grants are separate.** A production staff or admin grant does not exist in
+   staging except as a synthetic seeded identity with its own credentials.
 
 ### 11.3 What staging must mirror
 
 **[DECIDED]** Staging is only useful if it can catch production failures:
 
-- the same build artifact (§12.7), not a rebuild;
+- the same release artifacts (§12.7), not a rebuild;
 - the same migration set, applied in the same order;
 - the same configuration *shape* (every key present, values different);
-- the same infrastructure topology (one API, one worker, one database, one bucket set);
-- the same feature-flag defaults unless a flag is explicitly under test.
+- the same infrastructure topology: four applications, one API, one worker, one database, one bucket
+  set per environment;
+- the same feature-flag defaults unless a flag is explicitly under test;
+- the same cross-application workflows, tested as one ecosystem.
 
 **[RECOMMENDED]** A migration that has not run on staging has not been tested. Production applies
 only migrations that staging has already applied successfully.
@@ -1430,7 +1560,8 @@ only migrations that staging has already applied successfully.
 
 **[DECIDED]** Live payment credentials · real customer data · production signing keys · a public
 route from the production product · the ability to send real SMS or email to real users · any grant
-that exists in production but not in staging's seed.
+that exists in production but not in staging's seed · a shared database, bucket, queue, or secret
+with production.
 
 ### 11.5 Production protection
 
@@ -1438,16 +1569,62 @@ that exists in production but not in staging's seed.
 
 - Production is reachable only through the release pipeline (§12). No direct deploys, no manual file
   uploads, no console writes to the database.
-- The production environment is a **protected deployment environment**: it requires an explicit
-  approval by the founder for every deployment (§12.5).
-- Production secrets are readable only by the production runtime identity.
+- The production environment requires an explicit, recorded founder approval for every deployment
+  (§12.5). Approval of one release does not authorise the next.
+- Production secrets are readable only by the production runtime identity and the production
+  deployment workflow.
 - Production database access for humans is break-glass, time-boxed, dual-controlled, and audited.
+- Cloudflare Access protects `control.hivorr.com` and `staff.hivorr.com` at the edge. The application
+  still authenticates and authorises every request.
 
 ### 11.6 Local development
 
 **[RECOMMENDED]** One command starts Postgres, the API, the worker, and the Vite dev server. Seed
 data covers each activity and each verification state so permission behaviour is testable without
-manual setup. The Figma Make preview must keep working throughout (§8.11).
+manual setup. The Figma Make preview must keep working throughout (§8.11). Local development never
+connects to staging or production.
+
+### 11.7 Staging verification gate
+
+**[DECIDED]** A release is staging-verified only when all of the following are recorded against the
+same commit and artifact set:
+
+1. All CI gates pass on the commit.
+2. All four staging applications and the staging API/worker are deployed from the same release
+   artifacts.
+3. The migration set applies cleanly to staging from the previous state and from empty.
+4. Smoke tests pass on all four staging hosts, including headers, `noindex`, and session-audience
+   rejection.
+5. Cross-application E2E scenarios pass for every affected workflow.
+6. Visual regression passes at 375 / 768 / 1280 px.
+7. No staging credential, bucket, or queue can reach production.
+
+A release request cannot be prepared until this gate is recorded (§12.5).
+
+### 11.8 Cross-portal workflows that staging must test
+
+**[DECIDED]** These workflows are the reason the four portals exist in the same environment. Each is
+an end-to-end staging scenario using synthetic accounts, never production data.
+
+| # | Workflow | Cross-portal path |
+| --- | --- | --- |
+| 1 | **User verification** | Main submits identity/trade evidence → API case → staff processes within policy → control approves where required → main reflects the new lane state and unlocks gated writes. |
+| 2 | **Customer complaint** | Main raises a complaint → staff receives and investigates → escalation to control where authority is required → client receives updates on main. |
+| 3 | **Affiliate referral** | Approved partner uses a referral mechanism → referred user registers on main → backend attributes eligible activity → commission appears in the partner portal → control oversees the programme. |
+| 4 | **Account suspension** | Control suspends an account → all sessions in every portal are revoked → main, staff, and partner access is denied → audit record is written. |
+| 5 | **Dispute and refund** | Main opens a dispute → staff triages → control decides with dual control where required → ledger entry and notification → main reflects the outcome. |
+| 6 | **Listing moderation** | Seller publishes on main → staff/control review → publish or deny → main shows the correct status and reason. |
+| 7 | **KYC/tier change** | Main submits evidence → staff/control decision → financial capability changes → main and staff read models update. |
+| 8 | **Partner payout review** | Partner requests commission payout → staff/control reviews → finance executes through the provider adapter → partner sees updated status, not another partner's data. |
+
+Every scenario must prove:
+
+- the correct portal receives the task and the others do not;
+- a user without the required grant receives a stable deny response;
+- a session from one portal or environment cannot perform the action;
+- the state change is visible in every portal that should see it;
+- the audit record names the actor, audience, environment, target, and correlation id;
+- no live payment, SMS, or email leaves staging.
 
 ---
 
@@ -1455,27 +1632,30 @@ manual setup. The Figma Make preview must keep working throughout (§8.11).
 
 ### 12.1 Branching model
 
-**[RECOMMENDED]** Trunk-based development with short-lived branches. The reason is governance, not
-fashion: a long-lived branch is a release that has not been reviewed, and this project requires every
-production change to be reviewed and approved.
+**[DECIDED]** Two protected branches and short-lived working branches. The flow is
+`feature → staging → main`; `staging` is the integration branch and `main` is the production
+release branch.
 
 | Branch | Purpose | Lifetime |
 | --- | --- | --- |
-| `main` | Always deployable; protected | permanent |
-| `feat/<slug>` | One change | hours to days; squash-merged |
-| `fix/<slug>` | One defect | hours to days |
+| `main` | Production release branch; always deployable | permanent |
+| `staging` | Integration and staging deployment branch | permanent |
+| `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`, `test/<slug>` | One change | hours to days |
 | `release/<date>` | **Not used** — production is a promotion, not a branch | — |
 
 Rules:
 
-- No direct commits to `main`. Pull request required.
+- No direct commits or pushes to `main` or `staging`. Pull request required.
+- A working branch merges into `staging` first. Only a verified `staging` commit is promoted to
+  `main` by pull request.
 - Linear history; squash merge; no merge commits.
-- Force-push and branch deletion on `main` are disabled.
+- Force-push and branch deletion on `main` and `staging` are disabled where the GitHub plan allows
+  it, and detected by CI where it does not (§12.3).
 - A branch that cannot merge within a few days is split.
 
 ### 12.2 Pipeline stages
 
-**[RECOMMENDED]**
+**[DECIDED]**
 
 ```
 pull request
@@ -1483,41 +1663,67 @@ pull request
   2 lint + format check (oxfmt)
   3 typecheck (tsc --noEmit)
   4 unit + component tests
-  5 build all app bundles
+  5 build all four application bundles
   6 visual regression against the baseline
   7 OpenAPI diff (breaking change = failure)
   8 dependency + secret scan
   9 migration lint + `db diff` review artefact
         │
         ▼
-merge to main
- 10 build once → immutable artifact (digest recorded)
- 11 deploy artifact to staging
- 12 apply migrations to staging
- 13 smoke test + E2E on staging
+merge to staging
+ 10 repeat gates on the merged commit; deployment depends on their success
+ 11 build once → one release manifest and immutable artifacts per component
+ 12 deploy the four staging applications + staging API + worker
+ 13 apply migrations to staging
+ 14 smoke test every staging host + cross-application E2E
+ 15 record the staging-verified release
         │
         ▼
-production (gated)
- 14 founder approval
- 15 apply migrations to production (reviewed, expand/contract only)
- 16 deploy the same artifact digest
- 17 post-deploy smoke test
- 18 monitor error rate and queue depth for 30 minutes
+release request (GitHub Issue)
+ 16 issue contains SHA, manifest, digests, migrations, changes, test evidence, rollback target
+        │
+        ▼
+founder approval (issue comment)
+ 17 `/approve-release <sha>` from the authorised founder account
+ 18 approval workflow verifies identity, SHA, issue state, and successful staging verification
+        │
+        ▼
+production promotion (gated)
+ 19 download the same staging artifacts; verify digests
+ 20 apply the reviewed migration set to production (expand/contract only)
+ 21 deploy the same artifacts to the four production hosts + production API/worker
+ 22 post-deploy smoke test on all eight hosts
+ 23 monitor error rate and queue depth for 30 minutes
 ```
+
+A normal push, PR merge, or staging deployment never triggers production. Production is reachable
+only through the approval in §12.5.
 
 ### 12.3 Environment protection
 
-**[RECOMMENDED]**
+**[DECIDED]** Staging and production are GitHub Environments. Deployment credentials exist only in
+the environment that uses them.
 
 | Environment | Trigger | Approval |
 | --- | --- | --- |
 | Preview (per PR) | automatic | none |
-| Staging | merge to `main` | none, but it must be green |
-| Production | manual promotion of a staging artifact | **founder, per deployment** |
+| Staging | successful CI on `staging` | none, but all gates must be green |
+| Production | approved release request | **founder, per deployment** |
 
-GitHub Environments with required reviewers is the concrete mechanism. The production environment
-has: required reviewer (founder), no self-review, wait timer, and a deployment branch rule that only
-accepts the artifact promoted from staging.
+**GitHub Free constraint (verified 6 November 2026).** This private repository is on GitHub Free.
+Server-side branch protection, rulesets, required status checks, and environment required reviewers
+are unavailable. The controls in this repository are therefore:
+
+1. the local pre-push hook, which blocks accidental direct pushes;
+2. the CI `verify-pr-merge` guard, which fails a protected-branch push that is not linked to a merged
+   PR;
+3. deployment workflows that depend on successful CI and on the founder approval workflow;
+4. artifact promotion, which refuses to build a different artifact for production.
+
+These are **compensating controls, not server-side enforcement**. A repository administrator can
+alter a workflow, a variable, or a protected branch. The alternatives are recorded in §16.4 #27:
+remain on Free with compensating controls, upgrade to GitHub Pro/Team for enforceable branch and
+environment protection, or move hosting. No upgrade is required by this revision.
 
 ### 12.4 Migration review gate
 
@@ -1541,32 +1747,66 @@ Migration mechanics — naming, self-containment, `migration repair`, declarativ
 **[DECIDED]** **Every production release requires explicit founder approval. Approval of one release
 does not authorise future releases.**
 
-Concretely:
+The release request is a GitHub Issue created only after the staging verification gate passes
+(§11.7). It contains:
 
-- The approval is per deployment, attached to a specific artifact digest and a specific migration
-  set.
-- There is no standing "auto-deploy to production" toggle.
-- A previously approved artifact that is re-promoted still requires approval for that promotion.
-- Approval is recorded with who, when, what digest, and what changed since the last release.
+- the release tag/version and commit SHA;
+- the staging CI run and staging deployment record;
+- the release manifest and the digest of every application, API, and worker artifact;
+- the migration set and its hash;
+- the affected applications and the cross-application workflows tested;
+- the change summary since the previous release;
+- the test evidence: CI, smoke, E2E, visual regression, security scans;
+- the rollback target: the previous release manifest and digests.
+
+The approval is an issue comment from the authorised founder account using the agreed command:
+
+```
+/approve-release <release-sha>
+```
+
+The approval workflow verifies, before it dispatches anything:
+
+1. the comment is newly created and the issue carries the release-candidate label;
+2. the comment author is the configured founder GitHub account;
+3. the SHA in the comment matches the issue's release SHA;
+4. the same SHA has a successful staging verification record;
+5. the artifact manifest still exists and its digests match the staging artifacts.
+
+It records the approval comment ID, the approver, the timestamp, the SHA, and the digests. Only then
+does it dispatch the production promotion. The production workflow re-verifies the approval record
+and refuses to build a new artifact. A normal push, PR merge, staging deployment, or manual dispatch
+without a matching approved issue never deploys to production.
+
+**Sole-operator note.** The founder may be both the approver and the repository administrator. The
+separation preserved here is between **approval** and **execution**: the approval is a recorded
+comment, and the deployment is performed by the workflow from the approved artifacts, not from a
+workstation. Under GitHub Free the founder's admin access remains a residual risk (§12.3).
 
 ### 12.6 Rollback and recovery
 
 **[DECIDED]**
 
-- Application rollback is instant: redeploy the previous artifact digest.
+- Application rollback is a redeploy of the previous release manifest's artifacts. No rebuild.
 - Database changes follow expand/contract, so a rollback never requires a destructive migration.
 - A migration that cannot be rolled back forward is not merged.
+- Every release records its rollback target and the previous manifest.
 - Restore drills are quarterly, with a documented RTO (§13.6).
 - **[OPEN]** Backup tier, PITR retention length, and logical-dump destination (`§16.4 #13`).
 
 ### 12.7 Artifact provenance
 
-**[RECOMMENDED]**
+**[DECIDED]**
 
-- Build once, promote the same artifact. Staging and production run identical bytes.
-- The artifact digest is recorded in the deployment, the audit log, and the release note.
+- Build once, promote the same artifacts. Staging and production run identical bytes.
+- The release manifest records the commit SHA, release tag, build time, and the digest of each
+  application bundle, the API image, the worker image, and the migration set.
+- The manifest is stored with the artifacts and referenced by the release issue.
+- The artifact digest is recorded in the deployment, the audit record, and the release note.
 - Dependencies are installed from the frozen lockfile only.
 - Builds are reproducible from a tagged commit.
+- If the staging artifacts have expired or their digests do not match, promotion fails and the
+  release must be re-staged. Production never rebuilds.
 
 ### 12.8 What is prohibited
 
@@ -1576,8 +1816,47 @@ Concretely:
 - Applying a migration by hand to production.
 - Editing production configuration outside the pipeline.
 - Sharing a production secret with a developer workstation.
-- Approving your own production deployment.
+- A production deployment that does not originate from an approved staging release.
+- Rebuilding an artifact for production instead of promoting the staged one.
+- Approving a release whose staging verification is missing, failed, or belongs to a different SHA.
 - Shipping a release whose migration has not run on staging.
+- Leaving the legacy Flutter origin serving after a completed cutover without a recorded rollback
+  position.
+
+### 12.9 Coordinated releases
+
+**[DECIDED]** Releases are **lockstep** at MVP. One commit produces one release manifest covering:
+
+- `web`, `control`, `staff`, and `partner`, in both environments;
+- the API and worker;
+- the migration set;
+- the configuration shape and feature-flag defaults.
+
+All eight hosts and the API report the same release SHA. A staging verification that covers only one
+application is not sufficient for a change that affects shared identity, permissions, API contracts,
+or another application's workflow.
+
+Independent application releases are not permitted at MVP. They may be introduced later only when
+the API contract declares a compatibility range, the manifest records it, and staging verifies every
+consuming application. That is a recorded architecture change, not an operational shortcut.
+
+### 12.10 Legacy Flutter cutover
+
+**[DECIDED]** The legacy Flutter applications currently serving `hivorr.com` and
+`staging.hivorr.com` are retired by a staged cutover, not an immediate DNS deletion. The operational
+runbook is `documents/Engineering-Execution/LEGACY_FLUTTER_CUTOVER.md`.
+
+Rules:
+
+1. The legacy deployment and DNS records are preserved until the React replacement is deployed and
+   verified in staging.
+2. The cutover switches the custom domains/origins only after the production React deployment passes
+   smoke tests.
+3. DNS records are not deleted as part of the switch. The old origin remains a rollback target for a
+   defined window.
+4. Flutter is decommissioned only after the rollback window closes and the founder records approval.
+5. No step in the cutover may be performed by an AI agent without the founder's explicit approval and
+   access to the relevant Cloudflare project.
 
 ---
 
@@ -1604,7 +1883,7 @@ future.
 | **Activity registry** | Activities are definitions (id, name, dashboards, navigation, accent, lanes), not hard-coded switches | The six activities already need a switcher and per-activity navigation |
 | **Module boundary** | A module owns a schema and exposes a service contract | Six activities already require isolation (§9.2) |
 | **Capability namespace** | `<domain>.<resource>.<action>` strings, computed not stored | The permission matrix already works this way (`matrix` §9.3) |
-| **Provider adapter** | One interface per external service | Payments already need Paystack *and* Flutterwave (§9.10) |
+| **Provider adapter** | One interface per external service | Payments already need a provider boundary for VFD and any future provider |
 | **Outbox events** | Side effects published transactionally | Notifications already need them (§9.11) |
 
 A sixth seam is not needed. If a future feature appears to need one, that is a signal to re-read this
@@ -1702,7 +1981,7 @@ this section was created by this revision.
 ├── apps/                  # additional entry points (new)
 │   ├── control/           # control.hivorr.com
 │   ├── staff/             # staff.hivorr.com
-│   └── partners/          # partners.hivorr.com
+│   └── partner/          # partner.hivorr.com
 │
 ├── server/                # API + worker (new package)
 │   ├── src/
@@ -1843,16 +2122,17 @@ Therefore:
 
 ### 15.5 Infrastructure and services
 
-**[OPEN]** — provider selection is not part of this revision.
+**[DECIDED 7 November 2026]**
 
-| Layer | Candidate | Status |
+| Layer | Provider | Status |
 | --- | --- | --- |
-| Web hosting | Cloudflare Pages, Vercel | open |
-| API + worker runtime | Fly.io, Render, Railway | open |
-| Database | Neon, Supabase, RDS | **open** (`§16.4 #1`) |
+| DNS, TLS, edge | Cloudflare | decided (`§16.4 #17`) |
+| Web hosting | Cloudflare Pages | decided (`§16.4 #17`) |
+| API + worker runtime | Fly.io | decided (`§16.4 #17`) |
+| Database | Supabase, managed PostgreSQL only (Position A) | decided (`§16.4 #1`) |
 | Object storage | Cloudflare R2 | decided (§9.12) |
-| CI/CD | GitHub Actions | recommended (§12) |
-| Payments | Paystack, Flutterwave, NIBSS | decided (§9.10) |
+| CI/CD | GitHub Actions | decided (`§16.4 #25`) |
+| Payments | VFD, with NIBSS name enquiry | decided (§9.10) |
 | SMS | Termii | decided (§9.7) |
 | Error tracking | Sentry | recommended |
 | Logs / metrics / traces | OpenTelemetry → Grafana Cloud, or equivalent | recommended |
@@ -1888,27 +2168,38 @@ Therefore:
 | 7 | REST + OpenAPI, generated client | Decided |
 | 8 | Cloudflare R2, private-first object storage | Decided |
 | 9 | PostgreSQL-backed job queue at MVP | Decided |
-| 10 | Managed PaaS + managed Postgres | Decided (provider open) |
+| 10 | Managed PaaS + managed Postgres | Decided — Cloudflare Pages/Fly.io + Supabase (`§16.4 #1`, #17) |
 | 11 | Visual regression gate on frontend extraction | Decided |
 | 12 | One account, six activities, no per-activity database or auth | Decided |
-| 13 | Five entry points: `hivorr.com`, `staging.`, `control.`, `staff.`, `partners.` | Decided (3 Nov 2026) |
+| 13 | Four applications, eight deployments: `web`, `control`, `staff`, `partner` in production and staging | Decided (7 Nov 2026) |
 | 14 | RLS as defence in depth; service layer is authoritative | Decided |
-| 15 | Supabase, if chosen, is managed Postgres only (Position A) | Decided (3 Nov 2026) |
+| 15 | Supabase as managed Postgres only (Position A) | Decided (7 Nov 2026) |
+| 16 | Staging is an integrated ecosystem of all four applications | Decided (7 Nov 2026) |
+| 17 | Lockstep releases with one manifest per commit | Decided (7 Nov 2026) |
+| 18 | Founder approval by GitHub Issue comment, promoting the staging artifacts | Decided (7 Nov 2026) |
+| 19 | Staged retirement of the legacy Flutter deployments | Decided (7 Nov 2026) |
 
 ### 16.2 Decisions added by this revision
 
-**[DECIDED]** by founder instruction, 3 November 2026:
+**[DECIDED]** by founder instruction, 7 November 2026:
 
-1. **Domain structure** — the five entry points in §4.1, with the access rules in §4.4–§4.7.
-2. **Control platform scope** — founder + authorised developer; developer is technical-only and never
-   touches money, PII by default, or business decisions.
-3. **Staff platform scope** — job-specific permissions; staff never automatically receive admin.
-4. **Partner platform scope** — partnerships only; never an entry point for the six activities.
-5. **Staging and production separation** — staging at `staging.hivorr.com`, production at
-   `hivorr.com`, no shared data or credentials, production protected by founder approval.
-6. **Per-release founder approval** — every production release, not a standing authorisation.
+1. **Eight deployments** — four applications, each in production and staging, with the hosts in
+   §4.1.
+2. **Integrated staging ecosystem** — all four staging applications share the staging API, identity,
+   and database, and are tested together.
+3. **Lockstep releases** — one commit, one manifest, all four applications plus API, worker, and
+   migrations (§12.9).
+4. **Issue-based founder approval** — a GitHub Issue and `/approve-release <sha>` comment, verified
+   by the approval workflow (§12.5).
+5. **Build-once promotion** — production consumes the staging artifacts; it never rebuilds (§12.7).
+6. **Staged Flutter cutover** — the legacy Flutter deployments are retired only after the React
+   replacement is deployed and verified (§12.10).
 7. **Migration review before production execution** — §12.4.
 8. **Future expansion must not be over-built** — §13.1 and §13.5.
+
+Decisions retained from 3 November 2026: control scope (founder + authorised developer),
+staff job-specific permissions, partner scope, staging/production separation, per-release founder
+approval, and the six-activity model.
 
 ### 16.3 Recommendations that need sign-off
 
@@ -1917,21 +2208,24 @@ without redesign.
 
 | # | Recommendation | Section |
 | --- | --- | --- |
-| 1 | Four separate frontend bundles sharing one design system | §8.12 |
-| 2 | Host-only session cookies with four audiences | §5.4, §10.3 |
+| 1 | Four application bundles sharing one design system | §8.12 |
+| 2 | Host-only session cookies with four audiences and environment binding | §5.4, §10.3 |
 | 3 | Partner identity as a membership on the one identity service | §4.6 |
 | 4 | `platform.engineering` as a distinct, time-boxed developer grant | §4.4 |
 | 5 | Staff capabilities in `support.*` / `operations.*` / `marketing.*` namespaces | §7.3 |
-| 6 | Trunk-based branching with protected `main` | §12.1 |
-| 7 | Build once, promote the same artifact digest | §12.7 |
-| 8 | Production as a protected GitHub Environment with per-deployment founder approval | §12.3 |
+| 6 | `feature → staging → main` branching with protected `staging` and `main` | §12.1 |
+| 7 | Build once, promote the same release manifest and artifact digests | §12.7 |
+| 8 | `staging` and `production` as GitHub Environments, with the issue-comment founder gate | §12.3, §12.5 |
 | 9 | Geo as a platform capability, not per-module | §9.14 |
 | 10 | Production photography served from R2 instead of hotlinked Unsplash | §8.4 |
 | 11 | Adopt `react-router`, `react-hook-form`, TanStack Query, `zod`; add the test toolchain | §8.7, §8.10, §15.3 |
 | 12 | The repository layout in §14.1 | §14 |
 | 13 | `minimumReleaseAge` retained as a supply-chain control | §2.5 |
-| 14 | No public API host: each entry point serves `/api/*` same-origin from the edge | §4.9 |
-| 15 | Apex canonical with `www` → apex 301; no `www.` on privileged hosts; no wildcard DNS; HSTS without `preload` | §4.9 |
+| 14 | No public API host: each of the eight hosts serves `/api/*` same-origin from the edge | §4.9 |
+| 15 | Apex canonical with `www` → apex 301; no `www.` on privileged/staging hosts; no wildcard DNS; HSTS without `preload` | §4.9 |
+| 16 | Cloudflare Access on the control and staff hosts, in both environments | §4.4, §4.5, §10.12 |
+| 17 | Cross-application E2E suite as a blocking staging gate | §11.7 |
+| 18 | A release manifest stored with the artifacts and referenced by the release issue | §12.7 |
 
 ### 16.4 Open founder decisions
 
@@ -1957,7 +2251,7 @@ so there is one list, not three.
 | 14 | **Sign-in identifier** — **DECIDED 7 November 2026:** email-first. Email and password are required at registration; a phone number is optional and becomes mandatory only before an action that sends an OTP or a dispatch message | Auth screens; identity schema | Founder | §9.7; EP-01 entry record §5 |
 | 15 | **Verification vendor** — review queue only, or an identity provider | Lane implementation | Founder | matrix #12 |
 | 16 | **Data residency and primary region** | Provider and region; latency; compliance | Founder | db rules #10 |
-| 17 | **Hosting platform, DNS provider, TLS issuance** — **DECIDED 7 November 2026:** Cloudflare for DNS, TLS and the edge (Pages for the static bundles), and Fly.io for the API and worker runtime. All five hostnames sit behind the Cloudflare edge; `/api/*` is proxied same-origin from the edge to the Fly.io origin. TLS is provider-managed at the edge; HSTS without `preload`. | §4.8, §4.9 | Founder + architect | new; EP-01 entry record §5 |
+| 17 | **Hosting platform, DNS provider, TLS issuance** — **DECIDED 7 November 2026:** Cloudflare for DNS, TLS and the edge (Pages for the static bundles), and Fly.io for the API and worker runtime. All eight hostnames sit behind the Cloudflare edge; `/api/*` is proxied same-origin from the edge to the Fly.io origin. TLS is provider-managed at the edge; HSTS without `preload`. The three second-level staging hosts are subject to #26. | §4.8, §4.9 | Founder + architect | new; EP-01 entry record §5 |
 | 18 | **Map / geo provider** | Errand and logistics dispatch | Founder | §9.14 |
 | 19 | **Mobile** — PWA first, or React Native | §19 (removed — see changelog) | Founder | old #8 |
 | 20 | **AI scope** — out of launch scope, or a specific surface | Any AI module | Founder | old #9 |
@@ -1966,6 +2260,8 @@ so there is one list, not three.
 | 23 | **Self-dealing exceptions** | §6.7 | Founder | matrix #14 |
 | 24 | **Grandfathering** — grace period if a verification rule tightens | Rollout policy | Founder | matrix #13 |
 | 25 | **CI provider and repository hosting** — **DECIDED 4 November 2026:** GitHub and GitHub Actions; private repository; protected `main`; native secret and dependency scanning; `staging`/`production` as definitions only; no deployment in EP-00. Kept in the register so cross-references stay valid. | Nothing — settled | Founder | `standards` §16 #18; EP-00-000 |
+| 26 | **TLS for the three second-level staging hosts** — `control.staging.hivorr.com`, `staff.staging.hivorr.com`, and `partner.staging.hivorr.com` are not covered by a standard Cloudflare Universal SSL certificate. Choose Advanced Certificate Manager, Total TLS, or an equivalent certificate; or approve flattened hostnames. | Provisioning the three staging privileged hosts; §4.8 | Founder | Revision 3 §4.8 |
+| 27 | **GitHub enforcement tier** — remain on GitHub Free with the compensating controls in §12.3, or upgrade to Pro/Team for server-side branch protection and environment required reviewers. | Strength of the production approval guarantee; §12.3 | Founder | Revision 3 §12.3 |
 
 **Resolved by this revision and therefore removed from the list:** the errand-vs-logistics question.
 The founder's instruction defines six activities, with "Send an Errand" and "I Want to Provide
@@ -1978,7 +2274,7 @@ that; this revision does not edit the matrix.
 
 | # | Conflict | Detail | Resolution in this revision |
 | --- | --- | --- | --- |
-| 1 | **Supabase vs "provider open"** | The instruction for this revision names "staging Supabase" and "production Supabase". `ARCHITECTURE.md` §2.3 and `database rules` §1.4 leave the managed provider open, and Position A is explicitly conditional ("if Supabase is chosen"). | This revision writes the environment rules provider-agnostically and treats "staging Supabase project" as the concrete form *if* Supabase is selected. The provider stays open (§16.4 #1). **This needs a founder decision.** |
+| 1 | **Supabase vs "provider open"** | Revision 2 left the managed provider open and treated Supabase as conditional. | Resolved 7 November 2026: Supabase is the managed PostgreSQL provider, used under Position A only. The Data API, Supabase Auth, and Supabase Storage are not used. |
 | 2 | **Errand as an activity** | The matrix marks errand-vs-logistics open; `VISION.md` §6 marks errand `[OPEN]`; `AGENTS.md` Rule 6 omits it. | The founder's instruction for this revision settles it: six activities, errand and logistics separate. Matrix §18 #2 and §19 #2 record the settlement as of 3 November 2026. |
 | 3 | **`discover`** | `VISION.md` §3 listed it as an approved Explore activity; the prototype offers errand; `AGENTS.md` Rule 6 said "buy, hire, discover". | Settled 3 November 2026: `errand` is the third Explore activity and `discover` is the browse step inside Hire, which the prototype already implements as `emp-discover` and `pro-discover`. `VISION.md`, `AGENTS.md` and the matrix were corrected to match. |
 | 4 | **Developer as an actor** | No approved document defines a developer role. The matrix's admin scopes are verification, payment, dispute, account, configuration, audit. | This revision adds `platform.engineering` as a **separate, non-admin grant** (§4.4, §16.3 #4). It does not widen any existing admin scope. |
@@ -1992,8 +2288,51 @@ that; this revision does not edit the matrix.
 | 12 | **Unsplash hotlinks** | The prototype references remote Unsplash URLs for all photography. | Recorded (§8.4): licensed for the prototype, not for production hotlinking. |
 | 13 | **`index.html` declares `light dark`** | `<meta name="color-scheme" content="light dark">` contradicts `theme.css`'s `color-scheme: light` and the no-dark-mode rule. | Recorded. **Not changed** — the prototype must not be modified by a documentation task. Flagged for the implementation phase. |
 | 14 | **Activities hub is unreachable** | `ActivitiesHub` exists but no route reaches it; `VISION.md` §8 records this. | Recorded as an MVP requirement, not a new feature (§5.3). |
+| 15 | **Architecture modelled five entry points** | Revision 2 defined `hivorr.com`, `staging.hivorr.com`, `control.`, `staff.`, `partner.` and four bundles as "five deployments". That is inconsistent with four applications in two environments. | Corrected in revision 3: four applications, eight deployments (§4.1, §8.12). The EP-01 entry record's four-bundles/five-deployments ruling is superseded by an amendment. |
+| 16 | **Live hosts serve legacy Flutter** | Verified 7 November 2026: `hivorr.com` and `staging.hivorr.com` serve the legacy Flutter application, not this repository. `control.`, `staff.`, `partner.`, and the privileged staging hosts have no DNS record. | Recorded as a transitional state, not an architecture. Cutover is staged and reversible (§12.10, `LEGACY_FLUTTER_CUTOVER.md`). |
+| 17 | **VFD vs Paystack/Flutterwave** | §3.1 recorded VFD as the single provider, while §9.10 and §15.5 still said Paystack primary and Flutterwave secondary. | Corrected in revision 3: VFD is the single payment/custody provider throughout. |
+| 18 | **TLS for second-level staging hosts** | The required `*.staging.hivorr.com` names are not covered by standard Cloudflare Universal SSL. | Recorded as an open founder cost decision (§16.4 #26). No host is provisioned until it is settled. |
 
 ### 16.6 Changelog
+
+#### 7 November 2026 — revision 3: four portals, two environments
+
+**Decided by founder instruction**
+
+- Hivorr is one ecosystem with four functional portals: main, control, staff, and partner.
+- Each portal exists in staging and production: eight deployments in total.
+- The partner portal host is `partner.hivorr.com` in production and
+  `partner.staging.hivorr.com` in staging. The earlier `partners.` spelling is superseded.
+- Releases are lockstep: one commit, one manifest, all four applications plus API, worker, and
+  migrations.
+- Production is promoted from the staging artifacts after an explicit founder approval comment on a
+  release issue.
+- The legacy Flutter deployments are retired by a staged, reversible cutover.
+
+**Added**
+
+- §4.0 one ecosystem, four portals, with responsibilities and shared versus portal-specific services.
+- §4.1 the eight deployments and the `partner` hostnames.
+- §11.7 staging verification gate and §11.8 cross-portal workflows.
+- §12.5 issue-based founder approval, §12.9 coordinated releases, §12.10 legacy Flutter cutover.
+- §16.4 #26 staging TLS coverage and #27 GitHub enforcement tier.
+- §16.5 #15–#18: five-versus-eight topology, live Flutter, VFD consistency, second-level TLS.
+
+**Corrected**
+
+- Revision 2's “five entry points” and “four bundles, five deployments” are replaced by four
+  applications, eight deployments.
+- Session records now carry an environment/issuer binding in addition to the four audiences.
+- §9.10 and §15.5 no longer name Paystack or Flutterwave; VFD is the single payment/custody provider.
+- §11.2 isolation now names separate database projects, signing keys, buckets, queues, and provider
+  accounts, and blocks staging egress to production.
+- §12.1 branching now matches the repository: `feature → staging → main`.
+
+**Verified, not changed**
+
+- `hivorr.com` and `staging.hivorr.com` still serve the legacy Flutter application.
+- No DNS, certificate, Cloudflare, Fly.io, Supabase, or credential change was made by this revision.
+- `control.`, `staff.`, `partner.`, and their staging hosts have no DNS record yet.
 
 #### 7 November 2026 — EP-01 entry decisions folded in
 
@@ -2024,7 +2363,7 @@ that; this revision does not edit the matrix.
 **Added**
 
 - §1.4 trust tiers; §3.2 entry-point capability matrix; §3.3 non-negotiable boundaries.
-- §4 domain and subdomain architecture: `hivorr.com`, `staging.`, `control.`, `staff.`, `partners.`,
+- §4 domain and subdomain architecture: `hivorr.com`, `staging.`, `control.`, `staff.`, `partner.`,
   with access rules, developer restrictions, and staff/partner boundaries.
 - §4.9 API host and canonical hostnames: same-origin `/api` at the edge instead of a public
   `api.hivorr.com`, apex canonical with a `www` redirect, no wildcard DNS, HSTS without `preload`.
@@ -2077,6 +2416,33 @@ that; this revision does not edit the matrix.
 - Appendix B "Gaps in the previous document", which described the superseded Flutter-era document and
   no longer helps anyone.
 - Appendix C, replaced by §16.4.
+
+---
+
+## 17. Implementation Roadmap
+
+**[DECIDED]** Stages are ordered by dependency. No stage starts before its predecessor's exit evidence
+exists. Only stages marked "external" touch DNS, hosting, databases, or credentials, and each of
+those requires explicit founder approval.
+
+| Stage | Work | Depends on | External change | Exit evidence |
+| --- | --- | --- | --- | --- |
+| **0** | Hostname and scope decisions recorded | — | No | This revision; `partner` confirmed |
+| **1** | Documentation rework: architecture, standards, EP-01 amendment, cutover runbook | Stage 0 | No | Updated documents; no external change |
+| **2** | Monorepo foundation: `apps/control`, `apps/staff`, `apps/partner`, `server/`, `packages/`; four bundle entries | Stage 1 | No | All bundles build; Figma preview intact |
+| **3** | API, worker, identity, capability engine, audit, database foundation, migrations | Stage 2 | No | Local gates; allow/deny tests; migration reset |
+| **4** | CI and release pipeline: all-bundle build, release manifest, digests, staging gate | Stage 3 | No | Seeded failing gates; manifest artifact |
+| **5** | Staging ecosystem: four hosts, API, worker, staging Supabase, R2, secrets, Access | Stage 4 | **Yes** | All four staging hosts serve; headers; isolation |
+| **6** | Cross-portal E2E, smoke, visual regression, staging verification record | Stage 5 | Yes | §11.7 and §11.8 evidence |
+| **7** | Release governance: issue creation, founder comment approval, artifact promotion, rollback | Stage 4, 6 | GitHub configuration | Approval workflow tested; rollback drill |
+| **8** | Production ecosystem: four hosts, API, worker, separate Supabase, R2, secrets, Access | Stage 6, 7 | **Yes** | Production smoke; isolation proof |
+| **9** | Legacy Flutter cutover with rollback window | Stage 8 | **Yes** | `LEGACY_FLUTTER_CUTOVER.md` evidence |
+| **10** | First production release through the approved gate | Stage 9 | **Yes** | Release issue, approval, deployment record |
+
+**Current position (7 November 2026):** Stage 0 is complete for the portal/hostname decision;
+Stage 1 is in progress; Stages 2–10 are not started. The repository has no server, database, portal
+bundles, or working staging/production deployment from this codebase. The live main and staging hosts
+remain on the legacy Flutter application until Stage 9.
 
 ---
 

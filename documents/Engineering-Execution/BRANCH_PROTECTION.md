@@ -5,6 +5,13 @@
 **Not a claim of server-side enforcement:** GitHub Free does not provide branch protection or
 repository rulesets for this private repository. See §5.
 
+> **Pending alignment — 2026-11-07.** `ARCHITECTURE.md` revision 3 replaces the manual production
+> dispatch described in §4 with a release issue and a founder `/approve-release <sha>` comment that
+> promotes the same staging artifacts, and defines four portals across eight deployments. The
+> current workflows and this document still describe the pre-revision-3 gate. They will be updated
+> when the release workflows are implemented; this note records the gap rather than claiming the new
+> gate exists.
+
 ## 1. Branch model
 
 | Branch | Role | Direct push | Update path |

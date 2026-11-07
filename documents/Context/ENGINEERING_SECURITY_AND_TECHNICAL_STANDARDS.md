@@ -548,7 +548,7 @@ section are:
 
 - The client is hostile and the network is hostile (`ARCHITECTURE.md` §10.1).
 - The highest-value targets are `control.` and the financial ledger, not the public storefront.
-- `partners.` is the lowest-trust externally facing surface (`ARCHITECTURE.md` §7.4).
+- `partner.` is the lowest-trust externally facing surface (`ARCHITECTURE.md` §7.4).
 - A hostname proves nothing; a subdomain is a deployment boundary, not a control
   (`ARCHITECTURE.md` §10.12).
 - The named threats include IDOR, cross-activity leakage, cross-audience leakage, staff and developer
@@ -727,7 +727,7 @@ filenames, custom headers — are validated or encoded. A newline in a header va
 splitting defect.
 
 **SEC-32 [STD]** Redirect targets are never taken from a request parameter without an allowlist.
-Open redirects are used in phishing, and Hivorr has five hosts that look alike to a user in a hurry.
+Open redirects are used in phishing, and Hivorr has eight hosts that look alike to a user in a hurry.
 
 ### 4.7 File uploads
 
@@ -947,9 +947,9 @@ included in an error message.
 
 ### 5.3 Sessions and tokens
 
-**FACT** Sessions are host-only cookies with four audiences — `app`, `control`, `staff`, `partners`
-(`ARCHITECTURE.md` §5.4, §10.3). There is no parent-domain cookie. The API has no public hostname
-(`ARCHITECTURE.md` §4.9).
+**FACT** Sessions are host-only cookies with four audiences — `app`, `control`, `staff`, `partner`
+(`ARCHITECTURE.md` §5.4, §10.3). Each session is also bound to its environment. There is no
+parent-domain cookie. The API has no public hostname (`ARCHITECTURE.md` §4.9).
 
 **AUT-10 [STD]** A session cookie is `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, and carries the
 `__Host-` prefix. `Domain` is never set. The cookie name differs per audience.
@@ -958,9 +958,9 @@ included in an error message.
 the session record; the client holds only the identifier. Session state is never encoded in a way the
 client can read or modify.
 
-**AUT-12 [STD]** The server rejects a session whose audience does not match the endpoint
-(`ARCHITECTURE.md` §5.4). A `partners` session cannot call an activity endpoint even if the person
-also holds an ordinary account — they hold a different session for that.
+**AUT-12 [STD]** The server rejects a session whose audience or environment does not match the
+endpoint (`ARCHITECTURE.md` §5.4). A `partner` session cannot call an activity endpoint even if the
+person also holds an ordinary account — they hold a different session for that.
 
 **AUT-13 [STD]** The session identifier is rotated on privilege change: sign-in, elevation, MFA
 completion, audience switch, password change. It is destroyed on sign-out, on account suspension and
@@ -986,7 +986,7 @@ computes capabilities from database state (`matrix` §11.2).
 **FACT** The MFA matrix per surface is `ARCHITECTURE.md` §10.8. This section states the engineering
 obligation that makes it enforceable.
 
-**AUT-18 [STD]** MFA is mandatory on `staff.` and `control.` (TOTP), and mandatory on `partners.` for
+**AUT-18 [STD]** MFA is mandatory on `staff.` and `control.` (TOTP), and mandatory on `partner.` for
 commission payout access (`ARCHITECTURE.md` §10.8). It is enforced server-side at session or
 step-up creation, not by a prompt the client may skip.
 
@@ -1641,12 +1641,15 @@ multi-region deployment, and a message broker.
 
 ### 9.1 Environments
 
-**FACT** There are three deployment targets and four environments including local and CI
-(`ARCHITECTURE.md` §11.1, `database rules` §10.1). The hosts are `hivorr.com`, `staging.hivorr.com`,
-`control.hivorr.com`, `staff.hivorr.com` and `partners.hivorr.com` (`ARCHITECTURE.md` §4.1).
+**FACT** There are two hosted environments, staging and production, plus local development and CI
+(`ARCHITECTURE.md` §11.1, `database rules` §10.1). Each hosted environment contains four functional
+portals. The eight hosts are `hivorr.com`, `control.hivorr.com`, `staff.hivorr.com`,
+`partner.hivorr.com`, `staging.hivorr.com`, `control.staging.hivorr.com`,
+`staff.staging.hivorr.com` and `partner.staging.hivorr.com` (`ARCHITECTURE.md` §4.1).
 
 **DEP-01 [STD]** Development, staging and production are separate. They do not share a database, a
-bucket, a secret, a credential, a queue or a deployment pipeline approval.
+bucket, a secret, a credential, a queue or a deployment pipeline approval. The same isolation applies
+between the four portals' staging and production deployments.
 
 **DEP-02 [STD]** Each environment has its own configuration and its own credentials. A credential is
 never reused across environments, and a production credential never exists outside the production
@@ -1659,6 +1662,19 @@ forbidden (`ARCHITECTURE.md` §4.9).
 same roles, same headers, same CSP. It may differ in data volume and in configuration values
 (`ARCHITECTURE.md` §11.3). A staging environment that cannot reproduce a production bug has no
 purpose.
+
+**DEP-34 [STD]** Each hosted environment contains all four portals — main, control, staff and
+partner. A portal is an access surface over the shared API, identity service and database of its
+environment, not a separate backend or database (`ARCHITECTURE.md` §4.0). Staging is tested as one
+integrated ecosystem, not four unrelated sites (`ARCHITECTURE.md` §11.8).
+
+**DEP-35 [STD]** Every session is bound to both an application audience (`app`, `control`, `staff`,
+`partner`) and an environment (`staging`, `production`). A session from one portal or environment is
+rejected by another, independent of the hostname (`ARCHITECTURE.md` §5.4).
+
+**DEP-36 [STD]** Cloudflare Access protects `control.hivorr.com`, `staff.hivorr.com`,
+`control.staging.hivorr.com` and `staff.staging.hivorr.com` at the edge. It is additional to backend
+authentication and authorisation, never a replacement for either (`ARCHITECTURE.md` §10.12).
 
 ### 9.2 Configuration and secrets per environment
 
@@ -2660,7 +2676,7 @@ Nothing here may be implemented as though it were decided, except where a row is
 | 17 | **Self-hosted fonts versus a third-party CDN** | PER-20 | Architect | Self-hosted, for privacy and to remove a third-party request |
 | 18 | **CI provider and repository hosting** — **DECIDED 4 November 2026:** GitHub and GitHub Actions; private repository; protected `main`; native secret and dependency scanning; `staging`/`production` as definitions only; no deployment in EP-00. Kept so cross-references stay valid. | Nothing — settled | Founder | Recorded in `ARCHITECTURE.md` §16.4 #25 and EP-00-000 |
 | 19 | **Incident severity definitions and on-call expectations** | OPS-14 | Founder | The four-level table in OPS-14, confirmed for a small team |
-| 20 | **Whether `partners.` may ever hold an activity capability** | §4.6 of `ARCHITECTURE.md`, matrix §9.4 | Founder | No — `ARCHITECTURE.md` §7.4 already says no |
+| 20 | **Whether `partner.` may ever hold an activity capability** — **DECIDED 7 November 2026:** no. A partner session carries no activity capability and no wallet (`ARCHITECTURE.md` §7.4) | §4.6 of `ARCHITECTURE.md`, matrix §9.4 | Founder | No — `ARCHITECTURE.md` §7.4 |
 | 21 | **External audit programme** — which assessments are commissioned, in what order, by which assessor, at what cadence and budget. VAPT is already proposed (QUA-27, §16 #12); this row covers the data-protection, financial-control, API/infrastructure and access-control assessments in §19.13 | AR-5; assessment scheduling; any public statement about assurance | Founder | Start with a VAPT and an access-control review before public launch; add financial-control and data-protection assessments once the custody and processing models are confirmed. Cadence and vendor remain founder decisions. |
 | 22 | **Who may declare Hivorr "audit-ready"** — and in what scope. §19.12 defines the readiness gate but not the person who may speak for the company | AUD-03, AUD-78, AUD-85; every external communication | Founder | Founder only, in writing, with the scope and date named. No agent, contributor or document may make the statement. |
 | 23 | **VFD onboarding and contractual requirements** — the full written set, the version received, and which requirements bind Hivorr | Every R2 record; provider integration controls; reconciliation and custody obligations | Founder with counsel | Do not assume. Request the written onboarding pack and the signed agreement, record each requirement as R2 with its source clause, and leave the rest **[OPEN]** (§19.2, §16 #13 row in §15). |
