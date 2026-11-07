@@ -500,7 +500,7 @@ hold an approver role (`EES` §5.6, `AI-20`).
 |---|---|---|---|---|
 | **0.1** | 2026-11-06 | Initial draft. EP-00 exit re-verified; 16 decisions recorded as `PENDING` with owners; §4.3 rulings recorded as `PENDING`; 38-item blocker matrix; phase set to `Blocked`. No decision invented, no default adopted, no register edited. | AI implementation agent | None — draft only |
 | **0.2** | 2026-11-06 | CI evidence attached. Commit `8210f98` pushed on `docs/ep-01-001-entry-record`; PR #19 opened into `staging`; CI run `42289296520` green on all six jobs. §11.3 E12 updated from "does not exist" to the recorded run and E13 added for the pull request. No decision outcome, status, blocker or signature changed. | AI implementation agent | None — draft only |
-| **0.3** | 2026-11-07 | EP-00 G5 signed and `DEV-002` recorded; EP-00 exit basis moved to `RECORDED`; §3 criteria C8/C10/C14 dispositions updated; §3.2, §4.3, §5, §9.1–§9.4, §10.1 and §11.1 re-issued; E14 added. EP-01 remains `Blocked` on `#1`, `#17`, `#14`, the second reviewer and the G0 rulings. No `[OPEN]` decision was settled and this record's own approvals remain `PENDING`. | AI implementation agent | None — draft only |
+| **0.3** | 2026-11-07 | EP-00 G5 signed and `DEV-002` recorded; EP-00 exit basis moved to `RECORDED`; §3 criteria C8/C10/C14 dispositions updated; §3.2, §4.3, §5, §9.1–§9.4, §10.1 and §11.1 re-issued; E12 refreshed and E14 added. EP-01 remains `Blocked` on `#1`, `#17`, `#14`, the second reviewer and the G0 rulings. No `[OPEN]` decision was settled and this record's own approvals remain `PENDING`. | AI implementation agent | None — draft only |
 
 ### 11.3 Evidence attached to this record
 
@@ -517,8 +517,8 @@ hold an approver role (`EES` §5.6, `AI-20`).
 | E9 | Phase-status determination (§9) | This record | `Blocked` |
 | E10 | Architect review of *this record* | — | **Does not exist** |
 | E11 | Founder signature of *this record* | — | **Does not exist** |
-| E12 | CI run for this record's commit | PR #19 | **Recorded** — CI `42289296520`, success, six jobs, on commit `8210f98`, branch `docs/ep-01-001-entry-record` into `staging` |
-| E13 | Pull request for this record | [PR #19](https://github.com/Oludammy2030/Hivorr/pull/19) | **Open** — `MERGEABLE`; no review decision recorded |
+| E12 | CI run for this record's commits | PR #19 | **Recorded** — run `42340031780`, success, all six jobs, on commit `a7ddca3` (v0.3), branch `docs/ep-01-001-entry-record` into `staging`; earlier run `42289296520` green on `8210f98` (v0.2). Later evidence-only commits are covered by the same PR checks |
+| E13 | Pull request for this record | [PR #19](https://github.com/Oludammy2030/Hivorr/pull/19) | **Open** — `MERGEABLE`; all six CI jobs green; no review decision recorded |
 | E14 | EP-00 G5 signature and C8 acceptance | `EP-00-011` §6; `standards` §13.3 `DEV-002`; `EP-00-011` §3–§4 | **Recorded** — signed 2026-11-07 by Prince Abidemi Oluwadamilare (founder and architect roles, separately recorded); EP-00 closed; C10 limitation and residual risks R-1–R-6 accepted; R-3 resolved |
 
 ---
