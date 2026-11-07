@@ -2424,6 +2424,18 @@ treats them as precedent, and so that the exit condition is visible.
 | **Expiry** | Before EP-01 touches authentication, capability or migration code, and no later than 2026-12-31, whichever is earlier |
 | **Approval** | Founder (Prince Abidemi Oluwadamilare), 2026-11-04 |
 
+| Field | Value |
+| --- | --- |
+| **ID** | `DEV-002` |
+| **Rule** | EP-00 exit criterion **C8** — "`main` is protected" (`EP-00` §1 exit gate, §13 C8; technical goal `TG-07`), applied through `EES` §7.1 **G5** ("every exit criterion in §6 met, each with a linked artifact"). |
+| **Scope** | The `main` and `staging` branches of the private `Oludammy2030/Hivorr` GitHub repository on the GitHub Free plan. This is not a waiver of any other rule, gate, branch or repository control. |
+| **Reason** | GitHub Free does not provide branch protection or repository rulesets for private repositories. Both endpoints return `403 — Upgrade to GitHub Pro or make this repository public to enable this feature.` Decision #18 (`ARCHITECTURE.md` §16.4 #25) requires the repository to remain private. No engineering change can create a paid host capability. |
+| **Risk** | Host-enforced rejection of a direct push, force-push or self-approved merge on `main` or `staging` does not exist, and required status checks and reviewers are not enforced server-side. The exposure is to repository history and to an unreviewed or unverified change reaching `main`; no customer, personal or financial data is exposed by this gap. |
+| **Compensating control** | The local `.githooks/pre-push` hook rejects direct pushes to protected branches; the CI `Protected branch guard` workflow (`.github/workflows/branch-guard.yml`) runs `scripts/verify-pr-merge.mjs` on every push to `main`/`staging`; the staging and production deployment workflows gate promotion; the founder reviews every diff; `QUA-29`/`QUA-31` review is covered by `DEV-001` for EP-00. The limits are stated in `BRANCH_PROTECTION.md` §5–§6. These are compensating controls, **not** protection, and must never be described as protection. |
+| **Owner** | Prince Abidemi Oluwadamilare (Founder) |
+| **Expiry** | Ends when host-enforced protection of `main` and `staging` exists, or when the EP-01 G5 closure record is signed, whichever is earlier. It does **not** extend to `G4` (production release), which has no deviation path (`EES` §7.3). |
+| **Approval** | Founder (Prince Abidemi Oluwadamilare), 2026-11-07 |
+
 **GOV-18 [STD]** An entry in this register is not permission to extend the exception. It describes the
 current state; it does not authorise new work that depends on it.
 
@@ -2647,6 +2659,10 @@ Nothing here may be implemented as though it were decided, except where a row is
 ---
 
 ## 17. Changelog
+
+### 7 November 2026 — deviation `DEV-002` recorded
+
+Recorded `DEV-002` in §13.3: a conditionally time-boxed acceptance of the missing host-enforced protection for `main` and `staging` (EP-00 exit criterion C8), applied through `EES` §7.1 G5. The local pre-push hook, the CI `verify-pr` guard and the deployment gates are recorded as compensating controls only. Approved by the founder (Prince Abidemi Oluwadamilare) on 7 November 2026. The deviation ends when host-enforced protection exists or when EP-01's G5 closure record is signed, whichever is earlier, and does not extend to G4. No rule changed meaning and no **[OPEN]** item was settled.
 
 ### 6 November 2026 — version 2.1, audit readiness by design
 
