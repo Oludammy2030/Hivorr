@@ -1707,27 +1707,29 @@ pull request
 merge to staging
  10 repeat gates on the merged commit; deployment depends on their success
  11 build once → one release manifest and immutable artifacts per component
- 12 deploy the four staging applications + staging API + worker
- 13 apply migrations to staging
- 14 smoke test every staging host + cross-application E2E
- 15 record the staging-verified release
+ 12 verify the staging backend target (environment, project ref, database URL)
+ 13 deploy the four staging applications + staging API + worker
+ 14 apply migrations to staging
+ 15 smoke test every staging host + cross-application E2E
+ 16 record the staging-verified release
         │
         ▼
 release request (GitHub Issue)
- 16 issue contains SHA, manifest, digests, migrations, changes, test evidence, rollback target
+ 17 issue contains SHA, manifest, digests, migrations, changes, test evidence, rollback target
         │
         ▼
 founder approval (issue comment)
- 17 `/approve-release <sha>` from the authorised founder account
- 18 approval workflow verifies identity, SHA, issue state, and successful staging verification
+ 18 `/approve-release <sha>` from the authorised founder account
+ 19 approval workflow verifies identity, SHA, issue state, and successful staging verification
         │
         ▼
 production promotion (gated)
- 19 download the same staging artifacts; verify digests
- 20 apply the reviewed migration set to production (expand/contract only)
- 21 deploy the same artifacts to the four production hosts + production API/worker
- 22 post-deploy smoke test on all eight hosts
- 23 monitor error rate and queue depth for 30 minutes
+ 20 download the same staging artifacts; verify digests
+ 21 verify the production backend target (environment, project ref, database URL)
+ 22 apply the reviewed migration set to production (expand/contract only)
+ 23 deploy the same artifacts to the four production hosts + production API/worker
+ 24 post-deploy smoke test on all eight hosts
+ 25 monitor error rate and queue depth for 30 minutes
 ```
 
 A normal push, PR merge, or staging deployment never triggers production. Production is reachable
@@ -1854,6 +1856,8 @@ workstation. Under GitHub Free the founder's admin access remains a residual ris
 - Rebuilding an artifact for production instead of promoting the staged one.
 - Approving a release whose staging verification is missing, failed, or belongs to a different SHA.
 - Shipping a release whose migration has not run on staging.
+- Deploying a backend without passing `scripts/verify-backend-target.mjs`, or with a database URL
+  that belongs to another environment's Supabase project.
 - Leaving the legacy Flutter origin serving after a completed cutover without a recorded rollback
   position.
 
