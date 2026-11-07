@@ -72,3 +72,48 @@ missing, so the shims cannot resolve a version. The global Node on PATH is 26.13
 **Consequence.** Local `pnpm`-based parity cannot be claimed for this task. CI on Linux, which
 uses the pinned Node 22 / pnpm 10.34.9, remains the reference environment. This is recorded as
 residual risk R-P1 and must be restored before any EP-01 item that needs a local build.
+
+---
+
+## 6. Toolchain parity — RESTORED (2026-11-07)
+
+Root cause: `mise.exe` was present at `%LOCALAPPDATA%\mise\bin\mise.exe`, but that directory was not
+on the process `PATH`; the shims could not locate `mise`, so `node` and `pnpm` fell through to the
+global Node 26. The binary was never missing.
+
+Fix applied (user environment, no repository change):
+
+```text
+$ [Environment]::SetEnvironmentVariable('Path', "$env:LOCALAPPDATA\mise\shims;$cur", 'User')
+added: C:\Users\HP\AppData\Local\mise\shims
+```
+
+`%LOCALAPPDATA%\mise\bin` was already a User `PATH` entry; `shims` was not. Both are now present.
+
+```text
+$ node -v
+v22.23.4
+$ pnpm -v
+10.34.9
+$ node scripts/version-parity.mjs
+toolchain: OK — node 22.23.4, pnpm 10.34.9
+toolchain: contract node >=22.0.0 <23, pnpm 10.34.9
+```
+
+`pnpm` scripts now run through the pinned toolchain. Full gate suite:
+
+```text
+$ pnpm verify
+toolchain: OK — node 22.23.4, pnpm 10.34.9
+lint: OK — 20 known baseline violation(s), 0 new; 0 stale
+Test Files  2 passed (2)
+     Tests  18 passed (18)
+All push-protection checks passed.
+built in 8.52s
+exit=0
+```
+
+**Consequence.** R-P1 is resolved on this workstation. The run above is the first `pnpm`-native gate
+run for this record; earlier sections invoked the underlying Node entry points directly and are kept
+unchanged as history. CI on Linux remains the shared reference environment.
+

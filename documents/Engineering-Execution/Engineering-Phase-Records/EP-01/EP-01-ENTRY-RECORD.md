@@ -5,7 +5,7 @@
 | **Document ID** | `EP-01-001` |
 | **Phase** | `EP-01` — Core Platform Foundation & Infrastructure |
 | **Task name** | Entry gate closure and decision register |
-| **Record version** | `0.4` — entry gate closed; EP-01 opened for build |
+| **Record version** | `0.5` — entry gate closed; EP-01 opened; `R-P1` resolved |
 | **Record status** | `Approved` — architect review and founder signature recorded 2026-11-07 |
 | **Phase status** | **`Ready`** — all nine §9.3 items settled or explicitly accepted |
 | **Class** | `[FOUNDER]` |
@@ -200,12 +200,15 @@ server, no schema and no authentication**; EP-00 has not exited."*
 | No branch model | `main`/`staging` with hook and CI guard (`BRANCH_PROTECTION.md`) | C8 remains unmet; accepted 2026-11-07 as `DEV-002`; the control is compensating only |
 | No server, no schema, no authentication | Still true | Unchanged |
 | EP-00 has not exited | **No longer true** — G5 signed 2026-11-07; C8 accepted as `DEV-002`; C10 limitation accepted; C14 met | The plan is not edited; EP-01 opened on its own entry decisions 2026-11-07 |
-| Toolchain available as pinned | `mise` missing; Node 26 on PATH; `pnpm` absent | New drift, R-P1; local build claims cannot be made |
+| Toolchain available as pinned | Restored 2026-11-07: node 22.23.4, pnpm 10.34.9; parity OK | R-P1 resolved; `pnpm verify` exit 0 |
 
-**R-P1 in detail.** `scripts/version-parity.mjs` cannot resolve `pnpm.cmd`, and `mise` is not on
-`PATH` although `%LOCALAPPDATA%\mise\shims` exists. The shims report `mise-shim: failed to execute
-mise: program not found`. CI on Linux with the pinned versions remains the reference environment.
-This must be restored before any item that requires a local build.
+**R-P1 in detail — RESOLVED 2026-11-07.** `scripts/version-parity.mjs` could not resolve `pnpm.cmd`
+because `%LOCALAPPDATA%\mise\bin` was not on the process `PATH`, so the shims could not find
+`mise.exe` and `node` fell through to the global 26.13.0. The binary was present all along. With
+`%LOCALAPPDATA%\mise\shims` and `%LOCALAPPDATA%\mise\bin` on the User `PATH`, the pin resolves:
+`node 22.23.4`, `pnpm 10.34.9`, parity OK, and `pnpm verify` exits 0. Evidence:
+`evidence/local-gates.log` §6. No repository change was needed; the fix is workstation configuration.
+CI on Linux remains the shared reference environment.
 
 ---
 
@@ -450,7 +453,7 @@ recorded in the section named in the last column.
 
 | # | Risk | Impact | Owner | Handling |
 |---|---|---|---|---|
-| **R-P1** | Pinned toolchain unavailable locally: `mise` not on `PATH`, global Node 26.13.0, no `pnpm`; `scripts/version-parity.mjs` fails | Local build/parity claims cannot be made; "works on my machine" drift | Developer; architect | CI on Linux is the reference. Restore the pin before any item needing a local build. Do not lower a supply-chain control to compensate |
+| **R-P1** | Pinned toolchain unavailable locally: `mise` not on `PATH`, global Node 26.13.0, no `pnpm`; `scripts/version-parity.mjs` fails | Local build/parity claims cannot be made; "works on my machine" drift | Developer; architect | **Resolved 2026-11-07** — `%LOCALAPPDATA%\mise\shims` and `mise\bin` added to the User `PATH`; node 22.23.4 and pnpm 10.34.9 resolve; parity OK; `pnpm verify` exit 0 (`evidence/local-gates.log` §6). No repository change; CI on Linux remains the reference |
 | **R-P2** | EP-00 exit needed a paid host capability or a visibility/host change that contradicts decision #18 | EP-01 could not open while EP-00 was unsigned | Founder | **Resolved 2026-11-07** — EP-00 closed through G5; C8 accepted as `DEV-002` in `standards` §13.3 with compensating controls and a condition-based expiry. Not a claim that `main` is protected |
 | **R-P3** | `DEV-001` expires before `023` | Authentication, capability and migration changes would merge without a second reviewer | Founder + architect | **Resolved 2026-11-07** — `DEV-003` recorded in `standards` §13.3 and covers every item `DEV-001` would have bound. Re-review at each `GOV-16` cycle; close at appointment or EP-01 `G5` |
 | **R-P4** | Two evidence roots exist (`Engineering-Phase-Records/EP-00/evidence/` and `Engineering-Execution/evidence/`) | `070` may index an inconsistent set | Architect | Recorded as a finding; `070` adopts one convention. Not fixed here |
@@ -537,6 +540,7 @@ and it does not amend `QUA-29` or `QUA-31`.
 | **0.2** | 2026-11-06 | CI evidence attached. Commit `8210f98` pushed on `docs/ep-01-001-entry-record`; PR #19 opened into `staging`; CI run `42289296520` green on all six jobs. §11.3 E12 updated from "does not exist" to the recorded run and E13 added for the pull request. No decision outcome, status, blocker or signature changed. | AI implementation agent | None — draft only |
 | **0.3** | 2026-11-07 | EP-00 G5 signed and `DEV-002` recorded; EP-00 exit basis moved to `RECORDED`; §3 criteria C8/C10/C14 dispositions updated; §3.2, §4.3, §5, §5.1, §9.1–§9.4, §10.1 and §11.1 re-issued; E12 refreshed, E14 and E15 added. The founder's 2026-11-07 statement that no second reviewer exists is recorded as fact, not as a waiver. EP-01 remains `Blocked` on `#1`, `#17`, `#14`, the second reviewer and the G0 rulings. No `[OPEN]` decision was settled and this record's own approvals remain `PENDING`. | AI implementation agent | None — draft only |
 | **0.4** | 2026-11-07 | Entry gate closed on the founder's instruction. `DEV-003` recorded; `#1` (Supabase), `#17` (Cloudflare/Fly.io) and `#14` (email-first) decided; six `standards` §16 rows decided; `EX-10` residual approved in full; rulings R1 and R2 recorded; five technical selections named. §3, §5, §5.1, §6, §7, §9.1–§9.4, §10.1, §10.3–§10.5 and §11 re-issued. Register fold-in performed as a separate act. Phase status `Ready`; `002` may start. | AI implementation agent | Founder, 2026-11-07 §11.1 |
+| **0.5** | 2026-11-07 | Factual amendment: `R-P1` resolved. The pinned toolchain was restored on the workstation by adding `%LOCALAPPDATA%\mise\shims` and `mise\bin` to the User `PATH`; node 22.23.4 and pnpm 10.34.9 now resolve, parity passes and `pnpm verify` exits 0. §4.3 and §10.1 updated; E19 added; `evidence/local-gates.log` §6 records the run. No decision changed, no rule changed meaning, no register edited, and the phase status is unchanged. | AI implementation agent | Founder instruction 2026-11-07 (“fix it”); no decision re-signed |
 
 ### 11.3 Evidence attached to this record
 
@@ -560,10 +564,11 @@ and it does not amend `QUA-29` or `QUA-31`.
 | E16 | `DEV-003` — second-reviewer deviation for EP-01 | `standards` §13.3 | **Recorded** — approved 2026-11-07; owner, compensating controls and condition-based expiry stated; ends at reviewer appointment or EP-01 `G5`; no `G4` extension |
 | E17 | Register fold-in | `ARCHITECTURE.md` §16.4 `#1`, `#14`, `#17`, §9.7, §16.6 | **Recorded** — separate act, 2026-11-07, with a changelog entry |
 | E18 | This record's own approval | This record §11.1 | **Recorded** — architect and founder roles approved 2026-11-07 by Prince Abidemi Oluwadamilare, recorded separately; no independent second reviewer |
+| E19 | Local pinned toolchain restored | `evidence/local-gates.log` §6 | **Recorded** — 2026-11-07: node 22.23.4, pnpm 10.34.9, parity OK, `pnpm verify` exit 0 |
 
 ---
 
-**Record version:** `0.4` — entry gate closed; EP-01 opened for build.
+**Record version:** `0.5` — entry gate closed; EP-01 opened; `R-P1` resolved.
 **Record status:** `Approved` — architect and founder approvals recorded 2026-11-07 in §11.1.
 **Phase status:** **`Ready`** — all nine §9.3 items settled or explicitly accepted.
-**Next action:** `002` may start. `DEV-002` and `DEV-003` remain in force and both end at the EP-01 `G5` closure record or earlier; neither extends to `G4`. `R-P1` (local toolchain) must be restored before any item that needs a local build; CI on Linux is the reference until then.
+**Next action:** `002` may start. `DEV-002` and `DEV-003` remain in force and both end at the EP-01 `G5` closure record or earlier; neither extends to `G4`. The pinned toolchain resolves locally as of 2026-11-07 (`pnpm verify` exit 0); CI on Linux remains the shared reference.
