@@ -1,8 +1,9 @@
 # Legacy Flutter Cutover Runbook
 
-**Status:** **Immediate detach approved by the founder on 7 November 2026. Not executed.** Cloudflare
-access is not available in this environment, so no DNS, hosting, certificate, or deployment change has
-been made.
+**Status:** **Immediate detach approved and executed at DNS on 7 November 2026.** The web CNAME
+records for `hivorr.com` and `staging.hivorr.com` were deleted; both hostnames are now unavailable.
+The Flutter Pages custom-domain entries remain attached and require a Pages-edit token to remove.
+No mail or ownership record was changed. Cloudflare zone changes were made with founder approval.
 **Selected path:** immediate detach. `hivorr.com` and `staging.hivorr.com` will be disconnected from
 the Flutter origin and will be unavailable until the React production deployment is ready. No
 maintenance page is being deployed under this decision.
@@ -273,11 +274,11 @@ Decommissioning is irreversible. It is a separate approval from the cutover.
 
 | Phase | Status |
 |---|---|
-| 0 - Inventory and preserve | **Required now** — Cloudflare access and the legacy project must be identified |
+| 0 - Inventory and preserve | **Complete** — Pages projects and DNS records identified and backed up |
 | 1 - Freeze | Not started |
 | 2 - React staging | **Blocked** — no staging ecosystem exists |
 | 3 - Production preparation | **Blocked** |
 | 4 - Staged cutover | **Superseded by immediate detach** |
-| 4a - Immediate detach | **Approved 7 November 2026 — not executed; no Cloudflare access** |
-| 5 - Verification | Not started |
+| 4a - Immediate detach | **DNS detach executed 7 November 2026; Pages custom-domain cleanup pending** |
+| 5 - Verification | **DNS verification complete; Pages cleanup pending** |
 | 6 - Decommission | Not started |

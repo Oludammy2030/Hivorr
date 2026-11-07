@@ -4,7 +4,7 @@
 > This revision replaces revision 2 **in place**. It records the founder-approved environment
 > architecture: **four applications across two hosted environments, eight deployments**, a
 > staging-first, build-once release process, and a funded, founder-approved production gate. It also
-> records the staged retirement of the legacy Flutter applications that currently serve
+> records the staged retirement of the legacy Flutter applications that served
 > `hivorr.com` and `staging.hivorr.com`.
 >
 > Revision 2 replaced the 1 November 2026 revision in place. The pre-1-November original (the
@@ -476,7 +476,9 @@ not used. Cloudflare R2 provides object storage.
 **Verified state on 7 November 2026 — not the target state:**
 
 - `hivorr.com` and `staging.hivorr.com` resolve through Cloudflare.
-- Both currently serve the **legacy Flutter application**, not this repository's React build.
+- Both served the **legacy Flutter application** until 7 November 2026, not this repository's React build.
+  The two web CNAME records were deleted on 7 November 2026; both hostnames are now unavailable. The
+  Flutter Pages custom-domain entries remain pending cleanup.
 - `www.hivorr.com`, `control.hivorr.com`, `staff.hivorr.com`, `partner.hivorr.com`, and all three
   privileged staging hosts have no DNS record yet.
 - The legacy hosts do not send HSTS, CSP, frame protection, or a permissions policy.
@@ -1881,7 +1883,7 @@ consuming application. That is a recorded architecture change, not an operationa
 
 ### 12.10 Legacy Flutter cutover
 
-**[DECIDED]** The legacy Flutter applications currently serving `hivorr.com` and
+**[DECIDED]** The legacy Flutter applications formerly serving `hivorr.com` and
 `staging.hivorr.com` are retired by a staged cutover, not an immediate DNS deletion. The operational
 runbook is `documents/Engineering-Execution/LEGACY_FLUTTER_CUTOVER.md`.
 
@@ -2328,7 +2330,7 @@ that; this revision does not edit the matrix.
 | 13 | **`index.html` declares `light dark`** | `<meta name="color-scheme" content="light dark">` contradicts `theme.css`'s `color-scheme: light` and the no-dark-mode rule. | Recorded. **Not changed** — the prototype must not be modified by a documentation task. Flagged for the implementation phase. |
 | 14 | **Activities hub is unreachable** | `ActivitiesHub` exists but no route reaches it; `VISION.md` §8 records this. | Recorded as an MVP requirement, not a new feature (§5.3). |
 | 15 | **Architecture modelled five entry points** | Revision 2 defined `hivorr.com`, `staging.hivorr.com`, `control.`, `staff.`, `partner.` and four bundles as "five deployments". That is inconsistent with four applications in two environments. | Corrected in revision 3: four applications, eight deployments (§4.1, §8.12). The EP-01 entry record's four-bundles/five-deployments ruling is superseded by an amendment. |
-| 16 | **Live hosts serve legacy Flutter** | Verified 7 November 2026: `hivorr.com` and `staging.hivorr.com` serve the legacy Flutter application, not this repository. `control.`, `staff.`, `partner.`, and the privileged staging hosts have no DNS record. | Recorded as a transitional state, not an architecture. Cutover is staged and reversible (§12.10, `LEGACY_FLUTTER_CUTOVER.md`). |
+| 16 | **Live hosts serve legacy Flutter** | Verified 7 November 2026: `hivorr.com` and `staging.hivorr.com` served the legacy Flutter build. The founder approved immediate detach, and the two web CNAME records were deleted on 7 November 2026. | Recorded as a transitional state. Both hostnames are now unavailable; React is not deployed. Flutter Pages custom domains remain to be removed. |
 | 17 | **VFD vs Paystack/Flutterwave** | §3.1 recorded VFD as the single provider, while §9.10 and §15.5 still said Paystack primary and Flutterwave secondary. | Corrected in revision 3: VFD is the single payment/custody provider throughout. |
 | 18 | **TLS for second-level staging hosts** | The required `*.staging.hivorr.com` names are not covered by standard Cloudflare Universal SSL. | Recorded as an open founder cost decision (§16.4 #26). No host is provisioned until it is settled. |
 
@@ -2369,7 +2371,9 @@ that; this revision does not edit the matrix.
 
 **Verified, not changed**
 
-- `hivorr.com` and `staging.hivorr.com` still serve the legacy Flutter application.
+- `hivorr.com` and `staging.hivorr.com` served the legacy Flutter application until the web CNAME
+  records were deleted on 7 November 2026. Both hostnames are now unavailable. The Flutter Pages
+  custom-domain entries remain pending cleanup.
 - No DNS, certificate, Cloudflare, Fly.io, Supabase, or credential change was made by this revision.
 - `control.`, `staff.`, `partner.`, and their staging hosts have no DNS record yet.
 
@@ -2482,8 +2486,9 @@ those requires explicit founder approval.
 Stage 1 is complete; Stage 2 is complete; Stage 3 has started with the API bootstrap, configuration
 contract, health endpoints, capability engine, and their tests. Stages 4–10 are not started. The
 repository has no database, migrations, worker, provider adapters, portal screens, or working
-staging/production deployment from this codebase. The live main and staging hosts remain on the
-legacy Flutter application until Stage 9.
+staging/production deployment from this codebase. The live main and staging hostnames were detached
+from the legacy Flutter origin on 7 November 2026 and are currently unavailable; the React production
+deployment does not exist yet.
 
 ---
 
