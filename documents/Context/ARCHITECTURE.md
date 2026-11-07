@@ -2440,9 +2440,11 @@ those requires explicit founder approval.
 | **10** | First production release through the approved gate | Stage 9 | **Yes** | Release issue, approval, deployment record |
 
 **Current position (7 November 2026):** Stage 0 is complete for the portal/hostname decision;
-Stage 1 is in progress; Stages 2–10 are not started. The repository has no server, database, portal
-bundles, or working staging/production deployment from this codebase. The live main and staging hosts
-remain on the legacy Flutter application until Stage 9.
+Stage 1 is complete; Stage 2 is complete; Stage 3 has started with the API bootstrap, configuration
+contract, health endpoints, capability engine, and their tests. Stages 4–10 are not started. The
+repository has no database, migrations, worker, provider adapters, portal screens, or working
+staging/production deployment from this codebase. The live main and staging hosts remain on the
+legacy Flutter application until Stage 9.
 
 ---
 
