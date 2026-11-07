@@ -199,6 +199,65 @@ try {
     "api role may read identity users",
   )
 
+  const secondAccount = await testClient.query(
+    "insert into identity.accounts default values returning id",
+  )
+  const secondAccountId = secondAccount.rows[0].id
+  const secondUser = await testClient.query(
+    "insert into identity.users (account_id, email) values ($1, $2) returning id",
+    [secondAccountId, "other@example.test"],
+  )
+  const secondUserId = secondUser.rows[0].id
+
+  await testClient.query("grant hivorr_api to postgres with set true")
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    accountId,
+    userId,
+  ])
+  const ownUsers = await testClient.query(
+    "select count(*)::int as count from identity.users",
+  )
+  assert(
+    ownUsers.rows[0].count === 1,
+    "rls shows only the current account's users",
+  )
+  const ownCredentials = await testClient.query(
+    "select count(*)::int as count from identity.credentials",
+  )
+  assert(
+    ownCredentials.rows[0].count === 1,
+    "rls shows only the current user's credential",
+  )
+  const crossAccountUpdate = await testClient.query(
+    "update identity.users set display_name = 'blocked' where id = $1",
+    [secondUserId],
+  )
+  assert(crossAccountUpdate.rowCount === 0, "rls blocks a cross-account update")
+  const lookup = await testClient.query(
+    "select user_id, account_id from identity.find_login_credential('founder@example.test')",
+  )
+  assert(lookup.rowCount === 1, "pre-auth lookup returns one credential")
+  assert(
+    lookup.rows[0].user_id === userId,
+    "pre-auth lookup returns the right user",
+  )
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  const noContext = await testClient.query(
+    "select count(*)::int as count from identity.users",
+  )
+  assert(
+    noContext.rows[0].count === 0,
+    "rls denies without an identity context",
+  )
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
   const roleLogin = await testClient.query(
     "select rolname, rolcanlogin from pg_roles where rolname like 'hivorr_%'",
   )
