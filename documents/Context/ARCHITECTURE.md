@@ -1078,7 +1078,8 @@ would return `NULL` and every policy would fail closed for every user.
 - Phone OTP for Nigerian numbers via Termii, plus email verification.
 - Password reset by single-use, expiring token.
 - No social login at MVP.
-- **[OPEN]** whether sign-in is email-first, phone-first, or either (`§16.4 #14`).
+- **DECIDED 7 November 2026:** sign-in is **email-first** — email and password at registration, phone
+  optional until a phone-dependent action (§16.4 #14).
 - Sessions and audiences per §5.4.
 - Privileged grants require TOTP MFA (§10.8).
 
@@ -1940,7 +1941,7 @@ so there is one list, not three.
 
 | # | Decision | Blocks | Owner | Source |
 | --- | --- | --- | --- | --- |
-| 1 | **Managed Postgres provider** — Neon, Supabase, or RDS | §4–§8 applicability of the database rules; hosting | Founder + architect | db rules #1 |
+| 1 | **Managed Postgres provider** — **DECIDED 7 November 2026:** Supabase, managed Postgres only (Position A). The Data API, Supabase Auth and Supabase Storage are not used; identity is built in the NestJS API and storage is Cloudflare R2 (§9.12). | §4–§8 applicability of the database rules; hosting | Founder + architect | db rules #1; EP-01 entry record §5 |
 | 2 | **Funds custody** — licensed provider holds funds, or Hivorr pursues a licence | Wallet design; legal structure; launch timeline | Founder + counsel | §9.10 |
 | 3 | **MVP activity scope** — all six at launch, or Explore-first | Which modules ship first | Founder | matrix #3 |
 | 4 | **Deactivation with open obligations** — blocked, or allowed | Activity state machine | Founder | matrix #4 |
@@ -1953,10 +1954,10 @@ so there is one list, not three.
 | 11 | **Platform fee, escrow holding period, dispute rules** | Escrow lifecycle; ledger design | Founder | matrix #13, §9.10 |
 | 12 | **`discover`** - **DECIDED 3 November 2026:** a capability inside Hire, not an activity (§16.5 #3). Kept in the register so cross-references stay valid. | Nothing - settled | Founder | matrix #1 |
 | 13 | **Backup tier** — PITR retention and dump destination | Production readiness | Founder + architect | db rules #13 |
-| 14 | **Sign-in identifier** — email-first, phone-first, or either | Auth screens; identity schema | Founder | §9.7 |
+| 14 | **Sign-in identifier** — **DECIDED 7 November 2026:** email-first. Email and password are required at registration; a phone number is optional and becomes mandatory only before an action that sends an OTP or a dispatch message | Auth screens; identity schema | Founder | §9.7; EP-01 entry record §5 |
 | 15 | **Verification vendor** — review queue only, or an identity provider | Lane implementation | Founder | matrix #12 |
 | 16 | **Data residency and primary region** | Provider and region; latency; compliance | Founder | db rules #10 |
-| 17 | **Hosting platform, DNS provider, TLS issuance** | §4.8 | Founder + architect | new |
+| 17 | **Hosting platform, DNS provider, TLS issuance** — **DECIDED 7 November 2026:** Cloudflare for DNS, TLS and the edge (Pages for the static bundles), and Fly.io for the API and worker runtime. All five hostnames sit behind the Cloudflare edge; `/api/*` is proxied same-origin from the edge to the Fly.io origin. TLS is provider-managed at the edge; HSTS without `preload`. | §4.8, §4.9 | Founder + architect | new; EP-01 entry record §5 |
 | 18 | **Map / geo provider** | Errand and logistics dispatch | Founder | §9.14 |
 | 19 | **Mobile** — PWA first, or React Native | §19 (removed — see changelog) | Founder | old #8 |
 | 20 | **AI scope** — out of launch scope, or a specific surface | Any AI module | Founder | old #9 |
@@ -1993,6 +1994,15 @@ that; this revision does not edit the matrix.
 | 14 | **Activities hub is unreachable** | `ActivitiesHub` exists but no route reaches it; `VISION.md` §8 records this. | Recorded as an MVP requirement, not a new feature (§5.3). |
 
 ### 16.6 Changelog
+
+#### 7 November 2026 — EP-01 entry decisions folded in
+
+**Recorded** — the separate fold-in act required by `R-P5` and `EP-01-ENTRY-RECORD.md` §10.4.
+
+- §16.4 #1 decided: **Supabase**, managed Postgres only (Position A); Data API, Auth and Storage not used.
+- §16.4 #17 decided: **Cloudflare** for DNS, TLS and the edge (Pages), **Fly.io** for the API and worker; `/api/*` proxied same-origin at the edge.
+- §16.4 #14 decided: **email-first** sign-in; phone optional until a phone-dependent action. §9.7 updated to match.
+- No other row changed. No rule changed meaning. The remaining **[OPEN]** rows are untouched.
 
 #### 4 November 2026 — CI provider and repository hosting decided
 
