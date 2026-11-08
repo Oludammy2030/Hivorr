@@ -4,6 +4,8 @@ export const CAPABILITY_IDS = [
   "session.read",
   "activity.activate",
   "admin.audit.read",
+  "admin.grant.read",
+  "admin.grant.manage",
   "staff.support.handle",
   "partner.referral.read",
   "platform.engineering.access",
@@ -11,7 +13,7 @@ export const CAPABILITY_IDS = [
 
 export type CapabilityId = typeof CAPABILITY_IDS[number]
 
-export type GrantId = "admin.audit.read" | "staff.support.handle" | "partner.referral.read" | "platform.engineering"
+export type GrantId = "admin.audit.read" | "admin.grant.read" | "admin.grant.manage" | "staff.support.handle" | "partner.referral.read" | "platform.engineering"
 
 export interface AccessContext {
   readonly authenticated: boolean
@@ -44,6 +46,20 @@ export function computeCapabilities(
     context.grants.includes("admin.audit.read")
   ) {
     capabilities.add("admin.audit.read")
+  }
+
+  if (
+    context.audience === "control" &&
+    context.grants.includes("admin.grant.read")
+  ) {
+    capabilities.add("admin.grant.read")
+  }
+
+  if (
+    context.audience === "control" &&
+    context.grants.includes("admin.grant.manage")
+  ) {
+    capabilities.add("admin.grant.manage")
   }
 
   if (

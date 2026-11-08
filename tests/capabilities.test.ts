@@ -49,6 +49,30 @@ describe("capability computation", () => {
     ).toBe(true)
   })
 
+  it("allows control grant access only with the control audience and grant", () => {
+    expect(can({ ...base, audience: "control" }, "admin.grant.read")).toBe(
+      false,
+    )
+    expect(
+      can(
+        { ...base, audience: "control", grants: ["admin.grant.read"] },
+        "admin.grant.read",
+      ),
+    ).toBe(true)
+    expect(
+      can(
+        { ...base, audience: "control", grants: ["admin.grant.manage"] },
+        "admin.grant.manage",
+      ),
+    ).toBe(true)
+    expect(
+      can(
+        { ...base, audience: "control", grants: ["admin.grant.manage"] },
+        "admin.grant.read",
+      ),
+    ).toBe(false)
+  })
+
   it("keeps staff, partner and engineering grants in their own audiences", () => {
     const staff = computeCapabilities({
       ...base,

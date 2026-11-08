@@ -169,6 +169,15 @@ try {
     [userId],
   )
 
+  const validScope = await testClient.query(
+    "select identity.grant_scope_is_valid('admin', 'admin.grant.manage') as valid, identity.grant_scope_is_valid('staff', 'admin.grant.manage') as invalid",
+  )
+  assert(validScope.rows[0].valid === true, "admin grant may manage grants")
+  assert(
+    validScope.rows[0].invalid === false,
+    "a staff grant cannot hold an admin scope",
+  )
+
   let duplicateEmailRejected = false
   try {
     await testClient.query(
@@ -235,6 +244,19 @@ try {
     [secondUserId],
   )
   assert(crossAccountUpdate.rowCount === 0, "rls blocks a cross-account update")
+
+  let grantListDenied = false
+  await testClient.query("savepoint grant_list_denied")
+  try {
+    await testClient.query("select * from identity.list_grants($1, 'test')", [
+      userId,
+    ])
+  } catch (error) {
+    grantListDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint grant_list_denied")
+  }
+  assert(grantListDenied, "grant listing requires a grant-management grant")
+
   const lookup = await testClient.query(
     "select user_id, account_id from identity.find_login_credential('founder@example.test')",
   )
