@@ -98,6 +98,37 @@ try {
   )
   assert(pending.rows[0].count === 1, "outbox accepts a pending event")
 
+  const outboxColumns = await testClient.query(
+    "select column_name from information_schema.columns where table_schema = 'platform' and table_name = 'outbox'",
+  )
+  const outboxColumnNames = new Set(
+    outboxColumns.rows.map((row) => row.column_name),
+  )
+  for (const column of ["locked_at", "locked_by", "dead_lettered_at"]) {
+    assert(outboxColumnNames.has(column), `outbox has ${column}`)
+  }
+  const workerUpdate = await testClient.query(
+    "select has_table_privilege('hivorr_worker', 'platform.outbox', 'update') as allowed",
+  )
+  assert(
+    workerUpdate.rows[0].allowed === true,
+    "worker role may update outbox delivery state",
+  )
+  const workerHealth = await testClient.query(
+    "select has_function_privilege('hivorr_worker', 'platform.outbox_health()', 'execute') as allowed",
+  )
+  assert(
+    workerHealth.rows[0].allowed === true,
+    "worker role may read outbox health",
+  )
+  const workerInsert = await testClient.query(
+    "select has_table_privilege('hivorr_worker', 'platform.outbox', 'insert') as allowed",
+  )
+  assert(
+    workerInsert.rows[0].allowed === false,
+    "worker role cannot produce outbox events",
+  )
+
   const apiInsert = await testClient.query(
     "select has_table_privilege('hivorr_api', 'platform.audit_log', 'insert') as allowed",
   )

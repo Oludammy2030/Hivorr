@@ -26,6 +26,7 @@
     "test": "vitest run",
     "test:db": "node scripts/test-db-migrations.mjs",
     "test:identity": "vitest run tests/identity-integration.test.ts",
+    "test:worker": "vitest run tests/worker-outbox.test.ts",
     "test:push-protection": "node scripts/test-push-protection.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

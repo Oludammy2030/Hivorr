@@ -120,4 +120,49 @@ describe("API configuration", () => {
       ),
     ).toBe(false)
   })
+
+  it("provides safe worker defaults and falls back to the API database URL", () => {
+    const config = parseConfig({
+      HIVORR_ENV: "test",
+      DATABASE_URL: "postgresql://postgres:fake@127.0.0.1:54322/postgres",
+    })
+    expect(config.worker.databaseUrl).toBe(config.databaseUrl)
+    expect(config.worker.batchSize).toBe(20)
+    expect(config.worker.maxAttempts).toBe(5)
+    expect(config.worker.leaseMs).toBe(60_000)
+    expect(config.worker.retryBaseMs).toBe(5_000)
+    expect(config.worker.pollIntervalMs).toBe(1_000)
+    expect(config.worker.healthPort).toBe(3001)
+    expect(config.worker.workerId).toContain("hivorr-worker-test-")
+  })
+
+  it("uses a dedicated worker URL and rejects one from another project", () => {
+    const workerUrl =
+      "postgresql://postgres.abcdefghijklmnopqrst:fake@aws-0-eu-west-1.pooler.supabase.com:6543/postgres"
+    const config = parseConfig({
+      HIVORR_ENV: "staging",
+      BACKEND_ENVIRONMENT: "staging",
+      SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+      DATABASE_URL:
+        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+      WORKER_DATABASE_URL: workerUrl,
+      SESSION_ISSUER: "hivorr-staging",
+      MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    })
+    expect(config.worker.databaseUrl).toBe(workerUrl)
+
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "staging",
+        BACKEND_ENVIRONMENT: "staging",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        WORKER_DATABASE_URL:
+          "postgresql://postgres:fake@db.zyxwvutsrqponmlkjihg.supabase.co:5432/postgres",
+        SESSION_ISSUER: "hivorr-staging",
+        MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      }),
+    ).toThrow(ConfigurationError)
+  })
 })

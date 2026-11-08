@@ -1,3 +1,5 @@
+import { hostname } from "node:os"
+
 import { z } from "zod"
 
 export const DEPLOYMENT_ENVIRONMENTS = [
@@ -33,6 +35,20 @@ const configSchema = z
     SESSION_ISSUER: z.string().min(1).optional(),
     MFA_ENCRYPTION_KEY: z.string().min(1).optional(),
     DATABASE_URL: z.string().min(1).optional(),
+    WORKER_DATABASE_URL: z.string().min(1).optional(),
+    WORKER_POLL_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(50)
+      .max(60_000)
+      .default(1_000),
+    WORKER_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(20),
+    WORKER_LEASE_MS: z.coerce.number().int().min(5_000).default(60_000),
+    WORKER_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(50).default(5),
+    WORKER_RETRY_BASE_MS: z.coerce.number().int().min(100).default(5_000),
+    WORKER_HEALTH_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
+    WORKER_HEALTH_HOST: z.string().min(1).default("0.0.0.0"),
+    WORKER_ID: z.string().min(1).max(120).optional(),
     CORS_ALLOWED_ORIGINS: z.string().optional(),
     TRUST_PROXY: z
       .enum(["true", "false"])
@@ -96,6 +112,21 @@ const configSchema = z
       })
     }
     if (
+      value.WORKER_DATABASE_URL &&
+      value.SUPABASE_PROJECT_REF &&
+      !databaseUrlMatchesProjectRef(
+        value.WORKER_DATABASE_URL,
+        value.SUPABASE_PROJECT_REF,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["WORKER_DATABASE_URL"],
+        message:
+          "WORKER_DATABASE_URL does not belong to SUPABASE_PROJECT_REF; backend environments must not be mixed",
+      })
+    }
+    if (
       value.DATABASE_URL &&
       value.SUPABASE_PROJECT_REF &&
       !databaseUrlMatchesProjectRef(
@@ -138,6 +169,19 @@ export function databaseUrlMatchesProjectRef(
 
 export const API_CONFIG = "HIVORR_API_CONFIG" as const
 
+export interface WorkerConfig {
+  /** Least-privilege worker role when provisioned; falls back to DATABASE_URL. */
+  readonly databaseUrl: string | undefined
+  readonly pollIntervalMs: number
+  readonly batchSize: number
+  readonly leaseMs: number
+  readonly maxAttempts: number
+  readonly retryBaseMs: number
+  readonly healthPort: number
+  readonly healthHost: string
+  readonly workerId: string
+}
+
 export interface ApiConfig {
   readonly environment: DeploymentEnvironment
   readonly backendEnvironment: DeploymentEnvironment
@@ -150,6 +194,7 @@ export interface ApiConfig {
   readonly databaseUrl: string | undefined
   readonly corsAllowedOrigins: readonly string[]
   readonly trustProxy: boolean
+  readonly worker: WorkerConfig
 }
 
 export class ConfigurationError extends Error {
@@ -190,6 +235,19 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       .map((origin) => origin.trim())
       .filter(Boolean),
     trustProxy: value.TRUST_PROXY,
+    worker: {
+      databaseUrl: value.WORKER_DATABASE_URL ?? value.DATABASE_URL,
+      pollIntervalMs: value.WORKER_POLL_INTERVAL_MS,
+      batchSize: value.WORKER_BATCH_SIZE,
+      leaseMs: value.WORKER_LEASE_MS,
+      maxAttempts: value.WORKER_MAX_ATTEMPTS,
+      retryBaseMs: value.WORKER_RETRY_BASE_MS,
+      healthPort: value.WORKER_HEALTH_PORT,
+      healthHost: value.WORKER_HEALTH_HOST,
+      workerId:
+        value.WORKER_ID ??
+        `hivorr-worker-${value.HIVORR_ENV}-${hostname()}-${process.pid}`,
+    },
   }
 }
 

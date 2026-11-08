@@ -11,6 +11,7 @@ export const SERVER_PACKAGE_NAME = "@hivorr/server" as const
 export const API_VERSION = "v1" as const
 
 export { createApplication } from "./app"
+export { createDatabasePool } from "./db/pool"
 export {
   loadConfig,
   parseConfig,
@@ -77,3 +78,23 @@ export {
   sessionPolicy,
 } from "./modules/identity/session-policy"
 export { resolveAudience } from "./modules/identity/portal"
+export { OutboxHandlers, retryDelayMs } from "./worker/outbox"
+export type {
+  HandlerRegistry,
+  OutboxEvent,
+  OutboxHandler,
+  OutboxHandlerContext,
+  OutboxLogger,
+} from "./worker/outbox"
+export { OutboxRepository } from "./worker/outbox-repository"
+export type {
+  FailResult,
+  OutboxHealth,
+  OutboxRepositoryOptions,
+} from "./worker/outbox-repository"
+export { OutboxWorker } from "./worker/outbox-worker"
+export type { OutboxWorkerOptions, RunResult } from "./worker/outbox-worker"
+export {
+  startWorkerHealthServer,
+  stopWorkerHealthServer,
+} from "./worker/health"

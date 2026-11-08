@@ -2494,11 +2494,13 @@ layer, and sessions can be listed and revoked. Grant management now exists for t
 callers holding an active `admin.grant.manage` grant in the same environment. Every function
 re-verifies the actor inside the database, grants are filtered by environment, the last active
 grant-manager cannot be revoked, and each API change is audited. The first grant is bootstrapped
-out of band, never by a migration. The privileged grant surface is not built yet. Stages 4–10 are
-not started. The worker, provider adapters, portal screens, and working staging/production
-deployment are not built. The live main and staging hostnames were detached from the legacy Flutter
-origin on 7 November 2026 and are currently unavailable; the React production deployment does not
-exist yet.
+out of band, never by a migration. The privileged grant surface is not built yet. The transaction
+outbox now has a worker: lease-based claiming with `for update skip locked`, at-least-once delivery,
+deterministic exponential backoff, dead-lettering, and queue-health endpoints. No production event
+handlers are registered yet, so real event types dead-letter until a handler exists. Stages 4–10 are
+not started. Provider adapters, portal screens, and a working staging/production deployment are not
+built. The live main and staging hostnames were detached from the legacy Flutter origin on
+7 November 2026 and are currently unavailable; the React production deployment does not exist yet.
 
 ---
 

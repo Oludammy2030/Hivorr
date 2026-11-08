@@ -183,6 +183,11 @@ jobs:
           IDENTITY_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         run: pnpm test:identity
 
+      - name: Worker outbox integration
+        env:
+          WORKER_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: pnpm test:worker
+
   build:
     name: build
     needs: test

@@ -15,6 +15,12 @@ These are already set as GitHub environment variables. They are public identifie
 | `EXPECTED_SUPABASE_PROJECT_REF` | `hkswhaltyqfqkgswukfs` | `ahyizcwidkwyowroeqfp` |
 | `STAGING_SUPABASE_PROJECT_REF` | `hkswhaltyqfqkgswukfs` | `hkswhaltyqfqkgswukfs` |
 | `PRODUCTION_SUPABASE_PROJECT_REF` | `ahyizcwidkwyowroeqfp` | `ahyizcwidkwyowroeqfp` |
+| `WORKER_POLL_INTERVAL_MS` | `1000` | `1000` |
+| `WORKER_BATCH_SIZE` | `20` | `20` |
+| `WORKER_LEASE_MS` | `60000` | `60000` |
+| `WORKER_MAX_ATTEMPTS` | `5` | `5` |
+| `WORKER_RETRY_BASE_MS` | `5000` | `5000` |
+| `WORKER_HEALTH_PORT` | `3001` | `3001` |
 
 The committed source of truth is `config/backend-projects.json`. The deployment preflight reads it
 and refuses a mismatched target.
@@ -32,6 +38,8 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 | `SESSION_SIGNING_KEY` | `production` | Production-only signing key |
 | `MFA_ENCRYPTION_KEY` | `staging` | 32 bytes, base64, staging-only |
 | `MFA_ENCRYPTION_KEY` | `production` | 32 bytes, base64, production-only |
+| `WORKER_DATABASE_URL` | `staging` | Optional least-privilege worker role; falls back to `DATABASE_URL` |
+| `WORKER_DATABASE_URL` | `production` | Optional least-privilege worker role; falls back to `DATABASE_URL` |
 | `FLY_API_TOKEN` | `staging` | Staging deploy token, when the API is deployed |
 | `FLY_API_TOKEN` | `production` | Production deploy token, when the API is deployed |
 

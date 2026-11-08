@@ -89,6 +89,17 @@ describeIntegration("identity service integration", () => {
       databaseUrl: testUrl,
       corsAllowedOrigins: [],
       trustProxy: false,
+      worker: {
+        databaseUrl: testUrl,
+        pollIntervalMs: 1_000,
+        batchSize: 20,
+        leaseMs: 60_000,
+        maxAttempts: 5,
+        retryBaseMs: 5_000,
+        healthPort: 3001,
+        healthHost: "127.0.0.1",
+        workerId: "identity-test-worker",
+      },
     }
     database = new DatabaseService(config)
     service = new IdentityService(database, config)
