@@ -14,6 +14,19 @@ import {
   normalizeEmail,
   verifyPassword,
 } from "../server/src/modules/identity/identity.service"
+import {
+  generateRecoveryCodes,
+  hashRecoveryCode,
+  MfaCipher,
+} from "../server/src/modules/identity/mfa-crypto"
+import {
+  base32Decode,
+  base32Encode,
+  generateTotpSecret,
+  totpCode,
+  totpUri,
+  verifyTotp,
+} from "../server/src/modules/identity/totp"
 
 describe("identity session policy", () => {
   it("uses a shorter session on privileged portals", () => {
@@ -80,5 +93,73 @@ describe("identity primitives", () => {
       true,
     )
     await expect(verifyPassword(hash, "wrong-password")).resolves.toBe(false)
+  })
+})
+
+describe("TOTP", () => {
+  it("round-trips base32", () => {
+    const bytes = Buffer.from("hivorr-totp-test-secret")
+    expect(base32Decode(base32Encode(bytes))).toEqual(bytes)
+  })
+
+  it("matches the RFC 6238 SHA-1 vector at six digits", () => {
+    const secret = base32Encode(Buffer.from("12345678901234567890"))
+    expect(secret).toBe("GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ")
+    expect(totpCode(secret, 1)).toBe("287082")
+    expect(verifyTotp(secret, "287082", 59_000)).toBe(true)
+    expect(verifyTotp(secret, "287083", 59_000)).toBe(false)
+  })
+
+  it("rejects malformed codes and builds an otpauth URI", () => {
+    const secret = generateTotpSecret()
+    expect(verifyTotp(secret, "abcdef")).toBe(false)
+    expect(verifyTotp(secret, "12345")).toBe(false)
+
+    const uri = totpUri(secret, "founder@example.test")
+    expect(uri).toContain("otpauth://totp/Hivorr%3Afounder%40example.test")
+    expect(uri).toContain(`secret=${secret}`)
+    expect(uri).toContain("issuer=Hivorr")
+    expect(uri).toContain("period=30")
+  })
+})
+
+describe("MFA secret handling", () => {
+  const key = Buffer.alloc(32, 3).toString("base64")
+
+  it("encrypts with authenticated encryption and decrypts", () => {
+    const cipher = MfaCipher.fromBase64(key)!
+    const encrypted = cipher.encrypt("JBSWY3DPEHPK3PXP")
+    expect(encrypted.ciphertext).not.toContain("JBSWY3DPEHPK3PXP")
+    expect(encrypted.keyVersion).toBe("v1")
+    expect(cipher.decrypt(encrypted.ciphertext)).toBe("JBSWY3DPEHPK3PXP")
+  })
+
+  it("fails closed with the wrong key or a tampered ciphertext", () => {
+    const cipher = MfaCipher.fromBase64(key)!
+    const other = MfaCipher.fromBase64(Buffer.alloc(32, 9).toString("base64"))!
+    const encrypted = cipher.encrypt("secret")
+
+    expect(() => other.decrypt(encrypted.ciphertext)).toThrow()
+    const parts = encrypted.ciphertext.split(":")
+    parts[3] = `A${parts[3].slice(1)}`
+    expect(() => cipher.decrypt(parts.join(":"))).toThrow()
+  })
+
+  it("rejects a key that is not 32 bytes", () => {
+    expect(() =>
+      MfaCipher.fromBase64(Buffer.from("too-short").toString("base64")),
+    ).toThrow()
+    expect(MfaCipher.fromBase64(undefined)).toBeUndefined()
+  })
+
+  it("generates distinct, normalisable recovery codes", () => {
+    const codes = generateRecoveryCodes()
+    expect(codes).toHaveLength(10)
+    expect(new Set(codes).size).toBe(10)
+    expect(codes[0]).toMatch(/^[2-9A-HJ-NP-Z]{5}-[2-9A-HJ-NP-Z]{5}$/)
+    expect(hashRecoveryCode(codes[0])).toBe(
+      hashRecoveryCode(codes[0].toLowerCase().replace("-", " ")),
+    )
+    expect(hashRecoveryCode(codes[0])).not.toBe(hashRecoveryCode(codes[1]))
   })
 })

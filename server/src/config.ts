@@ -31,6 +31,7 @@ const configSchema = z
     API_HOST: z.string().min(1).default("0.0.0.0"),
     LOG_LEVEL: z.enum(logLevels).default("info"),
     SESSION_ISSUER: z.string().min(1).optional(),
+    MFA_ENCRYPTION_KEY: z.string().min(1).optional(),
     DATABASE_URL: z.string().min(1).optional(),
     CORS_ALLOWED_ORIGINS: z.string().optional(),
     TRUST_PROXY: z
@@ -81,6 +82,19 @@ const configSchema = z
         message: "SESSION_ISSUER is required in staging and production",
       })
     }
+    if (!value.MFA_ENCRYPTION_KEY) {
+      context.addIssue({
+        code: "custom",
+        path: ["MFA_ENCRYPTION_KEY"],
+        message: "MFA_ENCRYPTION_KEY is required in staging and production",
+      })
+    } else if (mfaKeyLength(value.MFA_ENCRYPTION_KEY) !== 32) {
+      context.addIssue({
+        code: "custom",
+        path: ["MFA_ENCRYPTION_KEY"],
+        message: "MFA_ENCRYPTION_KEY must be 32 bytes encoded as base64",
+      })
+    }
     if (
       value.DATABASE_URL &&
       value.SUPABASE_PROJECT_REF &&
@@ -103,6 +117,10 @@ const configSchema = z
  * connections use `db.<ref>.supabase.co`; pooler connections carry the project
  * reference in the username (for example `postgres.<ref>`).
  */
+export function mfaKeyLength(value: string): number {
+  return Buffer.from(value, "base64").length
+}
+
 export function databaseUrlMatchesProjectRef(
   databaseUrl: string,
   projectRef: string,
@@ -128,6 +146,7 @@ export interface ApiConfig {
   readonly host: string
   readonly logLevel: typeof logLevels[number]
   readonly sessionIssuer: string
+  readonly mfaEncryptionKey?: string
   readonly databaseUrl: string | undefined
   readonly corsAllowedOrigins: readonly string[]
   readonly trustProxy: boolean
@@ -164,6 +183,7 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
     host: value.API_HOST,
     logLevel: value.LOG_LEVEL,
     sessionIssuer: value.SESSION_ISSUER ?? `hivorr-${value.HIVORR_ENV}`,
+    mfaEncryptionKey: value.MFA_ENCRYPTION_KEY,
     databaseUrl: value.DATABASE_URL,
     corsAllowedOrigins: (value.CORS_ALLOWED_ORIGINS ?? "")
       .split(",")

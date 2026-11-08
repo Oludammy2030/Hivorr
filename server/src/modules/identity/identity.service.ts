@@ -8,7 +8,13 @@ import type { PoolClient } from "pg"
 import { ApiError } from "../../common/errors"
 import { API_CONFIG, type ApiConfig } from "../../config"
 import { DatabaseService } from "../../db/database.service"
+import {
+  generateRecoveryCodes,
+  hashRecoveryCode,
+  MfaCipher,
+} from "./mfa-crypto"
 import { sessionPolicy } from "./session-policy"
+import { generateTotpSecret, totpUri, verifyTotp } from "./totp"
 
 const ARGON2_OPTIONS = {
   memoryCost: 19_456,
@@ -64,6 +70,79 @@ export interface SessionResult {
 export interface IssuedSession extends SessionResult {
   readonly token: string
   readonly maxAgeSeconds: number
+}
+
+export interface MfaChallenge {
+  readonly mfaRequired: true
+  readonly challengeToken: string
+  readonly expiresAt: string
+}
+
+export type SignInResult = IssuedSession | MfaChallenge
+
+export interface MfaEnrollment {
+  readonly factorId: string
+  readonly secret: string
+  readonly otpauthUri: string
+}
+
+export interface RecoveryCodeSet {
+  readonly recoveryCodes: readonly string[]
+}
+
+export interface TotpConfirmationInput {
+  readonly factorId: string
+  readonly code: string
+}
+
+export interface MfaVerificationInput {
+  readonly challengeToken: string
+  readonly code: string
+}
+
+export interface SessionSummary {
+  readonly sessionId: string
+  readonly current: boolean
+  readonly audience: PortalId
+  readonly environment: EnvironmentId
+  readonly deviceName: string | null
+  readonly createdAt: string
+  readonly lastSeenAt: string
+  readonly idleExpiresAt: string
+  readonly expiresAt: string
+  readonly mfaSatisfied: boolean
+}
+
+export const MFA_CHALLENGE_TTL_MS = 5 * 60 * 1000
+export const MFA_MAX_ATTEMPTS = 5
+
+export function isMfaChallenge(result: SignInResult): result is MfaChallenge {
+  return "mfaRequired" in result
+}
+
+interface SessionRow {
+  session_id: string
+  user_id: string
+  account_id: string
+  audience: PortalId
+  environment: EnvironmentId
+  expires_at: string
+  idle_expires_at: string
+  revoked_at: string | null
+  mfa_satisfied_at: string | null
+  email: string
+}
+
+interface ChallengeRow {
+  challenge_id: string
+  user_id: string
+  account_id: string
+  audience: PortalId
+  environment: EnvironmentId
+  device_name: string | null
+  attempts: number
+  expires_at: string
+  consumed_at: string | null
 }
 
 export function normalizeEmail(email: string): string {
@@ -175,18 +254,7 @@ export class IdentityService {
   async signIn(
     input: SignInInput,
     context: RequestContext,
-  ): Promise<IssuedSession> {
-    // The privileged portals require MFA. MFA verification is not implemented
-    // yet, so they must not receive a session that could be mistaken for a
-    // fully authenticated one.
-    if (context.audience !== "app") {
-      throw new ApiError(
-        "SERVICE_UNAVAILABLE",
-        "Privileged sign-in is not available until MFA is implemented.",
-        503,
-      )
-    }
-
+  ): Promise<SignInResult> {
     const email = normalizeEmail(input.email)
     const client = await this.database.pool.connect()
 
@@ -223,73 +291,177 @@ export class IdentityService {
         throw new ApiError("UNAUTHENTICATED", "Invalid email or password.", 401)
       }
 
-      const token = createSessionToken()
-      const tokenHash = hashSessionToken(token)
-      const policy = sessionPolicy(context.audience)
-      const now = Date.now()
-      const expiresAt = new Date(now + policy.absoluteMs)
-      const idleExpiresAt = new Date(now + policy.idleMs)
-
-      await client.query("begin")
-      await client.query("select platform.set_identity_context($1, $2)", [
-        row.account_id,
-        row.user_id,
-      ])
-      await client.query(
-        "update identity.credentials set failed_attempts = 0, locked_until = null where user_id = $1",
-        [row.user_id],
-      )
-
-      let deviceId: string | null = null
-      if (input.deviceName) {
-        const device = await client.query<{ id: string }>(
-          "insert into identity.devices (user_id, name) values ($1, $2) returning id",
-          [row.user_id, input.deviceName],
+      if (context.audience !== "app") {
+        return await this.beginMfaChallenge(
+          client,
+          row.user_id,
+          row.account_id,
+          input.deviceName,
+          context,
         )
-        deviceId = device.rows[0].id
       }
 
-      const session = await client.query<{ id: string }>(
-        `insert into identity.sessions
-           (user_id, device_id, audience, environment, refresh_token_hash, idle_expires_at, expires_at)
-         values ($1, $2, $3, $4, $5, $6, $7)
-         returning id`,
-        [
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          row.account_id,
           row.user_id,
-          deviceId,
-          context.audience,
-          context.environment,
-          tokenHash,
-          idleExpiresAt.toISOString(),
-          expiresAt.toISOString(),
-        ],
-      )
-      const sessionId = session.rows[0].id
+        ])
+        await client.query(
+          "update identity.credentials set failed_attempts = 0, locked_until = null where user_id = $1",
+          [row.user_id],
+        )
 
-      await this.audit(client, context, {
-        actorType: "user",
-        actorId: row.user_id,
-        action: "identity.sign_in",
-        targetType: "session",
-        targetId: sessionId,
-      })
+        const issued = await this.createSession(client, {
+          accountId: row.account_id,
+          userId: row.user_id,
+          email,
+          deviceName: input.deviceName,
+          context,
+        })
 
-      await client.query("commit")
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: row.user_id,
+          action: "identity.sign_in",
+          targetType: "session",
+          targetId: issued.sessionId,
+        })
 
-      return {
-        token,
-        sessionId,
-        accountId: row.account_id,
-        userId: row.user_id,
-        email,
-        audience: context.audience,
-        environment: context.environment,
-        expiresAt: expiresAt.toISOString(),
-        idleExpiresAt: idleExpiresAt.toISOString(),
-        maxAgeSeconds: Math.floor(policy.absoluteMs / 1000),
+        await client.query("commit")
+        return issued
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
       }
     } finally {
       client.release()
+    }
+  }
+
+  private async beginMfaChallenge(
+    client: PoolClient,
+    userId: string,
+    accountId: string,
+    deviceName: string | undefined,
+    context: RequestContext,
+  ): Promise<MfaChallenge> {
+    const token = createSessionToken()
+    const tokenHash = hashSessionToken(token)
+    const expiresAt = new Date(Date.now() + MFA_CHALLENGE_TTL_MS)
+
+    await client.query("begin")
+    try {
+      await client.query("select platform.set_identity_context($1, $2)", [
+        accountId,
+        userId,
+      ])
+
+      const factor = await client.query(
+        `select 1 from identity.mfa_factors
+         where user_id = $1 and factor_type = 'totp'
+           and confirmed_at is not null and revoked_at is null
+         limit 1`,
+        [userId],
+      )
+      if (factor.rowCount === 0) {
+        throw new ApiError(
+          "FORBIDDEN",
+          "Enrol an authenticator on the main portal before using this portal.",
+          403,
+        )
+      }
+
+      await client.query(
+        "update identity.credentials set failed_attempts = 0, locked_until = null where user_id = $1",
+        [userId],
+      )
+      await client.query(
+        `insert into identity.mfa_challenges
+           (user_id, challenge_hash, audience, environment, device_name, expires_at)
+         values ($1, $2, $3, $4, $5, $6)`,
+        [
+          userId,
+          tokenHash,
+          context.audience,
+          context.environment,
+          deviceName ?? null,
+          expiresAt.toISOString(),
+        ],
+      )
+      await this.audit(client, context, {
+        actorType: "user",
+        actorId: userId,
+        action: "identity.mfa_challenge",
+        targetType: "user",
+        targetId: userId,
+      })
+      await client.query("commit")
+
+      return {
+        mfaRequired: true,
+        challengeToken: token,
+        expiresAt: expiresAt.toISOString(),
+      }
+    } catch (error) {
+      await client.query("rollback").catch(() => undefined)
+      throw error
+    }
+  }
+
+  private async createSession(
+    client: PoolClient,
+    input: {
+      accountId: string
+      userId: string
+      email: string
+      deviceName?: string
+      context: RequestContext
+    },
+  ): Promise<IssuedSession> {
+    const token = createSessionToken()
+    const tokenHash = hashSessionToken(token)
+    const policy = sessionPolicy(input.context.audience)
+    const now = Date.now()
+    const expiresAt = new Date(now + policy.absoluteMs)
+    const idleExpiresAt = new Date(now + policy.idleMs)
+
+    let deviceId: string | null = null
+    if (input.deviceName) {
+      const device = await client.query<{ id: string }>(
+        "insert into identity.devices (user_id, name) values ($1, $2) returning id",
+        [input.userId, input.deviceName],
+      )
+      deviceId = device.rows[0].id
+    }
+
+    const session = await client.query<{ id: string }>(
+      `insert into identity.sessions
+         (user_id, device_id, audience, environment, refresh_token_hash, idle_expires_at, expires_at)
+       values ($1, $2, $3, $4, $5, $6, $7)
+       returning id`,
+      [
+        input.userId,
+        deviceId,
+        input.context.audience,
+        input.context.environment,
+        tokenHash,
+        idleExpiresAt.toISOString(),
+        expiresAt.toISOString(),
+      ],
+    )
+
+    return {
+      token,
+      sessionId: session.rows[0].id,
+      accountId: input.accountId,
+      userId: input.userId,
+      email: input.email,
+      audience: input.context.audience,
+      environment: input.context.environment,
+      expiresAt: expiresAt.toISOString(),
+      idleExpiresAt: idleExpiresAt.toISOString(),
+      maxAgeSeconds: Math.floor(policy.absoluteMs / 1000),
     }
   }
 
@@ -391,6 +563,557 @@ export class IdentityService {
       await client.query("commit")
     } finally {
       client.release()
+    }
+  }
+
+  async enrollTotp(
+    token: string,
+    context: RequestContext,
+  ): Promise<MfaEnrollment> {
+    if (context.audience !== "app") {
+      throw new ApiError(
+        "FORBIDDEN",
+        "Enrol an authenticator on the main portal.",
+        403,
+      )
+    }
+    const cipher = this.cipher()
+    const client = await this.database.pool.connect()
+
+    try {
+      const session = await this.requireSession(client, token, context)
+      const secret = generateTotpSecret()
+      const encrypted = cipher.encrypt(secret)
+
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          session.account_id,
+          session.user_id,
+        ])
+        const factor = await client.query<{ id: string }>(
+          `insert into identity.mfa_factors
+             (user_id, factor_type, label, secret_ciphertext, key_version)
+           values ($1, 'totp', 'Authenticator app', $2, $3)
+           returning id`,
+          [session.user_id, encrypted.ciphertext, encrypted.keyVersion],
+        )
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: session.user_id,
+          action: "identity.mfa_enroll_started",
+          targetType: "user",
+          targetId: session.user_id,
+        })
+        await client.query("commit")
+
+        return {
+          factorId: factor.rows[0].id,
+          secret,
+          otpauthUri: totpUri(secret, session.email),
+        }
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  async confirmTotp(
+    token: string,
+    input: TotpConfirmationInput,
+    context: RequestContext,
+  ): Promise<RecoveryCodeSet> {
+    if (context.audience !== "app") {
+      throw new ApiError(
+        "FORBIDDEN",
+        "Enrol an authenticator on the main portal.",
+        403,
+      )
+    }
+    const cipher = this.cipher()
+    const client = await this.database.pool.connect()
+
+    try {
+      const session = await this.requireSession(client, token, context)
+
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          session.account_id,
+          session.user_id,
+        ])
+        const factor = await client.query<{ secret_ciphertext: string }>(
+          `select secret_ciphertext from identity.mfa_factors
+           where id = $1 and user_id = $2
+             and confirmed_at is null and revoked_at is null`,
+          [input.factorId, session.user_id],
+        )
+        const pending = factor.rows[0]
+        if (!pending) {
+          throw new ApiError("NOT_FOUND", "The enrolment was not found.", 404)
+        }
+
+        const secret = cipher.decrypt(pending.secret_ciphertext)
+        if (!verifyTotp(secret, input.code)) {
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The verification code is not valid.",
+            401,
+          )
+        }
+
+        const recoveryCodes = generateRecoveryCodes()
+        await client.query(
+          "update identity.mfa_factors set confirmed_at = now(), last_used_at = now() where id = $1",
+          [input.factorId],
+        )
+        await client.query(
+          "delete from identity.recovery_codes where user_id = $1",
+          [session.user_id],
+        )
+        for (const code of recoveryCodes) {
+          await client.query(
+            "insert into identity.recovery_codes (user_id, code_hash) values ($1, $2)",
+            [session.user_id, hashRecoveryCode(code)],
+          )
+        }
+        await client.query(
+          "update identity.sessions set mfa_satisfied_at = now() where id = $1",
+          [session.session_id],
+        )
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: session.user_id,
+          action: "identity.mfa_enrolled",
+          targetType: "user",
+          targetId: session.user_id,
+        })
+        await client.query("commit")
+
+        return { recoveryCodes }
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  async verifyMfa(
+    input: MfaVerificationInput,
+    context: RequestContext,
+  ): Promise<IssuedSession> {
+    const client = await this.database.pool.connect()
+
+    try {
+      const lookup = await client.query<ChallengeRow>(
+        "select * from identity.find_mfa_challenge($1)",
+        [hashSessionToken(input.challengeToken)],
+      )
+      const challenge = lookup.rows[0]
+      if (
+        !challenge ||
+        challenge.consumed_at ||
+        new Date(challenge.expires_at).getTime() <= Date.now()
+      ) {
+        throw new ApiError(
+          "UNAUTHENTICATED",
+          "The verification challenge is invalid or has expired.",
+          401,
+        )
+      }
+      if (challenge.attempts >= MFA_MAX_ATTEMPTS) {
+        throw new ApiError(
+          "RATE_LIMITED",
+          "Too many verification attempts.",
+          429,
+        )
+      }
+      if (
+        challenge.audience !== context.audience ||
+        challenge.environment !== context.environment
+      ) {
+        throw new ApiError(
+          "FORBIDDEN",
+          "This verification challenge belongs to another portal.",
+          403,
+        )
+      }
+
+      let committed = false
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          challenge.account_id,
+          challenge.user_id,
+        ])
+        const locked = await client.query<{
+          attempts: number
+          consumed_at: string | null
+        }>(
+          "select attempts, consumed_at from identity.mfa_challenges where id = $1 for update",
+          [challenge.challenge_id],
+        )
+        const current = locked.rows[0]
+        if (!current || current.consumed_at) {
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The verification challenge has already been used.",
+            401,
+          )
+        }
+        if (current.attempts >= MFA_MAX_ATTEMPTS) {
+          throw new ApiError(
+            "RATE_LIMITED",
+            "Too many verification attempts.",
+            429,
+          )
+        }
+
+        const verified = await this.verifySecondFactor(
+          client,
+          challenge.user_id,
+          input.code,
+        )
+        if (!verified) {
+          await client.query(
+            "update identity.mfa_challenges set attempts = attempts + 1 where id = $1",
+            [challenge.challenge_id],
+          )
+          await client.query("commit")
+          committed = true
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The verification code is not valid.",
+            401,
+          )
+        }
+
+        await client.query(
+          "update identity.mfa_challenges set consumed_at = now() where id = $1",
+          [challenge.challenge_id],
+        )
+        const user = await client.query<{ email: string }>(
+          "select email from identity.users where id = $1",
+          [challenge.user_id],
+        )
+        if (!user.rows[0]) {
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The verification challenge is invalid or has expired.",
+            401,
+          )
+        }
+
+        const issued = await this.createSession(client, {
+          accountId: challenge.account_id,
+          userId: challenge.user_id,
+          email: user.rows[0].email,
+          deviceName: challenge.device_name ?? undefined,
+          context,
+        })
+        await client.query(
+          "update identity.sessions set mfa_satisfied_at = now() where id = $1",
+          [issued.sessionId],
+        )
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: challenge.user_id,
+          action: "identity.mfa_verified",
+          targetType: "session",
+          targetId: issued.sessionId,
+        })
+        await client.query("commit")
+        committed = true
+        return issued
+      } catch (error) {
+        if (!committed) await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  async stepUp(
+    token: string,
+    code: string,
+    context: RequestContext,
+  ): Promise<SessionResult> {
+    const client = await this.database.pool.connect()
+
+    try {
+      const session = await this.requireSession(client, token, context)
+
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          session.account_id,
+          session.user_id,
+        ])
+        const verified = await this.verifySecondFactor(
+          client,
+          session.user_id,
+          code,
+        )
+        if (!verified) {
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The verification code is not valid.",
+            401,
+          )
+        }
+        await client.query(
+          "update identity.sessions set mfa_satisfied_at = now(), last_seen_at = now() where id = $1",
+          [session.session_id],
+        )
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: session.user_id,
+          action: "identity.mfa_step_up",
+          targetType: "session",
+          targetId: session.session_id,
+        })
+        await client.query("commit")
+
+        return this.toSessionResult(session)
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  async listSessions(
+    token: string,
+    context: RequestContext,
+  ): Promise<SessionSummary[]> {
+    const client = await this.database.pool.connect()
+
+    try {
+      const session = await this.requireSession(client, token, context)
+
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          session.account_id,
+          session.user_id,
+        ])
+        const rows = await client.query<{
+          id: string
+          audience: PortalId
+          environment: EnvironmentId
+          device_name: string | null
+          issued_at: string
+          last_seen_at: string
+          idle_expires_at: string
+          expires_at: string
+          mfa_satisfied_at: string | null
+        }>(
+          `select s.id, s.audience, s.environment, d.name as device_name,
+                  s.issued_at, s.last_seen_at, s.idle_expires_at, s.expires_at,
+                  s.mfa_satisfied_at
+           from identity.sessions s
+           left join identity.devices d on d.id = s.device_id
+           where s.user_id = $1 and s.revoked_at is null
+           order by s.last_seen_at desc`,
+          [session.user_id],
+        )
+        await client.query("commit")
+
+        return rows.rows.map((row) => ({
+          sessionId: row.id,
+          current: row.id === session.session_id,
+          audience: row.audience,
+          environment: row.environment,
+          deviceName: row.device_name,
+          createdAt: row.issued_at,
+          lastSeenAt: row.last_seen_at,
+          idleExpiresAt: row.idle_expires_at,
+          expiresAt: row.expires_at,
+          mfaSatisfied: row.mfa_satisfied_at !== null,
+        }))
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  async revokeSession(
+    token: string,
+    sessionId: string,
+    context: RequestContext,
+  ): Promise<void> {
+    const client = await this.database.pool.connect()
+
+    try {
+      const session = await this.requireSession(client, token, context)
+
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          session.account_id,
+          session.user_id,
+        ])
+        const updated = await client.query(
+          `update identity.sessions
+           set revoked_at = now(), revoked_reason = 'revoked_by_user'
+           where id = $1 and user_id = $2 and revoked_at is null`,
+          [sessionId, session.user_id],
+        )
+        if (updated.rowCount === 0) {
+          throw new ApiError("NOT_FOUND", "The session was not found.", 404)
+        }
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: session.user_id,
+          action: "identity.session_revoked",
+          targetType: "session",
+          targetId: sessionId,
+        })
+        await client.query("commit")
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  async revokeOtherSessions(
+    token: string,
+    context: RequestContext,
+  ): Promise<number> {
+    const client = await this.database.pool.connect()
+
+    try {
+      const session = await this.requireSession(client, token, context)
+
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          session.account_id,
+          session.user_id,
+        ])
+        const updated = await client.query(
+          `update identity.sessions
+           set revoked_at = now(), revoked_reason = 'revoke_others'
+           where user_id = $1 and id <> $2 and revoked_at is null`,
+          [session.user_id, session.session_id],
+        )
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: session.user_id,
+          action: "identity.sessions_revoked",
+          targetType: "user",
+          targetId: session.user_id,
+        })
+        await client.query("commit")
+        return updated.rowCount ?? 0
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  private cipher(): MfaCipher {
+    const cipher = MfaCipher.fromBase64(this.config.mfaEncryptionKey)
+    if (!cipher) {
+      throw new ApiError(
+        "SERVICE_UNAVAILABLE",
+        "Multi-factor authentication is not configured in this environment.",
+        503,
+      )
+    }
+    return cipher
+  }
+
+  private async requireSession(
+    client: PoolClient,
+    token: string,
+    context: RequestContext,
+  ): Promise<SessionRow> {
+    const lookup = await client.query<SessionRow>(
+      "select * from identity.find_session($1)",
+      [hashSessionToken(token)],
+    )
+    const session = lookup.rows[0]
+    if (!session) {
+      throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)
+    }
+    this.assertSessionIsUsable(session, context)
+    return session
+  }
+
+  private async verifySecondFactor(
+    client: PoolClient,
+    userId: string,
+    code: string,
+  ): Promise<boolean> {
+    const factors = await client.query<{
+      id: string
+      secret_ciphertext: string
+    }>(
+      `select id, secret_ciphertext from identity.mfa_factors
+       where user_id = $1 and factor_type = 'totp'
+         and confirmed_at is not null and revoked_at is null
+       order by created_at`,
+      [userId],
+    )
+    const cipher = this.cipher()
+    for (const factor of factors.rows) {
+      try {
+        if (verifyTotp(cipher.decrypt(factor.secret_ciphertext), code)) {
+          await client.query(
+            "update identity.mfa_factors set last_used_at = now() where id = $1",
+            [factor.id],
+          )
+          return true
+        }
+      } catch {
+        // An unreadable factor must not block another confirmed factor.
+      }
+    }
+
+    const recovery = await client.query<{ id: string }>(
+      `select id from identity.recovery_codes
+       where user_id = $1 and code_hash = $2 and used_at is null`,
+      [userId, hashRecoveryCode(code)],
+    )
+    const match = recovery.rows[0]
+    if (match) {
+      await client.query(
+        "update identity.recovery_codes set used_at = now() where id = $1",
+        [match.id],
+      )
+      return true
+    }
+    return false
+  }
+
+  private toSessionResult(session: SessionRow): SessionResult {
+    return {
+      sessionId: session.session_id,
+      accountId: session.account_id,
+      userId: session.user_id,
+      email: session.email,
+      audience: session.audience,
+      environment: session.environment,
+      expiresAt: session.expires_at,
+      idleExpiresAt: session.idle_expires_at,
     }
   }
 

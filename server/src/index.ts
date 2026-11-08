@@ -33,16 +33,39 @@ export {
   hashSessionToken,
   hashPassword,
   verifyPassword,
+  isMfaChallenge,
   IdentityService,
+  MFA_CHALLENGE_TTL_MS,
+  MFA_MAX_ATTEMPTS,
 } from "./modules/identity/identity.service"
 export type {
   IssuedSession,
+  MfaChallenge,
+  MfaEnrollment,
+  RecoveryCodeSet,
   RegisterInput,
   RegistrationResult,
   RequestContext,
   SessionResult,
+  SessionSummary,
   SignInInput,
+  SignInResult,
 } from "./modules/identity/identity.service"
+export {
+  generateRecoveryCodes,
+  hashRecoveryCode,
+  MfaCipher,
+  normalizeRecoveryCode,
+} from "./modules/identity/mfa-crypto"
+export {
+  base32Decode,
+  base32Encode,
+  currentTimeStep,
+  generateTotpSecret,
+  totpCode,
+  totpUri,
+  verifyTotp,
+} from "./modules/identity/totp"
 export {
   buildSessionCookie,
   clearSessionCookie,

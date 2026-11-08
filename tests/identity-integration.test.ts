@@ -9,6 +9,7 @@ import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
 import { DatabaseService } from "../server/src/db/database.service"
 import { IdentityService } from "../server/src/modules/identity/identity.service"
+import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
 const baseUrl = process.env.IDENTITY_TEST_DATABASE_URL
 const describeIntegration = baseUrl ? describe : describe.skip
@@ -63,6 +64,7 @@ describeIntegration("identity service integration", () => {
       host: "127.0.0.1",
       logLevel: "silent",
       sessionIssuer: "hivorr-staging",
+      mfaEncryptionKey: Buffer.alloc(32, 7).toString("base64"),
       databaseUrl: testUrl,
       corsAllowedOrigins: [],
       trustProxy: false,
@@ -127,13 +129,13 @@ describeIntegration("identity service integration", () => {
     ).rejects.toBeInstanceOf(ApiError)
   })
 
-  it("refuses privileged sign-in until MFA is implemented", async () => {
+  it("requires a confirmed authenticator for privileged sign-in", async () => {
     await expect(
       service.signIn(
         { email: "founder@example.test", password: "correct-horse-battery" },
         { ...context, audience: "control" },
       ),
-    ).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
   })
 
   it("issues a session, resolves it, and rejects another audience", async () => {
@@ -222,5 +224,186 @@ describeIntegration("identity service integration", () => {
       headers: { host, cookie },
     })
     expect(afterSignOut.statusCode).toBe(401)
+  })
+
+  it("enrols TOTP, gates a privileged portal, and hardens sessions over HTTP", async () => {
+    const mainHost = "staging.hivorr.com"
+    const controlHost = "control.staging.hivorr.com"
+    const staffHost = "staff.staging.hivorr.com"
+    const json = { "content-type": "application/json" }
+
+    const signedIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host: mainHost, ...json },
+      payload: {
+        email: "http@example.test",
+        password: "http-test-password",
+      },
+    })
+    expect(signedIn.statusCode).toBe(200)
+    const appCookie = String(signedIn.headers["set-cookie"]).split(";")[0]
+
+    const enrollment = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/totp/enroll",
+      headers: { host: mainHost, cookie: appCookie },
+    })
+    expect(enrollment.statusCode).toBe(201)
+    const { factorId, secret, otpauthUri } = enrollment.json()
+    expect(otpauthUri).toContain("otpauth://totp/")
+    expect(secret).toMatch(/^[A-Z2-7]+$/)
+
+    const wrongConfirm = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/totp/confirm",
+      headers: { host: mainHost, cookie: appCookie, ...json },
+      payload: { factorId, code: "000000" },
+    })
+    expect(wrongConfirm.statusCode).toBe(401)
+
+    const confirmation = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/totp/confirm",
+      headers: { host: mainHost, cookie: appCookie, ...json },
+      payload: { factorId, code: totpCode(secret, currentTimeStep()) },
+    })
+    expect(confirmation.statusCode).toBe(200)
+    const { recoveryCodes } = confirmation.json()
+    expect(recoveryCodes).toHaveLength(10)
+
+    const appSessions = await app.inject({
+      method: "GET",
+      url: "/v1/auth/sessions",
+      headers: { host: mainHost, cookie: appCookie },
+    })
+    expect(appSessions.statusCode).toBe(200)
+    const appSessionList = appSessions.json()
+    expect(
+      appSessionList.some((session: { current: boolean }) => session.current),
+    ).toBe(true)
+    const appSessionId = appSessionList.find(
+      (session: { current: boolean }) => session.current,
+    ).sessionId
+
+    const challenge = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host: controlHost, ...json },
+      payload: {
+        email: "http@example.test",
+        password: "http-test-password",
+      },
+    })
+    expect(challenge.statusCode).toBe(202)
+    const challengeBody = challenge.json()
+    expect(challengeBody.mfaRequired).toBe(true)
+    expect(challengeBody).not.toHaveProperty("token")
+
+    const wrongCode = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/verify",
+      headers: { host: controlHost, ...json },
+      payload: { challengeToken: challengeBody.challengeToken, code: "000000" },
+    })
+    expect(wrongCode.statusCode).toBe(401)
+
+    const crossPortal = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/verify",
+      headers: { host: staffHost, ...json },
+      payload: {
+        challengeToken: challengeBody.challengeToken,
+        code: totpCode(secret, currentTimeStep()),
+      },
+    })
+    expect(crossPortal.statusCode).toBe(403)
+
+    const verified = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/verify",
+      headers: { host: controlHost, ...json },
+      payload: {
+        challengeToken: challengeBody.challengeToken,
+        code: totpCode(secret, currentTimeStep()),
+      },
+    })
+    expect(verified.statusCode).toBe(200)
+    expect(verified.json()).toMatchObject({
+      audience: "control",
+      environment: "staging",
+    })
+    const controlCookie = String(verified.headers["set-cookie"]).split(";")[0]
+    expect(controlCookie).toContain("__Host-hivorr_control_sid=")
+
+    const replayedChallenge = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/verify",
+      headers: { host: controlHost, ...json },
+      payload: {
+        challengeToken: challengeBody.challengeToken,
+        code: totpCode(secret, currentTimeStep()),
+      },
+    })
+    expect(replayedChallenge.statusCode).toBe(401)
+
+    const controlSessions = await app.inject({
+      method: "GET",
+      url: "/v1/auth/sessions",
+      headers: { host: controlHost, cookie: controlCookie },
+    })
+    const controlCurrent = controlSessions
+      .json()
+      .find((session: { current: boolean }) => session.current)
+    expect(controlCurrent).toMatchObject({
+      audience: "control",
+      environment: "staging",
+      mfaSatisfied: true,
+    })
+
+    const steppedUp = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/step-up",
+      headers: { host: mainHost, cookie: appCookie, ...json },
+      payload: { code: recoveryCodes[0] },
+    })
+    expect(steppedUp.statusCode).toBe(200)
+
+    const reusedRecovery = await app.inject({
+      method: "POST",
+      url: "/v1/auth/mfa/step-up",
+      headers: { host: mainHost, cookie: appCookie, ...json },
+      payload: { code: recoveryCodes[0] },
+    })
+    expect(reusedRecovery.statusCode).toBe(401)
+
+    const revokedOthers = await app.inject({
+      method: "DELETE",
+      url: "/v1/auth/sessions",
+      headers: { host: mainHost, cookie: appCookie },
+    })
+    expect(revokedOthers.statusCode).toBe(200)
+    expect(revokedOthers.json().revoked).toBeGreaterThanOrEqual(1)
+
+    const controlAfterRevoke = await app.inject({
+      method: "GET",
+      url: "/v1/auth/session",
+      headers: { host: controlHost, cookie: controlCookie },
+    })
+    expect(controlAfterRevoke.statusCode).toBe(401)
+
+    const revokedCurrent = await app.inject({
+      method: "DELETE",
+      url: `/v1/auth/sessions/${appSessionId}`,
+      headers: { host: mainHost, cookie: appCookie },
+    })
+    expect(revokedCurrent.statusCode).toBe(204)
+
+    const appAfterRevoke = await app.inject({
+      method: "GET",
+      url: "/v1/auth/session",
+      headers: { host: mainHost, cookie: appCookie },
+    })
+    expect(appAfterRevoke.statusCode).toBe(401)
   })
 })

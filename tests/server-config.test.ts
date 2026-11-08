@@ -26,7 +26,22 @@ describe("API configuration", () => {
       expect(error).toBeInstanceOf(ConfigurationError)
       expect(String(error)).toContain("DATABASE_URL")
       expect(String(error)).toContain("SESSION_ISSUER")
+      expect(String(error)).toContain("MFA_ENCRYPTION_KEY")
     }
+  })
+
+  it("rejects an MFA key that is not 32 bytes", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "staging",
+        BACKEND_ENVIRONMENT: "staging",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        SESSION_ISSUER: "hivorr-staging",
+        MFA_ENCRYPTION_KEY: Buffer.from("too-short").toString("base64"),
+      }),
+    ).toThrow(ConfigurationError)
   })
 
   it("accepts an explicit production configuration", () => {
@@ -37,6 +52,7 @@ describe("API configuration", () => {
       DATABASE_URL:
         "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
       SESSION_ISSUER: "hivorr-production",
+      MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
       API_PORT: "8080",
       CORS_ALLOWED_ORIGINS: "https://hivorr.com, https://control.hivorr.com",
     })

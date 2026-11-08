@@ -1,7 +1,8 @@
 # Backend Environment Setup
 
-**Status:** GitHub environment variables are configured. Connection strings are **not** configured
-yet; they must be set after the exposed passwords are rotated.
+**Status:** GitHub environment variables are configured, and both `staging` and `production` hold a
+distinct `DATABASE_URL`. The MFA encryption key is still required before either API can serve
+authenticator endpoints.
 
 ## 1. Public environment variables
 
@@ -29,8 +30,14 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 | `DATABASE_URL` | `production` | Rotated production connection string |
 | `SESSION_SIGNING_KEY` | `staging` | Staging-only signing key |
 | `SESSION_SIGNING_KEY` | `production` | Production-only signing key |
+| `MFA_ENCRYPTION_KEY` | `staging` | 32 bytes, base64, staging-only |
+| `MFA_ENCRYPTION_KEY` | `production` | 32 bytes, base64, production-only |
 | `FLY_API_TOKEN` | `staging` | Staging deploy token, when the API is deployed |
 | `FLY_API_TOKEN` | `production` | Production deploy token, when the API is deployed |
+
+`MFA_ENCRYPTION_KEY` encrypts TOTP secrets with AES-256-GCM before they reach the database. Generate
+it with `openssl rand -base64 32`. The two environments must never share a key, because a staging
+ciphertext must not be readable in production.
 
 Commands (they prompt for the value without echoing it):
 
@@ -39,6 +46,8 @@ gh secret set DATABASE_URL --env staging
 gh secret set DATABASE_URL --env production
 gh secret set SESSION_SIGNING_KEY --env staging
 gh secret set SESSION_SIGNING_KEY --env production
+gh secret set MFA_ENCRYPTION_KEY --env staging
+gh secret set MFA_ENCRYPTION_KEY --env production
 ```
 
 The current `SUPABASE_ACCESS_TOKEN` in the workstation environment is invalid. Replace it through the
@@ -88,8 +97,9 @@ credentials. `.env*` is ignored except `.env.example`.
 
 ## 6. What is still required
 
-1. Rotate both database passwords exposed on 2026-11-07.
-2. Set the rotated `DATABASE_URL` values as environment secrets.
+1. Rotate both database passwords exposed on 2026-11-07. Done.
+2. Set the rotated `DATABASE_URL` values as environment secrets. Done.
 3. Generate separate `SESSION_SIGNING_KEY` values.
-4. Wire `pnpm verify:backend-target` into the Fly.io deploy job when it exists.
-5. Add required-reviewer protection when the GitHub plan supports it.
+4. Generate separate `MFA_ENCRYPTION_KEY` values and set them per environment.
+5. Wire `pnpm verify:backend-target` into the Fly.io deploy job when it exists.
+6. Add required-reviewer protection when the GitHub plan supports it.

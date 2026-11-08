@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Inject,
+  Param,
   Post,
   Req,
   Res,
@@ -15,8 +17,11 @@ import { ApiError } from "../../common/errors"
 import { API_CONFIG, type ApiConfig } from "../../config"
 import {
   IdentityService,
+  isMfaChallenge,
+  type MfaChallenge,
   type RequestContext,
   type SessionResult,
+  type SignInResult,
 } from "./identity.service"
 import { resolveAudience } from "./portal"
 import {
@@ -36,12 +41,39 @@ const signInSchema = z.object({
   password: z.string().min(1).max(128),
 })
 
+const totpConfirmSchema = z.object({
+  factorId: z.string().min(1).max(64),
+  code: z.string().min(6).max(20),
+})
+
+const mfaVerifySchema = z.object({
+  challengeToken: z.string().min(20).max(200),
+  code: z.string().min(6).max(20),
+})
+
+const codeSchema = z.object({
+  code: z.string().min(6).max(20),
+})
+
 function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body)
   if (!result.success) {
     throw new ApiError("VALIDATION_FAILED", "The request body is invalid.", 400)
   }
   return result.data
+}
+
+function sessionBody(session: SessionResult): SessionResult {
+  return {
+    sessionId: session.sessionId,
+    accountId: session.accountId,
+    userId: session.userId,
+    email: session.email,
+    audience: session.audience,
+    environment: session.environment,
+    expiresAt: session.expiresAt,
+    idleExpiresAt: session.idleExpiresAt,
+  }
 }
 
 @Controller("auth")
@@ -64,10 +96,10 @@ export class IdentityController {
     @Body() body: unknown,
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
-  ): Promise<SessionResult> {
+  ): Promise<SessionResult | MfaChallenge> {
     const input = parseBody(signInSchema, body)
     const context = this.requestContext(request)
-    const session = await this.identity.signIn(
+    const result: SignInResult = await this.identity.signIn(
       {
         ...input,
         deviceName:
@@ -78,6 +110,33 @@ export class IdentityController {
       context,
     )
 
+    if (isMfaChallenge(result)) {
+      reply.status(202)
+      return result
+    }
+
+    reply.header(
+      "set-cookie",
+      buildSessionCookie(
+        sessionCookieName(result.audience),
+        result.token,
+        result.maxAgeSeconds,
+      ),
+    )
+    return sessionBody(result)
+  }
+
+  @Post("mfa/verify")
+  @HttpCode(200)
+  async verifyMfa(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<SessionResult> {
+    const input = parseBody(mfaVerifySchema, body)
+    const context = this.requestContext(request)
+    const session = await this.identity.verifyMfa(input, context)
+
     reply.header(
       "set-cookie",
       buildSessionCookie(
@@ -86,27 +145,83 @@ export class IdentityController {
         session.maxAgeSeconds,
       ),
     )
+    return sessionBody(session)
+  }
 
-    return {
-      sessionId: session.sessionId,
-      accountId: session.accountId,
-      userId: session.userId,
-      email: session.email,
-      audience: session.audience,
-      environment: session.environment,
-      expiresAt: session.expiresAt,
-      idleExpiresAt: session.idleExpiresAt,
-    }
+  @Post("mfa/totp/enroll")
+  async enrollTotp(
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    const context = this.requestContext(request)
+    const token = this.sessionToken(request, context)
+    const enrollment = await this.identity.enrollTotp(token, context)
+    reply.status(201)
+    return enrollment
+  }
+
+  @Post("mfa/totp/confirm")
+  @HttpCode(200)
+  async confirmTotp(@Body() body: unknown, @Req() request: FastifyRequest) {
+    const input = parseBody(totpConfirmSchema, body)
+    const context = this.requestContext(request)
+    const token = this.sessionToken(request, context)
+    return this.identity.confirmTotp(token, input, context)
+  }
+
+  @Post("mfa/step-up")
+  @HttpCode(200)
+  async stepUp(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ): Promise<SessionResult> {
+    const input = parseBody(codeSchema, body)
+    const context = this.requestContext(request)
+    const token = this.sessionToken(request, context)
+    return this.identity.stepUp(token, input.code, context)
   }
 
   @Get("session")
   async session(@Req() request: FastifyRequest): Promise<SessionResult> {
     const context = this.requestContext(request)
-    const token = request.cookies?.[sessionCookieName(context.audience)]
-    if (!token) {
-      throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)
-    }
-    return this.identity.getSession(token, context)
+    return this.identity.getSession(
+      this.sessionToken(request, context),
+      context,
+    )
+  }
+
+  @Get("sessions")
+  async sessions(@Req() request: FastifyRequest) {
+    const context = this.requestContext(request)
+    return this.identity.listSessions(
+      this.sessionToken(request, context),
+      context,
+    )
+  }
+
+  @Delete("sessions/:id")
+  @HttpCode(204)
+  async revokeSession(
+    @Param("id") id: string,
+    @Req() request: FastifyRequest,
+  ): Promise<void> {
+    const context = this.requestContext(request)
+    await this.identity.revokeSession(
+      this.sessionToken(request, context),
+      id,
+      context,
+    )
+  }
+
+  @Delete("sessions")
+  @HttpCode(200)
+  async revokeOtherSessions(@Req() request: FastifyRequest) {
+    const context = this.requestContext(request)
+    const revoked = await this.identity.revokeOtherSessions(
+      this.sessionToken(request, context),
+      context,
+    )
+    return { revoked }
   }
 
   @Post("sign-out")
@@ -122,6 +237,17 @@ export class IdentityController {
       "set-cookie",
       clearSessionCookie(sessionCookieName(context.audience)),
     )
+  }
+
+  private sessionToken(
+    request: FastifyRequest,
+    context: RequestContext,
+  ): string {
+    const token = request.cookies?.[sessionCookieName(context.audience)]
+    if (!token) {
+      throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)
+    }
+    return token
   }
 
   private requestContext(request: FastifyRequest): RequestContext {
