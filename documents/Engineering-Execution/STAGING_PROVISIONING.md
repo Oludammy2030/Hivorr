@@ -16,7 +16,7 @@ no deployment exists, and no database migration has been applied to staging.
 | R2 | **Blocked:** enable R2 in the Cloudflare dashboard before creating `hivorr-staging-media` and `hivorr-staging-exports`. |
 | Custom domains and DNS | Not attached. Add each Pages custom domain in the dashboard; the zone is in the same account. |
 | Access | Not configured. Create the three Access applications in Zero Trust. |
-| API/worker deployment | Not built. The server needs a production build and container image first. |
+| API/worker deployment | The server now has a CommonJS production build (`pnpm build:server`) and a container image (`Dockerfile`), verified locally. Fly deployment is the next step. |
 
 The Fly.io region is recorded as **`jnb` (Johannesburg)** in `config/environments.json`.
 

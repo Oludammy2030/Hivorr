@@ -12,6 +12,8 @@
     "build": "vite build --config vite.figma.config.ts",
     "build:all": "vite build --config vite.figma.config.ts && node scripts/build-portals.mjs",
     "build:portals": "node scripts/build-portals.mjs",
+    "build:server": "pnpm build:shared && tsc -p server/tsconfig.build.json && node scripts/finalize-server-build.mjs",
+    "build:shared": "tsc -p packages/shared/tsconfig.build.json",
     "check:toolchain": "node scripts/version-parity.mjs",
     "dev": "vite --host 0.0.0.0 --config vite.figma.config.ts",
     "format": "oxfmt",
@@ -36,7 +38,7 @@
     "test:watch": "vitest",
     "topology:verify": "node scripts/verify-environment-topology.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm check:toolchain && pnpm lint && pnpm lint:boundaries && pnpm topology:verify && pnpm typecheck && pnpm test && pnpm test:push-protection && pnpm test:release && pnpm test:topology && pnpm build:all"
+    "verify": "pnpm check:toolchain && pnpm lint && pnpm lint:boundaries && pnpm topology:verify && pnpm typecheck && pnpm test && pnpm test:push-protection && pnpm test:release && pnpm test:topology && pnpm build:all && pnpm build:server"
   },
   "dependencies": {
     "@hivorr/shared": "workspace:*",

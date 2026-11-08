@@ -145,7 +145,9 @@ credentials. `.env*` is ignored except `.env.example`.
 1. Rotate both database passwords exposed on 2026-11-07. Done.
 2. Set the rotated `DATABASE_URL` values as environment secrets. Done.
 3. Generate separate `MFA_ENCRYPTION_KEY` values and set them per environment.
-4. Wire `pnpm verify:backend-target` into the Fly.io deploy job when it exists.
+4. Wire `pnpm verify:backend-target` into the Fly.io deploy job when it exists. The API and worker
+   image is built by `pnpm build:server` and `Dockerfile`; runtime commands are
+   `node server/dist/main.js` and `node server/dist/worker.js`.
 5. Bootstrap the first `admin.grant.manage` grant per environment (§5) after `MFA_ENCRYPTION_KEY` is set.
 6. Add required-reviewer protection when the GitHub plan supports it.
 7. `TEC-12` is approved for staging as of 8 November 2026. The topology is recorded in

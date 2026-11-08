@@ -221,6 +221,9 @@ jobs:
       - name: Build
         run: pnpm build:all
 
+      - name: Build the API and worker
+        run: pnpm build:server
+
   security:
     name: secret and dependency scan
     needs: install
