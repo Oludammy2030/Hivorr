@@ -4,6 +4,7 @@
   "environments": {
     "staging": {
       "status": "planned",
+      "flyRegion": "jnb",
       "baseDomain": "staging.hivorr.com",
       "hosts": {
         "main": "staging.hivorr.com",

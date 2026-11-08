@@ -143,6 +143,16 @@ check(
   verifiedWithBlocker.issues.join("\n"),
 )
 
+const badRegion = mutate((topology) => {
+  topology.environments.staging.flyRegion = "Johannesburg"
+})
+check(
+  "a malformed Fly.io region is refused",
+  !badRegion.ok &&
+    badRegion.issues.some((issue) => issue.includes("three-letter")),
+  badRegion.issues.join("\n"),
+)
+
 const unknownApp = mutate((topology) => {
   topology.environments.staging.hosts.admin = "admin.staging.hivorr.com"
 })

@@ -120,6 +120,18 @@ export function verifyEnvironmentTopology(topology, options = {}) {
       hostIssues(name, application, host, environment.baseDomain, issues)
     }
 
+    if (environment.flyRegion !== undefined) {
+      if (!/^[a-z]{3}$/.test(environment.flyRegion)) {
+        issues.push(
+          `${name}: flyRegion must be a three-letter Fly.io region code`,
+        )
+      }
+    } else if (environment.status === "verified") {
+      issues.push(
+        `${name}: a verified environment must record its Fly.io region`,
+      )
+    }
+
     if (environment.apiOrigin !== "internal-only") {
       issues.push(
         `${name}: the API has no public hostname; apiOrigin must be internal-only`,

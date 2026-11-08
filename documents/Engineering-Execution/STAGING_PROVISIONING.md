@@ -16,11 +16,15 @@ blockers clear.
 are not provisioned.** The validator refuses to mark staging `verified` while either blocker remains
 open.
 
-Two further choices are not yet recorded and must be named before step 3:
+The Fly.io region is recorded as **`jnb` (Johannesburg)** in `config/environments.json`.
 
-- **[OPEN] Fly.io region** — no region is recorded in the approved documents.
+One further choice is not yet recorded:
+
 - **[OPEN] Cloudflare Pages project names and R2 bucket names** — naming is operational, but the
   names must stay environment-scoped and must never be shared with production.
+
+`TEC-12` is drafted at `TEC-12-VENDOR-DATA-PROCESSING.md`. It is **not approved** until the founder
+signs it; the legal basis, DPAs, Supabase region, and R2 jurisdiction remain open in that record.
 
 ## 2. Non-negotiables
 
@@ -98,8 +102,8 @@ automation that performs these steps.
 
 ### 5.2 Fly.io API and worker
 
-1. Create two apps, for example `hivorr-staging-api` and `hivorr-staging-worker`, in the approved
-   region. The worker must not have a public service.
+1. Create two apps, for example `hivorr-staging-api` and `hivorr-staging-worker`, in `jnb`
+   (Johannesburg). The worker must not have a public service.
 2. Build and deploy the API and worker from the release commit. Production promotion reuses the
    recorded artifact; staging may build from `staging`.
 3. Inject `HIVORR_ENV=staging`, `BACKEND_ENVIRONMENT=staging`,
