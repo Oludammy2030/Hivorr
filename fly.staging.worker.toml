@@ -1,0 +1,24 @@
+app = "hivorr-staging-worker"
+primary_region = "jnb"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# No services: the worker has no public port. Its health listener is reachable
+# only on the private Fly network at hivorr-staging-worker.internal:3001.
+[processes]
+  app = "node server/dist/worker.js"
+
+[env]
+  HIVORR_ENV = "staging"
+  BACKEND_ENVIRONMENT = "staging"
+  SUPABASE_PROJECT_REF = "hkswhaltyqfqkgswukfs"
+  SESSION_ISSUER = "hivorr-staging"
+  LOG_LEVEL = "info"
+  WORKER_POLL_INTERVAL_MS = "1000"
+  WORKER_BATCH_SIZE = "20"
+  WORKER_LEASE_MS = "60000"
+  WORKER_MAX_ATTEMPTS = "5"
+  WORKER_RETRY_BASE_MS = "5000"
+  WORKER_HEALTH_PORT = "3001"
+  WORKER_HEALTH_HOST = "0.0.0.0"

@@ -184,6 +184,9 @@ jobs:
       - name: Apply and verify migrations
         run: pnpm test:db
 
+      - name: Apply migrations through the deployment runner
+        run: pnpm migrations:apply && pnpm migrations:apply
+
       - name: Identity integration
         env:
           IDENTITY_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
