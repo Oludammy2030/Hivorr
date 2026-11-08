@@ -199,7 +199,6 @@ export function verifyEnvironmentTopology(topology, options = {}) {
     const secrets = environment.requiredSecrets ?? []
     for (const secret of [
       "DATABASE_URL",
-      "SESSION_SIGNING_KEY",
       "MFA_ENCRYPTION_KEY",
       "WORKER_DATABASE_URL",
     ]) {

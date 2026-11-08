@@ -34,8 +34,6 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 | --- | --- | --- |
 | `DATABASE_URL` | `staging` | Rotated staging connection string |
 | `DATABASE_URL` | `production` | Rotated production connection string |
-| `SESSION_SIGNING_KEY` | `staging` | Staging-only signing key |
-| `SESSION_SIGNING_KEY` | `production` | Production-only signing key |
 | `MFA_ENCRYPTION_KEY` | `staging` | 32 bytes, base64, staging-only |
 | `MFA_ENCRYPTION_KEY` | `production` | 32 bytes, base64, production-only |
 | `WORKER_DATABASE_URL` | `staging` | Optional least-privilege worker role; falls back to `DATABASE_URL` |
@@ -47,13 +45,15 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 it with `openssl rand -base64 32`. The two environments must never share a key, because a staging
 ciphertext must not be readable in production.
 
+**There is no `SESSION_SIGNING_KEY`.** Access and refresh tokens are opaque random values stored as
+hashes; nothing is signed. A `SESSION_SIGNING_KEY` secret may still exist from an earlier setup. It
+is unused and can be deleted.
+
 Commands (they prompt for the value without echoing it):
 
 ```sh
 gh secret set DATABASE_URL --env staging
 gh secret set DATABASE_URL --env production
-gh secret set SESSION_SIGNING_KEY --env staging
-gh secret set SESSION_SIGNING_KEY --env production
 gh secret set MFA_ENCRYPTION_KEY --env staging
 gh secret set MFA_ENCRYPTION_KEY --env production
 ```
@@ -144,10 +144,9 @@ credentials. `.env*` is ignored except `.env.example`.
 
 1. Rotate both database passwords exposed on 2026-11-07. Done.
 2. Set the rotated `DATABASE_URL` values as environment secrets. Done.
-3. Generate separate `SESSION_SIGNING_KEY` values.
-4. Generate separate `MFA_ENCRYPTION_KEY` values and set them per environment.
-5. Wire `pnpm verify:backend-target` into the Fly.io deploy job when it exists.
-6. Bootstrap the first `admin.grant.manage` grant per environment (§5) after `MFA_ENCRYPTION_KEY` is set.
-7. Add required-reviewer protection when the GitHub plan supports it.
-8. Provision staging only after `TEC-12` is closed. The topology is recorded in
+3. Generate separate `MFA_ENCRYPTION_KEY` values and set them per environment.
+4. Wire `pnpm verify:backend-target` into the Fly.io deploy job when it exists.
+5. Bootstrap the first `admin.grant.manage` grant per environment (§5) after `MFA_ENCRYPTION_KEY` is set.
+6. Add required-reviewer protection when the GitHub plan supports it.
+7. Provision staging only after `TEC-12` is closed. The topology is recorded in
    `config/environments.json`; the executed sequence is `STAGING_PROVISIONING.md`.

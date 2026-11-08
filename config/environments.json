@@ -22,7 +22,6 @@
       "accessProtected": ["control", "staff", "partner"],
       "requiredSecrets": [
         "DATABASE_URL",
-        "SESSION_SIGNING_KEY",
         "MFA_ENCRYPTION_KEY",
         "WORKER_DATABASE_URL",
         "FLY_API_TOKEN"
@@ -47,7 +46,6 @@
       "accessProtected": ["control", "staff", "partner"],
       "requiredSecrets": [
         "DATABASE_URL",
-        "SESSION_SIGNING_KEY",
         "MFA_ENCRYPTION_KEY",
         "WORKER_DATABASE_URL",
         "FLY_API_TOKEN"
