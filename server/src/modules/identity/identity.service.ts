@@ -67,10 +67,19 @@ export interface SessionResult {
   readonly idleExpiresAt: string
 }
 
-export interface IssuedSession extends SessionResult {
+export interface IssuedSession
+  extends SessionResult {
+  /** Short-lived access token, sent in the host-only session cookie. */
+  /** Long-lived refresh token, sent only to the auth endpoints. */
   readonly token: string
+  readonly refreshToken: string
   readonly maxAgeSeconds: number
+  readonly refreshMaxAgeSeconds: number
+  readonly accessExpiresAt: string
 }
+
+/** A refresh token presented within this window of first use is a retry, not a breach. */
+export const REFRESH_REUSE_LEEWAY_MS = 10 * 1000
 
 export interface MfaChallenge {
   readonly mfaRequired: true
@@ -143,6 +152,22 @@ interface ChallengeRow {
   attempts: number
   expires_at: string
   consumed_at: string | null
+}
+
+interface RefreshRow {
+  refresh_id: string
+  session_id: string
+  user_id: string
+  account_id: string
+  audience: PortalId
+  environment: EnvironmentId
+  email: string
+  token_expires_at: string
+  session_expires_at: string
+  session_idle_expires_at: string
+  session_revoked_at: string | null
+  used_at: string | null
+  replaced_by: string | null
 }
 
 export function normalizeEmail(email: string): string {
@@ -419,12 +444,17 @@ export class IdentityService {
       context: RequestContext
     },
   ): Promise<IssuedSession> {
-    const token = createSessionToken()
-    const tokenHash = hashSessionToken(token)
+    const accessToken = createSessionToken()
+    const accessTokenHash = hashSessionToken(accessToken)
+    const refreshToken = createSessionToken()
+    const refreshTokenHash = hashSessionToken(refreshToken)
     const policy = sessionPolicy(input.context.audience)
     const now = Date.now()
     const expiresAt = new Date(now + policy.absoluteMs)
     const idleExpiresAt = new Date(now + policy.idleMs)
+    const accessExpiresAt = new Date(
+      Math.min(now + policy.accessMs, expiresAt.getTime()),
+    )
 
     let deviceId: string | null = null
     if (input.deviceName) {
@@ -437,23 +467,34 @@ export class IdentityService {
 
     const session = await client.query<{ id: string }>(
       `insert into identity.sessions
-         (user_id, device_id, audience, environment, refresh_token_hash, idle_expires_at, expires_at)
-       values ($1, $2, $3, $4, $5, $6, $7)
+         (user_id, device_id, audience, environment, refresh_token_hash,
+          access_token_hash, access_expires_at, idle_expires_at, expires_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        returning id`,
       [
         input.userId,
         deviceId,
         input.context.audience,
         input.context.environment,
-        tokenHash,
+        refreshTokenHash,
+        accessTokenHash,
+        accessExpiresAt.toISOString(),
         idleExpiresAt.toISOString(),
         expiresAt.toISOString(),
       ],
     )
+    const sessionId = session.rows[0].id
+
+    await client.query(
+      `insert into identity.refresh_tokens (session_id, token_hash, expires_at)
+       values ($1, $2, $3)`,
+      [sessionId, refreshTokenHash, expiresAt.toISOString()],
+    )
 
     return {
-      token,
-      sessionId: session.rows[0].id,
+      token: accessToken,
+      refreshToken,
+      sessionId,
       accountId: input.accountId,
       userId: input.userId,
       email: input.email,
@@ -461,7 +502,9 @@ export class IdentityService {
       environment: input.context.environment,
       expiresAt: expiresAt.toISOString(),
       idleExpiresAt: idleExpiresAt.toISOString(),
-      maxAgeSeconds: Math.floor(policy.absoluteMs / 1000),
+      accessExpiresAt: accessExpiresAt.toISOString(),
+      maxAgeSeconds: Math.floor(policy.accessMs / 1000),
+      refreshMaxAgeSeconds: Math.floor(policy.absoluteMs / 1000),
     }
   }
 
@@ -483,7 +526,7 @@ export class IdentityService {
         idle_expires_at: string
         revoked_at: string | null
         email: string
-      }>("select * from identity.find_session($1)", [tokenHash])
+      }>("select * from identity.find_session_by_access($1)", [tokenHash])
       const session = lookup.rows[0]
       if (!session) {
         throw new ApiError(
@@ -539,7 +582,7 @@ export class IdentityService {
         expires_at?: string
         idle_expires_at?: string
         revoked_at?: string | null
-      }>("select * from identity.find_session($1)", [tokenHash])
+      }>("select * from identity.find_session_by_access($1)", [tokenHash])
       const session = lookup.rows[0]
       if (!session) return
       this.assertSessionIsUsable(session, context, { includeExpiry: false })
@@ -561,6 +604,250 @@ export class IdentityService {
         targetId: session.session_id,
       })
       await client.query("commit")
+    } finally {
+      client.release()
+    }
+  }
+
+  /**
+   * Revokes the session that owns a refresh token. Used by sign-out when the
+   * access cookie has already expired but the refresh cookie is still present.
+   */
+  async signOutByRefresh(
+    refreshToken: string,
+    context: RequestContext,
+  ): Promise<void> {
+    const client = await this.database.pool.connect()
+
+    try {
+      const lookup = await client.query<RefreshRow>(
+        "select * from identity.find_refresh_token($1)",
+        [hashSessionToken(refreshToken)],
+      )
+      const found = lookup.rows[0]
+      if (!found) return
+      if (
+        found.audience !== context.audience ||
+        found.environment !== context.environment
+      ) {
+        return
+      }
+      if (found.session_revoked_at) return
+
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          found.account_id,
+          found.user_id,
+        ])
+        await client.query(
+          "update identity.sessions set revoked_at = now(), revoked_reason = 'sign_out' where id = $1 and revoked_at is null",
+          [found.session_id],
+        )
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: found.user_id,
+          action: "identity.sign_out",
+          targetType: "session",
+          targetId: found.session_id,
+        })
+        await client.query("commit")
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
+      }
+    } finally {
+      client.release()
+    }
+  }
+
+  /**
+   * Rotates a refresh token. The old token is marked used inside the same
+   * transaction that writes its replacement, so two concurrent successes are
+   * impossible. A spent token presented outside the retry leeway is treated as
+   * theft: the whole session is revoked and the event is audited.
+   */
+  async refresh(
+    refreshToken: string,
+    context: RequestContext,
+  ): Promise<IssuedSession> {
+    const client = await this.database.pool.connect()
+
+    try {
+      const lookup = await client.query<RefreshRow>(
+        "select * from identity.find_refresh_token($1)",
+        [hashSessionToken(refreshToken)],
+      )
+      const found = lookup.rows[0]
+      if (!found) {
+        throw new ApiError(
+          "UNAUTHENTICATED",
+          "The refresh token is invalid or has expired.",
+          401,
+        )
+      }
+      if (
+        found.audience !== context.audience ||
+        found.environment !== context.environment
+      ) {
+        throw new ApiError(
+          "FORBIDDEN",
+          "This refresh token belongs to another portal.",
+          403,
+        )
+      }
+
+      let committed = false
+      await client.query("begin")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          found.account_id,
+          found.user_id,
+        ])
+
+        const locked = await client.query<{
+          used_at: string | null
+          expires_at: string
+        }>(
+          "select used_at, expires_at from identity.refresh_tokens where id = $1 for update",
+          [found.refresh_id],
+        )
+        const token = locked.rows[0]
+        if (!token) {
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The refresh token is invalid or has expired.",
+            401,
+          )
+        }
+
+        if (token.used_at) {
+          const withinLeeway =
+            Date.now() - new Date(token.used_at).getTime() <=
+            REFRESH_REUSE_LEEWAY_MS
+          if (!withinLeeway) {
+            await client.query(
+              `update identity.sessions
+               set revoked_at = now(), revoked_reason = 'refresh_reuse'
+               where id = $1 and revoked_at is null`,
+              [found.session_id],
+            )
+            await this.audit(client, context, {
+              actorType: "user",
+              actorId: found.user_id,
+              action: "identity.refresh_reuse_detected",
+              targetType: "session",
+              targetId: found.session_id,
+            })
+          }
+          await client.query("commit")
+          committed = true
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The refresh token has already been used.",
+            401,
+          )
+        }
+
+        const now = Date.now()
+        const session = await client.query<{
+          expires_at: string
+          idle_expires_at: string
+          revoked_at: string | null
+        }>(
+          `select expires_at, idle_expires_at, revoked_at
+           from identity.sessions where id = $1 for update`,
+          [found.session_id],
+        )
+        const current = session.rows[0]
+        if (
+          !current ||
+          current.revoked_at ||
+          new Date(current.expires_at).getTime() <= now ||
+          new Date(current.idle_expires_at).getTime() <= now ||
+          new Date(token.expires_at).getTime() <= now
+        ) {
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "The refresh token is invalid or has expired.",
+            401,
+          )
+        }
+
+        const policy = sessionPolicy(context.audience)
+        const accessToken = createSessionToken()
+        const accessTokenHash = hashSessionToken(accessToken)
+        const nextRefreshToken = createSessionToken()
+        const nextRefreshTokenHash = hashSessionToken(nextRefreshToken)
+        const accessExpiresAt = new Date(
+          Math.min(
+            now + policy.accessMs,
+            new Date(current.expires_at).getTime(),
+          ),
+        )
+        const idleExpiresAt = new Date(
+          Math.min(now + policy.idleMs, new Date(current.expires_at).getTime()),
+        )
+
+        const replacement = await client.query<{ id: string }>(
+          `insert into identity.refresh_tokens
+             (session_id, token_hash, expires_at)
+           values ($1, $2, $3)
+           returning id`,
+          [found.session_id, nextRefreshTokenHash, current.expires_at],
+        )
+        await client.query(
+          "update identity.refresh_tokens set used_at = now(), replaced_by = $1 where id = $2",
+          [replacement.rows[0].id, found.refresh_id],
+        )
+        await client.query(
+          `update identity.sessions
+           set refresh_token_hash = $1,
+               access_token_hash = $2,
+               access_expires_at = $3,
+               idle_expires_at = $4,
+               last_seen_at = now()
+           where id = $5`,
+          [
+            nextRefreshTokenHash,
+            accessTokenHash,
+            accessExpiresAt.toISOString(),
+            idleExpiresAt.toISOString(),
+            found.session_id,
+          ],
+        )
+        await this.audit(client, context, {
+          actorType: "user",
+          actorId: found.user_id,
+          action: "identity.refresh",
+          targetType: "session",
+          targetId: found.session_id,
+        })
+        await client.query("commit")
+        committed = true
+
+        return {
+          token: accessToken,
+          refreshToken: nextRefreshToken,
+          sessionId: found.session_id,
+          accountId: found.account_id,
+          userId: found.user_id,
+          email: found.email,
+          audience: found.audience,
+          environment: found.environment,
+          expiresAt: current.expires_at,
+          idleExpiresAt: idleExpiresAt.toISOString(),
+          accessExpiresAt: accessExpiresAt.toISOString(),
+          maxAgeSeconds: Math.floor(policy.accessMs / 1000),
+          refreshMaxAgeSeconds: Math.max(
+            0,
+            Math.floor((new Date(current.expires_at).getTime() - now) / 1000),
+          ),
+        }
+      } catch (error) {
+        if (!committed) await client.query("rollback").catch(() => undefined)
+        throw error
+      }
     } finally {
       client.release()
     }
@@ -1047,7 +1334,7 @@ export class IdentityService {
     context: RequestContext,
   ): Promise<SessionRow> {
     const lookup = await client.query<SessionRow>(
-      "select * from identity.find_session($1)",
+      "select * from identity.find_session_by_access($1)",
       [hashSessionToken(token)],
     )
     const session = lookup.rows[0]

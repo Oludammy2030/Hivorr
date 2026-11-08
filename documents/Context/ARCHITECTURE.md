@@ -2485,12 +2485,12 @@ those requires explicit founder approval.
 Stage 1 is complete; Stage 2 is complete; Stage 3 has started with the API bootstrap, configuration
 contract, health endpoints, capability engine, database baseline (module schemas, platform tables,
 identity spine, UUIDv7, roles, grants, append-only audit), RLS policies and transaction-scoped
-identity context, and their tests. The first identity slice issues a single opaque server-side session
-token bound to one portal and one environment; privileged portals require a confirmed TOTP factor and
-exchange a short-lived, single-use challenge for a session, recovery codes are single-use, TOTP secrets
-are encrypted at the application layer, and sessions can be listed and revoked. The access/refresh
-split with rotation and reuse detection, grant management, and the privileged grant surface are not
-built yet. Stages 4–10 are not started. The worker, provider adapters, portal screens, and working
+identity context, and their tests. Identity now uses a short-lived opaque access token plus a rotating
+refresh token bound to one portal and one environment; the refresh chain detects reuse and revokes the
+session, privileged portals require a confirmed TOTP factor and exchange a short-lived, single-use
+challenge for a session, recovery codes are single-use, TOTP secrets are encrypted at the application
+layer, and sessions can be listed and revoked. Grant management and the privileged grant surface are
+not built yet. Stages 4–10 are not started. The worker, provider adapters, portal screens, and working
 staging/production deployment are not built. The live main and staging hostnames were detached from
 the legacy Flutter origin on 7 November 2026 and are currently unavailable; the React production
 deployment does not exist yet.

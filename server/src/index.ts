@@ -37,6 +37,7 @@ export {
   IdentityService,
   MFA_CHALLENGE_TTL_MS,
   MFA_MAX_ATTEMPTS,
+  REFRESH_REUSE_LEEWAY_MS,
 } from "./modules/identity/identity.service"
 export type {
   IssuedSession,
@@ -67,8 +68,11 @@ export {
   verifyTotp,
 } from "./modules/identity/totp"
 export {
+  buildRefreshCookie,
   buildSessionCookie,
+  clearRefreshCookie,
   clearSessionCookie,
+  refreshCookieName,
   sessionCookieName,
   sessionPolicy,
 } from "./modules/identity/session-policy"

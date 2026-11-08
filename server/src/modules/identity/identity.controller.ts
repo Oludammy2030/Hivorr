@@ -18,6 +18,7 @@ import { API_CONFIG, type ApiConfig } from "../../config"
 import {
   IdentityService,
   isMfaChallenge,
+  type IssuedSession,
   type MfaChallenge,
   type RequestContext,
   type SessionResult,
@@ -25,8 +26,11 @@ import {
 } from "./identity.service"
 import { resolveAudience } from "./portal"
 import {
+  buildRefreshCookie,
   buildSessionCookie,
+  clearRefreshCookie,
   clearSessionCookie,
+  refreshCookieName,
   sessionCookieName,
 } from "./session-policy"
 
@@ -115,14 +119,7 @@ export class IdentityController {
       return result
     }
 
-    reply.header(
-      "set-cookie",
-      buildSessionCookie(
-        sessionCookieName(result.audience),
-        result.token,
-        result.maxAgeSeconds,
-      ),
-    )
+    this.setSessionCookies(reply, result)
     return sessionBody(result)
   }
 
@@ -137,14 +134,7 @@ export class IdentityController {
     const context = this.requestContext(request)
     const session = await this.identity.verifyMfa(input, context)
 
-    reply.header(
-      "set-cookie",
-      buildSessionCookie(
-        sessionCookieName(session.audience),
-        session.token,
-        session.maxAgeSeconds,
-      ),
-    )
+    this.setSessionCookies(reply, session)
     return sessionBody(session)
   }
 
@@ -179,6 +169,33 @@ export class IdentityController {
     const context = this.requestContext(request)
     const token = this.sessionToken(request, context)
     return this.identity.stepUp(token, input.code, context)
+  }
+
+  @Post("refresh")
+  @HttpCode(200)
+  async refresh(
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<SessionResult> {
+    const context = this.requestContext(request)
+    const refreshToken = request.cookies?.[refreshCookieName(context.audience)]
+    if (!refreshToken) {
+      this.clearSessionCookies(reply, context.audience)
+      throw new ApiError(
+        "UNAUTHENTICATED",
+        "A valid refresh token is required.",
+        401,
+      )
+    }
+
+    try {
+      const session = await this.identity.refresh(refreshToken, context)
+      this.setSessionCookies(reply, session)
+      return sessionBody(session)
+    } catch (error) {
+      this.clearSessionCookies(reply, context.audience)
+      throw error
+    }
   }
 
   @Get("session")
@@ -231,12 +248,40 @@ export class IdentityController {
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<void> {
     const context = this.requestContext(request)
-    const token = request.cookies?.[sessionCookieName(context.audience)]
-    if (token) await this.identity.signOut(token, context)
-    reply.header(
-      "set-cookie",
-      clearSessionCookie(sessionCookieName(context.audience)),
-    )
+    const accessToken = request.cookies?.[sessionCookieName(context.audience)]
+    const refreshToken = request.cookies?.[refreshCookieName(context.audience)]
+
+    if (accessToken) {
+      await this.identity.signOut(accessToken, context)
+    } else if (refreshToken) {
+      await this.identity.signOutByRefresh(refreshToken, context)
+    }
+    this.clearSessionCookies(reply, context.audience)
+  }
+
+  private setSessionCookies(reply: FastifyReply, session: IssuedSession): void {
+    reply.header("set-cookie", [
+      buildSessionCookie(
+        sessionCookieName(session.audience),
+        session.token,
+        session.maxAgeSeconds,
+      ),
+      buildRefreshCookie(
+        refreshCookieName(session.audience),
+        session.refreshToken,
+        session.refreshMaxAgeSeconds,
+      ),
+    ])
+  }
+
+  private clearSessionCookies(
+    reply: FastifyReply,
+    audience: RequestContext["audience"],
+  ): void {
+    reply.header("set-cookie", [
+      clearSessionCookie(sessionCookieName(audience)),
+      clearRefreshCookie(refreshCookieName(audience)),
+    ])
   }
 
   private sessionToken(

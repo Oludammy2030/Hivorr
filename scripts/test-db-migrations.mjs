@@ -161,8 +161,8 @@ try {
     [userId, accountId],
   )
   await testClient.query(
-    "insert into identity.sessions (user_id, audience, environment, refresh_token_hash, idle_expires_at, expires_at) values ($1, 'app', 'test', $2, now() + interval '30 minutes', now() + interval '12 hours')",
-    [userId, "refresh-hash-test"],
+    "insert into identity.sessions (user_id, audience, environment, refresh_token_hash, access_token_hash, access_expires_at, idle_expires_at, expires_at) values ($1, 'app', 'test', $2, $3, now() + interval '15 minutes', now() + interval '30 minutes', now() + interval '12 hours')",
+    [userId, "refresh-hash-test", "access-hash-test"],
   )
   await testClient.query(
     "insert into identity.grants (user_id, grant_type, scope, environment) values ($1, 'admin', 'admin.audit.read', 'test')",
@@ -183,8 +183,8 @@ try {
   let invalidAudienceRejected = false
   try {
     await testClient.query(
-      "insert into identity.sessions (user_id, audience, environment, refresh_token_hash, idle_expires_at, expires_at) values ($1, 'admin', 'test', $2, now(), now())",
-      [userId, "invalid-audience-hash"],
+      "insert into identity.sessions (user_id, audience, environment, refresh_token_hash, access_token_hash, access_expires_at, idle_expires_at, expires_at) values ($1, 'admin', 'test', $2, $3, now(), now(), now())",
+      [userId, "invalid-audience-hash", "invalid-audience-access-hash"],
     )
   } catch {
     invalidAudienceRejected = true

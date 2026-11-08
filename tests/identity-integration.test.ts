@@ -8,12 +8,33 @@ import { ApiError } from "../server/src/common/errors"
 import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
 import { DatabaseService } from "../server/src/db/database.service"
-import { IdentityService } from "../server/src/modules/identity/identity.service"
+import {
+  hashSessionToken,
+  IdentityService,
+} from "../server/src/modules/identity/identity.service"
 import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
 const baseUrl = process.env.IDENTITY_TEST_DATABASE_URL
 const describeIntegration = baseUrl ? describe : describe.skip
 const databaseName = `hivorr_identity_test_${Date.now()}`
+
+type CookieJar = Record<string, string>
+
+function readCookies(headers: Record<string, unknown>): CookieJar {
+  const raw = headers["set-cookie"]
+  const entries = Array.isArray(raw) ? raw : raw ? [raw] : []
+  const jar: CookieJar = {}
+  for (const entry of entries) {
+    const pair = String(entry).split(";")[0]
+    const index = pair.indexOf("=")
+    if (index > 0) jar[pair.slice(0, index)] = pair.slice(index + 1)
+  }
+  return jar
+}
+
+function cookieHeader(jar: CookieJar, name: string): string {
+  return `${name}=${jar[name]}`
+}
 
 describeIntegration("identity service integration", () => {
   let admin: Client
@@ -194,10 +215,10 @@ describeIntegration("identity service integration", () => {
     expect(signedIn.statusCode).toBe(200)
     expect(signedIn.json()).not.toHaveProperty("token")
 
-    const setCookie = signedIn.headers["set-cookie"]
-    expect(typeof setCookie).toBe("string")
-    const cookie = String(setCookie).split(";")[0]
-    expect(cookie).toContain("__Host-hivorr_app_sid=")
+    const jar = readCookies(signedIn.headers)
+    expect(jar["__Host-hivorr_app_sid"]).toBeTruthy()
+    expect(jar["hivorr_app_rt"]).toBeTruthy()
+    const cookie = cookieHeader(jar, "__Host-hivorr_app_sid")
 
     const session = await app.inject({
       method: "GET",
@@ -242,7 +263,8 @@ describeIntegration("identity service integration", () => {
       },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = String(signedIn.headers["set-cookie"]).split(";")[0]
+    const appJar = readCookies(signedIn.headers)
+    const appCookie = cookieHeader(appJar, "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -333,7 +355,10 @@ describeIntegration("identity service integration", () => {
       audience: "control",
       environment: "staging",
     })
-    const controlCookie = String(verified.headers["set-cookie"]).split(";")[0]
+    const controlCookie = cookieHeader(
+      readCookies(verified.headers),
+      "__Host-hivorr_control_sid",
+    )
     expect(controlCookie).toContain("__Host-hivorr_control_sid=")
 
     const replayedChallenge = await app.inject({
@@ -405,5 +430,92 @@ describeIntegration("identity service integration", () => {
       headers: { host: mainHost, cookie: appCookie },
     })
     expect(appAfterRevoke.statusCode).toBe(401)
+  })
+
+  it("rotates refresh tokens and revokes the session when an old token is reused", async () => {
+    const host = "staging.hivorr.com"
+    const json = { "content-type": "application/json" }
+
+    const signedIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, ...json },
+      payload: {
+        email: "http@example.test",
+        password: "http-test-password",
+      },
+    })
+    expect(signedIn.statusCode).toBe(200)
+    const original = readCookies(signedIn.headers)
+    const oldAccess = cookieHeader(original, "__Host-hivorr_app_sid")
+    const oldRefresh = cookieHeader(original, "hivorr_app_rt")
+    expect(oldRefresh).toContain("hivorr_app_rt=")
+
+    const beforeRefresh = await app.inject({
+      method: "GET",
+      url: "/v1/auth/session",
+      headers: { host, cookie: oldAccess },
+    })
+    expect(beforeRefresh.statusCode).toBe(200)
+
+    const refreshed = await app.inject({
+      method: "POST",
+      url: "/v1/auth/refresh",
+      headers: { host, cookie: oldRefresh },
+    })
+    expect(refreshed.statusCode).toBe(200)
+    expect(refreshed.json()).not.toHaveProperty("refreshToken")
+    expect(refreshed.json()).not.toHaveProperty("token")
+    const rotated = readCookies(refreshed.headers)
+    expect(rotated["hivorr_app_rt"]).toBeTruthy()
+    expect(rotated["hivorr_app_rt"]).not.toBe(original["hivorr_app_rt"])
+    const newAccess = cookieHeader(rotated, "__Host-hivorr_app_sid")
+
+    const staleAccess = await app.inject({
+      method: "GET",
+      url: "/v1/auth/session",
+      headers: { host, cookie: oldAccess },
+    })
+    expect(staleAccess.statusCode).toBe(401)
+
+    const afterRefresh = await app.inject({
+      method: "GET",
+      url: "/v1/auth/session",
+      headers: { host, cookie: newAccess },
+    })
+    expect(afterRefresh.statusCode).toBe(200)
+
+    // Reusing the spent token outside the retry leeway is treated as theft.
+    await setup.query(
+      "update identity.refresh_tokens set used_at = now() - interval '1 minute' where token_hash = $1",
+      [hashSessionToken(original["hivorr_app_rt"])],
+    )
+    const replay = await app.inject({
+      method: "POST",
+      url: "/v1/auth/refresh",
+      headers: { host, cookie: oldRefresh },
+    })
+    expect(replay.statusCode).toBe(401)
+
+    const revoked = await app.inject({
+      method: "GET",
+      url: "/v1/auth/session",
+      headers: { host, cookie: newAccess },
+    })
+    expect(revoked.statusCode).toBe(401)
+
+    const reuseAudit = await setup.query(
+      "select count(*)::int as count from platform.audit_log where action = 'identity.refresh_reuse_detected'",
+    )
+    expect(reuseAudit.rows[0].count).toBeGreaterThanOrEqual(1)
+  })
+
+  it("refuses refresh without a refresh cookie", async () => {
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/auth/refresh",
+      headers: { host: "staging.hivorr.com" },
+    })
+    expect(response.statusCode).toBe(401)
   })
 })

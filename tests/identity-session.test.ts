@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  buildRefreshCookie,
   buildSessionCookie,
+  clearRefreshCookie,
   clearSessionCookie,
+  refreshCookieName,
   sessionCookieName,
   sessionPolicy,
 } from "../server/src/modules/identity/session-policy"
@@ -33,13 +36,18 @@ describe("identity session policy", () => {
     expect(sessionPolicy("app")).toEqual({
       absoluteMs: 12 * 60 * 60 * 1000,
       idleMs: 30 * 60 * 1000,
+      accessMs: 30 * 60 * 1000,
     })
     expect(sessionPolicy("control")).toEqual({
       absoluteMs: 8 * 60 * 60 * 1000,
       idleMs: 15 * 60 * 1000,
+      accessMs: 15 * 60 * 1000,
     })
     expect(sessionPolicy("staff").idleMs).toBe(15 * 60 * 1000)
     expect(sessionPolicy("partner").idleMs).toBe(15 * 60 * 1000)
+    expect(sessionPolicy("app").accessMs).toBeLessThan(
+      sessionPolicy("app").absoluteMs,
+    )
   })
 
   it("uses host-only cookie names and secure attributes", () => {
@@ -54,6 +62,16 @@ describe("identity session policy", () => {
     expect(cookie).toContain("Path=/")
     expect(cookie).toContain("Max-Age=3600")
     expect(clearSessionCookie("__Host-hivorr_app_sid")).toContain("Max-Age=0")
+
+    expect(refreshCookieName("app")).toBe("hivorr_app_rt")
+    const refresh = buildRefreshCookie("hivorr_app_rt", "refresh", 7200)
+    expect(refresh).toContain("hivorr_app_rt=refresh")
+    expect(refresh).toContain("HttpOnly")
+    expect(refresh).toContain("Secure")
+    expect(refresh).toContain("SameSite=Strict")
+    expect(refresh).toContain("Path=/v1/auth")
+    expect(refresh).toContain("Max-Age=7200")
+    expect(clearRefreshCookie("hivorr_app_rt")).toContain("Max-Age=0")
   })
 })
 
