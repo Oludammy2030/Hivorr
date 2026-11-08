@@ -145,11 +145,19 @@ check(
 
 const verifiedWithBlocker = mutate((topology) => {
   topology.environments.staging.status = "verified"
+  topology.blockers = [
+    {
+      id: "test-blocker",
+      summary: "A synthetic open blocker for the policy test.",
+      source: "test",
+      blocks: ["staging"],
+    },
+  ]
 })
 check(
   "staging cannot be verified while a blocker is open",
   !verifiedWithBlocker.ok &&
-    verifiedWithBlocker.issues.some((issue) => issue.includes("TEC-12")),
+    verifiedWithBlocker.issues.some((issue) => issue.includes("test-blocker")),
   verifiedWithBlocker.issues.join("\n"),
 )
 

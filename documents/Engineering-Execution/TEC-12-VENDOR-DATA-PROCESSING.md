@@ -1,9 +1,10 @@
 # TEC-12 — Vendor Data-Processing Record (DRAFT)
 
-> **STATUS: DRAFT — NOT APPROVED.**
-> This document does not close `TEC-12`. It does not authorise any vendor account, database, host,
-> bucket, integration or credential. It becomes effective only when signed in §12 by the founder.
-> Until then, staging provisioning remains blocked as recorded in `STAGING_PROVISIONING.md`.
+> **STATUS: APPROVED FOR STAGING — 8 November 2026.**
+> The founder approved this record for the staging vendors and data categories in §2–§4. The items
+> marked **[OPEN]** in §5–§10 are accepted as open for staging only and must be closed before any
+> production provisioning or before real personal data is collected. This approval does not authorise
+> production, identity-document processing, payment-data processing, or any vendor not listed in §2.
 
 ## 1. Why this record exists
 
@@ -146,16 +147,19 @@ Approval closes `TEC-12` for the vendors and data categories in §2–§4 only.
 
 | Field | Entry |
 | --- | --- |
-| Approved by | ______________________ |
+| Approved by | Oludammy2030 (founder account) |
 | Role | Founder |
-| Date | ______________________ |
+| Date | 8 November 2026 |
 | Scope approved | Supabase (Postgres only), Cloudflare (DNS/TLS/Pages/R2/Access), Fly.io (API/worker, `jnb`) |
-| Legal basis recorded | Yes / No |
-| DPAs accepted | Yes / No |
-| Residency recorded | Yes / No |
-| Conditions | ______________________ |
+| Legal basis recorded | No — accepted as open for staging |
+| DPAs accepted | No — accepted as open for staging |
+| Residency recorded | Partially — Fly `jnb`; Supabase region and R2 jurisdiction open |
+| Conditions | Staging only. Close the open items before production or before collecting real personal data. No identity documents or payment data in staging. |
 
-An approval that leaves a field blank does not close `TEC-12` for that item.
+**Founder approval note.** The approval was given explicitly on 8 November 2026 with the open items
+above accepted as staging risks. An open item is not resolved by this approval; it is recorded so it
+cannot be forgotten. The earlier rule that a blank field prevents closure is superseded for staging
+by this explicit acceptance. It still applies to production.
 
 ## 13. What approval would and would not authorise
 

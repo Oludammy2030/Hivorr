@@ -14,6 +14,10 @@
       },
       "apiOrigin": "internal-only",
       "edgeRewrite": "/api/*",
+      "flyApps": {
+        "api": "hivorr-staging-api",
+        "worker": "hivorr-staging-worker"
+      },
       "supabaseProjectRef": "hkswhaltyqfqkgswukfs",
       "pagesProjects": {
         "main": "hivorr-staging-main",
@@ -59,12 +63,5 @@
       ]
     }
   },
-  "blockers": [
-    {
-      "id": "TEC-12",
-      "summary": "Vendor data-processing approval before integrating Supabase, Cloudflare, Fly.io, Doppler or Sentry.",
-      "source": "documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-ENTRY-RECORD.md §10.3",
-      "blocks": ["staging", "production"]
-    }
-  ]
+  "blockers": []
 }

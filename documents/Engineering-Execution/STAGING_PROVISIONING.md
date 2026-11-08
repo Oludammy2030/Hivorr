@@ -1,19 +1,22 @@
 # Staging Provisioning Runbook (EP-01-060)
 
-**Status:** Blocked. The topology is recorded in `config/environments.json` and validated by
-`pnpm topology:verify`, but **no host, database, bucket, certificate, DNS record or credential has
-been created**. This runbook is the reproducible sequence for the founder to execute when the
-blockers clear.
+**Status:** Approved for staging and in progress (8 November 2026). `TEC-12` is approved for staging.
+The Fly apps `hivorr-staging-api` and `hivorr-staging-worker` exist, and all four Pages projects exist.
+R2 bucket creation is blocked until R2 is enabled on the Cloudflare account. No hostname resolves,
+no deployment exists, and no database migration has been applied to staging.
 
-## 1. Blocker — do not provision until it is closed
+## 1. Remaining execution prerequisites
 
-| Blocker | What it means | Source |
-| --- | --- | --- |
-| `TEC-12` | Vendor data-processing approval must record what data leaves the system, where it goes, the legal basis, processing terms, failure behaviour and exit path before Supabase, Cloudflare, Fly.io, Doppler or Sentry is integrated. | EP-01 entry record §10.3 |
-
-The former #26 TLS blocker is **resolved**: the three privileged staging hosts are flattened to
-first-level names and are covered by Cloudflare Universal SSL. The validator refuses to mark staging
-`verified` while `TEC-12` remains open.
+| Item | State |
+| --- | --- |
+| `TEC-12` | **Approved for staging.** Open items are recorded in the record and must close before production. |
+| #26 TLS | **Resolved** by flattened first-level staging hostnames; Universal SSL covers them. |
+| Fly apps | Created in `jnb`: `hivorr-staging-api`, `hivorr-staging-worker`. |
+| Pages projects | Created: `hivorr-staging-main`, `hivorr-staging-control`, `hivorr-staging-staff`, `hivorr-staging-partner`. |
+| R2 | **Blocked:** enable R2 in the Cloudflare dashboard before creating `hivorr-staging-media` and `hivorr-staging-exports`. |
+| Custom domains and DNS | Not attached. Add each Pages custom domain in the dashboard; the zone is in the same account. |
+| Access | Not configured. Create the three Access applications in Zero Trust. |
+| API/worker deployment | Not built. The server needs a production build and container image first. |
 
 The Fly.io region is recorded as **`jnb` (Johannesburg)** in `config/environments.json`.
 
@@ -199,8 +202,8 @@ production buckets, or production DNS. Record the teardown and the reason.
 
 ## 8. What this runbook does not do
 
-- It does not approve `TEC-12`.
-- It does not choose the Cloudflare Pages project or R2 bucket names.
+- It does not create a production resource.
+- It does not build or deploy the API or worker image.
 - It does not create anything by itself, and no workflow performs these steps yet.
 - It does not make staging "ready": after provisioning, `config/environments.json` moves staging to
   `verified` only when `TEC-12` is closed and the evidence above exists.

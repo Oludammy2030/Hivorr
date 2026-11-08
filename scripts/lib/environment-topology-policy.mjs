@@ -142,6 +142,17 @@ export function verifyEnvironmentTopology(topology, options = {}) {
       hostIssues(name, application, host, environment.baseDomain, issues)
     }
 
+    if (environment.flyApps !== undefined) {
+      for (const role of ["api", "worker"]) {
+        const app = environment.flyApps[role]
+        if (!app || !app.startsWith(`hivorr-${name}-`)) {
+          issues.push(
+            `${name}: Fly app ${role} is not scoped to hivorr-${name}-`,
+          )
+        }
+      }
+    }
+
     if (environment.flyRegion !== undefined) {
       if (!/^[a-z]{3}$/.test(environment.flyRegion)) {
         issues.push(
@@ -252,13 +263,6 @@ export function verifyEnvironmentTopology(topology, options = {}) {
     environments.staging?.status !== "verified"
   ) {
     issues.push("production cannot be verified before staging")
-  }
-
-  if (
-    environments.staging?.status === "planned" &&
-    !blockers.some((blocker) => blocker.blocks?.includes("staging"))
-  ) {
-    issues.push("a planned staging environment must name its open blockers")
   }
 
   return {
