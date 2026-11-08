@@ -21,7 +21,7 @@ interface EnrolledUser {
 }
 
 const mainHost = "staging.hivorr.com"
-const controlHost = "control.staging.hivorr.com"
+const controlHost = "control-staging.hivorr.com"
 const json = { "content-type": "application/json" }
 
 function readCookies(headers: Record<string, unknown>): CookieJar {

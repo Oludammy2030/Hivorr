@@ -12,9 +12,9 @@ const HOSTS: Readonly<Record<EnvironmentId, Readonly<Record<PortalId, string>>>>
     },
     staging: {
       app: "staging.hivorr.com",
-      control: "control.staging.hivorr.com",
-      staff: "staff.staging.hivorr.com",
-      partner: "partner.staging.hivorr.com",
+      control: "control-staging.hivorr.com",
+      staff: "staff-staging.hivorr.com",
+      partner: "partner-staging.hivorr.com",
     },
   }
 

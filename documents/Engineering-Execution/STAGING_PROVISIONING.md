@@ -5,16 +5,15 @@
 been created**. This runbook is the reproducible sequence for the founder to execute when the
 blockers clear.
 
-## 1. Blockers — do not provision until both are closed
+## 1. Blocker — do not provision until it is closed
 
 | Blocker | What it means | Source |
 | --- | --- | --- |
 | `TEC-12` | Vendor data-processing approval must record what data leaves the system, where it goes, the legal basis, processing terms, failure behaviour and exit path before Supabase, Cloudflare, Fly.io, Doppler or Sentry is integrated. | EP-01 entry record §10.3 |
-| `open-decision-26` | `control.staging.hivorr.com`, `staff.staging.hivorr.com` and `partner.staging.hivorr.com` are second-level names not covered by standard Cloudflare Universal SSL. Choose Advanced Certificate Manager, Total TLS, an equivalent certificate, or approve flattened hostnames. | `ARCHITECTURE.md` §16.4 #26 |
 
-`ARCHITECTURE.md` §4.8 states the consequence directly: **until #26 is settled, the required names
-are not provisioned.** The validator refuses to mark staging `verified` while either blocker remains
-open.
+The former #26 TLS blocker is **resolved**: the three privileged staging hosts are flattened to
+first-level names and are covered by Cloudflare Universal SSL. The validator refuses to mark staging
+`verified` while `TEC-12` remains open.
 
 The Fly.io region is recorded as **`jnb` (Johannesburg)** in `config/environments.json`.
 
@@ -43,9 +42,9 @@ signs it; the legal basis, DPAs, Supabase region, and R2 jurisdiction remain ope
 | Application | Staging host |
 | --- | --- |
 | Main | `staging.hivorr.com` |
-| Control | `control.staging.hivorr.com` |
-| Staff | `staff.staging.hivorr.com` |
-| Partner | `partner.staging.hivorr.com` |
+| Control | `control-staging.hivorr.com` |
+| Staff | `staff-staging.hivorr.com` |
+| Partner | `partner-staging.hivorr.com` |
 
 | Resource | Staging |
 | --- | --- |
@@ -127,8 +126,8 @@ automation that performs these steps.
 
 ### 5.4 Cloudflare Access
 
-1. Protect `control.staging.hivorr.com`, `staff.staging.hivorr.com`, and
-   `partner.staging.hivorr.com` with an Access application.
+1. Protect `control-staging.hivorr.com`, `staff-staging.hivorr.com`, and
+   `partner-staging.hivorr.com` with an Access application.
 2. Allow only the founder identity for the control host at first; staff and partner allowlists are
    added when those roles exist.
 3. Verify an unauthenticated request is challenged before the bundle loads, not after.
@@ -143,9 +142,10 @@ automation that performs these steps.
 
 ### 5.6 DNS and TLS
 
-1. Create explicit A/AAAA or CNAME records for the four staging hosts only. No wildcard records.
-2. Wait for the certificate covering all four names. This is the #26 decision in practice; stop if
-   the certificate does not cover a second-level staging host.
+1. Create explicit A/AAAA or CNAME records for the four staging hosts only. No wildcard DNS records.
+2. Confirm the Universal SSL certificate covers the flattened names. `control-staging`,
+   `staff-staging`, and `partner-staging` are first-level and covered by `*.hivorr.com`; no ACM
+   subscription is needed.
 3. Confirm TLS terminates at the edge and the origin is not directly reachable.
 4. Do not create or change any production record.
 
@@ -191,8 +191,8 @@ production buckets, or production DNS. Record the teardown and the reason.
 
 ## 8. What this runbook does not do
 
-- It does not approve `TEC-12` or decide #26.
-- It does not select the Fly.io region or provider names.
+- It does not approve `TEC-12`.
+- It does not choose the Cloudflare Pages project or R2 bucket names.
 - It does not create anything by itself, and no workflow performs these steps yet.
 - It does not make staging "ready": after provisioning, `config/environments.json` moves staging to
-  `verified` only when both blockers are closed and the evidence above exists.
+  `verified` only when `TEC-12` is closed and the evidence above exists.

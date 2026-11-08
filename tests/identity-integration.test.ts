@@ -260,8 +260,8 @@ describeIntegration("identity service integration", () => {
 
   it("enrols TOTP, gates a privileged portal, and hardens sessions over HTTP", async () => {
     const mainHost = "staging.hivorr.com"
-    const controlHost = "control.staging.hivorr.com"
-    const staffHost = "staff.staging.hivorr.com"
+    const controlHost = "control-staging.hivorr.com"
+    const staffHost = "staff-staging.hivorr.com"
     const json = { "content-type": "application/json" }
 
     const signedIn = await app.inject({

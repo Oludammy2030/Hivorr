@@ -160,7 +160,8 @@ An approval that leaves a field blank does not close `TEC-12` for that item.
 ## 13. What approval would and would not authorise
 
 **Would authorise:** creating the staging vendor resources described in `STAGING_PROVISIONING.md`,
-within the approved data categories, after #26 is also closed.
+within the approved data categories. The former #26 TLS blocker is resolved by the flattened
+first-level staging hostnames.
 
 **Would not authorise:** production provisioning, identity-document or payment-data processing, a
 public API hostname, cross-environment failover, or any vendor not listed in §2.

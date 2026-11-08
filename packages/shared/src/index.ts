@@ -51,7 +51,7 @@ export const PORTALS: Readonly<Record<PortalId, PortalDefinition>> = {
     audience: "control",
     hosts: {
       production: "control.hivorr.com",
-      staging: "control.staging.hivorr.com",
+      staging: "control-staging.hivorr.com",
     },
     noindex: true,
   },
@@ -61,7 +61,7 @@ export const PORTALS: Readonly<Record<PortalId, PortalDefinition>> = {
     audience: "staff",
     hosts: {
       production: "staff.hivorr.com",
-      staging: "staff.staging.hivorr.com",
+      staging: "staff-staging.hivorr.com",
     },
     noindex: true,
   },
@@ -71,7 +71,7 @@ export const PORTALS: Readonly<Record<PortalId, PortalDefinition>> = {
     audience: "partner",
     hosts: {
       production: "partner.hivorr.com",
-      staging: "partner.staging.hivorr.com",
+      staging: "partner-staging.hivorr.com",
     },
     noindex: true,
   },

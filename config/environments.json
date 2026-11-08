@@ -5,12 +5,12 @@
     "staging": {
       "status": "planned",
       "flyRegion": "jnb",
-      "baseDomain": "staging.hivorr.com",
+      "baseDomain": "hivorr.com",
       "hosts": {
         "main": "staging.hivorr.com",
-        "control": "control.staging.hivorr.com",
-        "staff": "staff.staging.hivorr.com",
-        "partner": "partner.staging.hivorr.com"
+        "control": "control-staging.hivorr.com",
+        "staff": "staff-staging.hivorr.com",
+        "partner": "partner-staging.hivorr.com"
       },
       "apiOrigin": "internal-only",
       "edgeRewrite": "/api/*",
@@ -60,12 +60,6 @@
       "summary": "Vendor data-processing approval before integrating Supabase, Cloudflare, Fly.io, Doppler or Sentry.",
       "source": "documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-ENTRY-RECORD.md §10.3",
       "blocks": ["staging", "production"]
-    },
-    {
-      "id": "open-decision-26",
-      "summary": "TLS coverage for the three second-level staging hosts is an open founder cost decision.",
-      "source": "documents/Context/ARCHITECTURE.md §16.4 #26",
-      "blocks": ["staging"]
     }
   ]
 }

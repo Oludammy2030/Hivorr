@@ -114,6 +114,6 @@ CI runs this in the `test` job. `pnpm verify` also runs it.
 - `STAGING_DEPLOY_TARGET`, `PRODUCTION_DEPLOY_TARGET`, and `FOUNDER_GITHUB_LOGIN` are unset, so the
   staging release request and production target check are skipped rather than simulated.
 - The eight-host topology is recorded in `config/environments.json` and checked by
-  `pnpm topology:verify`, but provisioning is blocked by `TEC-12` and §16.4 #26. The sequence is in
-  `STAGING_PROVISIONING.md`.
+  `pnpm topology:verify`, but provisioning is blocked by `TEC-12`. The three staging privileged hosts
+  are flattened to first-level names; the sequence is in `STAGING_PROVISIONING.md`.
 - There is no alerting on a failed manifest verification. The job fails closed; a human must act.

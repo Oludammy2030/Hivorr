@@ -46,15 +46,15 @@
 backend per environment**: a modular-monolith TypeScript API, one worker process, and one PostgreSQL
 database per environment. The main product — all six user activities — lives at `hivorr.com`. Three
 narrow, separately deployed surfaces sit beside it (`control`, `staff`, `partner`). Staging carries
-the same four applications at `staging.hivorr.com`, `control.staging.hivorr.com`,
-`staff.staging.hivorr.com`, and `partner.staging.hivorr.com`. That is **four applications and eight
+the same four applications at `staging.hivorr.com`, `control-staging.hivorr.com`,
+`staff-staging.hivorr.com`, and `partner-staging.hivorr.com`. That is **four applications and eight
 deployments**. All eight are clients of the same API and identity service *within their environment*.
 None is a second backend, a second database, a second user population, or a route into the other
 environment.
 
 ```
         PRODUCTION                                  STAGING
- hivorr.com        control.hivorr.com        staging.hivorr.com      control.staging.hivorr.com
+ hivorr.com        control.hivorr.com        staging.hivorr.com      control-staging.hivorr.com
  staff.hivorr.com  partner.hivorr.com       staff.staging...        partner.staging...
         │                  │                          │                        │
         └────────┬─────────┘                          └───────────┬────────────┘
@@ -97,9 +97,9 @@ relying on a subdomain to imply it. Each has a production deployment and a stagi
 | Tier | Production | Staging | Who | Trust |
 | --- | --- | --- | --- | --- |
 | **Public product** | `hivorr.com` | `staging.hivorr.com` | Any registered account | Standard session; all six activities; never admin |
-| **Internal operations** | `staff.hivorr.com` | `staff.staging.hivorr.com` | Appointed Hivorr staff | Standard session + staff grant + MFA; job-scoped |
-| **Privileged governance** | `control.hivorr.com` | `control.staging.hivorr.com` | Founder, authorised developer | Strictest session + mandatory MFA; narrow scopes |
-| **External partnership** | `partner.hivorr.com` | `partner.staging.hivorr.com` | Approved affiliates and partners | Partner session; no activity capabilities, no wallet |
+| **Internal operations** | `staff.hivorr.com` | `staff-staging.hivorr.com` | Appointed Hivorr staff | Standard session + staff grant + MFA; job-scoped |
+| **Privileged governance** | `control.hivorr.com` | `control-staging.hivorr.com` | Founder, authorised developer | Strictest session + mandatory MFA; narrow scopes |
+| **External partnership** | `partner.hivorr.com` | `partner-staging.hivorr.com` | Approved affiliates and partners | Partner session; no activity capabilities, no wallet |
 
 The staging column is non-production and must never share data, credentials, signing keys, payment
 accounts, buckets, or queues with the production column (§11). A subdomain is an **organisational
@@ -209,9 +209,9 @@ the Figma Make file.
 | # | Component | Responsibility | Status |
 | --- | --- | --- | --- |
 | 1 | **Web app** (`hivorr.com`, `staging.hivorr.com`) | The six user activities, shared wallet, messaging, profile, activity switcher. | Exists as prototype; no deployment from this repository yet |
-| 2 | **Control app** (`control.hivorr.com`, `control.staging.hivorr.com`) | Founder governance, developer operations, review queues, configuration, audit. | New — §7.2 |
-| 3 | **Staff app** (`staff.hivorr.com`, `staff.staging.hivorr.com`) | Job-scoped operational work: support, verification, operations, marketing. | New — §7.3 |
-| 4 | **Partner app** (`partner.hivorr.com`, `partner.staging.hivorr.com`) | Affiliate and partner applications, referral and commission tracking. | New — §7.4 |
+| 2 | **Control app** (`control.hivorr.com`, `control-staging.hivorr.com`) | Founder governance, developer operations, review queues, configuration, audit. | New — §7.2 |
+| 3 | **Staff app** (`staff.hivorr.com`, `staff-staging.hivorr.com`) | Job-scoped operational work: support, verification, operations, marketing. | New — §7.3 |
+| 4 | **Partner app** (`partner.hivorr.com`, `partner-staging.hivorr.com`) | Affiliate and partner applications, referral and commission tracking. | New — §7.4 |
 | 5 | **API** | Authentication, authorisation, domain logic, financial operations, admin/staff/partner operations. | New |
 | 6 | **Worker** | Webhooks, notifications, escrow release, payouts, reconciliation, media scanning, referral accrual. | New |
 | 7 | **PostgreSQL** | One system of record per environment. Module-scoped schemas, ledger, audit log. | New |
@@ -279,9 +279,9 @@ API, database, audit log, and business services.
 | Portal | Purpose | Primary users | Production | Staging |
 | --- | --- | --- | --- | --- |
 | **Main** | Marketplace and service activities | Clients, professionals, sellers, logistics providers | `hivorr.com` | `staging.hivorr.com` |
-| **Control** | Governance and system control | Founder, explicitly authorised administrators and technical personnel | `control.hivorr.com` | `control.staging.hivorr.com` |
-| **Staff** | Internal daily operations | Appointed Hivorr staff, by job function | `staff.hivorr.com` | `staff.staging.hivorr.com` |
-| **Partner** | Affiliation and external partnerships | Approved partners, affiliates, partner organisations | `partner.hivorr.com` | `partner.staging.hivorr.com` |
+| **Control** | Governance and system control | Founder, explicitly authorised administrators and technical personnel | `control.hivorr.com` | `control-staging.hivorr.com` |
+| **Staff** | Internal daily operations | Appointed Hivorr staff, by job function | `staff.hivorr.com` | `staff-staging.hivorr.com` |
+| **Partner** | Affiliation and external partnerships | Approved partners, affiliates, partner organisations | `partner.hivorr.com` | `partner-staging.hivorr.com` |
 
 **Main portal.** Registration, sign-in, profiles, account management, the six activities (Buy,
 Hire, Errand, Sell, Offer Services, Provide Logistics), job posting and applications, product
@@ -337,9 +337,9 @@ production host and a staging host.
 | Production | `staff.hivorr.com` | Internal staff portal | Officially appointed Hivorr staff | Internal operations |
 | Production | `partner.hivorr.com` | External partnership portal | Approved affiliates and partners | External partnership |
 | Staging | `staging.hivorr.com` | Main Hivorr platform | Authorised testers and founder | Non-production |
-| Staging | `control.staging.hivorr.com` | Administrative platform | Authorised testers and founder | Non-production |
-| Staging | `staff.staging.hivorr.com` | Internal staff portal | Authorised testers and founder | Non-production |
-| Staging | `partner.staging.hivorr.com` | External partnership portal | Authorised testers and founder | Non-production |
+| Staging | `control-staging.hivorr.com` | Administrative platform | Authorised testers and founder | Non-production |
+| Staging | `staff-staging.hivorr.com` | Internal staff portal | Authorised testers and founder | Non-production |
+| Staging | `partner-staging.hivorr.com` | External partnership portal | Authorised testers and founder | Non-production |
 
 These are **eight deployments of four applications, not eight user populations** (§5). A person may
 hold an ordinary Hivorr account and a staff grant at the same time; the grants are separate, and
@@ -379,7 +379,7 @@ name of the whole environment. The staging environment comprises all four stagin
 ### 4.4 `control.hivorr.com` — the administrative platform
 
 **[DECIDED]** The restricted administrative environment, deployed at `control.hivorr.com` and
-`control.staging.hivorr.com`.
+`control-staging.hivorr.com`.
 
 Access is limited to:
 
@@ -414,7 +414,7 @@ exposure; it never replaces authorisation.
 
 **[DECIDED]** Reserved for officially appointed Hivorr personnel: marketing, operations, customer
 support, verification officers, and other authorised staff. Deployed at `staff.hivorr.com` and
-`staff.staging.hivorr.com`.
+`staff-staging.hivorr.com`.
 
 - **Staff access is controlled through job-specific permissions** (§10.6).
 - **A staff member does not automatically receive administrator privileges.** Staff and admin are
@@ -428,7 +428,7 @@ support, verification officers, and other authorised staff. Deployed at `staff.h
 
 **[DECIDED]** Reserved for external partnership programmes: affiliates, referral programmes,
 business partnerships, partnership applications, and commission and referral tracking. Deployed at
-`partner.hivorr.com` and `partner.staging.hivorr.com`.
+`partner.hivorr.com` and `partner-staging.hivorr.com`.
 
 - It **must not become an alternative entry point for the six core activities.** A partner session
   cannot place an order, publish a listing, accept an errand, or touch a wallet.
@@ -487,11 +487,11 @@ not used. Cloudflare R2 provides object storage.
 **No DNS, certificate, hosting, or deployment configuration was changed in producing this revision.**
 The cutover is a separate, approved operation with a rollback position (§12.10).
 
-**TLS constraint.** `control.staging.hivorr.com`, `staff.staging.hivorr.com`, and
-`partner.staging.hivorr.com` are second-level subdomains. Cloudflare Universal SSL normally covers
-only the apex and a first-level wildcard, so these names require Advanced Certificate Manager, Total
-TLS, or an equivalent certificate. This is a founder cost decision and is recorded in §16.4 #26.
-Until it is settled, the required names are not provisioned.
+**TLS.** The three privileged staging hosts are **flattened to first-level names**:
+`control-staging.hivorr.com`, `staff-staging.hivorr.com`, and `partner-staging.hivorr.com`. They are
+covered by Cloudflare's Universal SSL wildcard for `*.hivorr.com`. The earlier second-level
+`*.staging.hivorr.com` scheme is superseded, and no Advanced Certificate Manager subscription is
+required for staging. This resolves §16.4 #26.
 
 **[RECOMMENDED]** Each application has its own Cloudflare Pages project per environment, with an
 explicit custom domain. `staging.` is a separate deployment target, not a rewrite rule.
@@ -1048,9 +1048,9 @@ staging host.
 | App | Production host | Staging host | Ships | Does not ship |
 | --- | --- | --- | --- | --- |
 | `web` | `hivorr.com` | `staging.hivorr.com` | six activity shells, wallet, messaging, profile, switcher | review queues, audit tooling, engineering tools |
-| `control` | `control.hivorr.com` | `control.staging.hivorr.com` | review queues, configuration, audit, engineering views | product checkout, seller tools |
-| `staff` | `staff.hivorr.com` | `staff.staging.hivorr.com` | support, verification, operations, marketing tools | financial configuration, engineering tools |
-| `partner` | `partner.hivorr.com` | `partner.staging.hivorr.com` | applications, referrals, commission | any activity capability, any wallet |
+| `control` | `control.hivorr.com` | `control-staging.hivorr.com` | review queues, configuration, audit, engineering views | product checkout, seller tools |
+| `staff` | `staff.hivorr.com` | `staff-staging.hivorr.com` | support, verification, operations, marketing tools | financial configuration, engineering tools |
+| `partner` | `partner.hivorr.com` | `partner-staging.hivorr.com` | applications, referrals, commission | any activity capability, any wallet |
 
 All four consume `packages/design`, `packages/shared`, and `packages/api-client`. Each has its own
 Vite entry, its own `index.html`, and its own deployment target in each environment. They share a
@@ -1409,9 +1409,9 @@ grants. There is no "Seller permission", only `market.sell` plus the seller lane
 | Surface | MFA |
 | --- | --- |
 | `hivorr.com` / `staging.hivorr.com` | Optional at MVP; available to every account |
-| `staff.hivorr.com` / `staff.staging.hivorr.com` | **Mandatory** TOTP |
-| `control.hivorr.com` / `control.staging.hivorr.com` | **Mandatory** TOTP; optional IP allowlist for the founder; Cloudflare Access at the edge |
-| `partner.hivorr.com` / `partner.staging.hivorr.com` | **Mandatory** TOTP for commission payout access |
+| `staff.hivorr.com` / `staff-staging.hivorr.com` | **Mandatory** TOTP |
+| `control.hivorr.com` / `control-staging.hivorr.com` | **Mandatory** TOTP; optional IP allowlist for the founder; Cloudflare Access at the edge |
+| `partner.hivorr.com` / `partner-staging.hivorr.com` | **Mandatory** TOTP for commission payout access |
 
 Staging privileged accounts are separate accounts with separate grants; a production staff or admin
 grant does not exist in staging unless it is seeded there under a synthetic identity.
@@ -1509,7 +1509,7 @@ Each hosted environment runs four applications, one API, one worker, and one dat
 | | Development | Staging | Production |
 | --- | --- | --- | --- |
 | Purpose | Local implementation and testing; controlled source changes | Integrated testing, QA, founder review | Live product |
-| Applications | `localhost:8443` (Vite) | `staging.hivorr.com`, `control.staging.hivorr.com`, `staff.staging.hivorr.com`, `partner.staging.hivorr.com` | `hivorr.com`, `control.hivorr.com`, `staff.hivorr.com`, `partner.hivorr.com` |
+| Applications | `localhost:8443` (Vite) | `staging.hivorr.com`, `control-staging.hivorr.com`, `staff-staging.hivorr.com`, `partner-staging.hivorr.com` | `hivorr.com`, `control.hivorr.com`, `staff.hivorr.com`, `partner.hivorr.com` |
 | API | local process | staging Fly.io app | production Fly.io app |
 | Database | local Postgres container | **staging Supabase project only** | **production Supabase project only** |
 | Storage | local or a dev bucket | staging R2 buckets | production R2 buckets |
@@ -2291,7 +2291,7 @@ so there is one list, not three.
 | 14 | **Sign-in identifier** — **DECIDED 7 November 2026:** email-first. Email and password are required at registration; a phone number is optional and becomes mandatory only before an action that sends an OTP or a dispatch message | Auth screens; identity schema | Founder | §9.7; EP-01 entry record §5 |
 | 15 | **Verification vendor** — review queue only, or an identity provider | Lane implementation | Founder | matrix #12 |
 | 16 | **Data residency and primary region** | Provider and region; latency; compliance | Founder | db rules #10 |
-| 17 | **Hosting platform, DNS provider, TLS issuance** — **DECIDED 7 November 2026:** Cloudflare for DNS, TLS and the edge (Pages for the static bundles), and Fly.io for the API and worker runtime. All eight hostnames sit behind the Cloudflare edge; `/api/*` is proxied same-origin from the edge to the Fly.io origin. TLS is provider-managed at the edge; HSTS without `preload`. The three second-level staging hosts are subject to #26. | §4.8, §4.9 | Founder + architect | new; EP-01 entry record §5 |
+| 17 | **Hosting platform, DNS provider, TLS issuance** — **DECIDED 7 November 2026:** Cloudflare for DNS, TLS and the edge (Pages for the static bundles), and Fly.io for the API and worker runtime. All eight hostnames sit behind the Cloudflare edge; `/api/*` is proxied same-origin from the edge to the Fly.io origin. TLS is provider-managed at the edge; HSTS without `preload`. The three privileged staging hosts are flattened to first-level names (§16.4 #26). | §4.8, §4.9 | Founder + architect | new; EP-01 entry record §5 |
 | 18 | **Map / geo provider** | Errand and logistics dispatch | Founder | §9.14 |
 | 19 | **Mobile** — PWA first, or React Native | §19 (removed — see changelog) | Founder | old #8 |
 | 20 | **AI scope** — out of launch scope, or a specific surface | Any AI module | Founder | old #9 |
@@ -2300,7 +2300,7 @@ so there is one list, not three.
 | 23 | **Self-dealing exceptions** | §6.7 | Founder | matrix #14 |
 | 24 | **Grandfathering** — grace period if a verification rule tightens | Rollout policy | Founder | matrix #13 |
 | 25 | **CI provider and repository hosting** — **DECIDED 4 November 2026:** GitHub and GitHub Actions; private repository; protected `main`; native secret and dependency scanning; `staging`/`production` as definitions only; no deployment in EP-00. Kept in the register so cross-references stay valid. | Nothing — settled | Founder | `standards` §16 #18; EP-00-000 |
-| 26 | **TLS for the three second-level staging hosts** — `control.staging.hivorr.com`, `staff.staging.hivorr.com`, and `partner.staging.hivorr.com` are not covered by a standard Cloudflare Universal SSL certificate. Choose Advanced Certificate Manager, Total TLS, or an equivalent certificate; or approve flattened hostnames. | Provisioning the three staging privileged hosts; §4.8 | Founder | Revision 3 §4.8 |
+| 26 | **TLS for the three privileged staging hosts** — **RESOLVED 8 November 2026:** the hosts are flattened to `control-staging.hivorr.com`, `staff-staging.hivorr.com`, and `partner-staging.hivorr.com`. They are first-level names covered by Cloudflare's Universal SSL `*.hivorr.com` wildcard. No Advanced Certificate Manager subscription is required. | Nothing — settled | Founder | Revision 3 §4.8; 8 November 2026 amendment |
 | 27 | **GitHub enforcement tier** — remain on GitHub Free with the compensating controls in §12.3, or upgrade to Pro/Team for server-side branch protection and environment required reviewers. | Strength of the production approval guarantee; §12.3 | Founder | Revision 3 §12.3 |
 
 **Resolved by this revision and therefore removed from the list:** the errand-vs-logistics question.
@@ -2331,9 +2331,20 @@ that; this revision does not edit the matrix.
 | 15 | **Architecture modelled five entry points** | Revision 2 defined `hivorr.com`, `staging.hivorr.com`, `control.`, `staff.`, `partner.` and four bundles as "five deployments". That is inconsistent with four applications in two environments. | Corrected in revision 3: four applications, eight deployments (§4.1, §8.12). The EP-01 entry record's four-bundles/five-deployments ruling is superseded by an amendment. |
 | 16 | **Live hosts serve legacy Flutter** | Verified 7 November 2026: `hivorr.com` and `staging.hivorr.com` served the legacy Flutter build. The founder approved immediate detach; the CNAME records and Pages custom domains were removed and both Flutter Pages projects were deleted. | Both hostnames are unavailable; React is not deployed. No Flutter rollback target remains. |
 | 17 | **VFD vs Paystack/Flutterwave** | §3.1 recorded VFD as the single provider, while §9.10 and §15.5 still said Paystack primary and Flutterwave secondary. | Corrected in revision 3: VFD is the single payment/custody provider throughout. |
-| 18 | **TLS for second-level staging hosts** | The required `*.staging.hivorr.com` names are not covered by standard Cloudflare Universal SSL. | Recorded as an open founder cost decision (§16.4 #26). No host is provisioned until it is settled. |
+| 18 | **TLS for second-level staging hosts** | The original `*.staging.hivorr.com` names were not covered by standard Cloudflare Universal SSL. | **Resolved 8 November 2026** by flattening the three privileged staging hosts to first-level names. No ACM subscription is required (§16.4 #26). |
 
 ### 16.6 Changelog
+
+#### 8 November 2026 — flattened staging hostnames
+
+**Decided by founder instruction**
+
+- The three privileged staging hosts become `control-staging.hivorr.com`,
+  `staff-staging.hivorr.com`, and `partner-staging.hivorr.com`.
+- The second-level `*.staging.hivorr.com` scheme is superseded.
+- §16.4 #26 is resolved. Cloudflare Universal SSL covers the flattened names; no Advanced
+  Certificate Manager subscription is required.
+- No DNS, certificate, hosting, database, or credential change was made by this amendment.
 
 #### 7 November 2026 — revision 3: four portals, two environments
 
@@ -2342,7 +2353,7 @@ that; this revision does not edit the matrix.
 - Hivorr is one ecosystem with four functional portals: main, control, staff, and partner.
 - Each portal exists in staging and production: eight deployments in total.
 - The partner portal host is `partner.hivorr.com` in production and
-  `partner.staging.hivorr.com` in staging. The earlier `partners.` spelling is superseded.
+  `partner-staging.hivorr.com` in staging. The earlier `partners.` spelling is superseded.
 - Releases are lockstep: one commit, one manifest, all four applications plus API, worker, and
   migrations.
 - Production is promoted from the staging artifacts after an explicit founder approval comment on a

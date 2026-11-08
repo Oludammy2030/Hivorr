@@ -24,9 +24,9 @@ explicit approval and the relevant access.
 | `control.hivorr.com` | No DNS record |
 | `staff.hivorr.com` | No DNS record |
 | `partner.hivorr.com` | No DNS record |
-| `control.staging.hivorr.com` | No DNS record |
-| `staff.staging.hivorr.com` | No DNS record |
-| `partner.staging.hivorr.com` | No DNS record |
+| `control-staging.hivorr.com` | No DNS record |
+| `staff-staging.hivorr.com` | No DNS record |
+| `partner-staging.hivorr.com` | No DNS record |
 | Live security headers | No HSTS, CSP, frame protection, or permissions policy observed |
 | `staging.hivorr.com` indexing | Currently indexable; must become `Disallow: /` and `noindex` |
 | Repository | Contains the React prototype only; no API, database, or portal bundles yet |
@@ -65,7 +65,7 @@ this workstation. The first task is to identify them before any change.
 Do not begin Phase 4 until all are true:
 
 - [ ] The React staging ecosystem is deployed: `staging.hivorr.com`,
-      `control.staging.hivorr.com`, `staff.staging.hivorr.com`, `partner.staging.hivorr.com`.
+      `control-staging.hivorr.com`, `staff-staging.hivorr.com`, `partner-staging.hivorr.com`.
 - [ ] Staging smoke, cross-portal E2E, header, `noindex`, and session-isolation tests pass.
 - [ ] The production React deployment is reachable on its platform URL and passes smoke tests before
       any hostname switch.
@@ -167,8 +167,8 @@ Perform one hostname group at a time, with verification between groups.
 
 ### 9.4 Staging
 
-1. Attach `staging.hivorr.com`, `control.staging.hivorr.com`, `staff.staging.hivorr.com`, and
-   `partner.staging.hivorr.com` to the staging projects.
+1. Attach `staging.hivorr.com`, `control-staging.hivorr.com`, `staff-staging.hivorr.com`, and
+   `partner-staging.hivorr.com` to the staging projects.
 2. Confirm `noindex` and `Disallow: /` on all four.
 3. Confirm no staging request reaches production.
 

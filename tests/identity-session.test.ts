@@ -81,8 +81,8 @@ describe("portal resolution", () => {
     expect(resolveAudience("control.hivorr.com:443", "production")).toBe(
       "control",
     )
-    expect(resolveAudience("staff.staging.hivorr.com", "staging")).toBe("staff")
-    expect(resolveAudience("partner.staging.hivorr.com", "staging")).toBe(
+    expect(resolveAudience("staff-staging.hivorr.com", "staging")).toBe("staff")
+    expect(resolveAudience("partner-staging.hivorr.com", "staging")).toBe(
       "partner",
     )
   })

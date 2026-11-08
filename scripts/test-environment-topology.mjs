@@ -81,14 +81,24 @@ check(
   wildcard.issues.join("\n"),
 )
 
-const wrongDomain = mutate((topology) => {
-  topology.environments.staging.hosts.main = "hivorr.com"
+const secondLevel = mutate((topology) => {
+  topology.environments.staging.hosts.control = "control.staging.hivorr.com"
 })
 check(
-  "a staging host outside the staging domain is refused",
-  !wrongDomain.ok &&
-    wrongDomain.issues.some((issue) => issue.includes("does not belong")),
-  wrongDomain.issues.join("\n"),
+  "a second-level staging host is refused after flattening",
+  !secondLevel.ok &&
+    secondLevel.issues.some((issue) => issue.includes("first-level")),
+  secondLevel.issues.join("\n"),
+)
+
+const stagingHostAsProduction = mutate((topology) => {
+  topology.environments.production.hosts.control = "control-staging.hivorr.com"
+})
+check(
+  "a staging host cannot be declared in production",
+  !stagingHostAsProduction.ok &&
+    stagingHostAsProduction.issues.some((issue) => issue.includes("staging")),
+  stagingHostAsProduction.issues.join("\n"),
 )
 
 const publicApi = mutate((topology) => {

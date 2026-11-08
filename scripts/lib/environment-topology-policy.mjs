@@ -48,6 +48,28 @@ function hostIssues(environmentName, application, host, baseDomain, issues) {
   if (host.includes("partners.")) {
     issues.push(`${label}: the partner host is singular, not partners.`)
   }
+
+  const escaped = baseDomain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  if (environmentName === "staging") {
+    const main = `staging.${baseDomain}`
+    const flattened = new RegExp(`^[a-z0-9-]+-staging\\.${escaped}$`)
+    if (host !== main && !flattened.test(host)) {
+      issues.push(
+        `${label}: staging host must be ${main} or a first-level *-staging host`,
+      )
+    }
+  }
+  if (environmentName === "production") {
+    const firstLevel = new RegExp(`^[a-z0-9-]+\\.${escaped}$`)
+    if (host !== baseDomain && !firstLevel.test(host)) {
+      issues.push(
+        `${label}: production host must be ${baseDomain} or a first-level subdomain`,
+      )
+    }
+    if (host.includes("staging")) {
+      issues.push(`${label}: a production host must not contain staging`)
+    }
+  }
 }
 
 export function verifyEnvironmentTopology(topology, options = {}) {

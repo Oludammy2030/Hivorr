@@ -149,5 +149,5 @@ credentials. `.env*` is ignored except `.env.example`.
 5. Wire `pnpm verify:backend-target` into the Fly.io deploy job when it exists.
 6. Bootstrap the first `admin.grant.manage` grant per environment (§5) after `MFA_ENCRYPTION_KEY` is set.
 7. Add required-reviewer protection when the GitHub plan supports it.
-8. Provision staging only after `TEC-12` and §16.4 #26 are closed. The topology is recorded in
+8. Provision staging only after `TEC-12` is closed. The topology is recorded in
    `config/environments.json`; the executed sequence is `STAGING_PROVISIONING.md`.

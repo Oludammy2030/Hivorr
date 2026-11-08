@@ -1644,8 +1644,8 @@ multi-region deployment, and a message broker.
 **FACT** There are two hosted environments, staging and production, plus local development and CI
 (`ARCHITECTURE.md` §11.1, `database rules` §10.1). Each hosted environment contains four functional
 portals. The eight hosts are `hivorr.com`, `control.hivorr.com`, `staff.hivorr.com`,
-`partner.hivorr.com`, `staging.hivorr.com`, `control.staging.hivorr.com`,
-`staff.staging.hivorr.com` and `partner.staging.hivorr.com` (`ARCHITECTURE.md` §4.1).
+`partner.hivorr.com`, `staging.hivorr.com`, `control-staging.hivorr.com`,
+`staff-staging.hivorr.com` and `partner-staging.hivorr.com` (`ARCHITECTURE.md` §4.1).
 
 **DEP-01 [STD]** Development, staging and production are separate. They do not share a database, a
 bucket, a secret, a credential, a queue or a deployment pipeline approval. The same isolation applies
@@ -1673,7 +1673,7 @@ integrated ecosystem, not four unrelated sites (`ARCHITECTURE.md` §11.8).
 rejected by another, independent of the hostname (`ARCHITECTURE.md` §5.4).
 
 **DEP-36 [STD]** Cloudflare Access protects `control.hivorr.com`, `staff.hivorr.com`,
-`control.staging.hivorr.com` and `staff.staging.hivorr.com` at the edge. It is additional to backend
+`control-staging.hivorr.com` and `staff-staging.hivorr.com` at the edge. It is additional to backend
 authentication and authorisation, never a replacement for either (`ARCHITECTURE.md` §10.12).
 
 **DEP-37 [STD]** Staging and production use independent Supabase projects. A deployment must fail
