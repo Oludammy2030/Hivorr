@@ -138,6 +138,9 @@ jobs:
       - name: Release manifest and approval policy
         run: pnpm test:release
 
+      - name: Environment topology policy
+        run: pnpm test:topology
+
   database:
     name: database migrations
     needs: install

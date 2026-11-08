@@ -32,9 +32,11 @@
     "test:worker": "vitest run tests/worker-outbox.test.ts",
     "test:push-protection": "node scripts/test-push-protection.mjs",
     "test:release": "node scripts/test-release-pipeline.mjs",
+    "test:topology": "node scripts/test-environment-topology.mjs",
     "test:watch": "vitest",
+    "topology:verify": "node scripts/verify-environment-topology.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm check:toolchain && pnpm lint && pnpm lint:boundaries && pnpm typecheck && pnpm test && pnpm test:push-protection && pnpm test:release && pnpm build:all"
+    "verify": "pnpm check:toolchain && pnpm lint && pnpm lint:boundaries && pnpm topology:verify && pnpm typecheck && pnpm test && pnpm test:push-protection && pnpm test:release && pnpm test:topology && pnpm build:all"
   },
   "dependencies": {
     "@hivorr/shared": "workspace:*",

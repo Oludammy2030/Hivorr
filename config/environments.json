@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "applications": ["main", "control", "staff", "partner"],
+  "environments": {
+    "staging": {
+      "status": "planned",
+      "baseDomain": "staging.hivorr.com",
+      "hosts": {
+        "main": "staging.hivorr.com",
+        "control": "control.staging.hivorr.com",
+        "staff": "staff.staging.hivorr.com",
+        "partner": "partner.staging.hivorr.com"
+      },
+      "apiOrigin": "internal-only",
+      "edgeRewrite": "/api/*",
+      "supabaseProjectRef": "hkswhaltyqfqkgswukfs",
+      "storage": {
+        "provider": "cloudflare-r2",
+        "bucketPrefix": "hivorr-staging"
+      },
+      "accessProtected": ["control", "staff", "partner"],
+      "requiredSecrets": [
+        "DATABASE_URL",
+        "SESSION_SIGNING_KEY",
+        "MFA_ENCRYPTION_KEY",
+        "WORKER_DATABASE_URL",
+        "FLY_API_TOKEN"
+      ]
+    },
+    "production": {
+      "status": "reserved",
+      "baseDomain": "hivorr.com",
+      "hosts": {
+        "main": "hivorr.com",
+        "control": "control.hivorr.com",
+        "staff": "staff.hivorr.com",
+        "partner": "partner.hivorr.com"
+      },
+      "apiOrigin": "internal-only",
+      "edgeRewrite": "/api/*",
+      "supabaseProjectRef": "ahyizcwidkwyowroeqfp",
+      "storage": {
+        "provider": "cloudflare-r2",
+        "bucketPrefix": "hivorr-production"
+      },
+      "accessProtected": ["control", "staff", "partner"],
+      "requiredSecrets": [
+        "DATABASE_URL",
+        "SESSION_SIGNING_KEY",
+        "MFA_ENCRYPTION_KEY",
+        "WORKER_DATABASE_URL",
+        "FLY_API_TOKEN"
+      ]
+    }
+  },
+  "blockers": [
+    {
+      "id": "TEC-12",
+      "summary": "Vendor data-processing approval before integrating Supabase, Cloudflare, Fly.io, Doppler or Sentry.",
+      "source": "documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-ENTRY-RECORD.md §10.3",
+      "blocks": ["staging", "production"]
+    },
+    {
+      "id": "open-decision-26",
+      "summary": "TLS coverage for the three second-level staging hosts is an open founder cost decision.",
+      "source": "documents/Context/ARCHITECTURE.md §16.4 #26",
+      "blocks": ["staging"]
+    }
+  ]
+}
