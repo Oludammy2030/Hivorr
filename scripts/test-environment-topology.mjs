@@ -163,6 +163,27 @@ check(
   badRegion.issues.join("\n"),
 )
 
+const badPagesProject = mutate((topology) => {
+  topology.environments.staging.pagesProjects.control =
+    "hivorr-production-control"
+})
+check(
+  "a Pages project outside the environment prefix is refused",
+  !badPagesProject.ok &&
+    badPagesProject.issues.some((issue) => issue.includes("Pages project")),
+  badPagesProject.issues.join("\n"),
+)
+
+const badBucket = mutate((topology) => {
+  topology.environments.staging.storage.buckets = ["hivorr-production-media"]
+})
+check(
+  "an R2 bucket outside the environment prefix is refused",
+  !badBucket.ok &&
+    badBucket.issues.some((issue) => issue.includes("R2 bucket")),
+  badBucket.issues.join("\n"),
+)
+
 const unknownApp = mutate((topology) => {
   topology.environments.staging.hosts.admin = "admin.staging.hivorr.com"
 })

@@ -17,10 +17,16 @@ first-level names and are covered by Cloudflare Universal SSL. The validator ref
 
 The Fly.io region is recorded as **`jnb` (Johannesburg)** in `config/environments.json`.
 
-One further choice is not yet recorded:
+The provider names are recorded in `config/environments.json` and approved by the founder:
 
-- **[OPEN] Cloudflare Pages project names and R2 bucket names** — naming is operational, but the
-  names must stay environment-scoped and must never be shared with production.
+| Resource | Name |
+| --- | --- |
+| Pages, main | `hivorr-staging-main` |
+| Pages, control | `hivorr-staging-control` |
+| Pages, staff | `hivorr-staging-staff` |
+| Pages, partner | `hivorr-staging-partner` |
+| R2 media | `hivorr-staging-media` |
+| R2 exports | `hivorr-staging-exports` |
 
 `TEC-12` is drafted at `TEC-12-VENDOR-DATA-PROCESSING.md`. It is **not approved** until the founder
 signs it; the legal basis, DPAs, Supabase region, and R2 jurisdiction remain open in that record.
@@ -116,8 +122,9 @@ automation that performs these steps.
 
 ### 5.3 Cloudflare Pages (four staging projects)
 
-1. Create one Pages project per application, each bound to `staging.hivorr.com` or its
-   `*.staging.hivorr.com` custom domain. `staging.` is a deployment target, not a path rewrite.
+1. Create the four recorded projects — `hivorr-staging-main`, `hivorr-staging-control`,
+   `hivorr-staging-staff`, `hivorr-staging-partner` — each bound to its flattened custom domain.
+   `staging.` is a deployment target, not a path rewrite.
 2. Deploy the four bundles from the same staging release artifact. Do not rebuild for a host.
 3. Add security headers at the edge: HSTS without `preload`, CSP, frame protection, permissions
    policy, and `noindex` for the privileged and staging hosts.
@@ -135,7 +142,8 @@ automation that performs these steps.
 
 ### 5.5 Cloudflare R2
 
-1. Create staging buckets under the `hivorr-staging` prefix. Never reuse a production bucket name.
+1. Create `hivorr-staging-media` and `hivorr-staging-exports`. Never reuse a production bucket
+   name.
 2. Keep buckets private. Public media is served through the CDN, not by direct bucket access.
 3. Issue a staging-only S3-compatible token; store it as a staging environment secret.
 4. Confirm a production token cannot read a staging bucket and the reverse.

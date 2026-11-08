@@ -187,6 +187,35 @@ export function verifyEnvironmentTopology(topology, options = {}) {
       !environment.storage.bucketPrefix.includes(name)
     ) {
       issues.push(`${name}: the R2 bucket prefix must be environment-scoped`)
+    } else if (Array.isArray(environment.storage.buckets)) {
+      for (const bucket of environment.storage.buckets) {
+        if (!bucket.startsWith(environment.storage.bucketPrefix)) {
+          issues.push(
+            `${name}: R2 bucket ${bucket} is not scoped to ${environment.storage.bucketPrefix}`,
+          )
+        }
+      }
+    }
+
+    if (environment.pagesProjects !== undefined) {
+      const projects = environment.pagesProjects
+      const seen = new Set()
+      for (const application of TOPOLOGY_APPLICATIONS) {
+        const project = projects[application]
+        if (!project) {
+          issues.push(`${name}: missing the ${application} Pages project`)
+          continue
+        }
+        if (!project.startsWith(`hivorr-${name}-`)) {
+          issues.push(
+            `${name}: Pages project ${project} is not scoped to hivorr-${name}-`,
+          )
+        }
+        if (seen.has(project)) {
+          issues.push(`${name}: duplicate Pages project ${project}`)
+        }
+        seen.add(project)
+      }
     }
 
     const protectedApps = environment.accessProtected ?? []

@@ -15,9 +15,16 @@
       "apiOrigin": "internal-only",
       "edgeRewrite": "/api/*",
       "supabaseProjectRef": "hkswhaltyqfqkgswukfs",
+      "pagesProjects": {
+        "main": "hivorr-staging-main",
+        "control": "hivorr-staging-control",
+        "staff": "hivorr-staging-staff",
+        "partner": "hivorr-staging-partner"
+      },
       "storage": {
         "provider": "cloudflare-r2",
-        "bucketPrefix": "hivorr-staging"
+        "bucketPrefix": "hivorr-staging",
+        "buckets": ["hivorr-staging-media", "hivorr-staging-exports"]
       },
       "accessProtected": ["control", "staff", "partner"],
       "requiredSecrets": [
