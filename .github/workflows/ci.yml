@@ -135,6 +135,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Release manifest and approval policy
+        run: pnpm test:release
+
   database:
     name: database migrations
     needs: install

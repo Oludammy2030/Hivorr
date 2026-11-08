@@ -2497,9 +2497,13 @@ grant-manager cannot be revoked, and each API change is audited. The first grant
 out of band, never by a migration. The privileged grant surface is not built yet. The transaction
 outbox now has a worker: lease-based claiming with `for update skip locked`, at-least-once delivery,
 deterministic exponential backoff, dead-lettering, and queue-health endpoints. No production event
-handlers are registered yet, so real event types dead-letter until a handler exists. Stages 4–10 are
-not started. Provider adapters, portal screens, and a working staging/production deployment are not
-built. The live main and staging hostnames were detached from the legacy Flutter origin on
+handlers are registered yet, so real event types dead-letter until a handler exists. The release
+pipeline now builds once, records a manifest of the four bundle digests, the backend source, and the
+migration set, and promotes the staging artifact to production without rebuilding. Production
+requires a founder `/approve-release <sha>` comment on a `release-candidate` Issue and re-verifies
+every digest after download. No hosted environment exists, so rollout remains unconfigured. Stages
+4–10 are not started. Provider adapters, portal screens, and a working staging/production deployment
+are not built. The live main and staging hostnames were detached from the legacy Flutter origin on
 7 November 2026 and are currently unavailable; the React production deployment does not exist yet.
 
 ---

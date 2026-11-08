@@ -3,8 +3,8 @@ name: Production deployment
 on:
   workflow_dispatch:
     inputs:
-      approval_reference:
-        description: Written founder approval reference (issue, record or message ID)
+      release_sha:
+        description: Staging-verified commit SHA to promote (40 hex characters)
         required: true
         type: string
       confirmation:
@@ -14,86 +14,162 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  actions: read
+  issues: read
 
 concurrency:
   group: production
   cancel-in-progress: false
 
 jobs:
-  founder-approval:
+  verify-founder-approval:
     name: verify founder approval
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require the founder account and an approval reference
+      - name: Checkout policy scripts
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Require the founder account, confirmation, and a release SHA
+        env:
+          FOUNDER_LOGIN: ${{ vars.FOUNDER_GITHUB_LOGIN }}
+          ACTOR: ${{ github.actor }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
         run: |
-          if [ -z "${{ vars.FOUNDER_GITHUB_LOGIN }}" ]; then
+          set -euo pipefail
+          if [ -z "$FOUNDER_LOGIN" ]; then
             echo "FOUNDER_GITHUB_LOGIN is not configured. Refusing production deployment."
             exit 1
           fi
-          if [ "${{ github.actor }}" != "${{ vars.FOUNDER_GITHUB_LOGIN }}" ]; then
+          if [ "$ACTOR" != "$FOUNDER_LOGIN" ]; then
             echo "Only the founder account may dispatch a production deployment."
-            echo "Actor: ${{ github.actor }}; required: ${{ vars.FOUNDER_GITHUB_LOGIN }}"
+            echo "Actor: $ACTOR; required: $FOUNDER_LOGIN"
             exit 1
           fi
-          if [ "${{ inputs.confirmation }}" != "DEPLOY_PRODUCTION" ]; then
+          if [ "$CONFIRMATION" != "DEPLOY_PRODUCTION" ]; then
             echo "Confirmation phrase did not match. Refusing production deployment."
             exit 1
           fi
-          if [ -z "${{ inputs.approval_reference }}" ]; then
-            echo "An explicit approval reference is required. Refusing production deployment."
+          if ! printf '%s' "$RELEASE_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "release_sha must be a 40-character lowercase hex commit SHA."
             exit 1
           fi
-          echo "Founder approval reference: ${{ inputs.approval_reference }}"
+          echo "Release SHA: $RELEASE_SHA"
 
-  verify-pr:
-    name: verify production PR
-    needs: founder-approval
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout policy script
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Require a merged pull request into main
+      - name: Verify the release-candidate issue and founder command
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_REF_NAME: main
-        run: node scripts/verify-pr-merge.mjs
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          FOUNDER_GITHUB_LOGIN: ${{ vars.FOUNDER_GITHUB_LOGIN }}
+        run: node scripts/verify-founder-approval.mjs
 
-  build-production-artifact:
-    name: build production artifact
-    needs: verify-pr
+  verify-release-ancestry:
+    name: verify release belongs to main
+    needs: verify-founder-approval
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main with full history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require the release SHA to be part of main
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          if ! git cat-file -e "${RELEASE_SHA}^{commit}" 2>/dev/null; then
+            echo "Release SHA $RELEASE_SHA is not present in this repository."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$RELEASE_SHA" origin/main; then
+            echo "Release SHA $RELEASE_SHA is not an ancestor of main. Promote only a merged release."
+            exit 1
+          fi
+          echo "Release $RELEASE_SHA is part of main."
+
+  promote-release:
+    name: download and verify staging artifact
+    needs: verify-release-ancestry
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
     steps:
-      - name: Checkout
+      - name: Checkout the release commit
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Install pnpm 10.34.9
-        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
         with:
-          version: 10.34.9
-          run_install: false
+          ref: ${{ inputs.release_sha }}
+          fetch-depth: 0
 
-      - name: Install Node 22
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Frozen install
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build:all
-
-      - name: Record production artifact
+      - name: Resolve the successful staging run
+        id: staging-run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
         run: |
-          echo "Production artifact built from ${{ github.sha }}"
-          echo "Founder approval reference: ${{ inputs.approval_reference }}"
-          echo "No production host is configured in this phase; deployment remains an explicit later step."
+          set -euo pipefail
+          run_id="$(gh run list \
+            --workflow deploy-staging.yml \
+            --commit "$RELEASE_SHA" \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId // empty')"
+          if [ -z "$run_id" ]; then
+            echo "No successful staging deployment gate exists for $RELEASE_SHA. Refusing promotion."
+            exit 1
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Promoting the artifact from staging run $run_id."
+
+      - name: Download the staging application artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ steps.staging-run.outputs.run_id }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p downloaded/dist downloaded/manifest
+          gh run download "$RUN_ID" --name "staging-build-$RELEASE_SHA" --dir downloaded/dist
+          gh run download "$RUN_ID" --name "release-manifest-$RELEASE_SHA" --dir downloaded/manifest
+
+      - name: Verify the downloaded artifact against the staging manifest
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: >-
+          node scripts/verify-release-manifest.mjs
+          --manifest downloaded/manifest/release-manifest.json
+          --sha "$RELEASE_SHA"
+          --ref staging
+          --dist downloaded/dist
+          --server server/src
+          --migrations supabase/migrations
+
+      - name: Verify the production backend target
+        if: vars.PRODUCTION_DEPLOY_TARGET != ''
+        env:
+          HIVORR_ENV: production
+          BACKEND_ENVIRONMENT: production
+          SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          if [ -z "$SUPABASE_PROJECT_REF" ]; then
+            echo "PRODUCTION_SUPABASE_PROJECT_REF is not configured. Refusing production deployment."
+            exit 1
+          fi
+          node scripts/verify-backend-target.mjs
+
+      - name: Record the verified promotion
+        run: |
+          echo "Production promotion verified from the staging artifact, with no rebuild."
+          echo "Release SHA: ${{ inputs.release_sha }}"
+          echo "Staging run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.staging-run.outputs.run_id }}"
+          if [ -n "${{ vars.PRODUCTION_DEPLOY_TARGET }}" ]; then
+            echo "Production deployment target: ${{ vars.PRODUCTION_DEPLOY_TARGET }}"
+          else
+            echo "No production host is configured yet; the verified artifact is ready for the rollout stage."
+          fi

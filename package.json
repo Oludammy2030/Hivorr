@@ -20,6 +20,9 @@
     "lint": "node scripts/lint.mjs",
     "lint:boundaries": "node scripts/lint-boundaries.mjs",
     "preview": "vite preview --config vite.figma.config.ts",
+    "release:approval": "node scripts/verify-founder-approval.mjs",
+    "release:manifest": "node scripts/release-manifest.mjs",
+    "release:verify": "node scripts/verify-release-manifest.mjs",
     "security:deps": "pnpm audit --audit-level=high",
     "security:secrets": "node scripts/secret-scan.mjs",
     "verify:backend-target": "node scripts/verify-backend-target.mjs",
@@ -28,9 +31,10 @@
     "test:identity": "vitest run tests/identity-integration.test.ts",
     "test:worker": "vitest run tests/worker-outbox.test.ts",
     "test:push-protection": "node scripts/test-push-protection.mjs",
+    "test:release": "node scripts/test-release-pipeline.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm check:toolchain && pnpm lint && pnpm lint:boundaries && pnpm typecheck && pnpm test && pnpm test:push-protection && pnpm build:all"
+    "verify": "pnpm check:toolchain && pnpm lint && pnpm lint:boundaries && pnpm typecheck && pnpm test && pnpm test:push-protection && pnpm test:release && pnpm build:all"
   },
   "dependencies": {
     "@hivorr/shared": "workspace:*",
