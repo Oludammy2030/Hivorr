@@ -59,19 +59,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install flyctl 0.5.5
-        env:
-          FLY_VERSION: 0.5.5
         run: |
           set -euo pipefail
-          base="https://github.com/superfly/flyctl/releases/download/v${FLY_VERSION}"
-          curl -fsSL -o /tmp/flyctl.tar.gz "${base}/flyctl_${FLY_VERSION}_Linux_x86_64.tar.gz"
-          curl -fsSL -o /tmp/flyctl_checksums.txt "${base}/flyctl_${FLY_VERSION}_checksums.txt"
-          grep "Linux_x86_64.tar.gz" /tmp/flyctl_checksums.txt \
-            | awk '{print $1"  /tmp/flyctl.tar.gz"}' \
-            | sha256sum -c -
-          tar -xzf /tmp/flyctl.tar.gz -C /tmp
-          sudo install -m 0755 /tmp/flyctl /usr/local/bin/flyctl
-          flyctl version
+          curl -fsSL https://fly.io/install.sh | sh -s -- 0.5.5
+          echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
+          "$HOME/.fly/bin/flyctl" version
 
       - name: Apply staging migrations
         env:
