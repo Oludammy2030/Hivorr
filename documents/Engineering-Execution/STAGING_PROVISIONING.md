@@ -1,10 +1,11 @@
 # Staging Provisioning Runbook (EP-01-060)
 
-**Status:** Partially live (9 November 2026). The staging API and worker are deployed to Fly in `jnb`,
-all 11 migrations are applied, and both R2 buckets and all four Pages projects exist. The API answers
-at `https://hivorr-staging-api.fly.dev/v1/health/live`. **No custom hostname resolves yet**, the
-frontend is not deployed to Pages, Access and the edge rewrite are not configured, and the Fly API is
-currently reachable directly rather than only through the edge.
+**Status:** Provisioned and stopped by default (9 November 2026). The staging API and worker are
+deployed to Fly in `jnb`, all 11 migrations are applied, and both R2 buckets and all four Pages
+projects exist. **Machines are scaled to zero** so idle staging costs no compute. Start them with
+`scripts/staging-start.ps1`; stop them with `scripts/staging-stop.ps1`. **No custom hostname resolves
+yet**, the frontend is not deployed to Pages, Access and the edge rewrite are not configured, and the
+Fly API is directly reachable on its `fly.dev` hostname rather than only through the edge.
 
 ## 1. Remaining execution prerequisites
 

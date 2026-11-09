@@ -122,3 +122,12 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: bash scripts/flyctl-ci.sh status --app hivorr-staging-worker
+
+      - name: Scale staging to zero
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          bash scripts/flyctl-ci.sh scale count 0 --app hivorr-staging-api --yes
+          bash scripts/flyctl-ci.sh scale count 0 --app hivorr-staging-worker --yes
+          echo "Staging is stopped; start it with scripts/staging-start.ps1"
