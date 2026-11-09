@@ -1,9 +1,11 @@
 # Staging Provisioning Runbook (EP-01-060)
 
-**Status:** Approved for staging and in progress (8 November 2026). `TEC-12` is approved for staging.
-The Fly apps `hivorr-staging-api` and `hivorr-staging-worker` exist, and all four Pages projects exist.
-R2 bucket creation is blocked until R2 is enabled on the Cloudflare account. No hostname resolves,
-no deployment exists, and no database migration has been applied to staging.
+**Status:** Provisioned and stopped by default (9 November 2026). The staging API and worker are
+deployed to Fly in `jnb`, all 11 migrations are applied, and both R2 buckets and all four Pages
+projects exist. **Machines are scaled to zero** so idle staging costs no compute. Start them with
+`scripts/staging-start.ps1`; stop them with `scripts/staging-stop.ps1`. **No custom hostname resolves
+yet**, the frontend is not deployed to Pages, Access and the edge rewrite are not configured, and the
+Fly API is directly reachable on its `fly.dev` hostname rather than only through the edge.
 
 ## 1. Remaining execution prerequisites
 
@@ -11,12 +13,15 @@ no deployment exists, and no database migration has been applied to staging.
 | --- | --- |
 | `TEC-12` | **Approved for staging.** Open items are recorded in the record and must close before production. |
 | #26 TLS | **Resolved** by flattened first-level staging hostnames; Universal SSL covers them. |
-| Fly apps | Created in `jnb`: `hivorr-staging-api`, `hivorr-staging-worker`. |
-| Pages projects | Created: `hivorr-staging-main`, `hivorr-staging-control`, `hivorr-staging-staff`, `hivorr-staging-partner`. |
-| R2 | **Blocked:** enable R2 in the Cloudflare dashboard before creating `hivorr-staging-media` and `hivorr-staging-exports`. |
+| Fly apps | Deployed in `jnb`: `hivorr-staging-api`, `hivorr-staging-worker`. One image is deployed to both. |
+| Migrations | All 11 applied through `scripts/apply-migrations.mjs`. |
+| Pages projects | Created: `hivorr-staging-main`, `hivorr-staging-control`, `hivorr-staging-staff`, `hivorr-staging-partner`. No deployment yet. |
+| R2 | Created: `hivorr-staging-media`, `hivorr-staging-exports`. |
 | Custom domains and DNS | Not attached. Add each Pages custom domain in the dashboard; the zone is in the same account. |
 | Access | Not configured. Create the three Access applications in Zero Trust. |
-| API/worker deployment | Build and container image exist. `.github/workflows/deploy-fly-staging.yml` applies migrations, builds once, deploys both apps, and smoke-tests the API. It needs the `FLY_API_TOKEN` staging secret. |
+| Edge guard | **Not implemented.** The Fly API has a public `fly.dev` hostname. Until the edge header guard or a Tunnel is in place, the API is directly reachable. Do not collect real data. |
+| Database TLS verification | Encrypted, but the pooler certificate is not verified until `DATABASE_SSL_CA` is set from **Database settings → SSL Configuration**. |
+| Readiness | `/health/ready` returns 503 by design: the database-backed readiness check is not implemented yet. |
 
 The Fly.io region is recorded as **`jnb` (Johannesburg)** in `config/environments.json`.
 

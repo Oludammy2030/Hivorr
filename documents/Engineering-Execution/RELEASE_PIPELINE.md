@@ -109,7 +109,9 @@ CI runs this in the `test` job. `pnpm verify` also runs it.
 
 ## 8. Not yet implemented
 
-- No staging or production host, DNS, Fly.io app, Cloudflare Access policy, or R2 bucket exists.
+- The staging API and worker are deployed on Fly and answer on their `fly.dev` hostnames, but no
+  custom hostname, DNS record, Cloudflare Access policy, or frontend Pages deployment exists yet.
+- Production has no host, DNS, Fly.io app, Cloudflare Access policy, or R2 bucket.
 - The rollout step is intentionally absent; the workflows stop at verified promotion.
 - `STAGING_DEPLOY_TARGET`, `PRODUCTION_DEPLOY_TARGET`, and `FOUNDER_GITHUB_LOGIN` are unset, so the
   staging release request and production target check are skipped rather than simulated.
