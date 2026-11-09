@@ -123,11 +123,13 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: bash scripts/flyctl-ci.sh status --app hivorr-staging-worker
 
-      - name: Scale staging to zero
+      - name: Scale staging to its idle shape
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
           set -euo pipefail
-          bash scripts/flyctl-ci.sh scale count 0 --app hivorr-staging-api --yes
+          # One API machine sleeps when idle and wakes on request. The worker
+          # has no public traffic to wake it, so it stays at zero until started.
+          bash scripts/flyctl-ci.sh scale count 1 --app hivorr-staging-api --yes
           bash scripts/flyctl-ci.sh scale count 0 --app hivorr-staging-worker --yes
-          echo "Staging is stopped; start it with scripts/staging-start.ps1"
+          echo "API will auto-wake; start the worker with scripts/staging-start.ps1"

@@ -2,10 +2,12 @@
 
 **Status:** Provisioned and stopped by default (9 November 2026). The staging API and worker are
 deployed to Fly in `jnb`, all 11 migrations are applied, and both R2 buckets and all four Pages
-projects exist. **Machines are scaled to zero** so idle staging costs no compute. Start them with
-`scripts/staging-start.ps1`; stop them with `scripts/staging-stop.ps1`. **No custom hostname resolves
-yet**, the frontend is not deployed to Pages, Access and the edge rewrite are not configured, and the
-Fly API is directly reachable on its `fly.dev` hostname rather than only through the edge.
+projects exist. The API keeps **one machine that sleeps when idle and wakes on the first request**;
+the worker is kept at **zero** because it has no traffic to wake it. Start both with
+`scripts/staging-start.ps1`, stop the worker with `scripts/staging-stop.ps1`, or go to zero machines
+with `scripts/staging-offline.ps1`. **No custom hostname resolves yet**, the frontend is not deployed
+to Pages, Access and the edge rewrite are not configured, and the Fly API is directly reachable on
+its `fly.dev` hostname rather than only through the edge.
 
 ## 1. Remaining execution prerequisites
 
