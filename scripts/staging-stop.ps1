@@ -9,7 +9,8 @@ if (-not (Test-Path $fly)) {
   exit 1
 }
 
-Write-Host "Stopping staging machines..." -ForegroundColor Cyan
-& $fly scale count 0 -a hivorr-staging-api --yes
+Write-Host "Stopping the worker, leaving the API able to auto-wake..." -ForegroundColor Cyan
+& $fly scale count 1 -a hivorr-staging-api --yes
 & $fly scale count 0 -a hivorr-staging-worker --yes
-Write-Host "Staging stopped. Compute cost is now zero." -ForegroundColor Green
+Write-Host "Done. The API sleeps when idle and wakes on the next request." -ForegroundColor Green
+Write-Host "For zero machines and zero cost, run scripts/staging-offline.ps1"
