@@ -21,10 +21,17 @@ import path from "node:path"
 import { Client } from "pg"
 
 const LOCK_KEY = 72_700_100
-const databaseUrl = process.env.DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL?.trim()
 
 if (!databaseUrl) {
   console.error("apply-migrations: DATABASE_URL is required")
+  process.exit(2)
+}
+
+if (!/^postgres(ql)?:\/\//i.test(databaseUrl)) {
+  console.error(
+    "apply-migrations: DATABASE_URL must be the full postgresql:// URI, not a password or a parameter list",
+  )
   process.exit(2)
 }
 
