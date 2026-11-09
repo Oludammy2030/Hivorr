@@ -14,6 +14,7 @@
 // This is the CI/deployment path. It never prints the connection string.
 
 import { createHash } from "node:crypto"
+import { lookup } from "node:dns/promises"
 import { readdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 
@@ -46,10 +47,37 @@ if (files.length === 0) {
   process.exit(2)
 }
 
+// Supabase's direct database host is IPv6-first. GitHub runners have no IPv6
+// route, so resolve an IPv4 address explicitly and keep the original hostname
+// as the TLS server name. A local container stays on loopback without TLS.
+function connectionOptions(value) {
+  const parsed = new URL(value)
+  return {
+    host: parsed.hostname,
+    port: Number(parsed.port || 5432),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: parsed.pathname.replace(/^\//, "") || "postgres",
+  }
+}
+
+const connection = connectionOptions(databaseUrl)
+let ssl
+
+if (!isLocalHost(databaseUrl)) {
+  ssl = { rejectUnauthorized: true, servername: connection.host }
+  try {
+    const resolved = await lookup(connection.host, { family: 4 })
+    connection.host = resolved.address
+  } catch {
+    // Fall back to the hostname so a dual-stack network can still connect.
+  }
+}
+
 const client = new Client({
-  connectionString: databaseUrl,
+  ...connection,
   application_name: "hivorr-migrator",
-  ssl: isLocalHost(databaseUrl) ? undefined : { rejectUnauthorized: true },
+  ssl,
 })
 
 let locked = false
