@@ -1,13 +1,15 @@
 # Staging Provisioning Runbook (EP-01-060)
 
-**Status:** Provisioned and stopped by default (9 November 2026). The staging API and worker are
-deployed to Fly in `jnb`, all 11 migrations are applied, and both R2 buckets and all four Pages
-projects exist. The API keeps **one machine that sleeps when idle and wakes on the first request**;
-the worker is kept at **zero** because it has no traffic to wake it. Start both with
+**Status:** Live on the staging hostnames (9 November 2026). All four hosts serve the frontend over
+valid TLS, and `/api/*` is proxied same-origin to Fly. Cloudflare Access protects the control, staff
+and partner hosts. The API keeps **one machine that sleeps after 5 minutes idle and wakes in about
+6 seconds**; the worker is kept at **zero** because it has no traffic to wake it. Start both with
 `scripts/staging-start.ps1`, stop the worker with `scripts/staging-stop.ps1`, or go to zero machines
-with `scripts/staging-offline.ps1`. **No custom hostname resolves yet**, the frontend is not deployed
-to Pages, Access and the edge rewrite are not configured, and the Fly API is directly reachable on
-its `fly.dev` hostname rather than only through the edge.
+with `scripts/staging-offline.ps1`.
+
+Remaining for a production-grade staging environment: database certificate verification
+(`DATABASE_SSL_CA`), automated Pages deployment from the release manifest, and verification of the
+Access policies.
 
 ## 1. Remaining execution prerequisites
 
@@ -17,10 +19,11 @@ its `fly.dev` hostname rather than only through the edge.
 | #26 TLS | **Resolved** by flattened first-level staging hostnames; Universal SSL covers them. |
 | Fly apps | Deployed in `jnb`: `hivorr-staging-api`, `hivorr-staging-worker`. One image is deployed to both. |
 | Migrations | All 11 applied through `scripts/apply-migrations.mjs`. |
-| Pages projects | Created: `hivorr-staging-main`, `hivorr-staging-control`, `hivorr-staging-staff`, `hivorr-staging-partner`. No deployment yet. |
+| Pages projects | Created and deployed: `hivorr-staging-main`, `hivorr-staging-control`, `hivorr-staging-staff`, `hivorr-staging-partner`, each bound to its custom domain. |
 | R2 | Created: `hivorr-staging-media`, `hivorr-staging-exports`. |
-| Custom domains and DNS | Not attached. Add each Pages custom domain in the dashboard; the zone is in the same account. |
-| Access | Not configured. Create the three Access applications in Zero Trust. |
+| Custom domains and DNS | Active: all four flattened staging hosts resolve through Cloudflare and serve over TLS. |
+| Access | Active on `control-staging`, `staff-staging` and `partner-staging`; unauthenticated requests receive the Access sign-in page. |
+| API proxy | `workers/api-proxy` routes `/api/*` on all four hosts to Fly, preserving the browser host and presenting the edge secret. |
 | Edge guard | The `/api/*` Worker forwards the browser host and an `EDGE_SHARED_SECRET`; the API trusts the forwarded host only when the secret matches. Direct API callers cannot choose a portal. The Fly host stays reachable but is not a recognised portal. |
 | Database TLS verification | Encrypted, but the pooler certificate is not verified until `DATABASE_SSL_CA` is set from **Database settings → SSL Configuration**. |
 | Readiness | `/health/ready` returns 503 by design: the database-backed readiness check is not implemented yet. |
