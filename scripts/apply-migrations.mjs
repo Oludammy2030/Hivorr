@@ -70,7 +70,9 @@ if (!isLocalHost(databaseUrl)) {
     const resolved = await lookup(connection.host, { family: 4 })
     connection.host = resolved.address
   } catch {
-    // Fall back to the hostname so a dual-stack network can still connect.
+    throw new Error(
+      `no IPv4 address for ${connection.host}; use the Supabase session pooler connection string`,
+    )
   }
 }
 
