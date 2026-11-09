@@ -1,20 +1,41 @@
 name: Staging Fly deployment
 
-# Manual until the first successful deploy is recorded. Promotion to production
-# remains a separate founder-approved workflow.
+# Staging deploys on every merged change. Promotion to production remains a
+# separate founder-approved workflow.
 on:
+  push:
+    branches:
+      - staging
   workflow_dispatch:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: staging-fly
   cancel-in-progress: false
 
 jobs:
+  verify-pr:
+    name: verify staging PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout policy script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Require a merged pull request into staging
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: staging
+        run: node scripts/verify-pr-merge.mjs
+
   deploy:
     name: migrate, build once, deploy
+    needs: verify-pr
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: staging
