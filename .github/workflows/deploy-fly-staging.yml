@@ -72,6 +72,7 @@ jobs:
 
       - name: Stage runtime secrets on Fly
         env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           WORKER_DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
           MFA_ENCRYPTION_KEY: ${{ secrets.MFA_ENCRYPTION_KEY }}
