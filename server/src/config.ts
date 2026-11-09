@@ -35,6 +35,7 @@ const configSchema = z
     SESSION_ISSUER: z.string().min(1).optional(),
     MFA_ENCRYPTION_KEY: z.string().min(1).optional(),
     DATABASE_URL: z.string().min(1).optional(),
+    DATABASE_SSL_CA: z.string().min(1).optional(),
     WORKER_DATABASE_URL: z.string().min(1).optional(),
     WORKER_POLL_INTERVAL_MS: z.coerce
       .number()
@@ -192,6 +193,8 @@ export interface ApiConfig {
   readonly sessionIssuer: string
   readonly mfaEncryptionKey?: string
   readonly databaseUrl: string | undefined
+  /** PEM root certificate for the database host, when supplied. */
+  readonly databaseSslCa: string | undefined
   readonly corsAllowedOrigins: readonly string[]
   readonly trustProxy: boolean
   readonly worker: WorkerConfig
@@ -230,6 +233,7 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
     sessionIssuer: value.SESSION_ISSUER ?? `hivorr-${value.HIVORR_ENV}`,
     mfaEncryptionKey: value.MFA_ENCRYPTION_KEY,
     databaseUrl: value.DATABASE_URL,
+    databaseSslCa: value.DATABASE_SSL_CA,
     corsAllowedOrigins: (value.CORS_ALLOWED_ORIGINS ?? "")
       .split(",")
       .map((origin) => origin.trim())

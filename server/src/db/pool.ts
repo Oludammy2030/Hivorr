@@ -31,16 +31,25 @@ export function createDatabasePool(
   const databaseUrl = options.databaseUrl ?? config.databaseUrl
   const remote =
     config.environment === "staging" || config.environment === "production"
+
+  // Supabase's shared pooler presents a chain rooted in a project certificate.
+  // When that certificate is supplied, verify it. Otherwise the connection is
+  // still encrypted, matching libpq's sslmode=require, but the server is not
+  // authenticated. Set DATABASE_SSL_CA to close that gap.
+  const ssl =
+    remote && !isLocalHost(databaseUrl)
+      ? config.databaseSslCa
+        ? { ca: config.databaseSslCa, rejectUnauthorized: true }
+        : { rejectUnauthorized: false }
+      : undefined
+
   const poolConfig: PoolConfig = {
     connectionString: databaseUrl,
     max: options.max ?? 10,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
     application_name: options.applicationName,
-    ssl:
-      remote && !isLocalHost(databaseUrl)
-        ? { rejectUnauthorized: true }
-        : undefined,
+    ssl,
   }
   return new Pool(poolConfig)
 }

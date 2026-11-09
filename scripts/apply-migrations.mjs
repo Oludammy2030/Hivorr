@@ -69,13 +69,20 @@ function connectionOptions(value) {
 }
 
 const connection = connectionOptions(databaseUrl)
+const databaseSslCa = process.env.DATABASE_SSL_CA?.replace(/\\n/g, "\n")
 let ssl
 
 if (!isLocalHost(databaseUrl)) {
-  ssl = { rejectUnauthorized: true, servername: connection.host }
+  // Supabase's shared pooler uses a project certificate. Verify it when the
+  // PEM is supplied; otherwise encrypt without authenticating the server,
+  // matching libpq's sslmode=require.
+  ssl = databaseSslCa
+    ? { ca: databaseSslCa, rejectUnauthorized: true }
+    : { rejectUnauthorized: false }
   try {
     const resolved = await lookup(connection.host, { family: 4 })
     connection.host = resolved.address
+    if (databaseSslCa) ssl.servername = new URL(databaseUrl).hostname
   } catch {
     throw new Error(
       `no IPv4 address for ${connection.host}; use the Supabase session pooler connection string`,
