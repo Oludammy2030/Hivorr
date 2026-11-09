@@ -36,6 +36,7 @@ const configSchema = z
     MFA_ENCRYPTION_KEY: z.string().min(1).optional(),
     DATABASE_URL: z.string().min(1).optional(),
     DATABASE_SSL_CA: z.string().min(1).optional(),
+    EDGE_SHARED_SECRET: z.string().min(1).optional(),
     WORKER_DATABASE_URL: z.string().min(1).optional(),
     WORKER_POLL_INTERVAL_MS: z.coerce
       .number()
@@ -195,6 +196,8 @@ export interface ApiConfig {
   readonly databaseUrl: string | undefined
   /** PEM root certificate for the database host, when supplied. */
   readonly databaseSslCa: string | undefined
+  /** Shared secret the edge proxy must present for a forwarded host. */
+  readonly edgeSharedSecret: string | undefined
   readonly corsAllowedOrigins: readonly string[]
   readonly trustProxy: boolean
   readonly worker: WorkerConfig
@@ -234,6 +237,7 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
     mfaEncryptionKey: value.MFA_ENCRYPTION_KEY,
     databaseUrl: value.DATABASE_URL,
     databaseSslCa: value.DATABASE_SSL_CA,
+    edgeSharedSecret: value.EDGE_SHARED_SECRET,
     corsAllowedOrigins: (value.CORS_ALLOWED_ORIGINS ?? "")
       .split(",")
       .map((origin) => origin.trim())

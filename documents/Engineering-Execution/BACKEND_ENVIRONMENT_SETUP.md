@@ -36,6 +36,7 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 | `DATABASE_URL` | `production` | Rotated production connection string |
 | `DATABASE_SSL_CA` | `staging` | Optional PEM root certificate for the pooler; public value, not a secret |
 | `MFA_ENCRYPTION_KEY` | `staging` | 32 bytes, base64, staging-only |
+| `EDGE_SHARED_SECRET` | `staging` | Shared with the `/api` proxy Worker; lets the API trust the forwarded host |
 | `MFA_ENCRYPTION_KEY` | `production` | 32 bytes, base64, production-only |
 | `WORKER_DATABASE_URL` | `staging` | Optional least-privilege worker role; falls back to `DATABASE_URL` |
 | `WORKER_DATABASE_URL` | `production` | Optional least-privilege worker role; falls back to `DATABASE_URL` |

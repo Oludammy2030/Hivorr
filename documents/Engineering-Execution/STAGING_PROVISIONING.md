@@ -21,7 +21,7 @@ its `fly.dev` hostname rather than only through the edge.
 | R2 | Created: `hivorr-staging-media`, `hivorr-staging-exports`. |
 | Custom domains and DNS | Not attached. Add each Pages custom domain in the dashboard; the zone is in the same account. |
 | Access | Not configured. Create the three Access applications in Zero Trust. |
-| Edge guard | **Not implemented.** The Fly API has a public `fly.dev` hostname. Until the edge header guard or a Tunnel is in place, the API is directly reachable. Do not collect real data. |
+| Edge guard | The `/api/*` Worker forwards the browser host and an `EDGE_SHARED_SECRET`; the API trusts the forwarded host only when the secret matches. Direct API callers cannot choose a portal. The Fly host stays reachable but is not a recognised portal. |
 | Database TLS verification | Encrypted, but the pooler certificate is not verified until `DATABASE_SSL_CA` is set from **Database settings → SSL Configuration**. |
 | Readiness | `/health/ready` returns 503 by design: the database-backed readiness check is not implemented yet. |
 
