@@ -159,7 +159,7 @@ describe("MFA secret handling", () => {
 
     expect(() => other.decrypt(encrypted.ciphertext)).toThrow()
     const parts = encrypted.ciphertext.split(":")
-    parts[3] = `A${parts[3].slice(1)}`
+    parts[3] = `${parts[3][0] === "A" ? "B" : "A"}${parts[3].slice(1)}`
     expect(() => cipher.decrypt(parts.join(":"))).toThrow()
   })
 

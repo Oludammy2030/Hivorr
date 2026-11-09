@@ -1,0 +1,13 @@
+name = "hivorr-staging-api-proxy"
+main = "src/index.js"
+compatibility_date = "2026-11-09"
+
+routes = [
+  { pattern = "staging.hivorr.com/api/*", zone_name = "hivorr.com" },
+  { pattern = "control-staging.hivorr.com/api/*", zone_name = "hivorr.com" },
+  { pattern = "staff-staging.hivorr.com/api/*", zone_name = "hivorr.com" },
+  { pattern = "partner-staging.hivorr.com/api/*", zone_name = "hivorr.com" }
+]
+
+[vars]
+API_ORIGIN = "https://hivorr-staging-api.fly.dev"

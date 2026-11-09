@@ -14,7 +14,19 @@ export function requestContext(
   config: ApiConfig,
   request: FastifyRequest,
 ): RequestContext {
-  const audience = resolveAudience(request.headers.host, config.environment)
+  // The browser host is forwarded by the edge proxy. It is trusted only when
+  // the request carries the shared edge secret, so a direct caller cannot
+  // choose a different portal by spoofing a header.
+  const forwardedHost = request.headers["x-hivorr-origin-host"]
+  const edgeSecret = request.headers["x-hivorr-edge-secret"]
+  const trustedForward =
+    config.edgeSharedSecret !== undefined &&
+    typeof edgeSecret === "string" &&
+    edgeSecret === config.edgeSharedSecret &&
+    typeof forwardedHost === "string"
+  const host = trustedForward ? forwardedHost : request.headers.host
+
+  const audience = resolveAudience(host, config.environment)
   if (!audience) {
     throw new ApiError(
       "FORBIDDEN",
