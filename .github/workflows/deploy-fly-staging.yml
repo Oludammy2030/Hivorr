@@ -58,12 +58,8 @@ jobs:
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
-      - name: Install flyctl 0.5.5
-        run: |
-          set -euo pipefail
-          curl -fsSL https://fly.io/install.sh | sh -s -- 0.5.5
-          echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
-          "$HOME/.fly/bin/flyctl" version
+      - name: Pull the pinned flyctl image
+        run: docker pull flyio/flyctl:v0.5.5
 
       - name: Apply staging migrations
         env:
@@ -79,10 +75,11 @@ jobs:
         run: |
           set -euo pipefail
           worker_db="${WORKER_DATABASE_URL:-$DATABASE_URL}"
-          flyctl secrets set --app hivorr-staging-api --stage \
+          bash scripts/flyctl-ci.sh secrets set --app hivorr-staging-api --stage \
             DATABASE_URL="$DATABASE_URL" \
             MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY"
-          flyctl secrets set --app hivorr-staging-worker --stage \
+          WORKER_DATABASE_URL="$worker_db" bash scripts/flyctl-ci.sh secrets set \
+            --app hivorr-staging-worker --stage \
             DATABASE_URL="$DATABASE_URL" \
             WORKER_DATABASE_URL="$worker_db" \
             MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY"
@@ -92,7 +89,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
           set -euo pipefail
-          flyctl deploy --build-only --push \
+          bash scripts/flyctl-ci.sh deploy --build-only --push \
             --image-label "staging-${GITHUB_SHA}" \
             --config fly.staging.api.toml
 
@@ -100,13 +97,13 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           IMAGE: registry.fly.io/hivorr-staging-api:staging-${{ github.sha }}
-        run: flyctl deploy --image "$IMAGE" --config fly.staging.api.toml
+        run: bash scripts/flyctl-ci.sh deploy --image "$IMAGE" --config fly.staging.api.toml
 
       - name: Deploy the worker
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           IMAGE: registry.fly.io/hivorr-staging-api:staging-${{ github.sha }}
-        run: flyctl deploy --image "$IMAGE" --config fly.staging.worker.toml
+        run: bash scripts/flyctl-ci.sh deploy --image "$IMAGE" --config fly.staging.worker.toml
 
       - name: Smoke test the API
         run: |
@@ -124,4 +121,4 @@ jobs:
       - name: Record the worker
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-        run: flyctl status --app hivorr-staging-worker
+        run: bash scripts/flyctl-ci.sh status --app hivorr-staging-worker
