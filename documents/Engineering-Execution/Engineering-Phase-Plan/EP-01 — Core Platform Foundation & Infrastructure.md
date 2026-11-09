@@ -568,7 +568,7 @@ Each item is a candidate work package under the EES §8 protocol. Before it reac
 - **Objective:** Provision `local`, `staging` (and the reserved `production` definition) with isolated databases, credentials, secrets and hostnames, matching the architecture's **eight deployments** (four portals in each hosted environment).
 - **Engineering purpose:** Establishes environment isolation and the integrated staging ecosystem that EP-01 exits on.
 - **Dependencies:** EP-01-001 (#17 hosting/DNS/TLS), EP-01-020, EP-01-043.
-- **Expected outcome:** `staging.hivorr.com`, `control.staging.hivorr.com`, `staff.staging.hivorr.com` and `partner.staging.hivorr.com` resolve with valid TLS; staging has its own database, roles, secrets and session issuer; no credential is shared with local or production; Cloudflare Access protects the control and staff staging hosts; the topology is recorded as code or as a reproducible runbook.
+- **Expected outcome:** `staging.hivorr.com`, `control-staging.hivorr.com`, `staff-staging.hivorr.com` and `partner-staging.hivorr.com` resolve with valid TLS; staging has its own database, roles, secrets and session issuer; no credential is shared with local or production; Cloudflare Access protects the control and staff staging hosts; the topology is recorded as code or as a reproducible runbook.
 - **Priority:** Critical · **Status:** `Not started`
 - **Reasoning:** Planning — Extremely High · Coding — Medium
 

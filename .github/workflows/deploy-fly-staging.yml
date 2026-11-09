@@ -1,0 +1,134 @@
+name: Staging Fly deployment
+
+# Staging deploys on every merged change. Promotion to production remains a
+# separate founder-approved workflow.
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: staging-fly
+  cancel-in-progress: false
+
+jobs:
+  verify-pr:
+    name: verify staging PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout policy script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Require a merged pull request into staging
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: staging
+        run: node scripts/verify-pr-merge.mjs
+
+  deploy:
+    name: migrate, build once, deploy
+    needs: verify-pr
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install pnpm 10.34.9
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 10.34.9
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install flyctl 0.5.5
+        env:
+          FLY_VERSION: 0.5.5
+        run: |
+          set -euo pipefail
+          base="https://github.com/superfly/flyctl/releases/download/v${FLY_VERSION}"
+          curl -fsSL -o /tmp/flyctl.tar.gz "${base}/flyctl_${FLY_VERSION}_Linux_x86_64.tar.gz"
+          curl -fsSL -o /tmp/flyctl_checksums.txt "${base}/flyctl_${FLY_VERSION}_checksums.txt"
+          grep "Linux_x86_64.tar.gz" /tmp/flyctl_checksums.txt \
+            | awk '{print $1"  /tmp/flyctl.tar.gz"}' \
+            | sha256sum -c -
+          tar -xzf /tmp/flyctl.tar.gz -C /tmp
+          sudo install -m 0755 /tmp/flyctl /usr/local/bin/flyctl
+          flyctl version
+
+      - name: Apply staging migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/apply-migrations.mjs
+
+      - name: Stage runtime secrets on Fly
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          WORKER_DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
+          MFA_ENCRYPTION_KEY: ${{ secrets.MFA_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          worker_db="${WORKER_DATABASE_URL:-$DATABASE_URL}"
+          flyctl secrets set --app hivorr-staging-api --stage \
+            DATABASE_URL="$DATABASE_URL" \
+            MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY"
+          flyctl secrets set --app hivorr-staging-worker --stage \
+            DATABASE_URL="$DATABASE_URL" \
+            WORKER_DATABASE_URL="$worker_db" \
+            MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY"
+
+      - name: Build the image once
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          flyctl deploy --build-only --push \
+            --image-label "staging-${GITHUB_SHA}" \
+            --config fly.staging.api.toml
+
+      - name: Deploy the API
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          IMAGE: registry.fly.io/hivorr-staging-api:staging-${{ github.sha }}
+        run: flyctl deploy --image "$IMAGE" --config fly.staging.api.toml
+
+      - name: Deploy the worker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          IMAGE: registry.fly.io/hivorr-staging-api:staging-${{ github.sha }}
+        run: flyctl deploy --image "$IMAGE" --config fly.staging.worker.toml
+
+      - name: Smoke test the API
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 20); do
+            if curl -fsS https://hivorr-staging-api.fly.dev/v1/health/live; then
+              echo "staging API is live"
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "staging API did not become healthy"
+          exit 1
+
+      - name: Record the worker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl status --app hivorr-staging-worker

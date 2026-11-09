@@ -2,9 +2,12 @@
 
 The API and worker boundary.
 
-**Current state:** boundary only. `src/index.ts` exports the package constants;
-the NestJS + Fastify bootstrap, modules, migrations, and worker arrive in
-EP-01-010 through EP-01-014 and EP-01-020 onward.
+**Current state:** API bootstrap only. `src/app.ts` creates the NestJS + Fastify
+application; `src/main.ts` starts it. Configuration fails closed, `/v1/health` is a
+liveness endpoint, and `/v1/health/ready` deliberately reports `503` until the
+database adapter exists. The capability engine is pure and default-deny. The
+modules, database, migrations, worker, and provider adapters arrive in the
+remaining EP-01 packages.
 
 Rules:
 

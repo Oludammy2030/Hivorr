@@ -5,12 +5,11 @@
 **Not a claim of server-side enforcement:** GitHub Free does not provide branch protection or
 repository rulesets for this private repository. See §5.
 
-> **Pending alignment — 2026-11-07.** `ARCHITECTURE.md` revision 3 replaces the manual production
-> dispatch described in §4 with a release issue and a founder `/approve-release <sha>` comment that
-> promotes the same staging artifacts, and defines four portals across eight deployments. The
-> current workflows and this document still describe the pre-revision-3 gate. They will be updated
-> when the release workflows are implemented; this note records the gap rather than claiming the new
-> gate exists.
+> **Aligned with revision 3 — 2026-11-08.** The release workflows now build once, record a manifest
+> of artifact digests, and promote the staging artifact to production without rebuilding. Production
+> requires a founder `/approve-release <sha>` comment on a `release-candidate` Issue. See
+> `RELEASE_PIPELINE.md`. The four-portal, eight-deployment target still has no hosted environment, so
+> the rollout step remains unconfigured rather than simulated.
 
 ## 1. Branch model
 
@@ -97,26 +96,32 @@ The guard was tested with both a merged commit (`3b1def3`, passes) and a pushed 
 `.github/workflows/deploy-staging.yml` runs only on `staging` pushes.
 
 1. `verify-pr` must pass — the push must come from a merged PR into `staging`.
-2. `build-staging-artifact` builds the project and uploads `dist/` as a 14-day artifact.
+2. `build-staging-artifact` builds all four bundles **once**, writes `release-manifest.json`, verifies
+   the manifest against the build, and uploads both the bundle artifact and the manifest for 90 days.
 3. The `staging` environment is recorded as an audit marker.
-4. If `STAGING_DEPLOY_TARGET` is configured, the workflow records it. No staging host exists yet, so
-   the current output states that the target is an EP-01 entry condition.
+4. If `STAGING_DEPLOY_TARGET` is configured, the backend target is verified and a
+   `release-candidate` Issue is created. No staging host exists yet, so the current output states
+   that the target is an EP-01 entry condition.
 
-The gate is the approved-PR workflow. It does not invent a host or credentials.
+The gate is the approved-PR workflow plus the manifest. It does not invent a host or credentials.
 
 ### Production
 
-`.github/workflows/deploy-production.yml` is **manual only** (`workflow_dispatch`). It requires all
-of the following before it builds anything:
+`.github/workflows/deploy-production.yml` is **manual only** (`workflow_dispatch`). It **does not
+build**. It requires all of the following:
 
 1. the actor equals the repository variable `FOUNDER_GITHUB_LOGIN`;
-2. an explicit `approval_reference` is supplied;
-3. the confirmation phrase is exactly `DEPLOY_PRODUCTION`;
-4. the commit is linked to a merged Pull Request into `main`;
-5. the run targets `main`.
+2. the confirmation phrase is exactly `DEPLOY_PRODUCTION`;
+3. `release_sha` is a 40-character lowercase hex commit;
+4. the founder has commented `/approve-release <release_sha>` on the matching `release-candidate`
+   Issue;
+5. `release_sha` is an ancestor of `main`;
+6. a successful `deploy-staging.yml` run exists for `release_sha`;
+7. the downloaded staging artifact and the release commit's backend source and migrations match the
+   staging manifest digests.
 
-The `production` environment is recorded. No production host exists in EP-00, so the workflow builds
-and records the artifact rather than deploying it.
+The `production` environment is recorded. No production host exists yet, so the workflow verifies
+and records the promotion rather than deploying it.
 
 ## 5. GitHub Free capability findings
 
@@ -160,8 +165,9 @@ guarantee against a determined privileged actor.
 
 - Normal change: working branch → pull request → review → merge.
 - Staging: merge the working PR into `staging`; the staging gate runs automatically.
-- Production: merge `staging` into `main` by PR; run the production workflow manually with the approval
-  reference and confirmation phrase.
+- Production: merge `staging` into `main` by PR; approve the `release-candidate` Issue with
+  `/approve-release <sha>` from the founder account; run the production workflow with that SHA and the
+  confirmation phrase. The workflow promotes the staging artifact without rebuilding.
 - Emergency only: a maintainer may use the GitHub UI merge path. Record the reason, the affected
   commit, the approver and the follow-up in the phase record. Do not disable the local hook as a
   shortcut, and do not force-push.

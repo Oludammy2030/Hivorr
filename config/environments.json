@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "applications": ["main", "control", "staff", "partner"],
+  "environments": {
+    "staging": {
+      "status": "planned",
+      "flyRegion": "jnb",
+      "baseDomain": "hivorr.com",
+      "hosts": {
+        "main": "staging.hivorr.com",
+        "control": "control-staging.hivorr.com",
+        "staff": "staff-staging.hivorr.com",
+        "partner": "partner-staging.hivorr.com"
+      },
+      "apiOrigin": "internal-only",
+      "edgeRewrite": "/api/*",
+      "flyApps": {
+        "api": "hivorr-staging-api",
+        "worker": "hivorr-staging-worker"
+      },
+      "supabaseProjectRef": "hkswhaltyqfqkgswukfs",
+      "pagesProjects": {
+        "main": "hivorr-staging-main",
+        "control": "hivorr-staging-control",
+        "staff": "hivorr-staging-staff",
+        "partner": "hivorr-staging-partner"
+      },
+      "storage": {
+        "provider": "cloudflare-r2",
+        "bucketPrefix": "hivorr-staging",
+        "buckets": ["hivorr-staging-media", "hivorr-staging-exports"]
+      },
+      "accessProtected": ["control", "staff", "partner"],
+      "requiredSecrets": [
+        "DATABASE_URL",
+        "MFA_ENCRYPTION_KEY",
+        "WORKER_DATABASE_URL",
+        "FLY_API_TOKEN"
+      ]
+    },
+    "production": {
+      "status": "reserved",
+      "baseDomain": "hivorr.com",
+      "hosts": {
+        "main": "hivorr.com",
+        "control": "control.hivorr.com",
+        "staff": "staff.hivorr.com",
+        "partner": "partner.hivorr.com"
+      },
+      "apiOrigin": "internal-only",
+      "edgeRewrite": "/api/*",
+      "supabaseProjectRef": "ahyizcwidkwyowroeqfp",
+      "storage": {
+        "provider": "cloudflare-r2",
+        "bucketPrefix": "hivorr-production"
+      },
+      "accessProtected": ["control", "staff", "partner"],
+      "requiredSecrets": [
+        "DATABASE_URL",
+        "MFA_ENCRYPTION_KEY",
+        "WORKER_DATABASE_URL",
+        "FLY_API_TOKEN"
+      ]
+    }
+  },
+  "blockers": []
+}

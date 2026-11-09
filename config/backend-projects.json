@@ -1,0 +1,14 @@
+{
+  "staging": {
+    "projectRef": "hkswhaltyqfqkgswukfs",
+    "status": "active"
+  },
+  "production": {
+    "projectRef": "ahyizcwidkwyowroeqfp",
+    "status": "active"
+  },
+  "retired": {
+    "staging": "cgxkiczmwzydhoroclvf",
+    "production": "fxpcgtetvzlexbptqiwp"
+  }
+}

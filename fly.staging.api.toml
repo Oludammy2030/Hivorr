@@ -1,0 +1,29 @@
+app = "hivorr-staging-api"
+primary_region = "jnb"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  HIVORR_ENV = "staging"
+  BACKEND_ENVIRONMENT = "staging"
+  SUPABASE_PROJECT_REF = "hkswhaltyqfqkgswukfs"
+  SESSION_ISSUER = "hivorr-staging"
+  API_PORT = "3000"
+  API_HOST = "0.0.0.0"
+  LOG_LEVEL = "info"
+  TRUST_PROXY = "true"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "15s"
+    method = "GET"
+    path = "/v1/health/live"
+    timeout = "5s"

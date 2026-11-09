@@ -31,10 +31,10 @@ jobs:
         run: node scripts/verify-pr-merge.mjs
 
   build-staging-artifact:
-    name: build staging artifact
+    name: build staging release artifact
     needs: verify-pr
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     environment: staging
     steps:
       - name: Checkout
@@ -55,23 +55,107 @@ jobs:
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
-      - name: Build
+      - name: Build all four application bundles
         run: pnpm build:all
 
-      - name: Upload staging artifact
+      - name: Generate the release manifest
+        run: >-
+          node scripts/release-manifest.mjs
+          --sha "${{ github.sha }}"
+          --ref staging
+          --output release-manifest.json
+
+      - name: Verify the release manifest against the build
+        run: >-
+          node scripts/verify-release-manifest.mjs
+          --manifest release-manifest.json
+          --sha "${{ github.sha }}"
+          --ref staging
+          --dist dist
+
+      - name: Upload staging application artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: staging-build-${{ github.sha }}
           path: dist
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 90
+
+      - name: Upload release manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-manifest-${{ github.sha }}
+          path: release-manifest.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Verify the staging backend target
+        if: vars.STAGING_DEPLOY_TARGET != ''
+        env:
+          HIVORR_ENV: staging
+          BACKEND_ENVIRONMENT: staging
+          SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          if [ -z "$SUPABASE_PROJECT_REF" ]; then
+            echo "STAGING_SUPABASE_PROJECT_REF is not configured. Refusing staging deployment."
+            exit 1
+          fi
+          node scripts/verify-backend-target.mjs
 
       - name: Deployment target
         run: |
           if [ -n "${{ vars.STAGING_DEPLOY_TARGET }}" ]; then
             echo "Staging deployment target is configured: ${{ vars.STAGING_DEPLOY_TARGET }}"
-            echo "Deployment itself remains gated on the approved PR and this artifact."
+            echo "The release is CI-verified and manifest-recorded; hosting rollout is the next stage."
           else
-            echo "No staging host is configured yet. The approved PR gate and artifact are in place;"
+            echo "No staging host is configured yet. The approved PR gate, build, manifest and artifact are in place;"
             echo "the hosting target is an EP-01 entry condition."
           fi
+
+  release-request:
+    name: create release request
+    needs: build-staging-artifact
+    if: vars.STAGING_DEPLOY_TARGET != '' && vars.FOUNDER_GITHUB_LOGIN != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Download the release manifest
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-manifest-${{ github.sha }}
+
+      - name: Create the release-candidate issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SHA: ${{ github.sha }}
+          MANIFEST_PATH: release-manifest.json
+          STAGING_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          label="release-candidate"
+          gh label create "$label" \
+            --color FBCA04 \
+            --description "Staging-verified release awaiting founder approval" \
+            --force || true
+          existing="$(gh issue list \
+            --label "$label" \
+            --state all \
+            --search "$RELEASE_SHA" \
+            --json number \
+            --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Release issue #$existing already exists for $RELEASE_SHA; not creating a duplicate."
+            exit 0
+          fi
+          node scripts/release-issue-body.mjs > release-issue.md
+          gh issue create \
+            --title "Release ${RELEASE_SHA:0:7}" \
+            --label "$label" \
+            --body-file release-issue.md

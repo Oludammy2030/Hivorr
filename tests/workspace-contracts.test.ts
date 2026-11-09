@@ -35,7 +35,7 @@ describe("four portals, two environments", () => {
   it("uses the approved partner hostnames", () => {
     expect(getPortal("partner").hosts.production).toBe("partner.hivorr.com")
     expect(getPortal("partner").hosts.staging).toBe(
-      "partner.staging.hivorr.com",
+      "partner-staging.hivorr.com",
     )
   })
 
@@ -54,11 +54,11 @@ describe("four portals, two environments", () => {
 
   it("resolves a host to its portal and environment", () => {
     expect(getPortalByHost("hivorr.com", "production")?.id).toBe("app")
-    expect(getPortalByHost("control.staging.hivorr.com", "staging")?.id).toBe(
+    expect(getPortalByHost("control-staging.hivorr.com", "staging")?.id).toBe(
       "control",
     )
     expect(
-      getPortalByHost("control.staging.hivorr.com", "production"),
+      getPortalByHost("control-staging.hivorr.com", "production"),
     ).toBeUndefined()
   })
 

@@ -14,8 +14,11 @@ export default tseslint.config(
   {
     ignores: [
       "dist/**",
+      "**/dist/**",
       "node_modules/**",
       ".figma/**",
+      "supabase/.temp/**",
+      "supabase/.branches/**",
       "coverage/**",
       "pnpm-lock.yaml",
     ],
