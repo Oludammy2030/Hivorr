@@ -34,6 +34,7 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 | --- | --- | --- |
 | `DATABASE_URL` | `staging` | Rotated staging connection string |
 | `DATABASE_URL` | `production` | Rotated production connection string |
+| `DATABASE_SSL_CA` | `staging` | Optional PEM root certificate for the pooler; public value, not a secret |
 | `MFA_ENCRYPTION_KEY` | `staging` | 32 bytes, base64, staging-only |
 | `MFA_ENCRYPTION_KEY` | `production` | 32 bytes, base64, production-only |
 | `WORKER_DATABASE_URL` | `staging` | Optional least-privilege worker role; falls back to `DATABASE_URL` |
@@ -44,6 +45,11 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 `MFA_ENCRYPTION_KEY` encrypts TOTP secrets with AES-256-GCM before they reach the database. Generate
 it with `openssl rand -base64 32`. The two environments must never share a key, because a staging
 ciphertext must not be readable in production.
+
+**Database TLS.** Remote connections use TLS. If `DATABASE_SSL_CA` is not set, the connection is
+encrypted but the server certificate is not verified, matching libpq's `sslmode=require`. Download
+the project root certificate from **Database settings → SSL Configuration** and set it as
+`DATABASE_SSL_CA` to enable verification. The staging pooler chain is not trusted by Node without it.
 
 **There is no `SESSION_SIGNING_KEY`.** Access and refresh tokens are opaque random values stored as
 hashes; nothing is signed. A `SESSION_SIGNING_KEY` secret may still exist from an earlier setup. It
