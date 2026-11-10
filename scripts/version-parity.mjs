@@ -30,19 +30,37 @@ const args = new Map(
 )
 
 function commandVersion(command, commandArgs) {
-  try {
-    return execFileSync(command, commandArgs, {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-      // Windows cannot exec a .cmd shim without a shell.
-      shell: process.platform === "win32",
-    }).trim()
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error)
-    console.error(`toolchain: cannot read ${command} version: ${detail}`)
-    process.exit(2)
+  return execFileSync(command, commandArgs, {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    // Windows cannot exec a .cmd shim without a shell.
+    shell: process.platform === "win32",
+  }).trim()
+}
+
+// Corepack and npm expose pnpm as `pnpm.cmd` on Windows; mise and other
+// version managers expose `pnpm.exe`, which the shell resolves from `pnpm`.
+// Try both so a correctly pinned toolchain is not reported as missing.
+function pnpmVersionValue() {
+  const override = args.get("pnpm")
+  if (override) return override
+
+  const candidates =
+    process.platform === "win32" ? ["pnpm.cmd", "pnpm"] : ["pnpm"]
+  const failures = []
+  for (const command of candidates) {
+    try {
+      return commandVersion(command, ["--version"])
+    } catch (error) {
+      failures.push(error instanceof Error ? error.message : String(error))
+    }
   }
+
+  console.error(
+    `toolchain: cannot read the pnpm version: ${failures.join("; ")}`,
+  )
+  process.exit(2)
 }
 
 function parseExact(value) {
@@ -51,11 +69,7 @@ function parseExact(value) {
 }
 
 const nodeVersion = args.get("node") || process.version.replace(/^v/, "")
-const pnpmVersion =
-  args.get("pnpm") ||
-  commandVersion(process.platform === "win32" ? "pnpm.cmd" : "pnpm", [
-    "--version",
-  ])
+const pnpmVersion = pnpmVersionValue()
 
 const expectedPnpm = String(manifest.packageManager || "").replace(/^pnpm@/, "")
 const expectedNodeRange = String(manifest.engines?.node || "")
