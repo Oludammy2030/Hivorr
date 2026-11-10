@@ -106,7 +106,7 @@ describe("CI pipeline contract", () => {
     expect(actions.length).toBeGreaterThan(0)
     for (const action of actions) {
       expect(action).toMatch(
-        /^(?:actions\/(?:checkout|setup-node)|pnpm\/action-setup)@[0-9a-f]{40}$/,
+        /^(?:actions\/(?:checkout|setup-node|upload-artifact)|pnpm\/action-setup)@[0-9a-f]{40}$/,
       )
     }
   })
