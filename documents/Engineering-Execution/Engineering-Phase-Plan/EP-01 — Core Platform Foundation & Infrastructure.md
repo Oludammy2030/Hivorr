@@ -276,7 +276,7 @@ The visual baseline (`050`) is off the backend critical path but on the **phase 
 
 ## 11. Roadmap items
 
-Each item is a candidate work package under the EES §8 protocol. Before it reaches G0 it must be elaborated with class, scope-in/out, reuse check, test plan, evidence, rollback and approver. IDs are stable and are never reused.
+Each item is a candidate work package under the EES §8 protocol. Before it reaches G0 it must be elaborated with class, scope-in/out, reuse check, test plan, evidence, rollback and approver. IDs are stable and are never reused. Three-digit references in this plan, such as `020`, mean `EP-01-020`; the shorthand is valid only inside this document.
 
 **Reasoning levels:** *Planning* = reasoning needed to define the package at G0. *Coding* = reasoning needed to implement and verify it. Use the higher level when a security or architectural property is involved.
 

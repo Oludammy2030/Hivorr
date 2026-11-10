@@ -81,6 +81,9 @@ jobs:
       - name: Format changed files
         run: pnpm format:check
 
+      - name: Work-package governance
+        run: pnpm docs:check
+
   typecheck:
     name: typecheck
     needs: lint

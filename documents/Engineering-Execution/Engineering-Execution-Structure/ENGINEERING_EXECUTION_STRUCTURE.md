@@ -751,6 +751,17 @@ abandoned keeps its ID and is marked `Cancelled`, so history stays readable.
 prefix, matching the phase identifiers and the EP-01 phase plan. The `WP-` form used in version 2.0
 of this document is retired; no identifier in either form is reused.
 
+**Allocation.** An identifier is a coordinate, not a sequence number. EP-01 allocates identifiers in
+ten-wide blocks per stage: Stage A `001`–`009`, Stage B `010`–`019`, Stage C `020`–`029`, Stage D
+`030`–`039`, Stage E `040`–`049`, Stage F `050`–`059`, Stage G `060`–`069`, Stage H `070`–`079`. An
+unused number in a block is unallocated; it is not a deleted task, a cancelled package or a reserved
+named task. Execution order and document order follow dependencies, not numeric order. A package
+created after planning keeps the next free identifier even when it is inserted earlier in the plan;
+`EP-00-012` and `EP-00-013` are the precedent. Identifiers are never renumbered or reused. A package
+added during execution is added to its phase plan's roadmap section in the same change. The
+`pnpm docs:check` gate enforces this section in CI; a plan/task mismatch or a malformed identifier
+fails the build.
+
 ### 8.2 Required fields
 
 **[PROPOSED]** A work package is not ready (G0) until all of these exist:
@@ -939,6 +950,17 @@ This table exists so the correction is auditable and does not have to be redisco
 ---
 
 ## 13. Changelog
+
+### 10 November 2026 — §8.1 allocation clarification
+
+**What changed.** §8.1 now states how identifiers are allocated: EP-01's ten-wide stage blocks,
+that unused numbers are unallocated rather than deleted or reserved, that allocation order and
+execution order are independent, and that a package added during execution is recorded in the phase
+plan in the same change. The `pnpm docs:check` gate enforces the rule in CI.
+
+**What did not change.** No identifier was renumbered or reused. The `EP-<phase>-<nnn>` form, the G0
+fields, the gates and the phase sequence are unchanged. This documents EP-01's existing scheme; it
+makes no decision for EP-02 onward.
 
 ### 6 November 2026 — cross-reference update, audit readiness
 
