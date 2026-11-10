@@ -1,0 +1,17 @@
+{
+  "platform": "win32",
+  "playwright": "1.64.1",
+  "chromium": "156.0.8078.4",
+  "viewportHeights": 900,
+  "widths": [
+    375,
+    768,
+    1280
+  ],
+  "screens": [
+    "onboarding",
+    "login",
+    "activity-select"
+  ],
+  "capturedAt": "2026-11-10T05:59:12.923Z"
+}

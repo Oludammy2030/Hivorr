@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "outDir": "dist-openapi",
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": ["src/contracts/**/*.ts", "src/openapi/**/*.ts"],
+  "exclude": []
+}

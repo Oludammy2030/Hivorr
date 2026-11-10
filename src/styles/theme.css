@@ -101,6 +101,17 @@
   /* Two families only (AGENTS.md §2.6) */
   --hivorr-font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --hivorr-font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Auth gradient — founder-approved 2026-11-10 (EP-01-053, F-47).
+     Additive: matches the prototype's existing auth background. */
+  --hivorr-deep-blue: #1a2ad4;
+  --hivorr-deep-blue-soft: #4f5fef;
+  --hivorr-gradient-auth: linear-gradient(
+    135deg,
+    #1a2ad4 0%,
+    #2d3fe7 40%,
+    #4f5fef 100%
+  );
 }
 
 /*

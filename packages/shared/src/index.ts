@@ -6,9 +6,13 @@
  * by the applications, the API, and the release tooling.
  */
 
+import { z } from "zod"
+
 export const ENVIRONMENT_IDS = ["production", "staging"] as const
 
 export type EnvironmentId = typeof ENVIRONMENT_IDS[number]
+
+export const environmentIdSchema = z.enum(ENVIRONMENT_IDS)
 
 export interface EnvironmentDefinition {
   readonly id: EnvironmentId
@@ -26,6 +30,8 @@ export const ENVIRONMENTS: Readonly<Record<EnvironmentId, EnvironmentDefinition>
 export const PORTAL_IDS = ["app", "control", "staff", "partner"] as const
 
 export type PortalId = typeof PORTAL_IDS[number]
+
+export const portalIdSchema = z.enum(PORTAL_IDS)
 
 export interface PortalDefinition {
   readonly id: PortalId
@@ -110,3 +116,15 @@ export interface ReleaseManifest {
 export function isProductionHost(host: string): boolean {
   return getPortalByHost(host, "production") !== undefined
 }
+
+/**
+ * Contract vocabulary shared by the API and every client.
+ *
+ * Each module owns one list and one schema. Computation, persistence and HTTP
+ * behaviour stay in the server.
+ */
+export * from "./activities.js"
+export * from "./capabilities.js"
+export * from "./errors.js"
+export * from "./pagination.js"
+export * from "./routes.js"

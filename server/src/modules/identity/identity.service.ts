@@ -5,9 +5,24 @@ import { hash, verify } from "@node-rs/argon2"
 import type { EnvironmentId, PortalId } from "@hivorr/shared"
 import type { PoolClient } from "pg"
 
-import { ApiError } from "../../common/errors"
+import { ApiError, rateLimited } from "../../common/errors"
+import { FixedWindowRateLimiter } from "../../common/rate-limiter"
 import { API_CONFIG, type ApiConfig } from "../../config"
 import { DatabaseService } from "../../db/database.service"
+import {
+  computeCapabilities,
+  type CapabilityId,
+} from "../../domain/capabilities"
+import {
+  EMAIL_ADAPTER,
+  CaptureEmailAdapter,
+  type EmailAdapter,
+} from "../../integrations/email/email.adapter"
+import { appendAudit } from "../platform"
+import { listActiveActivities } from "../profile"
+import { buildAccessContext } from "./access"
+import { normalizeEmail } from "./domain/identity"
+import { IdentityRepository } from "./repositories/identity.repository"
 import {
   generateRecoveryCodes,
   hashRecoveryCode,
@@ -67,6 +82,22 @@ export interface SessionResult {
   readonly idleExpiresAt: string
 }
 
+export interface SessionActivityView {
+  readonly id: string
+  readonly state: string
+}
+
+export interface CurrentSession extends SessionResult {
+  readonly account: {
+    readonly id: string
+    readonly email: string
+    readonly displayName: string | null
+    readonly status: string
+  }
+  readonly activities: readonly SessionActivityView[]
+  readonly capabilities: readonly CapabilityId[]
+}
+
 export interface IssuedSession
   extends SessionResult {
   /** Short-lived access token, sent in the host-only session cookie. */
@@ -85,6 +116,12 @@ export interface MfaChallenge {
   readonly mfaRequired: true
   readonly challengeToken: string
   readonly expiresAt: string
+}
+
+interface RecoveryRow {
+  user_id: string
+  account_id: string
+  email: string
 }
 
 export type SignInResult = IssuedSession | MfaChallenge
@@ -124,6 +161,8 @@ export interface SessionSummary {
 
 export const MFA_CHALLENGE_TTL_MS = 5 * 60 * 1000
 export const MFA_MAX_ATTEMPTS = 5
+export const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000
+export const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000
 
 export function isMfaChallenge(result: SignInResult): result is MfaChallenge {
   return "mfaRequired" in result
@@ -170,9 +209,7 @@ interface RefreshRow {
   replaced_by: string | null
 }
 
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
+export { normalizeEmail } from "./domain/identity"
 
 export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex")
@@ -208,9 +245,13 @@ function isUniqueViolation(error: unknown): boolean {
 
 @Injectable()
 export class IdentityService {
+  private readonly limiter = new FixedWindowRateLimiter()
+
   constructor(
     @Inject(DatabaseService) private readonly database: DatabaseService,
     @Inject(API_CONFIG) private readonly config: ApiConfig,
+    @Inject(EMAIL_ADAPTER)
+    private readonly email: EmailAdapter = new CaptureEmailAdapter(),
   ) {}
 
   async register(
@@ -219,50 +260,41 @@ export class IdentityService {
   ): Promise<RegistrationResult> {
     const email = normalizeEmail(input.email)
     const passwordHash = await hashPassword(input.password)
-    const client = await this.database.pool.connect()
 
     try {
-      await client.query("begin")
-      const ids = await client.query<{
-        account_id: string
-        user_id: string
-      }>("select platform.uuidv7() as account_id, platform.uuidv7() as user_id")
-      const accountId = ids.rows[0].account_id
-      const userId = ids.rows[0].user_id
+      return await this.database.withTransaction({}, async (transaction) => {
+        const ids = await transaction.query<{
+          account_id: string
+          user_id: string
+        }>(
+          "select platform.uuidv7() as account_id, platform.uuidv7() as user_id",
+        )
+        const accountId = ids.rows[0].account_id
+        const userId = ids.rows[0].user_id
 
-      await client.query("select platform.set_identity_context($1, $2)", [
-        accountId,
-        userId,
-      ])
+        await transaction.setIdentity({ accountId, userId })
 
-      await client.query("insert into identity.accounts (id) values ($1)", [
-        accountId,
-      ])
-      await client.query(
-        "insert into identity.users (id, account_id, email, display_name) values ($1, $2, $3, $4)",
-        [userId, accountId, email, input.displayName ?? null],
-      )
-      await client.query(
-        "insert into identity.credentials (user_id, password_hash) values ($1, $2)",
-        [userId, passwordHash],
-      )
-      await client.query(
-        "insert into identity.memberships (user_id, account_id, role) values ($1, $2, 'owner')",
-        [userId, accountId],
-      )
+        const repository = new IdentityRepository(transaction)
+        await repository.createAccountWithOwner({
+          accountId,
+          userId,
+          email,
+          displayName: input.displayName ?? null,
+          passwordHash,
+        })
 
-      await this.audit(client, context, {
-        actorType: "user",
-        actorId: userId,
-        action: "identity.register",
-        targetType: "account",
-        targetId: accountId,
+        await this.audit(transaction.client, context, {
+          actorType: "user",
+          actorId: userId,
+          action: "identity.register",
+          targetType: "account",
+          targetId: accountId,
+          afterSummary: { accountId, userId },
+        })
+
+        return { accountId, userId, email }
       })
-
-      await client.query("commit")
-      return { accountId, userId, email }
     } catch (error) {
-      await client.query("rollback").catch(() => undefined)
       if (isUniqueViolation(error)) {
         throw new ApiError(
           "CONFLICT",
@@ -271,8 +303,207 @@ export class IdentityService {
         )
       }
       throw error
-    } finally {
-      client.release()
+    }
+  }
+
+  async requestPasswordReset(
+    email: string,
+    context: RequestContext,
+  ): Promise<void> {
+    const normalized = normalizeEmail(email)
+    this.limitReset(normalized, context)
+    const token = createSessionToken()
+    const tokenHash = hashSessionToken(token)
+
+    const recipient = await this.database.withTransaction(
+      {},
+      async (transaction) => {
+        const lookup = await transaction.query<{
+          user_id: string
+          account_id: string
+        }>(
+          "select user_id, account_id from identity.find_login_credential($1)",
+          [normalized],
+        )
+        const row = lookup.rows[0]
+        if (!row) return undefined
+
+        await transaction.setIdentity({
+          accountId: row.account_id,
+          userId: row.user_id,
+        })
+        await transaction.query(
+          `insert into identity.tokens (user_id, purpose, token_hash, expires_at)
+           values ($1, 'password_reset', $2, now() + ($3::int * interval '1 millisecond'))`,
+          [row.user_id, tokenHash, PASSWORD_RESET_TTL_MS],
+        )
+        await this.audit(transaction.client, context, {
+          actorType: "user",
+          actorId: row.user_id,
+          action: "identity.password_reset_requested",
+          targetType: "user",
+          targetId: row.user_id,
+        })
+        return normalized
+      },
+    )
+
+    if (!recipient) return
+    await this.email.send({
+      to: recipient,
+      subject: "Reset your Hivorr password",
+      text: `Use this single-use token within 30 minutes: ${token}`,
+    })
+  }
+
+  async resetPassword(
+    token: string,
+    password: string,
+    context: RequestContext,
+  ): Promise<void> {
+    const tokenHash = hashSessionToken(token)
+    const passwordHash = await hashPassword(password)
+
+    const completed = await this.database.withTransaction(
+      {},
+      async (transaction) => {
+        const lookup = await transaction.query<RecoveryRow>(
+          "select * from identity.find_password_reset_token($1)",
+          [tokenHash],
+        )
+        const row = lookup.rows[0]
+        if (!row) return false
+
+        await transaction.setIdentity({
+          accountId: row.account_id,
+          userId: row.user_id,
+        })
+        const consumed = await transaction.query(
+          `update identity.tokens
+           set consumed_at = now()
+           where token_hash = $1 and purpose = 'password_reset'
+             and consumed_at is null and expires_at > now()
+           returning id`,
+          [tokenHash],
+        )
+        if ((consumed.rowCount ?? 0) !== 1) return false
+
+        await transaction.query(
+          `update identity.credentials
+           set password_hash = $1, password_updated_at = now(),
+               failed_attempts = 0, locked_until = null
+           where user_id = $2`,
+          [passwordHash, row.user_id],
+        )
+        await transaction.query(
+          `update identity.sessions
+           set revoked_at = now(), revoked_reason = 'password_reset'
+           where user_id = $1 and revoked_at is null`,
+          [row.user_id],
+        )
+        await this.audit(transaction.client, context, {
+          actorType: "user",
+          actorId: row.user_id,
+          action: "identity.password_reset_completed",
+          targetType: "user",
+          targetId: row.user_id,
+        })
+        return true
+      },
+    )
+
+    if (!completed) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "This reset token is invalid or has expired.",
+        400,
+      )
+    }
+  }
+
+  async requestEmailVerification(
+    accessToken: string,
+    context: RequestContext,
+  ): Promise<void> {
+    const session = await this.getSession(accessToken, context)
+    const token = createSessionToken()
+    const tokenHash = hashSessionToken(token)
+
+    await this.database.withTransaction(
+      {
+        identity: { accountId: session.accountId, userId: session.userId },
+      },
+      async (transaction) => {
+        await transaction.query(
+          `insert into identity.tokens (user_id, purpose, token_hash, expires_at)
+           values ($1, 'email_verification', $2, now() + ($3::int * interval '1 millisecond'))`,
+          [session.userId, tokenHash, EMAIL_VERIFICATION_TTL_MS],
+        )
+        await this.audit(transaction.client, context, {
+          actorType: "user",
+          actorId: session.userId,
+          action: "identity.email_verification_requested",
+          targetType: "user",
+          targetId: session.userId,
+        })
+      },
+    )
+
+    await this.email.send({
+      to: session.email,
+      subject: "Verify your Hivorr email",
+      text: `Use this single-use token within 24 hours: ${token}`,
+    })
+  }
+
+  async verifyEmail(token: string, context: RequestContext): Promise<void> {
+    const tokenHash = hashSessionToken(token)
+
+    const completed = await this.database.withTransaction(
+      {},
+      async (transaction) => {
+        const lookup = await transaction.query<RecoveryRow>(
+          "select * from identity.find_email_verification_token($1)",
+          [tokenHash],
+        )
+        const row = lookup.rows[0]
+        if (!row) return false
+
+        await transaction.setIdentity({
+          accountId: row.account_id,
+          userId: row.user_id,
+        })
+        const consumed = await transaction.query(
+          `update identity.tokens
+           set consumed_at = now()
+           where token_hash = $1 and purpose = 'email_verification'
+             and consumed_at is null and expires_at > now()
+           returning id`,
+          [tokenHash],
+        )
+        if ((consumed.rowCount ?? 0) !== 1) return false
+
+        await transaction.query(
+          "update identity.users set email_verified_at = now() where id = $1",
+          [row.user_id],
+        )
+        await this.audit(transaction.client, context, {
+          actorType: "user",
+          actorId: row.user_id,
+          action: "identity.email_verified",
+          targetType: "user",
+          targetId: row.user_id,
+        })
+        return true
+      },
+    )
+
+    if (!completed) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "This verification token is invalid or has expired.",
+        400,
+      )
     }
   }
 
@@ -281,6 +512,7 @@ export class IdentityService {
     context: RequestContext,
   ): Promise<SignInResult> {
     const email = normalizeEmail(input.email)
+    this.limitSignIn(email, context)
     const client = await this.database.pool.connect()
 
     try {
@@ -307,7 +539,10 @@ export class IdentityService {
         row.locked_until &&
         new Date(row.locked_until).getTime() > Date.now()
       ) {
-        throw new ApiError("RATE_LIMITED", "Too many sign-in attempts.", 429)
+        throw rateLimited(
+          (new Date(row.locked_until).getTime() - Date.now()) / 1_000,
+          "Too many sign-in attempts.",
+        )
       }
 
       const valid = await verifyPassword(row.password_hash, input.password)
@@ -351,6 +586,11 @@ export class IdentityService {
           action: "identity.sign_in",
           targetType: "session",
           targetId: issued.sessionId,
+          afterSummary: {
+            sessionId: issued.sessionId,
+            audience: context.audience,
+            environment: context.environment,
+          },
         })
 
         await client.query("commit")
@@ -511,7 +751,7 @@ export class IdentityService {
   async getSession(
     token: string,
     context: RequestContext,
-  ): Promise<SessionResult> {
+  ): Promise<CurrentSession> {
     const tokenHash = hashSessionToken(token)
     const client = await this.database.pool.connect()
 
@@ -543,25 +783,104 @@ export class IdentityService {
       )
 
       await client.query("begin")
-      await client.query("select platform.set_identity_context($1, $2)", [
-        session.account_id,
-        session.user_id,
-      ])
-      await client.query(
-        "update identity.sessions set last_seen_at = now(), idle_expires_at = $1 where id = $2",
-        [idleExpiresAt.toISOString(), session.session_id],
-      )
-      await client.query("commit")
+      try {
+        await client.query("select platform.set_identity_context($1, $2)", [
+          session.account_id,
+          session.user_id,
+        ])
 
-      return {
-        sessionId: session.session_id,
-        accountId: session.account_id,
-        userId: session.user_id,
-        email: session.email,
-        audience: session.audience,
-        environment: session.environment,
-        expiresAt: session.expires_at,
-        idleExpiresAt: idleExpiresAt.toISOString(),
+        const status = await client.query<{
+          user_status: string
+          account_status: string
+          display_name: string | null
+          email: string
+        }>(
+          `select u.status as user_status, a.status as account_status,
+                  u.display_name, u.email
+           from identity.users u
+           join identity.accounts a on a.id = u.account_id
+           where u.id = $1`,
+          [session.user_id],
+        )
+        const profile = status.rows[0]
+
+        if (
+          !profile ||
+          profile.user_status !== "active" ||
+          profile.account_status !== "active"
+        ) {
+          await client.query(
+            `update identity.sessions
+             set revoked_at = now(), revoked_reason = 'user_suspended'
+             where user_id = $1 and revoked_at is null`,
+            [session.user_id],
+          )
+          await client.query("commit")
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "A valid session is required.",
+            401,
+          )
+        }
+
+        await client.query(
+          "update identity.sessions set last_seen_at = now(), idle_expires_at = $1 where id = $2",
+          [idleExpiresAt.toISOString(), session.session_id],
+        )
+
+        const activities = await listActiveActivities(
+          client,
+          session.account_id,
+        )
+
+        const grants = await client.query<{
+          scope: string
+          environment: string
+          expires_at: string | null
+          revoked_at: string | null
+        }>(
+          `select scope, environment, expires_at, revoked_at
+           from identity.grants where user_id = $1`,
+          [session.user_id],
+        )
+
+        const capabilities = [
+          ...computeCapabilities(
+            buildAccessContext({
+              audience: context.audience,
+              environment: context.environment,
+              activities,
+              grants: grants.rows,
+            }),
+          ),
+        ]
+
+        await client.query("commit")
+
+        return {
+          sessionId: session.session_id,
+          accountId: session.account_id,
+          userId: session.user_id,
+          email: profile.email,
+          audience: session.audience,
+          environment: session.environment,
+          expiresAt: session.expires_at,
+          idleExpiresAt: idleExpiresAt.toISOString(),
+          account: {
+            id: session.account_id,
+            email: profile.email,
+            displayName: profile.display_name,
+            status: profile.account_status,
+          },
+          activities: activities.map((activity) => ({
+            id: activity.id,
+            state: activity.state,
+          })),
+          capabilities,
+        }
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined)
+        throw error
       }
     } finally {
       client.release()
@@ -602,6 +921,8 @@ export class IdentityService {
         action: "identity.sign_out",
         targetType: "session",
         targetId: session.session_id,
+        beforeSummary: { revoked: false },
+        afterSummary: { revoked: true },
       })
       await client.query("commit")
     } finally {
@@ -650,6 +971,8 @@ export class IdentityService {
           action: "identity.sign_out",
           targetType: "session",
           targetId: found.session_id,
+          beforeSummary: { revoked: false },
+          afterSummary: { revoked: true },
         })
         await client.query("commit")
       } catch (error) {
@@ -704,6 +1027,37 @@ export class IdentityService {
           found.account_id,
           found.user_id,
         ])
+
+        const identityStatus = await client.query<{
+          user_status: string
+          account_status: string
+        }>(
+          `select u.status as user_status, a.status as account_status
+           from identity.users u
+           join identity.accounts a on a.id = u.account_id
+           where u.id = $1`,
+          [found.user_id],
+        )
+        const activeIdentity = identityStatus.rows[0]
+        if (
+          !activeIdentity ||
+          activeIdentity.user_status !== "active" ||
+          activeIdentity.account_status !== "active"
+        ) {
+          await client.query(
+            `update identity.sessions
+             set revoked_at = now(), revoked_reason = 'user_suspended'
+             where user_id = $1 and revoked_at is null`,
+            [found.user_id],
+          )
+          await client.query("commit")
+          committed = true
+          throw new ApiError(
+            "UNAUTHENTICATED",
+            "A valid session is required.",
+            401,
+          )
+        }
 
         const locked = await client.query<{
           used_at: string | null
@@ -822,6 +1176,7 @@ export class IdentityService {
           action: "identity.refresh",
           targetType: "session",
           targetId: found.session_id,
+          afterSummary: { sessionId: found.session_id, rotated: true },
         })
         await client.query("commit")
         committed = true
@@ -994,6 +1349,7 @@ export class IdentityService {
     input: MfaVerificationInput,
     context: RequestContext,
   ): Promise<IssuedSession> {
+    this.limitOtp(hashSessionToken(input.challengeToken), context)
     const client = await this.database.pool.connect()
 
     try {
@@ -1014,11 +1370,7 @@ export class IdentityService {
         )
       }
       if (challenge.attempts >= MFA_MAX_ATTEMPTS) {
-        throw new ApiError(
-          "RATE_LIMITED",
-          "Too many verification attempts.",
-          429,
-        )
+        throw rateLimited(60, "Too many verification attempts.")
       }
       if (
         challenge.audience !== context.audience ||
@@ -1054,11 +1406,7 @@ export class IdentityService {
           )
         }
         if (current.attempts >= MFA_MAX_ATTEMPTS) {
-          throw new ApiError(
-            "RATE_LIMITED",
-            "Too many verification attempts.",
-            429,
-          )
+          throw rateLimited(60, "Too many verification attempts.")
         }
 
         const verified = await this.verifySecondFactor(
@@ -1114,6 +1462,19 @@ export class IdentityService {
           targetType: "session",
           targetId: issued.sessionId,
         })
+        if (context.audience !== "app") {
+          await this.audit(client, context, {
+            actorType: "user",
+            actorId: challenge.user_id,
+            action: "identity.privileged_sign_in",
+            targetType: "session",
+            targetId: issued.sessionId,
+            afterSummary: {
+              audience: context.audience,
+              environment: context.environment,
+            },
+          })
+        }
         await client.query("commit")
         committed = true
         return issued
@@ -1131,6 +1492,7 @@ export class IdentityService {
     code: string,
     context: RequestContext,
   ): Promise<SessionResult> {
+    this.limitOtp(hashSessionToken(token), context)
     const client = await this.database.pool.connect()
 
     try {
@@ -1460,17 +1822,43 @@ export class IdentityService {
         `update identity.credentials
          set failed_attempts = failed_attempts + 1,
              locked_until = case
-               when failed_attempts + 1 >= 5 then now() + interval '15 minutes'
+               when failed_attempts + 1 >= $2
+                 then now() + ($3::int * interval '1 millisecond')
                else locked_until
              end
          where user_id = $1`,
-        [userId],
+        [userId, this.config.auth.lockoutAttempts, this.config.auth.lockoutMs],
       )
       await client.query("commit")
     } catch (error) {
       await client.query("rollback").catch(() => undefined)
       throw error
     }
+  }
+
+  private limit(key: string, max: number): void {
+    const result = this.limiter.check(key, {
+      windowMs: this.config.auth.rateLimitWindowMs,
+      max,
+    })
+    if (!result.allowed) {
+      throw rateLimited(result.retryAfterSeconds)
+    }
+  }
+
+  private limitSignIn(email: string, context: RequestContext): void {
+    this.limit(`signin:id:${email}`, this.config.auth.identifierMax)
+    this.limit(`signin:ip:${context.ip ?? "unknown"}`, this.config.auth.ipMax)
+  }
+
+  private limitReset(email: string, context: RequestContext): void {
+    this.limit(`reset:id:${email}`, this.config.auth.identifierMax)
+    this.limit(`reset:ip:${context.ip ?? "unknown"}`, this.config.auth.ipMax)
+  }
+
+  private limitOtp(identifier: string, context: RequestContext): void {
+    this.limit(`otp:id:${identifier}`, this.config.auth.identifierMax)
+    this.limit(`otp:ip:${context.ip ?? "unknown"}`, this.config.auth.ipMax)
   }
 
   private async audit(
@@ -1482,24 +1870,23 @@ export class IdentityService {
       action: string
       targetType: string
       targetId: string
+      beforeSummary?: Record<string, unknown>
+      afterSummary?: Record<string, unknown>
     },
   ): Promise<void> {
-    await client.query(
-      `insert into platform.audit_log
-         (actor_type, actor_id, actor_audience, environment, action, target_type, target_id, ip, user_agent, correlation_id)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [
-        event.actorType,
-        event.actorId,
-        context.audience,
-        context.environment,
-        event.action,
-        event.targetType,
-        event.targetId,
-        context.ip ?? null,
-        context.userAgent ?? null,
-        context.correlationId ?? null,
-      ],
-    )
+    await appendAudit(client, {
+      actorType: event.actorType,
+      actorId: event.actorId,
+      actorAudience: context.audience,
+      environment: context.environment,
+      action: event.action,
+      targetType: event.targetType,
+      targetId: event.targetId,
+      beforeSummary: event.beforeSummary,
+      afterSummary: event.afterSummary,
+      ip: context.ip,
+      userAgent: context.userAgent,
+      correlationId: context.correlationId,
+    })
   }
 }

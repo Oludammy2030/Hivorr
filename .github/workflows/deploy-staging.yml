@@ -73,6 +73,13 @@ jobs:
           --ref staging
           --dist dist
 
+      - name: Record the release digest
+        run: |
+          set -euo pipefail
+          digest="sha256:$(sha256sum release-manifest.json | cut -d' ' -f1)"
+          printf '%s\n' "$digest" > release-digest.txt
+          echo "release digest: $digest"
+
       - name: Upload staging application artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -86,6 +93,14 @@ jobs:
         with:
           name: release-manifest-${{ github.sha }}
           path: release-manifest.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload release digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-digest-${{ github.sha }}
+          path: release-digest.txt
           if-no-files-found: error
           retention-days: 90
 

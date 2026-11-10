@@ -163,6 +163,13 @@ describeIntegration("grant management integration", () => {
         databaseUrl: testUrl,
         corsAllowedOrigins: [],
         trustProxy: false,
+        auth: {
+          rateLimitWindowMs: 60_000,
+          identifierMax: 100,
+          ipMax: 1_000,
+          lockoutAttempts: 5,
+          lockoutMs: 15 * 60 * 1_000,
+        },
         worker: {
           databaseUrl: testUrl,
           pollIntervalMs: 1_000,

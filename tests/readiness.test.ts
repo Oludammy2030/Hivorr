@@ -53,7 +53,7 @@ afterAll(() => {
 describe("EP-00 repository contract", () => {
   it("pins the package manager and supported Node major", () => {
     expect(manifest.packageManager).toBe("pnpm@10.34.9")
-    expect(manifest.engines?.node).toBe(">=22.0.0 <23")
+    expect(manifest.engines?.node).toBe(">=22.12.0 <23")
     expect(manifest.engines?.pnpm).toBe("10.34.9")
   })
 

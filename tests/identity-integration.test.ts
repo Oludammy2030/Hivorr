@@ -9,6 +9,10 @@ import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
 import { DatabaseService } from "../server/src/db/database.service"
 import {
+  EMAIL_ADAPTER,
+  type CaptureEmailAdapter,
+} from "../server/src/integrations/email/email.adapter"
+import {
   hashSessionToken,
   IdentityService,
 } from "../server/src/modules/identity/identity.service"
@@ -36,6 +40,12 @@ function cookieHeader(jar: CookieJar, name: string): string {
   return `${name}=${jar[name]}`
 }
 
+function tokenFrom(message: { text: string }, marker: string): string {
+  const match = message.text.match(new RegExp(`${marker}: (\\S+)`))
+  if (!match) throw new Error(`token missing for ${marker}`)
+  return match[1]
+}
+
 describeIntegration("identity service integration", () => {
   let admin: Client
   let setup: Client
@@ -43,6 +53,7 @@ describeIntegration("identity service integration", () => {
   let service: IdentityService
   let testUrl: string
   let app: Awaited<ReturnType<typeof createApplication>>["app"]
+  let email: CaptureEmailAdapter
 
   const context = {
     audience: "app" as const,
@@ -89,6 +100,13 @@ describeIntegration("identity service integration", () => {
       databaseUrl: testUrl,
       corsAllowedOrigins: [],
       trustProxy: false,
+      auth: {
+        rateLimitWindowMs: 60_000,
+        identifierMax: 100,
+        ipMax: 1_000,
+        lockoutAttempts: 5,
+        lockoutMs: 15 * 60 * 1_000,
+      },
       worker: {
         databaseUrl: testUrl,
         pollIntervalMs: 1_000,
@@ -106,6 +124,7 @@ describeIntegration("identity service integration", () => {
     const created = await createApplication(config)
     app = created.app
     await app.init()
+    email = app.get<CaptureEmailAdapter>(EMAIL_ADAPTER)
     await app.getHttpAdapter().getInstance().ready()
   }, 30_000)
 
@@ -233,7 +252,7 @@ describeIntegration("identity service integration", () => {
 
     const session = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host, cookie },
     })
     expect(session.statusCode).toBe(200)
@@ -252,10 +271,43 @@ describeIntegration("identity service integration", () => {
 
     const afterSignOut = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host, cookie },
     })
     expect(afterSignOut.statusCode).toBe(401)
+  })
+
+  it("rejects an unknown registration field with a stable validation code", async () => {
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: {
+        host: "staging.hivorr.com",
+        "content-type": "application/json",
+      },
+      payload: {
+        email: "unknown-field@example.test",
+        password: "http-test-password",
+        isAdmin: true,
+      },
+    })
+
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toMatchObject({
+      error: { code: "VALIDATION_FAILED" },
+    })
+    expect(response.json().error.message).toContain("isAdmin")
+  })
+
+  it("rejects a control-only endpoint on the app host before authentication", async () => {
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/control/grants",
+      headers: { host: "staging.hivorr.com" },
+    })
+
+    expect(response.statusCode).toBe(403)
+    expect(response.json()).toMatchObject({ error: { code: "FORBIDDEN" } })
   })
 
   it("enrols TOTP, gates a privileged portal, and hardens sessions over HTTP", async () => {
@@ -397,6 +449,39 @@ describeIntegration("identity service integration", () => {
       mfaSatisfied: true,
     })
 
+    const privilegedAudit = await setup.query(
+      "select count(*)::int as count from platform.audit_log where action = 'identity.privileged_sign_in'",
+    )
+    expect(privilegedAudit.rows[0].count).toBeGreaterThanOrEqual(1)
+
+    const deniedAudit = await app.inject({
+      method: "GET",
+      url: "/v1/control/audit",
+      headers: { host: controlHost, cookie: controlCookie },
+    })
+    expect(deniedAudit.statusCode).toBe(403)
+    expect(deniedAudit.json()).toMatchObject({
+      error: { code: "FORBIDDEN" },
+    })
+
+    const controlUser = await setup.query(
+      "select id from identity.users where email = 'http@example.test'",
+    )
+    await setup.query(
+      "insert into identity.grants (user_id, grant_type, scope, environment) values ($1, 'admin', 'admin.audit.read', 'staging')",
+      [controlUser.rows[0].id],
+    )
+
+    const audit = await app.inject({
+      method: "GET",
+      url: "/v1/control/audit",
+      headers: { host: controlHost, cookie: controlCookie },
+    })
+    expect(audit.statusCode).toBe(200)
+    expect(Array.isArray(audit.json())).toBe(true)
+    expect(audit.json().length).toBeGreaterThan(0)
+    expect(audit.json()[0]).toHaveProperty("afterSummary")
+
     const steppedUp = await app.inject({
       method: "POST",
       url: "/v1/auth/mfa/step-up",
@@ -423,7 +508,7 @@ describeIntegration("identity service integration", () => {
 
     const controlAfterRevoke = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host: controlHost, cookie: controlCookie },
     })
     expect(controlAfterRevoke.statusCode).toBe(401)
@@ -437,7 +522,7 @@ describeIntegration("identity service integration", () => {
 
     const appAfterRevoke = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host: mainHost, cookie: appCookie },
     })
     expect(appAfterRevoke.statusCode).toBe(401)
@@ -464,7 +549,7 @@ describeIntegration("identity service integration", () => {
 
     const beforeRefresh = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host, cookie: oldAccess },
     })
     expect(beforeRefresh.statusCode).toBe(200)
@@ -484,14 +569,14 @@ describeIntegration("identity service integration", () => {
 
     const staleAccess = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host, cookie: oldAccess },
     })
     expect(staleAccess.statusCode).toBe(401)
 
     const afterRefresh = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host, cookie: newAccess },
     })
     expect(afterRefresh.statusCode).toBe(200)
@@ -510,7 +595,7 @@ describeIntegration("identity service integration", () => {
 
     const revoked = await app.inject({
       method: "GET",
-      url: "/v1/auth/session",
+      url: "/v1/session",
       headers: { host, cookie: newAccess },
     })
     expect(revoked.statusCode).toBe(401)
@@ -528,5 +613,455 @@ describeIntegration("identity service integration", () => {
       headers: { host: "staging.hivorr.com" },
     })
     expect(response.statusCode).toBe(401)
+  })
+
+  it("creates no grant or activity at registration", async () => {
+    const registered = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: {
+        host: "staging.hivorr.com",
+        "content-type": "application/json",
+      },
+      payload: {
+        email: "no-grant@example.test",
+        password: "http-test-password",
+      },
+    })
+    expect(registered.statusCode).toBe(201)
+    const { userId, accountId } = registered.json()
+
+    const grants = await setup.query(
+      "select count(*)::int as count from identity.grants where user_id = $1",
+      [userId],
+    )
+    expect(grants.rows[0].count).toBe(0)
+
+    const activities = await setup.query(
+      "select count(*)::int as count from profile.activity_activations where account_id = $1",
+      [accountId],
+    )
+    expect(activities.rows[0].count).toBe(0)
+  })
+
+  it("resets a password, revokes sessions and consumes the token once", async () => {
+    const host = "staging.hivorr.com"
+    const emailAddress = "recovery@example.test"
+    const password = "http-test-password"
+    const newPassword = "http-test-password-2"
+    email.clear()
+
+    const registered = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(registered.statusCode).toBe(201)
+    const { userId } = registered.json()
+
+    const signedIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(signedIn.statusCode).toBe(200)
+    const cookie = cookieHeader(
+      readCookies(signedIn.headers),
+      "__Host-hivorr_app_sid",
+    )
+
+    const requested = await app.inject({
+      method: "POST",
+      url: "/v1/auth/password-reset/request",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress },
+    })
+    expect(requested.statusCode).toBe(202)
+    const messages = email.captured()
+    const message = messages[messages.length - 1]
+    expect(message?.to).toBe(emailAddress)
+    const token = tokenFrom(message!, "within 30 minutes")
+
+    const completed = await app.inject({
+      method: "POST",
+      url: "/v1/auth/password-reset/complete",
+      headers: { host, "content-type": "application/json" },
+      payload: { token, password: newPassword },
+    })
+    expect(completed.statusCode).toBe(204)
+
+    const oldSignIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(oldSignIn.statusCode).toBe(401)
+
+    const newSignIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password: newPassword },
+    })
+    expect(newSignIn.statusCode).toBe(200)
+
+    const revoked = await app.inject({
+      method: "GET",
+      url: "/v1/session",
+      headers: { host, cookie },
+    })
+    expect(revoked.statusCode).toBe(401)
+
+    const replay = await app.inject({
+      method: "POST",
+      url: "/v1/auth/password-reset/complete",
+      headers: { host, "content-type": "application/json" },
+      payload: { token, password: newPassword },
+    })
+    expect(replay.statusCode).toBe(400)
+
+    const stored = await setup.query(
+      "select token_hash from identity.tokens where user_id = $1 and purpose = 'password_reset' order by created_at desc limit 1",
+      [userId],
+    )
+    expect(stored.rows[0].token_hash).not.toBe(token)
+    expect(stored.rows[0].token_hash).toMatch(/^[a-f0-9]{64}$/)
+  })
+
+  it("does not reveal whether a reset email exists", async () => {
+    email.clear()
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/auth/password-reset/request",
+      headers: {
+        host: "staging.hivorr.com",
+        "content-type": "application/json",
+      },
+      payload: { email: "missing-recovery@example.test" },
+    })
+    expect(response.statusCode).toBe(202)
+    expect(email.captured()).toHaveLength(0)
+  })
+
+  it("verifies an email once with a single-use token", async () => {
+    const host = "staging.hivorr.com"
+    const emailAddress = "verify@example.test"
+    const password = "http-test-password"
+    email.clear()
+
+    const registered = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(registered.statusCode).toBe(201)
+    const { userId } = registered.json()
+
+    const signedIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(signedIn.statusCode).toBe(200)
+    const cookie = cookieHeader(
+      readCookies(signedIn.headers),
+      "__Host-hivorr_app_sid",
+    )
+
+    const requested = await app.inject({
+      method: "POST",
+      url: "/v1/auth/email-verification/request",
+      headers: { host, cookie },
+    })
+    expect(requested.statusCode).toBe(202)
+
+    const messages = email.captured()
+    const message = messages[messages.length - 1]
+    expect(message?.to).toBe(emailAddress)
+    const token = tokenFrom(message!, "within 24 hours")
+
+    const completed = await app.inject({
+      method: "POST",
+      url: "/v1/auth/email-verification/complete",
+      headers: { host, "content-type": "application/json" },
+      payload: { token },
+    })
+    expect(completed.statusCode).toBe(204)
+
+    const verified = await setup.query(
+      "select email_verified_at from identity.users where id = $1",
+      [userId],
+    )
+    expect(verified.rows[0].email_verified_at).toBeTruthy()
+
+    const replay = await app.inject({
+      method: "POST",
+      url: "/v1/auth/email-verification/complete",
+      headers: { host, "content-type": "application/json" },
+      payload: { token },
+    })
+    expect(replay.statusCode).toBe(400)
+  })
+
+  it("returns account, activities and presentation capabilities, and revokes on suspension", async () => {
+    const host = "staging.hivorr.com"
+    const emailAddress = "session-view@example.test"
+    const password = "http-test-password"
+
+    const registered = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(registered.statusCode).toBe(201)
+    const { userId, accountId } = registered.json()
+
+    const signedIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(signedIn.statusCode).toBe(200)
+    const cookie = cookieHeader(
+      readCookies(signedIn.headers),
+      "__Host-hivorr_app_sid",
+    )
+
+    await setup.query(
+      "insert into profile.activity_activations (account_id, activity_id, state) values ($1, 'market.sell', 'ACTIVE')",
+      [accountId],
+    )
+
+    const current = await app.inject({
+      method: "GET",
+      url: "/v1/session",
+      headers: { host, cookie },
+    })
+    expect(current.statusCode).toBe(200)
+    const body = current.json()
+    expect(body.account).toMatchObject({
+      id: accountId,
+      email: emailAddress,
+      status: "active",
+    })
+    expect(body.activities).toContainEqual({
+      id: "market.sell",
+      state: "ACTIVE",
+    })
+    expect(body.capabilities).toContain("session.read")
+    expect(body.capabilities).toContain("activity.activate")
+
+    await setup.query(
+      "update identity.users set status = 'suspended' where id = $1",
+      [userId],
+    )
+    const rejected = await app.inject({
+      method: "GET",
+      url: "/v1/session",
+      headers: { host, cookie },
+    })
+    expect(rejected.statusCode).toBe(401)
+
+    const liveSessions = await setup.query(
+      "select count(*)::int as count from identity.sessions where user_id = $1 and revoked_at is null",
+      [userId],
+    )
+    expect(liveSessions.rows[0].count).toBe(0)
+  })
+
+  it("activates, deactivates and enforces the activity transition table", async () => {
+    const host = "staging.hivorr.com"
+    const emailAddress = "activities@example.test"
+    const password = "http-test-password"
+
+    const registered = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(registered.statusCode).toBe(201)
+    const { accountId } = registered.json()
+
+    const signedIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(signedIn.statusCode).toBe(200)
+    const cookie = cookieHeader(
+      readCookies(signedIn.headers),
+      "__Host-hivorr_app_sid",
+    )
+
+    const activities = [
+      "market.buy",
+      "services.hire",
+      "errands.request",
+      "market.sell",
+      "services.offer",
+      "logistics.provide",
+    ]
+    for (const activity of activities) {
+      const response = await app.inject({
+        method: "POST",
+        url: `/v1/activities/${activity}/activate`,
+        headers: { host, cookie },
+      })
+      expect(response.statusCode).toBe(200)
+      expect(response.json()).toEqual({ id: activity, state: "ACTIVE" })
+    }
+
+    const duplicate = await app.inject({
+      method: "POST",
+      url: "/v1/activities/market.buy/activate",
+      headers: { host, cookie },
+    })
+    expect(duplicate.statusCode).toBe(200)
+
+    const list = await app.inject({
+      method: "GET",
+      url: "/v1/activities",
+      headers: { host, cookie },
+    })
+    expect(list.statusCode).toBe(200)
+    expect(list.json()).toHaveLength(6)
+    expect(
+      list.json().every((entry: { state: string }) => entry.state === "ACTIVE"),
+    ).toBe(true)
+
+    const activationAudit = await setup.query(
+      "select before_summary, after_summary from platform.audit_log where action = 'profile.activity_activated' and target_id = 'market.buy' order by occurred_at desc limit 1",
+    )
+    expect(activationAudit.rows[0]?.before_summary).toMatchObject({
+      state: "INACTIVE",
+    })
+    expect(activationAudit.rows[0]?.after_summary).toMatchObject({
+      state: "ACTIVE",
+    })
+
+    const sessionView = await app.inject({
+      method: "GET",
+      url: "/v1/session",
+      headers: { host, cookie },
+    })
+    expect(sessionView.json().activities).toHaveLength(6)
+
+    const deactivated = await app.inject({
+      method: "POST",
+      url: "/v1/activities/market.buy/deactivate",
+      headers: { host, cookie },
+    })
+    expect(deactivated.statusCode).toBe(200)
+    expect(deactivated.json()).toEqual({
+      id: "market.buy",
+      state: "INACTIVE",
+    })
+
+    const deactivationAudit = await setup.query(
+      "select before_summary, after_summary from platform.audit_log where action = 'profile.activity_deactivated' and target_id = 'market.buy' order by occurred_at desc limit 1",
+    )
+    expect(deactivationAudit.rows[0]?.before_summary).toMatchObject({
+      state: "ACTIVE",
+    })
+    expect(deactivationAudit.rows[0]?.after_summary).toMatchObject({
+      state: "INACTIVE",
+    })
+
+    const after = await app.inject({
+      method: "GET",
+      url: "/v1/activities",
+      headers: { host, cookie },
+    })
+    const marketBuy = after
+      .json()
+      .find((entry: { id: string }) => entry.id === "market.buy")
+    expect(marketBuy.state).toBe("INACTIVE")
+
+    const kept = await setup.query(
+      "select state from profile.activity_activations where account_id = $1 and activity_id = 'market.buy'",
+      [accountId],
+    )
+    expect(kept.rows[0]?.state).toBe("INACTIVE")
+
+    const unknown = await app.inject({
+      method: "POST",
+      url: "/v1/activities/market.discover/activate",
+      headers: { host, cookie },
+    })
+    expect(unknown.statusCode).toBe(400)
+
+    let invalidTransition = false
+    try {
+      await setup.query(
+        "update profile.activity_activations set state = 'SUSPENDED' where account_id = $1 and activity_id = 'market.buy' and state = 'INACTIVE'",
+        [accountId],
+      )
+    } catch (error) {
+      invalidTransition = error?.code === "23514"
+    }
+    expect(invalidTransition).toBe(true)
+
+    const second = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { host, "content-type": "application/json" },
+      payload: {
+        email: "activation-initial@example.test",
+        password,
+      },
+    })
+    const secondAccountId = second.json().accountId
+    let invalidInitial = false
+    try {
+      await setup.query(
+        "insert into profile.activity_activations (account_id, activity_id, state) values ($1, 'market.buy', 'RESTRICTED')",
+        [secondAccountId],
+      )
+    } catch (error) {
+      invalidInitial = error?.code === "23514"
+    }
+    expect(invalidInitial).toBe(true)
+  })
+
+  it("locks out repeated bad sign-ins and returns Retry-After", async () => {
+    const host = "staging.hivorr.com"
+    const emailAddress = "lockout@example.test"
+    const password = "http-test-password"
+
+    const registered = await app.inject({
+      method: "POST",
+      url: "/v1/auth/register",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password },
+    })
+    expect(registered.statusCode).toBe(201)
+
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      const response = await app.inject({
+        method: "POST",
+        url: "/v1/auth/sign-in",
+        headers: { host, "content-type": "application/json" },
+        payload: { email: emailAddress, password: "wrong-password" },
+      })
+      expect([401, 429]).toContain(response.statusCode)
+    }
+
+    const locked = await app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-in",
+      headers: { host, "content-type": "application/json" },
+      payload: { email: emailAddress, password: "wrong-password" },
+    })
+    expect(locked.statusCode).toBe(429)
+    expect(locked.headers["retry-after"]).toBeTruthy()
   })
 })

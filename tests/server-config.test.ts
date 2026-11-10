@@ -14,6 +14,39 @@ describe("API configuration", () => {
     expect(config.host).toBe("0.0.0.0")
     expect(config.sessionIssuer).toBe("hivorr-test")
     expect(config.databaseUrl).toBeUndefined()
+    expect(config.releaseSha).toBeNull()
+    expect(config.releaseDigest).toBeNull()
+    expect(config.auth).toEqual({
+      rateLimitWindowMs: 60_000,
+      identifierMax: 10,
+      ipMax: 30,
+      lockoutAttempts: 5,
+      lockoutMs: 15 * 60 * 1_000,
+    })
+  })
+
+  it("records the release identity when injected", () => {
+    const releaseSha = "a".repeat(40)
+    const releaseDigest = `sha256:${"b".repeat(64)}`
+    const config = parseConfig({
+      HIVORR_ENV: "test",
+      RELEASE_SHA: releaseSha,
+      RELEASE_DIGEST: releaseDigest,
+    })
+    expect(config.releaseSha).toBe(releaseSha)
+    expect(config.releaseDigest).toBe(releaseDigest)
+  })
+
+  it("rejects a malformed release identity", () => {
+    expect(() =>
+      parseConfig({ HIVORR_ENV: "test", RELEASE_SHA: "not-a-sha" }),
+    ).toThrow(ConfigurationError)
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "test",
+        RELEASE_DIGEST: "sha256:short",
+      }),
+    ).toThrow(ConfigurationError)
   })
 
   it("requires a database and issuer in staging and production", () => {

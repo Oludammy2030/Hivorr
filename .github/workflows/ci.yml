@@ -78,6 +78,12 @@ jobs:
       - name: Workspace boundaries
         run: pnpm lint:boundaries
 
+      - name: Migration lint
+        run: pnpm lint:migrations
+
+      - name: Configuration contract
+        run: pnpm config:check
+
       - name: Format changed files
         run: pnpm format:check
 
@@ -109,7 +115,7 @@ jobs:
         run: pnpm typecheck
 
   test:
-    name: test
+    name: unit, contract and policy tests
     needs: typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -135,11 +141,139 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Contract tests
+        run: pnpm test:contracts
+
       - name: Release manifest and approval policy
         run: pnpm test:release
 
       - name: Environment topology policy
         run: pnpm test:topology
+
+      - name: Push protection policy
+        run: pnpm test:push-protection
+
+  gates:
+    name: seeded-failure gate proofs
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install pnpm 10.34.9
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 10.34.9
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Prove every gate can fail
+        run: pnpm test:gates
+
+  openapi:
+    name: openapi diff
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm 10.34.9
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 10.34.9
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate and verify the committed contract
+        run: pnpm openapi:check
+
+      - name: Compare the contract with the base commit
+        run: |
+          BASE="$FORMAT_BASE"
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="HEAD~1"
+          fi
+          if git cat-file -e "$BASE:openapi/openapi.json" 2>/dev/null; then
+            git show "$BASE:openapi/openapi.json" > /tmp/openapi-base.json
+          else
+            printf '{}' > /tmp/openapi-base.json
+          fi
+          pnpm openapi:diff -- --base /tmp/openapi-base.json --head openapi/openapi.json --fail-on-breaking --out /tmp/openapi-diff.md
+          {
+            echo "### OpenAPI diff"
+            cat /tmp/openapi-diff.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  visual:
+    name: visual regression
+    needs: install
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install pnpm 10.34.9
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 10.34.9
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the pinned Chromium
+        run: pnpm exec playwright install chromium
+
+      - name: Primitive parity
+        run: pnpm test:design-parity
+
+      - name: Build the prototype
+        run: pnpm build
+
+      - name: Capture the current run
+        run: pnpm visual:capture -- --out visual/current
+
+      - name: Compare against the baseline
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          pnpm visual:check -- --baseline visual/baseline --current visual/current --fail-on-diff --out artifacts/visual-diff.md || status=$?
+          if [ -f artifacts/visual-diff.md ]; then
+            {
+              echo "### Visual regression"
+              cat artifacts/visual-diff.md
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit ${status:-0}
 
   database:
     name: database migrations
@@ -181,11 +315,38 @@ jobs:
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
+      - name: Lint migrations
+        run: pnpm lint:migrations
+
       - name: Apply and verify migrations
         run: pnpm test:db
 
       - name: Apply migrations through the deployment runner
         run: pnpm migrations:apply && pnpm migrations:apply
+
+      - name: Verify the migration history and checksums
+        run: pnpm migrations:verify
+
+      - name: Validate the database connection and version
+        run: pnpm db:check -- --expect-major 17
+
+      - name: Schema snapshot and diff review artefact
+        run: |
+          mkdir -p artifacts
+          pnpm db:snapshot -- --out artifacts/db-schema.txt
+          if [ -f supabase/schema-baseline.txt ]; then
+            pnpm db:diff -- --base supabase/schema-baseline.txt --head artifacts/db-schema.txt --out artifacts/db-schema-diff.md
+          else
+            printf '# Database schema diff\n\nNo committed baseline yet (`supabase/schema-baseline.txt`). The head snapshot is published for review.\n' > artifacts/db-schema-diff.md
+          fi
+          {
+            echo "### Database schema snapshot"
+            echo '```'
+            head -n 120 artifacts/db-schema.txt
+            echo '```'
+            echo "### Database schema diff"
+            cat artifacts/db-schema-diff.md
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Identity integration
         env:
@@ -224,8 +385,17 @@ jobs:
       - name: Build
         run: pnpm build:all
 
+      - name: Verify the four application bundles
+        run: pnpm bundles:check
+
       - name: Build the API and worker
         run: pnpm build:server
+
+      - name: Smoke-test the compiled API process
+        run: pnpm test:api
+
+      - name: Smoke-test the compiled worker process
+        run: pnpm test:worker-smoke
 
   security:
     name: secret and dependency scan
@@ -256,3 +426,29 @@ jobs:
 
       - name: Dependency audit (High and Critical block)
         run: pnpm security:deps
+
+  ci-complete:
+    name: ci-complete
+    if: always()
+    needs:
+      - install
+      - lint
+      - typecheck
+      - test
+      - gates
+      - openapi
+      - visual
+      - database
+      - build
+      - security
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Fail when any required gate did not succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: |
+          echo "One or more required gates did not succeed."
+          exit 1
+
+      - name: Confirm every required gate succeeded
+        run: echo "All required gates succeeded."

@@ -21,129 +21,171 @@ const logLevels = [
   "silent",
 ] as const
 
-const configSchema = z
-  .object({
-    HIVORR_ENV: z.enum(DEPLOYMENT_ENVIRONMENTS),
-    BACKEND_ENVIRONMENT: z.enum(DEPLOYMENT_ENVIRONMENTS).optional(),
-    SUPABASE_PROJECT_REF: z
-      .string()
-      .regex(/^[a-z0-9]{10,40}$/)
-      .optional(),
-    API_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-    API_HOST: z.string().min(1).default("0.0.0.0"),
-    LOG_LEVEL: z.enum(logLevels).default("info"),
-    SESSION_ISSUER: z.string().min(1).optional(),
-    MFA_ENCRYPTION_KEY: z.string().min(1).optional(),
-    DATABASE_URL: z.string().min(1).optional(),
-    DATABASE_SSL_CA: z.string().min(1).optional(),
-    EDGE_SHARED_SECRET: z.string().min(1).optional(),
-    WORKER_DATABASE_URL: z.string().min(1).optional(),
-    WORKER_POLL_INTERVAL_MS: z.coerce
-      .number()
-      .int()
-      .min(50)
-      .max(60_000)
-      .default(1_000),
-    WORKER_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(20),
-    WORKER_LEASE_MS: z.coerce.number().int().min(5_000).default(60_000),
-    WORKER_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(50).default(5),
-    WORKER_RETRY_BASE_MS: z.coerce.number().int().min(100).default(5_000),
-    WORKER_HEALTH_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
-    WORKER_HEALTH_HOST: z.string().min(1).default("0.0.0.0"),
-    WORKER_ID: z.string().min(1).max(120).optional(),
-    CORS_ALLOWED_ORIGINS: z.string().optional(),
-    TRUST_PROXY: z
-      .enum(["true", "false"])
-      .default("false")
-      .transform((value) => value === "true"),
-  })
-  .superRefine((value, context) => {
-    if (
-      value.BACKEND_ENVIRONMENT &&
-      value.BACKEND_ENVIRONMENT !== value.HIVORR_ENV
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["BACKEND_ENVIRONMENT"],
-        message: "BACKEND_ENVIRONMENT must match HIVORR_ENV",
-      })
-    }
+const baseConfigSchema = z.object({
+  HIVORR_ENV: z.enum(DEPLOYMENT_ENVIRONMENTS),
+  BACKEND_ENVIRONMENT: z.enum(DEPLOYMENT_ENVIRONMENTS).optional(),
+  SUPABASE_PROJECT_REF: z
+    .string()
+    .regex(/^[a-z0-9]{10,40}$/)
+    .optional(),
+  API_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  API_HOST: z.string().min(1).default("0.0.0.0"),
+  LOG_LEVEL: z.enum(logLevels).default("info"),
+  SESSION_ISSUER: z.string().min(1).optional(),
+  MFA_ENCRYPTION_KEY: z.string().min(1).optional(),
+  RELEASE_SHA: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/)
+    .optional(),
+  RELEASE_DIGEST: z
+    .string()
+    .regex(/^sha256:[0-9a-f]{64}$/)
+    .optional(),
+  DATABASE_URL: z.string().min(1).optional(),
+  DATABASE_SSL_CA: z.string().min(1).optional(),
+  EDGE_SHARED_SECRET: z.string().min(1).optional(),
+  WORKER_DATABASE_URL: z.string().min(1).optional(),
+  WORKER_POLL_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .min(50)
+    .max(60_000)
+    .default(1_000),
+  WORKER_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(20),
+  WORKER_LEASE_MS: z.coerce.number().int().min(5_000).default(60_000),
+  WORKER_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(50).default(5),
+  WORKER_RETRY_BASE_MS: z.coerce.number().int().min(100).default(5_000),
+  WORKER_HEALTH_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
+  WORKER_HEALTH_HOST: z.string().min(1).default("0.0.0.0"),
+  WORKER_ID: z.string().min(1).max(120).optional(),
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(3_600_000)
+    .default(60_000),
+  AUTH_RATE_LIMIT_IDENTIFIER_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10_000)
+    .default(10),
+  AUTH_RATE_LIMIT_IP_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100_000)
+    .default(30),
+  AUTH_LOCKOUT_ATTEMPTS: z.coerce.number().int().min(1).max(100).default(5),
+  AUTH_LOCKOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(86_400_000)
+    .default(15 * 60 * 1_000),
+  TRUST_PROXY: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+})
 
-    if (value.HIVORR_ENV !== "staging" && value.HIVORR_ENV !== "production")
-      return
+/**
+ * Every environment key the API reads. This is the single source of truth for
+ * the configuration contract (EP-01-043); `pnpm config:check` fails when the
+ * committed contract and this list drift apart.
+ */
+export const CONFIG_ENV_KEYS: readonly string[] = Object.freeze(
+  Object.keys(baseConfigSchema.shape),
+)
 
-    if (!value.BACKEND_ENVIRONMENT) {
-      context.addIssue({
-        code: "custom",
-        path: ["BACKEND_ENVIRONMENT"],
-        message: "BACKEND_ENVIRONMENT is required in staging and production",
-      })
-    }
-    if (!value.SUPABASE_PROJECT_REF) {
-      context.addIssue({
-        code: "custom",
-        path: ["SUPABASE_PROJECT_REF"],
-        message: "SUPABASE_PROJECT_REF is required in staging and production",
-      })
-    }
-    if (!value.DATABASE_URL) {
-      context.addIssue({
-        code: "custom",
-        path: ["DATABASE_URL"],
-        message: "DATABASE_URL is required in staging and production",
-      })
-    }
-    if (!value.SESSION_ISSUER) {
-      context.addIssue({
-        code: "custom",
-        path: ["SESSION_ISSUER"],
-        message: "SESSION_ISSUER is required in staging and production",
-      })
-    }
-    if (!value.MFA_ENCRYPTION_KEY) {
-      context.addIssue({
-        code: "custom",
-        path: ["MFA_ENCRYPTION_KEY"],
-        message: "MFA_ENCRYPTION_KEY is required in staging and production",
-      })
-    } else if (mfaKeyLength(value.MFA_ENCRYPTION_KEY) !== 32) {
-      context.addIssue({
-        code: "custom",
-        path: ["MFA_ENCRYPTION_KEY"],
-        message: "MFA_ENCRYPTION_KEY must be 32 bytes encoded as base64",
-      })
-    }
-    if (
-      value.WORKER_DATABASE_URL &&
-      value.SUPABASE_PROJECT_REF &&
-      !databaseUrlMatchesProjectRef(
-        value.WORKER_DATABASE_URL,
-        value.SUPABASE_PROJECT_REF,
-      )
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["WORKER_DATABASE_URL"],
-        message:
-          "WORKER_DATABASE_URL does not belong to SUPABASE_PROJECT_REF; backend environments must not be mixed",
-      })
-    }
-    if (
-      value.DATABASE_URL &&
-      value.SUPABASE_PROJECT_REF &&
-      !databaseUrlMatchesProjectRef(
-        value.DATABASE_URL,
-        value.SUPABASE_PROJECT_REF,
-      )
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["DATABASE_URL"],
-        message:
-          "DATABASE_URL does not belong to SUPABASE_PROJECT_REF; backend environments must not be mixed",
-      })
-    }
-  })
+const configSchema = baseConfigSchema.superRefine((value, context) => {
+  if (
+    value.BACKEND_ENVIRONMENT &&
+    value.BACKEND_ENVIRONMENT !== value.HIVORR_ENV
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["BACKEND_ENVIRONMENT"],
+      message: "BACKEND_ENVIRONMENT must match HIVORR_ENV",
+    })
+  }
+
+  if (value.HIVORR_ENV !== "staging" && value.HIVORR_ENV !== "production")
+    return
+
+  if (!value.BACKEND_ENVIRONMENT) {
+    context.addIssue({
+      code: "custom",
+      path: ["BACKEND_ENVIRONMENT"],
+      message: "BACKEND_ENVIRONMENT is required in staging and production",
+    })
+  }
+  if (!value.SUPABASE_PROJECT_REF) {
+    context.addIssue({
+      code: "custom",
+      path: ["SUPABASE_PROJECT_REF"],
+      message: "SUPABASE_PROJECT_REF is required in staging and production",
+    })
+  }
+  if (!value.DATABASE_URL) {
+    context.addIssue({
+      code: "custom",
+      path: ["DATABASE_URL"],
+      message: "DATABASE_URL is required in staging and production",
+    })
+  }
+  if (!value.SESSION_ISSUER) {
+    context.addIssue({
+      code: "custom",
+      path: ["SESSION_ISSUER"],
+      message: "SESSION_ISSUER is required in staging and production",
+    })
+  }
+  if (!value.MFA_ENCRYPTION_KEY) {
+    context.addIssue({
+      code: "custom",
+      path: ["MFA_ENCRYPTION_KEY"],
+      message: "MFA_ENCRYPTION_KEY is required in staging and production",
+    })
+  } else if (mfaKeyLength(value.MFA_ENCRYPTION_KEY) !== 32) {
+    context.addIssue({
+      code: "custom",
+      path: ["MFA_ENCRYPTION_KEY"],
+      message: "MFA_ENCRYPTION_KEY must be 32 bytes encoded as base64",
+    })
+  }
+  if (
+    value.WORKER_DATABASE_URL &&
+    value.SUPABASE_PROJECT_REF &&
+    !databaseUrlMatchesProjectRef(
+      value.WORKER_DATABASE_URL,
+      value.SUPABASE_PROJECT_REF,
+    )
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["WORKER_DATABASE_URL"],
+      message:
+        "WORKER_DATABASE_URL does not belong to SUPABASE_PROJECT_REF; backend environments must not be mixed",
+    })
+  }
+  if (
+    value.DATABASE_URL &&
+    value.SUPABASE_PROJECT_REF &&
+    !databaseUrlMatchesProjectRef(
+      value.DATABASE_URL,
+      value.SUPABASE_PROJECT_REF,
+    )
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["DATABASE_URL"],
+      message:
+        "DATABASE_URL does not belong to SUPABASE_PROJECT_REF; backend environments must not be mixed",
+    })
+  }
+})
 
 /**
  * A database URL must belong to the declared Supabase project. Supabase direct
@@ -184,6 +226,14 @@ export interface WorkerConfig {
   readonly workerId: string
 }
 
+export interface AuthAbuseConfig {
+  readonly rateLimitWindowMs: number
+  readonly identifierMax: number
+  readonly ipMax: number
+  readonly lockoutAttempts: number
+  readonly lockoutMs: number
+}
+
 export interface ApiConfig {
   readonly environment: DeploymentEnvironment
   readonly backendEnvironment: DeploymentEnvironment
@@ -193,6 +243,10 @@ export interface ApiConfig {
   readonly logLevel: typeof logLevels[number]
   readonly sessionIssuer: string
   readonly mfaEncryptionKey?: string
+  /** Commit identity of the running artifact, when the deployment records it. */
+  readonly releaseSha: string | null
+  /** Release manifest digest of the running artifact, when recorded. */
+  readonly releaseDigest: string | null
   readonly databaseUrl: string | undefined
   /** PEM root certificate for the database host, when supplied. */
   readonly databaseSslCa: string | undefined
@@ -200,6 +254,7 @@ export interface ApiConfig {
   readonly edgeSharedSecret: string | undefined
   readonly corsAllowedOrigins: readonly string[]
   readonly trustProxy: boolean
+  readonly auth: AuthAbuseConfig
   readonly worker: WorkerConfig
 }
 
@@ -235,6 +290,8 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
     logLevel: value.LOG_LEVEL,
     sessionIssuer: value.SESSION_ISSUER ?? `hivorr-${value.HIVORR_ENV}`,
     mfaEncryptionKey: value.MFA_ENCRYPTION_KEY,
+    releaseSha: value.RELEASE_SHA ?? null,
+    releaseDigest: value.RELEASE_DIGEST ?? null,
     databaseUrl: value.DATABASE_URL,
     databaseSslCa: value.DATABASE_SSL_CA,
     edgeSharedSecret: value.EDGE_SHARED_SECRET,
@@ -243,6 +300,13 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       .map((origin) => origin.trim())
       .filter(Boolean),
     trustProxy: value.TRUST_PROXY,
+    auth: {
+      rateLimitWindowMs: value.AUTH_RATE_LIMIT_WINDOW_MS,
+      identifierMax: value.AUTH_RATE_LIMIT_IDENTIFIER_MAX,
+      ipMax: value.AUTH_RATE_LIMIT_IP_MAX,
+      lockoutAttempts: value.AUTH_LOCKOUT_ATTEMPTS,
+      lockoutMs: value.AUTH_LOCKOUT_MS,
+    },
     worker: {
       databaseUrl: value.WORKER_DATABASE_URL ?? value.DATABASE_URL,
       pollIntervalMs: value.WORKER_POLL_INTERVAL_MS,
