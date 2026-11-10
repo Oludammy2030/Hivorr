@@ -90,6 +90,16 @@ try {
   }
   assert(appendOnly, "audit_log rejects updates")
 
+  let deleteRejected = false
+  try {
+    await testClient.query(
+      "delete from platform.audit_log where action = 'test.action'",
+    )
+  } catch {
+    deleteRejected = true
+  }
+  assert(deleteRejected, "audit_log rejects deletes")
+
   await testClient.query(
     "insert into platform.outbox (event_type, aggregate_type, aggregate_id) values ('test.event', 'test', 'aggregate')",
   )
@@ -144,6 +154,14 @@ try {
     "api role cannot update audit records",
   )
 
+  const apiDelete = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'platform.audit_log', 'delete') as allowed",
+  )
+  assert(
+    apiDelete.rows[0].allowed === false,
+    "api role cannot delete audit records",
+  )
+
   const identityTables = await testClient.query(
     "select tablename from pg_tables where schemaname = 'identity'",
   )
@@ -161,9 +179,160 @@ try {
     "mfa_factors",
     "recovery_codes",
     "tokens",
+    "mfa_challenges",
+    "refresh_tokens",
   ]) {
     assert(identityTableNames.has(table), `identity.${table} exists`)
   }
+
+  const identityRls = await testClient.query(
+    "select tablename, rowsecurity from pg_tables where schemaname = 'identity' order by tablename",
+  )
+  assert(identityRls.rowCount === 12, "twelve identity tables exist")
+  assert(
+    identityRls.rows.every((row) => row.rowsecurity === true),
+    "every identity table has row-level security enabled",
+  )
+
+  const identityComments = await testClient.query(
+    "select c.relname, obj_description(c.oid, 'pg_class') as comment from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'identity' and c.relkind = 'r'",
+  )
+  assert(
+    identityComments.rows.every((row) => Boolean(row.comment)),
+    "every identity table has a comment",
+  )
+
+  const identityForeignKeys = await testClient.query(
+    "select count(*)::int as count from pg_constraint c join pg_class t on t.oid = c.conrelid join pg_namespace n on n.oid = t.relnamespace where n.nspname = 'identity' and c.contype = 'f'",
+  )
+  assert(
+    identityForeignKeys.rows[0].count >= 10,
+    "identity tables declare foreign keys",
+  )
+
+  const uuidDefaults = await testClient.query(
+    "select count(*)::int as count from information_schema.columns where table_schema = 'identity' and column_name = 'id' and column_default like '%uuidv7%'",
+  )
+  assert(uuidDefaults.rows[0].count === 11, "identity ids default to UUIDv7")
+
+  const profileTables = await testClient.query(
+    "select tablename, rowsecurity from pg_tables where schemaname = 'profile' order by tablename",
+  )
+  assert(profileTables.rowCount === 2, "two profile tables exist")
+  assert(
+    profileTables.rows.every((row) => row.rowsecurity === true),
+    "every profile table has row-level security enabled",
+  )
+
+  const profileComments = await testClient.query(
+    "select c.relname, obj_description(c.oid, 'pg_class') as comment from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'profile' and c.relkind = 'r'",
+  )
+  assert(
+    profileComments.rows.every((row) => Boolean(row.comment)),
+    "every profile table has a comment",
+  )
+
+  const profileIndexes = await testClient.query(
+    "select indexname from pg_indexes where schemaname = 'profile'",
+  )
+  const profileIndexNames = new Set(
+    profileIndexes.rows.map((row) => row.indexname),
+  )
+  for (const index of [
+    "activity_activations_account_state_idx",
+    "activity_activations_activity_state_idx",
+  ]) {
+    assert(profileIndexNames.has(index), `profile index ${index} exists`)
+  }
+
+  const readonlyProfile = await testClient.query(
+    "select has_table_privilege('hivorr_readonly', 'profile.profiles', 'select') as allowed",
+  )
+  assert(
+    readonlyProfile.rows[0].allowed === true,
+    "readonly role may read profiles",
+  )
+  const apiActivationInsert = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'profile.activity_activations', 'insert') as allowed",
+  )
+  assert(
+    apiActivationInsert.rows[0].allowed === true,
+    "api role may create activations",
+  )
+  const readonlyContext = await testClient.query(
+    "select has_function_privilege('hivorr_readonly', 'platform.current_account_id()', 'execute') as allowed",
+  )
+  assert(
+    readonlyContext.rows[0].allowed === true,
+    "readonly role may evaluate the account policy",
+  )
+
+  const forcedRls = await testClient.query(
+    "select n.nspname as schema, c.relname as table_name, c.relforcerowsecurity as forced from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('identity', 'profile') and c.relkind = 'r' order by 1, 2",
+  )
+  assert(forcedRls.rowCount === 14, "fourteen identity/profile tables exist")
+  assert(
+    forcedRls.rows.every((row) => row.forced === true),
+    "every identity and profile table forces row-level security",
+  )
+
+  const expectedPolicies = {
+    accounts: ["SELECT", "INSERT", "UPDATE"],
+    users: ["SELECT", "INSERT", "UPDATE"],
+    credentials: ["SELECT", "INSERT", "UPDATE"],
+    memberships: ["SELECT", "INSERT", "UPDATE"],
+    grants: ["SELECT"],
+    devices: ["SELECT", "INSERT", "UPDATE"],
+    sessions: ["SELECT", "INSERT", "UPDATE"],
+    mfa_factors: ["SELECT", "INSERT", "UPDATE"],
+    recovery_codes: ["SELECT", "INSERT", "UPDATE", "DELETE"],
+    tokens: ["SELECT", "INSERT", "UPDATE", "DELETE"],
+    mfa_challenges: ["SELECT", "INSERT", "UPDATE"],
+    refresh_tokens: ["SELECT", "INSERT", "UPDATE"],
+    profiles: ["SELECT", "INSERT", "UPDATE"],
+    activity_activations: ["SELECT", "INSERT", "UPDATE"],
+  }
+  const policyRows = await testClient.query(
+    "select tablename, cmd from pg_policies where schemaname in ('identity', 'profile')",
+  )
+  const policiesByTable = new Map()
+  for (const row of policyRows.rows) {
+    const operations = policiesByTable.get(row.tablename) ?? new Set()
+    operations.add(row.cmd)
+    policiesByTable.set(row.tablename, operations)
+  }
+  for (const [table, operations] of Object.entries(expectedPolicies)) {
+    assert(
+      policiesByTable.get(table) instanceof Set &&
+        [...policiesByTable.get(table)].sort().join(",") ===
+          [...operations].sort().join(","),
+      `${table} has one policy per intended operation`,
+    )
+  }
+
+  const privateHelper = await testClient.query(
+    "select proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'private' and p.proname = 'current_account_id'",
+  )
+  assert(
+    privateHelper.rowCount === 1,
+    "the private account policy helper exists",
+  )
+
+  const publicWrapper = await testClient.query(
+    "select p.prosecdef as secdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'platform' and p.proname = 'current_account_id'",
+  )
+  assert(
+    publicWrapper.rows[0]?.secdef === true,
+    "the platform policy wrapper is security definer",
+  )
+
+  const definerPolicies = await testClient.query(
+    "select count(*)::int as count from pg_policies where schemaname = 'identity' and policyname like '%_definer_select'",
+  )
+  assert(
+    definerPolicies.rows[0].count === 8,
+    "the definer owner has narrow read policies",
+  )
 
   const uuid = await testClient.query(
     "select substring(platform.uuidv7()::text, 15, 1) as version, substring(platform.uuidv7()::text, 20, 1) as variant",
@@ -209,6 +378,76 @@ try {
     "a staff grant cannot hold an admin scope",
   )
 
+  await testClient.query(
+    "insert into profile.profiles (account_id, display_name) values ($1, $2)",
+    [accountId, "Founder"],
+  )
+
+  let invalidActivityRejected = false
+  await testClient.query("begin")
+  try {
+    await testClient.query(
+      "insert into profile.activity_activations (account_id, activity_id) values ($1, 'market.discover')",
+      [accountId],
+    )
+  } catch (error) {
+    invalidActivityRejected = error?.code === "23514"
+  } finally {
+    await testClient.query("rollback")
+  }
+  assert(invalidActivityRejected, "unknown activity IDs are refused")
+
+  let invalidStateRejected = false
+  await testClient.query("begin")
+  try {
+    await testClient.query(
+      "insert into profile.activity_activations (account_id, activity_id, state) values ($1, 'market.buy', 'ON')",
+      [accountId],
+    )
+  } catch (error) {
+    invalidStateRejected = error?.code === "23514"
+  } finally {
+    await testClient.query("rollback")
+  }
+  assert(invalidStateRejected, "unknown activation states are refused")
+
+  const activities = [
+    "market.buy",
+    "services.hire",
+    "errands.request",
+    "market.sell",
+    "services.offer",
+    "logistics.provide",
+  ]
+  for (const activity of activities) {
+    await testClient.query(
+      "insert into profile.activity_activations (account_id, activity_id) values ($1, $2)",
+      [accountId, activity],
+    )
+  }
+  const activationCount = await testClient.query(
+    "select count(*)::int as count from profile.activity_activations where account_id = $1",
+    [accountId],
+  )
+  assert(activationCount.rows[0].count === 6, "all six activities activate")
+
+  let duplicateActivationRejected = false
+  await testClient.query("begin")
+  try {
+    await testClient.query(
+      "insert into profile.activity_activations (account_id, activity_id) values ($1, 'market.buy')",
+      [accountId],
+    )
+  } catch (error) {
+    duplicateActivationRejected = error?.code === "23505"
+  } finally {
+    await testClient.query("rollback")
+  }
+  assert(
+    duplicateActivationRejected,
+    "activating twice is refused by the unique constraint",
+  )
+
   let duplicateEmailRejected = false
   try {
     await testClient.query(
@@ -249,6 +488,33 @@ try {
   )
   const secondUserId = secondUser.rows[0].id
 
+  await testClient.query(
+    "insert into profile.profiles (account_id, display_name) values ($1, 'Other')",
+    [secondAccountId],
+  )
+  await testClient.query(
+    "insert into profile.activity_activations (account_id, activity_id) values ($1, 'market.sell')",
+    [secondAccountId],
+  )
+
+  await testClient.query(
+    "insert into identity.sessions (user_id, audience, environment, refresh_token_hash, access_token_hash, access_expires_at, idle_expires_at, expires_at) values ($1, 'app', 'test', $2, $3, now() + interval '15 minutes', now() + interval '30 minutes', now() + interval '12 hours')",
+    [secondUserId, "second-refresh-hash", "second-access-hash"],
+  )
+
+  const closedAccount = await testClient.query(
+    "insert into identity.accounts default values returning id",
+  )
+  const closedAccountId = closedAccount.rows[0].id
+  const closedUser = await testClient.query(
+    "insert into identity.users (account_id, email, status) values ($1, $2, 'closed') returning id",
+    [closedAccountId, "closed@example.test"],
+  )
+  await testClient.query(
+    "insert into identity.credentials (user_id, password_hash) values ($1, $2)",
+    [closedUser.rows[0].id, "argon2id-placeholder"],
+  )
+
   await testClient.query("grant hivorr_api to postgres with set true")
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
@@ -275,6 +541,71 @@ try {
     [secondUserId],
   )
   assert(crossAccountUpdate.rowCount === 0, "rls blocks a cross-account update")
+
+  const ownProfile = await testClient.query(
+    "select count(*)::int as count from profile.profiles",
+  )
+  assert(
+    ownProfile.rows[0].count === 1,
+    "rls shows only the current account's profile",
+  )
+  const ownActivations = await testClient.query(
+    "select count(*)::int as count from profile.activity_activations",
+  )
+  assert(
+    ownActivations.rows[0].count === 6,
+    "rls shows only the current account's activations",
+  )
+  const profileUpdate = await testClient.query(
+    "update profile.profiles set display_name = 'Updated' where account_id = $1",
+    [accountId],
+  )
+  assert(profileUpdate.rowCount === 1, "api may update its own profile")
+
+  const ownSessions = await testClient.query(
+    "select count(*)::int as count from identity.sessions",
+  )
+  assert(
+    ownSessions.rows[0].count === 1,
+    "rls shows only the current user's sessions",
+  )
+
+  const contextAccount = await testClient.query(
+    "select platform.current_account_id() as account_id",
+  )
+  assert(
+    contextAccount.rows[0].account_id === accountId,
+    "the identity context is transaction-scoped",
+  )
+
+  const unknownLookup = await testClient.query(
+    "select * from identity.find_login_credential('nobody@example.test')",
+  )
+  assert(
+    unknownLookup.rowCount === 0,
+    "pre-auth lookup returns nothing for an unknown email",
+  )
+
+  const closedLookup = await testClient.query(
+    "select * from identity.find_login_credential('closed@example.test')",
+  )
+  assert(
+    closedLookup.rowCount === 0,
+    "pre-auth lookup refuses a closed account",
+  )
+
+  let crossProfileRejected = false
+  await testClient.query("savepoint profile_cross_account")
+  try {
+    await testClient.query(
+      "insert into profile.profiles (account_id, display_name) values ($1, 'Blocked')",
+      [secondAccountId],
+    )
+  } catch (error) {
+    crossProfileRejected = error?.code === "42501"
+    await testClient.query("rollback to savepoint profile_cross_account")
+  }
+  assert(crossProfileRejected, "rls blocks a cross-account profile write")
 
   let grantListDenied = false
   await testClient.query("savepoint grant_list_denied")
@@ -308,16 +639,111 @@ try {
     noContext.rows[0].count === 0,
     "rls denies without an identity context",
   )
+  const noContextProfiles = await testClient.query(
+    "select count(*)::int as count from profile.profiles",
+  )
+  assert(
+    noContextProfiles.rows[0].count === 0,
+    "profile rls denies without an identity context",
+  )
+  const noContextActivations = await testClient.query(
+    "select count(*)::int as count from profile.activity_activations",
+  )
+  assert(
+    noContextActivations.rows[0].count === 0,
+    "activation rls denies without an identity context",
+  )
+  const noContextSessions = await testClient.query(
+    "select count(*)::int as count from identity.sessions",
+  )
+  assert(
+    noContextSessions.rows[0].count === 0,
+    "session rls denies without an identity context",
+  )
   await testClient.query("reset role")
   await testClient.query("commit")
 
-  const roleLogin = await testClient.query(
-    "select rolname, rolcanlogin from pg_roles where rolname like 'hivorr_%'",
+  const roleAttributes = await testClient.query(
+    "select rolname, rolcanlogin, rolsuper, rolbypassrls, rolcreatedb, rolcreaterole from pg_roles where rolname like 'hivorr_%' order by rolname",
   )
-  assert(roleLogin.rowCount === 5, "five application roles exist")
+  assert(roleAttributes.rowCount === 5, "five application roles exist")
+  for (const role of roleAttributes.rows) {
+    assert(role.rolcanlogin === false, `${role.rolname} cannot log in`)
+    assert(role.rolsuper === false, `${role.rolname} is not superuser`)
+    assert(role.rolbypassrls === false, `${role.rolname} cannot bypass RLS`)
+    assert(
+      role.rolcreatedb === false,
+      `${role.rolname} cannot create databases`,
+    )
+    assert(role.rolcreaterole === false, `${role.rolname} cannot create roles`)
+  }
+
+  // The API role has USAGE but not CREATE, and no TRUNCATE or ALTER rights.
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+
+  let ddlDenied = false
+  await testClient.query("savepoint ddl_probe")
+  try {
+    await testClient.query("create table identity.ddl_probe (id int)")
+  } catch (error) {
+    ddlDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint ddl_probe")
+  }
+  assert(ddlDenied, "api role cannot create tables")
+
+  let alterDenied = false
+  await testClient.query("savepoint alter_probe")
+  try {
+    await testClient.query(
+      "alter table platform.audit_log add column probe int",
+    )
+  } catch (error) {
+    alterDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint alter_probe")
+  }
+  assert(alterDenied, "api role cannot alter tables")
+
+  let truncateDenied = false
+  await testClient.query("savepoint truncate_probe")
+  try {
+    await testClient.query("truncate platform.audit_log")
+  } catch (error) {
+    truncateDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint truncate_probe")
+  }
+  assert(truncateDenied, "api role cannot truncate audit records")
+
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
+  // A function created after the migrations inherits the closed default.
+  await testClient.query(
+    "create function platform.default_privilege_probe() returns int language sql as $$ select 1 $$",
+  )
+  const probe = await testClient.query(
+    "select has_function_privilege('hivorr_api', 'platform.default_privilege_probe()', 'execute') as allowed",
+  )
   assert(
-    roleLogin.rows.every((row) => row.rolcanlogin === false),
-    "application roles cannot log in directly",
+    probe.rows[0].allowed === false,
+    "new functions start closed to the api role",
+  )
+  await testClient.query("drop function platform.default_privilege_probe()")
+
+  const workerIdentity = await testClient.query(
+    "select has_table_privilege('hivorr_worker', 'identity.users', 'select') as allowed",
+  )
+  assert(
+    workerIdentity.rows[0].allowed === false,
+    "worker role cannot read identity users",
+  )
+
+  const readonlyAudit = await testClient.query(
+    "select has_table_privilege('hivorr_readonly', 'platform.audit_log', 'insert') as allowed",
+  )
+  assert(
+    readonlyAudit.rows[0].allowed === false,
+    "readonly role cannot append audit records",
   )
 
   console.log(

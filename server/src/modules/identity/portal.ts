@@ -1,39 +1,6 @@
-import type { EnvironmentId, PortalId } from "@hivorr/shared"
-
-import type { ApiConfig } from "../../config"
-
-const HOSTS: Readonly<Record<EnvironmentId, Readonly<Record<PortalId, string>>>> =
-  {
-    production: {
-      app: "hivorr.com",
-      control: "control.hivorr.com",
-      staff: "staff.hivorr.com",
-      partner: "partner.hivorr.com",
-    },
-    staging: {
-      app: "staging.hivorr.com",
-      control: "control-staging.hivorr.com",
-      staff: "staff-staging.hivorr.com",
-      partner: "partner-staging.hivorr.com",
-    },
-  }
-
 /**
- * The audience is derived from the host, not from a client-provided field.
- * The API only runs in staging or production. A development/test API has no
- * portal host and must not serve a session endpoint.
+ * The host-to-audience mapping and resolution live in `common/audience`, next
+ * to the guard that enforces them. This module keeps the identity import path
+ * stable and gives the identity module one source of truth.
  */
-export function resolveAudience(
-  hostHeader: string | undefined,
-  environment: ApiConfig["environment"],
-): PortalId | undefined {
-  if (environment !== "staging" && environment !== "production") return
-  if (!hostHeader) return
-
-  const env: EnvironmentId = environment
-  const host = hostHeader.toLowerCase().split(":")[0]
-  const hosts = HOSTS[env]
-  return (Object.keys(hosts) as PortalId[]).find(
-    (audience) => hosts[audience] === host,
-  )
-}
+export { resolveAudience, resolveRequestAudience } from "../../common/audience"

@@ -46,7 +46,12 @@ for (const args of [
 // oxfmt formats JavaScript and TypeScript. JSON, CSS and Markdown are outside
 // its v0.2 target set; pnpm-lock.yaml is generated and never hand-formatted.
 const FORMATTABLE = /\.(?:[cm]?[jt]sx?)$/i
-const files = [...changed].filter((file) => FORMATTABLE.test(file)).sort()
+// The API client is generated from the OpenAPI document. Formatting it by hand
+// would fight the generator; `pnpm openapi:check` owns drift instead.
+const GENERATED = new Set(["packages/api-client/src/index.ts"])
+const files = [...changed]
+  .filter((file) => FORMATTABLE.test(file) && !GENERATED.has(file))
+  .sort()
 
 if (files.length === 0) {
   console.log(`format:check: no changed formattable files relative to ${base}`)

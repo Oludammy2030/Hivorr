@@ -13,14 +13,20 @@
 //
 // This is the CI/deployment path. It never prints the connection string.
 
-import { createHash } from "node:crypto"
 import { lookup } from "node:dns/promises"
 import { readdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 
 import { Client } from "pg"
 
+import {
+  migrationChecksum,
+  planMigrations,
+  verifyMigrationHistory,
+} from "./lib/migration-history.mjs"
+
 const LOCK_KEY = 72_700_100
+const planOnly = process.argv.includes("--plan")
 const databaseUrl = process.env.DATABASE_URL?.trim()
 
 if (!databaseUrl) {
@@ -112,48 +118,69 @@ try {
     )
   `)
 
-  const applied = new Map(
-    (
-      await client.query(
-        "select filename, checksum from platform.schema_migrations",
-      )
-    ).rows.map((row) => [row.filename, row.checksum]),
+  const entries = files.map((filename) => ({
+    filename,
+    checksum: migrationChecksum(
+      readFileSync(path.join(migrationsDir, filename), "utf8"),
+    ),
+  }))
+  const history = await client.query(
+    "select filename, checksum from platform.schema_migrations",
   )
+  const plan = planMigrations({ files: entries, applied: history.rows })
 
-  let count = 0
-  for (const file of files) {
-    const sql = readFileSync(path.join(migrationsDir, file), "utf8")
-    const checksum = createHash("sha256").update(sql).digest("hex")
-
-    if (applied.has(file)) {
-      if (applied.get(file) !== checksum) {
-        throw new Error(
-          `${file} changed after it was applied; add a new migration instead`,
-        )
-      }
-      continue
-    }
-
-    await client.query("begin")
-    try {
-      await client.query(sql)
-      await client.query(
-        "insert into platform.schema_migrations (filename, checksum) values ($1, $2)",
-        [file, checksum],
-      )
-      await client.query("commit")
-    } catch (error) {
-      await client.query("rollback")
-      throw error
-    }
-
-    console.log(`apply-migrations: applied ${file}`)
-    count += 1
+  if (!plan.ok) {
+    throw new Error(`migration plan refused: ${plan.issues.join("; ")}`)
   }
 
-  console.log(
-    `apply-migrations: OK — ${count} applied, ${files.length - count} already present`,
-  )
+  if (planOnly) {
+    console.log(
+      `apply-migrations: PLAN — ${plan.pending.length} pending, ${plan.applied} applied`,
+    )
+    for (const filename of plan.pending) {
+      console.log(`  pending ${filename}`)
+    }
+  } else {
+    const pending = new Set(plan.pending)
+    let count = 0
+    for (const entry of entries) {
+      if (!pending.has(entry.filename)) continue
+
+      const sql = readFileSync(path.join(migrationsDir, entry.filename), "utf8")
+      await client.query("begin")
+      try {
+        await client.query(sql)
+        await client.query(
+          "insert into platform.schema_migrations (filename, checksum) values ($1, $2)",
+          [entry.filename, entry.checksum],
+        )
+        await client.query("commit")
+      } catch (error) {
+        await client.query("rollback")
+        throw error
+      }
+
+      console.log(`apply-migrations: applied ${entry.filename}`)
+      count += 1
+    }
+
+    const after = await client.query(
+      "select filename, checksum from platform.schema_migrations",
+    )
+    const verified = verifyMigrationHistory({
+      files: entries,
+      applied: after.rows,
+    })
+    if (!verified.ok) {
+      throw new Error(
+        `post-apply verification failed: ${verified.issues.join("; ")}`,
+      )
+    }
+
+    console.log(
+      `apply-migrations: OK — ${count} applied, ${entries.length - count} already present`,
+    )
+  }
 } catch (error) {
   console.error(
     `apply-migrations: FAILED — ${

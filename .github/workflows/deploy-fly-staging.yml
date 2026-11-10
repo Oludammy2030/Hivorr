@@ -61,10 +61,25 @@ jobs:
       - name: Pull the pinned flyctl image
         run: docker pull flyio/flyctl:v0.5.5
 
+      - name: Preflight the staging migration plan
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATOR_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "MIGRATOR_DATABASE_URL is not configured. Refusing to migrate with the runtime credential."
+            exit 1
+          fi
+          node scripts/apply-migrations.mjs --plan
+
       - name: Apply staging migrations
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.MIGRATOR_DATABASE_URL }}
         run: node scripts/apply-migrations.mjs
+
+      - name: Verify the staging migration history
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATOR_DATABASE_URL }}
+        run: node scripts/verify-migration-history.mjs
 
       - name: Stage runtime secrets on Fly
         env:
@@ -77,12 +92,14 @@ jobs:
           worker_db="${WORKER_DATABASE_URL:-$DATABASE_URL}"
           bash scripts/flyctl-ci.sh secrets set --app hivorr-staging-api --stage \
             DATABASE_URL="$DATABASE_URL" \
-            MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY"
+            MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY" \
+            RELEASE_SHA="$GITHUB_SHA"
           WORKER_DATABASE_URL="$worker_db" bash scripts/flyctl-ci.sh secrets set \
             --app hivorr-staging-worker --stage \
             DATABASE_URL="$DATABASE_URL" \
             WORKER_DATABASE_URL="$worker_db" \
-            MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY"
+            MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY" \
+            RELEASE_SHA="$GITHUB_SHA"
 
       - name: Build the image once
         env:
@@ -105,17 +122,19 @@ jobs:
           IMAGE: registry.fly.io/hivorr-staging-api:staging-${{ github.sha }}
         run: bash scripts/flyctl-ci.sh deploy --image "$IMAGE" --config fly.staging.worker.toml
 
-      - name: Smoke test the API
+      - name: Smoke test the API and its release identity
         run: |
           set -euo pipefail
           for attempt in $(seq 1 20); do
-            if curl -fsS https://hivorr-staging-api.fly.dev/v1/health/live; then
-              echo "staging API is live"
+            body="$(curl -fsS https://hivorr-staging-api.fly.dev/v1/health/live || true)"
+            if printf '%s' "$body" | grep -F "\"releaseSha\":\"$GITHUB_SHA\"" >/dev/null; then
+              echo "$body"
+              echo "staging API is live and reports release $GITHUB_SHA"
               exit 0
             fi
             sleep 6
           done
-          echo "staging API did not become healthy"
+          echo "staging API did not become healthy with release $GITHUB_SHA"
           exit 1
 
       - name: Record the worker

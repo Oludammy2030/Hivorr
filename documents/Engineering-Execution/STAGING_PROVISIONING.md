@@ -1,15 +1,17 @@
 # Staging Provisioning Runbook (EP-01-060)
 
-**Status:** Live on the staging hostnames (9 November 2026). All four hosts serve the frontend over
-valid TLS, and `/api/*` is proxied same-origin to Fly. Cloudflare Access protects the control, staff
-and partner hosts. The API keeps **one machine that sleeps after 5 minutes idle and wakes in about
-6 seconds**; the worker is kept at **zero** because it has no traffic to wake it. Start both with
+**Status:** Live and topology-verified on 10 November 2026. All four hosts serve over valid TLS,
+`/api/*` is proxied same-origin to Fly, and Cloudflare Access challenges the control, staff and partner
+hosts. The read-only evidence is
+`documents/Engineering-Execution/evidence/staging-topology/2026-11-10.md`, reproducible with
+`pnpm verify:staging-hosts`. The API keeps **one machine that sleeps after 5 minutes idle and wakes in
+about 6 seconds**; the worker is kept at **zero** because it has no traffic to wake it. Start both with
 `scripts/staging-start.ps1`, stop the worker with `scripts/staging-stop.ps1`, or go to zero machines
 with `scripts/staging-offline.ps1`.
 
 Remaining for a production-grade staging environment: database certificate verification
-(`DATABASE_SSL_CA`), automated Pages deployment from the release manifest, and verification of the
-Access policies.
+(`DATABASE_SSL_CA`), automated Pages deployment from the release manifest, and deploying the current
+release digest so the session and activity routes are present (`F-49`).
 
 ## 1. Remaining execution prerequisites
 
@@ -26,7 +28,8 @@ Access policies.
 | API proxy | `workers/api-proxy` routes `/api/*` on all four hosts to Fly, preserving the browser host and presenting the edge secret. |
 | Edge guard | The `/api/*` Worker forwards the browser host and an `EDGE_SHARED_SECRET`; the API trusts the forwarded host only when the secret matches. Direct API callers cannot choose a portal. The Fly host stays reachable but is not a recognised portal. |
 | Database TLS verification | Encrypted, but the pooler certificate is not verified until `DATABASE_SSL_CA` is set from **Database settings → SSL Configuration**. |
-| Readiness | `/health/ready` returns 503 by design: the database-backed readiness check is not implemented yet. |
+| Readiness | `/api/v1/health/ready` returns 503 by design: the database-backed readiness check is not implemented yet. |
+| API image | Staging serves auth but `GET /api/v1/session` and `GET /api/v1/activities` return 404; the deployed image predates those routes (`F-49`). Redeploy the current digest in `061`. |
 
 The Fly.io region is recorded as **`jnb` (Johannesburg)** in `config/environments.json`.
 
@@ -109,12 +112,18 @@ automation that performs these steps.
 3. Restrict network access to the Fly.io egress addresses and the migration runner; do not leave
    `0.0.0.0/0` in place for a hosted environment.
 4. Enable TLS enforcement and confirm the CA is verifiable by `pg` with `rejectUnauthorized: true`.
-5. Apply every migration in `supabase/migrations` in filename order as `hivorr_migrator`. Record the
-   applied set and its digest from the staging release manifest.
+5. Apply every migration in `supabase/migrations` in filename order through
+   `pnpm migrations:apply`; the pipeline first prints a `--plan` and refuses a changed checksum, an
+   unknown applied file, or an out-of-order pending file. The runner currently authenticates with the
+   deployment credential and acts as the migrator; the `hivorr_migrator` login-role question is
+   `F-29`. Record the applied set and its digest from the staging release manifest.
 6. Confirm `hivorr_api`, `hivorr_worker`, `hivorr_readonly` and `hivorr_migrator` exist and that only
    the migrator may alter schema. `hivorr_worker` must not insert outbox events.
 7. Set `DATABASE_URL` (API role) and `WORKER_DATABASE_URL` (worker role) as `staging` environment
-   secrets. Never reuse the superuser URL at runtime.
+   secrets, and `MIGRATOR_DATABASE_URL` as a distinct CI-only secret. The migrator secret is used only
+   by the migration job and is never set on Fly. Never reuse the superuser URL at runtime.
+   `hivorr_migrator` remains `nologin`; the CI-only deployment credential is the accepted applying
+   credential for EP-01, with a login migrator role as a pre-production follow-up (`F-29`).
 8. Bootstrap exactly one `admin.grant.manage` grant out of band after the founder has registered and
    confirmed a TOTP factor — see `BACKEND_ENVIRONMENT_SETUP.md` §5. Record it in the change log.
 
@@ -128,7 +137,8 @@ automation that performs these steps.
    `SUPABASE_PROJECT_REF=hkswhaltyqfqkgswukfs`, `SESSION_ISSUER`, `MFA_ENCRYPTION_KEY`,
    `DATABASE_URL`, `WORKER_DATABASE_URL`, and the worker settings as Fly secrets. They must never be
    baked into an image or written to a build log.
-4. Confirm the API serves `/health/live` and `/health/ready` only on the internal origin.
+4. Confirm the API serves `/v1/health/live` and `/v1/health/ready` only on the internal origin
+   (`/api/v1/health/live` through the edge).
 5. Confirm the worker serves `/health/queue` only on the private network, and that
    `WORKER_ID` is unique per machine.
 6. Record the deployed machine image digest. It belongs in the release record.
@@ -192,16 +202,20 @@ Then push a merged change to `staging` and confirm:
 
 ## 6. Evidence for EP-01-060
 
+The read-only topology evidence is committed at
+`documents/Engineering-Execution/evidence/staging-topology/2026-11-10.md` and reproduced with
+`pnpm verify:staging-hosts`.
+
 Capture, without secrets:
 
 - `pnpm topology:verify` output;
-- the certificate SAN list for the four hosts;
-- the four host responses and their security headers;
-- the Access challenge response;
+- `pnpm verify:staging-hosts` output (host status, certificate SAN, Access challenge, API health);
 - migration set and digest from the release manifest;
 - the Fly.io image digest;
 - the backend-target preflight output;
 - the release workflow run URL and the created Issue number.
+
+Do not record an Access redirect URL: it carries a signed `meta` parameter.
 
 ## 7. Teardown and rollback
 

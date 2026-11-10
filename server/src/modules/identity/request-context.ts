@@ -1,32 +1,28 @@
 import type { FastifyRequest } from "fastify"
 
+import type { PortalId } from "@hivorr/shared"
+
 import { ApiError } from "../../common/errors"
+import { resolveRequestAudience } from "../../common/audience"
 import type { ApiConfig } from "../../config"
 import type { RequestContext } from "./identity.service"
-import { resolveAudience } from "./portal"
 import { sessionCookieName } from "./session-policy"
 
 /**
  * Derives the audience and environment from the Host header and the running
  * deployment. A client can never widen either by sending a field.
+ *
+ * The audience guard resolves and stores the audience before the handler runs.
+ * The fallback keeps direct service-level callers honest.
  */
 export function requestContext(
   config: ApiConfig,
   request: FastifyRequest,
 ): RequestContext {
-  // The browser host is forwarded by the edge proxy. It is trusted only when
-  // the request carries the shared edge secret, so a direct caller cannot
-  // choose a different portal by spoofing a header.
-  const forwardedHost = request.headers["x-hivorr-origin-host"]
-  const edgeSecret = request.headers["x-hivorr-edge-secret"]
-  const trustedForward =
-    config.edgeSharedSecret !== undefined &&
-    typeof edgeSecret === "string" &&
-    edgeSecret === config.edgeSharedSecret &&
-    typeof forwardedHost === "string"
-  const host = trustedForward ? forwardedHost : request.headers.host
+  const attached = (request as FastifyRequest & { audience?: PortalId })
+    .audience
+  const audience = attached ?? resolveRequestAudience(config, request)
 
-  const audience = resolveAudience(host, config.environment)
   if (!audience) {
     throw new ApiError(
       "FORBIDDEN",

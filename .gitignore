@@ -8,6 +8,8 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
+# OpenAPI generator output (rebuilt by `pnpm openapi:build`)
+server/dist-openapi/
 # Generated per-commit release manifest and release-issue body
 release-manifest.json
 release-issue.md
@@ -30,6 +32,11 @@ yarn-error.log*
 
 # Test and coverage output
 coverage/
+# Generated visual run output; the approved baseline is committed under visual/baseline
+visual/current/
+# Generated CI gate output (schema snapshot, diff reports)
+artifacts/
+tests/__gate_selftest_*
 playwright-report/
 test-results/
 .blob-report/

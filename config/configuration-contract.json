@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "description": "Every configuration key Hivorr reads, its classification, and the environments in which a missing value must stop startup or deployment. Values never live here. EP-01-043.",
+  "sources": {
+    "config": "Read by the API and worker through server/src/config.ts.",
+    "tooling": "Read by deployment and topology preflight scripts.",
+    "deployment": "Read by the deployment workflow or the provider, never by the application."
+  },
+  "keys": [
+    {
+      "name": "HIVORR_ENV",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": ["development", "test", "staging", "production"],
+      "description": "Deployment environment. Selects defaults and audience resolution."
+    },
+    {
+      "name": "BACKEND_ENVIRONMENT",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": ["staging", "production"],
+      "description": "Backend environment. Must match HIVORR_ENV when set."
+    },
+    {
+      "name": "SUPABASE_PROJECT_REF",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": ["staging", "production"],
+      "description": "Project reference the database URL must belong to."
+    },
+    {
+      "name": "API_PORT",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "HTTP listen port. Defaults to 3000."
+    },
+    {
+      "name": "API_HOST",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "HTTP listen host. Defaults to 0.0.0.0."
+    },
+    {
+      "name": "LOG_LEVEL",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Structured logger threshold. Defaults to info."
+    },
+    {
+      "name": "SESSION_ISSUER",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": ["staging", "production"],
+      "description": "Label recorded on issued sessions. Sessions are opaque, not signed."
+    },
+    {
+      "name": "MFA_ENCRYPTION_KEY",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": ["staging", "production"],
+      "description": "32-byte base64 key that encrypts TOTP secrets. Per environment."
+    },
+    {
+      "name": "RELEASE_SHA",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Commit SHA of the running artifact. Injected by the deployment."
+    },
+    {
+      "name": "RELEASE_DIGEST",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Release manifest digest of the running artifact, when recorded."
+    },
+    {
+      "name": "DATABASE_URL",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": ["staging", "production"],
+      "description": "Runtime database connection string."
+    },
+    {
+      "name": "DATABASE_SSL_CA",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "PEM root certificate for the database host. Public, not a credential."
+    },
+    {
+      "name": "EDGE_SHARED_SECRET",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "Shared secret the edge proxy presents with a forwarded host."
+    },
+    {
+      "name": "WORKER_DATABASE_URL",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "Least-privilege worker connection string. Falls back to DATABASE_URL."
+    },
+    {
+      "name": "WORKER_POLL_INTERVAL_MS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Outbox poll interval. Defaults to 1000."
+    },
+    {
+      "name": "WORKER_BATCH_SIZE",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Outbox batch size. Defaults to 20."
+    },
+    {
+      "name": "WORKER_LEASE_MS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Outbox lease duration. Defaults to 60000."
+    },
+    {
+      "name": "WORKER_MAX_ATTEMPTS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Delivery attempts before dead-lettering. Defaults to 5."
+    },
+    {
+      "name": "WORKER_RETRY_BASE_MS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Exponential retry base. Defaults to 5000."
+    },
+    {
+      "name": "WORKER_HEALTH_PORT",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Worker health listen port. Defaults to 3001."
+    },
+    {
+      "name": "WORKER_HEALTH_HOST",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Worker health listen host. Defaults to 0.0.0.0."
+    },
+    {
+      "name": "WORKER_ID",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Worker identity. Derived from environment, host and pid when unset."
+    },
+    {
+      "name": "CORS_ALLOWED_ORIGINS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Comma-separated exact origin allowlist. Empty means same-origin only."
+    },
+    {
+      "name": "AUTH_RATE_LIMIT_WINDOW_MS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Authentication rate-limit window. Defaults to 60000."
+    },
+    {
+      "name": "AUTH_RATE_LIMIT_IDENTIFIER_MAX",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Authentication attempts per identifier per window. Defaults to 10."
+    },
+    {
+      "name": "AUTH_RATE_LIMIT_IP_MAX",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Authentication attempts per IP per window. Defaults to 30."
+    },
+    {
+      "name": "AUTH_LOCKOUT_ATTEMPTS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Failed sign-ins before credential lockout. Defaults to 5."
+    },
+    {
+      "name": "AUTH_LOCKOUT_MS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Credential lockout duration. Defaults to 15 minutes."
+    },
+    {
+      "name": "TRUST_PROXY",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Whether the HTTP adapter trusts proxy forwarding headers. Defaults to false."
+    },
+    {
+      "name": "EXPECTED_SUPABASE_PROJECT_REF",
+      "source": "tooling",
+      "classification": "public",
+      "requiredIn": ["staging", "production"],
+      "description": "Deployment preflight target. Must match the deployment's reference."
+    },
+    {
+      "name": "STAGING_SUPABASE_PROJECT_REF",
+      "source": "tooling",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Staging reference used by the topology preflight when the manifest omits it."
+    },
+    {
+      "name": "PRODUCTION_SUPABASE_PROJECT_REF",
+      "source": "tooling",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Production reference used by the topology preflight when the manifest omits it."
+    },
+    {
+      "name": "FLY_API_TOKEN",
+      "source": "deployment",
+      "classification": "secret",
+      "requiredIn": ["staging", "production"],
+      "description": "Fly.io deploy token. Deployment only; never read by the API or worker."
+    },
+    {
+      "name": "MIGRATOR_DATABASE_URL",
+      "source": "deployment",
+      "classification": "secret",
+      "requiredIn": ["staging", "production"],
+      "description": "CI-only migration connection string. Never injected into Fly or the runtime."
+    }
+  ]
+}

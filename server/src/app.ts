@@ -8,8 +8,8 @@ import {
 } from "@nestjs/platform-fastify"
 
 import { AppModule } from "./app.module"
-import { ApiErrorFilter } from "./common/api-error.filter"
 import { resolveCorrelationId } from "./common/correlation"
+import { createLogger } from "./common/logger"
 import { loadConfig, type ApiConfig } from "./config"
 
 export interface CreatedApplication {
@@ -33,7 +33,6 @@ export async function createApplication(
   )
 
   await app.register(fastifyCookie)
-  app.useGlobalFilters(new ApiErrorFilter())
   app.setGlobalPrefix("v1")
 
   if (config.corsAllowedOrigins.length > 0) {
@@ -51,6 +50,26 @@ export async function createApplication(
     reply.header("x-correlation-id", correlationId)
     ;(request as typeof request & { correlationId: string }).correlationId =
       correlationId
+    done()
+  })
+
+  const requestLogger = createLogger({
+    service: "hivorr-api",
+    environment: config.environment,
+    level: config.logLevel,
+  })
+  instance.addHook("onResponse", (request, reply, done) => {
+    const route = (request.url ?? "").split("?")[0]
+    if (!route.startsWith("/v1/health")) {
+      requestLogger.info("http.request", {
+        method: request.method,
+        route,
+        statusCode: reply.statusCode,
+        durationMs: Math.round(reply.elapsedTime),
+        correlationId: (request as typeof request & { correlationId?: string })
+          .correlationId,
+      })
+    }
     done()
   })
 

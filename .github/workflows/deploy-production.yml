@@ -92,9 +92,81 @@ jobs:
           fi
           echo "Release $RELEASE_SHA is part of main."
 
+  smoke-staging:
+    name: smoke the deployed staging release
+    needs: verify-release-ancestry
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout the release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.release_sha }}
+
+      - name: Install pnpm 10.34.9
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 10.34.9
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Smoke the deployed release
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: >-
+          node scripts/smoke-staging.mjs
+          --base https://staging.hivorr.com
+          --expect-sha "$RELEASE_SHA"
+
+  e2e-staging:
+    name: e2e the deployed slice
+    needs: smoke-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout the release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.release_sha }}
+
+      - name: Install pnpm 10.34.9
+        uses: pnpm/action-setup@7088e561eb65bb68695d245aa206f005ef30921d # v4.1.0
+        with:
+          version: 10.34.9
+          run_install: false
+
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the pinned Chromium
+        run: pnpm exec playwright install chromium
+
+      - name: Run the slice E2E
+        env:
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: node scripts/e2e-slice.mjs --base https://staging.hivorr.com
+
   promote-release:
     name: download and verify staging artifact
-    needs: verify-release-ancestry
+    needs:
+      - verify-release-ancestry
+      - smoke-staging
+      - e2e-staging
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
@@ -133,9 +205,23 @@ jobs:
           RELEASE_SHA: ${{ inputs.release_sha }}
         run: |
           set -euo pipefail
-          mkdir -p downloaded/dist downloaded/manifest
+          mkdir -p downloaded/dist downloaded/manifest downloaded/digest
           gh run download "$RUN_ID" --name "staging-build-$RELEASE_SHA" --dir downloaded/dist
           gh run download "$RUN_ID" --name "release-manifest-$RELEASE_SHA" --dir downloaded/manifest
+          gh run download "$RUN_ID" --name "release-digest-$RELEASE_SHA" --dir downloaded/digest
+
+      - name: Verify the release digest travels with the artifact
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          expected="$(tr -d '\r\n' < downloaded/digest/release-digest.txt)"
+          actual="sha256:$(sha256sum downloaded/manifest/release-manifest.json | cut -d' ' -f1)"
+          if [ "$expected" != "$actual" ]; then
+            echo "Release digest mismatch: artifact says $expected, manifest is $actual"
+            exit 1
+          fi
+          echo "Release digest verified: $actual"
 
       - name: Verify the downloaded artifact against the staging manifest
         env:
@@ -148,6 +234,19 @@ jobs:
           --dist downloaded/dist
           --server server/src
           --migrations supabase/migrations
+
+      - name: Verify the deployed staging identity matches the release
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS https://staging.hivorr.com/api/v1/health/live)"
+          if ! printf '%s' "$body" | grep -F "\"releaseSha\":\"$RELEASE_SHA\"" >/dev/null; then
+            echo "Staging does not report release $RELEASE_SHA. Refusing promotion."
+            printf '%s\n' "$body"
+            exit 1
+          fi
+          echo "Staging reports release $RELEASE_SHA."
 
       - name: Verify the production backend target
         if: vars.PRODUCTION_DEPLOY_TARGET != ''

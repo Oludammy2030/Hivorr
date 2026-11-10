@@ -37,8 +37,9 @@ const valid = verifyEnvironmentTopology(baseline, { backendProjects })
 check("the committed topology is valid", valid.ok, valid.issues.join("\n"))
 check("eight hosts are declared", valid.summary.hosts.length === 8)
 check(
-  "staging is not claimed as verified",
-  valid.summary.stagingStatus === "planned",
+  "staging is verified with recorded evidence",
+  valid.summary.stagingStatus === "verified" &&
+    typeof baseline.environments.staging.evidence === "string",
 )
 check("production is reserved", valid.summary.productionStatus === "reserved")
 
@@ -132,7 +133,9 @@ check(
 )
 
 const prematureProduction = mutate((topology) => {
+  topology.environments.staging.status = "planned"
   topology.environments.production.status = "verified"
+  topology.environments.production.flyRegion = "jnb"
 })
 check(
   "production cannot be verified before staging",

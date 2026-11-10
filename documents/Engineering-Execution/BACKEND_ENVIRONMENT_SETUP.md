@@ -40,6 +40,8 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 | `MFA_ENCRYPTION_KEY` | `production` | 32 bytes, base64, production-only |
 | `WORKER_DATABASE_URL` | `staging` | Optional least-privilege worker role; falls back to `DATABASE_URL` |
 | `WORKER_DATABASE_URL` | `production` | Optional least-privilege worker role; falls back to `DATABASE_URL` |
+| `MIGRATOR_DATABASE_URL` | `staging` | CI-only migration credential; never set on Fly (`F-29` acceptance) |
+| `MIGRATOR_DATABASE_URL` | `production` | CI-only migration credential; never set on Fly (`F-29` acceptance) |
 | `FLY_API_TOKEN` | `staging` | Staging deploy token, when the API is deployed |
 | `FLY_API_TOKEN` | `production` | Production deploy token, when the API is deployed |
 

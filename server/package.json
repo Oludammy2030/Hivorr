@@ -9,6 +9,7 @@
   "types": "./src/index.ts",
   "dependencies": {
     "@fastify/cookie": "11.0.2",
+    "@hivorr/shared": "workspace:*",
     "@nestjs/common": "12.3.2",
     "@nestjs/core": "12.3.2",
     "@nestjs/platform-fastify": "12.3.2",

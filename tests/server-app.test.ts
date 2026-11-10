@@ -42,4 +42,33 @@ describe("API bootstrap", () => {
       await app.close()
     }
   })
+
+  it("reports the injected release identity", async () => {
+    const releaseSha = "a".repeat(40)
+    const releaseDigest = `sha256:${"b".repeat(64)}`
+    const releaseConfig = parseConfig({
+      HIVORR_ENV: "test",
+      LOG_LEVEL: "error",
+      RELEASE_SHA: releaseSha,
+      RELEASE_DIGEST: releaseDigest,
+    })
+    const { app } = await createApplication(releaseConfig)
+
+    try {
+      await app.init()
+      await app.getHttpAdapter().getInstance().ready()
+      const live = await app.getHttpAdapter().getInstance().inject({
+        method: "GET",
+        url: "/v1/health/live",
+      })
+      expect(live.statusCode).toBe(200)
+      expect(live.json()).toMatchObject({
+        status: "ok",
+        releaseSha,
+        releaseDigest,
+      })
+    } finally {
+      await app.close()
+    }
+  })
 })

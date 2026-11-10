@@ -3,7 +3,9 @@
   "applications": ["main", "control", "staff", "partner"],
   "environments": {
     "staging": {
-      "status": "planned",
+      "status": "verified",
+      "verifiedAt": "2026-11-10",
+      "evidence": "documents/Engineering-Execution/evidence/staging-topology/2026-11-10.md",
       "flyRegion": "jnb",
       "baseDomain": "hivorr.com",
       "hosts": {
@@ -35,6 +37,7 @@
         "DATABASE_URL",
         "MFA_ENCRYPTION_KEY",
         "WORKER_DATABASE_URL",
+        "MIGRATOR_DATABASE_URL",
         "FLY_API_TOKEN"
       ]
     },
@@ -59,6 +62,7 @@
         "DATABASE_URL",
         "MFA_ENCRYPTION_KEY",
         "WORKER_DATABASE_URL",
+        "MIGRATOR_DATABASE_URL",
         "FLY_API_TOKEN"
       ]
     }
