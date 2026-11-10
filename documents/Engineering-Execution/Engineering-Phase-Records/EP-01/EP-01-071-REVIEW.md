@@ -8,7 +8,7 @@ adequacy against the approved standards.
 **Evidence base:** `EP-01-EVIDENCE-PACK.md`, the execution records, the migrations, the identity and
 platform services, and the local gate runs.
 
-**Verdict: NOT READY FOR CLOSURE.** No critical finding was found. **Three high findings remain
+**Verdict: NOT READY FOR CLOSURE.** No critical finding was found. **Two high findings remain
 unmitigated.** The phase must not be signed at `G5` until each is remediated or the founder records an
 explicit, scoped acceptance.
 
@@ -16,8 +16,10 @@ explicit, scoped acceptance.
 
 - H-01 (`F-29`) accepted — distinct CI-only `MIGRATOR_DATABASE_URL`, never injected into Fly;
   `hivorr_migrator` stays `nologin`.
+- H-04 resolved — CI run `42835621656` is green on every job, including the database, build and visual
+  gates.
 - H-05 (`F-04`) resolved by founder ruling — **no Doppler**. GitHub environment secrets + `fly secrets`
-  are the provider, with the recorded compensating controls; standards §16 #8 requires a formal revision.
+  are the provider; standards §16 #8 requires a formal revision.
 
 ---
 
@@ -27,7 +29,7 @@ explicit, scoped acceptance.
 - Artifact review of the evidence pack, gate outputs, visual approval and staging probe.
 - Test inventory and local execution.
 - **Not performed:** independent penetration test, live database assertions (no local PostgreSQL),
-  live staging E2E (staging is stale), CI observation (no push), coverage measurement, latency
+  live staging E2E (staging is stale), coverage measurement, latency
   measurement.
 - The reviewer is the implementing agent. `DEV-003` remains the recorded single-reviewer deviation;
   this review is not an independent second opinion.
@@ -42,13 +44,13 @@ explicit, scoped acceptance.
 | Authentication | Opaque session tokens stored as hashes | Pass | `randomBytes(32)`, SHA-256 storage; no signed token |
 | Authentication | `__Host-` session cookie per audience | Pass | `session-policy.ts`; `session.ts` tests |
 | Authentication | Refresh cookie scoped and `SameSite=Strict` | Pass | `session-policy.ts` |
-| Authentication | Rotation and reuse detection | Partial | Code + tests; CI unobserved |
+| Authentication | Rotation and reuse detection | Pass in CI | Code + tests; CI run `42835621656` |
 | Authentication | MFA challenge, encrypted TOTP secret | Pass | AES-256-GCM, per-environment key, challenge TTL |
 | Authentication | Credential lockout and rate limiting | Partial | Configurable lockout; per-process limits (`F-41`) |
 | Authorisation | Capability computed server-side | Pass | `computeCapabilities`; no client authority |
 | Authorisation | Deny path labelled and stable `FORBIDDEN` | Pass | `enforcement.test.ts` |
 | Authorisation | Unknown capability denies | Pass | Registry + enforcement tests |
-| Authorisation | Check and write share a transaction | Partial | Enforced in service; DB-backed proof only CI |
+| Authorisation | Check and write share a transaction | Pass in CI | Enforced in service; DB-backed proof in the CI database job |
 | RLS | Every EP-01 table has RLS and one policy per operation | Partial | 15 `FORCE RLS` tables; `rls-policy.test.ts`; DB run unobserved |
 | RLS | Fails closed without context | Partial | Policy pattern + test; DB run unobserved |
 | Audit | Append-only; update/delete rejected | Pass | Trigger `reject_append_only_mutation`; DB assertion |
@@ -62,7 +64,7 @@ explicit, scoped acceptance.
 | Transport | TLS and HSTS at the edge | Partial | Hosts verified; no header test |
 | Supply chain | Exact pins, secret/dependency scan | Partial | Exact versions; `security:secrets` clean; `security:deps` CI only |
 | Test adequacy | Unit/contract/gate suites | Partial | 278 pass, 7 skipped; 7 suites fail to load on Windows |
-| Test adequacy | Coverage measured | **Unmet** | No coverage report |
+| Test adequacy | Coverage measured | **Partial** | Local report: 46.5% statements / 50.8% branches; CI does not run coverage; line coverage is not a gate (`QUA-20`) |
 | Performance | Route JS budget | Pass | 121.4 KB / 71.0 KB gzip, under 200 KB |
 | Performance | API read/write latency | **Unmet** | Not measured |
 | Deployment | Staging runs the candidate digest | **High finding** | `F-49` stale image |
@@ -86,7 +88,7 @@ None found in the reviewed code paths.
 | H-01 | `F-29` — migrations run with the deployment credential; `hivorr_migrator` is `nologin`. A single CI-only applying role is not proven. | **Accepted 2026-11-10.** The migration job uses a distinct `MIGRATOR_DATABASE_URL`, never set on Fly; the role stays `nologin`. Residual: the credential is broader than a login migrator role. | Provision a login migrator role before production (follow-up). |
 | H-02 | `F-49` — the deployed staging API predates `/v1/session` and `/v1/activities`. | None; the smoke catches it. | Deploy the current digest; rerun smoke. |
 | H-03 | `F-50` — the slice bundle is not deployed; Pages rollout is manual. | CI produces a digest-verified artifact. | Publish the four bundles with `slice.html`; rerun E2E. |
-| H-04 | No CI run has been observed for the phase. All “green” evidence is local, and the work is uncommitted. | Local gates and seeded proofs. | Push; obtain a green CI run. |
+| H-04 | No CI run has been observed for the phase. | **Resolved 2026-11-10** — CI run `42835621656` is green: install, lint, typecheck, unit/contract/policy, gates, OpenAPI, visual, database migrations, build, secret scan and `ci-complete`. | — |
 | H-05 | `F-04` — the recorded secret provider is Doppler; the runtime uses GitHub environment secrets and Fly secrets. Rotation and scoped service tokens are weaker than recorded. | **Resolved 2026-11-10.** Founder ruled no Doppler; GitHub + Fly are the provider, with private repo, environment scoping, founder-only admin and deploy-time injection. Residual: manual rotation and GitHub Free reviewer limits. | Update standards §16 #8; record the residual at `G4`. |
 
 ### Medium
@@ -145,7 +147,7 @@ None found in the reviewed code paths.
 | Local suite | 278 pass, 7 skipped, 7 suites cannot load argon2 (`F-10`) |
 | Seeded gate proofs | 23/23 |
 | Contract/design/visual parity | Pass |
-| DB-backed RLS/role/audit proofs | Not run locally; CI unobserved |
+| DB-backed RLS/role/audit proofs | **Pass in CI** — run `42835621656` |
 | Coverage | **Measured locally** — 46.5% statements, 50.8% branches, 46.2% functions on the loadable suites; CI report pending. Line coverage is not a gate (`QUA-20`). |
 | Authenticated staging E2E | **Not run** |
 | Independent security test | **Not performed** |
@@ -160,17 +162,17 @@ cannot claim “all blocking gates pass”.
 **The phase is not ready for closure.**
 
 - No critical finding.
-- **Three high findings remain:** `F-49`, `F-50`, H-04 (no CI run). H-01 (`F-29`) is an accepted
-  residual; H-05 (`F-04`) is resolved by the founder's no-Doppler ruling.
+- **Two high findings remain:** `F-49` and `F-50`. H-01 (`F-29`) is an accepted residual; H-04 (CI)
+  is resolved; H-05 (`F-04`) is resolved by the no-Doppler ruling.
 - Eight medium and four low findings are recorded.
-- The unmet completion criteria `C4` and `C12` are consistent with these findings.
+- The unmet completion criterion `C12` is consistent with these findings; `C4` remains partial because
+  there is no committed schema baseline.
 
 ### Conditions for `072`
 
 1. Deploy the current digest and the slice; smoke and E2E green (`H-02`, `H-03`).
-2. Push and obtain a green CI run (`H-04`).
-3. Commit a schema baseline (`M-01`).
-4. At minimum, measure coverage and API latency, or record them as accepted gaps (`M-05`, `M-06`).
+2. Commit a schema baseline (`M-01`).
+3. At minimum, measure API latency, or record it as an accepted gap (`M-06`).
 
 `072` must not be signed until those are met or explicitly accepted by the founder with the residual
 risk stated.

@@ -61,23 +61,21 @@
 | 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **REQUIRES_REVIEW** — plan/apply/verify + 8 unit checks; no DB/workflow run; `F-29` credential and `F-28` baseline remain | — | `execution-records/EP-01-062.md` |
 | 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **REQUIRES_REVIEW** — smoke + E2E wired as blocking promotion gates; both correctly fail on `F-49`/`F-50` | — | `execution-records/EP-01-063.md` |
 | 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **REQUIRES_REVIEW** — pack complete; C1 met, 11 partial, 2 unmet, 2 open | — | `execution-records/EP-01-070.md` |
-| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — review complete; 0 critical, **3 high** unmitigated; H-01/H-05 resolved or accepted | — | `execution-records/EP-01-071.md` |
+| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — review complete; 0 critical, **2 high** (`F-49`, `F-50`); CI green | — | `execution-records/EP-01-071.md` |
 | 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **PENDING** | — | — |
 
 ---
 
 ## 2. Next eligible task
 
-**None.** `EP-01-072` cannot be signed while three high findings remain unmitigated:
+**None.** `EP-01-072` cannot be signed while two high findings remain:
 
 1. `F-49` — staging API stale.
 2. `F-50` — slice/Pages rollout.
-3. No CI run observed for the phase.
 
-H-01 (`F-29`) is an accepted residual: the migration job uses a distinct CI-only
-`MIGRATOR_DATABASE_URL`, never injected into Fly, and `hivorr_migrator` stays `nologin`. H-05 (`F-04`)
-is resolved by the founder's no-Doppler ruling; standards §16 #8 needs a formal revision.
-`DEV-003` (single reviewer) ends at `G5` or on appointment of a second reviewer.
+CI run `42835621656` is green on every job, closing H-04. H-01 (`F-29`) is an accepted residual; H-05
+(`F-04`) is resolved by the no-Doppler ruling. `DEV-003` (single reviewer) ends at `G5` or on
+appointment of a second reviewer.
 
 ---
 

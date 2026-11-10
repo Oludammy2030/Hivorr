@@ -19,25 +19,25 @@ missing; **Unmet** = no artifact or a known failure; **Open** = depends on a lat
 | # | Criterion | Status | Evidence | Gap |
 |---|---|---|---|---|
 | C1 | Entry gate satisfied | **Met** | `Engineering-Phase-Records/EP-01/EP-01-ENTRY-RECORD.md`; `evidence/decision-pack.md`; `evidence/protection-403.log` | — |
-| C2 | Build graph works in CI | **Partial** | Local: `typecheck`, `lint` (20 baseline), `lint:boundaries` (87 files / 10 modules), `format:check` (186 files), `build:all` (four bundles), `build:server`, `test:api`, `test:worker-smoke` | **No CI run observed**; work is uncommitted and `gh` is unavailable |
-| C3 | Contract generated; breaking diff fails | **Partial** | `openapi/openapi.json` (25 paths); `packages/api-client/src/index.ts`; `openapi-contract.test.ts`; `openapi-diff.mjs`; seeded proof in `test:gates` | `openapi:check` fails locally only because generated files are uncommitted; CI run unobserved |
+| C2 | Build graph works in CI | **Met** | CI run `42835621656`: install, lint, typecheck, unit/contract/policy, gates, build, secret scan and `ci-complete` all green | — |
+| C3 | Contract generated; breaking diff fails | **Met** | CI run `42835621656` — OpenAPI job green; `openapi:check` and `openapi:diff`; seeded proof | — |
 | C4 | Schema reproducible; `db diff` clean | **Unmet** | `scripts/test-db-migrations.mjs`; `migrations:plan/apply/verify`; 17 migrations | No local PostgreSQL; CI database job unobserved; **`F-28` no committed schema baseline**, so `db diff` cannot be clean |
-| C5 | Least privilege proven; migrator CI-only | **Partial** | `test-db-migrations.mjs` asserts five roles cannot log in, API cannot DDL/alter/truncate; `database-roles.test.ts`; migration job now uses a distinct `MIGRATOR_DATABASE_URL` never set on Fly | Database assertions run only in CI (unobserved); `F-29` is an accepted residual — `hivorr_migrator` stays `nologin`, login role is a pre-production follow-up |
-| C6 | RLS fails closed | **Partial** | `test-db-migrations.mjs` (14 tables, FORCE RLS, one policy per operation, allow and deny probes); `rls-policy.test.ts`; `identity-schema.test.ts` | DB-backed proof only in the unobserved CI database job |
-| C7 | Session isolation proven | **Partial** | `identity-session.test.ts`; `identity-integration.test.ts`; audience guard; refresh rotation/reuse code | Seven suites cannot load argon2 on Windows (`F-10`); CI unobserved |
-| C8 | Capability authority proven | **Partial** | `capability-registry.test.ts`; `capabilities.test.ts`; `enforcement.test.ts`; table-driven registry in `server/src/domain` | Integration/DB-backed checks in the unobserved CI job |
-| C9 | Enforcement in transaction | **Partial** | `enforcement.test.ts`; `transaction.test.ts`; `withTransaction`; service-layer guards | Live DB path in CI unobserved |
-| C10 | Audit immutable | **Partial** | `test-db-migrations.mjs` rejects update/delete; `audit.test.ts`; append-only triggers in migrations | DB proof in the unobserved CI job |
-| C11 | Visual identity preserved | **Partial** | Founder approval 2026-11-10 (`EP-01-050`); 9-image baseline at 375/768/1280; zero-tolerance diff unchanged; sign-in exact parity at three widths; no new font; `F-47` tokens additive | Registration uses the approved divergence (`F-48`); activity/recovery screens are not pixel-compared |
+| C5 | Least privilege proven; migrator CI-only | **Partial** | CI database job (`42835621656`): five roles cannot log in, API cannot DDL/alter/truncate; distinct CI-only `MIGRATOR_DATABASE_URL` | `F-29` accepted residual — `hivorr_migrator` stays `nologin`, login role is a pre-production follow-up |
+| C6 | RLS fails closed | **Met** | `test-db-migrations.mjs` and the CI database job (`42835621656`): 14 tables, FORCE RLS, one policy per operation, allow and deny probes | — |
+| C7 | Session isolation proven | **Met** | CI run `42835621656` — identity/session suites, audience guard, refresh rotation/reuse | — |
+| C8 | Capability authority proven | **Met** | CI run `42835621656` — capability registry and enforcement suites | — |
+| C9 | Enforcement in transaction | **Met** | CI run `42835621656` — enforcement and transaction suites | — |
+| C10 | Audit immutable | **Met** | CI database job: update/delete rejected; `audit.test.ts` | — |
+| C11 | Visual identity preserved | **Partial** | Founder approval 2026-11-10; baseline initially captured on the workstation and **re-captured on the pinned CI runner** (`F-44`, emoji glyph, 424 px at 375); zero-tolerance visual job green; sign-in exact parity; no new font | Re-baseline needs founder re-approval; registration divergence approved; activity/recovery not pixel-compared |
 | C12 | Staging provable | **Unmet** | Topology probe: four hosts, valid TLS, Access challenges, edge health (`evidence/staging-topology/2026-11-10.md`) | **`F-49` staging API predates `/v1/session` and `/v1/activities` (404)**; **`F-50` slice bundle not deployed**; smoke and E2E correctly fail |
-| C13 | Operability baseline | **Partial** | Structured logger/redaction (`logger.test.ts`); correlation (`server-correlation.test.ts`); health/readiness; worker queue health; error-tracker seam | Live log/worker wiring only in unobserved CI smoke; `F-40` free-text redaction |
+| C13 | Operability baseline | **Partial** | Structured logger/redaction, correlation, health/readiness, worker queue health and error-tracker seam; CI smoke green | `F-40` free-text redaction remains |
 | C14 | Budgets captured | **Partial** | `bundles:check`: main 121.4 KB gzip, each portal 71.0 KB, inside 200 KB | **API read/write latency not measured**; route-JS budget measured on the built artifact |
-| C15 | Quality gates honest | **Partial** | `test:gates` 23/23; typecheck/lint/boundaries/format/config; secret scan; coverage report (`test:coverage`: 46.5% statements / 50.8% branches locally); OpenAPI/visual/migration/db jobs in CI | CI run unobserved; `QUA-20` makes branch coverage on auth paths the gate, and those DB-backed suites are CI-only |
+| C15 | Quality gates honest | **Met** | CI run `42835621656` — all gates green, 23/23 seeded proofs, coverage report 46.5%/50.8% locally | Coverage is not a CI gate (`QUA-20`); branch coverage on DB-backed auth paths proven in CI |
 | C16 | Review complete | **Open** | — | `EP-01-071` not started |
 | C17 | Closure signed | **Open** | — | `EP-01-072` not started |
 
-**Result: 1 met, 11 partial, 2 unmet, 2 open.** The phase is **not** complete and must not be reported
-as closed.
+**Result: 9 met, 4 partial, 2 unmet, 2 open.** The phase is **not** complete and must not be reported
+as closed. `C4` and `C12` remain unmet; `C16`/`C17` are the review and closure records.
 
 ---
 

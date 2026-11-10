@@ -185,7 +185,8 @@ On 2026-11-10 the founder approved the baseline in `visual/baseline/`:
 with the SHA-256 hashes recorded in `execution-records/EP-01-050.md` §6. The approval is subject to:
 
 - `F-43` — dashboard screens are deferred to `053`;
-- `F-44` — the first CI run must match; if it does not, the baseline is regenerated on the runner and
-  returned for re-approval.
+- `F-44` — the first CI run must match; **it did not on the login emoji**. The three login images were
+  re-captured on the pinned CI runner (424 pixels at 375px, Windows Server emoji glyph) and CI is green.
+  The re-captured login images need founder re-approval; the other six images are unchanged.
 
 Extraction (`051`–`053`) may now start. `050` stays `REQUIRES_REVIEW` only for the first CI run.

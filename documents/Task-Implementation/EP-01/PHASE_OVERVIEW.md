@@ -269,13 +269,13 @@ edited; the drift is recorded here.
 | 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **REQUIRES_REVIEW** — plan/apply/verify + 8 unit checks; no DB/workflow run; `F-29` credential and `F-28` baseline remain |
 | 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **REQUIRES_REVIEW** — blocking promotion gates; both correctly fail on `F-49`/`F-50` |
 | 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **REQUIRES_REVIEW** — pack complete; C1 met, 11 partial, 2 unmet (`C4`/`C12`), 2 open |
-| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — review complete; 0 critical, **3 high** unmitigated; H-01/H-05 resolved or accepted |
+| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — review complete; 0 critical, **2 high** (`F-49`, `F-50`); CI green |
 | 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **PENDING** |
 
-**Next eligible task:** **none.** `EP-01-072` cannot be signed while three high findings remain: `F-49`
-(stale staging API), `F-50` (slice/Pages rollout), and no observed CI run. H-01 (`F-29`) is an accepted
-residual; H-05 (`F-04`) is resolved by the no-Doppler ruling (standards §16 #8 needs a formal revision).
-`DEV-003` ends at `G5` or on a second reviewer's appointment.
+**Next eligible task:** **none.** `EP-01-072` cannot be signed while two high findings remain: `F-49`
+(stale staging API) and `F-50` (slice/Pages rollout). CI run `42835621656` is green, closing the
+no-CI finding; H-01 (`F-29`) is an accepted residual and H-05 (`F-04`) is resolved by the no-Doppler
+ruling. `DEV-003` ends at `G5` or on a second reviewer's appointment.
 
 ### 5.1 Critical path for the remaining work
 
