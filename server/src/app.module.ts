@@ -36,8 +36,12 @@ export class AppModule {
       ],
       providers: [
         { provide: API_CONFIG, useValue: config },
-        Reflector,
-        { provide: APP_GUARD, useClass: AudienceGuard },
+        {
+          provide: APP_GUARD,
+          useFactory: (apiConfig: ApiConfig) =>
+            new AudienceGuard(new Reflector(), apiConfig),
+          inject: [API_CONFIG],
+        },
         { provide: APP_FILTER, useClass: ApiErrorFilter },
         {
           provide: LOGGER,
