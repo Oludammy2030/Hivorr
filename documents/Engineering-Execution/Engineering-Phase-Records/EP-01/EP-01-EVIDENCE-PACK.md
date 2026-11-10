@@ -32,7 +32,7 @@ missing; **Unmet** = no artifact or a known failure; **Open** = depends on a lat
 | C12 | Staging provable | **Unmet** | Topology probe: four hosts, valid TLS, Access challenges, edge health (`evidence/staging-topology/2026-11-10.md`) | **`F-49` staging API predates `/v1/session` and `/v1/activities` (404)**; **`F-50` slice bundle not deployed**; smoke and E2E correctly fail |
 | C13 | Operability baseline | **Partial** | Structured logger/redaction (`logger.test.ts`); correlation (`server-correlation.test.ts`); health/readiness; worker queue health; error-tracker seam | Live log/worker wiring only in unobserved CI smoke; `F-40` free-text redaction |
 | C14 | Budgets captured | **Partial** | `bundles:check`: main 121.4 KB gzip, each portal 71.0 KB, inside 200 KB | **API read/write latency not measured**; route-JS budget measured on the built artifact |
-| C15 | Quality gates honest | **Partial** | `test:gates` 23/23; typecheck/lint/boundaries/format/config; secret scan; OpenAPI/visual/migration/db jobs in CI | CI run unobserved |
+| C15 | Quality gates honest | **Partial** | `test:gates` 23/23; typecheck/lint/boundaries/format/config; secret scan; coverage report (`test:coverage`: 46.5% statements / 50.8% branches locally); OpenAPI/visual/migration/db jobs in CI | CI run unobserved; `QUA-20` makes branch coverage on auth paths the gate, and those DB-backed suites are CI-only |
 | C16 | Review complete | **Open** | — | `EP-01-071` not started |
 | C17 | Closure signed | **Open** | — | `EP-01-072` not started |
 
@@ -68,6 +68,7 @@ The tracker currently records **5 completed, 30 review, 4 pending, 0 blocked**.
 | `pnpm lint:boundaries` | 87 files, 10 modules | output |
 | `pnpm format:check` | 186 files | output |
 | `pnpm test` | 38 files / 278 tests pass, 7 skipped; 7 suites fail to load argon2 (`F-10`) | output |
+| `pnpm test:coverage` | 46.5% statements, 50.8% branches on loadable suites; line coverage is not a gate (`QUA-20`) | `coverage/coverage-summary.json` |
 | `pnpm test:gates` | 23/23 seeded proofs | output |
 | `pnpm config:check` | 33 keys, 5 secrets | output |
 | `pnpm bundles:check` | main 121.4 KB, portals 71.0 KB gzip | output |

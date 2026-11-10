@@ -97,7 +97,7 @@ None found in the reviewed code paths.
 | M-02 | `F-08` — `DATABASE_SSL_CA` unset; the pooler certificate is not verified. | Set the CA and verify with `rejectUnauthorized: true`. |
 | M-03 | `F-40` — key-based redaction misses PII in free-text provider errors. | Add a scrubber or accept the residual. |
 | M-04 | `F-41` — rate limits are per process; horizontal scaling weakens them. | Shared store before multi-instance. |
-| M-05 | Coverage is not measured. | Add a coverage report and threshold. |
+| M-05 | Coverage is not measured. | **Addressed locally 2026-11-10:** `test:coverage` reports 46.5% statements / 50.8% branches on the loadable suites. `QUA-20` says line coverage is not a gate; authorisation allow/deny branches are enumerated in tests. CI report pending. |
 | M-06 | API read/write latency is not measured. | Measure on staging against the budget. |
 | M-07 | No automated test for CSP/HSTS/frame protection, though `_headers` exists. | Add a header assertion to smoke. |
 | M-08 | Authenticated E2E is optional and has no test identity. | Provision a staging test identity. |
@@ -146,7 +146,7 @@ None found in the reviewed code paths.
 | Seeded gate proofs | 23/23 |
 | Contract/design/visual parity | Pass |
 | DB-backed RLS/role/audit proofs | Not run locally; CI unobserved |
-| Coverage | **Not measured** |
+| Coverage | **Measured locally** — 46.5% statements, 50.8% branches, 46.2% functions on the loadable suites; CI report pending. Line coverage is not a gate (`QUA-20`). |
 | Authenticated staging E2E | **Not run** |
 | Independent security test | **Not performed** |
 
