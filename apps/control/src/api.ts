@@ -1,0 +1,109 @@
+/**
+ * Minimal same-origin client for the identity API.
+ *
+ * The browser never holds a token: the API sets host-only cookies, and the
+ * edge proxy forwards them. `credentials: "same-origin"` is explicit so a
+ * future refactor cannot silently drop them.
+ */
+
+export interface Session {
+  readonly sessionId: string
+  readonly accountId: string
+  readonly userId: string
+  readonly email: string
+  readonly audience: "app" | "control" | "staff" | "partner"
+  readonly environment: "staging" | "production"
+  readonly expiresAt: string
+  readonly idleExpiresAt: string
+}
+
+export interface MfaChallenge {
+  readonly mfaRequired: true
+  readonly challengeToken: string
+  readonly expiresAt: string
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+    readonly status: number,
+    readonly retryAfterSeconds: number,
+  ) {
+    super(message)
+    this.name = "ApiError"
+  }
+}
+
+interface ApiErrorDetail {
+  code?: string
+  message?: string
+}
+
+interface ApiErrorBody {
+  error?: ApiErrorDetail
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`/api/v1${path}`, {
+    ...init,
+    credentials: "same-origin",
+    headers: {
+      "content-type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  })
+
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  const body = (await response
+    .json()
+    .catch(() => null)) as T & ApiErrorBody | null
+
+  if (!response.ok) {
+    throw new ApiError(
+      body?.error?.message ?? "The request could not be completed.",
+      body?.error?.code ?? "UNKNOWN",
+      response.status,
+      Number(response.headers.get("retry-after") ?? 0),
+    )
+  }
+
+  return body as T
+}
+
+export const api = {
+  session: () => request<Session>("/auth/session"),
+  signIn: (email: string, password: string) =>
+    request<Session | MfaChallenge>("/auth/sign-in", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  verifyMfa: (challengeToken: string, code: string) =>
+    request<Session>("/auth/mfa/verify", {
+      method: "POST",
+      body: JSON.stringify({ challengeToken, code }),
+    }),
+  signOut: () =>
+    request<void>("/auth/sign-out", {
+      method: "POST",
+    }),
+}
+
+export function isMfaChallenge(
+  result: Session | MfaChallenge,
+): result is MfaChallenge {
+  return "mfaRequired" in result
+}
+
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 429 && error.retryAfterSeconds > 0) {
+      return `${error.message} Try again in ${error.retryAfterSeconds} seconds.`
+    }
+    return error.message
+  }
+  return "Something went wrong. Please try again."
+}
