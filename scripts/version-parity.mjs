@@ -46,7 +46,8 @@ function pnpmVersionValue() {
   const override = args.get("pnpm")
   if (override) return override
 
-  const candidates = process.platform === "win32" ? ["pnpm.cmd", "pnpm"] : ["pnpm"]
+  const candidates =
+    process.platform === "win32" ? ["pnpm.cmd", "pnpm"] : ["pnpm"]
   const failures = []
   for (const command of candidates) {
     try {
@@ -56,7 +57,9 @@ function pnpmVersionValue() {
     }
   }
 
-  console.error(`toolchain: cannot read the pnpm version: ${failures.join("; ")}`)
+  console.error(
+    `toolchain: cannot read the pnpm version: ${failures.join("; ")}`,
+  )
   process.exit(2)
 }
 
