@@ -384,7 +384,7 @@ try {
   )
 
   let invalidActivityRejected = false
-  await testClient.query("savepoint profile_activity_check")
+  await testClient.query("begin")
   try {
     await testClient.query(
       "insert into profile.activity_activations (account_id, activity_id) values ($1, 'market.discover')",
@@ -392,12 +392,13 @@ try {
     )
   } catch (error) {
     invalidActivityRejected = error?.code === "23514"
-    await testClient.query("rollback to savepoint profile_activity_check")
+  } finally {
+    await testClient.query("rollback")
   }
   assert(invalidActivityRejected, "unknown activity IDs are refused")
 
   let invalidStateRejected = false
-  await testClient.query("savepoint profile_state_check")
+  await testClient.query("begin")
   try {
     await testClient.query(
       "insert into profile.activity_activations (account_id, activity_id, state) values ($1, 'market.buy', 'ON')",
@@ -405,7 +406,8 @@ try {
     )
   } catch (error) {
     invalidStateRejected = error?.code === "23514"
-    await testClient.query("rollback to savepoint profile_state_check")
+  } finally {
+    await testClient.query("rollback")
   }
   assert(invalidStateRejected, "unknown activation states are refused")
 
@@ -430,7 +432,7 @@ try {
   assert(activationCount.rows[0].count === 6, "all six activities activate")
 
   let duplicateActivationRejected = false
-  await testClient.query("savepoint profile_duplicate_check")
+  await testClient.query("begin")
   try {
     await testClient.query(
       "insert into profile.activity_activations (account_id, activity_id) values ($1, 'market.buy')",
@@ -438,7 +440,8 @@ try {
     )
   } catch (error) {
     duplicateActivationRejected = error?.code === "23505"
-    await testClient.query("rollback to savepoint profile_duplicate_check")
+  } finally {
+    await testClient.query("rollback")
   }
   assert(
     duplicateActivationRejected,
