@@ -1,5 +1,5 @@
 import { type DynamicModule, Module } from "@nestjs/common"
-import { APP_FILTER, APP_GUARD } from "@nestjs/core"
+import { APP_FILTER, APP_GUARD, Reflector } from "@nestjs/core"
 
 import { ApiErrorFilter } from "./common/api-error.filter"
 import { AudienceGuard } from "./common/audience"
@@ -36,6 +36,7 @@ export class AppModule {
       ],
       providers: [
         { provide: API_CONFIG, useValue: config },
+        Reflector,
         { provide: APP_GUARD, useClass: AudienceGuard },
         { provide: APP_FILTER, useClass: ApiErrorFilter },
         {
