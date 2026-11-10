@@ -7,8 +7,8 @@ Produce **one signed phase-entry record** for EP-01 that:
 
 1. Re-verifies EP-00's exit evidence criterion by criterion (not by trusting `EP-00-010`'s summary).
 2. Records every decision EP-01 depends on, by reference to the register that owns it, with owner, date, class, evidence and follow-up.
-3. Records the G0 scope readings in EP-01 §4.3 (four bundles / five deployments; slice-only extraction).
-4. Carries an item-level blocker matrix for all 38 remaining EP-01 items (`002`–`072`).
+3. Records the G0 scope readings in EP-01 §4.3 (four bundles / eight deployments; slice-only extraction).
+4. Carries an item-level blocker matrix for all 38 remaining EP-01 items listed in the EP-01 entry record §8.
 5. Sets EP-01 to exactly one status — **`Ready`** or **`Blocked`** — with named owners for anything missing.
 
 It writes no code, creates no schema, changes no phase plan, and decides nothing itself.
@@ -37,7 +37,7 @@ The specific risk today is the v1 failure mode returning in a new shape: EP-01 m
 | 4 | Drift register: differences between the EP-01 plan's planning snapshot and today's repository |
 | 5 | Decision register — reference-only rows for the 3 founder entry decisions, the second-reviewer arrangement, the 6+ architect decisions, the test-toolchain residual, and the technical selections EP-01-002/021 depend on |
 | 6 | G0 scope rulings: EP-01 §4.3 items 1 and 2, recorded verbatim as ruled |
-| 7 | Item blocker matrix for `002`–`072`: status, blockers, owner, clearing condition |
+| 7 | Item blocker matrix for the 38 remaining items: status, blockers, owner, clearing condition |
 | 8 | Phase status determination with the checklist that produces `Ready` or `Blocked` |
 | 9 | Residual risks and carried conditions (including `DEV-001` expiry and the C8 compensating control) |
 | 10 | Signature block and append-only amendment log |
@@ -172,7 +172,7 @@ Record status vocabulary is EES §9.1 only — no percentages, no "almost".
 | `standards §16 #8` | Secret manager and rotation | `[FOUNDER]`+`[REVIEW]` | Founder + architect | `020`, `043`, `060` |
 | `standards §16 #9` | Error-tracking / APM vendor and PII posture | `[FOUNDER]` | Founder | `040` (the seam can ship with the no-op adapter) |
 | `EX-10` residual | Test toolchain: Playwright, Testcontainers, Testing Library | `[REVIEW]` via `GOV-09` | Architect | `004`, `025`, `050`, `063` |
-| `EP-01 §4.3-R1` | Four bundles, five deployments | `[REVIEW]` | Architect | `002`, `054` |
+| `EP-01 §4.3-R1` | Four bundles, eight deployments | `[REVIEW]` | Architect | `002`, `054` |
 | `EP-01 §4.3-R2` | Slice-only extraction | `[REVIEW]` | Architect | `050`–`053` |
 | `EP-01-002/021` selections | DB driver, migration runner, queue, OpenAPI generator, boundary lint | `[REVIEW]` | Architect | `002`, `014`, `021` |
 
@@ -272,7 +272,7 @@ No code, so the tests are document gates — each must be able to fail.
 | T4 | No invented decision | Ruling text matches the supplied text; no `[OPEN]` row marked decided | Insert a plausible "Supabase chosen" default; review must reject it |
 | T5 | Register non-duplication | Every row names an owning register; no new register is created | Add a standalone decision with no owner; check fails |
 | T6 | Status honesty | `Ready` only when every §6.3 condition holds; otherwise `Blocked` with owners | Remove G5; status must become `Blocked` |
-| T7 | Blocker coverage | All 38 items `002`–`072` appear with a status and at least one blocker or "none" | Delete one row; check fails |
+| T7 | Blocker coverage | All 38 remaining items appear with a status and at least one blocker or "none" | Delete one row; check fails |
 | T8 | Drift accuracy | Read-only commands re-run on the signing date; drift from the plan's snapshot recorded | Change one fact silently; comparison fails |
 | T9 | Scope discipline | Diff contains only the new EP-01 files; `App.tsx`, `documents/Context/*`, both phase plans and all config unchanged | Add an unrelated edit; diff check fails |
 | T10 | Secret / PII scan | `pnpm security:secrets` exit 0; no credential pattern, token URL or customer data | Insert a fake key on a scratch branch; the gate must fail, then remove it |
@@ -331,7 +331,7 @@ On today's evidence the outcome is `Blocked`, with EP-00's G5, C8 and C14 named 
 - [ ] C1–C14 are each marked `Met` / `Unmet` / `Partially met` with an artifact inspected today.
 - [ ] All 16 decision rows exist; none is invented; each names its owning register.
 - [ ] Both §4.3 rulings are recorded verbatim, or marked `PENDING` with the architect named.
-- [ ] All 38 items `002`–`072` appear with a status and a named blocker or "none".
+- [ ] All 38 remaining items appear with a status and a named blocker or "none".
 - [ ] Phase status is exactly `Ready` or `Blocked`, justified by the §6.3 checklist.
 - [ ] No `[OPEN]` decision is silently resolved; no provider, vendor, library, lifetime or runner is chosen beyond what was ruled.
 - [ ] `DEV-001`'s expiry is tested against the current date; the arrangement for EP-01 is recorded as appointment or full GOV-13 re-deviation.

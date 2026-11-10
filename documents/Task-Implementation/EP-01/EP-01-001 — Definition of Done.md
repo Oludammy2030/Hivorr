@@ -5,7 +5,7 @@
 |---|---|
 | **Task ID** | `EP-01-001` |
 | **Task Name** | Entry gate closure and decision register |
-| **DoD version** | `1.1` — amended 2026-11-07 (see the amendment note below) |
+| **DoD version** | `1.2` — amended 2026-11-10 (wording only; see the amendment note below) |
 | **Related Phase** | `EP-01` — Core Platform Foundation & Infrastructure |
 | **Reference Implementation Plan** | `documents/Task-Implementation/EP-01/EP-01-001 — Entry gate closure and decision register.md` |
 | **Artifact under verification** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-ENTRY-RECORD.md` |
@@ -40,7 +40,12 @@ tests something:
 The two matching stop conditions are narrowed the same way. No check was removed to make the task
 pass; the amendment is recorded because the scope changed, and it is listed as an exception in §9.
 
-**Verification boundary.** This DoD verifies only the EP-01 entry record produced by `EP-01-001`, its evidence folder, and the G0 work-package record. It does **not** verify any later EP-01 item (`002`–`072`), any database, API, worker, frontend bundle, staging environment or CI change. Those remain `Not started` exactly as the record's blocker matrix states.
+**Amendment — v1.2, 2026-11-10.** Wording only: references to the blocker matrix as `002`–`072` are
+replaced with “the 38 remaining items” so the range notation does not imply 71 tasks, and ruling 1 is
+restated as four bundles / eight deployments to match plan §4.3. No check, threshold, evidence or
+result changed.
+
+**Verification boundary.** This DoD verifies only the EP-01 entry record produced by `EP-01-001`, its evidence folder, and the G0 work-package record. It does **not** verify any later EP-01 item (the 38 remaining items in the record §8), any database, API, worker, frontend bundle, staging environment or CI change. Those remain `Not started` exactly as the record's blocker matrix states.
 
 **Pre-condition for the verifier.** Read `EP-01-001` §6.3 before starting. The record may legitimately end at either `Ready` or `Blocked`; this DoD verifies that the correct one was chosen **from the evidence**, not that a particular outcome was reached.
 
@@ -63,9 +68,9 @@ pass; the amendment is recorded because the scope changed, and it is listed as a
 | **F-09** | All 16 decision rows are present | Exactly these owning IDs appear: `ARCHITECTURE §16.4 #1`; `#17`; `#14`; `EES §11.2 #2`/`DEV-001`; EP-00 exit basis; phase opening; `standards §16 #1`; `#2`; `#3`; `#6`; `#8`; `#9`; `EX-10` residual; `EP-01 §4.3-R1`; `EP-01 §4.3-R2`; `EP-01-002/021` technical selections | Record §5 |
 | **F-10** | Every row carries the full field set | Owning ID, decision text, owning register, class, owner (role), date, outcome (`RECORDED`/`PENDING`), evidence, follow-up | Record §5 |
 | **F-11** | No decision is resolved without a written decision | A row is `RECORDED` only where a written founder decision exists, cited with date; no provider, vendor, library, lifetime, runner, queue or generator is chosen without one, and no default is adopted | Record §5 |
-| **F-12** | G0 scope rulings are recorded | EP-01 §4.3 ruling 1 (four bundles / five deployments) and ruling 2 (slice-only extraction) are quoted faithfully, or `PENDING` with the architect named | Record §6 |
+| **F-12** | G0 scope rulings are recorded | EP-01 §4.3 ruling 1 (four bundles / eight deployments) and ruling 2 (slice-only extraction) are quoted faithfully, or `PENDING` with the architect named | Record §6 |
 | **F-13** | `DEV-001` expiry is tested, not assumed | The record compares the expiry (before auth/capability/migration work, and no later than 2026-12-31) with the signing date and records either an appointment or a complete GOV-13 re-deviation with rule, scope, reason, risk, compensating control, owner, expiry, approval and no G4 extension | Record §7 + Standards §13.3 |
-| **F-14** | Blocker matrix covers every remaining item | All 38 items `002`–`072` appear, each with an EES §9.1 status, at least one blocker or "none", an owner and a clearing condition | Record §8 |
+| **F-14** | Blocker matrix covers every remaining item | All 38 remaining items appear, each with an EES §9.1 status, at least one blocker or "none", an owner and a clearing condition | Record §8 |
 | **F-15** | Blocker scope is not inflated | The deliberately-excluded list in plan §4.3 (`standards §16 #4`,`#5`,`#10`,`#16`,`#17`; `ARCHITECTURE §16.4 #2/#6/#8`) does not appear as entry blockers | Record §5/§8 cross-check |
 | **F-16** | Phase status is exactly one permitted value | `Ready` only if every condition in plan §6.3 holds; otherwise `Blocked`. No third value, no percentage | Record §9 |
 | **F-17** | Record's own status is honest | `In review` while drafted/unsigned; `Verified` only after review and signature; never `Completed`, `Released` or "landed" | Record §1 |
@@ -160,7 +165,7 @@ pass; the amendment is recorded because the scope changed, and it is listed as a
 |---|---|---|---|
 | **D-01** | Required records created | Exactly one entry record; evidence files only inside `evidence/`; no duplicate or orphan file | File list |
 | **D-02** | Decision-row completeness | 16 rows, one per required owning ID; no duplicates; none missing | Record §5 |
-| **D-03** | Blocker-row completeness | 38 rows for `002`–`072`; no gaps; no row for a non-existent item | Record §8 |
+| **D-03** | Blocker-row completeness | 38 rows for the 38 remaining items; no gaps; no row for a non-existent item | Record §8 |
 | **D-04** | Relationships correct | Every blocked item's blocker resolves to a decision row or a named precondition; every decision row lists the items it blocks; no orphan blocker | Cross-reference audit |
 | **D-05** | Data accuracy | Roles, classes, dates and evidence references are accurate; `PENDING` is used wherever written approval is absent; no date is invented | Row review vs. source input |
 | **D-06** | Data integrity | Append-only after signature; no blank owner, date or clearing condition; EES §9.1 vocabulary only | Record + row scan |
@@ -263,7 +268,7 @@ A single unchecked item blocks approval unless recorded as an approved exception
 - [x] **FA-11** No `[OPEN]` decision is silently resolved; no provider, vendor, library, lifetime, runner, queue or generator is chosen beyond what the founder ruled on 2026-11-07.
 - [x] **FA-12** Both EP-01 §4.3 rulings are recorded faithfully.
 - [x] **FA-13** `DEV-001` expiry is tested against the verification date; the EP-01 arrangement is `DEV-003`, a complete GOV-13 re-deviation with expiry and no G4 extension.
-- [x] **FA-14** All 38 items `002`–`072` have a status, a blocker or "none", an owner and a clearing condition.
+- [x] **FA-14** All 38 remaining items have a status, a blocker or "none", an owner and a clearing condition.
 - [x] **FA-15** C8 is described as a compensating control only; no claim of protected `main` appears anywhere.
 - [x] **FA-16** No parallel decision register and no parallel deviations register exist; no new identifier scheme was introduced.
 - [x] **FA-17** The register fold-in is performed only as the separate recorded act required by `R-P5` and the record's §10.4, and is attributed to that act.

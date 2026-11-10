@@ -17,6 +17,7 @@
     "bundles:check": "node scripts/verify-bundles.mjs",
     "check:toolchain": "node scripts/version-parity.mjs",
     "config:check": "node scripts/check-configuration-contract.mjs",
+    "docs:check": "node scripts/check-work-packages.mjs",
     "dev": "vite --host 0.0.0.0 --config vite.figma.config.ts",
     "format": "oxfmt",
     "format:check": "node scripts/format-check.mjs",
@@ -63,7 +64,7 @@
     "test:watch": "vitest",
     "topology:verify": "node scripts/verify-environment-topology.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm check:toolchain && pnpm lint && pnpm lint:boundaries && pnpm lint:migrations && pnpm topology:verify && pnpm config:check && pnpm typecheck && pnpm test && pnpm test:contracts && pnpm test:push-protection && pnpm test:release && pnpm test:topology && pnpm test:gates && pnpm openapi:check && pnpm openapi:diff && pnpm visual:check && pnpm build:all && pnpm bundles:check && pnpm build:server && pnpm test:api && pnpm test:worker-smoke"
+    "verify": "pnpm check:toolchain && pnpm docs:check && pnpm lint && pnpm lint:boundaries && pnpm lint:migrations && pnpm topology:verify && pnpm config:check && pnpm typecheck && pnpm test && pnpm test:contracts && pnpm test:push-protection && pnpm test:release && pnpm test:topology && pnpm test:gates && pnpm openapi:check && pnpm openapi:diff && pnpm visual:check && pnpm build:all && pnpm bundles:check && pnpm build:server && pnpm test:api && pnpm test:worker-smoke"
   },
   "dependencies": {
     "@hivorr/api-client": "workspace:*",

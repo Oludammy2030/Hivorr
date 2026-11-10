@@ -5,7 +5,7 @@
 | **Document ID** | `EP-00-000` |
 | **Phase** | `EP-00` — Execution Readiness |
 | **Task name** | Phase entry record, G0 rulings and decision closure |
-| **Record version** | `0.9` — DoD approved |
+| **Record version** | `0.11` — D-05a scope note added |
 | **Record status** | `Verified` — reviewed and approved by role on 2026-11-04 |
 | **Phase status** | **`In build`** |
 | **Class** | `[FOUNDER]` — confirmed 2026-11-04 |
@@ -211,6 +211,8 @@ No drift was observed in the facts above. The EP-00 plan's 4 November 2026 snaps
 | **Evidence** | EES §8.1 text and changelog entry |
 | **Follow-up** | None — already amended |
 
+**Amendment `D-05a` — scope note, 2026-11-10.** The allocation recorded in D-05 was accurate at signature: the planned set was `EP-00-000` to `EP-00-011`. Two packages were allocated after that date: `EP-00-012` (prototype typecheck remediation) and `EP-00-013` (dependency security remediation). The allocated set is therefore `EP-00-000` to `EP-00-013`. No identifier was renumbered or reused. This is an erratum that keeps the signed ruling readable; it does not change the ruling.
+
 ---
 
 ## 7. Second reviewer
@@ -367,6 +369,7 @@ At signature, the founder states:
 | **0.8** | 2026-11-04 | pnpm pin amended from `10.34.3` to `10.34.9` in `.mise.toml` because `10.34.3` lacks npm attestation. `10.34.9` is a same-line patch published by GitHub Actions with attestation, 10 days old. `mise install` completed; risk R-O closed; evidence E15 added. No trust exclusion or `npm.shell_out` bypass used. | AI implementation agent | Founder approved the pin amendment, 2026-11-04 |
 | **0.9** | 2026-11-06 | `EP-00-000` DoD approved by the project lead with the FA-14 recorded exception; TV-13 seeded-failure proof executed; evidence E16 added. | AI implementation agent | Project lead approval, 2026-11-06 |
 | **0.10** | 2026-11-06 | `EP-00-001` executed and moved `Ready` → `Verified` (G2). Commit `8029466`, annotated tag `v0.0.1-bootstrap` (corrected object `e6fcd38`), lockfile regenerated to exact 53 + 9 parity. Three deviations accepted: Windows `--force` build parity (PC-01), tag not at `HEAD`, `EP-00-012` type fixes inside the bootstrap commit. Evidence E17 added. Phase remains `In build`. | AI implementation agent | Architect/founder G2 acceptance, 2026-11-06 |
+| **0.11** | 2026-11-10 | Scope note `D-05a` added: the allocated set is `EP-00-000`–`EP-00-013` after the post-signature allocation of `EP-00-012` and `EP-00-013`; no identifier was renumbered or reused. Signed D-05 text is preserved. | AI implementation agent | Record clarification; no decision changed |
 
 **Deviation note.** The approved implementation plan said: "If #18 or any ruling is not provided, stop at step 3. Do not draft a speculative record." The draft was created under the alternative the plan identified as requiring explicit approval: create the artifact in `Blocked` form with `PENDING` placeholders. No decision was invented, no default was chosen, and the phase was not marked `In build` until the approvals existed. The deviation is now accepted by the same 2026-11-04 approval and is recorded here for audit.
 
