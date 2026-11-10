@@ -32,7 +32,7 @@ Make the repository buildable, testable, reviewable and deployable-to-CI **befor
 
 **EP-00 delivers no user-facing capability and no revenue capability.** It is the precondition for every other phase. What becomes true is narrow, and deliberately so:
 
-- The repository has **provenance**: a first commit, a tag, a protected trunk, and a review rule that rejects an unreviewed change.
+- The repository has **provenance**: a first commit, a tag, and a review rule that rejects an unreviewed change. Host-side trunk protection is recorded as the accepted deviation `DEV-002` because the private-repo plan does not support it (`EP-00-007`).
 - The tree **installs reproducibly** from a committed lockfile on a pinned toolchain — locally and in CI.
 - The project has a **quality gate that has been proven to fail**: install, lint, typecheck, test and build each block a merge when broken.
 - The two supply-chain controls the standards require — **exact pinning with a frozen lockfile** and **secret and vulnerability scanning** — are live rather than intended.
@@ -115,7 +115,7 @@ Four statements needed an explicit ruling before work starts. **All four were ru
 1. **"A written local-run instruction that starts Postgres, API, worker and Vite" cannot be delivered in EP-00**, because none of those three components exists until EP-01, and EP-00 is forbidden from creating them. It blocks EP-00's exit as literally worded. **Ruling of record (`D-02`, founder, 4 November 2026):** EP-00 delivers a *verified* developer bootstrap for what exists today (clone → pinned toolchain → frozen install → typecheck → lint → test → build → dev server), plus a stated contract for how EP-01 extends it to Postgres/API/worker. The Postgres/API/worker clause is reassigned to EP-01 explicitly, in writing.
 2. **Does `EX-10` close at EP-00?** The register's exit condition names Vitest, Playwright and Testcontainers; EP-00's approved scope names only Vitest and a linter; EES §4.4 requires `EX-10` closed for EP-00 to exit. **Ruling of record (`D-03`, architect, 4 November 2026):** `EX-10` is recorded as **partially closed** at EP-00 (runner installed and gating) with the residual — Playwright, Testcontainers, component-test DOM — named as EP-01 work against the same register row. The alternative reading would pull visual-regression and integration-test tooling into EP-00 ahead of the code they test.
 3. **What "a linter" means, given `oxfmt` is already installed.** `oxfmt` is the approved formatter (`TEC`/`ARCHITECTURE.md` §2.1); the repository has never had a linter and `package.json` has no `lint` script. **Ruling of record (`D-04`, architect, 4 November 2026):** add a real linter as the gate, keep `oxfmt` as the formatter, and wire both. Linter choice is an architect `[REVIEW]` decision taken in `EP-00-004`, evaluated against `TEC-05`/§3.3 criteria; the plan does not pre-empt the choice.
-4. **Work-package identifier convention.** **Ruled 4 November 2026:** identifiers take the `EP-` prefix — `EP-<phase>-<nnn>` — so this plan's items are `EP-00-000` to `EP-00-012`, with `EP-00-001` elaborated at G0 in §9. `ENGINEERING_EXECUTION_STRUCTURE.md` §8.1 was amended the same day. The `WP-` form is retired, and an identifier in either form is never reused.
+4. **Work-package identifier convention.** **Ruled 4 November 2026:** identifiers take the `EP-` prefix — `EP-<phase>-<nnn>` — so this plan's items are `EP-00-000` to `EP-00-012`, with `EP-00-001` elaborated at G0 in §9. `ENGINEERING_EXECUTION_STRUCTURE.md` §8.1 was amended the same day. The `WP-` form is retired, and an identifier in either form is never reused. **Scope note, 10 November 2026:** the allocated set is now `EP-00-000` to `EP-00-013`; `EP-00-012` and `EP-00-013` were allocated after initial planning, and no identifier was renumbered or reused.
 
 Two further readings this plan adopts, which the architect should note but which do not need a separate ruling:
 
@@ -421,6 +421,17 @@ Deny paths are part of the plan: T2 fails when a package is missing, not only wh
 - **Priority:** Critical · **Status:** `Verified` — local + CI secret scan, seeded secret failure, zero-advisory audit and seeded High-advisory failure; provider-native scanning unavailable on the private plan · Class `[REVIEW]` (a third-party scanner would be `[FOUNDER]`, `TEC-12`)
 - **Reasoning:** Planning — Very High · Coding — Medium
 
+#### EP-00-013 — Dependency security remediation
+- **Task ID:** EP-00-013
+- **Feature or Task Name:** Dependency security remediation
+- **Objective:** Remove the known vulnerabilities from the pinned dependency tree without changing application behaviour, so the dependency gate required by `EP-00-006` and `EP-00-008` is green on the bootstrap commit.
+- **Engineering purpose:** Turns the dependency scan from a blocking finding into a passing gate, without a major upgrade, a package removal or a behaviour change. The item exists because enabling Dependabot surfaced 54 advisories, including one critical.
+- **Dependencies:** `EP-00-005` findings `F-05-02` and `F-05-03`; `EP-00-001` lockfile; `EP-00-012` closed so the typecheck baseline is trustworthy; project-lead approval of the scope amendment.
+- **Expected Outcome:** `pnpm audit` reports zero known advisories; every direct dependency stays exactly pinned within its installed major line; typecheck, test and build remain green; no package is removed or replaced; no source, UI, token or behaviour change.
+- **Priority:** High · **Status:** `Verified` (implementation) — zero-advisory audit and bundle-hash equality; architect review covered by `DEV-001` · Class `[REVIEW]`
+- **Reasoning:** Planning — High · Coding — Medium
+- **Origin:** Added during execution after `EP-00-005` surfaced 54 advisories in the pinned tree (1 critical, 27 high, 21 moderate, 5 low). Full scope, test results and rollback are in `EP-00-013 — Dependency security remediation.md`; evidence is indexed by `EP-00-010`.
+
 ---
 
 ### Stage E — Developer bootstrap
@@ -522,7 +533,7 @@ Recorded so the exit gate is not overread:
 
 ## 13. Transition handed to EP-01
 
-EP-01 inherits, and must not rebuild: the repository with history and a tag, the protected trunk and review settings, the five-stage pipeline, the toolchain contract and parity check, the committed lockfile, the Vitest runner and its configuration, the lint and format gate with its baseline register, both scanning gates, the developer bootstrap instruction, the evidence-index convention, and the `EP-` identifier convention.
+EP-01 inherits, and must not rebuild: the repository with history and a tag, the branch model and review settings, with host-side protection carried as the accepted `DEV-002` deviation, the five-stage pipeline, the toolchain contract and parity check, the committed lockfile, the Vitest runner and its configuration, the lint and format gate with its baseline register, both scanning gates, the developer bootstrap instruction, the evidence-index convention, and the `EP-` identifier convention.
 
 EP-01 must add, and EP-00 must not pre-empt: the workspace topology and package boundaries, the ten-module skeleton, PostgreSQL and the migration runner, Playwright and Testcontainers and Testing Library, the visual-regression baseline, the OpenAPI diff stage, migration lint and `db diff`, staging topology, build-once artifact digests, and the three entry decisions EP-01 is blocked on (#1 provider, #17 hosting/DNS/TLS, #14 sign-in identifier).
 
@@ -537,9 +548,10 @@ Also carried forward explicitly: `EX-10` is **partially closed** (runner only), 
 | 1.0 | 2026-11-04 | Approved phase plan as reviewed. | Founder / architect |
 | 1.1 | 2026-11-06 | Reconciled with `EP-00-000` and `EP-00-001`'s decision record: phase status `Ready` → `In build`; the four G0 rulings recorded (`D-02`–`D-05`) rather than three pending; decision #18 closed and recorded as GitHub / GitHub Actions; pnpm pin `10.34.3` → `10.34.9` throughout, including `packageManager`; R1 restated as a parity gap and R5 as an unprovisioned host; build state corrected to the recorded local `--force` install (`PC-01`); `EP-00-000` → `Verified`; `EP-00-001` `Blocked` → `In build`; `EP-00-012` added to §9, §6 and the critical path, with the prototype-change exception recorded in §4.2 and C12; stale pre-decision blockers and the stale closing paragraph replaced. Marked final. | `GOV-09`, `QUA-38` — the plan follows the record of record |
 | 1.2 | 2026-11-06 | Executed and evidenced the phase: toolchain contract, Vitest, ESLint/format, six-job CI, secret and dependency scanning, developer bootstrap and evidence index. Statuses: `EP-00-001`–`006`, `008`–`010`, `012`, `013` → `Verified`; `EP-00-007` → `Blocked` (GitHub private-repo protection requires Pro; 403 recorded); `EP-00-011` → `Blocked` (G5 unsigned). C1–C7, C9, C11–C13 met; C8 and C14 unmet; C10 partial (tag predates CI). Phase remains `In build`; it is **not** 100% complete and not closed. | `GOV-09`, `QUA-38`, `EES` §9.3 |
+| 1.3 | 2026-11-10 | Numbering and record reconciliation: `EP-00-013` added to §9 Stage D with its executed status and origin; §4.3 ruling 4 scope note updated to `EP-00-000`–`EP-00-013`; the two `protected trunk` statements in §1.2 and §13 corrected to the accepted `DEV-002` deviation; no identifier renumbered or reused. | `EES` §8.1, `GOV-09` |
 
 ---
 
-**Plan status:** revision 1.2 — implementation complete for EP-00 except the host-enforced protection and the G5 signature. No future phase has been analysed or planned; no application product code has been written. The only source edit in the phase remains `EP-00-012`'s type-only correction, committed in `8029466`.
+**Plan status:** revision 1.3 — implementation complete for EP-00 except the host-enforced protection and the G5 signature. No future phase has been analysed or planned; no application product code has been written. The only source edit in the phase remains `EP-00-012`'s type-only correction, committed in `8029466`.
 
 **Current position, 6 November 2026.** The phase is `In build`; implementation is verified and the exit gate is blocked on two external conditions, not on engineering work. `EP-00-007` needs GitHub Pro (paid) or an approved hosting/visibility change; `EP-00-011` needs the founder's G5 signature. `EP-00-010` marks C8 and C14 unmet and C10 partial rather than implying completion. The evidence pack, work-package records, green CI run and seeded-failure runs are in place; `F-01` remains a recorded Windows-only workaround with Linux CI as the reference. The phase closes only when the founder resolves those conditions and signs the G5 record.

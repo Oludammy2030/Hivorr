@@ -6,7 +6,7 @@
 | **Task ID** | `EP-00-012` |
 | **Task Name** | Prototype typecheck remediation |
 | **Related Phase** | `EP-00` - Execution Readiness |
-| **Reference Implementation Plan** | `documents/Task-Implementation/EP-00/EP-00-012- Prototype typecheck remediation.md` |
+| **Reference Implementation Plan** | `documents/Task-Implementation/EP-00/EP-00-012 — Prototype typecheck remediation (Implementation Plan).md` |
 | **Artifact under verification** | `src/app/App.tsx` (type-level corrections) and `vite.figma.config.ts` (one annotation), committed in `8029466` |
 | **Task class** | `[FOUNDER]` - the change touches the visual authority (`GOV-09`) |
 | **Verification owner** | Project lead, with architect review (`QUA-29`/`QUA-31`) and founder approval |

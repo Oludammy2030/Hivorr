@@ -5,7 +5,7 @@
 | **Document ID** | `EP-01-001` |
 | **Phase** | `EP-01` — Core Platform Foundation & Infrastructure |
 | **Task name** | Entry gate closure and decision register |
-| **Record version** | `0.6` — entry gate closed; EP-01 opened; `R-P1` resolved; `EP-01-001` verified |
+| **Record version** | `0.8` — wording clarification to the §8 evidence entry; no decision changed |
 | **Record status** | `Verified` — verified against the DoD 2026-11-07 (v1.1, approved with recorded exception) |
 | **Phase status** | **`Ready`** — all nine §9.3 items settled or explicitly accepted |
 | **Class** | `[FOUNDER]` |
@@ -443,7 +443,7 @@ recorded in the section named in the last column.
 | 4 | Second reviewer for EP-01 | Founder + architect | **Settled by deviation** — `DEV-003`; ends at appointment or EP-01 `G5` | §5, §7; `standards` §13.3 |
 | 5 | `standards` §16 `#1`,`#2`,`#3`,`#6`,`#8`,`#9` | Architect (+ founder where noted) | **Settled** — all six decided | §5; `standards` §16 |
 | 6 | `EX-10` residual — Playwright, Testcontainers, Testing Library | Architect | **Approved in full** — ruling 3 | §5; `standards` §13.3 `EX-10` |
-| 7 | §4.3 rulings R1 and R2 | Architect | **Recorded** — four bundles/five deployments; slice-only extraction | §6.1, §6.2 |
+| 7 | §4.3 rulings R1 and R2 | Architect | **Recorded** — four bundles/eight deployments (R1 superseded by §6.3); slice-only extraction | §6.1, §6.2, §6.3 |
 | 8 | Technical selections — DB driver, migration runner, queue, OpenAPI generator, boundary lint | Architect | **Recorded** — `pg`; Supabase CLI; `graphile-worker`; `@nestjs/swagger`; `dependency-cruiser` | §5 |
 | 9 | Phase opening | Founder | **Signed** — 2026-11-07 | §11.1 |
 
@@ -561,6 +561,7 @@ and it does not amend `QUA-29` or `QUA-31`.
 | **0.5** | 2026-11-07 | Factual amendment: `R-P1` resolved. The pinned toolchain was restored on the workstation by adding `%LOCALAPPDATA%\mise\shims` and `mise\bin` to the User `PATH`; node 22.23.4 and pnpm 10.34.9 now resolve, parity passes and `pnpm verify` exits 0. §4.3 and §10.1 updated; E19 added; `evidence/local-gates.log` §6 records the run. No decision changed, no rule changed meaning, no register edited, and the phase status is unchanged. | AI implementation agent | Founder instruction 2026-11-07 (“fix it”); no decision re-signed |
 | **0.6** | 2026-11-07 | `EP-01-001` verified. The decision pack moved to `evidence/decision-pack.md`; the DoD was amended to v1.1 (scope change note, eleven reworded checks, two narrowed stop conditions) and approved with recorded exception; §8 note for `001` set to `Verified`; `TEC-12` carried as a condition on `020`, `040` and `043`; E20 added. No decision changed and the phase status remains `Ready`. | AI implementation agent | Founder, 2026-11-07 — DoD §9 |
 | **0.7** | 2026-11-07 | Architecture revision 3: Hivorr has four functional portals (main, control, staff, partner) in two hosted environments. R1 is superseded by §6.3: four bundles, eight deployments; partner host is `partner.hivorr.com` / `partner.staging.hivorr.com`. No phase status change and no other decision reopened. | AI implementation agent | Founder, 2026-11-07 — architecture approval |
+| **0.8** | 2026-11-10 | Wording clarification only: E8 no longer abbreviates the item set as `002`–`072`; it now points at “all 38 remaining items in §8.” §9.3 row 7 is restated as four bundles/eight deployments to match §6.3. No identifier, decision, status or evidence changed. | AI implementation agent | Record clarification; no decision changed |
 
 ### 11.3 Evidence attached to this record
 
@@ -573,7 +574,7 @@ and it does not amend `QUA-29` or `QUA-31`.
 | E5 | Seeded-failure proofs | `evidence/seeded-failures.log` | Recorded |
 | E6 | Entry-gate verification (§3) | This record | Recorded |
 | E7 | Decision register (§5) | This record | 16 of 16 `RECORDED`; none `PENDING` |
-| E8 | Blocker matrix (§8) | This record | Complete for `002`–`072` |
+| E8 | Blocker matrix (§8) | This record | Complete for all 38 remaining items in §8 |
 | E9 | Phase-status determination (§9) | This record | `Ready` |
 | E10 | Architect review of *this record* | This record §11.1 | **Recorded** — approved 2026-11-07 by Prince Abidemi Oluwadamilare |
 | E11 | Founder signature of *this record* | This record §11.1 | **Recorded** — 2026-11-07; phase opened |
