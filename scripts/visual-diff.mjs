@@ -76,12 +76,11 @@ const baseline = imagesIn(baselineDirectory)
 const current = imagesIn(currentDirectory)
 
 function reportAndExit(markdown) {
+  console.log(markdown)
   if (out) {
     mkdirSync(path.dirname(path.resolve(out)), { recursive: true })
     writeFileSync(out, `${markdown}\n`)
     console.log(`visual:check: wrote ${out}`)
-  } else {
-    console.log(markdown)
   }
 }
 
