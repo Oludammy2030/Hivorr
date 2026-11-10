@@ -27,6 +27,11 @@ COPY --from=build /app/server/dist ./server/dist
 COPY --from=build /app/server/package.json ./server/package.json
 COPY --from=build /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=build /app/packages/shared/dist ./packages/shared/dist
+# @hivorr/shared has runtime dependencies of its own (zod). pnpm links them into
+# packages/shared/node_modules, and Node resolves imports from the importing
+# file's own directory upwards, so the symlinks must exist in the image. The
+# links point into /app/node_modules/.pnpm, which the first COPY already ships.
+COPY --from=build /app/packages/shared/node_modules ./packages/shared/node_modules
 
 USER node
 EXPOSE 3000 3001
