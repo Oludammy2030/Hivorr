@@ -10158,141 +10158,122 @@
         ],
         "responses": {
           "200": {
-            "description": "A bounded, filtered page of audit entries for a caller holding admin.audit.read; the read is itself audited",
+            "description": "A bounded, filtered page of audit entries for a caller holding admin.audit.read; the read is itself audited; the next cursor is returned in x-next-cursor",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "occurredAt": {
+                        "type": "string"
+                      },
+                      "actorType": {
+                        "type": "string"
+                      },
+                      "actorId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "actorAudience": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "environment": {
+                        "type": "string"
+                      },
+                      "action": {
+                        "type": "string"
+                      },
+                      "targetType": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "targetId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "beforeSummary": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
                           },
-                          "occurredAt": {
-                            "type": "string"
-                          },
-                          "actorType": {
-                            "type": "string"
-                          },
-                          "actorId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "actorAudience": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "environment": {
-                            "type": "string"
-                          },
-                          "action": {
-                            "type": "string"
-                          },
-                          "targetType": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "targetId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "beforeSummary": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "propertyNames": {
-                                  "type": "string"
-                                },
-                                "additionalProperties": {}
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "afterSummary": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "propertyNames": {
-                                  "type": "string"
-                                },
-                                "additionalProperties": {}
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "correlationId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "sessionId": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "reason": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "approvalReference": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
+                          {
+                            "type": "null"
                           }
-                        },
-                        "required": [
-                          "id",
-                          "occurredAt",
-                          "actorType",
-                          "actorId",
-                          "actorAudience",
-                          "environment",
-                          "action",
-                          "targetType",
-                          "targetId",
-                          "beforeSummary",
-                          "afterSummary",
-                          "correlationId",
-                          "sessionId",
-                          "reason",
-                          "approvalReference"
-                        ],
-                        "additionalProperties": false
+                        ]
+                      },
+                      "afterSummary": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "correlationId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "sessionId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "reason": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "approvalReference": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ],
-                  "additionalProperties": false
+                    "required": [
+                      "id",
+                      "occurredAt",
+                      "actorType",
+                      "actorId",
+                      "actorAudience",
+                      "environment",
+                      "action",
+                      "targetType",
+                      "targetId",
+                      "beforeSummary",
+                      "afterSummary",
+                      "correlationId"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
               }
             }
@@ -10701,72 +10682,56 @@
         ],
         "responses": {
           "200": {
-            "description": "A bounded page of users for a caller holding admin.user.read; supports q, status and cursor filters",
+            "description": "A bounded page of users for a caller holding admin.user.read; supports q, status and cursor filters; the next cursor is returned in x-next-cursor",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "accountId": {
-                            "type": "string"
-                          },
-                          "email": {
-                            "type": "string"
-                          },
-                          "displayName": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "status": {
-                            "type": "string"
-                          },
-                          "emailVerified": {
-                            "type": "boolean"
-                          },
-                          "confirmedFactors": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "createdAt": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "accountId",
-                          "email",
-                          "displayName",
-                          "status",
-                          "emailVerified",
-                          "confirmedFactors",
-                          "createdAt"
-                        ],
-                        "additionalProperties": false
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "accountId": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "displayName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "emailVerified": {
+                        "type": "boolean"
+                      },
+                      "confirmedFactors": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "createdAt": {
+                        "type": "string"
                       }
                     },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ],
-                  "additionalProperties": false
+                    "required": [
+                      "id",
+                      "accountId",
+                      "email",
+                      "displayName",
+                      "status",
+                      "emailVerified",
+                      "confirmedFactors",
+                      "createdAt"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
               }
             }

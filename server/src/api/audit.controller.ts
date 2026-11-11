@@ -1,5 +1,5 @@
-import { Controller, Get, Inject, Query, Req } from "@nestjs/common"
-import type { FastifyRequest } from "fastify"
+import { Controller, Get, Inject, Query, Req, Res } from "@nestjs/common"
+import type { FastifyReply, FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
 import { ApiError, requireCapability } from "../common/errors"
@@ -105,6 +105,7 @@ export class AuditController {
     @Query("to") to: string | undefined,
     @Query("cursor") cursor: string | undefined,
     @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
   ) {
     const page = parseCursor(cursor)
     const filters = {
@@ -175,7 +176,11 @@ export class AuditController {
           sessionId: session.sessionId,
         })
 
-        return result
+        if (result.nextCursor) {
+          reply.header("x-next-cursor", result.nextCursor)
+        }
+
+        return result.items
       },
     )
   }

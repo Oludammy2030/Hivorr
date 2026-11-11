@@ -139,15 +139,12 @@ export const auditEntrySchema = z.object({
   beforeSummary: z.record(z.string(), z.unknown()).nullable(),
   afterSummary: z.record(z.string(), z.unknown()).nullable(),
   correlationId: z.string().nullable(),
-  sessionId: z.string().nullable(),
-  reason: z.string().nullable(),
-  approvalReference: z.string().nullable(),
+  sessionId: z.string().nullable().optional(),
+  reason: z.string().nullable().optional(),
+  approvalReference: z.string().nullable().optional(),
 })
 
-export const auditEntryListResponse = z.object({
-  items: z.array(auditEntrySchema),
-  nextCursor: z.string().nullable(),
-})
+export const auditEntryListResponse = z.array(auditEntrySchema)
 
 export const currentSessionResponse = sessionResponse.extend({
   account: z.object({
@@ -223,10 +220,7 @@ export const userSummaryResponse = z.object({
   createdAt: z.string(),
 })
 
-export const userListResponse = z.object({
-  items: z.array(userSummaryResponse),
-  nextCursor: z.string().nullable(),
-})
+export const userListResponse = z.array(userSummaryResponse)
 
 export const ownGrantsResponse = z.object({
   grants: grantListResponse,

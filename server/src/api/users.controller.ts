@@ -1,5 +1,5 @@
-import { Controller, Get, Inject, Query, Req } from "@nestjs/common"
-import type { FastifyRequest } from "fastify"
+import { Controller, Get, Inject, Query, Req, Res } from "@nestjs/common"
+import type { FastifyReply, FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
 import { ApiError, requireCapability } from "../common/errors"
@@ -65,6 +65,7 @@ export class UsersController {
     @Query("status") status: string | undefined,
     @Query("cursor") cursor: string | undefined,
     @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
   ) {
     const page = parseCursor(cursor)
     const context = requestContext(this.config, request)
@@ -146,19 +147,20 @@ export class UsersController {
           correlationId: context.correlationId,
         })
 
-        return {
-          items: visible.map((row) => ({
-            id: row.id,
-            accountId: row.account_id,
-            email: row.email,
-            displayName: row.display_name,
-            status: row.status,
-            emailVerified: row.email_verified_at !== null,
-            confirmedFactors: Number(row.confirmed_factors),
-            createdAt: row.created_at,
-          })),
-          nextCursor,
+        if (nextCursor) {
+          reply.header("x-next-cursor", nextCursor)
         }
+
+        return visible.map((row) => ({
+          id: row.id,
+          accountId: row.account_id,
+          email: row.email,
+          displayName: row.display_name,
+          status: row.status,
+          emailVerified: row.email_verified_at !== null,
+          confirmedFactors: Number(row.confirmed_factors),
+          createdAt: row.created_at,
+        }))
       },
     )
   }

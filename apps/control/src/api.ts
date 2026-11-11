@@ -112,7 +112,20 @@ interface ApiErrorBody {
   error?: ApiErrorDetail
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+interface ApiResponse<T> {
+  body: T
+  response: Response
+}
+
+interface Page<T> {
+  items: T
+  nextCursor: string | null
+}
+
+async function requestResponse<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<ApiResponse<T>> {
   const response = await fetch(`/api/v1${path}`, {
     ...init,
     credentials: "same-origin",
@@ -123,7 +136,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
 
   if (response.status === 204) {
-    return undefined as T
+    return { body: undefined as T, response }
   }
 
   const body = (await response
@@ -139,11 +152,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     )
   }
 
-  return body as T
+  return { body: body as T, response }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const { body } = await requestResponse<T>(path, init)
+  return body
+}
+
+async function requestPage<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<Page<T>> {
+  const { body, response } = await requestResponse<T>(path, init)
+  return {
+    items: body,
+    nextCursor: response.headers.get("x-next-cursor"),
+  }
 }
 
 export const api = {
-  session: () => request<Session>("/auth/session"),
+  session: () => request<Session>("/session"),
   signIn: (email: string, password: string) =>
     request<Session | MfaChallenge>("/auth/sign-in", {
       method: "POST",
@@ -166,7 +195,9 @@ export const api = {
     if (status.trim()) params.set("status", status.trim())
     if (cursor) params.set("cursor", cursor)
     const suffix = params.toString()
-    return request<UserList>(`/control/users${suffix ? `?${suffix}` : ""}`)
+    return requestPage<readonly UserSummary[]>(
+      `/control/users${suffix ? `?${suffix}` : ""}`,
+    )
   },
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   createGrant: (input: CreateGrantInput) =>
@@ -182,7 +213,9 @@ export const api = {
     const params = new URLSearchParams()
     if (cursor) params.set("cursor", cursor)
     const suffix = params.toString()
-    return request<AuditPage>(`/control/audit${suffix ? `?${suffix}` : ""}`)
+    return requestPage<readonly AuditEntry[]>(
+      `/control/audit${suffix ? `?${suffix}` : ""}`,
+    )
   },
 }
 
