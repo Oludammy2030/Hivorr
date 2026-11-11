@@ -27,6 +27,7 @@ import {
   currentSessionResponse,
   signInRequest,
   totpConfirmRequest,
+  userListResponse,
 } from "../contracts/schemas"
 
 export type ApiAudience = PortalId | "public"
@@ -43,7 +44,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -418,6 +419,22 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         description:
           "Recent audit entries for a caller holding admin.audit.read",
         schema: auditEntryListResponse,
+      },
+    ],
+  },
+  {
+    id: "listUsers",
+    method: "get",
+    path: "/v1/control/users",
+    summary: "List user accounts",
+    tag: "users",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Up to 100 users for a caller holding admin.grant.read; supports q and status filters",
+        schema: userListResponse,
       },
     ],
   },

@@ -23,6 +23,55 @@ export interface MfaChallenge {
   readonly expiresAt: string
 }
 
+export interface Grant {
+  readonly id: string
+  readonly userId: string
+  readonly email: string | null
+  readonly grantType: string
+  readonly scope: string
+  readonly environment: string
+  readonly grantedBy: string | null
+  readonly expiresAt: string | null
+  readonly revokedAt: string | null
+  readonly createdAt: string
+}
+
+export interface OwnGrants {
+  readonly grants: readonly Grant[]
+  readonly capabilities: readonly string[]
+}
+
+export interface AuditEntry {
+  readonly id: string
+  readonly occurredAt: string
+  readonly actorType: string
+  readonly actorId: string | null
+  readonly actorAudience: string | null
+  readonly environment: string
+  readonly action: string
+  readonly targetType: string | null
+  readonly targetId: string | null
+  readonly correlationId: string | null
+}
+
+export interface UserSummary {
+  readonly id: string
+  readonly accountId: string
+  readonly email: string
+  readonly displayName: string | null
+  readonly status: string
+  readonly emailVerified: boolean
+  readonly confirmedFactors: number
+  readonly createdAt: string
+}
+
+export interface CreateGrantInput {
+  readonly email: string
+  readonly grantType: string
+  readonly scope: string
+  readonly expiresAt?: string
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -90,6 +139,27 @@ export const api = {
     request<void>("/auth/sign-out", {
       method: "POST",
     }),
+  ownGrants: () => request<OwnGrants>("/grants"),
+  listUsers: (query: string, status: string) => {
+    const params = new URLSearchParams()
+    if (query.trim()) params.set("q", query.trim())
+    if (status.trim()) params.set("status", status.trim())
+    const suffix = params.toString()
+    return request<readonly UserSummary[]>(
+      `/control/users${suffix ? `?${suffix}` : ""}`,
+    )
+  },
+  listGrants: () => request<readonly Grant[]>("/control/grants"),
+  createGrant: (input: CreateGrantInput) =>
+    request<Grant>("/control/grants", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  revokeGrant: (id: string) =>
+    request<Grant>(`/control/grants/${encodeURIComponent(id)}/revoke`, {
+      method: "POST",
+    }),
+  listAudit: () => request<readonly AuditEntry[]>("/control/audit"),
 }
 
 export function isMfaChallenge(
