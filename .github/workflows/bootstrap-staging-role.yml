@@ -63,6 +63,9 @@ jobs:
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
+      - name: Install the database client
+        run: npm install pg@8.16.3 --no-save --no-package-lock
+
       - name: Assign founder role and control grants
         env:
           HIVORR_ENV: staging
