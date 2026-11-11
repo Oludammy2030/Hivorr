@@ -20,6 +20,8 @@ export const CAPABILITY_DENY_REASONS = [
   "UNAUTHENTICATED",
   "WRONG_AUDIENCE",
   "MISSING_GRANT",
+  "MISSING_PERMISSION",
+  "EXPLICIT_DENY",
   "MISSING_ADMIN_ROLE",
   "MEMBERSHIP_REQUIRED",
   "BUSINESS_STATE",
@@ -56,6 +58,11 @@ export interface AccessContext {
   readonly activities?: readonly ActivityId[]
   readonly verification?: Partial<Record<VerificationLane, boolean>>
   readonly kycTier?: KycTier
+  /** Effective governance permissions composed from roles and individual grants. */
+  readonly adminPermissions?: readonly string[]
+  /** Explicit governance denials. An active denial always overrides an allow. */
+  readonly deniedPermissions?: readonly string[]
+  /** @deprecated Roles are collections of permissions; use `adminPermissions`. */
   readonly adminRoles?: readonly AdminRole[]
   readonly member?: boolean
   /** True once the business verification is approved; updates are frozen. */
@@ -69,6 +76,9 @@ export interface CapabilityRule {
   readonly verification?: VerificationLane
   readonly kyc?: boolean
   readonly grant?: GrantId
+  /** Governance permission required by the capability. */
+  readonly permission?: string
+  /** @deprecated Use `permission`; roles are collections, not capability gates. */
   readonly adminRole?: AdminRole
   readonly requiresMember?: boolean
   readonly requiresBusinessUnapproved?: boolean
@@ -222,23 +232,27 @@ export const CAPABILITY_RULES: Readonly<Record<CapabilityId, CapabilityRule>> =
 
     "admin.verification.review": {
       audience: CONTROL,
-      adminRole: "verification.review",
+      permission: "admin.verification.review",
     },
     "admin.payment.review": {
       audience: CONTROL,
-      adminRole: "payment.review",
+      permission: "admin.payment.review",
     },
     "admin.dispute.resolve": {
       audience: CONTROL,
-      adminRole: "dispute.resolve",
+      permission: "admin.dispute.resolve",
     },
     "admin.account.suspend": {
       audience: CONTROL,
-      adminRole: "account.manage",
+      permission: "admin.account.suspend",
     },
     "admin.configuration.write": {
       audience: CONTROL,
-      adminRole: "configuration.write",
+      permission: "admin.configuration.write",
+    },
+    "admin.configuration.read": {
+      audience: CONTROL,
+      permission: "admin.configuration.read",
     },
     "admin.audit.read": {
       audience: CONTROL,
@@ -251,6 +265,54 @@ export const CAPABILITY_RULES: Readonly<Record<CapabilityId, CapabilityRule>> =
     "admin.grant.manage": {
       audience: CONTROL,
       grant: "admin.grant.manage",
+    },
+    "admin.user.read": {
+      audience: CONTROL,
+      permission: "admin.user.read",
+    },
+    "admin.user.manage": {
+      audience: CONTROL,
+      permission: "admin.user.manage",
+    },
+    "admin.role.read": {
+      audience: CONTROL,
+      permission: "admin.role.read",
+    },
+    "admin.role.manage": {
+      audience: CONTROL,
+      permission: "admin.role.manage",
+    },
+    "admin.case.read": {
+      audience: CONTROL,
+      permission: "admin.case.read",
+    },
+    "admin.case.assign": {
+      audience: CONTROL,
+      permission: "admin.case.assign",
+    },
+    "admin.case.investigate": {
+      audience: CONTROL,
+      permission: "admin.case.investigate",
+    },
+    "admin.case.recommend": {
+      audience: CONTROL,
+      permission: "admin.case.recommend",
+    },
+    "admin.case.approve": {
+      audience: CONTROL,
+      permission: "admin.case.approve",
+    },
+    "admin.evidence.read": {
+      audience: CONTROL,
+      permission: "admin.evidence.read",
+    },
+    "admin.report.read": {
+      audience: CONTROL,
+      permission: "admin.report.read",
+    },
+    "admin.report.export": {
+      audience: CONTROL,
+      permission: "admin.report.export",
     },
     "staff.support.handle": {
       audience: STAFF,
@@ -287,6 +349,18 @@ export function evaluateCapability(
   }
   if (rule.grant && !context.grants.includes(rule.grant)) {
     return deny("MISSING_GRANT")
+  }
+  if (
+    rule.permission &&
+    (context.deniedPermissions ?? []).includes(rule.permission)
+  ) {
+    return deny("EXPLICIT_DENY")
+  }
+  if (
+    rule.permission &&
+    !(context.adminPermissions ?? []).includes(rule.permission)
+  ) {
+    return deny("MISSING_PERMISSION")
   }
   if (rule.adminRole && !(context.adminRoles ?? []).includes(rule.adminRole)) {
     return deny("MISSING_ADMIN_ROLE")

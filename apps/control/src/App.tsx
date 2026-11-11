@@ -1,16 +1,18 @@
 import { useEffect, useState, type FormEvent } from "react"
+import { NavLink, useLocation } from "react-router"
 
 import {
   api,
   errorMessage,
   isMfaChallenge,
   type AuditEntry,
+  type ControlAuthority,
   type Grant,
   type MfaChallenge,
-  type OwnGrants,
   type Session,
   type UserSummary,
 } from "./api"
+import { NAV_GROUPS, canSee, isKnownPath, sectionFromPath } from "./routes"
 
 interface LoadingView {
   kind: "loading"
@@ -33,30 +35,6 @@ interface SignedInView {
 }
 
 type View = LoadingView | SignedOutView | MfaView | SignedInView
-
-type Section = "overview" | "users" | "grants" | "audit"
-
-interface SectionLink {
-  id: Section
-  label: string
-}
-
-interface NavGroup {
-  label: string
-  items: readonly SectionLink[]
-}
-
-const NAV_GROUPS: readonly NavGroup[] = [
-  { label: "Governance", items: [{ id: "overview", label: "Overview" }] },
-  {
-    label: "People",
-    items: [
-      { id: "users", label: "Users" },
-      { id: "grants", label: "Grants" },
-    ],
-  },
-  { label: "Security", items: [{ id: "audit", label: "Audit" }] },
-]
 
 const GRANT_SCOPES: Record<string, readonly string[]> = {
   admin: ["admin.audit.read", "admin.grant.read", "admin.grant.manage"],
@@ -302,24 +280,35 @@ interface DashboardProps {
 }
 
 function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
-  const [section, setSection] = useState<Section>("overview")
-  const [own, setOwn] = useState<OwnGrants | null>(null)
+  const location = useLocation()
+  const section = sectionFromPath(location.pathname)
+  const knownPath = isKnownPath(location.pathname)
+  const [own, setOwn] = useState<ControlAuthority | null>(null)
   const [grants, setGrants] = useState<readonly Grant[] | null>(null)
   const [audit, setAudit] = useState<readonly AuditEntry[] | null>(null)
+  const [auditCursor, setAuditCursor] = useState<string | null>(null)
   const [error, setError] = useState<string | undefined>()
   const [busy, setBusy] = useState(false)
   const [grantType, setGrantType] = useState("staff")
   const [scope, setScope] = useState("staff.support.handle")
   const [users, setUsers] = useState<readonly UserSummary[] | null>(null)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [userSearch, setUserSearch] = useState("")
   const [userQuery, setUserQuery] = useState("")
   const [userStatus, setUserStatus] = useState("")
   const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null)
 
+  const capabilities = own?.capabilities ?? []
+  const canReadUsers = capabilities.includes("admin.user.read")
+  const canReadGrants =
+    capabilities.includes("admin.grant.read") ||
+    capabilities.includes("admin.grant.manage")
+  const canReadAudit = capabilities.includes("admin.audit.read")
+
   useEffect(() => {
     let active = true
     api
-      .ownGrants()
+      .authority()
       .then((value) => {
         if (active) setOwn(value)
       })
@@ -332,7 +321,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   }, [])
 
   useEffect(() => {
-    if (section !== "grants" || grants !== null) return
+    if (section !== "grants" || grants !== null || !canReadGrants) return
     let active = true
     setBusy(true)
     api
@@ -349,17 +338,18 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     return () => {
       active = false
     }
-  }, [section, grants])
+  }, [section, grants, canReadGrants])
 
   useEffect(() => {
-    if (section !== "users") return
+    if (section !== "users" || !canReadUsers) return
     let active = true
     setBusy(true)
     api
       .listUsers(userQuery, userStatus)
       .then((value) => {
         if (!active) return
-        setUsers(value)
+        setUsers(value.items)
+        setNextCursor(value.nextCursor)
         setError(undefined)
       })
       .catch((value: unknown) => {
@@ -371,16 +361,18 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     return () => {
       active = false
     }
-  }, [section, userQuery, userStatus])
+  }, [section, userQuery, userStatus, canReadUsers])
 
   useEffect(() => {
-    if (section !== "audit" || audit !== null) return
+    if (section !== "audit" || audit !== null || !canReadAudit) return
     let active = true
     setBusy(true)
     api
       .listAudit()
       .then((value) => {
-        if (active) setAudit(value)
+        if (!active) return
+        setAudit(value.items)
+        setAuditCursor(value.nextCursor)
       })
       .catch((value: unknown) => {
         if (active) setError(errorMessage(value))
@@ -391,7 +383,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     return () => {
       active = false
     }
-  }, [section, audit])
+  }, [section, audit, canReadAudit])
 
   async function handleCreateGrant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -434,12 +426,47 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     }
   }
 
-  const nav = NAV_GROUPS.flatMap((group) => group.items)
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    label: group.label,
+    items: group.items.filter((item) => canSee(item, capabilities)),
+  })).filter((group) => group.items.length > 0)
+  const allNav = NAV_GROUPS.flatMap((group) => group.items)
 
   function handleUserSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSelectedUser(null)
+    setNextCursor(null)
     setUserQuery(userSearch)
+  }
+
+  async function handleLoadMore() {
+    if (!nextCursor) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const value = await api.listUsers(userQuery, userStatus, nextCursor)
+      setUsers((current) => [...(current ?? []), ...value.items])
+      setNextCursor(value.nextCursor)
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleLoadMoreAudit() {
+    if (!auditCursor) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const value = await api.listAudit(auditCursor)
+      setAudit((current) => [...(current ?? []), ...value.items])
+      setAuditCursor(value.nextCursor)
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
   }
 
   function statusClass(status: string): string {
@@ -453,20 +480,20 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       <aside className="app-sidebar">
         <Brand />
         <nav className="app-nav">
-          {NAV_GROUPS.map((group) => (
+          {visibleGroups.map((group) => (
             <div key={group.label} className="nav-group">
               <p className="nav-label">{group.label}</p>
               {group.items.map((item) => (
-                <button
+                <NavLink
                   key={item.id}
-                  type="button"
-                  className={`nav-item${
-                    section === item.id ? " is-active" : ""
-                  }`}
-                  onClick={() => setSection(item.id)}
+                  to={item.path}
+                  end
+                  className={({ isActive }) =>
+                    `nav-item${isActive ? " is-active" : ""}`
+                  }
                 >
                   {item.label}
-                </button>
+                </NavLink>
               ))}
             </div>
           ))}
@@ -488,7 +515,12 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
         <header className="app-topbar">
           <div>
             <p className="eyebrow">Control portal</p>
-            <h1>{nav.find((item) => item.id === section)?.label}</h1>
+            <h1>
+              {knownPath
+                ? (allNav.find((item) => item.id === section)?.label ??
+                  "Overview")
+                : "Not found"}
+            </h1>
           </div>
           <span className="badge">{session.environment}</span>
         </header>
@@ -499,7 +531,17 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           </p>
         )}
 
-        {section === "overview" && (
+        {!knownPath && (
+          <section className="panel">
+            <h2>Page not found</h2>
+            <p className="muted">
+              This control-portal route does not exist. Use the navigation to
+              return to an authorised area.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "overview" && (
           <div className="dash-grid">
             <section className="panel">
               <h2>Session</h2>
@@ -563,7 +605,16 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           </div>
         )}
 
-        {section === "users" && (
+        {knownPath && section === "users" && !canReadUsers && (
+          <section className="panel">
+            <h2>Users</h2>
+            <p className="muted">
+              Your governance role does not include user directory access.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "users" && canReadUsers && (
           <div className="dash-stack">
             <section className="panel">
               <form className="user-toolbar" onSubmit={handleUserSearch}>
@@ -580,6 +631,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                   value={userStatus}
                   onChange={(event) => {
                     setSelectedUser(null)
+                    setNextCursor(null)
                     setUserStatus(event.target.value)
                   }}
                   aria-label="Filter by status"
@@ -652,6 +704,17 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                   </table>
                 </div>
               )}
+
+              {nextCursor && (
+                <button
+                  type="button"
+                  className="button button-quiet button-small"
+                  onClick={handleLoadMore}
+                  disabled={busy}
+                >
+                  {busy ? "Loading…" : "Load more"}
+                </button>
+              )}
             </section>
 
             {selectedUser && (
@@ -709,7 +772,16 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           </div>
         )}
 
-        {section === "grants" && (
+        {knownPath && section === "grants" && !canReadGrants && (
+          <section className="panel">
+            <h2>Grants</h2>
+            <p className="muted">
+              Your governance role does not include grant administration.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "grants" && canReadGrants && (
           <div className="dash-stack">
             <section className="panel">
               <h2>Create a grant</h2>
@@ -813,7 +885,16 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           </div>
         )}
 
-        {section === "audit" && (
+        {knownPath && section === "audit" && !canReadAudit && (
+          <section className="panel">
+            <h2>Audit log</h2>
+            <p className="muted">
+              Your governance role does not include audit access.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "audit" && canReadAudit && (
           <section className="panel">
             <h2>Audit log</h2>
             {audit === null && <p className="muted">Loading…</p>}
@@ -829,6 +910,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                       <th>Action</th>
                       <th>Actor</th>
                       <th>Target</th>
+                      <th>Reason</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -843,11 +925,23 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                             ? `:${entry.targetId.slice(0, 8)}`
                             : ""}
                         </td>
+                        <td>{entry.reason ?? "—"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {auditCursor && (
+              <button
+                type="button"
+                className="button button-quiet button-small"
+                onClick={handleLoadMoreAudit}
+                disabled={busy}
+              >
+                {busy ? "Loading…" : "Load more"}
+              </button>
             )}
           </section>
         )}

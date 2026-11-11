@@ -7,6 +7,7 @@ import {
   auditEntryListResponse,
   codeRequest,
   createGrantRequest,
+  controlAuthorityResponse,
   emailVerificationCompleteRequest,
   grantListResponse,
   grantViewResponse,
@@ -417,7 +418,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
       {
         status: 200,
         description:
-          "Recent audit entries for a caller holding admin.audit.read",
+          "A bounded, filtered page of audit entries for a caller holding admin.audit.read; the read is itself audited; the next cursor is returned in x-next-cursor",
         schema: auditEntryListResponse,
       },
     ],
@@ -433,8 +434,24 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
       {
         status: 200,
         description:
-          "Up to 100 users for a caller holding admin.grant.read; supports q and status filters",
+          "A bounded page of users for a caller holding admin.user.read; supports q, status and cursor filters; the next cursor is returned in x-next-cursor",
         schema: userListResponse,
+      },
+    ],
+  },
+  {
+    id: "controlAuthority",
+    method: "get",
+    path: "/v1/control/authority",
+    summary: "Read the caller's effective control-portal authority",
+    tag: "grants",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Grants, governance roles, effective permissions and presentation-only capabilities",
+        schema: controlAuthorityResponse,
       },
     ],
   },

@@ -29,6 +29,8 @@ function allowedContextFor(capability: CapabilityId): AccessContext {
     activities: rule.activity ? [rule.activity] : [],
     verification: rule.verification ? { [rule.verification]: true } : {},
     kycTier: rule.kyc ? "tier_1" : "tier_0",
+    adminPermissions: rule.permission ? [rule.permission] : [],
+    deniedPermissions: [],
     adminRoles: rule.adminRole ? [rule.adminRole] : [],
     member: rule.requiresMember === true,
     businessApproved: rule.requiresBusinessUnapproved ? false : true,
@@ -50,6 +52,13 @@ function denyVariants(
     })
   }
   if (rule.grant) variants.push({ ...allowed, grants: [] })
+  if (rule.permission) {
+    variants.push({ ...allowed, adminPermissions: [] })
+    variants.push({
+      ...allowed,
+      deniedPermissions: [rule.permission],
+    })
+  }
   if (rule.adminRole) variants.push({ ...allowed, adminRoles: [] })
   if (rule.requiresMember) variants.push({ ...allowed, member: false })
   if (rule.requiresBusinessUnapproved) {
@@ -121,7 +130,18 @@ describe("capability registry", () => {
         { ...base, audience: "control" },
         "admin.verification.review",
       ),
-    ).toEqual({ allowed: false, reason: "MISSING_ADMIN_ROLE" })
+    ).toEqual({ allowed: false, reason: "MISSING_PERMISSION" })
+    expect(
+      evaluateCapability(
+        {
+          ...base,
+          audience: "control",
+          adminPermissions: ["admin.verification.review"],
+          deniedPermissions: ["admin.verification.review"],
+        },
+        "admin.verification.review",
+      ),
+    ).toEqual({ allowed: false, reason: "EXPLICIT_DENY" })
     expect(evaluateCapability(base, "market.cart.manage")).toEqual({
       allowed: false,
       reason: "ACTIVITY_INACTIVE",

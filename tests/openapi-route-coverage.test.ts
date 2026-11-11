@@ -6,6 +6,7 @@ import { IdentityController } from "../server/src/modules/identity/identity.cont
 import { SessionController } from "../server/src/modules/identity/session.controller"
 import { ActivityController } from "../server/src/api/activity.controller"
 import { AuditController } from "../server/src/api/audit.controller"
+import { ControlAuthorityController } from "../server/src/api/control-authority.controller"
 import { UsersController } from "../server/src/api/users.controller"
 import { buildDocument } from "../server/src/openapi/build"
 import { scanControllerRoutes } from "../server/src/openapi/scan"
@@ -22,6 +23,7 @@ describe("OpenAPI route coverage", () => {
       SessionController,
       ActivityController,
       AuditController,
+      ControlAuthorityController,
       UsersController,
       GrantsController,
     ]

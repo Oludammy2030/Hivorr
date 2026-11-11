@@ -58,6 +58,25 @@ const scopes = ["admin.grant.manage", "admin.grant.read", "admin.audit.read"]
       inserted += result.rowCount
     }
     console.log("admin_grants_inserted=" + inserted)
+    const role = await client.query(
+      "select id from admin.roles where key = 'founder'",
+    )
+    if (role.rowCount === 0) {
+      console.log("founder_role_missing")
+      return
+    }
+    const assignment = await client.query(
+      `insert into admin.role_assignments
+         (user_id, role_id, scope_type, granted_by, reason)
+       select $1, $2, 'platform', null, 'Founder bootstrap'
+       where not exists (
+         select 1 from admin.role_assignments
+         where user_id = $1 and role_id = $2 and scope_type = 'platform'
+           and revoked_at is null
+       )`,
+      [userId, role.rows[0].id],
+    )
+    console.log("founder_role_assignments_inserted=" + assignment.rowCount)
   } finally {
     await client.end()
   }
@@ -96,4 +115,4 @@ try {
   Remove-Item $inputFile, $outFile, $errFile -Force -ErrorAction SilentlyContinue
 }
 
-$output -split "`n" | Select-String "admin_grants_inserted=|user_not_found|ERR " | ForEach-Object { $_.Line }
+$output -split "`n" | Select-String "admin_grants_inserted=|founder_role_assignments_inserted=|founder_role_missing|user_not_found|ERR " | ForEach-Object { $_.Line }

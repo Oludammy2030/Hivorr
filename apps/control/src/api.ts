@@ -41,6 +41,12 @@ export interface OwnGrants {
   readonly capabilities: readonly string[]
 }
 
+export interface ControlAuthority extends OwnGrants {
+  readonly roles: readonly string[]
+  readonly permissions: readonly string[]
+  readonly deniedPermissions: readonly string[]
+}
+
 export interface AuditEntry {
   readonly id: string
   readonly occurredAt: string
@@ -52,6 +58,14 @@ export interface AuditEntry {
   readonly targetType: string | null
   readonly targetId: string | null
   readonly correlationId: string | null
+  readonly sessionId: string | null
+  readonly reason: string | null
+  readonly approvalReference: string | null
+}
+
+export interface AuditPage {
+  readonly items: readonly AuditEntry[]
+  readonly nextCursor: string | null
 }
 
 export interface UserSummary {
@@ -63,6 +77,11 @@ export interface UserSummary {
   readonly emailVerified: boolean
   readonly confirmedFactors: number
   readonly createdAt: string
+}
+
+export interface UserList {
+  readonly items: readonly UserSummary[]
+  readonly nextCursor: string | null
 }
 
 export interface CreateGrantInput {
@@ -93,7 +112,20 @@ interface ApiErrorBody {
   error?: ApiErrorDetail
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+interface ApiResponse<T> {
+  body: T
+  response: Response
+}
+
+interface Page<T> {
+  items: T
+  nextCursor: string | null
+}
+
+async function requestResponse<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<ApiResponse<T>> {
   const response = await fetch(`/api/v1${path}`, {
     ...init,
     credentials: "same-origin",
@@ -104,7 +136,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
 
   if (response.status === 204) {
-    return undefined as T
+    return { body: undefined as T, response }
   }
 
   const body = (await response
@@ -120,11 +152,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     )
   }
 
-  return body as T
+  return { body: body as T, response }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const { body } = await requestResponse<T>(path, init)
+  return body
+}
+
+async function requestPage<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<Page<T>> {
+  const { body, response } = await requestResponse<T>(path, init)
+  return {
+    items: body,
+    nextCursor: response.headers.get("x-next-cursor"),
+  }
 }
 
 export const api = {
-  session: () => request<Session>("/auth/session"),
+  session: () => request<Session>("/session"),
   signIn: (email: string, password: string) =>
     request<Session | MfaChallenge>("/auth/sign-in", {
       method: "POST",
@@ -140,12 +188,14 @@ export const api = {
       method: "POST",
     }),
   ownGrants: () => request<OwnGrants>("/grants"),
-  listUsers: (query: string, status: string) => {
+  authority: () => request<ControlAuthority>("/control/authority"),
+  listUsers: (query: string, status: string, cursor?: string | null) => {
     const params = new URLSearchParams()
     if (query.trim()) params.set("q", query.trim())
     if (status.trim()) params.set("status", status.trim())
+    if (cursor) params.set("cursor", cursor)
     const suffix = params.toString()
-    return request<readonly UserSummary[]>(
+    return requestPage<readonly UserSummary[]>(
       `/control/users${suffix ? `?${suffix}` : ""}`,
     )
   },
@@ -159,7 +209,14 @@ export const api = {
     request<Grant>(`/control/grants/${encodeURIComponent(id)}/revoke`, {
       method: "POST",
     }),
-  listAudit: () => request<readonly AuditEntry[]>("/control/audit"),
+  listAudit: (cursor?: string | null) => {
+    const params = new URLSearchParams()
+    if (cursor) params.set("cursor", cursor)
+    const suffix = params.toString()
+    return requestPage<readonly AuditEntry[]>(
+      `/control/audit${suffix ? `?${suffix}` : ""}`,
+    )
+  },
 }
 
 export function isMfaChallenge(

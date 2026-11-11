@@ -5,4 +5,4 @@
  * tables is enforced against by `scripts/lint-boundaries.mjs`.
  */
 export { appendAudit, listAuditEntries } from "./audit"
-export type { AuditEntry, AuditEntryView } from "./audit"
+export type { AuditEntry, AuditEntryView, AuditPage, AuditQuery } from "./audit"

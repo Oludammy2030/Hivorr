@@ -6604,9 +6604,22 @@
                           "admin.dispute.resolve",
                           "admin.account.suspend",
                           "admin.configuration.write",
+                          "admin.configuration.read",
                           "admin.audit.read",
                           "admin.grant.read",
                           "admin.grant.manage",
+                          "admin.user.read",
+                          "admin.user.manage",
+                          "admin.role.read",
+                          "admin.role.manage",
+                          "admin.case.read",
+                          "admin.case.assign",
+                          "admin.case.investigate",
+                          "admin.case.recommend",
+                          "admin.case.approve",
+                          "admin.evidence.read",
+                          "admin.report.read",
+                          "admin.report.export",
                           "staff.support.handle",
                           "partner.referral.read",
                           "platform.engineering.access"
@@ -10145,7 +10158,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Recent audit entries for a caller holding admin.audit.read",
+            "description": "A bounded, filtered page of audit entries for a caller holding admin.audit.read; the read is itself audited; the next cursor is returned in x-next-cursor",
             "content": {
               "application/json": {
                 "schema": {
@@ -10221,6 +10234,24 @@
                         ]
                       },
                       "correlationId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "sessionId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "reason": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "approvalReference": {
                         "type": [
                           "string",
                           "null"
@@ -10651,7 +10682,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Up to 100 users for a caller holding admin.grant.read; supports q and status filters",
+            "description": "A bounded page of users for a caller holding admin.user.read; supports q, status and cursor filters; the next cursor is returned in x-next-cursor",
             "content": {
               "application/json": {
                 "schema": {
@@ -10701,6 +10732,588 @@
                     ],
                     "additionalProperties": false
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/control/authority": {
+      "get": {
+        "operationId": "controlAuthority",
+        "summary": "Read the caller's effective control-portal authority",
+        "tags": [
+          "grants"
+        ],
+        "x-hivorr-audience": [
+          "control"
+        ],
+        "security": [
+          {
+            "controlSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grants, governance roles, effective permissions and presentation-only capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "grants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "grantType": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string"
+                          },
+                          "environment": {
+                            "type": "string",
+                            "enum": [
+                              "production",
+                              "staging"
+                            ]
+                          },
+                          "grantedBy": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "expiresAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "revokedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "userId",
+                          "email",
+                          "grantType",
+                          "scope",
+                          "environment",
+                          "grantedBy",
+                          "expiresAt",
+                          "revokedAt",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "deniedPermissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "session.read",
+                          "profile.read.self",
+                          "profile.update.self",
+                          "activity.activate",
+                          "activity.deactivate",
+                          "market.catalog.browse",
+                          "market.cart.manage",
+                          "market.order.place",
+                          "market.order.cancel",
+                          "market.order.dispute",
+                          "services.job.post",
+                          "services.job.post.business",
+                          "services.application.review",
+                          "services.engagement.fund",
+                          "services.job.apply",
+                          "services.service.publish",
+                          "services.engagement.deliver",
+                          "services.earnings.receive",
+                          "errands.request.create",
+                          "errands.request.cancel",
+                          "errands.request.track",
+                          "market.product.draft",
+                          "market.product.publish",
+                          "market.inventory.manage",
+                          "market.order.fulfil",
+                          "market.invoice.issue",
+                          "market.earnings.receive",
+                          "logistics.pool.browse",
+                          "logistics.assignment.accept",
+                          "logistics.delivery.progress",
+                          "logistics.delivery.complete",
+                          "logistics.earnings.receive",
+                          "business.create",
+                          "business.verification.submit",
+                          "business.update",
+                          "wallet.read",
+                          "wallet.withdraw",
+                          "wallet.payout_account.bind",
+                          "wallet.convert",
+                          "messaging.thread.read",
+                          "messaging.message.send",
+                          "notification.read",
+                          "admin.verification.review",
+                          "admin.payment.review",
+                          "admin.dispute.resolve",
+                          "admin.account.suspend",
+                          "admin.configuration.write",
+                          "admin.configuration.read",
+                          "admin.audit.read",
+                          "admin.grant.read",
+                          "admin.grant.manage",
+                          "admin.user.read",
+                          "admin.user.manage",
+                          "admin.role.read",
+                          "admin.role.manage",
+                          "admin.case.read",
+                          "admin.case.assign",
+                          "admin.case.investigate",
+                          "admin.case.recommend",
+                          "admin.case.approve",
+                          "admin.evidence.read",
+                          "admin.report.read",
+                          "admin.report.export",
+                          "staff.support.handle",
+                          "partner.referral.read",
+                          "platform.engineering.access"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "grants",
+                    "roles",
+                    "permissions",
+                    "deniedPermissions",
+                    "capabilities"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -11246,9 +11859,22 @@
                           "admin.dispute.resolve",
                           "admin.account.suspend",
                           "admin.configuration.write",
+                          "admin.configuration.read",
                           "admin.audit.read",
                           "admin.grant.read",
                           "admin.grant.manage",
+                          "admin.user.read",
+                          "admin.user.manage",
+                          "admin.role.read",
+                          "admin.role.manage",
+                          "admin.case.read",
+                          "admin.case.assign",
+                          "admin.case.investigate",
+                          "admin.case.recommend",
+                          "admin.case.approve",
+                          "admin.evidence.read",
+                          "admin.report.read",
+                          "admin.report.export",
                           "staff.support.handle",
                           "partner.referral.read",
                           "platform.engineering.access"

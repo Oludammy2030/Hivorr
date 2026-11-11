@@ -1,9 +1,20 @@
 /**
  * Administration and governance module boundary.
  *
- * Owns the `admin` schema: admin roles, review queues, moderation,
- * configuration, audit access, disputes, staff scopes and the partner
- * programme. EP-01 creates the boundary and the public interface; the schema
- * and endpoints arrive with EP-01-024/036.
+ * Owns the `admin` schema: governance roles, assignments, staff, departments,
+ * partner organisations, cases, evidence, approvals, configuration, reporting
+ * read models and audit access policy. Other modules import from this file
+ * only; the boundary linter enforces it.
  */
-export {}
+export {
+  EMPTY_AUTHORITY,
+  composeAuthority,
+  loadAdminAuthority,
+  permissionScopes,
+} from "./authorization"
+export type {
+  GovernanceAssignment,
+  GovernanceAuthority,
+  GovernanceDenial,
+  GovernanceScopeType,
+} from "./authorization"

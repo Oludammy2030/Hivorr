@@ -139,6 +139,9 @@ export const auditEntrySchema = z.object({
   beforeSummary: z.record(z.string(), z.unknown()).nullable(),
   afterSummary: z.record(z.string(), z.unknown()).nullable(),
   correlationId: z.string().nullable(),
+  sessionId: z.string().nullable().optional(),
+  reason: z.string().nullable().optional(),
+  approvalReference: z.string().nullable().optional(),
 })
 
 export const auditEntryListResponse = z.array(auditEntrySchema)
@@ -221,6 +224,14 @@ export const userListResponse = z.array(userSummaryResponse)
 
 export const ownGrantsResponse = z.object({
   grants: grantListResponse,
+  capabilities: z.array(capabilitySchema),
+})
+
+export const controlAuthorityResponse = z.object({
+  grants: grantListResponse,
+  roles: z.array(z.string()),
+  permissions: z.array(z.string()),
+  deniedPermissions: z.array(z.string()),
   capabilities: z.array(capabilitySchema),
 })
 
