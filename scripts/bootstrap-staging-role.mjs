@@ -57,11 +57,7 @@ try {
   }
   const roleId = role.rows[0].id
 
-  const scopes = [
-    "admin.grant.manage",
-    "admin.grant.read",
-    "admin.audit.read",
-  ]
+  const scopes = ["admin.grant.manage", "admin.grant.read", "admin.audit.read"]
   let grantsInserted = 0
   for (const scope of scopes) {
     const inserted = await client.query(
