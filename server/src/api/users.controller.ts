@@ -2,23 +2,53 @@ import { Controller, Get, Inject, Query, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
-import { requireCapability } from "../common/errors"
+import { ApiError, requireCapability } from "../common/errors"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { DatabaseService } from "../db/database.service"
 import { computeCapabilities } from "../domain/capabilities"
+import { loadAdminAuthority } from "../modules/admin"
 import {
   IdentityService,
   accessToken,
   loadAccessContext,
   requestContext,
 } from "../modules/identity"
+import { appendAudit } from "../modules/platform"
+
+const USER_PAGE_SIZE = 50
+
+function parseCursor(
+  value: string | undefined,
+): {
+  readonly before: string | null
+  readonly beforeId: string | null
+} {
+  const cursor = (value ?? "").trim()
+  if (!cursor) return { before: null, beforeId: null }
+  const separator = cursor.indexOf("|")
+  if (separator <= 0) {
+    throw new ApiError("VALIDATION_FAILED", "The cursor is not valid.", 400)
+  }
+  const before = cursor.slice(0, separator)
+  const beforeId = cursor.slice(separator + 1)
+  if (
+    Number.isNaN(Date.parse(before)) ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      beforeId,
+    )
+  ) {
+    throw new ApiError("VALIDATION_FAILED", "The cursor is not valid.", 400)
+  }
+  return { before, beforeId }
+}
 
 /**
- * Read-only user directory for the control portal.
+ * Read-only user directory for the control portal (CP-004).
  *
- * Gated by `admin.grant.read` for now: an administrator who may inspect grants
- * may also inspect the accounts those grants point at. A dedicated user
- * capability can replace this without changing the route.
+ * Gated by `admin.user.read`, not by a grant-management capability. The read
+ * goes through `admin.list_users`, a narrow security-definer function that
+ * re-checks the platform-scoped permission inside the database. Account-scoped
+ * RLS is not relaxed; the function is the explicit, audited exception.
  */
 @Controller("control/users")
 @Audience("control")
@@ -33,8 +63,10 @@ export class UsersController {
   async list(
     @Query("q") query: string | undefined,
     @Query("status") status: string | undefined,
+    @Query("cursor") cursor: string | undefined,
     @Req() request: FastifyRequest,
   ) {
+    const page = parseCursor(cursor)
     const context = requestContext(this.config, request)
     const session = await this.identity.getSession(
       accessToken(request, context),
@@ -55,7 +87,18 @@ export class UsersController {
           audience: context.audience,
           environment: context.environment,
         })
-        requireCapability(computeCapabilities(access), "admin.grant.read")
+        const authority = await loadAdminAuthority(
+          transaction.client,
+          session.userId,
+        )
+        requireCapability(
+          computeCapabilities({
+            ...access,
+            adminPermissions: authority.permissions,
+            deniedPermissions: authority.deniedPermissions,
+          }),
+          "admin.user.read",
+        )
 
         const search = (query ?? "").trim()
         const statusFilter = (status ?? "").trim()
@@ -69,30 +112,53 @@ export class UsersController {
           email_verified_at: string | null
           created_at: string
           confirmed_factors: string
-        }>(
-          `select u.id, u.account_id, u.email, u.display_name, u.status,
-                  u.email_verified_at, u.created_at,
-                  (select count(*) from identity.mfa_factors f
-                   where f.user_id = u.id and f.confirmed_at is not null) as confirmed_factors
-           from identity.users u
-           where ($1 = '' or u.email ilike '%' || $1 || '%'
-                  or coalesce(u.display_name, '') ilike '%' || $1 || '%')
-             and ($2 = '' or u.status = $2)
-           order by u.created_at desc
-           limit 100`,
-          [search, statusFilter],
-        )
+        }>("select * from admin.list_users($1, $2, $3, $4, $5)", [
+          search,
+          statusFilter,
+          page.before,
+          page.beforeId,
+          USER_PAGE_SIZE + 1,
+        ])
 
-        return result.rows.map((row) => ({
-          id: row.id,
-          accountId: row.account_id,
-          email: row.email,
-          displayName: row.display_name,
-          status: row.status,
-          emailVerified: row.email_verified_at !== null,
-          confirmedFactors: Number(row.confirmed_factors),
-          createdAt: row.created_at,
-        }))
+        const visible = result.rows.slice(0, USER_PAGE_SIZE)
+        const last = visible[visible.length - 1]
+        const nextCursor =
+          result.rows.length > USER_PAGE_SIZE && last
+            ? `${new Date(last.created_at).toISOString()}|${last.id}`
+            : null
+
+        await appendAudit(transaction.client, {
+          actorType: "admin",
+          actorId: session.userId,
+          actorAudience: context.audience,
+          environment: context.environment,
+          action: "admin.users_listed",
+          targetType: "user_directory",
+          targetId: "platform",
+          afterSummary: {
+            query: search,
+            status: statusFilter,
+            count: visible.length,
+            cursor: page.before !== null,
+          },
+          ip: context.ip,
+          userAgent: context.userAgent,
+          correlationId: context.correlationId,
+        })
+
+        return {
+          items: visible.map((row) => ({
+            id: row.id,
+            accountId: row.account_id,
+            email: row.email,
+            displayName: row.display_name,
+            status: row.status,
+            emailVerified: row.email_verified_at !== null,
+            confirmedFactors: Number(row.confirmed_factors),
+            createdAt: row.created_at,
+          })),
+          nextCursor,
+        }
       },
     )
   }

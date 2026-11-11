@@ -841,6 +841,30 @@ partner organisation also trades on Hivorr, its people use `hivorr.com` with the
 6. The prototype's public "Open admin prototype" entry point is removed in every production build
    (`matrix` §10.5).
 
+### 7.7 Administrative governance domain
+
+**[DECIDED 11 November 2026]** The Control Portal is **one governance architecture with two
+operational shells**, not a merged portal. The `admin` module (module 9, §9.2) owns the governance
+domain: roles, permissions, assignments, staff, departments, partner organisations, cases, evidence,
+approvals, configuration and reporting read models. `control.hivorr.com` presents privileged
+governance; `staff.hivorr.com` presents job-scoped operations; `partner.hivorr.com` remains an
+external organisation surface. All three call the same API, authorization engine, audit trail,
+identity service and design system.
+
+The authoritative definition is `documents/Context/Administrative-Governance-Architecture.md`.
+It extends this document and the permission matrix for the governance domain; it does not replace
+them. Decisions D-01…D-08 and D-13 in
+`documents/Engineering-Execution/Control-Portal/DECISION-RECORD.md` record the founder approval.
+
+**Boundaries that remain unchanged:**
+
+- `control` is still limited to the founder and explicitly authorised administrators/developers
+  (§4.4, §7.2). Widen `staff` access to `control` only through a separately recorded decision.
+- Staff still receive job-scoped permissions and never default to `admin.*` (§7.3, §10.6).
+- Partners still receive no activity capability and no wallet (§7.4, §10.7).
+- No second identity, role, capability, audit, ledger, file store, notification system or design
+  system is introduced.
+
 ---
 
 ## 8. Frontend Architecture
@@ -2218,6 +2242,7 @@ Therefore:
 | 17 | Lockstep releases with one manifest per commit | Decided (7 Nov 2026) |
 | 18 | Founder approval by GitHub Issue comment, promoting the staging artifacts | Decided (7 Nov 2026) |
 | 19 | Staged retirement of the legacy Flutter deployments | Decided (7 Nov 2026) |
+| 20 | One administrative governance domain with separate control/staff/partner shells; `admin` owns roles, staff, departments, partners, cases, evidence, approvals and configuration | Decided (11 Nov 2026) — see §7.7 |
 
 ### 16.2 Decisions added by this revision
 
@@ -2335,7 +2360,27 @@ that; this revision does not edit the matrix.
 
 ### 16.6 Changelog
 
-#### 8 November 2026 — flattened staging hostnames
+#### 11 November 2026 — administrative governance domain
+
+**Decided by founder approval**
+
+- The Control Portal is one governance architecture with two operational shells: `control` for
+  privileged governance, `staff` for job-scoped operations, and `partner` for external
+  organisations. They share the `admin` governance domain, authorization engine, audit trail and
+  design system.
+- `admin` owns roles, permissions, assignments, staff, departments, partner organisations, cases,
+  evidence, approvals, configuration and reporting read models.
+- The authoritative governance definition is
+  `documents/Context/Administrative-Governance-Architecture.md`.
+- The cross-phase Control Portal workstream is recorded in
+  `documents/Engineering-Execution/Control-Portal/`.
+
+**Not changed**
+
+- No portal was merged. No session audience changed. No `[OPEN]` financial, verification, retention
+  or legal decision was settled. No production deployment or infrastructure change was made.
+
+### 8 November 2026 — flattened staging hostnames
 
 **Decided by founder instruction**
 

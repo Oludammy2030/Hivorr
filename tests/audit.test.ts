@@ -52,6 +52,27 @@ describe("audit service", () => {
     expect(values[11]).toBe("correlation-1")
   })
 
+  it("writes the governance context when supplied", async () => {
+    const client = new FakeClient()
+    await appendAudit(client as never, {
+      actorType: "admin",
+      actorId: "user-1",
+      actorAudience: "control",
+      environment: "staging",
+      action: "admin.user_suspended",
+      targetType: "account",
+      targetId: "account-1",
+      reason: "Confirmed fraud",
+      approvalReference: "approval-1",
+      sessionId: "session-1",
+    })
+
+    const values = client.calls[0]?.values ?? []
+    expect(values[12]).toBe("session-1")
+    expect(values[13]).toBe("Confirmed fraud")
+    expect(values[14]).toBe("approval-1")
+  })
+
   it("propagates an audit failure to the caller's transaction", async () => {
     const client = new FakeClient()
     client.fail = true
@@ -84,12 +105,26 @@ describe("audit service", () => {
         before_summary: { state: "INACTIVE" },
         after_summary: { state: "ACTIVE" },
         correlation_id: "correlation-1",
+        session_id: "session-1",
+        reason: "test reason",
+        approval_reference: "approval-1",
       },
     ]
 
-    const entries = await listAuditEntries(client as never, 500)
-    expect(client.calls[0]?.values).toEqual([200])
-    expect(entries).toEqual([
+    const page = await listAuditEntries(client as never, { limit: 500 })
+    expect(client.calls[0]?.values).toEqual([
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      101,
+    ])
+    expect(page.nextCursor).toBeNull()
+    expect(page.items).toEqual([
       {
         id: "audit-1",
         occurredAt: "2026-11-09T00:00:00.000Z",
@@ -103,7 +138,37 @@ describe("audit service", () => {
         beforeSummary: { state: "INACTIVE" },
         afterSummary: { state: "ACTIVE" },
         correlationId: "correlation-1",
+        sessionId: "session-1",
+        reason: "test reason",
+        approvalReference: "approval-1",
       },
     ])
+  })
+
+  it("returns a next cursor when more rows exist", async () => {
+    const client = new FakeClient()
+    client.rows = Array.from({ length: 3 }, (_, index) => ({
+      id: `00000000-0000-0000-0000-00000000000${index}`,
+      occurred_at: `2026-11-09T00:00:0${index}.000Z`,
+      actor_type: "user",
+      actor_id: "user-1",
+      actor_audience: "app",
+      environment: "staging",
+      action: "test",
+      target_type: "test",
+      target_id: "1",
+      before_summary: null,
+      after_summary: null,
+      correlation_id: null,
+      session_id: null,
+      reason: null,
+      approval_reference: null,
+    }))
+
+    const page = await listAuditEntries(client as never, { limit: 2 })
+    expect(page.items).toHaveLength(2)
+    expect(page.nextCursor).toBe(
+      "2026-11-09T00:00:01.000Z|00000000-0000-0000-0000-000000000001",
+    )
   })
 })

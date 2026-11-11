@@ -762,6 +762,15 @@ added during execution is added to its phase plan's roadmap section in the same 
 `pnpm docs:check` gate enforces this section in CI; a plan/task mismatch or a malformed identifier
 fails the build.
 
+**Cross-phase workstream exception — `CP`.** **[DECIDED 11 November 2026]** A programme that spans
+several phases and does not own a phase may use a workstream identifier of the form `CP-<nnn>`,
+allocated sequentially and never reused. The Control Portal governance programme is the first such
+workstream. Each `CP` package names exactly one owning phase and gate in its G0 record; it executes
+only when that phase's entry gate is met. A `CP` identifier never substitutes for a phase, never opens
+a phase, and never counts toward a phase's exit evidence until the owning phase records it. The
+register is `documents/Engineering-Execution/Control-Portal/CONTROL-PORTAL-IMPLEMENTATION-PLAN.md`.
+This exception is additive: the `EP-<phase>-<nnn>` form remains the default and is unchanged.
+
 ### 8.2 Required fields
 
 **[PROPOSED]** A work package is not ready (G0) until all of these exist:
@@ -950,6 +959,15 @@ This table exists so the correction is auditable and does not have to be redisco
 ---
 
 ## 13. Changelog
+
+### 11 November 2026 — cross-phase `CP` workstream exception
+
+**What changed.** §8.1 now permits a cross-phase programme to use `CP-<nnn>` identifiers when it
+spans phases and owns none. Each package names one owning phase and gate; it never opens a phase and
+never substitutes for an `EP-` package. The Control Portal governance programme is the first use.
+
+**What did not change.** `EP-<phase>-<nnn>` remains the default. No phase, gate, approver, status or
+evidence rule changed. No phase was opened and no `[OPEN]` decision was settled.
 
 ### 10 November 2026 — §8.1 allocation clarification
 

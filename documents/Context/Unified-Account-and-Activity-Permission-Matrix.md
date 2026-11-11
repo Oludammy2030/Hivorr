@@ -863,6 +863,18 @@ suspend or modify their own account.
 - Revoking an admin role never touches the user's activities, records, wallet, or verification.
 - Granting an admin role never activates an activity.
 
+### 14.5 Administrative governance extension
+
+**[DECIDED 11 November 2026]** The six admin scopes above remain the activity-independent
+administrative capability family. The governance domain that operates them — roles, resource scope,
+staff, departments, partner organisations, cases, evidence, approvals and configuration — is defined
+in `documents/Context/Administrative-Governance-Architecture.md`.
+
+That document extends this section; it does not replace the activity matrix in §9.3. Where the two
+appear to conflict, this matrix wins for activity capabilities and the governance architecture wins
+for administrative resource scope. A staff or partner assignment never creates an activity
+capability, and an activity never creates administrative authority.
+
 ---
 
 ## 15. Migration and backward compatibility

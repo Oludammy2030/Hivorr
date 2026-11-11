@@ -73,6 +73,36 @@ describe("capability computation", () => {
     ).toBe(false)
   })
 
+  it("requires a governance permission for administrative capabilities", () => {
+    expect(
+      can(
+        { ...base, audience: "control", adminPermissions: ["admin.user.read"] },
+        "admin.user.read",
+      ),
+    ).toBe(true)
+    expect(
+      can(
+        {
+          ...base,
+          audience: "control",
+          adminPermissions: ["admin.user.read"],
+          deniedPermissions: ["admin.user.read"],
+        },
+        "admin.user.read",
+      ),
+    ).toBe(false)
+    expect(
+      can(
+        {
+          ...base,
+          audience: "control",
+          adminPermissions: ["admin.user.read"],
+        },
+        "admin.user.manage",
+      ),
+    ).toBe(false)
+  })
+
   it("keeps staff, partner and engineering grants in their own audiences", () => {
     const staff = computeCapabilities({
       ...base,

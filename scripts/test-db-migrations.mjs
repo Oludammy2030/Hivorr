@@ -77,6 +77,45 @@ try {
     assert(tableNames.has(table), `platform.${table} exists`)
   }
 
+  const adminTables = await testClient.query(
+    "select tablename from pg_tables where schemaname = 'admin'",
+  )
+  const adminTableNames = new Set(adminTables.rows.map((row) => row.tablename))
+  for (const table of [
+    "permissions",
+    "roles",
+    "role_permissions",
+    "role_assignments",
+    "permission_grants",
+    "access_denials",
+    "departments",
+    "staff_profiles",
+    "department_members",
+    "partner_organisations",
+    "partner_representatives",
+    "partner_applications",
+    "partner_agreements",
+    "partner_scopes",
+    "approval_requests",
+    "approval_steps",
+    "approval_decisions",
+    "cases",
+    "case_events",
+    "case_links",
+    "case_evidence",
+    "case_findings",
+    "case_recommendations",
+    "case_decisions",
+    "case_actions",
+    "case_assignments",
+    "case_team_members",
+    "work_items",
+    "configuration_entries",
+    "configuration_versions",
+  ]) {
+    assert(adminTableNames.has(table), `admin.${table} exists`)
+  }
+
   await testClient.query(
     "insert into platform.audit_log (actor_type, environment, action) values ('system', 'test', 'test.action')",
   )
