@@ -206,6 +206,19 @@ export const grantViewResponse = z.object({
 
 export const grantListResponse = z.array(grantViewResponse)
 
+export const userSummaryResponse = z.object({
+  id: z.string(),
+  accountId: z.string(),
+  email: z.string(),
+  displayName: z.string().nullable(),
+  status: z.string(),
+  emailVerified: z.boolean(),
+  confirmedFactors: z.number().int(),
+  createdAt: z.string(),
+})
+
+export const userListResponse = z.array(userSummaryResponse)
+
 export const ownGrantsResponse = z.object({
   grants: grantListResponse,
   capabilities: z.array(capabilitySchema),

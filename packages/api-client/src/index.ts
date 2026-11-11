@@ -93,6 +93,8 @@ export type DeactivateActivityResponse = { "id": "market.buy" | "services.hire" 
 
 export type ListAuditResponse = ({ "id": string; "occurredAt": string; "actorType": string; "actorId": string | null; "actorAudience": string | null; "environment": string; "action": string; "targetType": string | null; "targetId": string | null; "beforeSummary": { [key: string]: unknown } | null; "afterSummary": { [key: string]: unknown } | null; "correlationId": string | null })[]
 
+export type ListUsersResponse = ({ "id": string; "accountId": string; "email": string; "displayName": string | null; "status": string; "emailVerified": boolean; "confirmedFactors": number; "createdAt": string })[]
+
 export type OwnGrantsResponse = { "grants": ({ "id": string; "userId": string; "email": string | null; "grantType": string; "scope": string; "environment": "production" | "staging"; "grantedBy": string | null; "expiresAt": string | null; "revokedAt": string | null; "createdAt": string })[]; "capabilities": ("session.read" | "profile.read.self" | "profile.update.self" | "activity.activate" | "activity.deactivate" | "market.catalog.browse" | "market.cart.manage" | "market.order.place" | "market.order.cancel" | "market.order.dispute" | "services.job.post" | "services.job.post.business" | "services.application.review" | "services.engagement.fund" | "services.job.apply" | "services.service.publish" | "services.engagement.deliver" | "services.earnings.receive" | "errands.request.create" | "errands.request.cancel" | "errands.request.track" | "market.product.draft" | "market.product.publish" | "market.inventory.manage" | "market.order.fulfil" | "market.invoice.issue" | "market.earnings.receive" | "logistics.pool.browse" | "logistics.assignment.accept" | "logistics.delivery.progress" | "logistics.delivery.complete" | "logistics.earnings.receive" | "business.create" | "business.verification.submit" | "business.update" | "wallet.read" | "wallet.withdraw" | "wallet.payout_account.bind" | "wallet.convert" | "messaging.thread.read" | "messaging.message.send" | "notification.read" | "admin.verification.review" | "admin.payment.review" | "admin.dispute.resolve" | "admin.account.suspend" | "admin.configuration.write" | "admin.audit.read" | "admin.grant.read" | "admin.grant.manage" | "staff.support.handle" | "partner.referral.read" | "platform.engineering.access")[] }
 
 export type ListGrantsResponse = ({ "id": string; "userId": string; "email": string | null; "grantType": string; "scope": string; "environment": "production" | "staging"; "grantedBy": string | null; "expiresAt": string | null; "revokedAt": string | null; "createdAt": string })[]
@@ -309,6 +311,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<ListAuditResponse>(
         "GET",
         "/v1/control/audit",
+        undefined,
+        [200],
+      ),
+    listUsers: () =>
+      request<ListUsersResponse>(
+        "GET",
+        "/v1/control/users",
         undefined,
         [200],
       ),

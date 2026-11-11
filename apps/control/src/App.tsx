@@ -4,8 +4,12 @@ import {
   api,
   errorMessage,
   isMfaChallenge,
+  type AuditEntry,
+  type Grant,
   type MfaChallenge,
+  type OwnGrants,
   type Session,
+  type UserSummary,
 } from "./api"
 
 interface LoadingView {
@@ -30,11 +34,58 @@ interface SignedInView {
 
 type View = LoadingView | SignedOutView | MfaView | SignedInView
 
+type Section = "overview" | "users" | "grants" | "audit"
+
+interface SectionLink {
+  id: Section
+  label: string
+}
+
+interface NavGroup {
+  label: string
+  items: readonly SectionLink[]
+}
+
+const NAV_GROUPS: readonly NavGroup[] = [
+  { label: "Governance", items: [{ id: "overview", label: "Overview" }] },
+  {
+    label: "People",
+    items: [
+      { id: "users", label: "Users" },
+      { id: "grants", label: "Grants" },
+    ],
+  },
+  { label: "Security", items: [{ id: "audit", label: "Audit" }] },
+]
+
+const GRANT_SCOPES: Record<string, readonly string[]> = {
+  admin: ["admin.audit.read", "admin.grant.read", "admin.grant.manage"],
+  staff: ["staff.support.handle"],
+  partner: ["partner.referral.read"],
+  platform_engineering: ["platform.engineering"],
+}
+
 function formatTime(value: string): string {
   return new Date(value).toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   })
+}
+
+function Brand() {
+  return (
+    <div className="brand">
+      <span className="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">
+          <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+        </svg>
+      </span>
+      <div>
+        <p className="brand-name">Hivorr</p>
+        <p className="brand-portal">Control portal</p>
+      </div>
+    </div>
+  )
 }
 
 export function App() {
@@ -115,12 +166,24 @@ export function App() {
     }
   }
 
+  if (view.kind === "signedIn") {
+    return (
+      <Dashboard
+        session={view.session}
+        onSignOut={handleSignOut}
+        signingOut={busy}
+      />
+    )
+  }
+
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="portal-title">
         <header className="brand">
           <span className="brand-mark" aria-hidden="true">
-            H
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">
+              <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+            </svg>
           </span>
           <div>
             <p className="brand-name">Hivorr</p>
@@ -227,46 +290,568 @@ export function App() {
             </button>
           </form>
         )}
-
-        {view.kind === "signedIn" && (
-          <div className="form">
-            <div>
-              <h1 id="portal-title">Signed in</h1>
-              <p className="muted">
-                You are authenticated for the control portal.
-              </p>
-            </div>
-
-            <dl className="details">
-              <div>
-                <dt>Email</dt>
-                <dd>{view.session.email}</dd>
-              </div>
-              <div>
-                <dt>Environment</dt>
-                <dd>{view.session.environment}</dd>
-              </div>
-              <div>
-                <dt>Session expires</dt>
-                <dd>{formatTime(view.session.expiresAt)}</dd>
-              </div>
-              <div>
-                <dt>Session id</dt>
-                <dd className="mono">{view.session.sessionId}</dd>
-              </div>
-            </dl>
-
-            <button
-              className="button button-quiet"
-              type="button"
-              onClick={handleSignOut}
-              disabled={busy}
-            >
-              {busy ? "Signing out…" : "Sign out"}
-            </button>
-          </div>
-        )}
       </section>
     </main>
+  )
+}
+
+interface DashboardProps {
+  session: Session
+  onSignOut: () => void
+  signingOut: boolean
+}
+
+function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
+  const [section, setSection] = useState<Section>("overview")
+  const [own, setOwn] = useState<OwnGrants | null>(null)
+  const [grants, setGrants] = useState<readonly Grant[] | null>(null)
+  const [audit, setAudit] = useState<readonly AuditEntry[] | null>(null)
+  const [error, setError] = useState<string | undefined>()
+  const [busy, setBusy] = useState(false)
+  const [grantType, setGrantType] = useState("staff")
+  const [scope, setScope] = useState("staff.support.handle")
+  const [users, setUsers] = useState<readonly UserSummary[] | null>(null)
+  const [userSearch, setUserSearch] = useState("")
+  const [userQuery, setUserQuery] = useState("")
+  const [userStatus, setUserStatus] = useState("")
+  const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null)
+
+  useEffect(() => {
+    let active = true
+    api
+      .ownGrants()
+      .then((value) => {
+        if (active) setOwn(value)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (section !== "grants" || grants !== null) return
+    let active = true
+    setBusy(true)
+    api
+      .listGrants()
+      .then((value) => {
+        if (active) setGrants(value)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, grants])
+
+  useEffect(() => {
+    if (section !== "users") return
+    let active = true
+    setBusy(true)
+    api
+      .listUsers(userQuery, userStatus)
+      .then((value) => {
+        if (!active) return
+        setUsers(value)
+        setError(undefined)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, userQuery, userStatus])
+
+  useEffect(() => {
+    if (section !== "audit" || audit !== null) return
+    let active = true
+    setBusy(true)
+    api
+      .listAudit()
+      .then((value) => {
+        if (active) setAudit(value)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, audit])
+
+  async function handleCreateGrant(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const email = String(form.get("email") ?? "").trim()
+    const grantType = String(form.get("grantType") ?? "staff")
+    const scope = String(form.get("scope") ?? "")
+    if (!email || !scope) {
+      setError("An email and a scope are required.")
+      return
+    }
+
+    setBusy(true)
+    setError(undefined)
+    try {
+      const created = await api.createGrant({ email, grantType, scope })
+      setGrants((current) => [created, ...(current ?? [])])
+      event.currentTarget.reset()
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRevoke(grant: Grant) {
+    setBusy(true)
+    setError(undefined)
+    try {
+      const revoked = await api.revokeGrant(grant.id)
+      setGrants((current) =>
+        (current ?? []).map((entry) =>
+          entry.id === revoked.id ? revoked : entry,
+        ),
+      )
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const nav = NAV_GROUPS.flatMap((group) => group.items)
+
+  function handleUserSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSelectedUser(null)
+    setUserQuery(userSearch)
+  }
+
+  function statusClass(status: string): string {
+    if (status === "active") return "chip chip-ok"
+    if (status === "suspended" || status === "closed") return "chip chip-danger"
+    return "chip"
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="app-sidebar">
+        <Brand />
+        <nav className="app-nav">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="nav-group">
+              <p className="nav-label">{group.label}</p>
+              {group.items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`nav-item${
+                    section === item.id ? " is-active" : ""
+                  }`}
+                  onClick={() => setSection(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="app-sidebar-footer">
+          <p className="muted">{session.email}</p>
+          <button
+            type="button"
+            className="button button-quiet"
+            onClick={onSignOut}
+            disabled={signingOut}
+          >
+            {signingOut ? "Signing out…" : "Sign out"}
+          </button>
+        </div>
+      </aside>
+
+      <main className="app-main">
+        <header className="app-topbar">
+          <div>
+            <p className="eyebrow">Control portal</p>
+            <h1>{nav.find((item) => item.id === section)?.label}</h1>
+          </div>
+          <span className="badge">{session.environment}</span>
+        </header>
+
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {section === "overview" && (
+          <div className="dash-grid">
+            <section className="panel">
+              <h2>Session</h2>
+              <dl className="details">
+                <div>
+                  <dt>Email</dt>
+                  <dd>{session.email}</dd>
+                </div>
+                <div>
+                  <dt>Environment</dt>
+                  <dd>{session.environment}</dd>
+                </div>
+                <div>
+                  <dt>Expires</dt>
+                  <dd>{formatTime(session.expiresAt)}</dd>
+                </div>
+                <div>
+                  <dt>Idle expires</dt>
+                  <dd>{formatTime(session.idleExpiresAt)}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section className="panel">
+              <h2>Capabilities</h2>
+              {own === null && <p className="muted">Loading…</p>}
+              {own && own.capabilities.length === 0 && (
+                <p className="muted">
+                  No capabilities yet. The first administrator grant must be
+                  bootstrapped out of band.
+                </p>
+              )}
+              {own && own.capabilities.length > 0 && (
+                <ul className="chip-list">
+                  {own.capabilities.map((capability) => (
+                    <li key={capability} className="chip">
+                      {capability}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="panel">
+              <h2>Your grants</h2>
+              {own === null && <p className="muted">Loading…</p>}
+              {own && own.grants.length === 0 && (
+                <p className="muted">No active grants.</p>
+              )}
+              {own && own.grants.length > 0 && (
+                <ul className="plain-list">
+                  {own.grants.map((grant) => (
+                    <li key={grant.id}>
+                      <span className="chip">{grant.grantType}</span>{" "}
+                      <span className="mono">{grant.scope}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        )}
+
+        {section === "users" && (
+          <div className="dash-stack">
+            <section className="panel">
+              <form className="user-toolbar" onSubmit={handleUserSearch}>
+                <input
+                  className="search-input"
+                  type="search"
+                  placeholder="Search by email or name"
+                  value={userSearch}
+                  onChange={(event) => setUserSearch(event.target.value)}
+                  aria-label="Search users"
+                />
+                <select
+                  className="filter-select"
+                  value={userStatus}
+                  onChange={(event) => {
+                    setSelectedUser(null)
+                    setUserStatus(event.target.value)
+                  }}
+                  aria-label="Filter by status"
+                >
+                  <option value="">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <button
+                  className="button button-small"
+                  type="submit"
+                  disabled={busy}
+                >
+                  Search
+                </button>
+              </form>
+            </section>
+
+            <section className="panel">
+              <div className="panel-head">
+                <h2>Users</h2>
+                <span className="muted">
+                  {users === null ? "Loading…" : `${users.length} shown`}
+                </span>
+              </div>
+
+              {users && users.length === 0 && (
+                <p className="muted">
+                  No users match this search. Clear the filters or create an
+                  account through onboarding.
+                </p>
+              )}
+
+              {users && users.length > 0 && (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Authenticator</th>
+                        <th>Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr
+                          key={user.id}
+                          className={
+                            selectedUser?.id === user.id ? "is-selected" : ""
+                          }
+                          onClick={() => setSelectedUser(user)}
+                        >
+                          <td>{user.email}</td>
+                          <td>{user.displayName ?? "—"}</td>
+                          <td>
+                            <span className={statusClass(user.status)}>
+                              {user.status}
+                            </span>
+                          </td>
+                          <td>
+                            {user.confirmedFactors > 0 ? "Enabled" : "Not set"}
+                          </td>
+                          <td>{formatTime(user.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {selectedUser && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>{selectedUser.email}</h2>
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    onClick={() => setSelectedUser(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+                <dl className="details">
+                  <div>
+                    <dt>Name</dt>
+                    <dd>{selectedUser.displayName ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd>{selectedUser.status}</dd>
+                  </div>
+                  <div>
+                    <dt>Email verified</dt>
+                    <dd>{selectedUser.emailVerified ? "Yes" : "No"}</dd>
+                  </div>
+                  <div>
+                    <dt>Authenticator</dt>
+                    <dd>
+                      {selectedUser.confirmedFactors > 0
+                        ? `${selectedUser.confirmedFactors} confirmed`
+                        : "Not enrolled"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Created</dt>
+                    <dd>{formatTime(selectedUser.createdAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>User id</dt>
+                    <dd className="mono">{selectedUser.id}</dd>
+                  </div>
+                  <div>
+                    <dt>Account id</dt>
+                    <dd className="mono">{selectedUser.accountId}</dd>
+                  </div>
+                </dl>
+                <p className="hint">
+                  Account actions — suspend, reinstate, revoke sessions — are
+                  the next control slice. This view is read-only.
+                </p>
+              </section>
+            )}
+          </div>
+        )}
+
+        {section === "grants" && (
+          <div className="dash-stack">
+            <section className="panel">
+              <h2>Create a grant</h2>
+              <form className="form" onSubmit={handleCreateGrant}>
+                <div className="form-row">
+                  <label className="field">
+                    <span>User email</span>
+                    <input name="email" type="email" required disabled={busy} />
+                  </label>
+                  <label className="field">
+                    <span>Grant type</span>
+                    <select
+                      name="grantType"
+                      value={grantType}
+                      onChange={(event) => {
+                        const next = event.target.value
+                        setGrantType(next)
+                        setScope(GRANT_SCOPES[next][0])
+                      }}
+                      disabled={busy}
+                    >
+                      {Object.keys(GRANT_SCOPES).map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Scope</span>
+                    <select
+                      name="scope"
+                      value={scope}
+                      onChange={(event) => setScope(event.target.value)}
+                      disabled={busy}
+                    >
+                      {(GRANT_SCOPES[grantType] ?? []).map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <button className="button" type="submit" disabled={busy}>
+                  {busy ? "Working…" : "Create grant"}
+                </button>
+              </form>
+            </section>
+
+            <section className="panel">
+              <h2>Grants</h2>
+              {grants === null && <p className="muted">Loading…</p>}
+              {grants && grants.length === 0 && (
+                <p className="muted">No grants in this environment.</p>
+              )}
+              {grants && grants.length > 0 && (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Email</th>
+                        <th>Type</th>
+                        <th>Scope</th>
+                        <th>Status</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {grants.map((grant) => (
+                        <tr key={grant.id}>
+                          <td>{grant.email ?? grant.userId}</td>
+                          <td>{grant.grantType}</td>
+                          <td className="mono">{grant.scope}</td>
+                          <td>
+                            {grant.revokedAt ? (
+                              <span className="chip chip-danger">revoked</span>
+                            ) : (
+                              <span className="chip chip-ok">active</span>
+                            )}
+                          </td>
+                          <td>
+                            {!grant.revokedAt && (
+                              <button
+                                type="button"
+                                className="button button-quiet button-small"
+                                onClick={() => handleRevoke(grant)}
+                                disabled={busy}
+                              >
+                                Revoke
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {section === "audit" && (
+          <section className="panel">
+            <h2>Audit log</h2>
+            {audit === null && <p className="muted">Loading…</p>}
+            {audit && audit.length === 0 && (
+              <p className="muted">No audit entries.</p>
+            )}
+            {audit && audit.length > 0 && (
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Action</th>
+                      <th>Actor</th>
+                      <th>Target</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {audit.map((entry) => (
+                      <tr key={entry.id}>
+                        <td>{formatTime(entry.occurredAt)}</td>
+                        <td className="mono">{entry.action}</td>
+                        <td>{entry.actorType}</td>
+                        <td className="mono">
+                          {entry.targetType ?? "—"}
+                          {entry.targetId
+                            ? `:${entry.targetId.slice(0, 8)}`
+                            : ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+      </main>
+    </div>
   )
 }

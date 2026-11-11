@@ -19,6 +19,7 @@ import { IdentityService } from "./modules/identity/identity.service"
 import { SessionController } from "./modules/identity/session.controller"
 import { ActivityController } from "./api/activity.controller"
 import { AuditController } from "./api/audit.controller"
+import { UsersController } from "./api/users.controller"
 import { ProfileService } from "./modules/profile/profile.service"
 
 @Module({})
@@ -32,6 +33,7 @@ export class AppModule {
         SessionController,
         ActivityController,
         AuditController,
+        UsersController,
         GrantsController,
       ],
       providers: [
