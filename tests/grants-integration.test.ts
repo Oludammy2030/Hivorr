@@ -276,6 +276,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "admin",
         scope: "admin.grant.manage",
+        reason: "Test denying an unauthorised caller",
       },
     })
     expect(create.statusCode).toBe(403)
@@ -290,6 +291,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "staff",
         scope: "staff.support.handle",
+        reason: "Support queue coverage",
       },
     })
     expect(created.statusCode).toBe(201)
@@ -305,6 +307,18 @@ describeIntegration("grant management integration", () => {
     })
     staffGrantId = grant.id
 
+    const noReason = await app.inject({
+      method: "POST",
+      url: "/v1/control/grants",
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: {
+        email: "worker@example.test",
+        grantType: "staff",
+        scope: "staff.support.handle",
+      },
+    })
+    expect(noReason.statusCode).toBe(400)
+
     const duplicate = await app.inject({
       method: "POST",
       url: "/v1/control/grants",
@@ -313,6 +327,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "staff",
         scope: "staff.support.handle",
+        reason: "Duplicate request",
       },
     })
     expect(duplicate.statusCode).toBe(409)
@@ -325,6 +340,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "staff",
         scope: "admin.grant.manage",
+        reason: "Invalid scope test",
       },
     })
     expect(wrongScope.statusCode).toBe(400)
@@ -337,6 +353,7 @@ describeIntegration("grant management integration", () => {
         email: "missing@example.test",
         grantType: "partner",
         scope: "partner.referral.read",
+        reason: "Unknown user test",
       },
     })
     expect(unknownUser.statusCode).toBe(404)
@@ -367,7 +384,8 @@ describeIntegration("grant management integration", () => {
     const revoked = await app.inject({
       method: "POST",
       url: `/v1/control/grants/${staffGrantId}/revoke`,
-      headers: { host: controlHost, cookie: adminControlCookie },
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: { reason: "Support coverage ended" },
     })
     expect(revoked.statusCode).toBe(200)
     expect(revoked.json().revokedAt).toBeTruthy()
@@ -375,7 +393,8 @@ describeIntegration("grant management integration", () => {
     const again = await app.inject({
       method: "POST",
       url: `/v1/control/grants/${staffGrantId}/revoke`,
-      headers: { host: controlHost, cookie: adminControlCookie },
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: { reason: "Second revocation attempt" },
     })
     expect(again.statusCode).toBe(404)
 
@@ -393,14 +412,15 @@ describeIntegration("grant management integration", () => {
     const lastManager = await app.inject({
       method: "POST",
       url: `/v1/control/grants/${bootstrap.id}/revoke`,
-      headers: { host: controlHost, cookie: adminControlCookie },
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: { reason: "Last manager guard test" },
     })
     expect(lastManager.statusCode).toBe(409)
   })
 
-  it("audits every grant change", async () => {
+  it("audits every grant change with a reason", async () => {
     const rows = await setup.query(
-      "select action, actor_id, target_type from platform.audit_log where action like 'identity.grant_%' order by action",
+      "select action, actor_id, target_type, reason from platform.audit_log where action like 'identity.grant_%' order by action",
     )
     const actions = rows.rows.map((row) => row.action)
     expect(actions).toContain("identity.grant_created")
@@ -410,5 +430,11 @@ describeIntegration("grant management integration", () => {
         (row) => row.actor_id === adminId && row.target_type === "grant",
       ),
     ).toBe(true)
+    expect(rows.rows.map((row) => row.reason)).toContain(
+      "Support queue coverage",
+    )
+    expect(rows.rows.map((row) => row.reason)).toContain(
+      "Support coverage ended",
+    )
   })
 })

@@ -47,6 +47,7 @@ export interface CreateGrantInput {
   readonly email: string
   readonly grantType: GrantType
   readonly scope: string
+  readonly reason?: string
   readonly expiresAt?: string
 }
 
@@ -187,6 +188,15 @@ export class GrantsService {
     const access = await this.access(token, context)
     this.require(context, access.capabilities, "admin.grant.manage")
 
+    const reason = input.reason?.trim()
+    if (!reason || reason.length < 3) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A reason is required to change a grant.",
+        400,
+      )
+    }
+
     if (!grantScopeIsValid(input.grantType, input.scope)) {
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -228,6 +238,7 @@ export class GrantsService {
               environment: created.rows[0].environment,
               revokedAt: null,
             },
+            reason,
           )
           return toView(created.rows[0])
         },
@@ -240,10 +251,20 @@ export class GrantsService {
   async revoke(
     token: string,
     grantId: string,
+    reasonInput: string | undefined,
     context: RequestContext,
   ): Promise<GrantView> {
     const access = await this.access(token, context)
     this.require(context, access.capabilities, "admin.grant.manage")
+
+    const reason = reasonInput?.trim()
+    if (!reason || reason.length < 3) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A reason is required to change a grant.",
+        400,
+      )
+    }
 
     try {
       return await this.database.withTransaction(
@@ -266,6 +287,7 @@ export class GrantsService {
             revoked.rows[0].id,
             { revokedAt: null },
             { revokedAt: revoked.rows[0].revoked_at },
+            reason,
           )
           return toView(revoked.rows[0])
         },
@@ -372,6 +394,7 @@ export class GrantsService {
     targetId: string,
     beforeSummary?: Record<string, unknown>,
     afterSummary?: Record<string, unknown>,
+    reason?: string,
   ): Promise<void> {
     await appendAudit(client, {
       actorType: "admin",
@@ -383,6 +406,7 @@ export class GrantsService {
       targetId,
       beforeSummary,
       afterSummary,
+      reason,
       ip: context.ip,
       userAgent: context.userAgent,
       correlationId: context.correlationId,

@@ -13,12 +13,19 @@ import type { FastifyRequest } from "fastify"
 import { Audience } from "../../../common/audience"
 import { parseBody } from "../../../common/validation"
 import { API_CONFIG, type ApiConfig } from "../../../config"
-import { createGrantRequest } from "../../../contracts/schemas"
+import {
+  createGrantRequest,
+  revokeGrantRequest,
+} from "../../../contracts/schemas"
 import { accessToken, requestContext } from "../request-context"
 import { GrantsService, type CreateGrantInput } from "./grants.service"
 
 function parseCreateGrant(body: unknown): CreateGrantInput {
   return parseBody(createGrantRequest, body) as CreateGrantInput
+}
+
+function parseRevokeGrant(body: unknown): { reason?: string } {
+  return parseBody(revokeGrantRequest, body) as { reason?: string }
 }
 
 @Controller()
@@ -53,8 +60,18 @@ export class GrantsController {
   @Post("control/grants/:id/revoke")
   @HttpCode(200)
   @Audience("control")
-  async revoke(@Param("id") id: string, @Req() request: FastifyRequest) {
+  async revoke(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    const input = parseRevokeGrant(body)
     const context = requestContext(this.config, request)
-    return this.grants.revoke(accessToken(request, context), id, context)
+    return this.grants.revoke(
+      accessToken(request, context),
+      id,
+      input.reason,
+      context,
+    )
   }
 }
