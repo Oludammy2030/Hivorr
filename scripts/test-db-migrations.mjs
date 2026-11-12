@@ -139,6 +139,71 @@ try {
   }
   assert(deleteRejected, "audit_log rejects deletes")
 
+  const auditColumns = await testClient.query(
+    "select column_name from information_schema.columns where table_schema = 'platform' and table_name = 'audit_log'",
+  )
+  const auditColumnNames = new Set(
+    auditColumns.rows.map((row) => row.column_name),
+  )
+  for (const column of [
+    "actor_display_name",
+    "actor_email",
+    "actor_role_keys",
+    "actor_role_scopes",
+    "capability",
+  ]) {
+    assert(auditColumnNames.has(column), `audit_log has ${column}`)
+  }
+
+  const snapshotAccount = await testClient.query(
+    "insert into identity.accounts (legal_name) values ('Audit Snapshot Ltd') returning id",
+  )
+  const snapshotActor = await testClient.query(
+    "insert into identity.users (account_id, email, display_name) values ($1, 'snapshot@example.test', 'Snapshot Actor') returning id",
+    [snapshotAccount.rows[0].id],
+  )
+  const actorId = snapshotActor.rows[0].id
+  await testClient.query(
+    `insert into admin.role_assignments (user_id, role_id, scope_type)
+     select $1, id, 'platform' from admin.roles where key = 'founder'`,
+    [actorId],
+  )
+  await testClient.query(
+    `insert into admin.role_assignments (user_id, role_id, scope_type, scope_id)
+     select $1, id, 'department', $2 from admin.roles where key = 'support_officer'`,
+    [actorId, "00000000-0000-7000-8000-000000000123"],
+  )
+  const snapshot = await testClient.query(
+    "select display_name, email, role_keys, role_scopes from platform.resolve_audit_actor($1)",
+    [actorId],
+  )
+  assert(snapshot.rows.length === 1, "resolve_audit_actor returns one actor")
+  assert(
+    snapshot.rows[0].display_name === "Snapshot Actor",
+    "resolve_audit_actor returns the display name",
+  )
+  assert(
+    JSON.stringify(snapshot.rows[0].role_keys) ===
+      JSON.stringify(["founder", "support_officer"]),
+    "resolve_audit_actor returns the active role keys",
+  )
+  const scopes = snapshot.rows[0].role_scopes
+  assert(
+    Array.isArray(scopes) &&
+      scopes.length === 2 &&
+      scopes[0].scopeType === "platform" &&
+      scopes[1].scopeType === "department" &&
+      scopes[1].scopeId === "00000000-0000-7000-8000-000000000123",
+    "resolve_audit_actor returns each role with its scope",
+  )
+  const nonUserActor = await testClient.query(
+    "select display_name from platform.resolve_audit_actor('system')",
+  )
+  assert(
+    nonUserActor.rows.length === 0,
+    "resolve_audit_actor tolerates a non-user actor id",
+  )
+
   await testClient.query(
     "insert into platform.outbox (event_type, aggregate_type, aggregate_id) values ('test.event', 'test', 'aggregate')",
   )

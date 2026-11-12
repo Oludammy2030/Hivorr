@@ -45,11 +45,12 @@ export async function appendAudit(
        (actor_type, actor_id, actor_audience, environment, action, target_type, target_id,
         before_summary, after_summary, ip, user_agent, correlation_id, session_id,
         reason, approval_reference, actor_display_name, actor_email, actor_role_keys,
-        capability)
-     select $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-            s.display_name, s.email, coalesce(s.role_keys, '{}'::text[]), $16
+        actor_role_scopes, capability)
+     select $1, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+            s.display_name, s.email, coalesce(s.role_keys, '{}'::text[]),
+            coalesce(s.role_scopes, '[]'::jsonb), $16
        from (select 1) as anchor
-       left join platform.resolve_audit_actor($2) s on true`,
+       left join platform.resolve_audit_actor($2::text) s on true`,
     [
       actorType,
       entry.actorId,
@@ -90,7 +91,19 @@ export interface AuditEntryView {
   readonly actorDisplayName: string | null
   readonly actorEmail: string | null
   readonly actorRoleKeys: readonly string[]
+  readonly actorRoleScopes: readonly AuditActorRoleScope[]
   readonly capability: string | null
+}
+
+/**
+ * A role and the scope it was held at when the action was recorded. The scope
+ * distinguishes, for example, a Support Officer for one queue from one with
+ * platform-wide scope.
+ */
+export interface AuditActorRoleScope {
+  readonly roleKey: string
+  readonly scopeType: string | null
+  readonly scopeId: string | null
 }
 
 export interface AuditQuery {
@@ -129,7 +142,24 @@ interface AuditRow {
   actor_display_name: string | null
   actor_email: string | null
   actor_role_keys: string[] | null
+  actor_role_scopes: unknown
   capability: string | null
+}
+
+function toRoleScopes(value: unknown): AuditActorRoleScope[] {
+  if (!Array.isArray(value)) return []
+  const scopes: AuditActorRoleScope[] = []
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) continue
+    const record = entry as Record<string, unknown>
+    if (typeof record.roleKey !== "string") continue
+    scopes.push({
+      roleKey: record.roleKey,
+      scopeType: typeof record.scopeType === "string" ? record.scopeType : null,
+      scopeId: typeof record.scopeId === "string" ? record.scopeId : null,
+    })
+  }
+  return scopes
 }
 
 /**
@@ -146,7 +176,7 @@ export async function listAuditEntries(
             environment, action, target_type, target_id,
             before_summary, after_summary, correlation_id, session_id,
             reason, approval_reference, actor_display_name, actor_email,
-            actor_role_keys, capability
+            actor_role_keys, actor_role_scopes, capability
        from platform.audit_log
       where ($1::uuid is null or actor_id = $1)
         and ($2::text is null or action = $2)
@@ -195,6 +225,7 @@ export async function listAuditEntries(
       actorDisplayName: row.actor_display_name,
       actorEmail: row.actor_email,
       actorRoleKeys: row.actor_role_keys ?? [],
+      actorRoleScopes: toRoleScopes(row.actor_role_scopes),
       capability: row.capability,
     })),
     nextCursor:

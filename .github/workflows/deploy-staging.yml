@@ -174,3 +174,82 @@ jobs:
             --title "Release ${RELEASE_SHA:0:7}" \
             --label "$label" \
             --body-file release-issue.md
+
+  deploy-pages:
+    name: deploy staging portals to Pages
+    needs: build-staging-artifact
+    if: vars.CLOUDFLARE_PAGES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://staging.hivorr.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install wrangler 4.160.0
+        run: npm install --global wrangler@4.160.0
+
+      - name: Download the verified staging build
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: staging-build-${{ github.sha }}
+          path: dist
+
+      - name: Download the release manifest
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-manifest-${{ github.sha }}
+
+      - name: Verify the downloaded build against the manifest
+        run: >-
+          node scripts/verify-release-manifest.mjs
+          --manifest release-manifest.json
+          --sha "${{ github.sha }}"
+          --ref staging
+          --dist dist
+
+      - name: Require Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "CLOUDFLARE_API_TOKEN is not set in the staging environment."
+            echo "Add it as an environment secret, or unset the CLOUDFLARE_PAGES_ENABLED variable to skip the Pages rollout."
+            exit 1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "CLOUDFLARE_ACCOUNT_ID is not set as a repository variable."
+            exit 1
+          fi
+
+      - name: Deploy the four staging bundles
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          deploy() {
+            echo "pages: deploying $1 to $2 for ${GITHUB_SHA:0:7}"
+            wrangler pages deploy "$1" \
+              --project-name "$2" \
+              --branch staging \
+              --commit-hash "$GITHUB_SHA"
+          }
+          deploy dist hivorr-staging-main
+          deploy dist/portals/control hivorr-staging-control
+          deploy dist/portals/staff hivorr-staging-staff
+          deploy dist/portals/partner hivorr-staging-partner
+
+      - name: Smoke test the public portal
+        run: |
+          set -euo pipefail
+          status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' https://staging.hivorr.com/)"
+          echo "main portal responded with $status"
+          if [ "$status" != "200" ]; then
+            echo "The main portal did not serve the release."
+            exit 1
+          fi

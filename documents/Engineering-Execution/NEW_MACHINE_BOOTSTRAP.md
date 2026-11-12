@@ -119,7 +119,8 @@ powershell -ExecutionPolicy Bypass -File scripts/staging-offline.ps1
 powershell -ExecutionPolicy Bypass -File scripts/staging-account-status.ps1
 powershell -ExecutionPolicy Bypass -File scripts/bootstrap-staging-admin.ps1 -Email admin@hivorr.com
 
-# deploy a portal manually while Pages automation is not wired
+# deploy a portal by hand (only for recovery; CI deploys all four on every merge)
+# see deploy-staging.yml "deploy staging portals to Pages"
 wrangler pages deploy dist --project-name hivorr-staging-main --branch staging
 wrangler pages deploy dist/portals/control --project-name hivorr-staging-control --branch staging
 

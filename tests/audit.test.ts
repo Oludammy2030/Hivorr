@@ -148,6 +148,14 @@ describe("audit service", () => {
         actor_display_name: "Amara Diallo",
         actor_email: "amara@example.test",
         actor_role_keys: ["founder"],
+        actor_role_scopes: [
+          { roleKey: "founder", scopeType: "platform", scopeId: null },
+          {
+            roleKey: "support_officer",
+            scopeType: "department",
+            scopeId: "department-1",
+          },
+        ],
         capability: "admin.user.read",
       },
     ]
@@ -185,8 +193,85 @@ describe("audit service", () => {
         actorDisplayName: "Amara Diallo",
         actorEmail: "amara@example.test",
         actorRoleKeys: ["founder"],
+        actorRoleScopes: [
+          { roleKey: "founder", scopeType: "platform", scopeId: null },
+          {
+            roleKey: "support_officer",
+            scopeType: "department",
+            scopeId: "department-1",
+          },
+        ],
         capability: "admin.user.read",
       },
+    ])
+  })
+
+  it("keeps a historical row readable when the scope snapshot is absent", async () => {
+    const client = new FakeClient()
+    client.rows = [
+      {
+        id: "audit-legacy",
+        occurred_at: "2026-11-10T00:00:00.000Z",
+        actor_type: "admin",
+        actor_id: "user-1",
+        actor_audience: "control",
+        environment: "staging",
+        action: "admin.users_listed",
+        target_type: "user_directory",
+        target_id: "platform",
+        before_summary: null,
+        after_summary: null,
+        correlation_id: null,
+        session_id: null,
+        reason: null,
+        approval_reference: null,
+        actor_display_name: null,
+        actor_email: null,
+        actor_role_keys: null,
+        actor_role_scopes: null,
+        capability: null,
+      },
+    ]
+
+    const page = await listAuditEntries(client as never, { limit: 10 })
+    expect(page.items[0]?.actorRoleKeys).toEqual([])
+    expect(page.items[0]?.actorRoleScopes).toEqual([])
+  })
+
+  it("ignores a malformed scope snapshot instead of failing the read", async () => {
+    const client = new FakeClient()
+    client.rows = [
+      {
+        id: "audit-2",
+        occurred_at: "2026-11-10T00:00:00.000Z",
+        actor_type: "admin",
+        actor_id: "user-1",
+        actor_audience: "control",
+        environment: "staging",
+        action: "admin.audit_read",
+        target_type: "audit_log",
+        target_id: "platform",
+        before_summary: null,
+        after_summary: null,
+        correlation_id: null,
+        session_id: null,
+        reason: null,
+        approval_reference: null,
+        actor_display_name: "Amara Diallo",
+        actor_email: "amara@example.test",
+        actor_role_keys: ["auditor"],
+        actor_role_scopes: [
+          "not-an-object",
+          { roleKey: 7 },
+          { roleKey: "auditor", scopeType: null, scopeId: null },
+        ],
+        capability: null,
+      },
+    ]
+
+    const page = await listAuditEntries(client as never, { limit: 10 })
+    expect(page.items[0]?.actorRoleScopes).toEqual([
+      { roleKey: "auditor", scopeType: null, scopeId: null },
     ])
   })
 
