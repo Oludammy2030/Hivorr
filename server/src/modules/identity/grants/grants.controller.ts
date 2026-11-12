@@ -24,8 +24,8 @@ function parseCreateGrant(body: unknown): CreateGrantInput {
   return parseBody(createGrantRequest, body) as CreateGrantInput
 }
 
-function parseRevokeGrant(body: unknown): { reason: string } {
-  return parseBody(revokeGrantRequest, body) as { reason: string }
+function parseRevokeGrant(body: unknown): { reason?: string } {
+  return parseBody(revokeGrantRequest, body) as { reason?: string }
 }
 
 @Controller()

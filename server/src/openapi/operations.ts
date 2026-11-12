@@ -22,7 +22,6 @@ import {
   recoveryCodesResponse,
   registerRequest,
   registrationResponse,
-  revokeGrantRequest,
   revokedSessionsResponse,
   sessionListResponse,
   sessionResponse,
@@ -506,10 +505,6 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     tag: "grants",
     audience: ["control"],
     pathParams: ["id"],
-    request: {
-      schema: revokeGrantRequest,
-      description: "The reason for the revocation",
-    },
     success: [
       {
         status: 200,

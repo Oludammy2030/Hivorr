@@ -12809,8 +12809,7 @@
                 "required": [
                   "email",
                   "grantType",
-                  "scope",
-                  "reason"
+                  "scope"
                 ],
                 "additionalProperties": false
               }
@@ -13301,28 +13300,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "description": "The reason for the revocation",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "reason": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 500
-                  }
-                },
-                "required": [
-                  "reason"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "The revoked grant",

@@ -47,7 +47,7 @@ export interface CreateGrantInput {
   readonly email: string
   readonly grantType: GrantType
   readonly scope: string
-  readonly reason: string
+  readonly reason?: string
   readonly expiresAt?: string
 }
 
@@ -188,6 +188,15 @@ export class GrantsService {
     const access = await this.access(token, context)
     this.require(context, access.capabilities, "admin.grant.manage")
 
+    const reason = input.reason?.trim()
+    if (!reason || reason.length < 3) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A reason is required to change a grant.",
+        400,
+      )
+    }
+
     if (!grantScopeIsValid(input.grantType, input.scope)) {
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -229,7 +238,7 @@ export class GrantsService {
               environment: created.rows[0].environment,
               revokedAt: null,
             },
-            input.reason,
+            reason,
           )
           return toView(created.rows[0])
         },
@@ -242,11 +251,20 @@ export class GrantsService {
   async revoke(
     token: string,
     grantId: string,
-    reason: string,
+    reasonInput: string | undefined,
     context: RequestContext,
   ): Promise<GrantView> {
     const access = await this.access(token, context)
     this.require(context, access.capabilities, "admin.grant.manage")
+
+    const reason = reasonInput?.trim()
+    if (!reason || reason.length < 3) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A reason is required to change a grant.",
+        400,
+      )
+    }
 
     try {
       return await this.database.withTransaction(
