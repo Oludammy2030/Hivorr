@@ -150,6 +150,15 @@ export const auditEntrySchema = z.object({
   actorDisplayName: z.string().nullable().optional(),
   actorEmail: z.string().nullable().optional(),
   actorRoleKeys: z.array(z.string()).optional(),
+  actorRoleScopes: z
+    .array(
+      z.object({
+        roleKey: z.string(),
+        scopeType: z.string().nullable().optional(),
+        scopeId: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
   capability: z.string().nullable().optional(),
 })
 

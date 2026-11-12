@@ -10275,6 +10275,33 @@
                           "type": "string"
                         }
                       },
+                      "actorRoleScopes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "roleKey": {
+                              "type": "string"
+                            },
+                            "scopeType": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "scopeId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "roleKey"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
                       "capability": {
                         "type": [
                           "string",

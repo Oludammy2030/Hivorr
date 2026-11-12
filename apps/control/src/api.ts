@@ -64,7 +64,14 @@ export interface AuditEntry {
   readonly actorDisplayName: string | null
   readonly actorEmail: string | null
   readonly actorRoleKeys: readonly string[]
+  readonly actorRoleScopes: readonly AuditActorRoleScope[]
   readonly capability: string | null
+}
+
+export interface AuditActorRoleScope {
+  readonly roleKey: string
+  readonly scopeType: string | null
+  readonly scopeId: string | null
 }
 
 export interface AuditPage {

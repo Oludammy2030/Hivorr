@@ -53,6 +53,7 @@ function formatTime(value: string): string {
 interface AuditActorView {
   readonly headline: string
   readonly detail: string | null
+  readonly capability: string | null
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -73,24 +74,60 @@ function roleLabel(key: string): string {
   return ROLE_LABELS[key] ?? key.split("_").join(" ")
 }
 
+function scopeLabel(scopeType: string): string {
+  return scopeType.charAt(0).toUpperCase() + scopeType.slice(1)
+}
+
+/**
+ * A role is only half the answer: the same role held at platform scope and at
+ * one department are different amounts of authority. Roles are grouped with the
+ * scopes they were held at, and a platform assignment adds nothing because it is
+ * the widest scope the role can carry.
+ */
+function describeRoles(entry: AuditEntry): string | null {
+  if (entry.actorRoleScopes.length > 0) {
+    const scopesByRole = new Map<string, Set<string>>()
+    const order: string[] = []
+    for (const held of entry.actorRoleScopes) {
+      if (!scopesByRole.has(held.roleKey)) {
+        scopesByRole.set(held.roleKey, new Set<string>())
+        order.push(held.roleKey)
+      }
+      if (held.scopeType && held.scopeType !== "platform") {
+        scopesByRole.get(held.roleKey)?.add(scopeLabel(held.scopeType))
+      }
+    }
+    return order
+      .map((roleKey) => {
+        const scopes = scopesByRole.get(roleKey)
+        return scopes && scopes.size > 0
+          ? `${roleLabel(roleKey)} (${[...scopes].join(", ")})`
+          : roleLabel(roleKey)
+      })
+      .join(", ")
+  }
+  if (entry.actorRoleKeys.length > 0) {
+    return entry.actorRoleKeys.map(roleLabel).join(", ")
+  }
+  return null
+}
+
 /**
  * The actor is a person first and a role second. Rows written before the
  * snapshot existed carry no role or name, so they fall back to the actor type
- * rather than inventing an identity.
+ * rather than inventing an identity. The capability is shown because authority
+ * can also come from a grant, where the actor holds no governance role.
  */
 function formatActor(entry: AuditEntry): AuditActorView {
   const name = entry.actorDisplayName ?? entry.actorEmail ?? null
-  const role =
-    entry.actorRoleKeys.length > 0
-      ? entry.actorRoleKeys.map(roleLabel).join(", ")
-      : null
+  const role = describeRoles(entry)
   const headline =
     role && name ? `${role} — ${name}` : (role ?? name ?? entry.actorType)
   const detail =
     entry.actorEmail && entry.actorEmail !== entry.actorDisplayName
       ? entry.actorEmail
       : null
-  return { headline, detail }
+  return { headline, detail, capability: entry.capability ?? null }
 }
 
 function Brand() {
@@ -988,6 +1025,11 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                             <div>{actor.headline}</div>
                             {actor.detail && (
                               <div className="muted">{actor.detail}</div>
+                            )}
+                            {actor.capability && (
+                              <div className="muted mono">
+                                {actor.capability}
+                              </div>
                             )}
                           </td>
                           <td className="mono">

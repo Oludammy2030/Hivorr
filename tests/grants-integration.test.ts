@@ -420,7 +420,7 @@ describeIntegration("grant management integration", () => {
 
   it("audits every grant change with a reason", async () => {
     const rows = await setup.query(
-      "select action, actor_id, target_type, reason from platform.audit_log where action like 'identity.grant_%' order by action",
+      "select action, actor_id, target_type, reason, actor_display_name, actor_role_keys, actor_role_scopes, capability from platform.audit_log where action like 'identity.grant_%' order by action",
     )
     const actions = rows.rows.map((row) => row.action)
     expect(actions).toContain("identity.grant_created")
@@ -436,5 +436,25 @@ describeIntegration("grant management integration", () => {
     expect(rows.rows.map((row) => row.reason)).toContain(
       "Support coverage ended",
     )
+    expect(
+      rows.rows.every((row) => row.capability === "admin.grant.manage"),
+    ).toBe(true)
+    expect(rows.rows.every((row) => row.actor_display_name !== null)).toBe(true)
+    // The bootstrap authority here is a grant, not a governance role, so the
+    // snapshot has no role keys and the capability is what explains the actor.
+    expect(
+      rows.rows.every(
+        (row) =>
+          Array.isArray(row.actor_role_keys) &&
+          row.actor_role_keys.length === 0,
+      ),
+    ).toBe(true)
+    expect(
+      rows.rows.every(
+        (row) =>
+          Array.isArray(row.actor_role_scopes) &&
+          row.actor_role_scopes.length === 0,
+      ),
+    ).toBe(true)
   })
 })

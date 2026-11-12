@@ -22,7 +22,7 @@
 | CP-006 | Admin module schema foundation | EP-02 | **REQUIRES_REVIEW** | `20261111000500_admin_create_organisation_tables.sql`; `20261111000600_admin_create_case_and_approval_tables.sql`; schema tests; database migration run passed 2026-11-11 |
 | CP-007 | Control shell foundation | EP-02 | **REQUIRES_REVIEW** | `react-router` routes; permission-aware navigation; `GET /v1/control/authority`; 404 and unauthorised states; **design-token migration still partial** |
 | CP-008 | Deny/allow/RLS evidence pack | EP-02 | **REQUIRES_REVIEW** | `P0-EVIDENCE-PACK.md`; `tests/control-p0-matrix.test.ts`; `tests/control-routes.test.ts`; local gates and database run green; **CI/review/staging outstanding** |
-| CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REQUIRES_REVIEW** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; actor name/email/role/capability snapshots; Actor column shows role and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
+| CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REQUIRES_REVIEW** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
 | CP-010…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
@@ -134,12 +134,12 @@
 ### CP-009 — Audit actor accountability and portal deploy parity
 
 - **Class:** `[REVIEW]` — audit schema, personal-data snapshot, API contract and deployment change.
-- **Scope in:** `platform.audit_log` actor snapshot columns; `platform.resolve_audit_actor`; control sign-in classified as `admin`; grant audit carries the authorising capability; Audit screen shows role and name in one Actor cell; Pages deployment job for all four bundles.
+- **Scope in:** `platform.audit_log` actor snapshot columns; `platform.resolve_audit_actor`; control sign-in classified as `admin`; grant audit carries the authorising capability; Audit screen shows role, assignment scope, name and capability; Pages deployment job for all four bundles.
 - **Scope out:** role administration UI; historical actor backfill (the information was never captured and is not invented); staff/partner portal content.
 - **Reuse:** `platform.audit_log`, `admin.role_assignments`, `admin.roles`, `appendAudit`, release manifest verification, `wrangler pages deploy`.
 - **Dependencies:** CP-004, CP-005.
-- **Test plan:** audit writer unit tests for actor classification, capability and snapshot fields; migration run on PostgreSQL 16.15; `pnpm test`; `bundles:check`; release-manifest verification.
-- **Audit impact:** R2 identity data (name, email) is snapshotted per governed action; no evidence or financial data. Rows written before the migration keep empty snapshots and display the actor type.
+- **Test plan:** audit writer unit tests for actor classification, capability, scope parsing and legacy rows; scope assertions in the migration run; grant snapshot assertions in the grants integration test; `pnpm test`; `bundles:check`; release-manifest verification.
+- **Audit impact:** R2 identity data (name, email) and the role scope are snapshotted per governed action; no evidence or financial data. Rows written before the migrations keep empty snapshots and display the actor type.
 - **Rollback:** the snapshot columns are additive; reverting the application restores the previous insert shape. Pages rollback is a redeploy of the previous commit's artifact.
 - **Approver:** Architect; founder for the personal-data snapshot and the audit-read presentation.
 
