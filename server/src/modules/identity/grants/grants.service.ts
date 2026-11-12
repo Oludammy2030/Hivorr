@@ -407,6 +407,7 @@ export class GrantsService {
       beforeSummary,
       afterSummary,
       reason,
+      capability: "admin.grant.manage",
       ip: context.ip,
       userAgent: context.userAgent,
       correlationId: context.correlationId,

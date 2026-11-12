@@ -73,6 +73,43 @@ describe("audit service", () => {
     expect(values[14]).toBe("approval-1")
   })
 
+  it("classifies a control sign-in as an administrator actor", async () => {
+    const client = new FakeClient()
+    await appendAudit(client as never, {
+      actorType: "user",
+      actorId: "user-1",
+      actorAudience: "control",
+      environment: "staging",
+      action: "identity.privileged_sign_in",
+      targetType: "session",
+      targetId: "session-1",
+    })
+    expect(client.calls[0]?.values?.[0]).toBe("admin")
+  })
+
+  it("writes the capability and governance context", async () => {
+    const client = new FakeClient()
+    await appendAudit(client as never, {
+      actorType: "admin",
+      actorId: "user-1",
+      actorAudience: "control",
+      environment: "staging",
+      action: "admin.user_suspended",
+      targetType: "account",
+      targetId: "account-1",
+      reason: "Confirmed fraud",
+      approvalReference: "approval-1",
+      sessionId: "session-1",
+      capability: "admin.user.manage",
+    })
+
+    const values = client.calls[0]?.values ?? []
+    expect(values[12]).toBe("session-1")
+    expect(values[13]).toBe("Confirmed fraud")
+    expect(values[14]).toBe("approval-1")
+    expect(values[15]).toBe("admin.user.manage")
+  })
+
   it("propagates an audit failure to the caller's transaction", async () => {
     const client = new FakeClient()
     client.fail = true
@@ -108,6 +145,10 @@ describe("audit service", () => {
         session_id: "session-1",
         reason: "test reason",
         approval_reference: "approval-1",
+        actor_display_name: "Amara Diallo",
+        actor_email: "amara@example.test",
+        actor_role_keys: ["founder"],
+        capability: "admin.user.read",
       },
     ]
 
@@ -141,6 +182,10 @@ describe("audit service", () => {
         sessionId: "session-1",
         reason: "test reason",
         approvalReference: "approval-1",
+        actorDisplayName: "Amara Diallo",
+        actorEmail: "amara@example.test",
+        actorRoleKeys: ["founder"],
+        capability: "admin.user.read",
       },
     ])
   })

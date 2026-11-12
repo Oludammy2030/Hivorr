@@ -147,6 +147,10 @@ export const auditEntrySchema = z.object({
   sessionId: z.string().nullable().optional(),
   reason: z.string().nullable().optional(),
   approvalReference: z.string().nullable().optional(),
+  actorDisplayName: z.string().nullable().optional(),
+  actorEmail: z.string().nullable().optional(),
+  actorRoleKeys: z.array(z.string()).optional(),
+  capability: z.string().nullable().optional(),
 })
 
 export const auditEntryListResponse = z.array(auditEntrySchema)

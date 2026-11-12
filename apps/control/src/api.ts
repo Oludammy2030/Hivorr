@@ -61,6 +61,10 @@ export interface AuditEntry {
   readonly sessionId: string | null
   readonly reason: string | null
   readonly approvalReference: string | null
+  readonly actorDisplayName: string | null
+  readonly actorEmail: string | null
+  readonly actorRoleKeys: readonly string[]
+  readonly capability: string | null
 }
 
 export interface AuditPage {

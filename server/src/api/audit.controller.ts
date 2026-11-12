@@ -165,6 +165,7 @@ export class AuditController {
           action: "admin.audit_read",
           targetType: "audit_log",
           targetId: "platform",
+          capability: "admin.audit.read",
           afterSummary: {
             ...filters,
             count: result.items.length,
