@@ -14,6 +14,7 @@ import {
   type UserSummary,
 } from "./api"
 import { NAV_GROUPS, canSee, isKnownPath, sectionFromPath } from "./routes"
+import { capabilityLabel, grantTypeLabel } from "./labels"
 
 interface LoadingView {
   kind: "loading"
@@ -631,6 +632,9 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   }
 
   const grantRows = grants ?? []
+  const activeOwnGrants = (own?.grants ?? []).filter(
+    (grant) => grantStatusOf(grant) === "active",
+  )
   const departmentSummaries = (departments ?? []).map((department) => {
     const rows = grantRows.filter(
       (grant) => grant.departmentKey === department.key,
@@ -783,7 +787,12 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
             </section>
 
             <section className="panel">
-              <h2>Capabilities</h2>
+              <div className="panel-head">
+                <h2>What you can do</h2>
+                <span className="muted">
+                  {own ? `${own.capabilities.length} allowed` : "—"}
+                </span>
+              </div>
               {own === null && <p className="muted">Loading…</p>}
               {own && own.capabilities.length === 0 && (
                 <p className="muted">
@@ -792,31 +801,58 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                 </p>
               )}
               {own && own.capabilities.length > 0 && (
-                <ul className="chip-list">
-                  {own.capabilities.map((capability) => (
-                    <li key={capability} className="chip">
-                      {capability}
-                    </li>
-                  ))}
-                </ul>
+                <details className="overview-details">
+                  <summary title="Expand the full list">
+                    <span className="overview-summary">
+                      {own.capabilities.map(capabilityLabel).join(" · ")}
+                    </span>
+                  </summary>
+                  <ul className="overview-list">
+                    {own.capabilities.map((capability) => (
+                      <li key={capability}>
+                        <span>{capabilityLabel(capability)}</span>
+                        <span className="mono muted">{capability}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               )}
             </section>
 
             <section className="panel">
-              <h2>Your grants</h2>
+              <div className="panel-head">
+                <h2>Your grants</h2>
+                <span className="muted">
+                  {own ? `${activeOwnGrants.length} active` : "—"}
+                </span>
+              </div>
               {own === null && <p className="muted">Loading…</p>}
-              {own && own.grants.length === 0 && (
+              {own && activeOwnGrants.length === 0 && (
                 <p className="muted">No active grants.</p>
               )}
-              {own && own.grants.length > 0 && (
-                <ul className="plain-list">
-                  {own.grants.map((grant) => (
-                    <li key={grant.id}>
-                      <span className="chip">{grant.grantType}</span>{" "}
-                      <span className="mono">{grant.scope}</span>
-                    </li>
-                  ))}
-                </ul>
+              {own && activeOwnGrants.length > 0 && (
+                <details className="overview-details">
+                  <summary title="Expand the full list">
+                    <span className="overview-summary">
+                      {activeOwnGrants
+                        .map(
+                          (grant) =>
+                            `${grantTypeLabel(grant.grantType)} · ${capabilityLabel(grant.scope)}`,
+                        )
+                        .join(" · ")}
+                    </span>
+                  </summary>
+                  <ul className="overview-list">
+                    {activeOwnGrants.map((grant) => (
+                      <li key={grant.id}>
+                        <span>{capabilityLabel(grant.scope)}</span>
+                        <span className="mono muted">
+                          {grant.grantType} · {grant.scope}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               )}
             </section>
           </div>
