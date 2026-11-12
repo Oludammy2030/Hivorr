@@ -7,6 +7,7 @@ import {
   type StaffInvite,
   type StaffMember,
 } from "./api"
+import { staffInviteLink } from "./portal-links"
 
 interface StaffPageProps {
   canManage: boolean
@@ -155,7 +156,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
   }
 
   const inviteLink = invite
-    ? `${window.location.origin}/invite?token=${encodeURIComponent(invite.token)}`
+    ? staffInviteLink(window.location, invite.token)
     : null
 
   return (
