@@ -65,7 +65,8 @@ record and audit history are retained.
 - Suspension revokes sessions; offboarding also revokes grants and role
   assignments.
 - Department change closes the previous membership and opens one new row.
-- API integration and control UI tests are added with the next slice.
+- The control route manifest exposes Staff only to `admin.user.read`, and the
+  invite link points at the main portal rather than the control host.
 
 ## 7. Audit impact
 
@@ -78,8 +79,8 @@ evidence, financial or production data.
 
 Forward-only. Drop `admin.staff_invites` and the five functions in a later
 approved destructive migration; existing identity accounts and staff profiles
-remain valid. The API tolerates the absence of the functions (the endpoints are
-not deployed yet).
+remain valid. The API endpoints would then fail; redeploy the previous release
+before dropping the functions.
 
 ## 9. Limits
 
