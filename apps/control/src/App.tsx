@@ -94,7 +94,10 @@ function describeRoles(entry: AuditEntry): string | null {
         order.push(held.roleKey)
       }
       if (held.scopeType && held.scopeType !== "platform") {
-        scopesByRole.get(held.roleKey)?.add(scopeLabel(held.scopeType))
+        const scoped = held.scopeId
+          ? `${scopeLabel(held.scopeType)} ${held.scopeId.slice(0, 8)}`
+          : scopeLabel(held.scopeType)
+        scopesByRole.get(held.roleKey)?.add(scoped)
       }
     }
     return order
