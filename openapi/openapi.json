@@ -10256,6 +10256,30 @@
                           "string",
                           "null"
                         ]
+                      },
+                      "actorDisplayName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "actorEmail": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "actorRoleKeys": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "capability": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
                       }
                     },
                     "required": [

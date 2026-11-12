@@ -24,20 +24,34 @@ export interface AuditEntry {
   readonly sessionId?: string | undefined
   readonly reason?: string | undefined
   readonly approvalReference?: string | undefined
+  readonly capability?: string | undefined
 }
 
 export async function appendAudit(
   client: PoolClient,
   entry: AuditEntry,
 ): Promise<void> {
+  const actorType =
+    entry.actorType === "user" && entry.actorAudience === "control"
+      ? "admin"
+      : entry.actorType === "user" && entry.actorAudience === "staff"
+        ? "staff"
+        : entry.actorType === "user" && entry.actorAudience === "partner"
+          ? "partner"
+          : entry.actorType
+
   await client.query(
     `insert into platform.audit_log
        (actor_type, actor_id, actor_audience, environment, action, target_type, target_id,
         before_summary, after_summary, ip, user_agent, correlation_id, session_id,
-        reason, approval_reference)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        reason, approval_reference, actor_display_name, actor_email, actor_role_keys,
+        capability)
+     select $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+            s.display_name, s.email, coalesce(s.role_keys, '{}'::text[]), $16
+       from (select 1) as anchor
+       left join platform.resolve_audit_actor($2) s on true`,
     [
-      entry.actorType,
+      actorType,
       entry.actorId,
       entry.actorAudience,
       entry.environment,
@@ -52,6 +66,7 @@ export async function appendAudit(
       entry.sessionId ?? null,
       entry.reason ?? null,
       entry.approvalReference ?? null,
+      entry.capability ?? null,
     ],
   )
 }
@@ -72,6 +87,10 @@ export interface AuditEntryView {
   readonly sessionId: string | null
   readonly reason: string | null
   readonly approvalReference: string | null
+  readonly actorDisplayName: string | null
+  readonly actorEmail: string | null
+  readonly actorRoleKeys: readonly string[]
+  readonly capability: string | null
 }
 
 export interface AuditQuery {
@@ -107,6 +126,10 @@ interface AuditRow {
   session_id: string | null
   reason: string | null
   approval_reference: string | null
+  actor_display_name: string | null
+  actor_email: string | null
+  actor_role_keys: string[] | null
+  capability: string | null
 }
 
 /**
@@ -122,7 +145,8 @@ export async function listAuditEntries(
     `select id, occurred_at, actor_type, actor_id, actor_audience,
             environment, action, target_type, target_id,
             before_summary, after_summary, correlation_id, session_id,
-            reason, approval_reference
+            reason, approval_reference, actor_display_name, actor_email,
+            actor_role_keys, capability
        from platform.audit_log
       where ($1::uuid is null or actor_id = $1)
         and ($2::text is null or action = $2)
@@ -168,6 +192,10 @@ export async function listAuditEntries(
       sessionId: row.session_id,
       reason: row.reason,
       approvalReference: row.approval_reference,
+      actorDisplayName: row.actor_display_name,
+      actorEmail: row.actor_email,
+      actorRoleKeys: row.actor_role_keys ?? [],
+      capability: row.capability,
     })),
     nextCursor:
       result.rows.length > bounded && last

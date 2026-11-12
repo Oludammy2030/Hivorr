@@ -930,6 +930,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                       <th>Time</th>
                       <th>Action</th>
                       <th>Actor</th>
+                      <th>Role</th>
                       <th>Target</th>
                       <th>Reason</th>
                     </tr>
@@ -939,14 +940,28 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                       <tr key={entry.id}>
                         <td>{formatTime(entry.occurredAt)}</td>
                         <td className="mono">{entry.action}</td>
-                        <td>{entry.actorType}</td>
+                        <td>
+                          <div>
+                            {entry.actorDisplayName ??
+                              entry.actorEmail ??
+                              entry.actorType}
+                          </div>
+                          {entry.actorEmail && (
+                            <div className="muted">{entry.actorEmail}</div>
+                          )}
+                        </td>
+                        <td>
+                          {entry.actorRoleKeys.length > 0
+                            ? entry.actorRoleKeys.join(", ")
+                            : entry.actorType}
+                        </td>
                         <td className="mono">
                           {entry.targetType ?? "—"}
                           {entry.targetId
                             ? `:${entry.targetId.slice(0, 8)}`
                             : ""}
                         </td>
-                        <td>{entry.reason ?? "—"}</td>
+                        <td>{entry.reason ?? "Not required"}</td>
                       </tr>
                     ))}
                   </tbody>

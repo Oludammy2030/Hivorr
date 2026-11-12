@@ -136,6 +136,7 @@ export class UsersController {
           action: "admin.users_listed",
           targetType: "user_directory",
           targetId: "platform",
+          capability: "admin.user.read",
           afterSummary: {
             query: search,
             status: statusFilter,
