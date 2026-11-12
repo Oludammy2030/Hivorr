@@ -28,7 +28,16 @@ import {
   sessionListResponse,
   sessionResponse,
   currentSessionResponse,
+  acceptStaffInviteRequest,
+  acceptStaffInviteResponse,
+  createStaffInviteRequest,
+  createStaffInviteResponse,
+  setStaffDepartmentRequest,
+  setStaffDepartmentResponse,
   signInRequest,
+  staffListResponse,
+  staffReasonRequest,
+  staffStatusResponse,
   totpConfirmRequest,
   userListResponse,
 } from "../contracts/schemas"
@@ -47,7 +56,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -548,6 +557,141 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The grant with its recorded department",
         schema: grantViewResponse,
+      },
+    ],
+  },
+  {
+    id: "listStaff",
+    method: "get",
+    path: "/v1/control/staff",
+    summary: "List staff records",
+    tag: "staff",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Staff directory for a caller holding admin.user.read; supports q and status filters",
+        schema: staffListResponse,
+      },
+    ],
+  },
+  {
+    id: "createStaffInvite",
+    method: "post",
+    path: "/v1/control/staff/invites",
+    summary: "Invite a staff member",
+    tag: "staff",
+    audience: ["control"],
+    request: {
+      schema: createStaffInviteRequest,
+      description: "Email, optional department and job title, and a reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The pending invitation and its single-use token",
+        schema: createStaffInviteResponse,
+      },
+    ],
+  },
+  {
+    id: "suspendStaff",
+    method: "post",
+    path: "/v1/control/staff/{userId}/suspend",
+    summary: "Suspend a staff member and revoke their sessions",
+    tag: "staff",
+    audience: ["control"],
+    pathParams: ["userId"],
+    request: {
+      schema: staffReasonRequest,
+      description: "Reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The new engagement status and revocation counts",
+        schema: staffStatusResponse,
+      },
+    ],
+  },
+  {
+    id: "reactivateStaff",
+    method: "post",
+    path: "/v1/control/staff/{userId}/reactivate",
+    summary: "Reactivate a staff member",
+    tag: "staff",
+    audience: ["control"],
+    pathParams: ["userId"],
+    request: {
+      schema: staffReasonRequest,
+      description: "Reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The new engagement status",
+        schema: staffStatusResponse,
+      },
+    ],
+  },
+  {
+    id: "offboardStaff",
+    method: "post",
+    path: "/v1/control/staff/{userId}/offboard",
+    summary: "Offboard a staff member and revoke access immediately",
+    tag: "staff",
+    audience: ["control"],
+    pathParams: ["userId"],
+    request: {
+      schema: staffReasonRequest,
+      description: "Reason",
+    },
+    success: [
+      {
+        status: 200,
+        description:
+          "The offboarded status, revoked sessions and revoked grants",
+        schema: staffStatusResponse,
+      },
+    ],
+  },
+  {
+    id: "setStaffDepartment",
+    method: "patch",
+    path: "/v1/control/staff/{userId}/department",
+    summary: "Assign a staff member to a department",
+    tag: "staff",
+    audience: ["control"],
+    pathParams: ["userId"],
+    request: {
+      schema: setStaffDepartmentRequest,
+      description: "Department key and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The staff member and the new department",
+        schema: setStaffDepartmentResponse,
+      },
+    ],
+  },
+  {
+    id: "acceptStaffInvite",
+    method: "post",
+    path: "/v1/auth/staff-invite/accept",
+    summary: "Accept a staff invitation",
+    tag: "staff",
+    audience: ["app"],
+    request: {
+      schema: acceptStaffInviteRequest,
+      description: "Invitation token, new password and optional display name",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The account created for the invitation",
+        schema: acceptStaffInviteResponse,
       },
     ],
   },

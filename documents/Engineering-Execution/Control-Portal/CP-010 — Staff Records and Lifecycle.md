@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | **Package** | CP-010 |
-| **Status** | `IN_PROGRESS` — database foundation only |
+| **Status** | `REQUIRES_REVIEW` — database, API, control screen and invite page implemented |
 | **Class** | `[REVIEW]` — authorization, personal data, schema |
 | **Owning phase** | EP-02 |
 | **Dependencies** | CP-002, CP-006 |
@@ -36,8 +36,6 @@ record and audit history are retained.
 
 ## 4. Scope out
 
-- Control API endpoints and screens (next slice of CP-010).
-- Invite acceptance page (next slice of CP-010).
 - Role and permission assignment (CP-012).
 - Approvals and maker-checker for destructive actions (CP-020).
 - Staff performance or workload reporting (CP-041).

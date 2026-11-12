@@ -15,6 +15,7 @@ import {
   type UserSummary,
 } from "./api"
 import { NAV_GROUPS, canSee, isKnownPath, sectionFromPath } from "./routes"
+import { StaffPage } from "./StaffPage"
 
 interface LoadingView {
   kind: "loading"
@@ -414,6 +415,8 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
 
   const capabilities = own?.capabilities ?? []
   const canReadUsers = capabilities.includes("admin.user.read")
+  const canReadStaff = capabilities.includes("admin.user.read")
+  const canManageStaff = capabilities.includes("admin.user.manage")
   const canReadGrants =
     capabilities.includes("admin.grant.read") ||
     capabilities.includes("admin.grant.manage")
@@ -1023,6 +1026,19 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </section>
             )}
           </div>
+        )}
+
+        {knownPath && section === "staff" && !canReadStaff && (
+          <section className="panel">
+            <h2>Staff</h2>
+            <p className="muted">
+              Your governance role does not include staff directory access.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "staff" && canReadStaff && (
+          <StaffPage canManage={canManageStaff} />
         )}
 
         {knownPath && section === "grants" && !canReadGrants && (
