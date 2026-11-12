@@ -549,6 +549,63 @@ h1 {
   line-height: 1.5;
 }
 
+.ok {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #16a34a;
+  background: #dcfce7;
+  border: 1px solid rgba(22, 163, 74, 0.18);
+  border-radius: 10px;
+}
+
+.button-danger {
+  background: var(--danger);
+}
+
+.button-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.invite-result {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.invite-link {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  background: #f8f9fc;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.staff-actions {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.staff-action-buttons,
+.staff-department {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.staff-department .field {
+  min-width: 220px;
+}
+
 @media (max-width: 720px) {
   .app-shell {
     grid-template-columns: 1fr;

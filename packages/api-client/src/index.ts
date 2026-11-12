@@ -113,6 +113,32 @@ export type SetGrantDepartmentRequest = { "departmentKey": string; "reason"?: st
 
 export type SetGrantDepartmentResponse = { "id": string; "userId": string; "email": string | null; "userName"?: string | null; "grantType": string; "scope": string; "environment": "production" | "staging"; "grantedBy": string | null; "expiresAt": string | null; "revokedAt": string | null; "createdAt": string; "departmentKey"?: string | null; "departmentName"?: string | null }
 
+export type ListStaffResponse = ({ "id": string; "userId": string; "email": string; "displayName": string | null; "jobTitle": string | null; "departmentKey": string | null; "departmentName": string | null; "engagementStatus": string; "startedOn": string | null; "endedOn": string | null; "confirmedFactors": number; "createdAt": string })[]
+
+export type CreateStaffInviteRequest = { "email": string; "departmentKey"?: string; "jobTitle"?: string; "reason": string }
+
+export type CreateStaffInviteResponse = { "id": string; "email": string; "departmentKey": string | null; "expiresAt": string; "token": string }
+
+export type SuspendStaffRequest = { "reason": string }
+
+export type SuspendStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number }
+
+export type ReactivateStaffRequest = { "reason": string }
+
+export type ReactivateStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number }
+
+export type OffboardStaffRequest = { "reason": string }
+
+export type OffboardStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number }
+
+export type SetStaffDepartmentRequest = { "departmentKey": string; "reason": string }
+
+export type SetStaffDepartmentResponse = { "userId": string; "departmentKey": string | null }
+
+export type AcceptStaffInviteRequest = { "token": string; "password": string; "displayName"?: string }
+
+export type AcceptStaffInviteResponse = { "email": string }
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -377,6 +403,55 @@ export function createHivorrClient(options: HivorrClientOptions) {
         `/v1/control/grants/${encodeURIComponent(params.id)}/department`,
         input,
         [200],
+      ),
+    listStaff: () =>
+      request<ListStaffResponse>(
+        "GET",
+        "/v1/control/staff",
+        undefined,
+        [200],
+      ),
+    createStaffInvite: (input: CreateStaffInviteRequest) =>
+      request<CreateStaffInviteResponse>(
+        "POST",
+        "/v1/control/staff/invites",
+        input,
+        [201],
+      ),
+    suspendStaff: (params: { userId: string }, input: SuspendStaffRequest) =>
+      request<SuspendStaffResponse>(
+        "POST",
+        `/v1/control/staff/${encodeURIComponent(params.userId)}/suspend`,
+        input,
+        [200],
+      ),
+    reactivateStaff: (params: { userId: string }, input: ReactivateStaffRequest) =>
+      request<ReactivateStaffResponse>(
+        "POST",
+        `/v1/control/staff/${encodeURIComponent(params.userId)}/reactivate`,
+        input,
+        [200],
+      ),
+    offboardStaff: (params: { userId: string }, input: OffboardStaffRequest) =>
+      request<OffboardStaffResponse>(
+        "POST",
+        `/v1/control/staff/${encodeURIComponent(params.userId)}/offboard`,
+        input,
+        [200],
+      ),
+    setStaffDepartment: (params: { userId: string }, input: SetStaffDepartmentRequest) =>
+      request<SetStaffDepartmentResponse>(
+        "PATCH",
+        `/v1/control/staff/${encodeURIComponent(params.userId)}/department`,
+        input,
+        [200],
+      ),
+    acceptStaffInvite: (input: AcceptStaffInviteRequest) =>
+      request<AcceptStaffInviteResponse>(
+        "POST",
+        "/v1/auth/staff-invite/accept",
+        input,
+        [201],
       ),
   }
 }

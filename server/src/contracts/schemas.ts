@@ -256,6 +256,69 @@ export const userSummaryResponse = z.object({
 
 export const userListResponse = z.array(userSummaryResponse)
 
+export const staffViewResponse = z.object({
+  id: z.string(),
+  userId: z.string(),
+  email: z.string(),
+  displayName: z.string().nullable(),
+  jobTitle: z.string().nullable(),
+  departmentKey: z.string().nullable(),
+  departmentName: z.string().nullable(),
+  engagementStatus: z.string(),
+  startedOn: z.string().nullable(),
+  endedOn: z.string().nullable(),
+  confirmedFactors: z.number().int(),
+  createdAt: z.string(),
+})
+
+export const staffListResponse = z.array(staffViewResponse)
+
+export const createStaffInviteRequest = z.strictObject({
+  email: z.string().min(3).max(254),
+  departmentKey: z.string().min(1).max(64).optional(),
+  jobTitle: z.string().max(120).optional(),
+  reason: z.string().min(5).max(500),
+})
+
+export const createStaffInviteResponse = z.object({
+  id: z.string(),
+  email: z.string(),
+  departmentKey: z.string().nullable(),
+  expiresAt: z.string(),
+  token: z.string(),
+})
+
+export const staffReasonRequest = z.strictObject({
+  reason: z.string().min(5).max(500),
+})
+
+export const staffStatusResponse = z.object({
+  userId: z.string(),
+  engagementStatus: z.string(),
+  sessionsRevoked: z.number().int(),
+  grantsRevoked: z.number().int(),
+})
+
+export const setStaffDepartmentRequest = z.strictObject({
+  departmentKey: z.string().min(1).max(64),
+  reason: z.string().min(5).max(500),
+})
+
+export const setStaffDepartmentResponse = z.object({
+  userId: z.string(),
+  departmentKey: z.string().nullable(),
+})
+
+export const acceptStaffInviteRequest = z.strictObject({
+  token: z.string().min(20).max(200),
+  password: z.string().min(12).max(128),
+  displayName: z.string().min(1).max(80).optional(),
+})
+
+export const acceptStaffInviteResponse = z.object({
+  email: z.string(),
+})
+
 export const ownGrantsResponse = z.object({
   grants: grantListResponse,
   capabilities: z.array(capabilitySchema),

@@ -8,6 +8,8 @@ import { ActivityController } from "../server/src/api/activity.controller"
 import { AuditController } from "../server/src/api/audit.controller"
 import { ControlAuthorityController } from "../server/src/api/control-authority.controller"
 import { UsersController } from "../server/src/api/users.controller"
+import { StaffController } from "../server/src/api/staff.controller"
+import { StaffInviteController } from "../server/src/api/staff-invite.controller"
 import { buildDocument } from "../server/src/openapi/build"
 import { scanControllerRoutes } from "../server/src/openapi/scan"
 
@@ -25,6 +27,8 @@ describe("OpenAPI route coverage", () => {
       AuditController,
       ControlAuthorityController,
       UsersController,
+      StaffController,
+      StaffInviteController,
       GrantsController,
     ]
       .flatMap((controller) => scanControllerRoutes(controller))

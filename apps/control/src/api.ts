@@ -103,6 +103,41 @@ export interface UserList {
   readonly nextCursor: string | null
 }
 
+export interface StaffMember {
+  readonly id: string
+  readonly userId: string
+  readonly email: string
+  readonly displayName: string | null
+  readonly jobTitle: string | null
+  readonly departmentKey: string | null
+  readonly departmentName: string | null
+  readonly engagementStatus: string
+  readonly startedOn: string | null
+  readonly endedOn: string | null
+  readonly confirmedFactors: number
+  readonly createdAt: string
+}
+
+export interface StaffInvite {
+  readonly id: string
+  readonly email: string
+  readonly departmentKey: string | null
+  readonly expiresAt: string
+  readonly token: string
+}
+
+export interface StaffStatusResult {
+  readonly userId: string
+  readonly engagementStatus: string
+  readonly sessionsRevoked: number
+  readonly grantsRevoked: number
+}
+
+export interface StaffDepartmentResult {
+  readonly userId: string
+  readonly departmentKey: string | null
+}
+
 export interface CreateGrantInput {
   readonly email: string
   readonly grantType: string
@@ -245,6 +280,45 @@ export const api = {
       `/control/audit${suffix ? `?${suffix}` : ""}`,
     )
   },
+  listStaff: (query: string, status: string) => {
+    const params = new URLSearchParams()
+    if (query.trim()) params.set("q", query.trim())
+    if (status.trim()) params.set("status", status.trim())
+    const suffix = params.toString()
+    return request<readonly StaffMember[]>(
+      `/control/staff${suffix ? `?${suffix}` : ""}`,
+    )
+  },
+  inviteStaff: (input: {
+    email: string
+    departmentKey?: string
+    jobTitle?: string
+    reason: string
+  }) =>
+    request<StaffInvite>("/control/staff/invites", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  setStaffStatus: (
+    userId: string,
+    action: "suspend" | "reactivate" | "offboard",
+    reason: string,
+  ) =>
+    request<StaffStatusResult>(
+      `/control/staff/${encodeURIComponent(userId)}/${action}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      },
+    ),
+  setStaffDepartment: (userId: string, departmentKey: string, reason: string) =>
+    request<StaffDepartmentResult>(
+      `/control/staff/${encodeURIComponent(userId)}/department`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ departmentKey, reason }),
+      },
+    ),
 }
 
 export function isMfaChallenge(

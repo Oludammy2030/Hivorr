@@ -1,4 +1,4 @@
-export type Section = "overview" | "users" | "grants" | "audit"
+export type Section = "overview" | "users" | "staff" | "grants" | "audit"
 
 export interface SectionLink {
   readonly id: Section
@@ -25,6 +25,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         id: "users",
         label: "Users",
         path: "/users",
+        capabilities: ["admin.user.read"],
+      },
+      {
+        id: "staff",
+        label: "Staff",
+        path: "/staff",
         capabilities: ["admin.user.read"],
       },
       {
@@ -56,6 +62,7 @@ interface SectionPath {
 export const SECTION_PATHS: readonly SectionPath[] = [
   { section: "overview", path: "/" },
   { section: "users", path: "/users" },
+  { section: "staff", path: "/staff" },
   { section: "grants", path: "/grants" },
   { section: "audit", path: "/audit" },
 ]

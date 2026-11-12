@@ -21,6 +21,9 @@ import { ActivityController } from "./api/activity.controller"
 import { AuditController } from "./api/audit.controller"
 import { ControlAuthorityController } from "./api/control-authority.controller"
 import { UsersController } from "./api/users.controller"
+import { StaffController } from "./api/staff.controller"
+import { StaffInviteController } from "./api/staff-invite.controller"
+import { StaffService } from "./modules/admin/staff.service"
 import { ProfileService } from "./modules/profile/profile.service"
 
 @Module({})
@@ -36,6 +39,8 @@ export class AppModule {
         AuditController,
         ControlAuthorityController,
         UsersController,
+        StaffController,
+        StaffInviteController,
         GrantsController,
       ],
       providers: [
@@ -63,6 +68,7 @@ export class AppModule {
         IdentityService,
         ProfileService,
         GrantsService,
+        StaffService,
       ],
     }
   }
