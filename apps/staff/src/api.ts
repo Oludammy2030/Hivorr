@@ -23,6 +23,27 @@ export interface MfaChallenge {
   readonly expiresAt: string
 }
 
+export interface Grant {
+  readonly id: string
+  readonly userId: string
+  readonly email: string | null
+  readonly userName: string | null
+  readonly grantType: string
+  readonly scope: string
+  readonly environment: string
+  readonly grantedBy: string | null
+  readonly expiresAt: string | null
+  readonly revokedAt: string | null
+  readonly createdAt: string
+  readonly departmentKey: string | null
+  readonly departmentName: string | null
+}
+
+export interface OwnGrants {
+  readonly grants: readonly Grant[]
+  readonly capabilities: readonly string[]
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -90,6 +111,7 @@ export const api = {
     request<void>("/auth/sign-out", {
       method: "POST",
     }),
+  grants: () => request<OwnGrants>("/grants"),
 }
 
 export function isMfaChallenge(
