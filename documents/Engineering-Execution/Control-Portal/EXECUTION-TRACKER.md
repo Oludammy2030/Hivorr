@@ -177,6 +177,7 @@
 | PR #63 (invite link targets the main portal) | Merged into `staging`; CI run `43301288438` green |
 | PR #64 (evidence record) | Merged into `staging`; CI run `43304311084` green |
 | PR #65 (acceptance rate limit and audit correction) | Merged into `staging`; CI run `43306927743` green; Fly deployment green |
+| PR #67 (attach an existing account as staff) | Merged into `staging`; CI run `43316369230` green; Fly deployment green; `admin.attach_staff_profile` present on staging |
 | Staging deployment gate | Runs `43301894294` and later green; Pages job deployed all four bundles |
 | `pnpm typecheck`, `lint`, `format:check`, `lint:boundaries`, `docs:check`, `lint:migrations`, `config:check` | PASS |
 | `pnpm test` | PASS — 53 files, 369 passed, 32 skipped |
