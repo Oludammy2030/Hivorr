@@ -119,6 +119,10 @@ export type CreateStaffInviteRequest = { "email": string; "departmentKey"?: stri
 
 export type CreateStaffInviteResponse = { "id": string; "email": string; "departmentKey": string | null; "expiresAt": string; "token": string }
 
+export type AttachStaffProfileRequest = { "email": string; "departmentKey"?: string; "jobTitle"?: string; "reason": string }
+
+export type AttachStaffProfileResponse = { "userId": string; "staffProfileId": string; "email": string; "departmentKey": string | null }
+
 export type SuspendStaffRequest = { "reason": string }
 
 export type SuspendStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number }
@@ -415,6 +419,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<CreateStaffInviteResponse>(
         "POST",
         "/v1/control/staff/invites",
+        input,
+        [201],
+      ),
+    attachStaffProfile: (input: AttachStaffProfileRequest) =>
+      request<AttachStaffProfileResponse>(
+        "POST",
+        "/v1/control/staff/attach",
         input,
         [201],
       ),

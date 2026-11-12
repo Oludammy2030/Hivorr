@@ -35,6 +35,11 @@ export function StaffPage({ canManage }: StaffPageProps) {
   const [inviteDepartment, setInviteDepartment] = useState("")
   const [inviteJobTitle, setInviteJobTitle] = useState("")
   const [inviteReason, setInviteReason] = useState("")
+  const [attachEmail, setAttachEmail] = useState("")
+  const [attachDepartment, setAttachDepartment] = useState("")
+  const [attachJobTitle, setAttachJobTitle] = useState("")
+  const [attachReason, setAttachReason] = useState("")
+  const [attached, setAttached] = useState<string | null>(null)
   const [error, setError] = useState<string | undefined>()
   const [busy, setBusy] = useState(false)
 
@@ -106,6 +111,31 @@ export function StaffPage({ canManage }: StaffPageProps) {
       setInviteDepartment("")
       setInviteJobTitle("")
       setInviteReason("")
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAttach(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(undefined)
+    setAttached(null)
+    setBusy(true)
+    try {
+      const created = await api.attachStaffProfile({
+        email: attachEmail,
+        ...(attachDepartment ? { departmentKey: attachDepartment } : {}),
+        ...(attachJobTitle.trim() ? { jobTitle: attachJobTitle.trim() } : {}),
+        reason: attachReason,
+      })
+      setAttached(`${created.email} is now a staff member.`)
+      setAttachEmail("")
+      setAttachDepartment("")
+      setAttachJobTitle("")
+      setAttachReason("")
+      await reload(created.userId)
     } catch (value) {
       setError(errorMessage(value))
     } finally {
@@ -275,6 +305,71 @@ export function StaffPage({ canManage }: StaffPageProps) {
         </section>
       )}
 
+      {canManage && (
+        <details className="panel">
+          <summary>Add an existing account as staff</summary>
+          <p className="muted attach-intro">
+            Use this when the person already signed up at the main portal and
+            should not receive a new-account invitation.
+          </p>
+          <form className="form" onSubmit={handleAttach}>
+            <div className="form-row">
+              <label className="field">
+                <span>Account email</span>
+                <input
+                  type="email"
+                  required
+                  value={attachEmail}
+                  onChange={(event) => setAttachEmail(event.target.value)}
+                  disabled={busy}
+                />
+              </label>
+              <label className="field">
+                <span>Department</span>
+                <select
+                  value={attachDepartment}
+                  onChange={(event) => setAttachDepartment(event.target.value)}
+                  disabled={busy}
+                >
+                  <option value="">Unassigned</option>
+                  {departments.map((department) => (
+                    <option key={department.key} value={department.key}>
+                      {department.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Job title</span>
+                <input
+                  type="text"
+                  value={attachJobTitle}
+                  onChange={(event) => setAttachJobTitle(event.target.value)}
+                  disabled={busy}
+                />
+              </label>
+            </div>
+            <label className="field">
+              <span>Reason</span>
+              <input
+                type="text"
+                required
+                minLength={5}
+                value={attachReason}
+                onChange={(event) => setAttachReason(event.target.value)}
+                placeholder="Why this account is joining staff"
+                disabled={busy}
+              />
+            </label>
+            <button className="button" type="submit" disabled={busy}>
+              {busy ? "Adding…" : "Add as staff"}
+            </button>
+          </form>
+
+          {attached && <p className="ok attach-result">{attached}</p>}
+        </details>
+      )}
+
       <section className="panel">
         <div className="panel-head">
           <h2>Staff</h2>
@@ -285,8 +380,8 @@ export function StaffPage({ canManage }: StaffPageProps) {
 
         {members && members.length === 0 && (
           <p className="muted">
-            No staff records match this filter. Create an invitation to add the
-            first staff member.
+            No staff records match this filter. Invite someone new, or add an
+            existing account as staff.
           </p>
         )}
 

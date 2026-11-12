@@ -399,6 +399,26 @@ h1 {
   letter-spacing: -0.2px;
 }
 
+.panel > summary {
+  cursor: pointer;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.panel[open] > summary {
+  margin-bottom: 14px;
+}
+
+.attach-intro {
+  margin: 0 0 14px;
+}
+
+.attach-result {
+  margin-top: 14px;
+}
+
 .chip-list {
   display: flex;
   flex-wrap: wrap;

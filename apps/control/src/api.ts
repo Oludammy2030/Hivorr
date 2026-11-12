@@ -133,6 +133,13 @@ export interface StaffStatusResult {
   readonly grantsRevoked: number
 }
 
+export interface AttachedStaffProfile {
+  readonly userId: string
+  readonly staffProfileId: string
+  readonly email: string
+  readonly departmentKey: string | null
+}
+
 export interface StaffDepartmentResult {
   readonly userId: string
   readonly departmentKey: string | null
@@ -296,6 +303,16 @@ export const api = {
     reason: string
   }) =>
     request<StaffInvite>("/control/staff/invites", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  attachStaffProfile: (input: {
+    email: string
+    departmentKey?: string
+    jobTitle?: string
+    reason: string
+  }) =>
+    request<AttachedStaffProfile>("/control/staff/attach", {
       method: "POST",
       body: JSON.stringify(input),
     }),

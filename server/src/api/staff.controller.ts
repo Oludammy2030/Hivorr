@@ -15,6 +15,7 @@ import { Audience } from "../common/audience"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
 import {
+  attachStaffProfileRequest,
   createStaffInviteRequest,
   setStaffDepartmentRequest,
   staffReasonRequest,
@@ -65,6 +66,26 @@ export class StaffController {
     )
 
     return this.staff.invite({
+      accountId: session.accountId,
+      userId: session.userId,
+      context,
+      email: input.email,
+      departmentKey: input.departmentKey,
+      jobTitle: input.jobTitle,
+      reason: input.reason,
+    })
+  }
+
+  @Post("attach")
+  async attachExisting(@Body() body: unknown, @Req() request: FastifyRequest) {
+    const input = parseBody(attachStaffProfileRequest, body)
+    const context = requestContext(this.config, request)
+    const session = await this.identity.getSession(
+      accessToken(request, context),
+      context,
+    )
+
+    return this.staff.attachExisting({
       accountId: session.accountId,
       userId: session.userId,
       context,
