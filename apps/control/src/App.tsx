@@ -124,8 +124,14 @@ function describeRoles(entry: AuditEntry): string | null {
 function formatActor(entry: AuditEntry): AuditActorView {
   const name = entry.actorDisplayName ?? entry.actorEmail ?? null
   const role = describeRoles(entry)
+  const nameIsRole =
+    name !== null &&
+    role !== null &&
+    role.toLowerCase().includes(name.toLowerCase())
   const headline =
-    role && name ? `${role} — ${name}` : (role ?? name ?? entry.actorType)
+    role && name && !nameIsRole
+      ? `${role} — ${name}`
+      : (role ?? name ?? entry.actorType)
   const detail =
     entry.actorEmail && entry.actorEmail !== entry.actorDisplayName
       ? entry.actorEmail
