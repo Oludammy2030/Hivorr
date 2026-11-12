@@ -2,11 +2,14 @@
  * Presentation labels for capability and grant identifiers.
  *
  * These strings are display only. Authorisation never depends on them: the
- * capability keys in `packages/shared/src/capabilities.ts` stay the contract,
- * and the server remains the only place that decides what a caller may do.
+ * capability keys in `capabilities.ts` stay the contract, and the server
+ * remains the only place that decides what a caller may do.
+ *
+ * Every portal imports this module, so the same authority is described the same
+ * way in the control, staff and partner shells.
  */
 
-const CAPABILITY_LABELS: Record<string, string> = {
+const CAPABILITY_LABELS: Readonly<Record<string, string>> = {
   "session.read": "Use your signed-in session",
   "profile.read.self": "See your own profile",
   "profile.update.self": "Edit your own profile",
@@ -38,7 +41,7 @@ const CAPABILITY_LABELS: Record<string, string> = {
   "platform.engineering": "Platform engineering access",
 }
 
-const GRANT_TYPE_LABELS: Record<string, string> = {
+const GRANT_TYPE_LABELS: Readonly<Record<string, string>> = {
   admin: "Administrator",
   staff: "Staff",
   partner: "Partner",

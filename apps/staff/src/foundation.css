@@ -253,3 +253,55 @@ h1 {
     border-radius: 18px;
   }
 }
+
+/* Compact, expandable capability summary. Shared with the control portal. */
+.overview-block {
+  display: grid;
+  gap: 6px;
+}
+
+.overview-details > summary {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--body);
+  cursor: pointer;
+}
+
+.overview-details > summary:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.overview-summary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 4px;
+}
+
+.overview-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.overview-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.overview-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}

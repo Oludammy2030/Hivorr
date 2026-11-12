@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react"
+import { capabilityLabel } from "@hivorr/shared"
 
 import {
   api,
@@ -40,6 +41,9 @@ function formatTime(value: string): string {
 export function App() {
   const [view, setView] = useState<View>({ kind: "loading" })
   const [busy, setBusy] = useState(false)
+  const [capabilities, setCapabilities] = useState<readonly string[] | null>(
+    null,
+  )
 
   useEffect(() => {
     let active = true
@@ -56,6 +60,22 @@ export function App() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    if (view.kind !== "signedIn") return
+    let active = true
+    api
+      .grants()
+      .then((value) => {
+        if (active) setCapabilities(value.capabilities)
+      })
+      .catch(() => {
+        if (active) setCapabilities([])
+      })
+    return () => {
+      active = false
+    }
+  }, [view.kind])
 
   async function handleSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -262,6 +282,27 @@ export function App() {
                 <dd className="mono">{view.session.sessionId}</dd>
               </div>
             </dl>
+
+            {capabilities !== null && capabilities.length > 0 && (
+              <div className="overview-block">
+                <p className="muted">What you can do</p>
+                <details className="overview-details">
+                  <summary title="Expand the full list">
+                    <span className="overview-summary">
+                      {capabilities.map(capabilityLabel).join(" · ")}
+                    </span>
+                  </summary>
+                  <ul className="overview-list">
+                    {capabilities.map((capability) => (
+                      <li key={capability}>
+                        <span>{capabilityLabel(capability)}</span>
+                        <span className="mono muted">{capability}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </div>
+            )}
 
             <button
               className="button button-quiet"

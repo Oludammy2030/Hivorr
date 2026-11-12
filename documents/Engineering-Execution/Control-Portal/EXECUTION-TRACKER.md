@@ -171,6 +171,9 @@
 8. Departments are seeded by migration and there is no department administration screen yet. A grant
    is placed in a department when it is created; grants issued before CP-011 appear under
    "Unassigned" until an administrator records the department. (CP-011)
+9. Capability and grant labels live in `packages/shared/src/labels.ts` so every portal explains
+   authority the same way. Control and staff consume it today; the partner portal is still a
+   foundation shell with no authorisation screen to label.
 
 ---
 

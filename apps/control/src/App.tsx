@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { NavLink, useLocation } from "react-router"
+import { capabilityLabel, grantTypeLabel } from "@hivorr/shared"
 
 import {
   api,
@@ -14,7 +15,6 @@ import {
   type UserSummary,
 } from "./api"
 import { NAV_GROUPS, canSee, isKnownPath, sectionFromPath } from "./routes"
-import { capabilityLabel, grantTypeLabel } from "./labels"
 
 interface LoadingView {
   kind: "loading"
