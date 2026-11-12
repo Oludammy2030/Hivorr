@@ -10,8 +10,25 @@ about 6 seconds**; the worker is kept at **zero** because it has no traffic to w
 with `scripts/staging-offline.ps1`.
 
 Remaining for a production-grade staging environment: database certificate verification
-(`DATABASE_SSL_CA`), automated Pages deployment from the release manifest, and deploying the current
-release digest so the session and activity routes are present (`F-49`).
+(`DATABASE_SSL_CA`) and deploying the current release digest so the session and activity routes are
+present (`F-49`).
+
+The four Pages bundles are deployed by the staging pipeline, not by hand. `deploy-staging.yml`
+downloads the verified release artifact, re-verifies it against the release manifest, and deploys
+`main`, `control`, `staff` and `partner` to their Pages projects with the commit hash recorded. This
+closes the drift that let the API and the frontends ship different commits: an API-only release no
+longer leaves the control portal on an older bundle.
+
+The rollout is gated on two staging settings:
+
+| Setting | Kind | Purpose |
+| --- | --- | --- |
+| `CLOUDFLARE_PAGES_ENABLED` | repository variable, value `true` | Enables the Pages job. Unset it to build without publishing. |
+| `CLOUDFLARE_ACCOUNT_ID` | repository variable | Selects the Cloudflare account for `wrangler pages deploy`. |
+| `CLOUDFLARE_API_TOKEN` | staging environment secret | Pages:Edit token for the four staging projects only. |
+
+If the variable is enabled and the secret is missing, the job fails with an explicit message rather
+than silently skipping the frontends.
 
 ## 1. Remaining execution prerequisites
 
@@ -148,7 +165,11 @@ automation that performs these steps.
 1. Create the four recorded projects — `hivorr-staging-main`, `hivorr-staging-control`,
    `hivorr-staging-staff`, `hivorr-staging-partner` — each bound to its flattened custom domain.
    `staging.` is a deployment target, not a path rewrite.
-2. Deploy the four bundles from the same staging release artifact. Do not rebuild for a host.
+2. Deploy the four bundles from the same staging release artifact. Do not rebuild for a host. The
+   `deploy-pages` job in `deploy-staging.yml` does this: it downloads `staging-build-<sha>`, verifies it
+   against the release manifest, deploys each bundle with `--branch staging --commit-hash <sha>`, and
+   smoke-tests the main host. A missing `CLOUDFLARE_API_TOKEN` fails the job instead of leaving the
+   frontends on an older bundle.
 3. Add security headers at the edge: HSTS without `preload`, CSP, frame protection, permissions
    policy, and `noindex` for the privileged and staging hosts.
 4. Add the `/api/*` rewrite to the staging Fly.io API origin. No other path may reach the API.

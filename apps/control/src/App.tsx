@@ -50,6 +50,49 @@ function formatTime(value: string): string {
   })
 }
 
+interface AuditActorView {
+  readonly headline: string
+  readonly detail: string | null
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  founder: "Founder",
+  governance_admin: "Governance Administrator",
+  verification_officer: "Verification Officer",
+  support_officer: "Support Officer",
+  operations_officer: "Operations Officer",
+  finance_officer: "Finance Officer",
+  investigator: "Investigator",
+  compliance_reviewer: "Compliance Reviewer",
+  partner_manager: "Partner Manager",
+  auditor: "Auditor",
+  department_manager: "Department Manager",
+}
+
+function roleLabel(key: string): string {
+  return ROLE_LABELS[key] ?? key.split("_").join(" ")
+}
+
+/**
+ * The actor is a person first and a role second. Rows written before the
+ * snapshot existed carry no role or name, so they fall back to the actor type
+ * rather than inventing an identity.
+ */
+function formatActor(entry: AuditEntry): AuditActorView {
+  const name = entry.actorDisplayName ?? entry.actorEmail ?? null
+  const role =
+    entry.actorRoleKeys.length > 0
+      ? entry.actorRoleKeys.map(roleLabel).join(", ")
+      : null
+  const headline =
+    role && name ? `${role} — ${name}` : (role ?? name ?? entry.actorType)
+  const detail =
+    entry.actorEmail && entry.actorEmail !== entry.actorDisplayName
+      ? entry.actorEmail
+      : null
+  return { headline, detail }
+}
+
 function Brand() {
   return (
     <div className="brand">
@@ -930,40 +973,33 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                       <th>Time</th>
                       <th>Action</th>
                       <th>Actor</th>
-                      <th>Role</th>
                       <th>Target</th>
                       <th>Reason</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {audit.map((entry) => (
-                      <tr key={entry.id}>
-                        <td>{formatTime(entry.occurredAt)}</td>
-                        <td className="mono">{entry.action}</td>
-                        <td>
-                          <div>
-                            {entry.actorDisplayName ??
-                              entry.actorEmail ??
-                              entry.actorType}
-                          </div>
-                          {entry.actorEmail && (
-                            <div className="muted">{entry.actorEmail}</div>
-                          )}
-                        </td>
-                        <td>
-                          {entry.actorRoleKeys.length > 0
-                            ? entry.actorRoleKeys.join(", ")
-                            : entry.actorType}
-                        </td>
-                        <td className="mono">
-                          {entry.targetType ?? "—"}
-                          {entry.targetId
-                            ? `:${entry.targetId.slice(0, 8)}`
-                            : ""}
-                        </td>
-                        <td>{entry.reason ?? "Not required"}</td>
-                      </tr>
-                    ))}
+                    {audit.map((entry) => {
+                      const actor = formatActor(entry)
+                      return (
+                        <tr key={entry.id}>
+                          <td>{formatTime(entry.occurredAt)}</td>
+                          <td className="mono">{entry.action}</td>
+                          <td>
+                            <div>{actor.headline}</div>
+                            {actor.detail && (
+                              <div className="muted">{actor.detail}</div>
+                            )}
+                          </td>
+                          <td className="mono">
+                            {entry.targetType ?? "—"}
+                            {entry.targetId
+                              ? `:${entry.targetId.slice(0, 8)}`
+                              : ""}
+                          </td>
+                          <td>{entry.reason ?? "Not required"}</td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
