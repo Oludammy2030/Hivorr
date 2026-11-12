@@ -51,6 +51,13 @@ export interface StaffDepartmentResult {
   readonly departmentKey: string | null
 }
 
+export interface AttachStaffProfileResult {
+  readonly userId: string
+  readonly staffProfileId: string
+  readonly email: string
+  readonly departmentKey: string | null
+}
+
 function pgCode(error: unknown): string | undefined {
   if (typeof error === "object" && error !== null && "code" in error) {
     const value = (error as { code?: unknown }).code
@@ -59,7 +66,15 @@ function pgCode(error: unknown): string | undefined {
   return undefined
 }
 
-function mapDatabaseError(error: unknown): never {
+interface DatabaseErrorMessages {
+  readonly notFound?: string
+  readonly conflict?: string
+}
+
+function mapDatabaseError(
+  error: unknown,
+  messages: DatabaseErrorMessages = {},
+): never {
   switch (pgCode(error)) {
     case "42501":
       throw new ApiError(
@@ -70,13 +85,14 @@ function mapDatabaseError(error: unknown): never {
     case "P0002":
       throw new ApiError(
         "NOT_FOUND",
-        "The staff record or invitation was not found.",
+        messages.notFound ?? "The staff record or invitation was not found.",
         404,
       )
     case "23505":
       throw new ApiError(
         "CONFLICT",
-        "A pending invitation or account already exists for this email.",
+        messages.conflict ??
+          "A pending invitation or account already exists for this email.",
         409,
       )
     case "22023":
@@ -325,6 +341,68 @@ export class StaffService {
       )
     } catch (error) {
       mapDatabaseError(error)
+    }
+  }
+
+  async attachExisting(input: {
+    accountId: string
+    userId: string
+    context: RequestContext
+    email: string
+    departmentKey?: string
+    jobTitle?: string
+    reason: string
+  }): Promise<AttachStaffProfileResult> {
+    try {
+      return await this.database.withTransaction(
+        { identity: { accountId: input.accountId, userId: input.userId } },
+        async (transaction) => {
+          const result = await transaction.query<{
+            user_id: string
+            staff_profile_id: string
+            email: string
+            department_key: string | null
+          }>("select * from admin.attach_staff_profile($1, $2, $3, $4)", [
+            input.email,
+            input.jobTitle ?? null,
+            input.departmentKey ?? null,
+            input.reason,
+          ])
+          const row = result.rows[0]
+
+          await appendAudit(transaction.client, {
+            actorType: "user",
+            actorId: input.userId,
+            actorAudience: input.context.audience,
+            environment: input.context.environment,
+            action: "admin.staff_profile_attached",
+            targetType: "user",
+            targetId: row.user_id,
+            afterSummary: {
+              email: row.email,
+              jobTitle: input.jobTitle ?? null,
+              departmentKey: row.department_key,
+            },
+            ip: input.context.ip,
+            userAgent: input.context.userAgent,
+            correlationId: input.context.correlationId,
+            reason: input.reason,
+            capability: "admin.user.manage",
+          })
+
+          return {
+            userId: row.user_id,
+            staffProfileId: row.staff_profile_id,
+            email: row.email,
+            departmentKey: row.department_key,
+          }
+        },
+      )
+    } catch (error) {
+      mapDatabaseError(error, {
+        notFound: "No Hivorr account uses this email.",
+        conflict: "This account is already a staff member.",
+      })
     }
   }
 

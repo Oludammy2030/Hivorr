@@ -29,6 +29,8 @@ record and audit history are retained.
 - `admin.create_staff_invite` gated by `admin.user.manage`.
 - `admin.accept_staff_invite` creates the identity account, credential, owner
   membership, staff profile and department membership atomically.
+- `admin.attach_staff_profile` for an existing Hivorr account that should
+  become staff without a new invitation.
 - `admin.set_staff_status` for active, suspended, leave and offboarded.
 - `admin.set_staff_department` with an effective-dated membership.
 - Immediate session revocation on suspension and offboarding.
@@ -46,7 +48,7 @@ record and audit history are retained.
 |---|---|
 | Invite token | 32 random bytes, stored only as a SHA-256 hash; single use; 7-day default expiry |
 | Duplicate invite | One pending invite per email, enforced by a partial unique index |
-| Existing account | Invite creation refuses an email that already has an identity account |
+| Existing account | Invite creation refuses an email that already has an identity account; the administrator adds that account as staff instead, which creates the profile and initial department membership without a new email or account |
 | Acceptance | Creates account, user, credential, owner membership, staff profile and department membership in one transaction |
 | Engagement status | `invited → active` on acceptance; `suspended`, `leave`, `offboarded` afterwards |
 | Suspension | Revokes every active session for the user |
@@ -63,6 +65,8 @@ record and audit history are retained.
 - Invite creation rejects an invalid email, a missing reason, an unknown
   department and an existing account.
 - Acceptance consumes the token once; a second attempt returns not-found.
+- Attaching an existing account creates the staff profile once; a second
+  attempt and an unknown email are refused.
 - Suspension revokes sessions; offboarding also revokes grants and role
   assignments.
 - Department change closes the previous membership and opens one new row.
@@ -87,5 +91,7 @@ before dropping the functions.
 
 - Invitations do not grant Cloudflare Access; the Access policy is separate and
   must include the staff email.
+- Invitations only create new accounts. An existing account becomes staff
+  through the "Add an existing account as staff" action.
 - Invitations do not grant a Hivorr capability; CP-012 assigns roles.
 - A suspended staff member keeps their account and can be reactivated.

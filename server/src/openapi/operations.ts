@@ -30,6 +30,8 @@ import {
   currentSessionResponse,
   acceptStaffInviteRequest,
   acceptStaffInviteResponse,
+  attachStaffProfileRequest,
+  attachStaffProfileResponse,
   createStaffInviteRequest,
   createStaffInviteResponse,
   setStaffDepartmentRequest,
@@ -592,6 +594,26 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 201,
         description: "The pending invitation and its single-use token",
         schema: createStaffInviteResponse,
+      },
+    ],
+  },
+  {
+    id: "attachStaffProfile",
+    method: "post",
+    path: "/v1/control/staff/attach",
+    summary: "Attach a staff profile to an existing account",
+    tag: "staff",
+    audience: ["control"],
+    request: {
+      schema: attachStaffProfileRequest,
+      description:
+        "Email of an existing account, optional department and job title, and a reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The created staff profile for the existing account",
+        schema: attachStaffProfileResponse,
       },
     ],
   },

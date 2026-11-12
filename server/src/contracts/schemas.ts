@@ -309,6 +309,20 @@ export const setStaffDepartmentResponse = z.object({
   departmentKey: z.string().nullable(),
 })
 
+export const attachStaffProfileRequest = z.strictObject({
+  email: z.string().min(3).max(254),
+  departmentKey: z.string().min(1).max(64).optional(),
+  jobTitle: z.string().max(120).optional(),
+  reason: z.string().min(5).max(500),
+})
+
+export const attachStaffProfileResponse = z.object({
+  userId: z.string(),
+  staffProfileId: z.string(),
+  email: z.string(),
+  departmentKey: z.string().nullable(),
+})
+
 export const acceptStaffInviteRequest = z.strictObject({
   token: z.string().min(20).max(200),
   password: z.string().min(12).max(128),
