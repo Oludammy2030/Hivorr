@@ -276,6 +276,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "admin",
         scope: "admin.grant.manage",
+        departmentKey: "governance",
         reason: "Test denying an unauthorised caller",
       },
     })
@@ -291,6 +292,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "staff",
         scope: "staff.support.handle",
+        departmentKey: "customer_care",
         reason: "Support queue coverage",
       },
     })
@@ -299,13 +301,43 @@ describeIntegration("grant management integration", () => {
     expect(grant).toMatchObject({
       userId: workerId,
       email: "worker@example.test",
+      userName: "worker@example.test",
       grantType: "staff",
       scope: "staff.support.handle",
       environment: "staging",
       grantedBy: adminId,
       revokedAt: null,
+      departmentKey: "customer_care",
+      departmentName: "Customer Care",
     })
     staffGrantId = grant.id
+
+    const noDepartment = await app.inject({
+      method: "POST",
+      url: "/v1/control/grants",
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: {
+        email: "worker@example.test",
+        grantType: "staff",
+        scope: "staff.support.handle",
+        reason: "Department required",
+      },
+    })
+    expect(noDepartment.statusCode).toBe(400)
+
+    const unknownDepartment = await app.inject({
+      method: "POST",
+      url: "/v1/control/grants",
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: {
+        email: "worker@example.test",
+        grantType: "staff",
+        scope: "staff.support.handle",
+        departmentKey: "not_a_department",
+        reason: "Unknown department",
+      },
+    })
+    expect(unknownDepartment.statusCode).toBe(400)
 
     const noReason = await app.inject({
       method: "POST",
@@ -315,6 +347,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "staff",
         scope: "staff.support.handle",
+        departmentKey: "customer_care",
       },
     })
     expect(noReason.statusCode).toBe(400)
@@ -327,6 +360,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "staff",
         scope: "staff.support.handle",
+        departmentKey: "customer_care",
         reason: "Duplicate request",
       },
     })
@@ -340,6 +374,7 @@ describeIntegration("grant management integration", () => {
         email: "worker@example.test",
         grantType: "staff",
         scope: "admin.grant.manage",
+        departmentKey: "customer_care",
         reason: "Invalid scope test",
       },
     })
@@ -353,6 +388,7 @@ describeIntegration("grant management integration", () => {
         email: "missing@example.test",
         grantType: "partner",
         scope: "partner.referral.read",
+        departmentKey: "operations",
         reason: "Unknown user test",
       },
     })
@@ -378,6 +414,55 @@ describeIntegration("grant management integration", () => {
       ),
     ).toBe(false)
     expect(body.capabilities).not.toContain("admin.audit.read")
+  })
+
+  it("lists departments and records the department on an existing grant", async () => {
+    const departments = await app.inject({
+      method: "GET",
+      url: "/v1/control/departments",
+      headers: { host: controlHost, cookie: adminControlCookie },
+    })
+    expect(departments.statusCode).toBe(200)
+    expect(
+      departments.json().map((department: { name: string }) => department.name),
+    ).toEqual(["Customer Care", "Financial", "Governance", "Operations"])
+
+    const denied = await app.inject({
+      method: "PATCH",
+      url: `/v1/control/grants/${staffGrantId}/department`,
+      headers: { host: controlHost, cookie: workerControlCookie, ...json },
+      payload: { departmentKey: "operations", reason: "Should be denied" },
+    })
+    expect(denied.statusCode).toBe(403)
+
+    const noReason = await app.inject({
+      method: "PATCH",
+      url: `/v1/control/grants/${staffGrantId}/department`,
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: { departmentKey: "operations" },
+    })
+    expect(noReason.statusCode).toBe(400)
+
+    const assigned = await app.inject({
+      method: "PATCH",
+      url: `/v1/control/grants/${staffGrantId}/department`,
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: {
+        departmentKey: "operations",
+        reason: "Re-homed to operations",
+      },
+    })
+    expect(assigned.statusCode).toBe(200)
+    expect(assigned.json()).toMatchObject({
+      departmentKey: "operations",
+      departmentName: "Operations",
+    })
+
+    const rows = await setup.query(
+      "select reason, after_summary from platform.audit_log where action = 'identity.grant_department_set' order by occurred_at desc limit 1",
+    )
+    expect(rows.rows[0]?.reason).toBe("Re-homed to operations")
+    expect(rows.rows[0]?.after_summary.departmentKey).toBe("operations")
   })
 
   it("revokes a grant but refuses to remove the last manager", async () => {

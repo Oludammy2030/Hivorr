@@ -7,6 +7,7 @@ import {
   isMfaChallenge,
   type AuditEntry,
   type ControlAuthority,
+  type Department,
   type Grant,
   type MfaChallenge,
   type Session,
@@ -54,6 +55,22 @@ interface AuditActorView {
   readonly headline: string
   readonly detail: string | null
   readonly capability: string | null
+}
+
+type GrantStatus = "active" | "expired" | "revoked"
+
+function grantStatusOf(grant: Grant): GrantStatus {
+  if (grant.revokedAt) return "revoked"
+  if (grant.expiresAt && new Date(grant.expiresAt).getTime() <= Date.now()) {
+    return "expired"
+  }
+  return "active"
+}
+
+function grantStatusChip(status: GrantStatus): string {
+  if (status === "active") return "chip chip-ok"
+  if (status === "expired") return "chip"
+  return "chip chip-danger"
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -380,6 +397,13 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [busy, setBusy] = useState(false)
   const [grantType, setGrantType] = useState("staff")
   const [scope, setScope] = useState("staff.support.handle")
+  const [departments, setDepartments] = useState<readonly Department[] | null>(
+    null,
+  )
+  const [grantDepartment, setGrantDepartment] = useState("")
+  const [openDepartment, setOpenDepartment] = useState<string | null>(null)
+  const [grantSearch, setGrantSearch] = useState("")
+  const [grantStatusFilter, setGrantStatusFilter] = useState("all")
   const [users, setUsers] = useState<readonly UserSummary[] | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [userSearch, setUserSearch] = useState("")
@@ -413,10 +437,14 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     if (section !== "grants" || grants !== null || !canReadGrants) return
     let active = true
     setBusy(true)
-    api
-      .listGrants()
-      .then((value) => {
-        if (active) setGrants(value)
+    Promise.all([api.listGrants(), api.listDepartments()])
+      .then(([grantRows, departmentRows]) => {
+        if (!active) return
+        setGrants(grantRows)
+        setDepartments(departmentRows)
+        setGrantDepartment(
+          (current) => current || (departmentRows[0]?.key ?? ""),
+        )
       })
       .catch((value: unknown) => {
         if (active) setError(errorMessage(value))
@@ -480,9 +508,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     const email = String(form.get("email") ?? "").trim()
     const grantType = String(form.get("grantType") ?? "staff")
     const scope = String(form.get("scope") ?? "")
+    const departmentKey = String(form.get("departmentKey") ?? "").trim()
     const reason = String(form.get("reason") ?? "").trim()
-    if (!email || !scope || reason.length < 3) {
-      setError("An email, a scope and a reason are required.")
+    if (!email || !scope || !departmentKey || reason.length < 3) {
+      setError("An email, scope, department and reason are required.")
       return
     }
 
@@ -493,10 +522,37 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
         email,
         grantType,
         scope,
+        departmentKey,
         reason,
       })
       setGrants((current) => [created, ...(current ?? [])])
       event.currentTarget.reset()
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAssignDepartment(grant: Grant, departmentKey: string) {
+    if (!departmentKey) return
+    const reason = window.prompt(
+      `Reason for recording ${grant.scope} under this department:`,
+    )
+    if (!reason || reason.trim().length < 3) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const updated = await api.setGrantDepartment(
+        grant.id,
+        departmentKey,
+        reason.trim(),
+      )
+      setGrants((current) =>
+        (current ?? []).map((entry) =>
+          entry.id === updated.id ? updated : entry,
+        ),
+      )
     } catch (value) {
       setError(errorMessage(value))
     } finally {
@@ -573,6 +629,68 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     if (status === "suspended" || status === "closed") return "chip chip-danger"
     return "chip"
   }
+
+  const grantRows = grants ?? []
+  const departmentSummaries = (departments ?? []).map((department) => {
+    const rows = grantRows.filter(
+      (grant) => grant.departmentKey === department.key,
+    )
+    const active = rows.filter((grant) => grantStatusOf(grant) === "active")
+    return {
+      key: department.key,
+      name: department.name,
+      total: rows.length,
+      active: active.length,
+      people: new Set(active.map((grant) => grant.userId)).size,
+    }
+  })
+  const unassignedGrants = grantRows.filter(
+    (grant) => grant.departmentKey === null,
+  )
+  if (unassignedGrants.length > 0) {
+    const active = unassignedGrants.filter(
+      (grant) => grantStatusOf(grant) === "active",
+    )
+    departmentSummaries.push({
+      key: "unassigned",
+      name: "Unassigned",
+      total: unassignedGrants.length,
+      active: active.length,
+      people: new Set(active.map((grant) => grant.userId)).size,
+    })
+  }
+
+  const openSummary =
+    departmentSummaries.find((summary) => summary.key === openDepartment) ??
+    null
+  const departmentGrants =
+    openDepartment === null
+      ? []
+      : openDepartment === "unassigned"
+        ? unassignedGrants
+        : grantRows.filter((grant) => grant.departmentKey === openDepartment)
+  const grantQuery = grantSearch.trim().toLowerCase()
+  const visibleGrants = departmentGrants
+    .filter((grant) => {
+      if (
+        grantStatusFilter !== "all" &&
+        grantStatusOf(grant) !== grantStatusFilter
+      ) {
+        return false
+      }
+      if (!grantQuery) return true
+      return [grant.userName, grant.email, grant.scope, grant.grantType].some(
+        (value) => (value ?? "").toLowerCase().includes(grantQuery),
+      )
+    })
+    .sort((left, right) => {
+      const leftRank = grantStatusOf(left) === "active" ? 0 : 1
+      const rightRank = grantStatusOf(right) === "active" ? 0 : 1
+      if (leftRank !== rightRank) return leftRank - rightRank
+      return (left.userName ?? left.email ?? "").localeCompare(
+        right.userName ?? right.email ?? "",
+      )
+    })
 
   return (
     <div className="app-shell">
@@ -883,12 +1001,36 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
         {knownPath && section === "grants" && canReadGrants && (
           <div className="dash-stack">
             <section className="panel">
-              <h2>Create a grant</h2>
+              <div className="panel-head">
+                <h2>Create a grant</h2>
+                <span className="muted">Every change is audited</span>
+              </div>
               <form className="form" onSubmit={handleCreateGrant}>
                 <div className="form-row">
                   <label className="field">
                     <span>User email</span>
                     <input name="email" type="email" required disabled={busy} />
+                  </label>
+                  <label className="field">
+                    <span>Department</span>
+                    <select
+                      name="departmentKey"
+                      value={grantDepartment}
+                      onChange={(event) =>
+                        setGrantDepartment(event.target.value)
+                      }
+                      disabled={busy || departments === null}
+                      required
+                    >
+                      {departments === null && (
+                        <option value="">Loading…</option>
+                      )}
+                      {(departments ?? []).map((department) => (
+                        <option key={department.key} value={department.key}>
+                          {department.name}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label className="field">
                     <span>Grant type</span>
@@ -936,62 +1078,211 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                     disabled={busy}
                   />
                 </label>
-                <button className="button" type="submit" disabled={busy}>
+                <button
+                  className="button"
+                  type="submit"
+                  disabled={busy || departments === null}
+                >
                   {busy ? "Working…" : "Create grant"}
                 </button>
               </form>
             </section>
 
-            <section className="panel">
-              <h2>Grants</h2>
-              {grants === null && <p className="muted">Loading…</p>}
-              {grants && grants.length === 0 && (
-                <p className="muted">No grants in this environment.</p>
-              )}
-              {grants && grants.length > 0 && (
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Email</th>
-                        <th>Type</th>
-                        <th>Scope</th>
-                        <th>Status</th>
-                        <th />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {grants.map((grant) => (
-                        <tr key={grant.id}>
-                          <td>{grant.email ?? grant.userId}</td>
-                          <td>{grant.grantType}</td>
-                          <td className="mono">{grant.scope}</td>
-                          <td>
-                            {grant.revokedAt ? (
-                              <span className="chip chip-danger">revoked</span>
-                            ) : (
-                              <span className="chip chip-ok">active</span>
-                            )}
-                          </td>
-                          <td>
-                            {!grant.revokedAt && (
+            {openSummary === null && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>Departments</h2>
+                  <span className="muted">
+                    {grants === null
+                      ? "Loading…"
+                      : `${grants.length} ${
+                          grants.length === 1 ? "grant" : "grants"
+                        } in this environment`}
+                  </span>
+                </div>
+                <p className="muted">
+                  Choose an area to see the grants held in it. A grant belongs
+                  to exactly one department.
+                </p>
+                {departments === null && <p className="muted">Loading…</p>}
+                {departments !== null && (
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Department</th>
+                          <th>Active grants</th>
+                          <th>People</th>
+                          <th>Total</th>
+                          <th />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {departmentSummaries.map((summary) => (
+                          <tr key={summary.key}>
+                            <td>{summary.name}</td>
+                            <td>{summary.active}</td>
+                            <td>{summary.people}</td>
+                            <td>{summary.total}</td>
+                            <td>
                               <button
                                 type="button"
                                 className="button button-quiet button-small"
-                                onClick={() => handleRevoke(grant)}
-                                disabled={busy}
+                                onClick={() => {
+                                  setOpenDepartment(summary.key)
+                                  setGrantSearch("")
+                                  setGrantStatusFilter("all")
+                                }}
                               >
-                                Revoke
+                                View
                               </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {openSummary !== null && (
+              <section className="panel">
+                <div className="panel-head">
+                  <div>
+                    <button
+                      type="button"
+                      className="button button-quiet button-small"
+                      onClick={() => setOpenDepartment(null)}
+                    >
+                      ← All departments
+                    </button>
+                  </div>
+                  <span className="muted">
+                    {openSummary.active} active · {openSummary.people}{" "}
+                    {openSummary.people === 1 ? "person" : "people"} ·{" "}
+                    {openSummary.total} total
+                  </span>
                 </div>
-              )}
-            </section>
+                <h2>{openSummary.name}</h2>
+
+                <form
+                  className="user-toolbar"
+                  onSubmit={(event) => event.preventDefault()}
+                >
+                  <input
+                    className="search-input"
+                    type="search"
+                    placeholder="Search name, email or scope"
+                    value={grantSearch}
+                    onChange={(event) => setGrantSearch(event.target.value)}
+                    aria-label="Search grants in this department"
+                  />
+                  <select
+                    className="filter-select"
+                    value={grantStatusFilter}
+                    onChange={(event) =>
+                      setGrantStatusFilter(event.target.value)
+                    }
+                    aria-label="Filter by grant status"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                    <option value="revoked">Revoked</option>
+                  </select>
+                  <span className="muted">
+                    {visibleGrants.length} of {departmentGrants.length}
+                  </span>
+                </form>
+
+                {visibleGrants.length === 0 && (
+                  <p className="muted">
+                    No grants match this view. Clear the search or choose
+                    another status.
+                  </p>
+                )}
+
+                {visibleGrants.length > 0 && (
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>User</th>
+                          <th>Type</th>
+                          <th>Scope</th>
+                          <th>Status</th>
+                          <th>Expires</th>
+                          <th />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleGrants.map((grant) => {
+                          const status = grantStatusOf(grant)
+                          return (
+                            <tr key={grant.id}>
+                              <td>
+                                <div>{grant.userName ?? "—"}</div>
+                                <div className="muted">{grant.email}</div>
+                              </td>
+                              <td>{grant.grantType}</td>
+                              <td className="mono">{grant.scope}</td>
+                              <td>
+                                <span className={grantStatusChip(status)}>
+                                  {status}
+                                </span>
+                              </td>
+                              <td>
+                                {grant.expiresAt
+                                  ? formatTime(grant.expiresAt)
+                                  : "Never"}
+                              </td>
+                              <td>
+                                {grant.departmentKey === null ? (
+                                  <select
+                                    className="filter-select"
+                                    defaultValue=""
+                                    aria-label={`Set the department for ${grant.email ?? "this grant"}`}
+                                    disabled={busy || departments === null}
+                                    onChange={(event) => {
+                                      const next = event.target.value
+                                      if (next) {
+                                        void handleAssignDepartment(grant, next)
+                                      }
+                                    }}
+                                  >
+                                    <option value="">Assign department…</option>
+                                    {(departments ?? []).map((department) => (
+                                      <option
+                                        key={department.key}
+                                        value={department.key}
+                                      >
+                                        {department.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  !grant.revokedAt && (
+                                    <button
+                                      type="button"
+                                      className="button button-quiet button-small"
+                                      onClick={() => handleRevoke(grant)}
+                                      disabled={busy}
+                                    >
+                                      Revoke
+                                    </button>
+                                  )
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         )}
 

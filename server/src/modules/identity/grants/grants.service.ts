@@ -29,6 +29,7 @@ export interface GrantView {
   readonly id: string
   readonly userId: string
   readonly email: string | null
+  readonly userName: string | null
   readonly grantType: string
   readonly scope: string
   readonly environment: EnvironmentId
@@ -36,6 +37,13 @@ export interface GrantView {
   readonly expiresAt: string | null
   readonly revokedAt: string | null
   readonly createdAt: string
+  readonly departmentKey: string | null
+  readonly departmentName: string | null
+}
+
+export interface DepartmentView {
+  readonly key: string
+  readonly name: string
 }
 
 export interface OwnGrantsView {
@@ -47,6 +55,7 @@ export interface CreateGrantInput {
   readonly email: string
   readonly grantType: GrantType
   readonly scope: string
+  readonly departmentKey?: string
   readonly reason?: string
   readonly expiresAt?: string
 }
@@ -55,6 +64,7 @@ interface GrantRow {
   id: string
   user_id: string
   email: string | null
+  display_name: string | null
   grant_type: string
   scope: string
   environment: EnvironmentId
@@ -62,6 +72,13 @@ interface GrantRow {
   expires_at: string | null
   revoked_at: string | null
   created_at: string
+  department_key: string | null
+  department_name: string | null
+}
+
+interface DepartmentRow {
+  key: string
+  name: string
 }
 
 interface Access {
@@ -94,6 +111,7 @@ function toView(row: GrantRow): GrantView {
     id: row.id,
     userId: row.user_id,
     email: row.email,
+    userName: row.display_name,
     grantType: row.grant_type,
     scope: row.scope,
     environment: row.environment,
@@ -101,12 +119,15 @@ function toView(row: GrantRow): GrantView {
     expiresAt: row.expires_at,
     revokedAt: row.revoked_at,
     createdAt: row.created_at,
+    departmentKey: row.department_key,
+    departmentName: row.department_name,
   }
 }
 
 function grantViewColumns(): string {
-  return `id, user_id, null::text as email, grant_type, scope, environment,
-          granted_by, expires_at, revoked_at, created_at`
+  return `id, user_id, null::text as email, null::text as display_name, grant_type,
+          scope, environment, granted_by, expires_at, revoked_at, created_at,
+          null::text as department_key, null::text as department_name`
 }
 
 function mapGrantError(error: unknown): Error {
@@ -114,6 +135,10 @@ function mapGrantError(error: unknown): Error {
     typeof error === "object" && error !== null && "code" in error
       ? (error as { code?: string }).code
       : undefined
+  const message =
+    typeof error === "object" && error !== null && "message" in error
+      ? String((error as { message?: unknown }).message)
+      : ""
   switch (code) {
     case "42501":
       return new ApiError(
@@ -122,7 +147,13 @@ function mapGrantError(error: unknown): Error {
         403,
       )
     case "P0002":
-      return new ApiError("NOT_FOUND", "The user or grant was not found.", 404)
+      return message.includes("department_not_found")
+        ? new ApiError(
+            "VALIDATION_FAILED",
+            "The department was not found or is not active.",
+            400,
+          )
+        : new ApiError("NOT_FOUND", "The user or grant was not found.", 404)
     case "23505":
       return new ApiError(
         "CONFLICT",
@@ -205,6 +236,27 @@ export class GrantsService {
       )
     }
 
+    const departmentKey = input.departmentKey?.trim()
+    if (!departmentKey) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A department is required to create a grant.",
+        400,
+      )
+    }
+
+    const available = (await this.queryRows(
+      "select key, name from admin.list_departments($1, $2)",
+      [access.session.userId, context.environment],
+    )) as unknown as DepartmentRow[]
+    if (!available.some((department) => department.key === departmentKey)) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "The department was not found or is not active.",
+        400,
+      )
+    }
+
     try {
       return await this.database.withTransaction(
         {
@@ -225,22 +277,115 @@ export class GrantsService {
               input.expiresAt ?? null,
             ],
           )
+          const placed = await transaction.query<GrantRow>(
+            "select * from identity.set_grant_department($1, $2, $3, $4)",
+            [
+              access.session.userId,
+              created.rows[0].id,
+              departmentKey,
+              context.environment,
+            ],
+          )
           await this.audit(
             transaction.client,
             context,
             access.session.userId,
             "identity.grant_created",
-            created.rows[0].id,
+            placed.rows[0].id,
             { exists: false },
             {
-              grantType: created.rows[0].grant_type,
-              scope: created.rows[0].scope,
-              environment: created.rows[0].environment,
+              grantType: placed.rows[0].grant_type,
+              scope: placed.rows[0].scope,
+              environment: placed.rows[0].environment,
+              departmentKey: placed.rows[0].department_key,
               revokedAt: null,
             },
             reason,
           )
-          return toView(created.rows[0])
+          return toView(placed.rows[0])
+        },
+      )
+    } catch (error) {
+      throw mapGrantError(error)
+    }
+  }
+
+  async departments(
+    token: string,
+    context: RequestContext,
+  ): Promise<readonly DepartmentView[]> {
+    const access = await this.access(token, context)
+    this.requireAny(context, access.capabilities, [
+      "admin.grant.read",
+      "admin.grant.manage",
+    ])
+
+    const rows = (await this.queryRows(
+      "select key, name from admin.list_departments($1, $2)",
+      [access.session.userId, context.environment],
+    )) as unknown as DepartmentRow[]
+    return rows.map((row) => ({
+      key: row.key,
+      name: row.name,
+    }))
+  }
+
+  async assignDepartment(
+    token: string,
+    grantId: string,
+    departmentKeyInput: string | undefined,
+    reasonInput: string | undefined,
+    context: RequestContext,
+  ): Promise<GrantView> {
+    const access = await this.access(token, context)
+    this.require(context, access.capabilities, "admin.grant.manage")
+
+    const departmentKey = departmentKeyInput?.trim()
+    if (!departmentKey) {
+      throw new ApiError("VALIDATION_FAILED", "A department is required.", 400)
+    }
+
+    const reason = reasonInput?.trim()
+    if (!reason || reason.length < 3) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A reason is required to change a grant.",
+        400,
+      )
+    }
+
+    try {
+      return await this.database.withTransaction(
+        {
+          identity: {
+            accountId: access.session.accountId,
+            userId: access.session.userId,
+          },
+        },
+        async (transaction) => {
+          const placed = await transaction.query<GrantRow>(
+            "select * from identity.set_grant_department($1, $2, $3, $4)",
+            [
+              access.session.userId,
+              grantId,
+              departmentKey,
+              context.environment,
+            ],
+          )
+          await this.audit(
+            transaction.client,
+            context,
+            access.session.userId,
+            "identity.grant_department_set",
+            placed.rows[0].id,
+            undefined,
+            {
+              departmentKey: placed.rows[0].department_key,
+              departmentName: placed.rows[0].department_name,
+            },
+            reason,
+          )
+          return toView(placed.rows[0])
         },
       )
     } catch (error) {

@@ -23,6 +23,7 @@
 | CP-007 | Control shell foundation | EP-02 | **REQUIRES_REVIEW** | `react-router` routes; permission-aware navigation; `GET /v1/control/authority`; 404 and unauthorised states; **design-token migration still partial** |
 | CP-008 | Deny/allow/RLS evidence pack | EP-02 | **REQUIRES_REVIEW** | `P0-EVIDENCE-PACK.md`; `tests/control-p0-matrix.test.ts`; `tests/control-routes.test.ts`; local gates and database run green; **CI/review/staging outstanding** |
 | CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REQUIRES_REVIEW** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
+| CP-011 | Grant organisation by department | EP-02 | **REQUIRES_REVIEW** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
 | CP-010…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
@@ -143,6 +144,18 @@
 - **Rollback:** the snapshot columns are additive; reverting the application restores the previous insert shape. Pages rollback is a redeploy of the previous commit's artifact.
 - **Approver:** Architect; founder for the personal-data snapshot and the audit-read presentation.
 
+### CP-011 — Grant organisation by department
+
+- **Class:** `[REVIEW]` — schema, authorization surface, API contract and UI change.
+- **Scope in:** `identity.grants.department_id`; four seeded departments; `identity.list_grants` read model with the holder's name and department; `identity.set_grant_department`; `admin.list_departments`; `GET /v1/control/departments`; `PATCH /v1/control/grants/:id/department`; department list, drill-in, search and status filter in the Grants screen.
+- **Scope out:** department administration UI; bulk re-homing; moving a grant between environments; staff and partner portal grant views.
+- **Reuse:** `admin.departments`, `identity.grants`, `admin.actor_has_platform_permission`, `identity.actor_has_grant`, `appendAudit`, existing grant capabilities.
+- **Dependencies:** CP-003, CP-004.
+- **Test plan:** migration run asserts the column, the seeded departments and that both new functions refuse without the capability; grants integration test proves department-required creation, unknown-department rejection, the catalogue, denial without `admin.grant.manage`, assignment with a reason and the stored audit row; `pnpm test`; `bundles:check`; OpenAPI diff additive only.
+- **Audit impact:** R3 governance metadata. Creating a grant records the department; re-homing a grant writes `identity.grant_department_set` with the operator, the department and the reason. No evidence or financial data.
+- **Rollback:** drop the column and the two functions in a forward migration; the read model falls back to the previous shape. Grants keep working because the department never authorises anything.
+- **Approver:** Architect; founder for the department catalogue and the grant grouping.
+
 ## 5. Known follow-ups
 
 1. The session capability list (`GET /v1/session`) still composes grants and activities only. Role permissions are loaded by the control user endpoint, not yet by the session view. CP-007/CP-012 will compose the full authority for presentation.
@@ -155,6 +168,9 @@
 6. Retention, legal hold, financial definitions and verification decisions remain open (O-01…O-12).
 7. CI on the exact commit and independent review are the remaining gates before CP-002/003/004 move
    from `REQUIRES_REVIEW` to `COMPLETED`.
+8. Departments are seeded by migration and there is no department administration screen yet. A grant
+   is placed in a department when it is created; grants issued before CP-011 appear under
+   "Unassigned" until an administrator records the department. (CP-011)
 
 ---
 

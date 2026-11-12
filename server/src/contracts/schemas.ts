@@ -82,6 +82,7 @@ export const createGrantRequest = z.strictObject({
   email: z.string().min(3).max(254),
   grantType: z.enum(GRANT_TYPE_VALUES),
   scope: z.string().min(1).max(80),
+  departmentKey: z.string().min(1).max(64).optional(),
   reason: z.string().min(3).max(500).optional(),
   expiresAt: z
     .string()
@@ -89,6 +90,11 @@ export const createGrantRequest = z.strictObject({
     .max(40)
     .refine((value) => !Number.isNaN(Date.parse(value)), "invalid date")
     .optional(),
+})
+
+export const setGrantDepartmentRequest = z.strictObject({
+  departmentKey: z.string().min(1).max(64),
+  reason: z.string().min(3).max(500).optional(),
 })
 
 export const revokeGrantRequest = z.strictObject({
@@ -216,6 +222,7 @@ export const grantViewResponse = z.object({
   id: z.string(),
   userId: z.string(),
   email: z.string().nullable(),
+  userName: z.string().nullable().optional(),
   grantType: z.string(),
   scope: z.string(),
   environment: environmentSchema,
@@ -223,9 +230,18 @@ export const grantViewResponse = z.object({
   expiresAt: z.string().nullable(),
   revokedAt: z.string().nullable(),
   createdAt: z.string(),
+  departmentKey: z.string().nullable().optional(),
+  departmentName: z.string().nullable().optional(),
 })
 
 export const grantListResponse = z.array(grantViewResponse)
+
+export const departmentViewResponse = z.object({
+  key: z.string(),
+  name: z.string(),
+})
+
+export const departmentListResponse = z.array(departmentViewResponse)
 
 export const userSummaryResponse = z.object({
   id: z.string(),
