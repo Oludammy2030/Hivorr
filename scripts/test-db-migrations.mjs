@@ -482,6 +482,55 @@ try {
     "a staff grant cannot hold an admin scope",
   )
 
+  const grantColumns = await testClient.query(
+    "select column_name from information_schema.columns where table_schema = 'identity' and table_name = 'grants'",
+  )
+  assert(
+    grantColumns.rows.some((row) => row.column_name === "department_id"),
+    "grants record the owning department",
+  )
+
+  const departments = await testClient.query(
+    "select key, name from admin.departments order by key",
+  )
+  assert(
+    JSON.stringify(departments.rows.map((row) => row.name)) ===
+      JSON.stringify([
+        "Customer Care",
+        "Financial",
+        "Governance",
+        "Operations",
+      ]),
+    "the staging departments are seeded",
+  )
+
+  let departmentListDenied = false
+  try {
+    await testClient.query("select * from admin.list_departments($1, 'test')", [
+      userId,
+    ])
+  } catch (error) {
+    departmentListDenied = error?.code === "42501"
+  }
+  assert(
+    departmentListDenied,
+    "the department catalogue requires a grant-read capability",
+  )
+
+  let departmentWriteDenied = false
+  try {
+    await testClient.query(
+      "select * from identity.set_grant_department($1, (select id from identity.grants where user_id = $1 limit 1), 'operations', 'test')",
+      [userId],
+    )
+  } catch (error) {
+    departmentWriteDenied = error?.code === "42501"
+  }
+  assert(
+    departmentWriteDenied,
+    "recording a department requires the grant-management capability",
+  )
+
   await testClient.query(
     "insert into profile.profiles (account_id, display_name) values ($1, $2)",
     [accountId, "Founder"],

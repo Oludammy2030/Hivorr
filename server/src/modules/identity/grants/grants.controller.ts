@@ -5,6 +5,7 @@ import {
   HttpCode,
   Inject,
   Param,
+  Patch,
   Post,
   Req,
 } from "@nestjs/common"
@@ -16,6 +17,7 @@ import { API_CONFIG, type ApiConfig } from "../../../config"
 import {
   createGrantRequest,
   revokeGrantRequest,
+  setGrantDepartmentRequest,
 } from "../../../contracts/schemas"
 import { accessToken, requestContext } from "../request-context"
 import { GrantsService, type CreateGrantInput } from "./grants.service"
@@ -26,6 +28,18 @@ function parseCreateGrant(body: unknown): CreateGrantInput {
 
 function parseRevokeGrant(body: unknown): { reason?: string } {
   return parseBody(revokeGrantRequest, body) as { reason?: string }
+}
+
+function parseSetDepartment(
+  body: unknown,
+): {
+  departmentKey: string
+  reason?: string
+} {
+  return parseBody(setGrantDepartmentRequest, body) as {
+    departmentKey: string
+    reason?: string
+  }
 }
 
 @Controller()
@@ -70,6 +84,32 @@ export class GrantsController {
     return this.grants.revoke(
       accessToken(request, context),
       id,
+      input.reason,
+      context,
+    )
+  }
+
+  @Get("control/departments")
+  @Audience("control")
+  async departments(@Req() request: FastifyRequest) {
+    const context = requestContext(this.config, request)
+    return this.grants.departments(accessToken(request, context), context)
+  }
+
+  @Patch("control/grants/:id/department")
+  @HttpCode(200)
+  @Audience("control")
+  async assignDepartment(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    const input = parseSetDepartment(body)
+    const context = requestContext(this.config, request)
+    return this.grants.assignDepartment(
+      accessToken(request, context),
+      id,
+      input.departmentKey,
       input.reason,
       context,
     )

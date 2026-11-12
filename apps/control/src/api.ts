@@ -27,6 +27,7 @@ export interface Grant {
   readonly id: string
   readonly userId: string
   readonly email: string | null
+  readonly userName: string | null
   readonly grantType: string
   readonly scope: string
   readonly environment: string
@@ -34,6 +35,13 @@ export interface Grant {
   readonly expiresAt: string | null
   readonly revokedAt: string | null
   readonly createdAt: string
+  readonly departmentKey: string | null
+  readonly departmentName: string | null
+}
+
+export interface Department {
+  readonly key: string
+  readonly name: string
 }
 
 export interface OwnGrants {
@@ -99,6 +107,7 @@ export interface CreateGrantInput {
   readonly email: string
   readonly grantType: string
   readonly scope: string
+  readonly departmentKey: string
   readonly reason: string
   readonly expiresAt?: string
 }
@@ -212,10 +221,16 @@ export const api = {
     )
   },
   listGrants: () => request<readonly Grant[]>("/control/grants"),
+  listDepartments: () => request<readonly Department[]>("/control/departments"),
   createGrant: (input: CreateGrantInput) =>
     request<Grant>("/control/grants", {
       method: "POST",
       body: JSON.stringify(input),
+    }),
+  setGrantDepartment: (id: string, departmentKey: string, reason: string) =>
+    request<Grant>(`/control/grants/${encodeURIComponent(id)}/department`, {
+      method: "PATCH",
+      body: JSON.stringify({ departmentKey, reason }),
     }),
   revokeGrant: (id: string, reason: string) =>
     request<Grant>(`/control/grants/${encodeURIComponent(id)}/revoke`, {

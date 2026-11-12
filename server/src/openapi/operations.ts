@@ -8,6 +8,7 @@ import {
   codeRequest,
   createGrantRequest,
   controlAuthorityResponse,
+  departmentListResponse,
   emailVerificationCompleteRequest,
   grantListResponse,
   grantViewResponse,
@@ -18,6 +19,7 @@ import {
   ownGrantsResponse,
   passwordResetCompleteRequest,
   passwordResetRequest,
+  setGrantDepartmentRequest,
   readinessResponse,
   recoveryCodesResponse,
   registerRequest,
@@ -32,7 +34,7 @@ import {
 } from "../contracts/schemas"
 
 export type ApiAudience = PortalId | "public"
-export type ApiMethod = "get" | "post" | "delete"
+export type ApiMethod = "get" | "post" | "patch" | "delete"
 
 export interface ApiSuccessResponse {
   readonly status: number
@@ -509,6 +511,42 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
       {
         status: 200,
         description: "The revoked grant",
+        schema: grantViewResponse,
+      },
+    ],
+  },
+  {
+    id: "listDepartments",
+    method: "get",
+    path: "/v1/control/departments",
+    summary: "List the departments that own grants",
+    tag: "grants",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Active departments for a caller holding admin.grant.read or admin.grant.manage",
+        schema: departmentListResponse,
+      },
+    ],
+  },
+  {
+    id: "setGrantDepartment",
+    method: "patch",
+    path: "/v1/control/grants/{id}/department",
+    summary: "Record the department that owns a grant",
+    tag: "grants",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: setGrantDepartmentRequest,
+      description: "Department and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The grant with its recorded department",
         schema: grantViewResponse,
       },
     ],
