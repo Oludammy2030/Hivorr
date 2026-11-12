@@ -175,9 +175,11 @@
 |---|---|
 | PR #62 (API, control screen, invite page) | Merged into `staging`; CI run `43299358738` green |
 | PR #63 (invite link targets the main portal) | Merged into `staging`; CI run `43301288438` green |
-| Staging deployment gate | Run `43301894294` green; Pages job deployed all four bundles |
+| PR #64 (evidence record) | Merged into `staging`; CI run `43304311084` green |
+| PR #65 (acceptance rate limit and audit correction) | Merged into `staging`; CI run `43306927743` green; Fly deployment green |
+| Staging deployment gate | Runs `43301894294` and later green; Pages job deployed all four bundles |
 | `pnpm typecheck`, `lint`, `format:check`, `lint:boundaries`, `docs:check`, `lint:migrations`, `config:check` | PASS |
-| `pnpm test` | PASS — 52 files, 368 passed, 32 skipped |
+| `pnpm test` | PASS — 53 files, 369 passed, 32 skipped |
 | `pnpm openapi:check`, `build:all` | PASS — 36 paths |
 | Live staging | `https://staging.hivorr.com/invite.html` serves the invitation page; the staff API route is registered |
 | `pnpm test:db` | Not run locally (Docker unavailable); the CI database job passed |
@@ -200,6 +202,9 @@
 9. Capability and grant labels live in `packages/shared/src/labels.ts` so every portal explains
    authority the same way. Control and staff consume it today; the partner portal is still a
    foundation shell with no authorisation screen to label.
+10. Staff invitations are delivered by copying the single-use link from the Staff screen; there is
+    no transactional email sender yet. The invitee's email must also be added to Cloudflare Access
+    separately. (CP-010)
 
 ---
 
