@@ -164,7 +164,7 @@
 - **Scope out:** role and permission assignment (CP-012); maker-checker approvals (CP-020); bulk import; email delivery of invitations.
 - **Reuse:** `admin.staff_profiles`, `admin.department_members`, `identity.users`, `identity.credentials`, `admin.actor_has_platform_permission`, `appendAudit`, existing controller and audience patterns.
 - **Dependencies:** CP-002, CP-006.
-- **Test plan:** migration run asserts the table, indexes, functions and grants; functions refuse without the capability; invite rejects an invalid email, a short reason, an unknown department and an existing account; acceptance consumes the token once; suspension revokes sessions and offboarding also revokes grants, role assignments and membership; control link derivation unit tests; full suite, OpenAPI and build gates.
+- **Test plan:** migration run asserts the table, indexes, functions and grants; functions refuse without the capability; invite rejects an invalid email, a short reason, an unknown department and an existing account; acceptance consumes the token once; suspension revokes sessions and offboarding also revokes grants, role assignments and membership; control link derivation and acceptance rate-limit unit tests; full suite, OpenAPI and build gates.
 - **Audit impact:** R2 personal and governance data. Invite creation, status changes, department moves and acceptance write audit rows with the operator, the reason and the capability. No evidence or financial data.
 - **Rollback:** forward-only; drop the table and functions in an approved destructive migration after redeploying the previous release. Identity accounts and staff profiles remain valid.
 - **Approver:** Architect; founder for staff personal data and immediate revocation.

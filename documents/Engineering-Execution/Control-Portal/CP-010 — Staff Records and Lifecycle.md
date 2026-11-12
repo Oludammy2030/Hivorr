@@ -54,6 +54,7 @@ record and audit history are retained.
 | Department | Keyed by `admin.departments.key`; membership is effective-dated |
 | Read model | Bounded to 200 rows, search by email/name/job title, status filter |
 | Privilege | Every function re-checks `admin.actor_has_platform_permission`; the API role has no table privileges |
+| Abuse control | Acceptance is unauthenticated, so it shares the per-IP authentication rate limit before hashing the password |
 
 ## 6. Test plan
 

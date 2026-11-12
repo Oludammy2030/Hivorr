@@ -1,7 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common"
 
-import { ApiError } from "../../common/errors"
-import type { DeploymentEnvironment } from "../../config"
+import { ApiError, rateLimited } from "../../common/errors"
+import { FixedWindowRateLimiter } from "../../common/rate-limiter"
+import {
+  API_CONFIG,
+  type ApiConfig,
+  type DeploymentEnvironment,
+} from "../../config"
 import { DatabaseService } from "../../db/database.service"
 import {
   createSessionToken,
@@ -87,8 +92,11 @@ function mapDatabaseError(error: unknown): never {
 
 @Injectable()
 export class StaffService {
+  private readonly limiter = new FixedWindowRateLimiter()
+
   constructor(
     @Inject(DatabaseService) private readonly database: DatabaseService,
+    @Inject(API_CONFIG) private readonly config: ApiConfig,
   ) {}
 
   async list(input: {
@@ -329,6 +337,8 @@ export class StaffService {
     userAgent?: string
     correlationId?: string
   }): Promise<{ email: string }> {
+    this.limitInviteAcceptance(input.ip)
+
     const tokenHash = hashSessionToken(input.token)
     const passwordHash = await hashPassword(input.password)
 
@@ -356,13 +366,27 @@ export class StaffService {
           ip: input.ip,
           userAgent: input.userAgent,
           correlationId: input.correlationId,
-          capability: "admin.user.manage",
         })
 
         return { email: row.email }
       })
     } catch (error) {
       mapDatabaseError(error)
+    }
+  }
+
+  /**
+   * Acceptance is unauthenticated and hashes the password before the token is
+   * checked, so an unbounded caller could force expensive hashing. Apply the
+   * same per-IP authentication budget as sign-in.
+   */
+  private limitInviteAcceptance(ip: string | undefined): void {
+    const result = this.limiter.check(`staff-invite:ip:${ip ?? "unknown"}`, {
+      windowMs: this.config.auth.rateLimitWindowMs,
+      max: this.config.auth.ipMax,
+    })
+    if (!result.allowed) {
+      throw rateLimited(result.retryAfterSeconds)
     }
   }
 }
