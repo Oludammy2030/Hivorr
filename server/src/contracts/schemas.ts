@@ -82,12 +82,17 @@ export const createGrantRequest = z.strictObject({
   email: z.string().min(3).max(254),
   grantType: z.enum(GRANT_TYPE_VALUES),
   scope: z.string().min(1).max(80),
+  reason: z.string().min(3).max(500),
   expiresAt: z
     .string()
     .min(1)
     .max(40)
     .refine((value) => !Number.isNaN(Date.parse(value)), "invalid date")
     .optional(),
+})
+
+export const revokeGrantRequest = z.strictObject({
+  reason: z.string().min(3).max(500),
 })
 
 // --- Responses --------------------------------------------------------------

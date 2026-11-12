@@ -391,15 +391,21 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     const email = String(form.get("email") ?? "").trim()
     const grantType = String(form.get("grantType") ?? "staff")
     const scope = String(form.get("scope") ?? "")
-    if (!email || !scope) {
-      setError("An email and a scope are required.")
+    const reason = String(form.get("reason") ?? "").trim()
+    if (!email || !scope || reason.length < 3) {
+      setError("An email, a scope and a reason are required.")
       return
     }
 
     setBusy(true)
     setError(undefined)
     try {
-      const created = await api.createGrant({ email, grantType, scope })
+      const created = await api.createGrant({
+        email,
+        grantType,
+        scope,
+        reason,
+      })
       setGrants((current) => [created, ...(current ?? [])])
       event.currentTarget.reset()
     } catch (value) {
@@ -410,10 +416,14 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   }
 
   async function handleRevoke(grant: Grant) {
+    const reason = window.prompt(
+      `Reason for revoking ${grant.scope} from ${grant.email ?? "this user"}:`,
+    )
+    if (!reason || reason.trim().length < 3) return
     setBusy(true)
     setError(undefined)
     try {
-      const revoked = await api.revokeGrant(grant.id)
+      const revoked = await api.revokeGrant(grant.id, reason.trim())
       setGrants((current) =>
         (current ?? []).map((entry) =>
           entry.id === revoked.id ? revoked : entry,
@@ -826,6 +836,17 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                     </select>
                   </label>
                 </div>
+                <label className="field">
+                  <span>Reason</span>
+                  <input
+                    name="reason"
+                    type="text"
+                    minLength={3}
+                    maxLength={500}
+                    required
+                    disabled={busy}
+                  />
+                </label>
                 <button className="button" type="submit" disabled={busy}>
                   {busy ? "Working…" : "Create grant"}
                 </button>

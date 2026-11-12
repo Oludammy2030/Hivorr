@@ -88,6 +88,7 @@ export interface CreateGrantInput {
   readonly email: string
   readonly grantType: string
   readonly scope: string
+  readonly reason: string
   readonly expiresAt?: string
 }
 
@@ -205,9 +206,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  revokeGrant: (id: string) =>
+  revokeGrant: (id: string, reason: string) =>
     request<Grant>(`/control/grants/${encodeURIComponent(id)}/revoke`, {
       method: "POST",
+      body: JSON.stringify({ reason }),
     }),
   listAudit: (cursor?: string | null) => {
     const params = new URLSearchParams()

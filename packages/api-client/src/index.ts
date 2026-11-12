@@ -101,9 +101,11 @@ export type OwnGrantsResponse = { "grants": ({ "id": string; "userId": string; "
 
 export type ListGrantsResponse = ({ "id": string; "userId": string; "email": string | null; "grantType": string; "scope": string; "environment": "production" | "staging"; "grantedBy": string | null; "expiresAt": string | null; "revokedAt": string | null; "createdAt": string })[]
 
-export type CreateGrantRequest = { "email": string; "grantType": "admin" | "staff" | "partner" | "platform_engineering"; "scope": string; "expiresAt"?: string }
+export type CreateGrantRequest = { "email": string; "grantType": "admin" | "staff" | "partner" | "platform_engineering"; "scope": string; "reason": string; "expiresAt"?: string }
 
 export type CreateGrantResponse = { "id": string; "userId": string; "email": string | null; "grantType": string; "scope": string; "environment": "production" | "staging"; "grantedBy": string | null; "expiresAt": string | null; "revokedAt": string | null; "createdAt": string }
+
+export type RevokeGrantRequest = { "reason": string }
 
 export type RevokeGrantResponse = { "id": string; "userId": string; "email": string | null; "grantType": string; "scope": string; "environment": "production" | "staging"; "grantedBy": string | null; "expiresAt": string | null; "revokedAt": string | null; "createdAt": string }
 
@@ -351,11 +353,11 @@ export function createHivorrClient(options: HivorrClientOptions) {
         input,
         [201],
       ),
-    revokeGrant: (params: { id: string }) =>
+    revokeGrant: (params: { id: string }, input: RevokeGrantRequest) =>
       request<RevokeGrantResponse>(
         "POST",
         `/v1/control/grants/${encodeURIComponent(params.id)}/revoke`,
-        undefined,
+        input,
         [200],
       ),
   }
