@@ -15445,7 +15445,6 @@
                   "required": [
                     "id",
                     "email",
-                    "deliveryEmail",
                     "departmentKey",
                     "expiresAt",
                     "token"

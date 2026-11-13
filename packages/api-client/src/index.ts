@@ -117,7 +117,7 @@ export type ListStaffResponse = ({ "id": string; "userId": string; "email": stri
 
 export type CreateStaffInviteRequest = { "email": string; "deliveryEmail"?: string; "departmentKey"?: string; "jobTitle"?: string; "reason": string }
 
-export type CreateStaffInviteResponse = { "id": string; "email": string; "deliveryEmail": string; "departmentKey": string | null; "expiresAt": string; "token": string; "emailSent"?: boolean }
+export type CreateStaffInviteResponse = { "id": string; "email": string; "deliveryEmail"?: string; "departmentKey": string | null; "expiresAt": string; "token": string; "emailSent"?: boolean }
 
 export type AttachStaffProfileRequest = { "email": string; "departmentKey"?: string; "jobTitle"?: string; "reason": string }
 

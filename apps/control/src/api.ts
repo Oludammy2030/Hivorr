@@ -123,7 +123,7 @@ export interface StaffInvite {
   /** Official company address that becomes the account. */
   readonly email: string
   /** Personal address the invitation was delivered to. */
-  readonly deliveryEmail: string
+  readonly deliveryEmail?: string
   readonly departmentKey: string | null
   readonly expiresAt: string
   readonly token: string

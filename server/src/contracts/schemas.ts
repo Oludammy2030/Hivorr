@@ -286,7 +286,8 @@ export const createStaffInviteRequest = z.strictObject({
 export const createStaffInviteResponse = z.object({
   id: z.string(),
   email: z.string(),
-  deliveryEmail: z.string(),
+  /** Always returned by this API; optional so an added field is not a break. */
+  deliveryEmail: z.string().optional(),
   departmentKey: z.string().nullable(),
   expiresAt: z.string(),
   token: z.string(),
