@@ -178,9 +178,10 @@
 | PR #64 (evidence record) | Merged into `staging`; CI run `43304311084` green |
 | PR #65 (acceptance rate limit and audit correction) | Merged into `staging`; CI run `43306927743` green; Fly deployment green |
 | PR #67 (attach an existing account as staff) | Merged into `staging`; CI run `43316369230` green; Fly deployment green; `admin.attach_staff_profile` present on staging |
+| PR #69 (ZeptoMail invitation email) | Merged into `staging`; CI run `43366122425` green; Fly deployment green; `PUBLIC_APP_ORIGIN` and `MAIL_FROM_ADDRESS` present on staging; `ZEPTOMAIL_TOKEN` pending |
 | Staging deployment gate | Runs `43301894294` and later green; Pages job deployed all four bundles |
 | `pnpm typecheck`, `lint`, `format:check`, `lint:boundaries`, `docs:check`, `lint:migrations`, `config:check` | PASS |
-| `pnpm test` | PASS — 53 files, 369 passed, 32 skipped |
+| `pnpm test` | PASS — 54 files, 372 passed, 32 skipped |
 | `pnpm openapi:check`, `build:all` | PASS — 36 paths |
 | Live staging | `https://staging.hivorr.com/invite.html` serves the invitation page; the staff API route is registered |
 | `pnpm test:db` | Not run locally (Docker unavailable); the CI database job passed |
