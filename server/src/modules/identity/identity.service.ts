@@ -18,6 +18,9 @@ import {
   CaptureEmailAdapter,
   type EmailAdapter,
 } from "../../integrations/email/email.adapter"
+import { hivorrMarkAttachment } from "../../integrations/email/assets/hivorr-mark"
+import { buildEmailVerificationEmail } from "../../integrations/email/templates/email-verification"
+import { buildPasswordResetEmail } from "../../integrations/email/templates/password-reset"
 import { appendAudit } from "../platform"
 import { listActiveActivities } from "../profile"
 import { buildAccessContext } from "./access"
@@ -254,6 +257,17 @@ export class IdentityService {
     private readonly email: EmailAdapter = new CaptureEmailAdapter(),
   ) {}
 
+  /**
+   * Builds the browser link for a token-bearing email. Without a configured
+   * portal origin there is nothing a recipient could open, so the callers fall
+   * back to the token-only message used before the portal pages existed.
+   */
+  private actionLink(page: string, token: string): string | undefined {
+    const origin = this.config.mail.appOrigin
+    if (!origin) return undefined
+    return `${origin.replace(/\/$/, "")}/${page}?token=${encodeURIComponent(token)}`
+  }
+
   async register(
     input: RegisterInput,
     context: RequestContext,
@@ -349,10 +363,28 @@ export class IdentityService {
     )
 
     if (!recipient) return
+
+    const link = this.actionLink("reset.html", token)
+    if (!link) {
+      await this.email.send({
+        to: recipient,
+        subject: "Reset your Hivorr password",
+        text: `Use this single-use token within 30 minutes: ${token}`,
+      })
+      return
+    }
+
+    const message = buildPasswordResetEmail({
+      to: recipient,
+      link,
+      expiresInMinutes: 30,
+    })
     await this.email.send({
       to: recipient,
-      subject: "Reset your Hivorr password",
-      text: `Use this single-use token within 30 minutes: ${token}`,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+      images: [hivorrMarkAttachment()],
     })
   }
 
@@ -449,10 +481,27 @@ export class IdentityService {
       },
     )
 
+    const link = this.actionLink("verify.html", token)
+    if (!link) {
+      await this.email.send({
+        to: session.email,
+        subject: "Verify your Hivorr email",
+        text: `Use this single-use token within 24 hours: ${token}`,
+      })
+      return
+    }
+
+    const email = buildEmailVerificationEmail({
+      to: session.email,
+      link,
+      expiresInHours: 24,
+    })
     await this.email.send({
       to: session.email,
-      subject: "Verify your Hivorr email",
-      text: `Use this single-use token within 24 hours: ${token}`,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
+      images: [hivorrMarkAttachment()],
     })
   }
 

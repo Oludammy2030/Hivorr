@@ -74,6 +74,38 @@ describe("ZeptoMail adapter", () => {
     expect(JSON.parse(bodies[1]!).htmlbody).toBe("<p>rich</p>")
   })
 
+  it("maps inline images to the documented attachment shape", async () => {
+    let body = ""
+    const adapter = new ZeptoMailAdapter(settings, async (_url, init) => {
+      body = String(init?.body)
+      return new Response(null, { status: 201 })
+    })
+
+    await adapter.send({
+      to: "x@example.com",
+      subject: "s",
+      text: "t",
+      html: '<img src="cid:mark">',
+      images: [
+        {
+          cid: "mark",
+          name: "mark.png",
+          mimeType: "image/png",
+          content: "AAAA",
+        },
+      ],
+    })
+
+    expect(JSON.parse(body).inline_images).toEqual([
+      {
+        mime_type: "image/png",
+        name: "mark.png",
+        content: "AAAA",
+        cid: "mark",
+      },
+    ])
+  })
+
   it("fails without exposing the provider response body", async () => {
     const adapter = new ZeptoMailAdapter(
       settings,

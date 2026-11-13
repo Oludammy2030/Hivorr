@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#2d3fe7" />
+    <title>Hivorr — Email verification</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --brand: #2d3fe7;
+        --brand-deep: #1727be;
+        --brand-tint: #eef0fd;
+        --ink: #0f1626;
+        --body: #4b5563;
+        --muted: #6b7280;
+        --surface: #ffffff;
+        --app-bg: #f0f2f8;
+        --border: rgba(15, 22, 38, 0.08);
+        --danger: #ef4444;
+        --danger-tint: #fef2f2;
+        --success: #16a34a;
+        --success-tint: #dcfce7;
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: var(--app-bg);
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; }
+      .shell {
+        min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+        background:
+          radial-gradient(circle at 15% 10%, #e0e7ff 0%, transparent 45%),
+          radial-gradient(circle at 85% 90%, #eef0fd 0%, transparent 50%),
+          var(--app-bg);
+      }
+      .card {
+        width: min(460px, 100%); background: var(--surface);
+        border: 1px solid var(--border); border-radius: 22px; padding: 28px;
+        box-shadow: 0 18px 50px rgba(15, 22, 38, 0.1);
+      }
+      .brand {
+        display: flex; align-items: center; gap: 12px;
+        padding-bottom: 18px; margin-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .mark {
+        width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+        display: grid; place-items: center; color: #fff; background: var(--brand);
+      }
+      .mark svg { display: block; }
+      .name {
+        margin: 0; font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+        font-weight: 800; font-size: 18px; letter-spacing: -0.3px;
+      }
+      .sub { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+      .badge {
+        margin-left: auto; font-size: 10px; font-weight: 600;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        color: var(--brand); background: var(--brand-tint);
+        border-radius: 999px; padding: 5px 9px;
+      }
+      h1 {
+        margin: 0 0 6px; font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+        font-size: 24px; line-height: 1.2; letter-spacing: -0.6px;
+      }
+      p.lead { margin: 0; color: var(--body); font-size: 13px; line-height: 1.55; }
+      .form { display: grid; gap: 16px; }
+      button {
+        width: 100%; padding: 12px 16px; font: inherit; font-size: 14px;
+        font-weight: 600; color: #fff; background: var(--brand);
+        border: 1px solid transparent; border-radius: 12px; cursor: pointer;
+      }
+      button:hover:not(:disabled) { background: var(--brand-deep); }
+      button:disabled { opacity: 0.7; cursor: progress; }
+      .error {
+        margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.45;
+        color: var(--danger); background: var(--danger-tint);
+        border: 1px solid rgba(239, 68, 68, 0.18); border-radius: 10px;
+      }
+      .ok {
+        margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.45;
+        color: var(--success); background: var(--success-tint);
+        border: 1px solid rgba(22, 163, 74, 0.18); border-radius: 10px;
+      }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="card">
+        <header class="brand">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">
+              <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+            </svg>
+          </span>
+          <div>
+            <p class="name">Hivorr</p>
+            <p class="sub">Email verification</p>
+          </div>
+          <span class="badge">Account</span>
+        </header>
+
+        <div id="message"></div>
+
+        <section id="pending-step" class="form">
+          <div>
+            <h1>Confirm your email</h1>
+            <p class="lead" id="pending-lead">Verifying this address…</p>
+          </div>
+          <button id="retry" type="button" hidden>Try again</button>
+        </section>
+
+        <section id="done-step" class="form" hidden>
+          <div>
+            <h1>Email verified</h1>
+            <p class="lead">
+              This address is now confirmed on your Hivorr account. You can
+              close this tab.
+            </p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const token = new URLSearchParams(window.location.search).get("token") || ""
+
+      const message = document.getElementById("message")
+      const pendingStep = document.getElementById("pending-step")
+      const pendingLead = document.getElementById("pending-lead")
+      const doneStep = document.getElementById("done-step")
+      const retry = document.getElementById("retry")
+
+      function showError(text) {
+        message.innerHTML = ""
+        const p = document.createElement("p")
+        p.className = "error"
+        p.setAttribute("role", "alert")
+        p.textContent = text
+        message.appendChild(p)
+      }
+
+      async function api(path, options = {}) {
+        const response = await fetch(`/api/v1${path}`, {
+          ...options,
+          credentials: "same-origin",
+          headers: {
+            "content-type": "application/json",
+            ...(options.headers || {}),
+          },
+        })
+        if (response.status === 204) return null
+        const body = await response.json().catch(() => null)
+        if (!response.ok) {
+          const error = body && body.error ? body.error.message : "The request failed."
+          throw new Error(error)
+        }
+        return body
+      }
+
+      async function verify() {
+        message.innerHTML = ""
+        retry.hidden = true
+        pendingLead.textContent = "Verifying this address…"
+
+        if (!token) {
+          showError("This link is missing its verification token.")
+          pendingLead.textContent = "Request a new verification email from your account."
+          return
+        }
+
+        retry.disabled = true
+        try {
+          await api("/auth/email-verification/complete", {
+            method: "POST",
+            body: JSON.stringify({ token }),
+          })
+          pendingStep.hidden = true
+          doneStep.hidden = false
+        } catch (error) {
+          showError(error.message)
+          pendingLead.textContent = "This link could not be used."
+          retry.hidden = false
+        } finally {
+          retry.disabled = false
+        }
+      }
+
+      retry.addEventListener("click", verify)
+      verify()
+    </script>
+  </body>
+</html>

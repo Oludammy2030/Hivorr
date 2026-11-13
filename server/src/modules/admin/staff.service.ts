@@ -13,6 +13,7 @@ import {
   type EmailAdapter,
 } from "../../integrations/email/email.adapter"
 import { buildStaffInviteEmail } from "../../integrations/email/templates/staff-invite"
+import { hivorrMarkAttachment } from "../../integrations/email/assets/hivorr-mark"
 import {
   createSessionToken,
   hashPassword,
@@ -270,6 +271,7 @@ export class StaffService {
         subject: email.subject,
         text: email.text,
         html: email.html,
+        images: [hivorrMarkAttachment()],
       })
       return true
     } catch {
