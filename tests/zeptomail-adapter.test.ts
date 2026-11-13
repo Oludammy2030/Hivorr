@@ -66,6 +66,21 @@ describe("ZeptoMail adapter", () => {
     ).rejects.toThrow("zeptomail delivery failed with status 401")
   })
 
+  it("does not double the auth scheme when the token already has it", async () => {
+    let header: string | undefined
+    const adapter = new ZeptoMailAdapter(
+      { ...settings, token: "  Zoho-enczapikey copied-token  " },
+      async (_url, init) => {
+        header = (init?.headers as Record<string, string>).authorization
+        return new Response(null, { status: 201 })
+      },
+    )
+
+    await adapter.send({ to: "x@example.com", subject: "s", text: "t" })
+
+    expect(header).toBe("Zoho-enczapikey copied-token")
+  })
+
   it("stays on the capture adapter until a token and sender exist", () => {
     expect(createEmailAdapter(mailConfig({ token: undefined }))).toBeInstanceOf(
       CaptureEmailAdapter,
