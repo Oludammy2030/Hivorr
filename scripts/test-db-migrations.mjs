@@ -602,6 +602,25 @@ try {
     "the approval decision permission is registered",
   )
 
+  const partnerListDenied = await testClient
+    .query("select * from admin.list_partner_organisations($1)", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    partnerListDenied,
+    "the partner register requires a partner permission",
+  )
+
+  const partnerPermission = await testClient.query(
+    "select 1 from admin.permissions where key = 'admin.partner.manage'",
+  )
+  assert(
+    partnerPermission.rowCount === 1,
+    "the partner management permission is registered",
+  )
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )

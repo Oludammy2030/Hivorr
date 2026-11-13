@@ -19,6 +19,8 @@ import {
   type AccountNote,
   type AccountTimelineEntry,
   type ApprovalRequest,
+  type PartnerOrganisation,
+  type PartnerRepresentative,
   type Session,
   type UserSummary,
 } from "./api"
@@ -478,6 +480,12 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [approvals, setApprovals] = useState<readonly ApprovalRequest[] | null>(
     null,
   )
+  const [partners, setPartners] =
+    useState<readonly PartnerOrganisation[] | null>(null)
+  const [selectedPartner, setSelectedPartner] =
+    useState<PartnerOrganisation | null>(null)
+  const [partnerReps, setPartnerReps] =
+    useState<readonly PartnerRepresentative[]>([])
 
   const capabilities = own?.capabilities ?? []
   const canReadUsers = capabilities.includes("admin.user.read")
@@ -486,6 +494,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     capabilities.includes("admin.approval.read") ||
     capabilities.includes("admin.approval.decide")
   const canDecideApprovals = capabilities.includes("admin.approval.decide")
+  const canReadPartners =
+    capabilities.includes("admin.partner.read") ||
+    capabilities.includes("admin.partner.manage")
+  const canManagePartners = capabilities.includes("admin.partner.manage")
   const canReadStaff = capabilities.includes("admin.user.read")
   const canManageStaff = capabilities.includes("admin.user.manage")
   const canReadGrants =
@@ -625,6 +637,130 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       active = false
     }
   }, [section, canReadApprovals])
+
+  useEffect(() => {
+    if (section !== "partners" || !canReadPartners) return
+    let active = true
+    setBusy(true)
+    api
+      .listPartners()
+      .then((rows) => {
+        if (active) setPartners(rows)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, canReadPartners])
+
+  useEffect(() => {
+    if (!selectedPartner || !canReadPartners) return
+    let active = true
+    api
+      .listPartnerRepresentatives(selectedPartner.id)
+      .then((rows) => {
+        if (active) setPartnerReps(rows)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+    return () => {
+      active = false
+    }
+  }, [selectedPartner, canReadPartners])
+
+  async function handleCreatePartner(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const legalName = String(form.get("legalName") ?? "").trim()
+    const reason = String(form.get("reason") ?? "").trim()
+    if (legalName.length < 2 || reason.length < 5) {
+      setError(
+        "A legal name and a reason of at least five characters are required.",
+      )
+      return
+    }
+    setBusy(true)
+    setError(undefined)
+    try {
+      const created = await api.createPartner({
+        legalName,
+        tradingName: String(form.get("tradingName") ?? "").trim() || undefined,
+        category: String(form.get("category") ?? "").trim() || undefined,
+        country: String(form.get("country") ?? "").trim() || undefined,
+        reason,
+      })
+      setPartners((current) => [created, ...(current ?? [])])
+      setSelectedPartner(created)
+      event.currentTarget.reset()
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handlePartnerStatus(
+    partner: PartnerOrganisation,
+    status: "active" | "suspended" | "terminated",
+  ) {
+    const reason = window.prompt(
+      `Reason for marking ${partner.legalName} as ${status}:`,
+    )
+    if (!reason || reason.trim().length < 5) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const updated = await api.setPartnerStatus(
+        partner.id,
+        status,
+        reason.trim(),
+      )
+      setPartners((current) =>
+        (current ?? []).map((entry) =>
+          entry.id === updated.id ? updated : entry,
+        ),
+      )
+      setSelectedPartner(updated)
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAddPartnerRepresentative(
+    event: FormEvent<HTMLFormElement>,
+    partner: PartnerOrganisation,
+  ) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const email = String(form.get("email") ?? "").trim()
+    const role = String(form.get("role") ?? "member")
+    const reason = String(form.get("reason") ?? "").trim()
+    if (!email || reason.length < 5) {
+      setError(
+        "An account email and a reason of at least five characters are required.",
+      )
+      return
+    }
+    setBusy(true)
+    setError(undefined)
+    try {
+      await api.addPartnerRepresentative(partner.id, email, role, reason)
+      setPartnerReps(await api.listPartnerRepresentatives(partner.id))
+      event.currentTarget.reset()
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function handleDecideApproval(
     approval: ApprovalRequest,
@@ -2404,6 +2540,259 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                 </div>
               )}
             </section>
+          </div>
+        )}
+
+        {knownPath && section === "partners" && !canReadPartners && (
+          <section className="panel">
+            <h2>Partners</h2>
+            <p className="muted">
+              Your governance role does not include partner administration.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "partners" && canReadPartners && (
+          <div className="dash-stack">
+            {canManagePartners && (
+              <section className="panel">
+                <h2>Register a partner</h2>
+                <form className="form" onSubmit={handleCreatePartner}>
+                  <div className="form-row">
+                    <label className="field">
+                      <span>Legal name</span>
+                      <input name="legalName" required disabled={busy} />
+                    </label>
+                    <label className="field">
+                      <span>Trading name</span>
+                      <input name="tradingName" disabled={busy} />
+                    </label>
+                    <label className="field">
+                      <span>Category</span>
+                      <input name="category" disabled={busy} />
+                    </label>
+                    <label className="field">
+                      <span>Country</span>
+                      <input name="country" disabled={busy} />
+                    </label>
+                  </div>
+                  <label className="field">
+                    <span>Reason</span>
+                    <input
+                      name="reason"
+                      minLength={3}
+                      maxLength={500}
+                      required
+                      disabled={busy}
+                    />
+                  </label>
+                  <button className="button" type="submit" disabled={busy}>
+                    Register
+                  </button>
+                </form>
+              </section>
+            )}
+
+            <section className="panel">
+              <div className="panel-head">
+                <h2>Partner organisations</h2>
+                <span className="muted">
+                  {partners === null
+                    ? "Loading…"
+                    : `${partners.length} registered`}
+                </span>
+              </div>
+              {partners && partners.length === 0 && (
+                <p className="muted">No partner organisations yet.</p>
+              )}
+              {partners && partners.length > 0 && (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Organisation</th>
+                        <th>Status</th>
+                        <th>Representatives</th>
+                        <th>Agreements</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {partners.map((partner) => (
+                        <tr key={partner.id}>
+                          <td>
+                            <div>{partner.legalName}</div>
+                            <div className="muted">
+                              {partner.tradingName ?? partner.category ?? "—"}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="chip">{partner.status}</span>
+                          </td>
+                          <td>{partner.representatives}</td>
+                          <td>{partner.agreements}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="button button-quiet button-small"
+                              onClick={() => setSelectedPartner(partner)}
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {selectedPartner && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>{selectedPartner.legalName}</h2>
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    onClick={() => setSelectedPartner(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+                <dl className="details">
+                  <div>
+                    <dt>Status</dt>
+                    <dd>{selectedPartner.status}</dd>
+                  </div>
+                  <div>
+                    <dt>Category</dt>
+                    <dd>{selectedPartner.category ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Country</dt>
+                    <dd>{selectedPartner.country ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Registered</dt>
+                    <dd>{formatTime(selectedPartner.createdAt)}</dd>
+                  </div>
+                </dl>
+
+                {canManagePartners && (
+                  <div className="account-actions">
+                    {selectedPartner.status !== "active" &&
+                      selectedPartner.status !== "terminated" && (
+                        <button
+                          type="button"
+                          className="button button-small"
+                          onClick={() =>
+                            handlePartnerStatus(selectedPartner, "active")
+                          }
+                          disabled={busy}
+                        >
+                          Activate
+                        </button>
+                      )}
+                    {selectedPartner.status === "active" && (
+                      <button
+                        type="button"
+                        className="button button-quiet button-small"
+                        onClick={() =>
+                          handlePartnerStatus(selectedPartner, "suspended")
+                        }
+                        disabled={busy}
+                      >
+                        Suspend
+                      </button>
+                    )}
+                    {selectedPartner.status !== "terminated" && (
+                      <button
+                        type="button"
+                        className="button button-danger button-small"
+                        onClick={() =>
+                          handlePartnerStatus(selectedPartner, "terminated")
+                        }
+                        disabled={busy}
+                      >
+                        Terminate
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <h3 className="section-title">Representatives</h3>
+                {partnerReps.length === 0 && (
+                  <p className="muted">No representatives yet.</p>
+                )}
+                {partnerReps.length > 0 && (
+                  <ul className="plain-list">
+                    {partnerReps.map((rep) => (
+                      <li key={rep.id}>
+                        <div>
+                          {rep.displayName ?? rep.email}
+                          {rep.effectiveTo ? " (ended)" : ""}
+                        </div>
+                        <div className="muted">
+                          {rep.email} · {rep.role}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {canManagePartners &&
+                  selectedPartner.status !== "terminated" && (
+                    <form
+                      className="form"
+                      onSubmit={(event) =>
+                        handleAddPartnerRepresentative(event, selectedPartner)
+                      }
+                    >
+                      <div className="form-row">
+                        <label className="field">
+                          <span>Account email</span>
+                          <input
+                            name="email"
+                            type="email"
+                            required
+                            disabled={busy}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Role</span>
+                          <select
+                            name="role"
+                            defaultValue="member"
+                            disabled={busy}
+                          >
+                            <option value="owner">Owner</option>
+                            <option value="admin">Admin</option>
+                            <option value="member">Member</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        </label>
+                      </div>
+                      <label className="field">
+                        <span>Reason</span>
+                        <input
+                          name="reason"
+                          minLength={3}
+                          maxLength={500}
+                          required
+                          disabled={busy}
+                        />
+                      </label>
+                      <button
+                        className="button button-small"
+                        type="submit"
+                        disabled={busy}
+                      >
+                        Add representative
+                      </button>
+                    </form>
+                  )}
+              </section>
+            )}
           </div>
         )}
 

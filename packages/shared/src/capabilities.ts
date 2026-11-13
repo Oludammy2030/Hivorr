@@ -77,6 +77,8 @@ export const CAPABILITY_IDS = [
   "admin.evidence.read",
   "admin.report.read",
   "admin.report.export",
+  "admin.partner.read",
+  "admin.partner.manage",
   "staff.support.handle",
   "partner.referral.read",
   "platform.engineering.access",

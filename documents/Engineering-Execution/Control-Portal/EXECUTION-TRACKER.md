@@ -28,7 +28,8 @@
 | CP-012 | Role administration | EP-02 | **REQUIRES_REVIEW** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated |
 | CP-013 | Account governance | EP-02 | **REQUIRES_REVIEW** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
 | CP-020 | Approval and maker-checker | EP-02 | **REQUIRES_REVIEW** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
-| CP-014…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-014 | Partner organisations | EP-02 | **REQUIRES_REVIEW** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
+| CP-015…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -284,6 +285,18 @@ UI-only change: no migration, no API contract change and no permission change.
 - The staff portal reads its capability summary from the session instead of `/v1/grants`.
 - Tests: pure cases for `platformPermissions`; integration proves a platform role appears in the
   session and a department-scoped assignment does not.
+
+### CP-014 — Partner organisations
+
+- **Class:** `[REVIEW]` — authorisation, external organisation data and UI change.
+- **Scope in:** partner register; create; activate, suspend and terminate; representatives linked to existing accounts; `admin.partner.read`/`admin.partner.manage`; Partners screen; audit rows.
+- **Scope out:** partner applications workflow, agreement metadata, scope grants, partner portal screens and isolation (CP-015).
+- **Reuse:** `admin.partner_organisations`, `admin.partner_representatives`, `admin.partner_agreements`, `admin.actor_holds_platform_permission`, `appendAudit`.
+- **Dependencies:** CP-002, CP-006.
+- **Test plan:** migration asserts the permissions and that the register refuses without them; partner integration test covers 403, registration, the lifecycle with a terminated-state refusal, representatives including duplicate and unknown account, and the audit rows; full suite and OpenAPI route coverage.
+- **Audit impact:** R3 partner data. Registration, every status change and every representative link write an audit row with the operator and reason.
+- **Rollback:** drop the five functions in a forward migration; organisations and representatives remain stored and can be re-exposed by a later function.
+- **Approver:** Architect; founder for onboarding and termination.
 
 ### CP-020 — Approval and maker-checker
 
