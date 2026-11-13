@@ -195,6 +195,10 @@ export type DecideApprovalRequest = { "decision": "approve" | "reject"; "reason"
 
 export type DecideApprovalResponse = { "id": string; "reference": string; "actionType": string; "targetType": string; "targetId": string; "status": string; "reason": string; "requesterUserId": string; "requesterName"?: string | null; "requesterEmail"?: string | null; "createdAt": string; "decidedAt"?: string | null }
 
+export type RequestCaseDecisionRequest = { "outcome": string; "reason"?: string }
+
+export type RequestCaseDecisionResponse = { "id": string; "reference": string; "actionType": string; "targetType": string; "targetId": string; "status": string; "reason": string; "requesterUserId": string; "requesterName"?: string | null; "requesterEmail"?: string | null; "createdAt": string; "decidedAt"?: string | null }
+
 export type ListPartnersResponse = ({ "id": string; "legalName": string; "tradingName"?: string | null; "category"?: string | null; "country"?: string | null; "status": string; "representatives"?: number; "agreements"?: number; "createdAt": string })[]
 
 export type CreatePartnerRequest = { "legalName": string; "tradingName"?: string; "category"?: string; "country"?: string; "reason"?: string }
@@ -686,6 +690,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
         `/v1/control/approvals/${encodeURIComponent(params.id)}/decide`,
         input,
         [200],
+      ),
+    requestCaseDecision: (params: { id: string }, input: RequestCaseDecisionRequest) =>
+      request<RequestCaseDecisionResponse>(
+        "POST",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/decision`,
+        input,
+        [201],
       ),
     listPartners: () =>
       request<ListPartnersResponse>(

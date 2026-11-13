@@ -919,6 +919,32 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     }
   }
 
+  async function handleRequestCaseDecision(entry: CaseSummary) {
+    const outcome = window.prompt(
+      `Outcome for ${entry.reference} (for example: resolved in the customer's favour):`,
+    )
+    if (!outcome || outcome.trim().length < 3) return
+    const reason = window.prompt("Reason for this decision:")
+    if (!reason || reason.trim().length < 5) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const request = await api.requestCaseDecision(
+        entry.id,
+        outcome.trim(),
+        reason.trim(),
+      )
+      setError(
+        `Decision requested (${request.reference}). A second administrator must approve it.`,
+      )
+      setCaseEvents(await api.listCaseEvents(entry.id))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleCreatePartner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -3064,6 +3090,16 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                     >
                       Change status
                     </button>
+                    {selectedCase.status !== "DECIDED" && (
+                      <button
+                        type="button"
+                        className="button button-small"
+                        onClick={() => handleRequestCaseDecision(selectedCase)}
+                        disabled={busy}
+                      >
+                        Request decision
+                      </button>
+                    )}
                   </div>
                 )}
 

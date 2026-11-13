@@ -32,7 +32,8 @@
 | CP-015 | Partner isolation | EP-02 | **REQUIRES_REVIEW** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
 | CP-016 | Case spine and timeline | EP-02 | **REQUIRES_REVIEW** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
 | CP-017 | Case evidence metadata | EP-02 | **REQUIRES_REVIEW** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
-| CP-018…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-018 | Support and dispute operations | EP-02 | **REQUIRES_REVIEW** | `20261114001000_admin_add_case_decisions.sql`; case decisions routed through CP-020; outcome and closure reason on the case; decision events on the timeline; "Request decision" in the case detail; OpenAPI regenerated |
+| CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -345,6 +346,18 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Audit impact:** R3 evidence metadata. Upload registration and supersede are audited; every access appends a timeline event.
 - **Rollback:** drop the four functions in a forward migration; evidence rows remain stored.
 - **Approver:** Architect; founder for evidence retention and the private storage policy.
+
+### CP-018 — Support and dispute operations
+
+- **Class:** `[REVIEW]` — authorization, case outcome and approval wiring.
+- **Scope in:** decision requests for a case, routed through CP-020; outcome and closure reason stored on the case; `decision_requested`, `decision_recorded` and `decision_rejected` timeline events; "Request decision" in the case detail; approver must hold both `admin.approval.decide` and `admin.case.approve`.
+- **Scope out:** threaded customer messages, SLA timers, automated escalation rules, evidence decisions, bulk resolution.
+- **Reuse:** CP-016 case spine, CP-020 approval primitive, `admin.case_events`, `appendAudit`.
+- **Dependencies:** CP-016, CP-020.
+- **Test plan:** the approval suite proves a decision request, self-decision refusal, approval that sets `DECIDED` with the recorded outcome, and the timeline events; the case suite covers the working spine.
+- **Audit impact:** R3 case data. The request, decision and outcome are audited with the operator and reason.
+- **Rollback:** drop `request_case_decision` and restore the previous `decide_approval`; decided cases keep their outcome.
+- **Approver:** Architect; founder for the separation-of-duties rule on decisions.
 
 ### CP-020 — Approval and maker-checker
 

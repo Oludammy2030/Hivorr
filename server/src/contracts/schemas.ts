@@ -145,6 +145,11 @@ export const decideApprovalRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const caseDecisionRequest = z.strictObject({
+  outcome: z.string().min(3).max(500),
+  reason: z.string().min(3).max(500).optional(),
+})
+
 export const createPartnerRequest = z.strictObject({
   legalName: z.string().min(2).max(200),
   tradingName: z.string().min(1).max(200).optional(),

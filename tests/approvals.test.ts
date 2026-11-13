@@ -221,7 +221,11 @@ describeIntegration("approval integration", () => {
       [requesterId],
     )
     await setup.query(
-      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.approval.decide', 'platform'), ($1, 'admin.approval.read', 'platform'), ($1, 'admin.user.manage', 'platform')",
+      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.case.assign', 'platform'), ($1, 'admin.case.read', 'platform')",
+      [requesterId],
+    )
+    await setup.query(
+      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.approval.decide', 'platform'), ($1, 'admin.approval.read', 'platform'), ($1, 'admin.user.manage', 'platform'), ($1, 'admin.case.approve', 'platform')",
       [approver.userId],
     )
   }, 60_000)
@@ -353,5 +357,69 @@ describeIntegration("approval integration", () => {
       [secondTargetId],
     )
     expect(status.rows[0].status).toBe("active")
+  })
+
+  it("routes a case decision through a second administrator", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/v1/control/cases",
+      headers: { host: controlHost, cookie: requesterCookie, ...json },
+      payload: {
+        caseType: "dispute",
+        title: "Refund dispute for order 8821",
+        priority: "high",
+        severity: "medium",
+        reason: "Customer escalated the dispute",
+      },
+    })
+    expect(created.statusCode).toBe(201)
+    const caseId = created.json().id
+
+    const requested = await app.inject({
+      method: "POST",
+      url: `/v1/control/cases/${caseId}/decision`,
+      headers: { host: controlHost, cookie: requesterCookie, ...json },
+      payload: {
+        outcome: "Refund approved in full",
+        reason: "Evidence supports the customer's claim",
+      },
+    })
+    expect(requested.statusCode).toBe(201)
+    expect(requested.json().actionType).toBe("case.decision")
+
+    const selfDecision = await app.inject({
+      method: "POST",
+      url: `/v1/control/approvals/${requested.json().id}/decide`,
+      headers: { host: controlHost, cookie: requesterCookie, ...json },
+      payload: { decision: "approve", reason: "Approving my own decision" },
+    })
+    expect(selfDecision.statusCode).toBe(403)
+
+    const approved = await app.inject({
+      method: "POST",
+      url: `/v1/control/approvals/${requested.json().id}/decide`,
+      headers: { host: controlHost, cookie: approverCookie, ...json },
+      payload: {
+        decision: "approve",
+        reason: "Reviewed the evidence independently",
+      },
+    })
+    expect(approved.statusCode).toBe(200)
+    expect(approved.json().status).toBe("approved")
+
+    const decided = await setup.query(
+      "select status, outcome from admin.cases where id = $1",
+      [caseId],
+    )
+    expect(decided.rows[0].status).toBe("DECIDED")
+    expect(decided.rows[0].outcome).toBe("Refund approved in full")
+
+    const events = await setup.query(
+      "select event_type from admin.case_events where case_id = $1",
+      [caseId],
+    )
+    const types = events.rows.map((row) => row.event_type)
+    expect(types).toContain("decision_requested")
+    expect(types).toContain("decision_recorded")
   })
 })

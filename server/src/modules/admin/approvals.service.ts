@@ -201,6 +201,60 @@ export class ApprovalsService {
     }
   }
 
+  async requestCaseDecision(input: {
+    accountId: string
+    userId: string
+    caseId: string
+    outcome: string
+    reason?: string
+    context: RequestContext
+  }): Promise<ApprovalRequestView> {
+    const reason = input.reason?.trim()
+    const outcome = input.outcome?.trim()
+    if (!reason || reason.length < 5 || !outcome || outcome.length < 3) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "An outcome and a reason of at least five characters are required.",
+        400,
+      )
+    }
+
+    try {
+      return await this.database.withTransaction(
+        { identity: { accountId: input.accountId, userId: input.userId } },
+        async (transaction) => {
+          const result = await transaction.query<ApprovalRow>(
+            "select * from admin.request_case_decision($1, $2, $3, $4)",
+            [input.userId, input.caseId, outcome, reason],
+          )
+          const row = result.rows[0]
+          await appendAudit(transaction.client, {
+            actorType: "admin",
+            actorId: input.userId,
+            actorAudience: input.context.audience,
+            environment: input.context.environment,
+            action: "case.decision_requested",
+            targetType: "case",
+            targetId: input.caseId,
+            afterSummary: {
+              requestId: row.id,
+              reference: row.reference,
+              outcome,
+            },
+            reason,
+            capability: "admin.case.assign",
+            ip: input.context.ip,
+            userAgent: input.context.userAgent,
+            correlationId: input.context.correlationId,
+          })
+          return toView(row)
+        },
+      )
+    } catch (error) {
+      mapApprovalError(error)
+    }
+  }
+
   async decide(input: {
     accountId: string
     userId: string
