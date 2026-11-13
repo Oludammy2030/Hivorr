@@ -33,7 +33,8 @@
 | CP-016 | Case spine and timeline | EP-02 | **REQUIRES_REVIEW** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
 | CP-017 | Case evidence metadata | EP-02 | **REQUIRES_REVIEW** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
 | CP-018 | Support and dispute operations | EP-02 | **REQUIRES_REVIEW** | `20261114001000_admin_add_case_decisions.sql`; case decisions routed through CP-020; outcome and closure reason on the case; decision events on the timeline; "Request decision" in the case detail; OpenAPI regenerated |
-| CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-019 | Verification review | EP-02 | **REQUIRES_REVIEW** | `20261114001100_admin_add_verification_reviews.sql`; verification queue over review cases; evidence-gated approval; approve/reject/request-information with reason; Verification screen; audit rows |
+| CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -358,6 +359,18 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Audit impact:** R3 case data. The request, decision and outcome are audited with the operator and reason.
 - **Rollback:** drop `request_case_decision` and restore the previous `decide_approval`; decided cases keep their outcome.
 - **Approver:** Architect; founder for the separation-of-duties rule on decisions.
+
+### CP-019 — Verification review
+
+- **Class:** `[REVIEW]` — authorisation, personal-data review and decision.
+- **Scope in:** verification queue over `verification_review` cases; lane, review state and evidence count; approve, reject and request-information with a reason; evidence-gated approval; case outcome and timeline events; `admin.verification.review`; Verification screen; audit rows.
+- **Scope out:** automated lane routing, SLA timers, document OCR, identity-provider integration, approvals on verification decisions (the decision is direct and audited).
+- **Reuse:** CP-016 cases, CP-017 evidence, `admin.case_events`, `appendAudit`.
+- **Dependencies:** CP-016, CP-017.
+- **Test plan:** verification suite covers 403, the queue with evidence count, an approval that sets `DECIDED` with `verification_approved`, refusal to approve without evidence, and information requests that move the case to `PENDING_INFORMATION`; migration asserts the queue gate.
+- **Audit impact:** R2 identity data. Each decision writes `verification.<state>` with the officer, reason and evidence count.
+- **Rollback:** drop the table and two functions in a forward migration; cases keep their last state.
+- **Approver:** Architect; founder for the verification decision policy.
 
 ### CP-020 — Approval and maker-checker
 

@@ -24,6 +24,7 @@ import {
   type CaseSummary,
   type CaseEvent,
   type CaseEvidence,
+  type VerificationReview,
   type Session,
   type UserSummary,
 } from "./api"
@@ -496,6 +497,9 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [selectedCase, setSelectedCase] = useState<CaseSummary | null>(null)
   const [caseEvents, setCaseEvents] = useState<readonly CaseEvent[]>([])
   const [caseEvidence, setCaseEvidence] = useState<readonly CaseEvidence[]>([])
+  const [verification, setVerification] =
+    useState<readonly VerificationReview[] | null>(null)
+  const [verificationStatus, setVerificationStatus] = useState("")
 
   const capabilities = own?.capabilities ?? []
   const canReadUsers = capabilities.includes("admin.user.read")
@@ -512,6 +516,9 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     capabilities.includes("admin.case.read") ||
     capabilities.includes("admin.case.assign")
   const canWorkCases = capabilities.includes("admin.case.assign")
+  const canReviewVerification = capabilities.includes(
+    "admin.verification.review",
+  )
   const canReadStaff = capabilities.includes("admin.user.read")
   const canManageStaff = capabilities.includes("admin.user.manage")
   const canReadGrants =
@@ -731,6 +738,46 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       active = false
     }
   }, [selectedCase, canReadCases])
+
+  useEffect(() => {
+    if (section !== "verification" || !canReviewVerification) return
+    let active = true
+    setBusy(true)
+    api
+      .listVerification(verificationStatus)
+      .then((rows) => {
+        if (active) setVerification(rows)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, canReviewVerification, verificationStatus])
+
+  async function handleVerificationDecision(
+    entry: VerificationReview,
+    decision: "approve" | "reject" | "request_information",
+  ) {
+    const reason = window.prompt(
+      `Reason for ${decision.replace("_", " ")} on ${entry.reference}:`,
+    )
+    if (!reason || reason.trim().length < 5) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      await api.decideVerification(entry.caseId, decision, reason.trim())
+      setVerification(await api.listVerification(verificationStatus))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function handleCreateCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -3244,6 +3291,111 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </section>
             )}
           </div>
+        )}
+
+        {knownPath && section === "verification" && !canReviewVerification && (
+          <section className="panel">
+            <h2>Verification</h2>
+            <p className="muted">
+              Your governance role does not include verification review.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "verification" && canReviewVerification && (
+          <section className="panel">
+            <div className="panel-head">
+              <h2>Verification queue</h2>
+              <select
+                className="filter-select"
+                value={verificationStatus}
+                onChange={(event) => setVerificationStatus(event.target.value)}
+                aria-label="Filter verification reviews"
+              >
+                <option value="">All reviews</option>
+                <option value="pending">Pending</option>
+                <option value="information_requested">
+                  Information requested
+                </option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <p className="muted">
+              Approval requires at least one active evidence record on the case.
+              Every decision is recorded on the case timeline and audited.
+            </p>
+            {verification === null && <p className="muted">Loading…</p>}
+            {verification && verification.length === 0 && (
+              <p className="muted">No verification cases in this view.</p>
+            )}
+            {verification && verification.length > 0 && (
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Case</th>
+                      <th>Lane</th>
+                      <th>Review</th>
+                      <th>Evidence</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {verification.map((entry) => (
+                      <tr key={entry.caseId}>
+                        <td className="mono">{entry.reference}</td>
+                        <td>{entry.title}</td>
+                        <td>{entry.lane}</td>
+                        <td>
+                          <span className="chip">{entry.reviewStatus}</span>
+                        </td>
+                        <td>{entry.evidenceCount}</td>
+                        <td>
+                          <div className="account-actions">
+                            <button
+                              type="button"
+                              className="button button-small"
+                              onClick={() =>
+                                handleVerificationDecision(entry, "approve")
+                              }
+                              disabled={busy}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              className="button button-quiet button-small"
+                              onClick={() =>
+                                handleVerificationDecision(
+                                  entry,
+                                  "request_information",
+                                )
+                              }
+                              disabled={busy}
+                            >
+                              Request info
+                            </button>
+                            <button
+                              type="button"
+                              className="button button-danger button-small"
+                              onClick={() =>
+                                handleVerificationDecision(entry, "reject")
+                              }
+                              disabled={busy}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         )}
 
         {knownPath && section === "partners" && !canReadPartners && (

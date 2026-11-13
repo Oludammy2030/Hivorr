@@ -28,6 +28,7 @@ import { PartnersController } from "./api/partners.controller"
 import { PartnerController } from "./api/partner.controller"
 import { CasesController } from "./api/cases.controller"
 import { EvidenceController } from "./api/evidence.controller"
+import { VerificationController } from "./api/verification.controller"
 import { StaffService } from "./modules/admin/staff.service"
 import { RolesService } from "./modules/admin/roles.service"
 import { AccountGovernanceService } from "./modules/admin/account-governance.service"
@@ -36,6 +37,7 @@ import { PartnersService } from "./modules/admin/partners.service"
 import { PartnerPortalService } from "./modules/admin/partner-portal.service"
 import { CasesService } from "./modules/admin/cases.service"
 import { EvidenceService } from "./modules/admin/evidence.service"
+import { VerificationService } from "./modules/admin/verification.service"
 import { ProfileService } from "./modules/profile/profile.service"
 
 @Module({})
@@ -60,6 +62,7 @@ export class AppModule {
         PartnerController,
         CasesController,
         EvidenceController,
+        VerificationController,
         GrantsController,
       ],
       providers: [
@@ -100,6 +103,7 @@ export class AppModule {
         PartnerPortalService,
         CasesService,
         EvidenceService,
+        VerificationService,
       ],
     }
   }

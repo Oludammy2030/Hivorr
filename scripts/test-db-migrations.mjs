@@ -648,6 +648,17 @@ try {
     )
   assert(evidenceDenied, "the evidence register requires a case permission")
 
+  const verificationDenied = await testClient
+    .query("select * from admin.list_verification_queue($1, '')", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    verificationDenied,
+    "the verification queue requires admin.verification.review",
+  )
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )
