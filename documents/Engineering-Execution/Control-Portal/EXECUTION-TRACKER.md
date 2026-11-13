@@ -184,9 +184,10 @@
 | Transactional email end-to-end | `mail.hivorr.com` verified in Zoho CPaaS with DKIM `1221557._domainkey` and bounce CNAME `bounce-zem.mail.hivorr.com → cluster89.zeptomail.com`; a real staff invitation from the control screen was delivered |
 | PR #74 (branded invitation email) | Merged into `staging`; CI green; Fly release `9218786` |
 | PR #75 (one email layout, inline brand mark, recovery pages) | Merged into `staging`; CI run `43381859309` green; Fly release `v57` on `e82f673`; `https://staging.hivorr.com/reset` and `/verify` serve `200` |
+| PR #76 (official staff address, personal delivery address) | Merged into `staging`; CI run `43392130105` green including the database migration; Fly release `v58` on `d4c36f9`; `GET /v1/auth/staff-invite` returns `404` for an unknown token and `/invite` serves `200` |
 | Staging deployment gate | Runs `43301894294` and later green; Pages job deployed all four bundles |
 | `pnpm typecheck`, `lint`, `format:check`, `lint:boundaries`, `docs:check`, `lint:migrations`, `config:check` | PASS |
-| `pnpm test` | PASS — 54 files, 385 passed, 32 skipped |
+| `pnpm test` | PASS — 55 files, 388 passed, 32 skipped |
 | `pnpm openapi:check`, `build:all` | PASS — 36 paths |
 | Live staging | `https://staging.hivorr.com/invite.html` serves the invitation page; the staff API route is registered |
 | `pnpm test:db` | Not run locally (Docker unavailable); the CI database job passed |
