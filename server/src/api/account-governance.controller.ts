@@ -93,17 +93,6 @@ export class AccountGovernanceController {
     return this.action(request, id, "reactivate", body)
   }
 
-  @Post("control/users/:id/close")
-  @HttpCode(200)
-  @Audience("control")
-  async close(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
-    return this.action(request, id, "close", body)
-  }
-
   @Post("control/users/:id/revoke-sessions")
   @HttpCode(200)
   @Audience("control")

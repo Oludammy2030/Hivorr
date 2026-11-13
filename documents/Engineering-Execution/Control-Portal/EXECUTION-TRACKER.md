@@ -27,7 +27,8 @@
 | CP-010 | Staff records and lifecycle | EP-02 | **REQUIRES_REVIEW** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
 | CP-012 | Role administration | EP-02 | **REQUIRES_REVIEW** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated |
 | CP-013 | Account governance | EP-02 | **REQUIRES_REVIEW** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
-| CP-014…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-020 | Approval and maker-checker | EP-02 | **REQUIRES_REVIEW** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
+| CP-014…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -284,6 +285,18 @@ UI-only change: no migration, no API contract change and no permission change.
 - Tests: pure cases for `platformPermissions`; integration proves a platform role appears in the
   session and a department-scoped assignment does not.
 
+### CP-020 — Approval and maker-checker
+
+- **Class:** `[REVIEW]` — authorization, irreversible action and new control surface.
+- **Scope in:** `admin.request_approval`, `admin.list_approval_requests`, `admin.decide_approval`; typed requests over the existing `admin.approval_requests`, `approval_steps`, `approval_decisions` tables; account closure as the first wired action; Approvals screen; audit rows.
+- **Scope out:** additional action types, multi-stage or threshold routing, delegation, expiry jobs, notification delivery (CP-023).
+- **Reuse:** approval tables from CP-006, `admin.actor_holds_platform_permission`, `admin.govern_user`, `platform.audit_log`, `capabilities.ts`.
+- **Dependencies:** CP-006, CP-013.
+- **Test plan:** migration asserts the permission and that the register refuses without it; the approval integration test covers a request, a self-decision refusal, duplicate refusal, approval that closes the account and revokes grants and roles, and rejection that leaves the target active; full suite and OpenAPI route coverage.
+- **Audit impact:** R2 governance data. Requests, approvals, rejections and the executed closure each write an audit row with the operator, reference and reason.
+- **Rollback:** drop the three functions in a forward migration; existing requests and decisions remain readable. Account closure already executed is not undone.
+- **Approver:** Architect; founder for the separation-of-duties rule.
+
 ## 5. Known follow-ups
 
 1. Role permissions now compose into `GET /v1/session` for every portal. Only platform-scoped
@@ -320,10 +333,10 @@ UI-only change: no migration, no API contract change and no permission change.
     filters role assignments by name or email and shows that person's grants across departments; each
     tab keeps its own permission gate and URL, and `/roles` and `/grants` redirect to the new URLs so
     contextual links keep working. (CP-012)
-14. Account closure is immediate and irreversible. CP-020 will route sensitive closures through a
-    second approver; until then the action requires `admin.user.manage`, a reason and an audit record,
-    and self-action is refused in the database. Reopening a closed account has no supported path.
-    (CP-013)
+14. Account closure now goes through CP-020: the control UI raises a request, the direct close route is
+    removed, and a second administrator must approve. The approver needs both `admin.approval.decide`
+    and `admin.user.manage`, so the decision carries the authority to perform the action. Reopening a
+    closed account still has no supported path.
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a

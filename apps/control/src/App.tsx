@@ -18,6 +18,7 @@ import {
   type AssignableStaff,
   type AccountNote,
   type AccountTimelineEntry,
+  type ApprovalRequest,
   type Session,
   type UserSummary,
 } from "./api"
@@ -105,6 +106,12 @@ function assignmentStatusChip(status: AssignmentStatus): string {
   if (status === "active") return "chip chip-ok"
   if (status === "expired") return "chip"
   return "chip chip-danger"
+}
+
+function approvalStatusChip(status: string): string {
+  if (status === "approved") return "chip chip-ok"
+  if (status === "rejected") return "chip chip-danger"
+  return "chip"
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -468,10 +475,17 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [userNotes, setUserNotes] = useState<readonly AccountNote[]>([])
   const [userTimeline, setUserTimeline] =
     useState<readonly AccountTimelineEntry[]>([])
+  const [approvals, setApprovals] = useState<readonly ApprovalRequest[] | null>(
+    null,
+  )
 
   const capabilities = own?.capabilities ?? []
   const canReadUsers = capabilities.includes("admin.user.read")
   const canManageUsers = capabilities.includes("admin.user.manage")
+  const canReadApprovals =
+    capabilities.includes("admin.approval.read") ||
+    capabilities.includes("admin.approval.decide")
+  const canDecideApprovals = capabilities.includes("admin.approval.decide")
   const canReadStaff = capabilities.includes("admin.user.read")
   const canManageStaff = capabilities.includes("admin.user.manage")
   const canReadGrants =
@@ -592,19 +606,102 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     }
   }, [selectedUser, canReadUsers])
 
+  useEffect(() => {
+    if (section !== "approvals" || !canReadApprovals) return
+    let active = true
+    setBusy(true)
+    api
+      .listApprovals()
+      .then((rows) => {
+        if (active) setApprovals(rows)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, canReadApprovals])
+
+  async function handleDecideApproval(
+    approval: ApprovalRequest,
+    decision: "approve" | "reject",
+  ) {
+    const reason = window.prompt(
+      `Reason for ${
+        decision === "approve" ? "approving" : "rejecting"
+      } ${approval.reference}:`,
+    )
+    if (!reason || reason.trim().length < 5) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const updated = await api.decideApproval(
+        approval.id,
+        decision,
+        reason.trim(),
+      )
+      setApprovals((current) =>
+        (current ?? []).map((entry) =>
+          entry.id === updated.id ? updated : entry,
+        ),
+      )
+      if (updated.status === "approved") {
+        setUsers((current) =>
+          (current ?? []).map((entry) =>
+            entry.id === updated.targetId
+              ? { ...entry, status: "closed" }
+              : entry,
+          ),
+        )
+        setSelectedUser((current) =>
+          current && current.id === updated.targetId
+            ? { ...current, status: "closed" }
+            : current,
+        )
+      }
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRequestClosure(user: UserSummary) {
+    const reason = window.prompt(
+      `Reason for requesting closure of ${user.email}:`,
+    )
+    if (!reason || reason.trim().length < 5) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const request = await api.requestApproval({
+        actionType: "account.closure",
+        targetType: "user",
+        targetId: user.id,
+        reason: reason.trim(),
+      })
+      setError(
+        `Closure requested (${request.reference}). A second administrator must approve it.`,
+      )
+      setUserTimeline(await api.userTimeline(user.id))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleAccountAction(
     user: UserSummary,
-    action: "suspend" | "reactivate" | "close" | "revoke-sessions",
+    action: "suspend" | "reactivate" | "revoke-sessions",
   ) {
-    const label =
-      action === "close"
-        ? `Close ${user.email}? This removes its authority and cannot be undone.`
-        : `Reason for ${action.replace("-", " ")} on ${user.email}:`
-    if (action === "close" && !window.confirm(label)) return
-    const reason =
-      action === "close"
-        ? window.prompt(`Reason for closing ${user.email}:`)
-        : window.prompt(label)
+    const reason = window.prompt(
+      `Reason for ${action.replace("-", " ")} on ${user.email}:`,
+    )
     if (!reason || reason.trim().length < 5) return
 
     setBusy(true)
@@ -615,9 +712,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           ? api.suspendUser(user.id, reason.trim())
           : action === "reactivate"
             ? api.reactivateUser(user.id, reason.trim())
-            : action === "close"
-              ? api.closeUser(user.id, reason.trim())
-              : api.revokeUserSessions(user.id, reason.trim())
+            : api.revokeUserSessions(user.id, reason.trim())
 
       const result = await run
       if (action === "revoke-sessions") {
@@ -1520,12 +1615,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                       <button
                         type="button"
                         className="button button-danger button-small"
-                        onClick={() =>
-                          handleAccountAction(selectedUser, "close")
-                        }
+                        onClick={() => handleRequestClosure(selectedUser)}
                         disabled={busy}
                       >
-                        Close account
+                        Request closure
                       </button>
                     )}
                   </div>
@@ -2312,6 +2405,102 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               )}
             </section>
           </div>
+        )}
+
+        {knownPath && section === "approvals" && !canReadApprovals && (
+          <section className="panel">
+            <h2>Approvals</h2>
+            <p className="muted">
+              Your governance role does not include approvals.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "approvals" && canReadApprovals && (
+          <section className="panel">
+            <div className="panel-head">
+              <h2>Approvals</h2>
+              <span className="muted">
+                {approvals === null
+                  ? "Loading…"
+                  : `${approvals.filter((entry) => entry.status === "pending").length} pending`}
+              </span>
+            </div>
+            <p className="muted">
+              A request is decided by someone other than the person who raised
+              it.
+            </p>
+            {approvals && approvals.length === 0 && (
+              <p className="muted">No approval requests.</p>
+            )}
+            {approvals && approvals.length > 0 && (
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Action</th>
+                      <th>Target</th>
+                      <th>Requested by</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {approvals.map((entry) => (
+                      <tr key={entry.id}>
+                        <td className="mono">{entry.reference}</td>
+                        <td>{entry.actionType}</td>
+                        <td className="mono">{entry.targetId.slice(0, 8)}</td>
+                        <td>
+                          <div>{entry.requesterName ?? "—"}</div>
+                          <div className="muted">{entry.requesterEmail}</div>
+                        </td>
+                        <td>{entry.reason}</td>
+                        <td>
+                          <span className={approvalStatusChip(entry.status)}>
+                            {entry.status}
+                          </span>
+                        </td>
+                        <td>
+                          {entry.requesterUserId === session.userId ? (
+                            <span className="muted">You</span>
+                          ) : (
+                            canDecideApprovals &&
+                            entry.status === "pending" && (
+                              <div className="account-actions">
+                                <button
+                                  type="button"
+                                  className="button button-small"
+                                  onClick={() =>
+                                    handleDecideApproval(entry, "approve")
+                                  }
+                                  disabled={busy}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  className="button button-quiet button-small"
+                                  onClick={() =>
+                                    handleDecideApproval(entry, "reject")
+                                  }
+                                  disabled={busy}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         )}
 
         {knownPath && section === "audit" && !canReadAudit && (

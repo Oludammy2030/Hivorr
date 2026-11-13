@@ -169,10 +169,6 @@ export type ReactivateAccountRequest = { "reason"?: string }
 
 export type ReactivateAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
 
-export type CloseAccountRequest = { "reason"?: string }
-
-export type CloseAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
-
 export type RevokeUserSessionsRequest = { "reason"?: string }
 
 export type RevokeUserSessionsResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
@@ -184,6 +180,16 @@ export type AddAccountNoteRequest = { "body": string }
 export type AddAccountNoteResponse = { "id": string; "body": string; "authorName"?: string | null; "authorEmail"?: string | null; "createdAt": string }
 
 export type AccountTimelineResponse = ({ "occurredAt": string; "action": string; "reason"?: string | null; "actorName"?: string | null; "actorEmail"?: string | null })[]
+
+export type ListApprovalsResponse = ({ "id": string; "reference": string; "actionType": string; "targetType": string; "targetId": string; "status": string; "reason": string; "requesterUserId": string; "requesterName"?: string | null; "requesterEmail"?: string | null; "createdAt": string; "decidedAt"?: string | null })[]
+
+export type CreateApprovalRequest = { "actionType": string; "targetType": string; "targetId": string; "reason"?: string }
+
+export type CreateApprovalResponse = { "id": string; "reference": string; "actionType": string; "targetType": string; "targetId": string; "status": string; "reason": string; "requesterUserId": string; "requesterName"?: string | null; "requesterEmail"?: string | null; "createdAt": string; "decidedAt"?: string | null }
+
+export type DecideApprovalRequest = { "decision": "approve" | "reject"; "reason"?: string }
+
+export type DecideApprovalResponse = { "id": string; "reference": string; "actionType": string; "targetType": string; "targetId": string; "status": string; "reason": string; "requesterUserId": string; "requesterName"?: string | null; "requesterEmail"?: string | null; "createdAt": string; "decidedAt"?: string | null }
 
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
@@ -569,13 +575,6 @@ export function createHivorrClient(options: HivorrClientOptions) {
         input,
         [200],
       ),
-    closeAccount: (params: { id: string }, input: CloseAccountRequest) =>
-      request<CloseAccountResponse>(
-        "POST",
-        `/v1/control/users/${encodeURIComponent(params.id)}/close`,
-        input,
-        [200],
-      ),
     revokeUserSessions: (params: { id: string }, input: RevokeUserSessionsRequest) =>
       request<RevokeUserSessionsResponse>(
         "POST",
@@ -602,6 +601,27 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "GET",
         `/v1/control/users/${encodeURIComponent(params.id)}/timeline`,
         undefined,
+        [200],
+      ),
+    listApprovals: () =>
+      request<ListApprovalsResponse>(
+        "GET",
+        "/v1/control/approvals",
+        undefined,
+        [200],
+      ),
+    createApproval: (input: CreateApprovalRequest) =>
+      request<CreateApprovalResponse>(
+        "POST",
+        "/v1/control/approvals",
+        input,
+        [201],
+      ),
+    decideApproval: (params: { id: string }, input: DecideApprovalRequest) =>
+      request<DecideApprovalResponse>(
+        "POST",
+        `/v1/control/approvals/${encodeURIComponent(params.id)}/decide`,
+        input,
         [200],
       ),
   }

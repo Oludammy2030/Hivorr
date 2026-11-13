@@ -5,7 +5,7 @@ import { DatabaseService } from "../../db/database.service"
 import type { RequestContext } from "../identity"
 import { appendAudit } from "../platform"
 
-export type AccountAction = "suspend" | "reactivate" | "close" | "revoke_sessions"
+export type AccountAction = "suspend" | "reactivate" | "revoke_sessions"
 
 export interface AccountActionView {
   readonly userId: string
@@ -58,7 +58,6 @@ interface TimelineRow {
 const ACTION_LABELS: Readonly<Record<AccountAction, string>> = {
   suspend: "account.suspended",
   reactivate: "account.reactivated",
-  close: "account.closed",
   revoke_sessions: "account.sessions_revoked",
 }
 

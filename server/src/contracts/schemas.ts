@@ -133,6 +133,18 @@ export const addAccountNoteRequest = z.strictObject({
   body: z.string().min(3).max(2000),
 })
 
+export const createApprovalRequest = z.strictObject({
+  actionType: z.string().min(3).max(64),
+  targetType: z.string().min(2).max(32),
+  targetId: z.string().min(1).max(64),
+  reason: z.string().min(3).max(500).optional(),
+})
+
+export const decideApprovalRequest = z.strictObject({
+  decision: z.enum(["approve", "reject"]),
+  reason: z.string().min(3).max(500).optional(),
+})
+
 // --- Responses --------------------------------------------------------------
 
 export const registrationResponse = z.object({
@@ -338,6 +350,23 @@ export const accountTimelineEntryResponse = z.object({
 })
 
 export const accountTimelineListResponse = z.array(accountTimelineEntryResponse)
+
+export const approvalRequestViewResponse = z.object({
+  id: z.string(),
+  reference: z.string(),
+  actionType: z.string(),
+  targetType: z.string(),
+  targetId: z.string(),
+  status: z.string(),
+  reason: z.string(),
+  requesterUserId: z.string(),
+  requesterName: z.string().nullable().optional(),
+  requesterEmail: z.string().nullable().optional(),
+  createdAt: z.string(),
+  decidedAt: z.string().nullable().optional(),
+})
+
+export const approvalRequestListResponse = z.array(approvalRequestViewResponse)
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),

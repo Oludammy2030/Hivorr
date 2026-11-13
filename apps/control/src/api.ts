@@ -171,6 +171,21 @@ export interface AccountTimelineEntry {
   readonly actorEmail: string | null
 }
 
+export interface ApprovalRequest {
+  readonly id: string
+  readonly reference: string
+  readonly actionType: string
+  readonly targetType: string
+  readonly targetId: string
+  readonly status: string
+  readonly reason: string
+  readonly requesterUserId: string
+  readonly requesterName: string | null
+  readonly requesterEmail: string | null
+  readonly createdAt: string
+  readonly decidedAt: string | null
+}
+
 export interface UserList {
   readonly items: readonly UserSummary[]
   readonly nextCursor: string | null
@@ -349,11 +364,6 @@ export const api = {
       `/control/users/${encodeURIComponent(id)}/reactivate`,
       { method: "POST", body: JSON.stringify({ reason }) },
     ),
-  closeUser: (id: string, reason: string) =>
-    request<AccountAction>(`/control/users/${encodeURIComponent(id)}/close`, {
-      method: "POST",
-      body: JSON.stringify({ reason }),
-    }),
   revokeUserSessions: (id: string, reason: string) =>
     request<AccountAction>(
       `/control/users/${encodeURIComponent(id)}/revoke-sessions`,
@@ -371,6 +381,27 @@ export const api = {
   userTimeline: (id: string) =>
     request<readonly AccountTimelineEntry[]>(
       `/control/users/${encodeURIComponent(id)}/timeline`,
+    ),
+  listApprovals: () =>
+    request<readonly ApprovalRequest[]>("/control/approvals"),
+  requestApproval: (input: {
+    actionType: string
+    targetType: string
+    targetId: string
+    reason: string
+  }) =>
+    request<ApprovalRequest>("/control/approvals", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  decideApproval: (
+    id: string,
+    decision: "approve" | "reject",
+    reason: string,
+  ) =>
+    request<ApprovalRequest>(
+      `/control/approvals/${encodeURIComponent(id)}/decide`,
+      { method: "POST", body: JSON.stringify({ decision, reason }) },
     ),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),
