@@ -147,6 +147,30 @@ export interface UserSummary {
   readonly createdAt: string
 }
 
+export interface AccountAction {
+  readonly userId: string
+  readonly status: string
+  readonly sessionsRevoked: number
+  readonly grantsRevoked: number
+  readonly rolesRevoked: number
+}
+
+export interface AccountNote {
+  readonly id: string
+  readonly body: string
+  readonly authorName: string | null
+  readonly authorEmail: string | null
+  readonly createdAt: string
+}
+
+export interface AccountTimelineEntry {
+  readonly occurredAt: string
+  readonly action: string
+  readonly reason: string | null
+  readonly actorName: string | null
+  readonly actorEmail: string | null
+}
+
 export interface UserList {
   readonly items: readonly UserSummary[]
   readonly nextCursor: string | null
@@ -315,6 +339,39 @@ export const api = {
       `/control/users${suffix ? `?${suffix}` : ""}`,
     )
   },
+  suspendUser: (id: string, reason: string) =>
+    request<AccountAction>(`/control/users/${encodeURIComponent(id)}/suspend`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
+  reactivateUser: (id: string, reason: string) =>
+    request<AccountAction>(
+      `/control/users/${encodeURIComponent(id)}/reactivate`,
+      { method: "POST", body: JSON.stringify({ reason }) },
+    ),
+  closeUser: (id: string, reason: string) =>
+    request<AccountAction>(`/control/users/${encodeURIComponent(id)}/close`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
+  revokeUserSessions: (id: string, reason: string) =>
+    request<AccountAction>(
+      `/control/users/${encodeURIComponent(id)}/revoke-sessions`,
+      { method: "POST", body: JSON.stringify({ reason }) },
+    ),
+  listUserNotes: (id: string) =>
+    request<readonly AccountNote[]>(
+      `/control/users/${encodeURIComponent(id)}/notes`,
+    ),
+  addUserNote: (id: string, body: string) =>
+    request<AccountNote>(`/control/users/${encodeURIComponent(id)}/notes`, {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    }),
+  userTimeline: (id: string) =>
+    request<readonly AccountTimelineEntry[]>(
+      `/control/users/${encodeURIComponent(id)}/timeline`,
+    ),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),
   createGrant: (input: CreateGrantInput) =>

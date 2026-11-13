@@ -564,6 +564,25 @@ try {
     "the assignable staff list requires admin.role.manage",
   )
 
+  const accountGovernDenied = await testClient
+    .query(
+      "select * from admin.govern_user($1, $1, 'suspend', 'test reason')",
+      [userId],
+    )
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(accountGovernDenied, "account governance requires admin.user.manage")
+
+  const notesTable = await testClient.query(
+    "select 1 from information_schema.tables where table_schema = 'admin' and table_name = 'user_notes'",
+  )
+  assert(
+    notesTable.rowCount === 1,
+    "operator notes are stored in admin.user_notes",
+  )
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )

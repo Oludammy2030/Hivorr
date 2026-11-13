@@ -16,6 +16,8 @@ import {
   type RoleScopeTarget,
   type RoleScopeType,
   type AssignableStaff,
+  type AccountNote,
+  type AccountTimelineEntry,
   type Session,
   type UserSummary,
 } from "./api"
@@ -463,9 +465,13 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [userQuery, setUserQuery] = useState("")
   const [userStatus, setUserStatus] = useState("")
   const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null)
+  const [userNotes, setUserNotes] = useState<readonly AccountNote[]>([])
+  const [userTimeline, setUserTimeline] =
+    useState<readonly AccountTimelineEntry[]>([])
 
   const capabilities = own?.capabilities ?? []
   const canReadUsers = capabilities.includes("admin.user.read")
+  const canManageUsers = capabilities.includes("admin.user.manage")
   const canReadStaff = capabilities.includes("admin.user.read")
   const canManageStaff = capabilities.includes("admin.user.manage")
   const canReadGrants =
@@ -565,6 +571,98 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       active = false
     }
   }, [section, userQuery, userStatus, canReadUsers])
+
+  useEffect(() => {
+    if (!selectedUser || !canReadUsers) return
+    let active = true
+    Promise.all([
+      api.listUserNotes(selectedUser.id),
+      api.userTimeline(selectedUser.id),
+    ])
+      .then(([notes, timeline]) => {
+        if (!active) return
+        setUserNotes(notes)
+        setUserTimeline(timeline)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+    return () => {
+      active = false
+    }
+  }, [selectedUser, canReadUsers])
+
+  async function handleAccountAction(
+    user: UserSummary,
+    action: "suspend" | "reactivate" | "close" | "revoke-sessions",
+  ) {
+    const label =
+      action === "close"
+        ? `Close ${user.email}? This removes its authority and cannot be undone.`
+        : `Reason for ${action.replace("-", " ")} on ${user.email}:`
+    if (action === "close" && !window.confirm(label)) return
+    const reason =
+      action === "close"
+        ? window.prompt(`Reason for closing ${user.email}:`)
+        : window.prompt(label)
+    if (!reason || reason.trim().length < 5) return
+
+    setBusy(true)
+    setError(undefined)
+    try {
+      const run =
+        action === "suspend"
+          ? api.suspendUser(user.id, reason.trim())
+          : action === "reactivate"
+            ? api.reactivateUser(user.id, reason.trim())
+            : action === "close"
+              ? api.closeUser(user.id, reason.trim())
+              : api.revokeUserSessions(user.id, reason.trim())
+
+      const result = await run
+      if (action === "revoke-sessions") {
+        setError(
+          `Revoked ${result.sessionsRevoked} session${
+            result.sessionsRevoked === 1 ? "" : "s"
+          }.`,
+        )
+      } else {
+        setSelectedUser({ ...user, status: result.status })
+        setUsers((current) =>
+          (current ?? []).map((entry) =>
+            entry.id === user.id ? { ...entry, status: result.status } : entry,
+          ),
+        )
+      }
+      setUserTimeline(await api.userTimeline(user.id))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAddNote(
+    event: FormEvent<HTMLFormElement>,
+    user: UserSummary,
+  ) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const body = String(form.get("note") ?? "").trim()
+    if (body.length < 3) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      await api.addUserNote(user.id, body)
+      event.currentTarget.reset()
+      setUserNotes(await api.listUserNotes(user.id))
+      setUserTimeline(await api.userTimeline(user.id))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (section !== "audit" || audit !== null || !canReadAudit) return
@@ -1378,9 +1476,128 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                   </Link>
                 )}
                 <p className="hint">
-                  Account actions — suspend, reinstate, revoke sessions — are
-                  the next control slice. This view is read-only.
+                  Closing an account removes its grants and roles. Every action
+                  here requires a reason and is audited.
                 </p>
+
+                {canManageUsers && selectedUser.id !== session.userId && (
+                  <div className="account-actions">
+                    {selectedUser.status === "active" && (
+                      <button
+                        type="button"
+                        className="button button-quiet button-small"
+                        onClick={() =>
+                          handleAccountAction(selectedUser, "suspend")
+                        }
+                        disabled={busy}
+                      >
+                        Suspend
+                      </button>
+                    )}
+                    {selectedUser.status === "suspended" && (
+                      <button
+                        type="button"
+                        className="button button-quiet button-small"
+                        onClick={() =>
+                          handleAccountAction(selectedUser, "reactivate")
+                        }
+                        disabled={busy}
+                      >
+                        Reactivate
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="button button-quiet button-small"
+                      onClick={() =>
+                        handleAccountAction(selectedUser, "revoke-sessions")
+                      }
+                      disabled={busy}
+                    >
+                      Revoke sessions
+                    </button>
+                    {selectedUser.status !== "closed" && (
+                      <button
+                        type="button"
+                        className="button button-danger button-small"
+                        onClick={() =>
+                          handleAccountAction(selectedUser, "close")
+                        }
+                        disabled={busy}
+                      >
+                        Close account
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <h3 className="section-title">Notes</h3>
+                {userNotes.length === 0 && (
+                  <p className="muted">No notes yet.</p>
+                )}
+                {userNotes.length > 0 && (
+                  <ul className="plain-list">
+                    {userNotes.map((note) => (
+                      <li key={note.id}>
+                        <div>{note.body}</div>
+                        <div className="muted">
+                          {formatTime(note.createdAt)}
+                          {note.authorName || note.authorEmail
+                            ? ` · ${note.authorName ?? note.authorEmail}`
+                            : ""}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {canManageUsers && (
+                  <form
+                    className="form"
+                    onSubmit={(event) => handleAddNote(event, selectedUser)}
+                  >
+                    <label className="field">
+                      <span>Add a note</span>
+                      <textarea
+                        name="note"
+                        rows={2}
+                        maxLength={2000}
+                        minLength={3}
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <button
+                      className="button button-small"
+                      type="submit"
+                      disabled={busy}
+                    >
+                      Add note
+                    </button>
+                  </form>
+                )}
+
+                <h3 className="section-title">Timeline</h3>
+                {userTimeline.length === 0 && (
+                  <p className="muted">No recorded activity yet.</p>
+                )}
+                {userTimeline.length > 0 && (
+                  <ul className="plain-list">
+                    {userTimeline.map((entry, index) => (
+                      <li key={`${entry.occurredAt}-${index}`}>
+                        <div>
+                          <span className="mono">{entry.action}</span>
+                          {entry.reason ? ` — ${entry.reason}` : ""}
+                        </div>
+                        <div className="muted">
+                          {formatTime(entry.occurredAt)} ·{" "}
+                          {entry.actorName ??
+                            entry.actorEmail ??
+                            "recorded by the system"}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
             )}
           </div>
