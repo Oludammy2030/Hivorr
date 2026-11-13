@@ -629,6 +629,14 @@ try {
     "the partner read model is scoped to the user id",
   )
 
+  const caseListDenied = await testClient
+    .query("select * from admin.list_cases($1, '', '', '')", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(caseListDenied, "the case register requires a case permission")
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )

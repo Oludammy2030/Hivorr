@@ -15,6 +15,7 @@ import { AccountGovernanceController } from "../server/src/api/account-governanc
 import { ApprovalsController } from "../server/src/api/approvals.controller"
 import { PartnersController } from "../server/src/api/partners.controller"
 import { PartnerController } from "../server/src/api/partner.controller"
+import { CasesController } from "../server/src/api/cases.controller"
 import { buildDocument } from "../server/src/openapi/build"
 import { scanControllerRoutes } from "../server/src/openapi/scan"
 
@@ -39,6 +40,7 @@ describe("OpenAPI route coverage", () => {
       ApprovalsController,
       PartnersController,
       PartnerController,
+      CasesController,
       GrantsController,
     ]
       .flatMap((controller) => scanControllerRoutes(controller))

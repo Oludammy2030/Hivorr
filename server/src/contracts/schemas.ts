@@ -164,6 +164,55 @@ export const addPartnerRepresentativeRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const CASE_TYPE_VALUES = [
+  "support",
+  "complaint",
+  "dispute",
+  "investigation",
+  "incident",
+  "verification_review",
+  "financial_exception",
+  "security_incident",
+  "staff_conduct",
+  "partner_conduct",
+] as const
+
+export const createCaseRequest = z.strictObject({
+  caseType: z.enum(CASE_TYPE_VALUES),
+  title: z.string().min(3).max(200),
+  description: z.string().max(4000).optional(),
+  priority: z.enum(["low", "normal", "high", "urgent"]),
+  severity: z.enum(["low", "medium", "high", "critical"]),
+  queueKey: z.string().min(1).max(64).optional(),
+  reason: z.string().min(3).max(500).optional(),
+})
+
+export const caseNoteRequest = z.strictObject({
+  summary: z.string().min(3).max(2000),
+})
+
+export const assignCaseRequest = z.strictObject({
+  email: z.string().min(3).max(254).optional(),
+  queueKey: z.string().min(1).max(64).optional(),
+})
+
+export const caseStatusRequest = z.strictObject({
+  status: z.enum([
+    "TRIAGED",
+    "OPEN",
+    "INVESTIGATING",
+    "PENDING_INFORMATION",
+    "ESCALATED",
+    "REVIEW",
+    "DECIDED",
+    "ACTION_PENDING",
+    "CLOSED",
+    "REOPENED",
+    "ARCHIVED",
+  ]),
+  reason: z.string().min(3).max(500).optional(),
+})
+
 // --- Responses --------------------------------------------------------------
 
 export const registrationResponse = z.object({
@@ -429,6 +478,38 @@ export const ownPartnerOrganisationResponse = z.object({
 export const ownPartnerOrganisationListResponse = z.array(
   ownPartnerOrganisationResponse,
 )
+
+export const caseViewResponse = z.object({
+  id: z.string(),
+  reference: z.string(),
+  caseType: z.string(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  priority: z.string(),
+  severity: z.string(),
+  status: z.string(),
+  queueKey: z.string().nullable().optional(),
+  assigneeId: z.string().nullable().optional(),
+  assigneeName: z.string().nullable().optional(),
+  assigneeEmail: z.string().nullable().optional(),
+  departmentName: z.string().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  closedAt: z.string().nullable().optional(),
+})
+
+export const caseListResponse = z.array(caseViewResponse)
+
+export const caseEventViewResponse = z.object({
+  id: z.string(),
+  eventType: z.string(),
+  summary: z.string(),
+  actorName: z.string().nullable().optional(),
+  actorEmail: z.string().nullable().optional(),
+  occurredAt: z.string(),
+})
+
+export const caseEventListResponse = z.array(caseEventViewResponse)
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),

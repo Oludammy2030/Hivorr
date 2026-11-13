@@ -26,12 +26,14 @@ import { AccountGovernanceController } from "./api/account-governance.controller
 import { ApprovalsController } from "./api/approvals.controller"
 import { PartnersController } from "./api/partners.controller"
 import { PartnerController } from "./api/partner.controller"
+import { CasesController } from "./api/cases.controller"
 import { StaffService } from "./modules/admin/staff.service"
 import { RolesService } from "./modules/admin/roles.service"
 import { AccountGovernanceService } from "./modules/admin/account-governance.service"
 import { ApprovalsService } from "./modules/admin/approvals.service"
 import { PartnersService } from "./modules/admin/partners.service"
 import { PartnerPortalService } from "./modules/admin/partner-portal.service"
+import { CasesService } from "./modules/admin/cases.service"
 import { ProfileService } from "./modules/profile/profile.service"
 
 @Module({})
@@ -54,6 +56,7 @@ export class AppModule {
         ApprovalsController,
         PartnersController,
         PartnerController,
+        CasesController,
         GrantsController,
       ],
       providers: [
@@ -92,6 +95,7 @@ export class AppModule {
         ApprovalsService,
         PartnersService,
         PartnerPortalService,
+        CasesService,
       ],
     }
   }
