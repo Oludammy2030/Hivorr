@@ -312,4 +312,105 @@ describeIntegration("case spine integration", () => {
     expect(audit.rows.map((row) => row.action)).toContain("case.created")
     expect(audit.rows.map((row) => row.action)).toContain("case.status_changed")
   })
+
+  it("records evidence metadata, audits access and supersedes originals", async () => {
+    const hashA = "a".repeat(64)
+    const hashB = "b".repeat(64)
+
+    const first = await app.inject({
+      method: "POST",
+      url: `/v1/control/cases/${caseId}/evidence`,
+      headers: { host: controlHost, cookie: managerCookie, ...json },
+      payload: {
+        storageKey: `cases/${caseId}/photo-1.jpg`,
+        fileName: "photo-1.jpg",
+        mimeType: "image/jpeg",
+        sizeBytes: 2048,
+        sha256: hashA,
+        reason: "Customer supplied a photograph",
+      },
+    })
+    expect(first.statusCode).toBe(201)
+    expect(first.json()).toMatchObject({
+      fileName: "photo-1.jpg",
+      status: "active",
+    })
+
+    const replacement = await app.inject({
+      method: "POST",
+      url: `/v1/control/cases/${caseId}/evidence`,
+      headers: { host: controlHost, cookie: managerCookie, ...json },
+      payload: {
+        storageKey: `cases/${caseId}/photo-1-corrected.jpg`,
+        fileName: "photo-1-corrected.jpg",
+        sha256: hashB,
+        reason: "Corrected orientation supplied",
+      },
+    })
+    expect(replacement.statusCode).toBe(201)
+
+    const badHash = await app.inject({
+      method: "POST",
+      url: `/v1/control/cases/${caseId}/evidence`,
+      headers: { host: controlHost, cookie: managerCookie, ...json },
+      payload: {
+        storageKey: `cases/${caseId}/bad.jpg`,
+        fileName: "bad.jpg",
+        sha256: "not-a-hash",
+        reason: "Invalid hash",
+      },
+    })
+    expect(badHash.statusCode).toBe(400)
+
+    const access = await app.inject({
+      method: "POST",
+      url: `/v1/control/cases/${caseId}/evidence/${first.json().id}/access`,
+      headers: { host: controlHost, cookie: managerCookie, ...json },
+      payload: { purpose: "Case review" },
+    })
+    expect(access.statusCode).toBe(200)
+
+    const superseded = await app.inject({
+      method: "POST",
+      url: `/v1/control/evidence/${first.json().id}/supersede`,
+      headers: { host: controlHost, cookie: managerCookie, ...json },
+      payload: {
+        replacementId: replacement.json().id,
+        reason: "Original orientation was wrong",
+      },
+    })
+    expect(superseded.statusCode).toBe(200)
+    expect(superseded.json().supersedesId).toBe(first.json().id)
+
+    const list = await app.inject({
+      method: "GET",
+      url: `/v1/control/cases/${caseId}/evidence`,
+      headers: { host: controlHost, cookie: managerCookie },
+    })
+    expect(list.statusCode).toBe(200)
+    const statuses = (list.json() as Array<{ status: string }>).map(
+      (row) => row.status,
+    )
+    expect(statuses).toContain("active")
+    expect(statuses).toContain("superseded")
+
+    const events = await app.inject({
+      method: "GET",
+      url: `/v1/control/cases/${caseId}/events`,
+      headers: { host: controlHost, cookie: managerCookie },
+    })
+    const types = (events.json() as Array<{ eventType: string }>).map(
+      (row) => row.eventType,
+    )
+    expect(types).toContain("evidence_added")
+    expect(types).toContain("evidence_accessed")
+    expect(types).toContain("evidence_superseded")
+
+    const denied = await app.inject({
+      method: "GET",
+      url: `/v1/control/cases/${caseId}/evidence`,
+      headers: { host: controlHost, cookie: workerCookie },
+    })
+    expect(denied.statusCode).toBe(403)
+  })
 })

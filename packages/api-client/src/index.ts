@@ -233,6 +233,20 @@ export type SetCaseStatusRequest = { "status": "TRIAGED" | "OPEN" | "INVESTIGATI
 
 export type SetCaseStatusResponse = { "id": string; "reference": string; "caseType": string; "title": string; "description"?: string | null; "priority": string; "severity": string; "status": string; "queueKey"?: string | null; "assigneeId"?: string | null; "assigneeName"?: string | null; "assigneeEmail"?: string | null; "departmentName"?: string | null; "createdAt": string; "updatedAt": string; "closedAt"?: string | null }
 
+export type ListCaseEvidenceResponse = ({ "id": string; "fileName": string; "mimeType"?: string | null; "sizeBytes"?: number | null; "sha256"?: string | null; "classification": string; "status": string; "supersedesId"?: string | null; "uploadedByName"?: string | null; "uploadedByEmail"?: string | null; "uploadedAt": string })[]
+
+export type AddCaseEvidenceRequest = { "storageKey": string; "fileName": string; "mimeType"?: string; "sizeBytes"?: number; "sha256"?: string; "classification"?: "standard" | "sensitive" | "critical"; "reason"?: string }
+
+export type AddCaseEvidenceResponse = { "id": string; "fileName": string; "mimeType"?: string | null; "sizeBytes"?: number | null; "sha256"?: string | null; "classification": string; "status": string; "supersedesId"?: string | null; "uploadedByName"?: string | null; "uploadedByEmail"?: string | null; "uploadedAt": string }
+
+export type AccessCaseEvidenceRequest = { "purpose"?: string }
+
+export type AccessCaseEvidenceResponse = { "recorded": boolean }
+
+export type SupersedeCaseEvidenceRequest = { "replacementId": string; "reason"?: string }
+
+export type SupersedeCaseEvidenceResponse = { "id": string; "fileName": string; "mimeType"?: string | null; "sizeBytes"?: number | null; "sha256"?: string | null; "classification": string; "status": string; "supersedesId"?: string | null; "uploadedByName"?: string | null; "uploadedByEmail"?: string | null; "uploadedAt": string }
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -754,6 +768,34 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<SetCaseStatusResponse>(
         "POST",
         `/v1/control/cases/${encodeURIComponent(params.id)}/status`,
+        input,
+        [200],
+      ),
+    listCaseEvidence: (params: { id: string }) =>
+      request<ListCaseEvidenceResponse>(
+        "GET",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/evidence`,
+        undefined,
+        [200],
+      ),
+    addCaseEvidence: (params: { id: string }, input: AddCaseEvidenceRequest) =>
+      request<AddCaseEvidenceResponse>(
+        "POST",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/evidence`,
+        input,
+        [201],
+      ),
+    accessCaseEvidence: (params: { id: string; evidenceId: string }, input: AccessCaseEvidenceRequest) =>
+      request<AccessCaseEvidenceResponse>(
+        "POST",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/evidence/${encodeURIComponent(params.evidenceId)}/access`,
+        input,
+        [200],
+      ),
+    supersedeCaseEvidence: (params: { id: string }, input: SupersedeCaseEvidenceRequest) =>
+      request<SupersedeCaseEvidenceResponse>(
+        "POST",
+        `/v1/control/evidence/${encodeURIComponent(params.id)}/supersede`,
         input,
         [200],
       ),

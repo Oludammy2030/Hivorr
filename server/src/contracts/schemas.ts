@@ -213,6 +213,28 @@ export const caseStatusRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const addEvidenceRequest = z.strictObject({
+  storageKey: z.string().min(3).max(512),
+  fileName: z.string().min(1).max(255),
+  mimeType: z.string().min(1).max(128).optional(),
+  sizeBytes: z.number().int().min(0).optional(),
+  sha256: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/, "expected a lowercase SHA-256 hex digest")
+    .optional(),
+  classification: z.enum(["standard", "sensitive", "critical"]).optional(),
+  reason: z.string().min(3).max(500).optional(),
+})
+
+export const evidenceAccessRequest = z.strictObject({
+  purpose: z.string().min(1).max(200).optional(),
+})
+
+export const supersedeEvidenceRequest = z.strictObject({
+  replacementId: z.string().min(1).max(64),
+  reason: z.string().min(3).max(500).optional(),
+})
+
 // --- Responses --------------------------------------------------------------
 
 export const registrationResponse = z.object({
@@ -510,6 +532,26 @@ export const caseEventViewResponse = z.object({
 })
 
 export const caseEventListResponse = z.array(caseEventViewResponse)
+
+export const evidenceViewResponse = z.object({
+  id: z.string(),
+  fileName: z.string(),
+  mimeType: z.string().nullable().optional(),
+  sizeBytes: z.number().int().nullable().optional(),
+  sha256: z.string().nullable().optional(),
+  classification: z.string(),
+  status: z.string(),
+  supersedesId: z.string().nullable().optional(),
+  uploadedByName: z.string().nullable().optional(),
+  uploadedByEmail: z.string().nullable().optional(),
+  uploadedAt: z.string(),
+})
+
+export const evidenceListResponse = z.array(evidenceViewResponse)
+
+export const evidenceAccessResponse = z.object({
+  recorded: z.boolean(),
+})
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),
