@@ -221,6 +221,19 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Rollback:** drop the five functions and the five routes in a forward commit; the tables are untouched, so existing assignments remain valid.
 - **Approver:** Architect; founder for the role catalogue and the self-change rule.
 
+#### CP-012 evidence (13 November 2026)
+
+| Gate | Result |
+|---|---|
+| PR #80 (schema, API, control screen) | Merged into `staging`; CI run `43408314881` green |
+| Migration preflight | PR #80's first deploy was refused: a pending migration sorted before the applied `20261114000100`. PR #81 re-dated the file to `20261114000200`; no SQL changed. |
+| PR #81 (migration order) | Merged; CI run `43409001140` green; Fly release `c5f40c9`; `apply-migrations: applied 20261114000200`; history verified 30 of 30 |
+| Pages | Control bundle deployed from the verified artifact; contains "Assign a role", "Role catalogue" and the self-change note |
+| API | `/v1/control/roles` and `/v1/control/role-assignments` return `403` unauthenticated, so the routes are registered |
+| Local gates | `pnpm typecheck`, `lint`, `lint:boundaries`, `lint:migrations`, `format:check`, `docs:check`, `test` (389 passed), `build:portals`, `bundles:check`, OpenAPI generation and breaking-change gate all pass |
+| Database | Migration run applies `20261114000200`; the catalogue, the eleven seeded roles and both capability refusals are asserted |
+| Integration | `tests/roles-integration.test.ts` 5 of 5 pass against PostgreSQL 16.15 |
+
 ## 5. Known follow-ups
 
 1. The session capability list (`GET /v1/session`) still composes grants and activities only. Role
@@ -247,6 +260,9 @@ UI-only change: no migration, no API contract change and no permission change.
     the verified `mail.hivorr.com` sending domain. The copy-link fallback remains for a provider
     failure. The invitee's **official** `@hivorr.com` address must also be added to Cloudflare
     Access separately; the personal address is delivery-only. (CP-010)
+11. New migrations must be dated after the newest applied migration. The staging preflight refuses a
+    pending file that sorts earlier, which is what happened to the first CP-012 deploy; a future-dated
+    migration already in the applied set is the usual cause. (CP-012)
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
