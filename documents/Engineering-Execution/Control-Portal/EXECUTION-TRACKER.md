@@ -206,7 +206,7 @@ UI-only change: no migration, no API contract change and no permission change.
 | `pnpm test` | PASS — 55 files, 389 passed, 32 skipped |
 | `pnpm build:all` | PASS — control, staff and partner bundles built |
 | Browser pass | Built control bundle with a mocked API at 1440×900: section change pins the sidebar and topbar, only the content column scrolls, and navigation resets its scroll. At 375×667: static topbar, document scroll, no horizontal page overflow, and wide tables scroll inside their panel. No visual baseline covers the control portal, so this is manual evidence. |
-| CI and staging deployment | Pending this change's pull request |
+| CI and staging deployment | PR #78; CI run `43399331197` green; Fly release `v60` on `bb87685`; staging deployment gate `43399686663` green. No migration was needed. |
 
 ## 5. Known follow-ups
 
