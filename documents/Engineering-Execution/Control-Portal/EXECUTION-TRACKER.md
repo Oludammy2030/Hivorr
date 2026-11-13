@@ -26,7 +26,8 @@
 | CP-011 | Grant organisation by department | EP-02 | **REQUIRES_REVIEW** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
 | CP-010 | Staff records and lifecycle | EP-02 | **REQUIRES_REVIEW** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
 | CP-012 | Role administration | EP-02 | **REQUIRES_REVIEW** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated |
-| CP-013…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-013 | Account governance | EP-02 | **REQUIRES_REVIEW** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
+| CP-014…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -259,6 +260,18 @@ UI-only change: no migration, no API contract change and no permission change.
 - A single person search sits above both tabs: it filters role assignments by name or email and
   switches the Grants tab to that person's grants across departments.
 
+### CP-013 — Account governance
+
+- **Class:** `[REVIEW]` — authorization, personal data, irreversible action and UI change.
+- **Scope in:** `admin.govern_user`, `admin.add_user_note`, `admin.list_user_notes`, `admin.list_account_timeline`, `admin.user_notes`; suspend and reactivate; close with authority removal; per-account session revocation; operator notes; timeline; Users detail actions; audit rows.
+- **Scope out:** maker-checker approval routing (CP-020), account merge, data deletion, restoring a closed account, bulk actions.
+- **Reuse:** `identity.users`, `identity.sessions`, `identity.grants`, `admin.role_assignments`, `admin.permission_grants`, `platform.audit_log`, `admin.actor_holds_platform_permission`, `appendAudit`.
+- **Dependencies:** CP-002, CP-003, CP-005; CP-020 is deferred, so sensitive actions are direct and audited rather than queued for a second approver.
+- **Test plan:** migration run asserts the functions and the notes table and that governance refuses without `admin.user.manage`; the account integration test covers the 403, missing reason, self-action refusal, suspension with session revocation, reactivation, session revocation, closure that removes grants and roles, blocked sign-in, notes and the timeline; full suite and OpenAPI route coverage.
+- **Audit impact:** R2 identity data. Every action writes `account.*` with the operator, reason, status and the counts of sessions, grants and roles revoked; notes are themselves audited.
+- **Rollback:** drop the four functions and the notes table in a forward migration; statuses already changed remain, so a rollback must include an explicit data decision.
+- **Approver:** Architect; founder for the irreversible closure path and the personal-data note store.
+
 #### Session composition (13 November 2026)
 
 - `GET /v1/session` now composes platform role permissions with grants and activities, so a
@@ -307,6 +320,10 @@ UI-only change: no migration, no API contract change and no permission change.
     filters role assignments by name or email and shows that person's grants across departments; each
     tab keeps its own permission gate and URL, and `/roles` and `/grants` redirect to the new URLs so
     contextual links keep working. (CP-012)
+14. Account closure is immediate and irreversible. CP-020 will route sensitive closures through a
+    second approver; until then the action requires `admin.user.manage`, a reason and an audit record,
+    and self-action is refused in the database. Reopening a closed account has no supported path.
+    (CP-013)
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a

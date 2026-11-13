@@ -125,6 +125,14 @@ export const roleReasonRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const accountReasonRequest = z.strictObject({
+  reason: z.string().min(3).max(500).optional(),
+})
+
+export const addAccountNoteRequest = z.strictObject({
+  body: z.string().min(3).max(2000),
+})
+
 // --- Responses --------------------------------------------------------------
 
 export const registrationResponse = z.object({
@@ -302,6 +310,34 @@ export const roleScopeTargetResponse = z.object({
 })
 
 export const roleScopeTargetListResponse = z.array(roleScopeTargetResponse)
+
+export const accountActionResponse = z.object({
+  userId: z.string(),
+  status: z.string(),
+  sessionsRevoked: z.number().int(),
+  grantsRevoked: z.number().int(),
+  rolesRevoked: z.number().int(),
+})
+
+export const accountNoteViewResponse = z.object({
+  id: z.string(),
+  body: z.string(),
+  authorName: z.string().nullable().optional(),
+  authorEmail: z.string().nullable().optional(),
+  createdAt: z.string(),
+})
+
+export const accountNoteListResponse = z.array(accountNoteViewResponse)
+
+export const accountTimelineEntryResponse = z.object({
+  occurredAt: z.string(),
+  action: z.string(),
+  reason: z.string().nullable().optional(),
+  actorName: z.string().nullable().optional(),
+  actorEmail: z.string().nullable().optional(),
+})
+
+export const accountTimelineListResponse = z.array(accountTimelineEntryResponse)
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),

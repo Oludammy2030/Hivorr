@@ -161,6 +161,30 @@ export type RevokeRoleRequest = { "reason"?: string }
 
 export type RevokeRoleResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "roleKey": string; "roleName": string; "scopeType": string; "scopeId"?: string | null; "expiresAt"?: string | null; "revokedAt"?: string | null; "createdAt": string; "grantedBy"?: string | null; "reason"?: string | null }
 
+export type SuspendAccountRequest = { "reason"?: string }
+
+export type SuspendAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
+
+export type ReactivateAccountRequest = { "reason"?: string }
+
+export type ReactivateAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
+
+export type CloseAccountRequest = { "reason"?: string }
+
+export type CloseAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
+
+export type RevokeUserSessionsRequest = { "reason"?: string }
+
+export type RevokeUserSessionsResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
+
+export type ListAccountNotesResponse = ({ "id": string; "body": string; "authorName"?: string | null; "authorEmail"?: string | null; "createdAt": string })[]
+
+export type AddAccountNoteRequest = { "body": string }
+
+export type AddAccountNoteResponse = { "id": string; "body": string; "authorName"?: string | null; "authorEmail"?: string | null; "createdAt": string }
+
+export type AccountTimelineResponse = ({ "occurredAt": string; "action": string; "reason"?: string | null; "actorName"?: string | null; "actorEmail"?: string | null })[]
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -529,6 +553,55 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "POST",
         `/v1/control/role-assignments/${encodeURIComponent(params.id)}/revoke`,
         input,
+        [200],
+      ),
+    suspendAccount: (params: { id: string }, input: SuspendAccountRequest) =>
+      request<SuspendAccountResponse>(
+        "POST",
+        `/v1/control/users/${encodeURIComponent(params.id)}/suspend`,
+        input,
+        [200],
+      ),
+    reactivateAccount: (params: { id: string }, input: ReactivateAccountRequest) =>
+      request<ReactivateAccountResponse>(
+        "POST",
+        `/v1/control/users/${encodeURIComponent(params.id)}/reactivate`,
+        input,
+        [200],
+      ),
+    closeAccount: (params: { id: string }, input: CloseAccountRequest) =>
+      request<CloseAccountResponse>(
+        "POST",
+        `/v1/control/users/${encodeURIComponent(params.id)}/close`,
+        input,
+        [200],
+      ),
+    revokeUserSessions: (params: { id: string }, input: RevokeUserSessionsRequest) =>
+      request<RevokeUserSessionsResponse>(
+        "POST",
+        `/v1/control/users/${encodeURIComponent(params.id)}/revoke-sessions`,
+        input,
+        [200],
+      ),
+    listAccountNotes: (params: { id: string }) =>
+      request<ListAccountNotesResponse>(
+        "GET",
+        `/v1/control/users/${encodeURIComponent(params.id)}/notes`,
+        undefined,
+        [200],
+      ),
+    addAccountNote: (params: { id: string }, input: AddAccountNoteRequest) =>
+      request<AddAccountNoteResponse>(
+        "POST",
+        `/v1/control/users/${encodeURIComponent(params.id)}/notes`,
+        input,
+        [201],
+      ),
+    accountTimeline: (params: { id: string }) =>
+      request<AccountTimelineResponse>(
+        "GET",
+        `/v1/control/users/${encodeURIComponent(params.id)}/timeline`,
+        undefined,
         [200],
       ),
   }
