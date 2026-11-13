@@ -44,6 +44,8 @@ paste a connection string into a chat, an issue, a pull request, a commit, or a 
 | `MIGRATOR_DATABASE_URL` | `production` | CI-only migration credential; never set on Fly (`F-29` acceptance) |
 | `FLY_API_TOKEN` | `staging` | Staging deploy token, when the API is deployed |
 | `FLY_API_TOKEN` | `production` | Production deploy token, when the API is deployed |
+| `ZEPTOMAIL_TOKEN` | `staging` | Optional ZeptoMail send-only token; unset keeps invitation email on the copy-link fallback |
+| `ZEPTOMAIL_TOKEN` | `production` | Optional ZeptoMail send-only token for production transactional email |
 
 `MFA_ENCRYPTION_KEY` encrypts TOTP secrets with AES-256-GCM before they reach the database. Generate
 it with `openssl rand -base64 32`. The two environments must never share a key, because a staging
@@ -69,6 +71,17 @@ gh secret set MFA_ENCRYPTION_KEY --env production
 
 The current `SUPABASE_ACCESS_TOKEN` in the workstation environment is invalid. Replace it through the
 secure environment if the CLI is needed for migrations.
+
+**Transactional email (ZeptoMail).** Staff invitations are emailed through ZeptoMail when a token is
+configured; otherwise the control screen keeps the copy-link fallback.
+
+1. In ZeptoMail, verify the sending subdomain (`mail.hivorr.com`) and publish its SPF/DKIM records at
+   Cloudflare.
+2. Create a Mail Agent in ZeptoMail and copy its send-mail token.
+3. Set the token with `gh secret set ZEPTOMAIL_TOKEN --env staging` (the workflow stages it on Fly).
+4. The sender and portal origin live in `fly.staging.api.toml` as `MAIL_FROM_ADDRESS` and
+   `PUBLIC_APP_ORIGIN`; change them there when the domain changes.
+5. Send one invitation to an address you control and confirm delivery before relying on it.
 
 ## 3. Why GitHub environment secrets
 

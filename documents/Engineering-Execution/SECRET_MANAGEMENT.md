@@ -33,6 +33,7 @@ The contract is authoritative. Re-derive this summary with `pnpm config:check`.
 | Class | Keys | Where stored |
 | --- | --- | --- |
 | Secret, runtime | `DATABASE_URL`, `MFA_ENCRYPTION_KEY`, `WORKER_DATABASE_URL`, `EDGE_SHARED_SECRET` | GitHub environment secret → Fly secret at deploy |
+| Secret, runtime (optional) | `ZEPTOMAIL_TOKEN` | GitHub environment secret → Fly secret at deploy; unset keeps transactional email off |
 | Secret, deployment | `FLY_API_TOKEN` | GitHub environment secret; read only by the deploy workflow |
 | Public, runtime | `HIVORR_ENV`, `BACKEND_ENVIRONMENT`, `SUPABASE_PROJECT_REF`, `API_*`, `LOG_LEVEL`, `SESSION_ISSUER`, `TRUST_PROXY`, `CORS_ALLOWED_ORIGINS`, `AUTH_*`, `WORKER_*`, `DATABASE_SSL_CA` | GitHub environment variable or Fly environment |
 | Public, tooling | `EXPECTED_SUPABASE_PROJECT_REF`, `STAGING_SUPABASE_PROJECT_REF`, `PRODUCTION_SUPABASE_PROJECT_REF` | GitHub environment variable |
@@ -44,6 +45,8 @@ Rules:
 - `WORKER_DATABASE_URL` falls back to `DATABASE_URL`; use a dedicated least-privilege role where one
   is provisioned.
 - `EDGE_SHARED_SECRET` is optional but required before the edge proxy may forward a browser host.
+- `ZEPTOMAIL_TOKEN` is optional; when set, it must be a send-only Mail Agent token paired with a
+  verified sender (`MAIL_FROM_ADDRESS`) and `PUBLIC_APP_ORIGIN`.
 - Staging and production never share a value, including `MFA_ENCRYPTION_KEY`. A staging ciphertext
   must not be readable in production.
 - `SESSION_ISSUER` is a label, not a key. Sessions are opaque random tokens stored as hashes; there is
@@ -121,6 +124,14 @@ the API also uses the role.
 3. Run one deployment to prove it.
 4. Revoke the previous token in Fly.io.
 5. Record the rotation. A staging token must never reach a production app.
+
+### 4.6 `ZEPTOMAIL_TOKEN`
+
+1. In ZeptoMail, revoke the Mail Agent token being replaced.
+2. Create a replacement Mail Agent scoped to the verified sending domain.
+3. Set the new token as the GitHub environment secret and deploy.
+4. Send one invitation to an address the operator controls and confirm delivery.
+5. Record the rotation. The token is send-only; it must never be reused as a mailbox password.
 
 ## 5. Break-glass
 

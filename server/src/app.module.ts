@@ -7,10 +7,8 @@ import { ERROR_TRACKER, CaptureErrorTracker } from "./common/error-tracker"
 import { LOGGER, createLogger } from "./common/logger"
 import { API_CONFIG, type ApiConfig } from "./config"
 import { DatabaseService } from "./db/database.service"
-import {
-  EMAIL_ADAPTER,
-  CaptureEmailAdapter,
-} from "./integrations/email/email.adapter"
+import { EMAIL_ADAPTER } from "./integrations/email/email.adapter"
+import { createEmailAdapter } from "./integrations/email/zeptomail.adapter"
 import { HealthController } from "./health/health.controller"
 import { GrantsController } from "./modules/identity/grants/grants.controller"
 import { GrantsService } from "./modules/identity/grants/grants.service"
@@ -63,7 +61,12 @@ export class AppModule {
           inject: [API_CONFIG],
         },
         { provide: ERROR_TRACKER, useClass: CaptureErrorTracker },
-        { provide: EMAIL_ADAPTER, useClass: CaptureEmailAdapter },
+        {
+          provide: EMAIL_ADAPTER,
+          useFactory: (apiConfig: ApiConfig) =>
+            createEmailAdapter(apiConfig.mail),
+          inject: [API_CONFIG],
+        },
         DatabaseService,
         IdentityService,
         ProfileService,

@@ -289,8 +289,9 @@ export function StaffPage({ canManage }: StaffPageProps) {
           {invite && inviteLink && (
             <div className="invite-result">
               <p className="ok">
-                Invitation created for {invite.email}. Send this single-use link
-                within 7 days:
+                {invite.emailSent
+                  ? `Invitation email sent to ${invite.email}.`
+                  : `Invitation created for ${invite.email}. Email delivery is not configured, so send this single-use link within 7 days:`}
               </p>
               <p className="invite-link mono">{inviteLink}</p>
               <button

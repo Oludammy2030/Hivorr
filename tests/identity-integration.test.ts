@@ -100,6 +100,13 @@ describeIntegration("identity service integration", () => {
       databaseUrl: testUrl,
       corsAllowedOrigins: [],
       trustProxy: false,
+      mail: {
+        token: undefined,
+        apiUrl: "https://api.zeptomail.com/v1.1/email",
+        fromAddress: undefined,
+        fromName: "Hivorr",
+        appOrigin: undefined,
+      },
       auth: {
         rateLimitWindowMs: 60_000,
         identifierMax: 100,

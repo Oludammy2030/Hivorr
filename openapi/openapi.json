@@ -15429,6 +15429,9 @@
                     },
                     "token": {
                       "type": "string"
+                    },
+                    "emailSent": {
+                      "type": "boolean"
                     }
                   },
                   "required": [

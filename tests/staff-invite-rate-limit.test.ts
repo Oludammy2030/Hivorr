@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { ApiError } from "../server/src/common/errors"
 import type { ApiConfig } from "../server/src/config"
 import type { DatabaseService } from "../server/src/db/database.service"
+import { CaptureEmailAdapter } from "../server/src/integrations/email/email.adapter"
 import { StaffService } from "../server/src/modules/admin/staff.service"
 
 function serviceWithIpLimit(max: number): StaffService {
@@ -13,8 +14,15 @@ function serviceWithIpLimit(max: number): StaffService {
   } as unknown as DatabaseService
   const config = {
     auth: { rateLimitWindowMs: 60_000, ipMax: max },
+    mail: {
+      token: undefined,
+      apiUrl: "https://api.zeptomail.com/v1.1/email",
+      fromAddress: undefined,
+      fromName: "Hivorr",
+      appOrigin: undefined,
+    },
   } as unknown as ApiConfig
-  return new StaffService(database, config)
+  return new StaffService(database, config, new CaptureEmailAdapter())
 }
 
 const input = {
