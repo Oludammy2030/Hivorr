@@ -553,6 +553,17 @@ try {
     )
   assert(roleAssignmentDenied, "assigning a role requires admin.role.manage")
 
+  const assignableStaffDenied = await testClient
+    .query("select * from admin.list_assignable_staff($1)", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    assignableStaffDenied,
+    "the assignable staff list requires admin.role.manage",
+  )
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )

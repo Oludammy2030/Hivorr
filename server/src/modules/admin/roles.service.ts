@@ -43,6 +43,14 @@ export interface RoleScopeTarget {
   readonly name: string
 }
 
+export interface AssignableStaff {
+  readonly userId: string
+  readonly email: string
+  readonly displayName: string | null
+  readonly departmentKey: string | null
+  readonly departmentName: string | null
+}
+
 interface RoleRow {
   key: string
   name: string
@@ -238,6 +246,35 @@ export class RolesService {
             [input.userId, input.scopeType],
           )
           return result.rows.map((row) => ({ id: row.id, name: row.name }))
+        },
+      )
+    } catch (error) {
+      mapRoleError(error)
+    }
+  }
+
+  async listAssignableStaff(input: {
+    accountId: string
+    userId: string
+  }): Promise<readonly AssignableStaff[]> {
+    try {
+      return await this.database.withTransaction(
+        { identity: { accountId: input.accountId, userId: input.userId } },
+        async (transaction) => {
+          const result = await transaction.query<{
+            user_id: string
+            email: string
+            display_name: string | null
+            department_key: string | null
+            department_name: string | null
+          }>("select * from admin.list_assignable_staff($1)", [input.userId])
+          return result.rows.map((row) => ({
+            userId: row.user_id,
+            email: row.email,
+            displayName: row.display_name,
+            departmentKey: row.department_key,
+            departmentName: row.department_name,
+          }))
         },
       )
     } catch (error) {

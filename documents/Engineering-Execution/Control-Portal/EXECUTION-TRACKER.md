@@ -232,7 +232,19 @@ UI-only change: no migration, no API contract change and no permission change.
 | API | `/v1/control/roles` and `/v1/control/role-assignments` return `403` unauthenticated, so the routes are registered |
 | Local gates | `pnpm typecheck`, `lint`, `lint:boundaries`, `lint:migrations`, `format:check`, `docs:check`, `test` (389 passed), `build:portals`, `bundles:check`, OpenAPI generation and breaking-change gate all pass |
 | Database | Migration run applies `20261114000200`; the catalogue, the eleven seeded roles and both capability refusals are asserted |
-| Integration | `tests/roles-integration.test.ts` 5 of 5 pass against PostgreSQL 16.15 |
+| Integration | `tests/roles-integration.test.ts` 6 of 6 pass against PostgreSQL 16.15 |
+
+#### Role picker and compact catalogue (13 November 2026)
+
+- `admin.list_assignable_staff(actor)` serves the picker, gated by `admin.role.manage` rather than
+  `admin.user.read`, and lists only staff profiles with `engagement_status = 'active'` and an active
+  account: name, official email and department.
+- The Roles form replaces the manual email field with a filter and a staff selector; the assignment
+  action moved into the panel heading and the catalogue is collapsed by default, so the button no
+  longer requires scrolling.
+- Integration test covers the 403 without `admin.role.manage`, the active-staff list, and that a user
+  without a staff profile is not offered.
+- Migration `20261114000300_admin_add_assignable_staff.sql`.
 
 ## 5. Known follow-ups
 
@@ -263,6 +275,13 @@ UI-only change: no migration, no API contract change and no permission change.
 11. New migrations must be dated after the newest applied migration. The staging preflight refuses a
     pending file that sorts earlier, which is what happened to the first CP-012 deploy; a future-dated
     migration already in the applied set is the usual cause. (CP-012)
+12. Role assignments carry no environment column. Each environment has its own database, so a staging
+    assignment cannot reach production in practice; the reasoning is recorded rather than adding a
+    column that would change every role query. Revisit if one database ever hosts two environments.
+    (CP-012)
+13. Roles and grants are still two screens. The agreed direction is one Access section with two tabs
+    and shared person search, keeping each tab's permission gate and redirecting `/roles` and
+    `/grants`. Not built yet.
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a

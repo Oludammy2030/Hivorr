@@ -78,6 +78,20 @@ export class RolesController {
     })
   }
 
+  @Get("control/roles/assignable-staff")
+  @Audience("control")
+  async assignableStaff(@Req() request: FastifyRequest) {
+    const context = requestContext(this.config, request)
+    const session = await this.identity.getSession(
+      accessToken(request, context),
+      context,
+    )
+    return this.roles.listAssignableStaff({
+      accountId: session.accountId,
+      userId: session.userId,
+    })
+  }
+
   @Post("control/role-assignments")
   @Audience("control")
   async assign(@Body() body: unknown, @Req() request: FastifyRequest) {

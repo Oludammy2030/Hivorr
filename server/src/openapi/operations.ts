@@ -38,6 +38,7 @@ import {
   setStaffDepartmentRequest,
   setStaffDepartmentResponse,
   signInRequest,
+  assignableStaffListResponse,
   roleAssignmentListResponse,
   roleAssignmentViewResponse,
   roleListResponse,
@@ -788,6 +789,22 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         description:
           "Active departments or partner organisations for the requested scope type; pass type=department or type=organisation",
         schema: roleScopeTargetListResponse,
+      },
+    ],
+  },
+  {
+    id: "listAssignableStaff",
+    method: "get",
+    path: "/v1/control/roles/assignable-staff",
+    summary: "List the staff who may receive a governance role",
+    tag: "roles",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Active staff with an accepted engagement for a caller holding admin.role.manage",
+        schema: assignableStaffListResponse,
       },
     ],
   },
