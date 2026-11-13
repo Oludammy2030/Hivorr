@@ -178,7 +178,10 @@
 | PR #64 (evidence record) | Merged into `staging`; CI run `43304311084` green |
 | PR #65 (acceptance rate limit and audit correction) | Merged into `staging`; CI run `43306927743` green; Fly deployment green |
 | PR #67 (attach an existing account as staff) | Merged into `staging`; CI run `43316369230` green; Fly deployment green; `admin.attach_staff_profile` present on staging |
-| PR #69 (ZeptoMail invitation email) | Merged into `staging`; CI run `43366122425` green; Fly deployment green; `PUBLIC_APP_ORIGIN` and `MAIL_FROM_ADDRESS` present on staging; `ZEPTOMAIL_TOKEN` pending |
+| PR #69 (ZeptoMail invitation email) | Merged into `staging`; CI run `43366122425` green; Fly deployment green; `PUBLIC_APP_ORIGIN` and `MAIL_FROM_ADDRESS` present on staging |
+| PR #71 (CPaaS API endpoint) | Merged into `staging`; CI run `43371795264` green; Fly deployment green; `ZEPTOMAIL_API_URL=https://cpaas.zoho.com/v1.1/email` present on staging |
+| PR #72 (token that already carries the auth scheme) | Merged into `staging`; CI run `43373923656` green; Fly deployment `1eabb61` green; the send-only token authenticates against the live endpoint |
+| Transactional email end-to-end | `mail.hivorr.com` verified in Zoho CPaaS with DKIM `1221557._domainkey` and bounce CNAME `bounce-zem.mail.hivorr.com → cluster89.zeptomail.com`; a real staff invitation from the control screen was delivered |
 | Staging deployment gate | Runs `43301894294` and later green; Pages job deployed all four bundles |
 | `pnpm typecheck`, `lint`, `format:check`, `lint:boundaries`, `docs:check`, `lint:migrations`, `config:check` | PASS |
 | `pnpm test` | PASS — 54 files, 372 passed, 32 skipped |
@@ -204,9 +207,9 @@
 9. Capability and grant labels live in `packages/shared/src/labels.ts` so every portal explains
    authority the same way. Control and staff consume it today; the partner portal is still a
    foundation shell with no authorisation screen to label.
-10. Staff invitation email uses ZeptoMail. Until `ZEPTOMAIL_TOKEN` is set in the staging
-    environment, the Staff screen keeps the copy-link fallback. The invitee's email must also be
-    added to Cloudflare Access separately. (CP-010)
+10. Staff invitation email uses ZeptoMail under the Zoho CPaaS name. It is live on staging against
+    the verified `mail.hivorr.com` sending domain. The copy-link fallback remains for a provider
+    failure. The invitee's email must also be added to Cloudflare Access separately. (CP-010)
 
 ---
 
