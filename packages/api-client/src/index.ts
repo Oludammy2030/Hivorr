@@ -213,6 +213,26 @@ export type AddPartnerRepresentativeResponse = { "id": string; "userId": string;
 
 export type PartnerOrganisationsResponse = ({ "organisationId": string; "legalName": string; "tradingName"?: string | null; "status": string; "role": string; "effectiveFrom": string })[]
 
+export type ListCasesResponse = ({ "id": string; "reference": string; "caseType": string; "title": string; "description"?: string | null; "priority": string; "severity": string; "status": string; "queueKey"?: string | null; "assigneeId"?: string | null; "assigneeName"?: string | null; "assigneeEmail"?: string | null; "departmentName"?: string | null; "createdAt": string; "updatedAt": string; "closedAt"?: string | null })[]
+
+export type CreateCaseRequest = { "caseType": "support" | "complaint" | "dispute" | "investigation" | "incident" | "verification_review" | "financial_exception" | "security_incident" | "staff_conduct" | "partner_conduct"; "title": string; "description"?: string; "priority": "low" | "normal" | "high" | "urgent"; "severity": "low" | "medium" | "high" | "critical"; "queueKey"?: string; "reason"?: string }
+
+export type CreateCaseResponse = { "id": string; "reference": string; "caseType": string; "title": string; "description"?: string | null; "priority": string; "severity": string; "status": string; "queueKey"?: string | null; "assigneeId"?: string | null; "assigneeName"?: string | null; "assigneeEmail"?: string | null; "departmentName"?: string | null; "createdAt": string; "updatedAt": string; "closedAt"?: string | null }
+
+export type ListCaseEventsResponse = ({ "id": string; "eventType": string; "summary": string; "actorName"?: string | null; "actorEmail"?: string | null; "occurredAt": string })[]
+
+export type AddCaseEventRequest = { "summary": string }
+
+export type AddCaseEventResponse = { "id": string; "eventType": string; "summary": string; "actorName"?: string | null; "actorEmail"?: string | null; "occurredAt": string }
+
+export type AssignCaseRequest = { "email"?: string; "queueKey"?: string }
+
+export type AssignCaseResponse = { "id": string; "reference": string; "caseType": string; "title": string; "description"?: string | null; "priority": string; "severity": string; "status": string; "queueKey"?: string | null; "assigneeId"?: string | null; "assigneeName"?: string | null; "assigneeEmail"?: string | null; "departmentName"?: string | null; "createdAt": string; "updatedAt": string; "closedAt"?: string | null }
+
+export type SetCaseStatusRequest = { "status": "TRIAGED" | "OPEN" | "INVESTIGATING" | "PENDING_INFORMATION" | "ESCALATED" | "REVIEW" | "DECIDED" | "ACTION_PENDING" | "CLOSED" | "REOPENED" | "ARCHIVED"; "reason"?: string }
+
+export type SetCaseStatusResponse = { "id": string; "reference": string; "caseType": string; "title": string; "description"?: string | null; "priority": string; "severity": string; "status": string; "queueKey"?: string | null; "assigneeId"?: string | null; "assigneeName"?: string | null; "assigneeEmail"?: string | null; "departmentName"?: string | null; "createdAt": string; "updatedAt": string; "closedAt"?: string | null }
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -693,6 +713,48 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "GET",
         "/v1/partner/organisations",
         undefined,
+        [200],
+      ),
+    listCases: () =>
+      request<ListCasesResponse>(
+        "GET",
+        "/v1/control/cases",
+        undefined,
+        [200],
+      ),
+    createCase: (input: CreateCaseRequest) =>
+      request<CreateCaseResponse>(
+        "POST",
+        "/v1/control/cases",
+        input,
+        [201],
+      ),
+    listCaseEvents: (params: { id: string }) =>
+      request<ListCaseEventsResponse>(
+        "GET",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/events`,
+        undefined,
+        [200],
+      ),
+    addCaseEvent: (params: { id: string }, input: AddCaseEventRequest) =>
+      request<AddCaseEventResponse>(
+        "POST",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/events`,
+        input,
+        [201],
+      ),
+    assignCase: (params: { id: string }, input: AssignCaseRequest) =>
+      request<AssignCaseResponse>(
+        "POST",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/assign`,
+        input,
+        [200],
+      ),
+    setCaseStatus: (params: { id: string }, input: SetCaseStatusRequest) =>
+      request<SetCaseStatusResponse>(
+        "POST",
+        `/v1/control/cases/${encodeURIComponent(params.id)}/status`,
+        input,
         [200],
       ),
   }

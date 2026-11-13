@@ -30,7 +30,8 @@
 | CP-020 | Approval and maker-checker | EP-02 | **REQUIRES_REVIEW** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
 | CP-014 | Partner organisations | EP-02 | **REQUIRES_REVIEW** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
 | CP-015 | Partner isolation | EP-02 | **REQUIRES_REVIEW** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
-| CP-016…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-016 | Case spine and timeline | EP-02 | **REQUIRES_REVIEW** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
+| CP-017…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -319,6 +320,18 @@ UI-only change: no migration, no API contract change and no permission change.
 | API | Release `5946647`; `/v1/partner/organisations` returns `403` unauthenticated |
 | Isolation tests | 4 of 4: each partner sees only their organisation; a partner cookie is refused on control and wrong-audience routes; no governance or write capability appears in a partner session; a terminated organisation disappears |
 | Full suite | 391 passed; typecheck, lint, boundaries, format, bundles and OpenAPI **55 paths** pass |
+
+### CP-016 — Case spine and timeline
+
+- **Class:** `[REVIEW]` — authorisation, case data and UI change.
+- **Scope in:** case register; create; list with status/type/search filters; append-only timeline; assignment to an account or queue; status changes with a reason; `admin.case.read`/`admin.case.assign`; Cases screen; audit rows.
+- **Scope out:** evidence upload (CP-017), messages and resolution (CP-018), verification lanes (CP-019), approvals on decisions, investigation workspace (CP-021).
+- **Reuse:** `admin.cases`, `admin.case_events`, `admin.actor_holds_platform_permission`, `appendAudit`; approval tables remain ready for the decision step.
+- **Dependencies:** CP-002, CP-006.
+- **Test plan:** migration asserts the case register refuses without permission; the case integration test covers 403, creation with a first timeline event, filtered listing, note/assign/status events and the audit rows; full suite and OpenAPI route coverage.
+- **Audit impact:** R3 case data. Creation, assignment, notes and status changes are audited with the operator and reason where required.
+- **Rollback:** drop the six functions in a forward migration; case rows and events remain stored.
+- **Approver:** Architect; founder for the case scope and retention.
 
 ### CP-020 — Approval and maker-checker
 

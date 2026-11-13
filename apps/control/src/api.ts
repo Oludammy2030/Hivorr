@@ -208,6 +208,34 @@ export interface PartnerRepresentative {
   readonly effectiveTo: string | null
 }
 
+export interface CaseSummary {
+  readonly id: string
+  readonly reference: string
+  readonly caseType: string
+  readonly title: string
+  readonly description: string | null
+  readonly priority: string
+  readonly severity: string
+  readonly status: string
+  readonly queueKey: string | null
+  readonly assigneeId: string | null
+  readonly assigneeName: string | null
+  readonly assigneeEmail: string | null
+  readonly departmentName: string | null
+  readonly createdAt: string
+  readonly updatedAt: string
+  readonly closedAt: string | null
+}
+
+export interface CaseEvent {
+  readonly id: string
+  readonly eventType: string
+  readonly summary: string
+  readonly actorName: string | null
+  readonly actorEmail: string | null
+  readonly occurredAt: string
+}
+
 export interface UserList {
   readonly items: readonly UserSummary[]
   readonly nextCursor: string | null
@@ -457,6 +485,51 @@ export const api = {
       `/control/partners/${encodeURIComponent(id)}/representatives`,
       { method: "POST", body: JSON.stringify({ email, role, reason }) },
     ),
+  listCases: (status: string, caseType: string, query: string) => {
+    const params = new URLSearchParams()
+    if (status.trim()) params.set("status", status.trim())
+    if (caseType.trim()) params.set("type", caseType.trim())
+    if (query.trim()) params.set("q", query.trim())
+    const suffix = params.toString()
+    return request<readonly CaseSummary[]>(
+      `/control/cases${suffix ? `?${suffix}` : ""}`,
+    )
+  },
+  createCase: (input: {
+    caseType: string
+    title: string
+    description?: string
+    priority: string
+    severity: string
+    queueKey?: string
+    reason: string
+  }) =>
+    request<CaseSummary>("/control/cases", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  listCaseEvents: (id: string) =>
+    request<readonly CaseEvent[]>(
+      `/control/cases/${encodeURIComponent(id)}/events`,
+    ),
+  addCaseEvent: (id: string, summary: string) =>
+    request<CaseEvent>(`/control/cases/${encodeURIComponent(id)}/events`, {
+      method: "POST",
+      body: JSON.stringify({ summary }),
+    }),
+  assignCase: (id: string, email: string, queueKey: string) =>
+    request<CaseSummary>(`/control/cases/${encodeURIComponent(id)}/assign`, {
+      method: "POST",
+      body: JSON.stringify({
+        ...(email.trim() ? { email: email.trim() } : {}),
+        ...(queueKey.trim() ? { queueKey: queueKey.trim() } : {}),
+      }),
+    }),
+  setCaseStatus: (id: string, status: string, reason: string) =>
+    request<CaseSummary>(`/control/cases/${encodeURIComponent(id)}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status, reason }),
+    }),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),
   createGrant: (input: CreateGrantInput) =>

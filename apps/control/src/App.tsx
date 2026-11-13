@@ -21,6 +21,8 @@ import {
   type ApprovalRequest,
   type PartnerOrganisation,
   type PartnerRepresentative,
+  type CaseSummary,
+  type CaseEvent,
   type Session,
   type UserSummary,
 } from "./api"
@@ -486,6 +488,12 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     useState<PartnerOrganisation | null>(null)
   const [partnerReps, setPartnerReps] =
     useState<readonly PartnerRepresentative[]>([])
+  const [cases, setCases] = useState<readonly CaseSummary[] | null>(null)
+  const [caseStatusFilter, setCaseStatusFilter] = useState("")
+  const [caseTypeFilter, setCaseTypeFilter] = useState("")
+  const [caseQuery, setCaseQuery] = useState("")
+  const [selectedCase, setSelectedCase] = useState<CaseSummary | null>(null)
+  const [caseEvents, setCaseEvents] = useState<readonly CaseEvent[]>([])
 
   const capabilities = own?.capabilities ?? []
   const canReadUsers = capabilities.includes("admin.user.read")
@@ -498,6 +506,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     capabilities.includes("admin.partner.read") ||
     capabilities.includes("admin.partner.manage")
   const canManagePartners = capabilities.includes("admin.partner.manage")
+  const canReadCases =
+    capabilities.includes("admin.case.read") ||
+    capabilities.includes("admin.case.assign")
+  const canWorkCases = capabilities.includes("admin.case.assign")
   const canReadStaff = capabilities.includes("admin.user.read")
   const canManageStaff = capabilities.includes("admin.user.manage")
   const canReadGrants =
@@ -673,6 +685,148 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       active = false
     }
   }, [selectedPartner, canReadPartners])
+
+  useEffect(() => {
+    if (section !== "cases" || !canReadCases) return
+    let active = true
+    setBusy(true)
+    api
+      .listCases(caseStatusFilter, caseTypeFilter, caseQuery)
+      .then((rows) => {
+        if (active) setCases(rows)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, canReadCases, caseStatusFilter, caseTypeFilter, caseQuery])
+
+  useEffect(() => {
+    if (!selectedCase || !canReadCases) return
+    let active = true
+    api
+      .listCaseEvents(selectedCase.id)
+      .then((rows) => {
+        if (active) setCaseEvents(rows)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+    return () => {
+      active = false
+    }
+  }, [selectedCase, canReadCases])
+
+  async function handleCreateCase(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const title = String(form.get("title") ?? "").trim()
+    const reason = String(form.get("reason") ?? "").trim()
+    if (title.length < 3 || reason.length < 5) {
+      setError("A title and a reason of at least five characters are required.")
+      return
+    }
+    setBusy(true)
+    setError(undefined)
+    try {
+      const created = await api.createCase({
+        caseType: String(form.get("caseType") ?? "support"),
+        title,
+        description: String(form.get("description") ?? "").trim() || undefined,
+        priority: String(form.get("priority") ?? "normal"),
+        severity: String(form.get("severity") ?? "medium"),
+        queueKey: String(form.get("queueKey") ?? "").trim() || undefined,
+        reason,
+      })
+      setCases((current) => [created, ...(current ?? [])])
+      setSelectedCase(created)
+      event.currentTarget.reset()
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAddCaseNote(
+    event: FormEvent<HTMLFormElement>,
+    entry: CaseSummary,
+  ) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const summary = String(form.get("summary") ?? "").trim()
+    if (summary.length < 3) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      await api.addCaseEvent(entry.id, summary)
+      setCaseEvents(await api.listCaseEvents(entry.id))
+      event.currentTarget.reset()
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAssignCase(entry: CaseSummary) {
+    const email = window.prompt(
+      `Assignee email for ${entry.reference} (leave blank to unassign):`,
+      entry.assigneeEmail ?? "",
+    )
+    if (email === null) return
+    const queueKey = window.prompt(
+      "Queue key (optional):",
+      entry.queueKey ?? "",
+    )
+    if (queueKey === null) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const updated = await api.assignCase(entry.id, email, queueKey)
+      setCases((current) =>
+        (current ?? []).map((row) => (row.id === updated.id ? updated : row)),
+      )
+      setSelectedCase(updated)
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleCaseStatus(entry: CaseSummary) {
+    const status = window.prompt(
+      `New status for ${entry.reference} (TRIAGED, OPEN, INVESTIGATING, PENDING_INFORMATION, ESCALATED, REVIEW, DECIDED, ACTION_PENDING, CLOSED, REOPENED, ARCHIVED):`,
+      entry.status,
+    )
+    if (!status) return
+    const reason = window.prompt(`Reason for moving to ${status}:`)
+    if (!reason || reason.trim().length < 5) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const updated = await api.setCaseStatus(
+        entry.id,
+        status.trim(),
+        reason.trim(),
+      )
+      setCases((current) =>
+        (current ?? []).map((row) => (row.id === updated.id ? updated : row)),
+      )
+      setSelectedCase(updated)
+      setCaseEvents(await api.listCaseEvents(entry.id))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function handleCreatePartner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -2540,6 +2694,333 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                 </div>
               )}
             </section>
+          </div>
+        )}
+
+        {knownPath && section === "cases" && !canReadCases && (
+          <section className="panel">
+            <h2>Cases</h2>
+            <p className="muted">
+              Your governance role does not include case access.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "cases" && canReadCases && (
+          <div className="dash-stack">
+            {canWorkCases && (
+              <section className="panel">
+                <h2>Open a case</h2>
+                <form className="form" onSubmit={handleCreateCase}>
+                  <div className="form-row">
+                    <label className="field">
+                      <span>Type</span>
+                      <select
+                        name="caseType"
+                        defaultValue="support"
+                        disabled={busy}
+                      >
+                        <option value="support">Support</option>
+                        <option value="complaint">Complaint</option>
+                        <option value="dispute">Dispute</option>
+                        <option value="investigation">Investigation</option>
+                        <option value="incident">Incident</option>
+                        <option value="verification_review">
+                          Verification review
+                        </option>
+                        <option value="financial_exception">
+                          Financial exception
+                        </option>
+                        <option value="security_incident">
+                          Security incident
+                        </option>
+                        <option value="staff_conduct">Staff conduct</option>
+                        <option value="partner_conduct">Partner conduct</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Title</span>
+                      <input name="title" required disabled={busy} />
+                    </label>
+                    <label className="field">
+                      <span>Priority</span>
+                      <select
+                        name="priority"
+                        defaultValue="normal"
+                        disabled={busy}
+                      >
+                        <option value="low">Low</option>
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Severity</span>
+                      <select
+                        name="severity"
+                        defaultValue="medium"
+                        disabled={busy}
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Queue</span>
+                      <input name="queueKey" disabled={busy} />
+                    </label>
+                  </div>
+                  <label className="field">
+                    <span>Description</span>
+                    <textarea name="description" rows={2} disabled={busy} />
+                  </label>
+                  <label className="field">
+                    <span>Reason</span>
+                    <input
+                      name="reason"
+                      minLength={3}
+                      maxLength={500}
+                      required
+                      disabled={busy}
+                    />
+                  </label>
+                  <button className="button" type="submit" disabled={busy}>
+                    Open case
+                  </button>
+                </form>
+              </section>
+            )}
+
+            <section className="panel">
+              <div className="panel-head">
+                <h2>Cases</h2>
+                <span className="muted">
+                  {cases === null ? "Loading…" : `${cases.length} shown`}
+                </span>
+              </div>
+              <form
+                className="user-toolbar"
+                onSubmit={(event) => event.preventDefault()}
+              >
+                <input
+                  className="search-input"
+                  type="search"
+                  placeholder="Search reference or title"
+                  value={caseQuery}
+                  onChange={(event) => setCaseQuery(event.target.value)}
+                  aria-label="Search cases"
+                />
+                <select
+                  className="filter-select"
+                  value={caseStatusFilter}
+                  onChange={(event) => setCaseStatusFilter(event.target.value)}
+                  aria-label="Filter by status"
+                >
+                  <option value="">All statuses</option>
+                  {[
+                    "RECEIVED",
+                    "TRIAGED",
+                    "OPEN",
+                    "INVESTIGATING",
+                    "PENDING_INFORMATION",
+                    "ESCALATED",
+                    "REVIEW",
+                    "DECIDED",
+                    "ACTION_PENDING",
+                    "CLOSED",
+                    "REOPENED",
+                    "ARCHIVED",
+                  ].map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="filter-select"
+                  value={caseTypeFilter}
+                  onChange={(event) => setCaseTypeFilter(event.target.value)}
+                  aria-label="Filter by type"
+                >
+                  <option value="">All types</option>
+                  {[
+                    "support",
+                    "complaint",
+                    "dispute",
+                    "investigation",
+                    "incident",
+                    "verification_review",
+                    "financial_exception",
+                    "security_incident",
+                    "staff_conduct",
+                    "partner_conduct",
+                  ].map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </form>
+
+              {cases && cases.length === 0 && (
+                <p className="muted">No cases match this view.</p>
+              )}
+              {cases && cases.length > 0 && (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Case</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assignee</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cases.map((entry) => (
+                        <tr key={entry.id}>
+                          <td className="mono">{entry.reference}</td>
+                          <td>
+                            <div>{entry.title}</div>
+                            <div className="muted">{entry.caseType}</div>
+                          </td>
+                          <td>{entry.priority}</td>
+                          <td>
+                            <span className="chip">{entry.status}</span>
+                          </td>
+                          <td>
+                            {entry.assigneeName ?? entry.assigneeEmail ?? "—"}
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="button button-quiet button-small"
+                              onClick={() => setSelectedCase(entry)}
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {selectedCase && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>
+                    {selectedCase.reference} · {selectedCase.title}
+                  </h2>
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    onClick={() => setSelectedCase(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+                <dl className="details">
+                  <div>
+                    <dt>Type</dt>
+                    <dd>{selectedCase.caseType}</dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd>{selectedCase.status}</dd>
+                  </div>
+                  <div>
+                    <dt>Priority</dt>
+                    <dd>
+                      {selectedCase.priority} · {selectedCase.severity}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Assignee</dt>
+                    <dd>
+                      {selectedCase.assigneeName ??
+                        selectedCase.assigneeEmail ??
+                        "Unassigned"}
+                    </dd>
+                  </div>
+                </dl>
+                {selectedCase.description && (
+                  <p className="muted">{selectedCase.description}</p>
+                )}
+
+                {canWorkCases && (
+                  <div className="account-actions">
+                    <button
+                      type="button"
+                      className="button button-quiet button-small"
+                      onClick={() => handleAssignCase(selectedCase)}
+                      disabled={busy}
+                    >
+                      Assign
+                    </button>
+                    <button
+                      type="button"
+                      className="button button-quiet button-small"
+                      onClick={() => handleCaseStatus(selectedCase)}
+                      disabled={busy}
+                    >
+                      Change status
+                    </button>
+                  </div>
+                )}
+
+                <h3 className="section-title">Timeline</h3>
+                {caseEvents.length === 0 && (
+                  <p className="muted">No events yet.</p>
+                )}
+                <ul className="plain-list">
+                  {caseEvents.map((event) => (
+                    <li key={event.id}>
+                      <div>
+                        <span className="mono">{event.eventType}</span> —{" "}
+                        {event.summary}
+                      </div>
+                      <div className="muted">
+                        {formatTime(event.occurredAt)} ·{" "}
+                        {event.actorName ?? event.actorEmail ?? "system"}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {canWorkCases && (
+                  <form
+                    className="form"
+                    onSubmit={(event) => handleAddCaseNote(event, selectedCase)}
+                  >
+                    <label className="field">
+                      <span>Add a note</span>
+                      <textarea
+                        name="summary"
+                        rows={2}
+                        minLength={3}
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <button
+                      className="button button-small"
+                      type="submit"
+                      disabled={busy}
+                    >
+                      Append note
+                    </button>
+                  </form>
+                )}
+              </section>
+            )}
           </div>
         )}
 

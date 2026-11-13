@@ -18,6 +18,14 @@ import {
   partnerRepresentativeResponse,
   partnerStatusRequest,
   ownPartnerOrganisationListResponse,
+  assignCaseRequest,
+  caseEventListResponse,
+  caseEventViewResponse,
+  caseListResponse,
+  caseNoteRequest,
+  caseStatusRequest,
+  caseViewResponse,
+  createCaseRequest,
   activityViewSchema,
   assignRoleRequest,
   auditEntryListResponse,
@@ -84,7 +92,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -1139,6 +1147,110 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         description:
           "Organisations derived from the caller's active representative links; no organisation id is accepted",
         schema: ownPartnerOrganisationListResponse,
+      },
+    ],
+  },
+  {
+    id: "listCases",
+    method: "get",
+    path: "/v1/control/cases",
+    summary: "List cases",
+    tag: "cases",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description: "Open cases first; supports status, type and q filters",
+        schema: caseListResponse,
+      },
+    ],
+  },
+  {
+    id: "createCase",
+    method: "post",
+    path: "/v1/control/cases",
+    summary: "Open a case",
+    tag: "cases",
+    audience: ["control"],
+    request: {
+      schema: createCaseRequest,
+      description: "Type, title, priority, severity and reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The created case and its first timeline event",
+        schema: caseViewResponse,
+      },
+    ],
+  },
+  {
+    id: "listCaseEvents",
+    method: "get",
+    path: "/v1/control/cases/{id}/events",
+    summary: "Read the append-only case timeline",
+    tag: "cases",
+    audience: ["control"],
+    pathParams: ["id"],
+    success: [
+      {
+        status: 200,
+        description: "Events in chronological order",
+        schema: caseEventListResponse,
+      },
+    ],
+  },
+  {
+    id: "addCaseEvent",
+    method: "post",
+    path: "/v1/control/cases/{id}/events",
+    summary: "Append a note to a case",
+    tag: "cases",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: { schema: caseNoteRequest, description: "Note text" },
+    success: [
+      {
+        status: 201,
+        description: "The appended event",
+        schema: caseEventViewResponse,
+      },
+    ],
+  },
+  {
+    id: "assignCase",
+    method: "post",
+    path: "/v1/control/cases/{id}/assign",
+    summary: "Assign a case to an account or queue",
+    tag: "cases",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: assignCaseRequest,
+      description: "Assignee email and/or queue key",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The case with its new assignee",
+        schema: caseViewResponse,
+      },
+    ],
+  },
+  {
+    id: "setCaseStatus",
+    method: "post",
+    path: "/v1/control/cases/{id}/status",
+    summary: "Move a case to another status",
+    tag: "cases",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: { schema: caseStatusRequest, description: "Status and reason" },
+    success: [
+      {
+        status: 200,
+        description: "The case with its new status",
+        schema: caseViewResponse,
       },
     ],
   },

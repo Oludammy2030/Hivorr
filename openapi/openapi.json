@@ -29604,6 +29604,3080 @@
           }
         }
       }
+    },
+    "/v1/control/cases": {
+      "get": {
+        "operationId": "listCases",
+        "summary": "List cases",
+        "tags": [
+          "cases"
+        ],
+        "x-hivorr-audience": [
+          "control"
+        ],
+        "security": [
+          {
+            "controlSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Open cases first; supports status, type and q filters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "reference": {
+                        "type": "string"
+                      },
+                      "caseType": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "priority": {
+                        "type": "string"
+                      },
+                      "severity": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "queueKey": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "assigneeId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "assigneeName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "assigneeEmail": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "departmentName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      },
+                      "closedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "reference",
+                      "caseType",
+                      "title",
+                      "priority",
+                      "severity",
+                      "status",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCase",
+        "summary": "Open a case",
+        "tags": [
+          "cases"
+        ],
+        "x-hivorr-audience": [
+          "control"
+        ],
+        "security": [
+          {
+            "controlSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Type, title, priority, severity and reason",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caseType": {
+                    "type": "string",
+                    "enum": [
+                      "support",
+                      "complaint",
+                      "dispute",
+                      "investigation",
+                      "incident",
+                      "verification_review",
+                      "financial_exception",
+                      "security_incident",
+                      "staff_conduct",
+                      "partner_conduct"
+                    ]
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "normal",
+                      "high",
+                      "urgent"
+                    ]
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high",
+                      "critical"
+                    ]
+                  },
+                  "queueKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "caseType",
+                  "title",
+                  "priority",
+                  "severity"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created case and its first timeline event",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "reference": {
+                      "type": "string"
+                    },
+                    "caseType": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "queueKey": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "departmentName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "closedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "reference",
+                    "caseType",
+                    "title",
+                    "priority",
+                    "severity",
+                    "status",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/control/cases/{id}/events": {
+      "get": {
+        "operationId": "listCaseEvents",
+        "summary": "Read the append-only case timeline",
+        "tags": [
+          "cases"
+        ],
+        "x-hivorr-audience": [
+          "control"
+        ],
+        "security": [
+          {
+            "controlSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Events in chronological order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "eventType": {
+                        "type": "string"
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "actorName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "actorEmail": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "occurredAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "eventType",
+                      "summary",
+                      "occurredAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addCaseEvent",
+        "summary": "Append a note to a case",
+        "tags": [
+          "cases"
+        ],
+        "x-hivorr-audience": [
+          "control"
+        ],
+        "security": [
+          {
+            "controlSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Note text",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "summary": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 2000
+                  }
+                },
+                "required": [
+                  "summary"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The appended event",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "eventType": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "actorName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "actorEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "occurredAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "eventType",
+                    "summary",
+                    "occurredAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/control/cases/{id}/assign": {
+      "post": {
+        "operationId": "assignCase",
+        "summary": "Assign a case to an account or queue",
+        "tags": [
+          "cases"
+        ],
+        "x-hivorr-audience": [
+          "control"
+        ],
+        "security": [
+          {
+            "controlSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Assignee email and/or queue key",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 254
+                  },
+                  "queueKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The case with its new assignee",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "reference": {
+                      "type": "string"
+                    },
+                    "caseType": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "queueKey": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "departmentName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "closedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "reference",
+                    "caseType",
+                    "title",
+                    "priority",
+                    "severity",
+                    "status",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/control/cases/{id}/status": {
+      "post": {
+        "operationId": "setCaseStatus",
+        "summary": "Move a case to another status",
+        "tags": [
+          "cases"
+        ],
+        "x-hivorr-audience": [
+          "control"
+        ],
+        "security": [
+          {
+            "controlSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Status and reason",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "TRIAGED",
+                      "OPEN",
+                      "INVESTIGATING",
+                      "PENDING_INFORMATION",
+                      "ESCALATED",
+                      "REVIEW",
+                      "DECIDED",
+                      "ACTION_PENDING",
+                      "CLOSED",
+                      "REOPENED",
+                      "ARCHIVED"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "status"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The case with its new status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "reference": {
+                      "type": "string"
+                    },
+                    "caseType": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "queueKey": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "assigneeEmail": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "departmentName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "closedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "reference",
+                    "caseType",
+                    "title",
+                    "priority",
+                    "severity",
+                    "status",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
