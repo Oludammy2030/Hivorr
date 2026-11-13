@@ -59,7 +59,7 @@ record and audit history are retained.
 | Read model | Bounded to 200 rows, search by email/name/job title, status filter |
 | Privilege | Every function re-checks `admin.actor_has_platform_permission`; the API role has no table privileges |
 | Abuse control | Acceptance is unauthenticated, so it shares the per-IP authentication rate limit before hashing the password |
-| Invitation email | ZeptoMail API with a send-only token; delivery runs after the invite commits, and a provider failure leaves the invite valid and the copy link available |
+| Invitation email | ZeptoMail API with a send-only token; delivery runs after the invite commits, and a provider failure leaves the invite valid and the copy link available. Live on staging against the verified `mail.hivorr.com` sending domain |
 
 ## 6. Test plan
 
