@@ -311,6 +311,15 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Rollback:** drop the function and route in a forward commit; the partner audience returns to its foundation state.
 - **Approver:** Architect; founder for the partner boundary.
 
+#### CP-015 evidence (13 November 2026)
+
+| Gate | Result |
+|---|---|
+| Migration | `20261114000700_admin_add_partner_isolation.sql` applied; history verified **35 of 35** |
+| API | Release `5946647`; `/v1/partner/organisations` returns `403` unauthenticated |
+| Isolation tests | 4 of 4: each partner sees only their organisation; a partner cookie is refused on control and wrong-audience routes; no governance or write capability appears in a partner session; a terminated organisation disappears |
+| Full suite | 391 passed; typecheck, lint, boundaries, format, bundles and OpenAPI **55 paths** pass |
+
 ### CP-020 — Approval and maker-checker
 
 - **Class:** `[REVIEW]` — authorization, irreversible action and new control surface.
@@ -375,6 +384,9 @@ UI-only change: no migration, no API contract change and no permission change.
     `409` and points at `/v1/control/approvals`; the direct close is gone. The approver needs both
     `admin.approval.decide` and `admin.user.manage`, so the decision carries the authority to perform
     the action. Reopening a closed account still has no supported path.
+15. The partner boundary is enforced at the API, but the partner portal is still a foundation shell.
+    Its screens will consume `GET /v1/partner/organisations`; no organisation id is accepted, so the
+    portal inherits the isolation instead of re-implementing it. (CP-015)
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
