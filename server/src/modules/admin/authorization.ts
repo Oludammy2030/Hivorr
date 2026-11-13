@@ -204,3 +204,26 @@ export function permissionScopes(
     )
   })
 }
+
+/**
+ * Permissions the actor holds across the whole platform, with platform/global
+ * denials removed. Department- or organisation-scoped assignments are excluded
+ * on purpose: a scoped role must not become a platform-wide capability in the
+ * generic session view.
+ */
+export function platformPermissions(
+  authority: GovernanceAuthority,
+): readonly string[] {
+  const denied = new Set(
+    authority.denials
+      .filter((denial) => isGlobalDenial(denial))
+      .map((denial) => denial.permissionKey),
+  )
+  const permissions = new Set<string>()
+  for (const assignment of authority.assignments) {
+    if (assignment.scopeType !== "platform") continue
+    if (denied.has(assignment.permissionKey)) continue
+    permissions.add(assignment.permissionKey)
+  }
+  return [...permissions]
+}

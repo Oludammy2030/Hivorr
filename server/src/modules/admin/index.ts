@@ -11,6 +11,7 @@ export {
   composeAuthority,
   loadAdminAuthority,
   permissionScopes,
+  platformPermissions,
 } from "./authorization"
 export type {
   GovernanceAssignment,

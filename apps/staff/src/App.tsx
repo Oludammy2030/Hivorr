@@ -41,9 +41,6 @@ function formatTime(value: string): string {
 export function App() {
   const [view, setView] = useState<View>({ kind: "loading" })
   const [busy, setBusy] = useState(false)
-  const [capabilities, setCapabilities] = useState<readonly string[] | null>(
-    null,
-  )
 
   useEffect(() => {
     let active = true
@@ -63,19 +60,18 @@ export function App() {
 
   useEffect(() => {
     if (view.kind !== "signedIn") return
+    if (view.session.capabilities) return
     let active = true
     api
-      .grants()
-      .then((value) => {
-        if (active) setCapabilities(value.capabilities)
+      .session()
+      .then((session) => {
+        if (active) setView({ kind: "signedIn", session })
       })
-      .catch(() => {
-        if (active) setCapabilities([])
-      })
+      .catch(() => undefined)
     return () => {
       active = false
     }
-  }, [view.kind])
+  }, [view])
 
   async function handleSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -134,6 +130,9 @@ export function App() {
       setView({ kind: "signedOut" })
     }
   }
+
+  const capabilities =
+    view.kind === "signedIn" ? (view.session.capabilities ?? null) : null
 
   return (
     <main className="auth-shell">

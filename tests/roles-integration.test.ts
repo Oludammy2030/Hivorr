@@ -53,6 +53,7 @@ describeIntegration("role administration integration", () => {
 
   let adminId: string
   let adminSecret: string
+  let amaraSecret: string
   let adminControlCookie: string
   let workerControlCookie: string
   let auditorAssignmentId: string
@@ -207,7 +208,11 @@ describeIntegration("role administration integration", () => {
         "worker-test-password",
       )
 
-      await registerAndEnroll("amara@example.test", "amara-test-password")
+      const amaraUser = await registerAndEnroll(
+        "amara@example.test",
+        "amara-test-password",
+      )
+      amaraSecret = amaraUser.secret
 
       const amara = await setup.query(
         "select id from identity.users where email = 'amara@example.test'",
@@ -395,6 +400,43 @@ describeIntegration("role administration integration", () => {
       },
     })
     expect(noReason.statusCode).toBe(400)
+  })
+
+  it("composes a platform role into the session and keeps scoped roles out", async () => {
+    const amaraCookie = await controlCookie(
+      "amara@example.test",
+      "amara-test-password",
+      amaraSecret,
+    )
+    const session = await app.inject({
+      method: "GET",
+      url: "/v1/session",
+      headers: { host: controlHost, cookie: amaraCookie },
+    })
+    expect(session.statusCode).toBe(200)
+    expect(session.json().capabilities).toContain("admin.report.read")
+
+    const scoped = await app.inject({
+      method: "POST",
+      url: "/v1/control/role-assignments",
+      headers: { host: controlHost, cookie: adminControlCookie, ...json },
+      payload: {
+        email: "worker@example.test",
+        roleKey: "auditor",
+        scopeType: "department",
+        scopeId: financialDepartmentId,
+        reason: "Scoped audit review",
+      },
+    })
+    expect(scoped.statusCode).toBe(201)
+
+    const workerSession = await app.inject({
+      method: "GET",
+      url: "/v1/session",
+      headers: { host: controlHost, cookie: workerControlCookie },
+    })
+    expect(workerSession.statusCode).toBe(200)
+    expect(workerSession.json().capabilities).not.toContain("admin.report.read")
   })
 
   it("scopes an assignment to a real department and lists scope targets", async () => {
