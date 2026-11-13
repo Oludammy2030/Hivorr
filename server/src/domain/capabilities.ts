@@ -314,6 +314,14 @@ export const CAPABILITY_RULES: Readonly<Record<CapabilityId, CapabilityRule>> =
       audience: CONTROL,
       permission: "admin.report.export",
     },
+    "admin.partner.read": {
+      audience: CONTROL,
+      permission: "admin.partner.read",
+    },
+    "admin.partner.manage": {
+      audience: CONTROL,
+      permission: "admin.partner.manage",
+    },
     "staff.support.handle": {
       audience: STAFF,
       grant: "staff.support.handle",

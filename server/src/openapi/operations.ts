@@ -10,6 +10,13 @@ import {
   activityListResponse,
   approvalRequestListResponse,
   approvalRequestViewResponse,
+  addPartnerRepresentativeRequest,
+  createPartnerRequest,
+  partnerOrganisationListResponse,
+  partnerOrganisationResponse,
+  partnerRepresentativeListResponse,
+  partnerRepresentativeResponse,
+  partnerStatusRequest,
   activityViewSchema,
   assignRoleRequest,
   auditEntryListResponse,
@@ -76,7 +83,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -1027,6 +1034,94 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The decided request",
         schema: approvalRequestViewResponse,
+      },
+    ],
+  },
+  {
+    id: "listPartners",
+    method: "get",
+    path: "/v1/control/partners",
+    summary: "List partner organisations",
+    tag: "partners",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Active partners first, with representative and agreement counts",
+        schema: partnerOrganisationListResponse,
+      },
+    ],
+  },
+  {
+    id: "createPartner",
+    method: "post",
+    path: "/v1/control/partners",
+    summary: "Register a partner organisation",
+    tag: "partners",
+    audience: ["control"],
+    request: {
+      schema: createPartnerRequest,
+      description: "Legal name, optional trading name, category and country",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The registered organisation in applicant state",
+        schema: partnerOrganisationResponse,
+      },
+    ],
+  },
+  {
+    id: "setPartnerStatus",
+    method: "post",
+    path: "/v1/control/partners/{id}/status",
+    summary: "Activate, suspend or terminate a partner",
+    tag: "partners",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: { schema: partnerStatusRequest, description: "Status and reason" },
+    success: [
+      {
+        status: 200,
+        description: "The organisation with its new status",
+        schema: partnerOrganisationResponse,
+      },
+    ],
+  },
+  {
+    id: "listPartnerRepresentatives",
+    method: "get",
+    path: "/v1/control/partners/{id}/representatives",
+    summary: "List the representatives of a partner",
+    tag: "partners",
+    audience: ["control"],
+    pathParams: ["id"],
+    success: [
+      {
+        status: 200,
+        description: "Active representatives first",
+        schema: partnerRepresentativeListResponse,
+      },
+    ],
+  },
+  {
+    id: "addPartnerRepresentative",
+    method: "post",
+    path: "/v1/control/partners/{id}/representatives",
+    summary: "Authorise an existing account to act for a partner",
+    tag: "partners",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: addPartnerRepresentativeRequest,
+      description: "Account email, representative role and reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The representative link",
+        schema: partnerRepresentativeResponse,
       },
     ],
   },

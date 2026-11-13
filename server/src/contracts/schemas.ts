@@ -145,6 +145,25 @@ export const decideApprovalRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const createPartnerRequest = z.strictObject({
+  legalName: z.string().min(2).max(200),
+  tradingName: z.string().min(1).max(200).optional(),
+  category: z.string().min(1).max(80).optional(),
+  country: z.string().min(1).max(80).optional(),
+  reason: z.string().min(3).max(500).optional(),
+})
+
+export const partnerStatusRequest = z.strictObject({
+  status: z.enum(["active", "suspended", "terminated"]),
+  reason: z.string().min(3).max(500).optional(),
+})
+
+export const addPartnerRepresentativeRequest = z.strictObject({
+  email: z.string().min(3).max(254),
+  role: z.enum(["owner", "admin", "member", "viewer"]),
+  reason: z.string().min(3).max(500).optional(),
+})
+
 // --- Responses --------------------------------------------------------------
 
 export const registrationResponse = z.object({
@@ -367,6 +386,36 @@ export const approvalRequestViewResponse = z.object({
 })
 
 export const approvalRequestListResponse = z.array(approvalRequestViewResponse)
+
+export const partnerOrganisationResponse = z.object({
+  id: z.string(),
+  legalName: z.string(),
+  tradingName: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  status: z.string(),
+  representatives: z.number().int().optional(),
+  agreements: z.number().int().optional(),
+  createdAt: z.string(),
+})
+
+export const partnerOrganisationListResponse = z.array(
+  partnerOrganisationResponse,
+)
+
+export const partnerRepresentativeResponse = z.object({
+  id: z.string(),
+  userId: z.string(),
+  email: z.string(),
+  displayName: z.string().nullable().optional(),
+  role: z.string(),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().nullable().optional(),
+})
+
+export const partnerRepresentativeListResponse = z.array(
+  partnerRepresentativeResponse,
+)
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),

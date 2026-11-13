@@ -36,6 +36,8 @@ const CAPABILITY_LABELS: Readonly<Record<string, string>> = {
   "admin.evidence.read": "Read case evidence",
   "admin.report.read": "Read governance reports",
   "admin.report.export": "Export governance reports",
+  "admin.partner.read": "See partner organisations",
+  "admin.partner.manage": "Onboard, suspend or terminate partners",
   "staff.support.handle": "Handle support cases",
   "partner.referral.read": "See partner referrals",
   "platform.engineering": "Platform engineering access",

@@ -186,6 +186,28 @@ export interface ApprovalRequest {
   readonly decidedAt: string | null
 }
 
+export interface PartnerOrganisation {
+  readonly id: string
+  readonly legalName: string
+  readonly tradingName: string | null
+  readonly category: string | null
+  readonly country: string | null
+  readonly status: string
+  readonly representatives: number
+  readonly agreements: number
+  readonly createdAt: string
+}
+
+export interface PartnerRepresentative {
+  readonly id: string
+  readonly userId: string
+  readonly email: string
+  readonly displayName: string | null
+  readonly role: string
+  readonly effectiveFrom: string
+  readonly effectiveTo: string | null
+}
+
 export interface UserList {
   readonly items: readonly UserSummary[]
   readonly nextCursor: string | null
@@ -402,6 +424,38 @@ export const api = {
     request<ApprovalRequest>(
       `/control/approvals/${encodeURIComponent(id)}/decide`,
       { method: "POST", body: JSON.stringify({ decision, reason }) },
+    ),
+  listPartners: () =>
+    request<readonly PartnerOrganisation[]>("/control/partners"),
+  createPartner: (input: {
+    legalName: string
+    tradingName?: string
+    category?: string
+    country?: string
+    reason: string
+  }) =>
+    request<PartnerOrganisation>("/control/partners", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  setPartnerStatus: (id: string, status: string, reason: string) =>
+    request<PartnerOrganisation>(
+      `/control/partners/${encodeURIComponent(id)}/status`,
+      { method: "POST", body: JSON.stringify({ status, reason }) },
+    ),
+  listPartnerRepresentatives: (id: string) =>
+    request<readonly PartnerRepresentative[]>(
+      `/control/partners/${encodeURIComponent(id)}/representatives`,
+    ),
+  addPartnerRepresentative: (
+    id: string,
+    email: string,
+    role: string,
+    reason: string,
+  ) =>
+    request<PartnerRepresentative>(
+      `/control/partners/${encodeURIComponent(id)}/representatives`,
+      { method: "POST", body: JSON.stringify({ email, role, reason }) },
     ),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),

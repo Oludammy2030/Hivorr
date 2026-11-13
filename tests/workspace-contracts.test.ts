@@ -127,7 +127,7 @@ describe("activity registry contract", () => {
 
 describe("capability and grant contract", () => {
   it("exports the full capability matrix once", () => {
-    expect(CAPABILITY_IDS).toHaveLength(66)
+    expect(CAPABILITY_IDS).toHaveLength(68)
     expect(new Set(CAPABILITY_IDS).size).toBe(CAPABILITY_IDS.length)
     for (const capability of [
       "session.read",
