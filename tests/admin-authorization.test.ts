@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   composeAuthority,
   permissionScopes,
+  platformPermissions,
   type GovernanceAuthority,
 } from "../server/src/modules/admin"
 
@@ -134,5 +135,52 @@ describe("governance authority composition", () => {
     expect(authority.permissions).toEqual([])
     expect(authority.deniedPermissions).toEqual(["admin.case.investigate"])
     expect(permissionScopes(authority, "admin.case.investigate")).toEqual([])
+  })
+})
+
+describe("platform permissions for the session view", () => {
+  it("keeps platform assignments and drops scoped ones", () => {
+    const authority = composeAuthority(
+      [
+        {
+          ...baseRow,
+          permission_key: "admin.role.manage",
+          scope_type: "platform",
+          scope_id: null,
+        },
+        {
+          ...baseRow,
+          permission_key: "admin.case.read",
+          scope_type: "department",
+          scope_id: "dept-1",
+        },
+      ],
+      [],
+    )
+
+    expect(platformPermissions(authority)).toEqual(["admin.role.manage"])
+  })
+
+  it("removes a permission denied at platform scope", () => {
+    const authority = composeAuthority(
+      [
+        {
+          ...baseRow,
+          permission_key: "admin.role.manage",
+          scope_type: "platform",
+          scope_id: null,
+        },
+      ],
+      [
+        {
+          ...baseDenial,
+          permission_key: "admin.role.manage",
+          scope_type: "platform",
+          scope_id: null,
+        },
+      ],
+    )
+
+    expect(platformPermissions(authority)).toEqual([])
   })
 })

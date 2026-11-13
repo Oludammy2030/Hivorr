@@ -257,13 +257,24 @@ UI-only change: no migration, no API contract change and no permission change.
 - Route-manifest tests assert one section per path, the Access item's sibling highlight, and that
   Grants remains reachable without its own navigation item.
 
+#### Session composition (13 November 2026)
+
+- `GET /v1/session` now composes platform role permissions with grants and activities, so a
+  governance role is authority in every portal rather than only in the control authority view.
+- `platformPermissions` filters to platform-scoped assignments and removes platform/global denials;
+  a department- or organisation-scoped role does not become a global capability.
+- The session controller moved to the API layer so the identity module does not import the admin
+  module; the module boundary lint stays green.
+- The staff portal reads its capability summary from the session instead of `/v1/grants`.
+- Tests: pure cases for `platformPermissions`; integration proves a platform role appears in the
+  session and a department-scoped assignment does not.
+
 ## 5. Known follow-ups
 
-1. The session capability list (`GET /v1/session`) still composes grants and activities only. Role
-   permissions reach the control authority (`GET /v1/control/authority`) but not the general session
-   or the staff portal, so a staff member whose authority comes from a role sees the role in the
-   control directory but no matching capability in `GET /v1/grants`. Composing roles into the session
-   view remains a follow-up (CP-012 delivered the administration half).
+1. Role permissions now compose into `GET /v1/session` for every portal. Only platform-scoped
+   assignments are folded into the session capabilities, so a department-scoped role cannot become a
+   global capability; scoped authority is enforced at the resource layer when those features arrive.
+   The staff portal reads its capability summary from the session for the same reason.
 2. `admin.audit.read` and `admin.grant.*` remain grant-gated, so a founder role does not replace the existing grants. The bootstrap script creates both.
 3. Cursor pagination is implemented on the user directory; the control UI exposes "Load more" but does not yet show a page-size selector.
 4. The `admin` schema is complete for P0, but no staff, partner, case or approval **feature endpoints**

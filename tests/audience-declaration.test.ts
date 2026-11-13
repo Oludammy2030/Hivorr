@@ -8,7 +8,7 @@ import {
 import { GrantsController } from "../server/src/modules/identity/grants/grants.controller"
 import { HealthController } from "../server/src/health/health.controller"
 import { IdentityController } from "../server/src/modules/identity/identity.controller"
-import { SessionController } from "../server/src/modules/identity/session.controller"
+import { SessionController } from "../server/src/api/session.controller"
 import { ActivityController } from "../server/src/api/activity.controller"
 import { AuditController } from "../server/src/api/audit.controller"
 
