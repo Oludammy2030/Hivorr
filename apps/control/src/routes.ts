@@ -33,12 +33,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         path: "/staff",
         capabilities: ["admin.user.read"],
       },
-      {
-        id: "grants",
-        label: "Grants",
-        path: "/grants",
-        capabilities: ["admin.grant.read", "admin.grant.manage"],
-      },
     ],
   },
   {
@@ -66,6 +60,23 @@ export const SECTION_PATHS: readonly SectionPath[] = [
   { section: "grants", path: "/grants" },
   { section: "audit", path: "/audit" },
 ]
+
+/**
+ * Section headings are independent of the navigation on purpose: Grants is
+ * reached contextually and is not a nav item, but it is still a real section
+ * and must carry its own title.
+ */
+export const SECTION_TITLES: Readonly<Record<Section, string>> = {
+  overview: "Overview",
+  users: "Users",
+  staff: "Staff",
+  grants: "Grants",
+  audit: "Audit",
+}
+
+export function sectionTitle(section: Section): string {
+  return SECTION_TITLES[section]
+}
 
 export function sectionFromPath(pathname: string): Section {
   return (

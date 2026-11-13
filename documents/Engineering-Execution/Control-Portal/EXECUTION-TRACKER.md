@@ -192,6 +192,22 @@
 | Live staging | `https://staging.hivorr.com/invite.html` serves the invitation page; the staff API route is registered |
 | `pnpm test:db` | Not run locally (Docker unavailable); the CI database job passed |
 
+#### Control portal navigation and scrolling (13 November 2026)
+
+UI-only change: no migration, no API contract change and no permission change.
+
+| Gate | Result |
+|---|---|
+| Independent scrolling | `.app-shell` owns the viewport, `.app-main` scrolls with `min-height: 0` and `scrollbar-gutter: stable`, `.app-sidebar` scrolls its own nav, and `.app-topbar` sticks to the top of the content column. Panels may shrink below a wide table so it scrolls inside `.table-wrap` rather than the page. Below 720px the shell returns to normal document scroll. |
+| Navigation | Grants leaves `NAV_GROUPS`. `/grants` remains in `SECTION_PATHS`, so the URL, permission gate and page still work. `SECTION_TITLES` now supplies the `<h1>`, independent of the nav. |
+| Contextual entry | Users detail panel links to `/grants?user=<email>`; the Overview governance card links to `/grants` for callers with `admin.grant.read` but no `admin.user.read`. Department drill-in and back reflect `?department=` in the URL and apply client-side. |
+| Scroll reset | Navigating between sections resets the content scroller to the top. |
+| `pnpm typecheck`, `lint`, `lint:boundaries`, `format:check`, `docs:check` | PASS — no new lint violations |
+| `pnpm test` | PASS — 55 files, 389 passed, 32 skipped |
+| `pnpm build:all` | PASS — control, staff and partner bundles built |
+| Browser pass | Built control bundle with a mocked API at 1440×900: section change pins the sidebar and topbar, only the content column scrolls, and navigation resets its scroll. At 375×667: static topbar, document scroll, no horizontal page overflow, and wide tables scroll inside their panel. No visual baseline covers the control portal, so this is manual evidence. |
+| CI and staging deployment | Pending this change's pull request |
+
 ## 5. Known follow-ups
 
 1. The session capability list (`GET /v1/session`) still composes grants and activities only. Role permissions are loaded by the control user endpoint, not yet by the session view. CP-007/CP-012 will compose the full authority for presentation.
@@ -222,6 +238,12 @@
     account, and the personal address only receives the invitation. Acceptance never asks for an
     email, so the personal address cannot be used to register or sign in. The official mailbox is
     still created in the mail system by hand; the portal does not provision or suspend it. (CP-010)
+13. A new grant still defaults to the first department alphabetically because the session response
+    does not expose the operator's own department. Stage 2 will add that field so the form can
+    pre-select it while keeping a free choice. (CP-011)
+14. `admin.list_departments` is gated by `admin.grant.read` or `admin.grant.manage`, but the Staff
+    screen also calls it to populate the invite form. A staff manager without a grant capability
+    currently sees an error there. Stage 2 will also accept `admin.user.read`. (CP-010/CP-011)
 
 ---
 

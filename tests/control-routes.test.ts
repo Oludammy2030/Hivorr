@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest"
 import {
   NAV_GROUPS,
   SECTION_PATHS,
+  SECTION_TITLES,
   canSee,
   isKnownPath,
   sectionFromPath,
+  sectionTitle,
 } from "../apps/control/src/routes"
 
 const allItems = NAV_GROUPS.flatMap((group) => group.items)
@@ -35,6 +37,22 @@ describe("control portal route manifest", () => {
     expect(new Set(allItems.map((item) => item.id)).size).toBe(allItems.length)
   })
 
+  it("keeps grants routable without a navigation item", () => {
+    // Grants is reached contextually from the people and overview screens.
+    // The URL must keep working even though it no longer occupies the nav.
+    expect(isKnownPath("/grants")).toBe(true)
+    expect(sectionFromPath("/grants")).toBe("grants")
+    expect(allItems.some((item) => item.id === "grants")).toBe(false)
+  })
+
+  it("titles every section independently of the navigation", () => {
+    for (const entry of SECTION_PATHS) {
+      expect(sectionTitle(entry.section)).toBe(SECTION_TITLES[entry.section])
+      expect(sectionTitle(entry.section).length).toBeGreaterThan(0)
+    }
+    expect(sectionTitle("grants")).toBe("Grants")
+  })
+
   it("always shows an item without a capability requirement", () => {
     expect(canSee(allItems[0]!, [])).toBe(true)
   })
@@ -44,12 +62,5 @@ describe("control portal route manifest", () => {
     expect(canSee(users, [])).toBe(false)
     expect(canSee(users, ["admin.user.read"])).toBe(true)
     expect(canSee(users, ["admin.grant.read"])).toBe(false)
-  })
-
-  it("lets either grant capability reveal the grants item", () => {
-    const grants = allItems.find((item) => item.id === "grants")!
-    expect(canSee(grants, ["admin.grant.read"])).toBe(true)
-    expect(canSee(grants, ["admin.grant.manage"])).toBe(true)
-    expect(canSee(grants, ["admin.user.read"])).toBe(false)
   })
 })
