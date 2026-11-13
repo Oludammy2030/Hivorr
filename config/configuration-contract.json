@@ -180,7 +180,7 @@
       "source": "config",
       "classification": "public",
       "requiredIn": [],
-      "description": "ZeptoMail send endpoint for the account region. Defaults to the US endpoint."
+      "description": "Zoho CPaaS (ZeptoMail) send endpoint. Defaults to the current global endpoint; override only when the account's data centre differs."
     },
     {
       "name": "MAIL_FROM_ADDRESS",
