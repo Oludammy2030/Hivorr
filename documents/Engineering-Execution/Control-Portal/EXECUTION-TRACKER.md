@@ -256,6 +256,8 @@ UI-only change: no migration, no API contract change and no permission change.
   and user-detail links keep working.
 - Route-manifest tests assert one section per path, the Access item's sibling highlight, and that
   Grants remains reachable without its own navigation item.
+- A single person search sits above both tabs: it filters role assignments by name or email and
+  switches the Grants tab to that person's grants across departments.
 
 #### Session composition (13 November 2026)
 
@@ -301,9 +303,10 @@ UI-only change: no migration, no API contract change and no permission change.
     assignment cannot reach production in practice; the reasoning is recorded rather than adding a
     column that would change every role query. Revisit if one database ever hosts two environments.
     (CP-012)
-13. Roles and grants now share one Access section with two tabs. Each tab keeps its own search,
-    permission gate and URL; `/roles` and `/grants` redirect to the new URLs so contextual links keep
-    working. A single person search spanning both tabs is still a follow-up. (CP-012)
+13. Roles and grants share one Access section with two tabs and a single person search. The search
+    filters role assignments by name or email and shows that person's grants across departments; each
+    tab keeps its own permission gate and URL, and `/roles` and `/grants` redirect to the new URLs so
+    contextual links keep working. (CP-012)
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
