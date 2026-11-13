@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react"
-import { NavLink, useLocation } from "react-router"
+import { useEffect, useRef, useState, type FormEvent } from "react"
+import { Link, NavLink, useLocation, useNavigate } from "react-router"
 import { capabilityLabel, grantTypeLabel } from "@hivorr/shared"
 
 import {
@@ -14,7 +14,13 @@ import {
   type Session,
   type UserSummary,
 } from "./api"
-import { NAV_GROUPS, canSee, isKnownPath, sectionFromPath } from "./routes"
+import {
+  NAV_GROUPS,
+  canSee,
+  isKnownPath,
+  sectionFromPath,
+  sectionTitle,
+} from "./routes"
 import { StaffPage } from "./StaffPage"
 
 interface LoadingView {
@@ -389,6 +395,8 @@ interface DashboardProps {
 
 function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const mainRef = useRef<HTMLElement | null>(null)
   const section = sectionFromPath(location.pathname)
   const knownPath = isKnownPath(location.pathname)
   const [own, setOwn] = useState<ControlAuthority | null>(null)
@@ -406,6 +414,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [openDepartment, setOpenDepartment] = useState<string | null>(null)
   const [grantSearch, setGrantSearch] = useState("")
   const [grantStatusFilter, setGrantStatusFilter] = useState("all")
+  const [grantUser, setGrantUser] = useState("")
   const [users, setUsers] = useState<readonly UserSummary[] | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [userSearch, setUserSearch] = useState("")
@@ -436,6 +445,33 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    // React Router preserves an inner scroll container across navigation, so a
+    // section or filter change would otherwise land mid-page.
+    mainRef.current?.scrollTo(0, 0)
+  }, [location.pathname, location.search])
+
+  useEffect(() => {
+    // Contextual links land on /grants pre-filtered. Both filters are applied
+    // client-side over data the screen already loads.
+    if (section !== "grants") return
+    const params = new URLSearchParams(location.search)
+    const userParam = params.get("user")?.trim() ?? ""
+    const departmentParam = params.get("department")?.trim() ?? ""
+    if (departmentParam) {
+      setOpenDepartment(departmentParam)
+      setGrantUser("")
+    }
+    if (userParam) {
+      setGrantUser(userParam)
+      setOpenDepartment(null)
+    }
+    if (!departmentParam && !userParam) {
+      setGrantUser("")
+      setOpenDepartment(null)
+    }
+  }, [section, location.search])
 
   useEffect(() => {
     if (section !== "grants" || grants !== null || !canReadGrants) return
@@ -589,7 +625,6 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     label: group.label,
     items: group.items.filter((item) => canSee(item, capabilities)),
   })).filter((group) => group.items.length > 0)
-  const allNav = NAV_GROUPS.flatMap((group) => group.items)
 
   function handleUserSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -635,6 +670,14 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   }
 
   const grantRows = grants ?? []
+  const grantUserQuery = grantUser.trim().toLowerCase()
+  const userScopedGrants = grantUserQuery
+    ? grantRows.filter(
+        (grant) =>
+          (grant.email ?? "").toLowerCase() === grantUserQuery ||
+          grant.userId.toLowerCase() === grantUserQuery,
+      )
+    : []
   const activeOwnGrants = (own?.grants ?? []).filter(
     (grant) => grantStatusOf(grant) === "active",
   )
@@ -735,16 +778,11 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
         </div>
       </aside>
 
-      <main className="app-main">
+      <main className="app-main" ref={mainRef}>
         <header className="app-topbar">
           <div>
             <p className="eyebrow">Control portal</p>
-            <h1>
-              {knownPath
-                ? (allNav.find((item) => item.id === section)?.label ??
-                  "Overview")
-                : "Not found"}
-            </h1>
+            <h1>{knownPath ? sectionTitle(section) : "Not found"}</h1>
           </div>
           <span className="badge">{session.environment}</span>
         </header>
@@ -858,6 +896,25 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                 </details>
               )}
             </section>
+
+            {canReadGrants && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>Grant administration</h2>
+                </div>
+                <p className="muted">
+                  Grants are filed by department and reached from the people
+                  they apply to. This is the universal entry point when you can
+                  read grants but not the user directory.
+                </p>
+                <Link
+                  className="button button-quiet button-small button-link"
+                  to="/grants"
+                >
+                  Open grants
+                </Link>
+              </section>
+            )}
           </div>
         )}
 
@@ -1019,6 +1076,15 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                     <dd className="mono">{selectedUser.accountId}</dd>
                   </div>
                 </dl>
+                {canReadGrants && (
+                  <Link
+                    className="button button-quiet button-small button-link"
+                    to={`/grants?user=${encodeURIComponent(selectedUser.email)}`}
+                    onClick={() => setSelectedUser(null)}
+                  >
+                    Manage access
+                  </Link>
+                )}
                 <p className="hint">
                   Account actions — suspend, reinstate, revoke sessions — are
                   the next control slice. This view is read-only.
@@ -1140,7 +1206,74 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </form>
             </section>
 
-            {openSummary === null && (
+            {grantUserQuery !== "" && (
+              <section className="panel">
+                <div className="panel-head">
+                  <div>
+                    <h2>Grants for {grantUser}</h2>
+                    <span className="muted">
+                      {userScopedGrants.length}{" "}
+                      {userScopedGrants.length === 1 ? "grant" : "grants"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="button button-quiet button-small"
+                    onClick={() => {
+                      setGrantUser("")
+                      navigate("/grants", { replace: true })
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+                {grants === null && <p className="muted">Loading…</p>}
+                {grants !== null && userScopedGrants.length === 0 && (
+                  <p className="muted">
+                    This person holds no grants in this environment.
+                  </p>
+                )}
+                {grants !== null && userScopedGrants.length > 0 && (
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Type</th>
+                          <th>Scope</th>
+                          <th>Department</th>
+                          <th>Status</th>
+                          <th>Expires</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userScopedGrants.map((grant) => {
+                          const status = grantStatusOf(grant)
+                          return (
+                            <tr key={grant.id}>
+                              <td>{grant.grantType}</td>
+                              <td className="mono">{grant.scope}</td>
+                              <td>{grant.departmentName ?? "Unassigned"}</td>
+                              <td>
+                                <span className={grantStatusChip(status)}>
+                                  {status}
+                                </span>
+                              </td>
+                              <td>
+                                {grant.expiresAt
+                                  ? formatTime(grant.expiresAt)
+                                  : "Never"}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {openSummary === null && grantUserQuery === "" && (
               <section className="panel">
                 <div className="panel-head">
                   <h2>Departments</h2>
@@ -1184,6 +1317,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                                   setOpenDepartment(summary.key)
                                   setGrantSearch("")
                                   setGrantStatusFilter("all")
+                                  setGrantUser("")
+                                  navigate(
+                                    `/grants?department=${encodeURIComponent(summary.key)}`,
+                                  )
                                 }}
                               >
                                 View
@@ -1198,14 +1335,17 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </section>
             )}
 
-            {openSummary !== null && (
+            {openSummary !== null && grantUserQuery === "" && (
               <section className="panel">
                 <div className="panel-head">
                   <div>
                     <button
                       type="button"
                       className="button button-quiet button-small"
-                      onClick={() => setOpenDepartment(null)}
+                      onClick={() => {
+                        setOpenDepartment(null)
+                        navigate("/grants", { replace: true })
+                      }}
                     >
                       ← All departments
                     </button>
