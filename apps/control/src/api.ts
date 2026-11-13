@@ -250,6 +250,21 @@ export interface CaseEvidence {
   readonly uploadedAt: string
 }
 
+export interface VerificationReview {
+  readonly caseId: string
+  readonly reference: string
+  readonly title: string
+  readonly lane: string
+  readonly reviewStatus: string
+  readonly caseStatus: string
+  readonly priority: string
+  readonly subjectType: string | null
+  readonly subjectId: string | null
+  readonly assigneeEmail: string | null
+  readonly evidenceCount: number
+  readonly createdAt: string
+}
+
 export interface UserList {
   readonly items: readonly UserSummary[]
   readonly nextCursor: string | null
@@ -582,6 +597,19 @@ export const api = {
     request<ApprovalRequest>(
       `/control/cases/${encodeURIComponent(id)}/decision`,
       { method: "POST", body: JSON.stringify({ outcome, reason }) },
+    ),
+  listVerification: (status: string) => {
+    const suffix = status.trim()
+      ? `?status=${encodeURIComponent(status.trim())}`
+      : ""
+    return request<readonly VerificationReview[]>(
+      `/control/verification${suffix}`,
+    )
+  },
+  decideVerification: (caseId: string, decision: string, reason: string) =>
+    request<VerificationReview>(
+      `/control/verification/${encodeURIComponent(caseId)}/decision`,
+      { method: "POST", body: JSON.stringify({ decision, reason }) },
     ),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),

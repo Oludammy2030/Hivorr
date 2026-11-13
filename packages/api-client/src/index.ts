@@ -199,6 +199,12 @@ export type RequestCaseDecisionRequest = { "outcome": string; "reason"?: string 
 
 export type RequestCaseDecisionResponse = { "id": string; "reference": string; "actionType": string; "targetType": string; "targetId": string; "status": string; "reason": string; "requesterUserId": string; "requesterName"?: string | null; "requesterEmail"?: string | null; "createdAt": string; "decidedAt"?: string | null }
 
+export type ListVerificationQueueResponse = ({ "caseId": string; "reference": string; "title": string; "lane": string; "reviewStatus": string; "caseStatus": string; "priority": string; "subjectType"?: string | null; "subjectId"?: string | null; "assigneeEmail"?: string | null; "evidenceCount"?: number; "createdAt": string })[]
+
+export type RecordVerificationDecisionRequest = { "decision": "approve" | "reject" | "request_information"; "reason"?: string }
+
+export type RecordVerificationDecisionResponse = { "caseId": string; "reference": string; "title": string; "lane": string; "reviewStatus": string; "caseStatus": string; "priority": string; "subjectType"?: string | null; "subjectId"?: string | null; "assigneeEmail"?: string | null; "evidenceCount"?: number; "createdAt": string }
+
 export type ListPartnersResponse = ({ "id": string; "legalName": string; "tradingName"?: string | null; "category"?: string | null; "country"?: string | null; "status": string; "representatives"?: number; "agreements"?: number; "createdAt": string })[]
 
 export type CreatePartnerRequest = { "legalName": string; "tradingName"?: string; "category"?: string; "country"?: string; "reason"?: string }
@@ -697,6 +703,20 @@ export function createHivorrClient(options: HivorrClientOptions) {
         `/v1/control/cases/${encodeURIComponent(params.id)}/decision`,
         input,
         [201],
+      ),
+    listVerificationQueue: () =>
+      request<ListVerificationQueueResponse>(
+        "GET",
+        "/v1/control/verification",
+        undefined,
+        [200],
+      ),
+    recordVerificationDecision: (params: { id: string }, input: RecordVerificationDecisionRequest) =>
+      request<RecordVerificationDecisionResponse>(
+        "POST",
+        `/v1/control/verification/${encodeURIComponent(params.id)}/decision`,
+        input,
+        [200],
       ),
     listPartners: () =>
       request<ListPartnersResponse>(

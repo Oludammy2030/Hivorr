@@ -240,6 +240,11 @@ export const supersedeEvidenceRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const verificationDecisionRequest = z.strictObject({
+  decision: z.enum(["approve", "reject", "request_information"]),
+  reason: z.string().min(3).max(500).optional(),
+})
+
 // --- Responses --------------------------------------------------------------
 
 export const registrationResponse = z.object({
@@ -557,6 +562,25 @@ export const evidenceListResponse = z.array(evidenceViewResponse)
 export const evidenceAccessResponse = z.object({
   recorded: z.boolean(),
 })
+
+export const verificationReviewResponse = z.object({
+  caseId: z.string(),
+  reference: z.string(),
+  title: z.string(),
+  lane: z.string(),
+  reviewStatus: z.string(),
+  caseStatus: z.string(),
+  priority: z.string(),
+  subjectType: z.string().nullable().optional(),
+  subjectId: z.string().nullable().optional(),
+  assigneeEmail: z.string().nullable().optional(),
+  evidenceCount: z.number().int().optional(),
+  createdAt: z.string(),
+})
+
+export const verificationReviewListResponse = z.array(
+  verificationReviewResponse,
+)
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),

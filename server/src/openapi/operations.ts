@@ -32,6 +32,9 @@ import {
   evidenceListResponse,
   evidenceViewResponse,
   supersedeEvidenceRequest,
+  verificationDecisionRequest,
+  verificationReviewListResponse,
+  verificationReviewResponse,
   activityViewSchema,
   assignRoleRequest,
   auditEntryListResponse,
@@ -1070,6 +1073,42 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 201,
         description: "The pending approval request for the decision",
         schema: approvalRequestViewResponse,
+      },
+    ],
+  },
+  {
+    id: "listVerificationQueue",
+    method: "get",
+    path: "/v1/control/verification",
+    summary: "List the verification review queue",
+    tag: "cases",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Verification cases with their lane, decision state and evidence count",
+        schema: verificationReviewListResponse,
+      },
+    ],
+  },
+  {
+    id: "recordVerificationDecision",
+    method: "post",
+    path: "/v1/control/verification/{id}/decision",
+    summary: "Record a verification decision",
+    tag: "cases",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: verificationDecisionRequest,
+      description: "Approve, reject or request information with a reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The review with its new decision state",
+        schema: verificationReviewResponse,
       },
     ],
   },
