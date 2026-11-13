@@ -637,6 +637,17 @@ try {
     )
   assert(caseListDenied, "the case register requires a case permission")
 
+  const evidenceDenied = await testClient
+    .query(
+      "select * from admin.list_case_evidence($1, '00000000-0000-7000-8000-000000000000')",
+      [userId],
+    )
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(evidenceDenied, "the evidence register requires a case permission")
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )

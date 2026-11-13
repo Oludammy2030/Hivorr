@@ -236,6 +236,20 @@ export interface CaseEvent {
   readonly occurredAt: string
 }
 
+export interface CaseEvidence {
+  readonly id: string
+  readonly fileName: string
+  readonly mimeType: string | null
+  readonly sizeBytes: number | null
+  readonly sha256: string | null
+  readonly classification: string
+  readonly status: string
+  readonly supersedesId: string | null
+  readonly uploadedByName: string | null
+  readonly uploadedByEmail: string | null
+  readonly uploadedAt: string
+}
+
 export interface UserList {
   readonly items: readonly UserSummary[]
   readonly nextCursor: string | null
@@ -530,6 +544,40 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ status, reason }),
     }),
+  listCaseEvidence: (id: string) =>
+    request<readonly CaseEvidence[]>(
+      `/control/cases/${encodeURIComponent(id)}/evidence`,
+    ),
+  addCaseEvidence: (
+    id: string,
+    input: {
+      storageKey: string
+      fileName: string
+      mimeType?: string
+      sizeBytes?: number
+      sha256?: string
+      classification?: string
+      reason: string
+    },
+  ) =>
+    request<CaseEvidence>(`/control/cases/${encodeURIComponent(id)}/evidence`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  recordEvidenceAccess: (caseId: string, evidenceId: string, purpose: string) =>
+    request<{ recorded: boolean }>(
+      `/control/cases/${encodeURIComponent(caseId)}/evidence/${encodeURIComponent(evidenceId)}/access`,
+      { method: "POST", body: JSON.stringify({ purpose }) },
+    ),
+  supersedeEvidence: (
+    evidenceId: string,
+    replacementId: string,
+    reason: string,
+  ) =>
+    request<CaseEvidence>(
+      `/control/evidence/${encodeURIComponent(evidenceId)}/supersede`,
+      { method: "POST", body: JSON.stringify({ replacementId, reason }) },
+    ),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),
   createGrant: (input: CreateGrantInput) =>

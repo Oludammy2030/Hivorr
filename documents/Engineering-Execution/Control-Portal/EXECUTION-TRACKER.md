@@ -31,7 +31,8 @@
 | CP-014 | Partner organisations | EP-02 | **REQUIRES_REVIEW** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
 | CP-015 | Partner isolation | EP-02 | **REQUIRES_REVIEW** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
 | CP-016 | Case spine and timeline | EP-02 | **REQUIRES_REVIEW** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
-| CP-017…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-017 | Case evidence metadata | EP-02 | **REQUIRES_REVIEW** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
+| CP-018…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -332,6 +333,18 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Audit impact:** R3 case data. Creation, assignment, notes and status changes are audited with the operator and reason where required.
 - **Rollback:** drop the six functions in a forward migration; case rows and events remain stored.
 - **Approver:** Architect; founder for the case scope and retention.
+
+### CP-017 — Case evidence metadata
+
+- **Class:** `[REVIEW]` — evidence integrity, access auditing and UI change.
+- **Scope in:** evidence metadata register with optional SHA-256; access recorded on the case timeline; supersede link between originals; `admin.case.read`/`admin.case.assign`; evidence section in the case detail; audit rows.
+- **Scope out:** binary upload and signed download URLs (requires R2 credentials and object-storage wiring), retention jobs, quarantine workflow, evidence decisions.
+- **Reuse:** `admin.case_evidence`, `admin.case_events`, `admin.actor_holds_platform_permission`, `appendAudit`.
+- **Dependencies:** CP-016.
+- **Test plan:** migration asserts the evidence register refuses without permission; the case suite proves metadata registration, hash validation, access events, supersede and the 403 for a reader without the case permission.
+- **Audit impact:** R3 evidence metadata. Upload registration and supersede are audited; every access appends a timeline event.
+- **Rollback:** drop the four functions in a forward migration; evidence rows remain stored.
+- **Approver:** Architect; founder for evidence retention and the private storage policy.
 
 ### CP-020 — Approval and maker-checker
 

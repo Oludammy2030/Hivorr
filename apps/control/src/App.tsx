@@ -23,6 +23,7 @@ import {
   type PartnerRepresentative,
   type CaseSummary,
   type CaseEvent,
+  type CaseEvidence,
   type Session,
   type UserSummary,
 } from "./api"
@@ -494,6 +495,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [caseQuery, setCaseQuery] = useState("")
   const [selectedCase, setSelectedCase] = useState<CaseSummary | null>(null)
   const [caseEvents, setCaseEvents] = useState<readonly CaseEvent[]>([])
+  const [caseEvidence, setCaseEvidence] = useState<readonly CaseEvidence[]>([])
 
   const capabilities = own?.capabilities ?? []
   const canReadUsers = capabilities.includes("admin.user.read")
@@ -717,6 +719,14 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       .catch((value: unknown) => {
         if (active) setError(errorMessage(value))
       })
+    api
+      .listCaseEvidence(selectedCase.id)
+      .then((rows) => {
+        if (active) setCaseEvidence(rows)
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
     return () => {
       active = false
     }
@@ -820,6 +830,87 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
         (current ?? []).map((row) => (row.id === updated.id ? updated : row)),
       )
       setSelectedCase(updated)
+      setCaseEvents(await api.listCaseEvents(entry.id))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAddEvidence(
+    event: FormEvent<HTMLFormElement>,
+    entry: CaseSummary,
+  ) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const storageKey = String(form.get("storageKey") ?? "").trim()
+    const fileName = String(form.get("fileName") ?? "").trim()
+    const sha256 = String(form.get("sha256") ?? "").trim()
+    const reason = String(form.get("reason") ?? "").trim()
+    if (!storageKey || !fileName || reason.length < 5) {
+      setError("A storage key, file name and reason are required.")
+      return
+    }
+    setBusy(true)
+    setError(undefined)
+    try {
+      await api.addCaseEvidence(entry.id, {
+        storageKey,
+        fileName,
+        sha256: sha256 || undefined,
+        reason,
+      })
+      setCaseEvidence(await api.listCaseEvidence(entry.id))
+      setCaseEvents(await api.listCaseEvents(entry.id))
+      event.currentTarget.reset()
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleEvidenceAccess(
+    entry: CaseSummary,
+    evidence: CaseEvidence,
+  ) {
+    const purpose = window.prompt(
+      `Why are you accessing ${evidence.fileName}?`,
+      "Case review",
+    )
+    if (!purpose) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      await api.recordEvidenceAccess(entry.id, evidence.id, purpose)
+      setCaseEvents(await api.listCaseEvents(entry.id))
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleSupersedeEvidence(
+    entry: CaseSummary,
+    evidence: CaseEvidence,
+  ) {
+    const replacementId = window.prompt(
+      "Id of the replacement evidence for " + evidence.fileName + ":",
+    )
+    if (!replacementId) return
+    const reason = window.prompt("Reason for superseding:")
+    if (!reason || reason.trim().length < 5) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      await api.supersedeEvidence(
+        evidence.id,
+        replacementId.trim(),
+        reason.trim(),
+      )
+      setCaseEvidence(await api.listCaseEvidence(entry.id))
       setCaseEvents(await api.listCaseEvents(entry.id))
     } catch (value) {
       setError(errorMessage(value))
@@ -2974,6 +3065,101 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                       Change status
                     </button>
                   </div>
+                )}
+
+                <h3 className="section-title">Evidence</h3>
+                <p className="muted">
+                  Objects live in private storage. Only metadata and its hash
+                  are recorded here; every access is written to the timeline.
+                </p>
+                {caseEvidence.length === 0 && (
+                  <p className="muted">No evidence recorded.</p>
+                )}
+                {caseEvidence.length > 0 && (
+                  <ul className="plain-list">
+                    {caseEvidence.map((evidence) => (
+                      <li key={evidence.id}>
+                        <div>
+                          {evidence.fileName}
+                          <span className="muted">
+                            {" "}
+                            · {evidence.classification} · {evidence.status}
+                          </span>
+                        </div>
+                        <div className="muted mono">
+                          {evidence.sha256
+                            ? evidence.sha256.slice(0, 16)
+                            : "no hash"}
+                        </div>
+                        <div className="account-actions">
+                          <button
+                            type="button"
+                            className="button button-quiet button-small"
+                            onClick={() =>
+                              handleEvidenceAccess(selectedCase, evidence)
+                            }
+                            disabled={busy}
+                          >
+                            Record access
+                          </button>
+                          {canWorkCases && evidence.status === "active" && (
+                            <button
+                              type="button"
+                              className="button button-quiet button-small"
+                              onClick={() =>
+                                handleSupersedeEvidence(selectedCase, evidence)
+                              }
+                              disabled={busy}
+                            >
+                              Supersede
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {canWorkCases && (
+                  <form
+                    className="form"
+                    onSubmit={(event) => handleAddEvidence(event, selectedCase)}
+                  >
+                    <div className="form-row">
+                      <label className="field">
+                        <span>Storage key</span>
+                        <input name="storageKey" required disabled={busy} />
+                      </label>
+                      <label className="field">
+                        <span>File name</span>
+                        <input name="fileName" required disabled={busy} />
+                      </label>
+                      <label className="field">
+                        <span>SHA-256 (optional)</span>
+                        <input
+                          name="sha256"
+                          pattern="[0-9a-f]{64}"
+                          disabled={busy}
+                        />
+                      </label>
+                    </div>
+                    <label className="field">
+                      <span>Reason</span>
+                      <input
+                        name="reason"
+                        minLength={3}
+                        maxLength={500}
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <button
+                      className="button button-small"
+                      type="submit"
+                      disabled={busy}
+                    >
+                      Register evidence
+                    </button>
+                  </form>
                 )}
 
                 <h3 className="section-title">Timeline</h3>
