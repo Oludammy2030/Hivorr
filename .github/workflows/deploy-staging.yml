@@ -233,11 +233,20 @@ jobs:
         run: |
           set -euo pipefail
           deploy() {
+            local attempt=1
             echo "pages: deploying $1 to $2 for ${GITHUB_SHA:0:7}"
-            wrangler pages deploy "$1" \
+            until wrangler pages deploy "$1" \
               --project-name "$2" \
               --branch staging \
-              --commit-hash "$GITHUB_SHA"
+              --commit-hash "$GITHUB_SHA"; do
+              if [ "$attempt" -ge 3 ]; then
+                echo "pages: $2 failed after $attempt attempts"
+                return 1
+              fi
+              attempt=$((attempt + 1))
+              echo "pages: $2 failed, retrying in 20s (attempt $attempt of 3)"
+              sleep 20
+            done
           }
           deploy dist hivorr-staging-main
           deploy dist/portals/control hivorr-staging-control
