@@ -87,6 +87,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           WORKER_DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
           MFA_ENCRYPTION_KEY: ${{ secrets.MFA_ENCRYPTION_KEY }}
+          ZEPTOMAIL_TOKEN: ${{ secrets.ZEPTOMAIL_TOKEN }}
         run: |
           set -euo pipefail
           worker_db="${WORKER_DATABASE_URL:-$DATABASE_URL}"
@@ -94,6 +95,12 @@ jobs:
             DATABASE_URL="$DATABASE_URL" \
             MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY" \
             RELEASE_SHA="$GITHUB_SHA"
+          if [ -n "${ZEPTOMAIL_TOKEN:-}" ]; then
+            bash scripts/flyctl-ci.sh secrets set --app hivorr-staging-api --stage \
+              ZEPTOMAIL_TOKEN="$ZEPTOMAIL_TOKEN"
+          else
+            echo "ZEPTOMAIL_TOKEN is not set; staff invitation emails will use the copy-link fallback."
+          fi
           WORKER_DATABASE_URL="$worker_db" bash scripts/flyctl-ci.sh secrets set \
             --app hivorr-staging-worker --stage \
             DATABASE_URL="$DATABASE_URL" \

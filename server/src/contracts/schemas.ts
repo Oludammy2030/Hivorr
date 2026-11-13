@@ -286,6 +286,7 @@ export const createStaffInviteResponse = z.object({
   departmentKey: z.string().nullable(),
   expiresAt: z.string(),
   token: z.string(),
+  emailSent: z.boolean().optional(),
 })
 
 export const staffReasonRequest = z.strictObject({

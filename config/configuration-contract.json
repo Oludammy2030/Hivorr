@@ -169,6 +169,41 @@
       "description": "Comma-separated exact origin allowlist. Empty means same-origin only."
     },
     {
+      "name": "ZEPTOMAIL_TOKEN",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "ZeptoMail send-mail token. Unset keeps email delivery off and the capture adapter active."
+    },
+    {
+      "name": "ZEPTOMAIL_API_URL",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "ZeptoMail send endpoint for the account region. Defaults to the US endpoint."
+    },
+    {
+      "name": "MAIL_FROM_ADDRESS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Verified sender address for transactional email, for example no-reply@mail.hivorr.com."
+    },
+    {
+      "name": "MAIL_FROM_NAME",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Display name on transactional email. Defaults to Hivorr."
+    },
+    {
+      "name": "PUBLIC_APP_ORIGIN",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Public origin of the main portal, used to build invitation links in email."
+    },
+    {
       "name": "AUTH_RATE_LIMIT_WINDOW_MS",
       "source": "config",
       "classification": "public",

@@ -59,6 +59,17 @@ const baseConfigSchema = z.object({
   WORKER_HEALTH_HOST: z.string().min(1).default("0.0.0.0"),
   WORKER_ID: z.string().min(1).max(120).optional(),
   CORS_ALLOWED_ORIGINS: z.string().optional(),
+  ZEPTOMAIL_TOKEN: z.string().min(1).optional(),
+  ZEPTOMAIL_API_URL: z
+    .string()
+    .regex(/^https:\/\/\S+$/)
+    .default("https://api.zeptomail.com/v1.1/email"),
+  MAIL_FROM_ADDRESS: z.string().min(3).max(254).optional(),
+  MAIL_FROM_NAME: z.string().min(1).max(120).default("Hivorr"),
+  PUBLIC_APP_ORIGIN: z
+    .string()
+    .regex(/^https?:\/\/\S+$/)
+    .optional(),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce
     .number()
     .int()
@@ -234,6 +245,16 @@ export interface AuthAbuseConfig {
   readonly lockoutMs: number
 }
 
+export interface MailConfig {
+  /** ZeptoMail send-mail token. Delivery stays off while unset. */
+  readonly token: string | undefined
+  readonly apiUrl: string
+  readonly fromAddress: string | undefined
+  readonly fromName: string
+  /** Public origin of the main portal, used to build invitation links. */
+  readonly appOrigin: string | undefined
+}
+
 export interface ApiConfig {
   readonly environment: DeploymentEnvironment
   readonly backendEnvironment: DeploymentEnvironment
@@ -254,6 +275,7 @@ export interface ApiConfig {
   readonly edgeSharedSecret: string | undefined
   readonly corsAllowedOrigins: readonly string[]
   readonly trustProxy: boolean
+  readonly mail: MailConfig
   readonly auth: AuthAbuseConfig
   readonly worker: WorkerConfig
 }
@@ -300,6 +322,13 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       .map((origin) => origin.trim())
       .filter(Boolean),
     trustProxy: value.TRUST_PROXY,
+    mail: {
+      token: value.ZEPTOMAIL_TOKEN,
+      apiUrl: value.ZEPTOMAIL_API_URL,
+      fromAddress: value.MAIL_FROM_ADDRESS,
+      fromName: value.MAIL_FROM_NAME,
+      appOrigin: value.PUBLIC_APP_ORIGIN,
+    },
     auth: {
       rateLimitWindowMs: value.AUTH_RATE_LIMIT_WINDOW_MS,
       identifierMax: value.AUTH_RATE_LIMIT_IDENTIFIER_MAX,

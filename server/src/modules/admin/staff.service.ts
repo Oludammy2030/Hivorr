@@ -9,6 +9,10 @@ import {
 } from "../../config"
 import { DatabaseService } from "../../db/database.service"
 import {
+  EMAIL_ADAPTER,
+  type EmailAdapter,
+} from "../../integrations/email/email.adapter"
+import {
   createSessionToken,
   hashPassword,
   hashSessionToken,
@@ -37,6 +41,7 @@ export interface StaffInviteResult {
   readonly departmentKey: string | null
   readonly expiresAt: string
   readonly token: string
+  readonly emailSent: boolean
 }
 
 export interface StaffStatusResult {
@@ -113,6 +118,7 @@ export class StaffService {
   constructor(
     @Inject(DatabaseService) private readonly database: DatabaseService,
     @Inject(API_CONFIG) private readonly config: ApiConfig,
+    @Inject(EMAIL_ADAPTER) private readonly email: EmailAdapter,
   ) {}
 
   async list(input: {
@@ -179,7 +185,7 @@ export class StaffService {
     const tokenHash = hashSessionToken(token)
 
     try {
-      return await this.database.withTransaction(
+      const created = await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
         async (transaction) => {
           const result = await transaction.query<{
@@ -228,8 +234,47 @@ export class StaffService {
           }
         },
       )
+
+      const emailSent = await this.deliverInvite(created)
+      return { ...created, emailSent }
     } catch (error) {
       mapDatabaseError(error)
+    }
+  }
+
+  /**
+   * Delivery happens after the invitation commits. A provider failure must not
+   * roll back the invitation or hide it: the control UI keeps the single-use
+   * link so the administrator can still send it manually.
+   */
+  private async deliverInvite(
+    invite: Omit<StaffInviteResult, "emailSent">,
+  ): Promise<boolean> {
+    const { token, fromAddress, appOrigin } = this.config.mail
+    if (!token || !fromAddress || !appOrigin) return false
+
+    const link = `${appOrigin.replace(/\/$/, "")}/invite.html?token=${encodeURIComponent(invite.token)}`
+
+    try {
+      await this.email.send({
+        to: invite.email,
+        subject: "Your Hivorr staff invitation",
+        text: [
+          "Hello,",
+          "",
+          "You have been invited to join Hivorr as a staff member.",
+          "",
+          "Open this single-use link within 7 days to set your password and authenticator:",
+          link,
+          "",
+          `The link expires on ${invite.expiresAt}. If you were not expecting this invitation, ignore this email.`,
+          "",
+          "— Hivorr",
+        ].join("\n"),
+      })
+      return true
+    } catch {
+      return false
     }
   }
 

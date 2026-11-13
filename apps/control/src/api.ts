@@ -124,6 +124,7 @@ export interface StaffInvite {
   readonly departmentKey: string | null
   readonly expiresAt: string
   readonly token: string
+  readonly emailSent?: boolean
 }
 
 export interface StaffStatusResult {

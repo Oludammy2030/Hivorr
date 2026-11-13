@@ -31,6 +31,8 @@ record and audit history are retained.
   membership, staff profile and department membership atomically.
 - `admin.attach_staff_profile` for an existing Hivorr account that should
   become staff without a new invitation.
+- Invitation email delivery through the ZeptoMail transactional API when a
+  send-only token and sender are configured.
 - `admin.set_staff_status` for active, suspended, leave and offboarded.
 - `admin.set_staff_department` with an effective-dated membership.
 - Immediate session revocation on suspension and offboarding.
@@ -57,6 +59,7 @@ record and audit history are retained.
 | Read model | Bounded to 200 rows, search by email/name/job title, status filter |
 | Privilege | Every function re-checks `admin.actor_has_platform_permission`; the API role has no table privileges |
 | Abuse control | Acceptance is unauthenticated, so it shares the per-IP authentication rate limit before hashing the password |
+| Invitation email | ZeptoMail API with a send-only token; delivery runs after the invite commits, and a provider failure leaves the invite valid and the copy link available |
 
 ## 6. Test plan
 
@@ -72,6 +75,9 @@ record and audit history are retained.
 - Department change closes the previous membership and opens one new row.
 - The control route manifest exposes Staff only to `admin.user.read`, and the
   invite link points at the main portal rather than the control host.
+- The ZeptoMail adapter sends the documented payload with a send-only token and
+  fails without echoing the provider response; it stays on the capture adapter
+  until a token and sender exist.
 
 ## 7. Audit impact
 
@@ -93,5 +99,7 @@ before dropping the functions.
   must include the staff email.
 - Invitations only create new accounts. An existing account becomes staff
   through the "Add an existing account as staff" action.
+- Email delivery stays off until `ZEPTOMAIL_TOKEN`, `MAIL_FROM_ADDRESS` and
+  `PUBLIC_APP_ORIGIN` are set; until then the administrator sends the link.
 - Invitations do not grant a Hivorr capability; CP-012 assigns roles.
 - A suspended staff member keeps their account and can be reactivated.

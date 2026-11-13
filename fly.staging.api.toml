@@ -13,6 +13,9 @@ primary_region = "jnb"
   API_HOST = "0.0.0.0"
   LOG_LEVEL = "info"
   TRUST_PROXY = "true"
+  PUBLIC_APP_ORIGIN = "https://staging.hivorr.com"
+  MAIL_FROM_ADDRESS = "no-reply@mail.hivorr.com"
+  MAIL_FROM_NAME = "Hivorr"
 
 [http_service]
   internal_port = 3000
