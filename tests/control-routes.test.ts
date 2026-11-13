@@ -18,7 +18,8 @@ describe("control portal route manifest", () => {
     expect(new Set(sections).size).toBe(SECTION_PATHS.length)
     expect(sectionFromPath("/")).toBe("overview")
     expect(sectionFromPath("/users")).toBe("users")
-    expect(sectionFromPath("/grants")).toBe("grants")
+    expect(sectionFromPath("/access/roles")).toBe("roles")
+    expect(sectionFromPath("/access/grants")).toBe("grants")
     expect(sectionFromPath("/audit")).toBe("audit")
   })
 
@@ -37,12 +38,15 @@ describe("control portal route manifest", () => {
     expect(new Set(allItems.map((item) => item.id)).size).toBe(allItems.length)
   })
 
-  it("keeps grants routable without a navigation item", () => {
-    // Grants is reached contextually from the people and overview screens.
-    // The URL must keep working even though it no longer occupies the nav.
-    expect(isKnownPath("/grants")).toBe(true)
-    expect(sectionFromPath("/grants")).toBe("grants")
+  it("keeps grants routable under the Access page", () => {
+    // Grants shares the Access section with roles and keeps its own URL so
+    // contextual links such as ?user= and ?department= continue to work.
+    expect(isKnownPath("/access/grants")).toBe(true)
+    expect(sectionFromPath("/access/grants")).toBe("grants")
     expect(allItems.some((item) => item.id === "grants")).toBe(false)
+    expect(allItems.find((item) => item.id === "roles")?.activePaths).toContain(
+      "/access/grants",
+    )
   })
 
   it("titles every section independently of the navigation", () => {
