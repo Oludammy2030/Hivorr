@@ -621,6 +621,14 @@ try {
     "the partner management permission is registered",
   )
 
+  const ownPartner = await testClient.query(
+    "select * from admin.list_own_partner_organisations('00000000-0000-7000-8000-000000000000')",
+  )
+  assert(
+    ownPartner.rowCount === 0,
+    "the partner read model is scoped to the user id",
+  )
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )

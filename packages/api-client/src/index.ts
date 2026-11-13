@@ -211,6 +211,8 @@ export type AddPartnerRepresentativeRequest = { "email": string; "role": "owner"
 
 export type AddPartnerRepresentativeResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "role": string; "effectiveFrom": string; "effectiveTo"?: string | null }
 
+export type PartnerOrganisationsResponse = ({ "organisationId": string; "legalName": string; "tradingName"?: string | null; "status": string; "role": string; "effectiveFrom": string })[]
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -685,6 +687,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
         `/v1/control/partners/${encodeURIComponent(params.id)}/representatives`,
         input,
         [201],
+      ),
+    partnerOrganisations: () =>
+      request<PartnerOrganisationsResponse>(
+        "GET",
+        "/v1/partner/organisations",
+        undefined,
+        [200],
       ),
   }
 }

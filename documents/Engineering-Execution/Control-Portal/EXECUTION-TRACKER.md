@@ -29,7 +29,8 @@
 | CP-013 | Account governance | EP-02 | **REQUIRES_REVIEW** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
 | CP-020 | Approval and maker-checker | EP-02 | **REQUIRES_REVIEW** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
 | CP-014 | Partner organisations | EP-02 | **REQUIRES_REVIEW** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
-| CP-015…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-015 | Partner isolation | EP-02 | **REQUIRES_REVIEW** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
+| CP-016…CP-019, CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -297,6 +298,18 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Audit impact:** R3 partner data. Registration, every status change and every representative link write an audit row with the operator and reason.
 - **Rollback:** drop the five functions in a forward migration; organisations and representatives remain stored and can be re-exposed by a later function.
 - **Approver:** Architect; founder for onboarding and termination.
+
+### CP-015 — Partner isolation
+
+- **Class:** `[REVIEW]` — authorization and audience isolation change.
+- **Scope in:** `admin.list_own_partner_organisations`; `GET /v1/partner/organisations`; partner audience boundary proof; terminated organisations hidden; tests for A/B isolation and capability denial.
+- **Scope out:** partner portal screens, partner activity capabilities, row-level policies for direct table access (the read model is function-only), partner agreement/application workflows.
+- **Reuse:** `admin.partner_representatives`, `admin.partner_organisations`, `identity.getSession`, audience guard, capability composition.
+- **Dependencies:** CP-014, CP-007.
+- **Test plan:** isolation integration proves each partner sees only their organisation, a partner cookie is refused on control and wrong-audience routes, no governance or write capability appears in a partner session, and a terminated organisation disappears from the partner view.
+- **Audit impact:** none directly; reads are not audited, consistent with the existing read policy.
+- **Rollback:** drop the function and route in a forward commit; the partner audience returns to its foundation state.
+- **Approver:** Architect; founder for the partner boundary.
 
 ### CP-020 — Approval and maker-checker
 
