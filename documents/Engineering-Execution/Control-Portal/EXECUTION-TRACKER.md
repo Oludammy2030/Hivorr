@@ -25,7 +25,8 @@
 | CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REQUIRES_REVIEW** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
 | CP-011 | Grant organisation by department | EP-02 | **REQUIRES_REVIEW** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
 | CP-010 | Staff records and lifecycle | EP-02 | **REQUIRES_REVIEW** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
-| CP-012…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
+| CP-012 | Role administration | EP-02 | **REQUIRES_REVIEW** | `20261113000300_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated |
+| CP-013…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
 
@@ -208,9 +209,25 @@ UI-only change: no migration, no API contract change and no permission change.
 | Browser pass | Built control bundle with a mocked API at 1440×900: section change pins the sidebar and topbar, only the content column scrolls, and navigation resets its scroll. At 375×667: static topbar, document scroll, no horizontal page overflow, and wide tables scroll inside their panel. No visual baseline covers the control portal, so this is manual evidence. |
 | CI and staging deployment | PR #78; CI run `43399331197` green; Fly release `v60` on `bb87685`; staging deployment gate `43399686663` green. No migration was needed. |
 
+### CP-012 — Role administration
+
+- **Class:** `[REVIEW]` — authorization, governance data and API/UI change.
+- **Scope in:** `admin.list_roles`, `admin.list_role_assignments`, `admin.list_role_scope_targets`, `admin.assign_role`, `admin.revoke_role`, `admin.actor_holds_platform_permission`; `GET /v1/control/roles`; `GET /v1/control/role-assignments`; `GET /v1/control/roles/scope-targets`; `POST /v1/control/role-assignments`; `POST /v1/control/role-assignments/{id}/revoke`; Roles screen with the catalogue, assignment form, search and status filters.
+- **Scope out:** custom role creation (the seeded catalogue is the reviewed surface); permission editing; approval routing for sensitive assignments (CP-020); bulk assignment.
+- **Reuse:** `admin.roles`, `admin.role_permissions`, `admin.role_assignments`, `admin.permission_grants`, `admin.access_denials`, `admin.departments`, `admin.partner_organisations`, `appendAudit`.
+- **Dependencies:** CP-002, CP-006.
+- **Test plan:** migration assertions for the catalogue, seed count and capability refusal; roles integration test covers a 403 without a governance role, catalogue permissions, assignment, duplicate, self-change, unknown role/user, missing reason, department scope, scope targets, revocation, self-revocation and the audit rows; `pnpm test`; `bundles:check`; OpenAPI route coverage.
+- **Audit impact:** R3 governance data. Every assignment writes `identity.role_assigned` and every revocation `identity.role_revoked` with the operator, role, scope, reason and `admin.role.manage` capability.
+- **Rollback:** drop the five functions and the five routes in a forward commit; the tables are untouched, so existing assignments remain valid.
+- **Approver:** Architect; founder for the role catalogue and the self-change rule.
+
 ## 5. Known follow-ups
 
-1. The session capability list (`GET /v1/session`) still composes grants and activities only. Role permissions are loaded by the control user endpoint, not yet by the session view. CP-007/CP-012 will compose the full authority for presentation.
+1. The session capability list (`GET /v1/session`) still composes grants and activities only. Role
+   permissions reach the control authority (`GET /v1/control/authority`) but not the general session
+   or the staff portal, so a staff member whose authority comes from a role sees the role in the
+   control directory but no matching capability in `GET /v1/grants`. Composing roles into the session
+   view remains a follow-up (CP-012 delivered the administration half).
 2. `admin.audit.read` and `admin.grant.*` remain grant-gated, so a founder role does not replace the existing grants. The bootstrap script creates both.
 3. Cursor pagination is implemented on the user directory; the control UI exposes "Load more" but does not yet show a page-size selector.
 4. The `admin` schema is complete for P0, but no staff, partner, case or approval **feature endpoints**

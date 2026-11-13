@@ -145,6 +145,20 @@ export type AcceptStaffInviteRequest = { "token": string; "password": string; "d
 
 export type AcceptStaffInviteResponse = { "email": string }
 
+export type ListRolesResponse = ({ "key": string; "name": string; "description"?: string | null; "system": boolean; "permissions"?: (string)[]; "activeAssignments"?: number })[]
+
+export type ListRoleAssignmentsResponse = ({ "id": string; "userId": string; "email": string; "displayName"?: string | null; "roleKey": string; "roleName": string; "scopeType": string; "scopeId"?: string | null; "expiresAt"?: string | null; "revokedAt"?: string | null; "createdAt": string; "grantedBy"?: string | null; "reason"?: string | null })[]
+
+export type AssignRoleRequest = { "email": string; "roleKey": string; "scopeType": "platform" | "department" | "organisation"; "scopeId"?: string; "expiresAt"?: string; "reason"?: string }
+
+export type AssignRoleResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "roleKey": string; "roleName": string; "scopeType": string; "scopeId"?: string | null; "expiresAt"?: string | null; "revokedAt"?: string | null; "createdAt": string; "grantedBy"?: string | null; "reason"?: string | null }
+
+export type ListRoleScopeTargetsResponse = ({ "id": string; "name": string })[]
+
+export type RevokeRoleRequest = { "reason"?: string }
+
+export type RevokeRoleResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "roleKey": string; "roleName": string; "scopeType": string; "scopeId"?: string | null; "expiresAt"?: string | null; "revokedAt"?: string | null; "createdAt": string; "grantedBy"?: string | null; "reason"?: string | null }
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -472,6 +486,41 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "/v1/auth/staff-invite/accept",
         input,
         [201],
+      ),
+    listRoles: () =>
+      request<ListRolesResponse>(
+        "GET",
+        "/v1/control/roles",
+        undefined,
+        [200],
+      ),
+    listRoleAssignments: () =>
+      request<ListRoleAssignmentsResponse>(
+        "GET",
+        "/v1/control/role-assignments",
+        undefined,
+        [200],
+      ),
+    assignRole: (input: AssignRoleRequest) =>
+      request<AssignRoleResponse>(
+        "POST",
+        "/v1/control/role-assignments",
+        input,
+        [201],
+      ),
+    listRoleScopeTargets: () =>
+      request<ListRoleScopeTargetsResponse>(
+        "GET",
+        "/v1/control/roles/scope-targets",
+        undefined,
+        [200],
+      ),
+    revokeRole: (params: { id: string }, input: RevokeRoleRequest) =>
+      request<RevokeRoleResponse>(
+        "POST",
+        `/v1/control/role-assignments/${encodeURIComponent(params.id)}/revoke`,
+        input,
+        [200],
       ),
   }
 }

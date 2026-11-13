@@ -531,6 +531,36 @@ try {
     "recording a department requires the grant-management capability",
   )
 
+  const roleCatalogueDenied = await testClient
+    .query("select * from admin.list_roles($1, 'test')", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    roleCatalogueDenied,
+    "the role catalogue requires a role-management permission",
+  )
+
+  const roleAssignmentDenied = await testClient
+    .query(
+      `select * from admin.assign_role($1, 'founder@example.test', 'auditor', 'platform', null, null, 'test reason', 'test')`,
+      [userId],
+    )
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(roleAssignmentDenied, "assigning a role requires admin.role.manage")
+
+  const seededRoles = await testClient.query(
+    "select count(*)::int as count from admin.roles",
+  )
+  assert(
+    seededRoles.rows[0].count === 11,
+    "the eleven governance roles are seeded",
+  )
+
   await testClient.query(
     "insert into profile.profiles (account_id, display_name) values ($1, $2)",
     [accountId, "Founder"],
