@@ -52,6 +52,7 @@ export class ZeptoMailAdapter implements EmailAdapter {
         to: [{ email_address: { address: message.to } }],
         subject: message.subject,
         textbody: message.text,
+        ...(message.html ? { htmlbody: message.html } : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     })

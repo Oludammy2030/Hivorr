@@ -55,6 +55,25 @@ describe("ZeptoMail adapter", () => {
     })
   })
 
+  it("adds the rich body only when the message has one", async () => {
+    const bodies: string[] = []
+    const adapter = new ZeptoMailAdapter(settings, async (_url, init) => {
+      bodies.push(String(init?.body))
+      return new Response(null, { status: 201 })
+    })
+
+    await adapter.send({ to: "x@example.com", subject: "s", text: "t" })
+    await adapter.send({
+      to: "x@example.com",
+      subject: "s",
+      text: "t",
+      html: "<p>rich</p>",
+    })
+
+    expect(JSON.parse(bodies[0]!)).not.toHaveProperty("htmlbody")
+    expect(JSON.parse(bodies[1]!).htmlbody).toBe("<p>rich</p>")
+  })
+
   it("fails without exposing the provider response body", async () => {
     const adapter = new ZeptoMailAdapter(
       settings,
