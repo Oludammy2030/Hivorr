@@ -70,6 +70,12 @@ const baseConfigSchema = z.object({
     .string()
     .regex(/^https?:\/\/\S+$/)
     .optional(),
+  STAFF_EMAIL_DOMAIN: z
+    .string()
+    .regex(
+      /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i,
+    )
+    .default("hivorr.com"),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce
     .number()
     .int()
@@ -253,6 +259,11 @@ export interface MailConfig {
   readonly fromName: string
   /** Public origin of the main portal, used to build invitation links. */
   readonly appOrigin: string | undefined
+  /**
+   * Domain of the official addresses Hivorr owns. A staff invitation may only
+   * create an account on this domain; the personal address is delivery-only.
+   */
+  readonly staffEmailDomain: string
 }
 
 export interface ApiConfig {
@@ -328,6 +339,7 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       fromAddress: value.MAIL_FROM_ADDRESS,
       fromName: value.MAIL_FROM_NAME,
       appOrigin: value.PUBLIC_APP_ORIGIN,
+      staffEmailDomain: value.STAFF_EMAIL_DOMAIN,
     },
     auth: {
       rateLimitWindowMs: value.AUTH_RATE_LIMIT_WINDOW_MS,

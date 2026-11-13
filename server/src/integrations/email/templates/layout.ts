@@ -32,6 +32,13 @@ export interface EmailNote {
   readonly body: string
 }
 
+/** A labelled value shown in a bordered block, for an address or reference. */
+export interface EmailReference {
+  readonly label: string
+  readonly value: string
+  readonly hint?: string
+}
+
 export interface EmailLayoutInput {
   /** Inbox preview line, hidden in the body. */
   readonly preheader: string
@@ -42,6 +49,8 @@ export interface EmailLayoutInput {
   readonly paragraphs: readonly string[]
   readonly action?: EmailAction
   readonly note?: EmailNote
+  /** Shown above the action when the message must state one exact value. */
+  readonly reference?: EmailReference
   /** Shown when a client cannot follow the action, or when there is no action. */
   readonly fallbackUrl?: string
   readonly recipient: string
@@ -113,6 +122,26 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
         </tr>`
     : ""
 
+  const referenceRow = input.reference
+    ? `<tr>
+          <td style="padding:24px 32px 0 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border:1px solid ${BRAND.border};border-radius:12px;">
+              <tr>
+                <td style="padding:14px 16px;font-family:${FONT_STACK};">
+                  <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${BRAND.gray};">${escapeHtml(input.reference.label)}</p>
+                  <p style="margin:0;font-size:15px;line-height:22px;font-weight:600;color:${BRAND.ink};word-break:break-all;">${escapeHtml(input.reference.value)}</p>
+                  ${
+                    input.reference.hint
+                      ? `<p style="margin:6px 0 0 0;font-size:12px;line-height:18px;color:${BRAND.gray};">${escapeHtml(input.reference.hint)}</p>`
+                      : ""
+                  }
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`
+    : ""
+
   const paragraphs = input.paragraphs
     .map(
       (paragraph) =>
@@ -166,6 +195,7 @@ export function renderEmailLayout(input: EmailLayoutInput): string {
             ${paragraphs}
           </td>
         </tr>
+        ${referenceRow}
         ${actionRow}
         ${fallbackRow}
         ${noteRow}

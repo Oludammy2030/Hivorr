@@ -6,6 +6,7 @@ import { buildPasswordResetEmail } from "../server/src/integrations/email/templa
 import { buildStaffInviteEmail } from "../server/src/integrations/email/templates/staff-invite"
 
 const link = "https://staging.hivorr.com/invite.html?token=abc123"
+const accountEmail = "amara.okafor@hivorr.com"
 
 interface BuildOverrides {
   jobTitle?: string
@@ -15,6 +16,7 @@ interface BuildOverrides {
 function build(overrides: BuildOverrides = {}) {
   return buildStaffInviteEmail({
     to: overrides.to ?? "new.staff@example.com",
+    accountEmail,
     link,
     expiresAt: "2026-11-20T09:30:00.000Z",
     jobTitle: overrides.jobTitle,
@@ -51,6 +53,7 @@ describe("staff invitation email", () => {
   it("escapes every interpolated value", () => {
     const email = buildStaffInviteEmail({
       to: 'x"<script>@example.com',
+      accountEmail: 'y"<script>@hivorr.com',
       link: 'https://staging.hivorr.com/invite.html?token=a"b<c>',
       expiresAt: "2026-11-20T09:30:00.000Z",
       jobTitle: "<b>Admin</b>",
@@ -60,6 +63,16 @@ describe("staff invitation email", () => {
     expect(email.html).not.toContain("<b>Admin</b>")
     expect(email.html).toContain("&lt;script&gt;")
     expect(email.html).toContain("&lt;b&gt;Admin&lt;/b&gt;")
+  })
+
+  it("tells the invitee to register with the official address", () => {
+    const email = build()
+
+    expect(email.html).toContain(accountEmail)
+    expect(email.text).toContain(accountEmail)
+    expect(email.text).toContain("Use that address to register")
+    expect(email.html).toContain("Do not register with your personal address")
+    expect(email.html).toContain("Your Hivorr email")
   })
 
   it("uses the brand surface and keeps a hidden preheader", () => {

@@ -1,7 +1,13 @@
 import { formatExpiryDate, renderEmailLayout } from "./layout"
 
 export interface StaffInviteEmailInput {
+  /**
+   * Personal address the invitation is delivered to. It is never the account
+   * address and never appears as something to sign in with.
+   */
   readonly to: string
+  /** Official company address the account will be created with. */
+  readonly accountEmail: string
   readonly link: string
   readonly expiresAt: string
   readonly jobTitle?: string | undefined
@@ -29,6 +35,10 @@ export function buildStaffInviteEmail(
     "",
     intro,
     "",
+    `We have created your official Hivorr email address: ${input.accountEmail}`,
+    "",
+    "Use that address to register. You will not be asked to type it, because the account is already reserved for it. Your personal address is only used to deliver this invitation and cannot be used to sign in.",
+    "",
     "Open the link below to set your password and register your authenticator:",
     input.link,
     "",
@@ -40,14 +50,19 @@ export function buildStaffInviteEmail(
   ].join("\n")
 
   const html = renderEmailLayout({
-    preheader:
-      "You have been invited to join Hivorr. Set your password and authenticator within 7 days.",
+    preheader: `Your official Hivorr email is ${input.accountEmail}. Set your password and authenticator within 7 days.`,
     eyebrow: "Staff invitation",
     heading: "You're invited to join Hivorr",
     paragraphs: [
       intro,
-      "Set your password and register an authenticator to activate your account. This takes about two minutes.",
+      "We have created your official Hivorr email address. It is the address your Hivorr account uses, and every work message from us goes there.",
+      "Use it to register. You will not be asked to type it, because the account is already reserved for it. Your personal address is only used to deliver this invitation and cannot be used to sign in.",
     ],
+    reference: {
+      label: "Your Hivorr email",
+      value: input.accountEmail,
+      hint: "This address is already on your account. Do not register with your personal address.",
+    },
     action: { label: "Accept invitation", url: input.link },
     fallbackUrl: input.link,
     note: {

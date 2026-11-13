@@ -120,7 +120,10 @@ export interface StaffMember {
 
 export interface StaffInvite {
   readonly id: string
+  /** Official company address that becomes the account. */
   readonly email: string
+  /** Personal address the invitation was delivered to. */
+  readonly deliveryEmail?: string
   readonly departmentKey: string | null
   readonly expiresAt: string
   readonly token: string
@@ -299,6 +302,7 @@ export const api = {
   },
   inviteStaff: (input: {
     email: string
+    deliveryEmail?: string
     departmentKey?: string
     jobTitle?: string
     reason: string
