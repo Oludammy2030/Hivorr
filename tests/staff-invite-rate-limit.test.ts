@@ -20,6 +20,7 @@ function serviceWithIpLimit(max: number): StaffService {
       fromAddress: undefined,
       fromName: "Hivorr",
       appOrigin: undefined,
+      staffEmailDomain: "hivorr.com",
     },
   } as unknown as ApiConfig
   return new StaffService(database, config, new CaptureEmailAdapter())
@@ -43,5 +44,44 @@ describe("staff invite acceptance rate limit", () => {
     const error = await service.acceptInvite(input).catch((value) => value)
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).statusCode).toBe(429)
+  })
+
+  it("shares the budget with the invitation lookup", async () => {
+    const service = serviceWithIpLimit(1)
+
+    await expect(service.inviteDetails(input.token, input.ip)).rejects.toThrow(
+      "the database should not be reached",
+    )
+
+    const error = await service
+      .inviteDetails(input.token, input.ip)
+      .catch((value) => value)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).statusCode).toBe(429)
+  })
+})
+
+describe("official staff address", () => {
+  it("refuses an account outside the company domain before touching the database", async () => {
+    const service = serviceWithIpLimit(5)
+
+    const error = await service
+      .invite({
+        accountId: "account",
+        userId: "user",
+        context: {
+          audience: "control",
+          environment: "test",
+          ip: "203.0.113.7",
+        } as never,
+        email: "candidate@gmail.com",
+        deliveryEmail: "candidate@gmail.com",
+        reason: "New operations hire",
+      })
+      .catch((value) => value)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).statusCode).toBe(400)
+    expect((error as ApiError).message).toContain("@hivorr.com")
   })
 })

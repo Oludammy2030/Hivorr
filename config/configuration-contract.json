@@ -204,6 +204,13 @@
       "description": "Public origin of the main portal, used to build invitation links in email."
     },
     {
+      "name": "STAFF_EMAIL_DOMAIN",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Domain of the official company addresses Hivorr owns. Staff accounts may only be created on this domain; a personal address is delivery-only. Defaults to hivorr.com."
+    },
+    {
       "name": "AUTH_RATE_LIMIT_WINDOW_MS",
       "source": "config",
       "classification": "public",

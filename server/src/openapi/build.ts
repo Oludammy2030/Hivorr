@@ -75,14 +75,22 @@ function operationObject(operation: ApiOperation): OpenApiOperation {
       : operation.audience.map((audience) => ({
           [`${audience}Session`]: [],
         })),
-    ...(operation.pathParams
+    ...(operation.pathParams || operation.queryParams
       ? {
-          parameters: operation.pathParams.map((name) => ({
-            name,
-            in: "path",
-            required: true,
-            schema: { type: "string" },
-          })),
+          parameters: [
+            ...(operation.pathParams ?? []).map((name) => ({
+              name,
+              in: "path" as const,
+              required: true,
+              schema: { type: "string" as const },
+            })),
+            ...(operation.queryParams ?? []).map((name) => ({
+              name,
+              in: "query" as const,
+              required: true,
+              schema: { type: "string" as const },
+            })),
+          ],
         }
       : {}),
     ...(operation.request

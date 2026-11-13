@@ -32,6 +32,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
   const [departmentKey, setDepartmentKey] = useState("")
   const [invite, setInvite] = useState<StaffInvite | null>(null)
   const [inviteEmail, setInviteEmail] = useState("")
+  const [inviteDeliveryEmail, setInviteDeliveryEmail] = useState("")
   const [inviteDepartment, setInviteDepartment] = useState("")
   const [inviteJobTitle, setInviteJobTitle] = useState("")
   const [inviteReason, setInviteReason] = useState("")
@@ -102,12 +103,16 @@ export function StaffPage({ canManage }: StaffPageProps) {
     try {
       const created = await api.inviteStaff({
         email: inviteEmail,
+        ...(inviteDeliveryEmail.trim()
+          ? { deliveryEmail: inviteDeliveryEmail.trim() }
+          : {}),
         ...(inviteDepartment ? { departmentKey: inviteDepartment } : {}),
         ...(inviteJobTitle.trim() ? { jobTitle: inviteJobTitle.trim() } : {}),
         reason: inviteReason,
       })
       setInvite(created)
       setInviteEmail("")
+      setInviteDeliveryEmail("")
       setInviteDepartment("")
       setInviteJobTitle("")
       setInviteReason("")
@@ -235,12 +240,25 @@ export function StaffPage({ canManage }: StaffPageProps) {
           <form className="form" onSubmit={handleInvite}>
             <div className="form-row">
               <label className="field">
-                <span>Work email</span>
+                <span>Official Hivorr email</span>
                 <input
                   type="email"
                   required
                   value={inviteEmail}
                   onChange={(event) => setInviteEmail(event.target.value)}
+                  placeholder="firstname.lastname@hivorr.com"
+                  disabled={busy}
+                />
+              </label>
+              <label className="field">
+                <span>Personal email (delivery)</span>
+                <input
+                  type="email"
+                  value={inviteDeliveryEmail}
+                  onChange={(event) =>
+                    setInviteDeliveryEmail(event.target.value)
+                  }
+                  placeholder="Defaults to the official address"
                   disabled={busy}
                 />
               </label>
@@ -269,6 +287,11 @@ export function StaffPage({ canManage }: StaffPageProps) {
                 />
               </label>
             </div>
+            <p className="hint">
+              The invitation is sent to the personal address. The account is
+              created only for the official Hivorr address, which must be on the
+              company domain.
+            </p>
             <label className="field">
               <span>Reason</span>
               <input
@@ -290,8 +313,8 @@ export function StaffPage({ canManage }: StaffPageProps) {
             <div className="invite-result">
               <p className="ok">
                 {invite.emailSent
-                  ? `Invitation email sent to ${invite.email}.`
-                  : `Invitation created for ${invite.email}. Email delivery is not configured, so send this single-use link within 7 days:`}
+                  ? `Invitation sent to ${invite.deliveryEmail}. The account is reserved for ${invite.email}.`
+                  : `Invitation created for ${invite.email}. Email delivery is not configured, so send this single-use link to ${invite.deliveryEmail} within 7 days:`}
               </p>
               <p className="invite-link mono">{inviteLink}</p>
               <button

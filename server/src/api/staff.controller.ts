@@ -70,6 +70,7 @@ export class StaffController {
       userId: session.userId,
       context,
       email: input.email,
+      deliveryEmail: input.deliveryEmail,
       departmentKey: input.departmentKey,
       jobTitle: input.jobTitle,
       reason: input.reason,

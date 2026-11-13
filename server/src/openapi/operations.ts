@@ -38,6 +38,7 @@ import {
   setStaffDepartmentResponse,
   signInRequest,
   staffListResponse,
+  staffInviteDetailsResponse,
   staffReasonRequest,
   staffStatusResponse,
   totpConfirmRequest,
@@ -68,6 +69,8 @@ export interface ApiOperation {
   /** Non-2xx statuses the client should treat as a normal response. */
   readonly expected?: readonly number[]
   readonly pathParams?: readonly string[]
+  /** Required query parameters, declared in the published contract. */
+  readonly queryParams?: readonly string[]
 }
 
 const ALL_PORTALS: readonly ApiAudience[] = [
@@ -695,6 +698,23 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The staff member and the new department",
         schema: setStaffDepartmentResponse,
+      },
+    ],
+  },
+  {
+    id: "staffInviteDetails",
+    method: "get",
+    path: "/v1/auth/staff-invite",
+    summary: "Read a pending staff invitation",
+    tag: "staff",
+    audience: ["app"],
+    queryParams: ["token"],
+    success: [
+      {
+        status: 200,
+        description:
+          "The official address the invitation reserves, so the page can show it",
+        schema: staffInviteDetailsResponse,
       },
     ],
   },

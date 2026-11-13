@@ -39,11 +39,21 @@ export interface StaffView {
 
 export interface StaffInviteResult {
   readonly id: string
+  /** Official company address that becomes the account on acceptance. */
   readonly email: string
+  /** Personal address the invitation was delivered to. */
+  readonly deliveryEmail: string
   readonly departmentKey: string | null
   readonly expiresAt: string
   readonly token: string
   readonly emailSent: boolean
+}
+
+export interface StaffInviteDetails {
+  readonly email: string
+  readonly jobTitle: string | null
+  readonly departmentKey: string | null
+  readonly expiresAt: string
 }
 
 export interface StaffStatusResult {
@@ -178,14 +188,21 @@ export class StaffService {
     accountId: string
     userId: string
     context: RequestContext
+    /** Official company address that becomes the account. */
     email: string
+    /** Personal address for delivery. Defaults to the official address. */
+    deliveryEmail?: string
     departmentKey?: string
     jobTitle?: string
     reason: string
   }): Promise<StaffInviteResult> {
     const token = createSessionToken()
     const tokenHash = hashSessionToken(token)
-
+    const officialEmail = this.requireOfficialAddress(input.email)
+    const deliveryEmail = (input.deliveryEmail ?? input.email)
+      .trim()
+      .toLowerCase()
+    const domain = this.config.mail.staffEmailDomain
     try {
       const created = await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
@@ -193,16 +210,19 @@ export class StaffService {
           const result = await transaction.query<{
             id: string
             email: string
+            delivery_email: string
             department_key: string | null
             expires_at: string
           }>(
-            "select * from admin.create_staff_invite($1, $2, $3, $4, $5, null)",
+            "select * from admin.create_staff_invite($1, $2, $3, $4, $5, $6, null, $7)",
             [
-              input.email,
+              officialEmail,
+              deliveryEmail,
               input.departmentKey ?? null,
               input.jobTitle ?? null,
               tokenHash,
               input.reason,
+              domain,
             ],
           )
           const row = result.rows[0]
@@ -217,6 +237,7 @@ export class StaffService {
             targetId: row.id,
             afterSummary: {
               email: row.email,
+              deliveryEmail: row.delivery_email,
               departmentKey: row.department_key,
               expiresAt: row.expires_at,
             },
@@ -230,6 +251,7 @@ export class StaffService {
           return {
             id: row.id,
             email: row.email,
+            deliveryEmail: row.delivery_email,
             departmentKey: row.department_key,
             expiresAt: row.expires_at,
             token,
@@ -242,6 +264,53 @@ export class StaffService {
     } catch (error) {
       mapDatabaseError(error)
     }
+  }
+
+  /** Resolves a pending invitation for the acceptance page. */
+  async inviteDetails(token: string, ip?: string): Promise<StaffInviteDetails> {
+    this.limitInviteTraffic("lookup", ip)
+    const row = await this.database.withTransaction({}, async (transaction) => {
+      const result = await transaction.query<{
+        email: string
+        job_title: string | null
+        department_key: string | null
+        expires_at: string
+      }>("select * from admin.get_staff_invite($1)", [hashSessionToken(token)])
+      return result.rows[0]
+    })
+
+    if (!row) {
+      throw new ApiError(
+        "NOT_FOUND",
+        "This invitation is no longer valid.",
+        404,
+      )
+    }
+
+    return {
+      email: row.email,
+      jobTitle: row.job_title,
+      departmentKey: row.department_key,
+      expiresAt: row.expires_at,
+    }
+  }
+
+  /**
+   * A staff identity must live on the domain Hivorr owns, so access can be
+   * revoked by suspending the official mailbox. Personal addresses may only
+   * receive the invitation.
+   */
+  private requireOfficialAddress(email: string): string {
+    const normalized = email.trim().toLowerCase()
+    const domain = this.config.mail.staffEmailDomain.toLowerCase()
+    if (!normalized.endsWith(`@${domain}`)) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        `A staff account must use an official @${domain} address. The personal address is only used to deliver the invitation.`,
+        400,
+      )
+    }
+    return normalized
   }
 
   /**
@@ -260,14 +329,15 @@ export class StaffService {
 
     try {
       const email = buildStaffInviteEmail({
-        to: invite.email,
+        to: invite.deliveryEmail,
+        accountEmail: invite.email,
         link,
         expiresAt: invite.expiresAt,
         jobTitle,
       })
 
       await this.email.send({
-        to: invite.email,
+        to: invite.deliveryEmail,
         subject: email.subject,
         text: email.text,
         html: email.html,
@@ -399,6 +469,8 @@ export class StaffService {
     jobTitle?: string
     reason: string
   }): Promise<AttachStaffProfileResult> {
+    const officialEmail = this.requireOfficialAddress(input.email)
+
     try {
       return await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
@@ -409,7 +481,7 @@ export class StaffService {
             email: string
             department_key: string | null
           }>("select * from admin.attach_staff_profile($1, $2, $3, $4)", [
-            input.email,
+            officialEmail,
             input.jobTitle ?? null,
             input.departmentKey ?? null,
             input.reason,
@@ -461,7 +533,7 @@ export class StaffService {
     userAgent?: string
     correlationId?: string
   }): Promise<{ email: string }> {
-    this.limitInviteAcceptance(input.ip)
+    this.limitInviteTraffic("accept", input.ip)
 
     const tokenHash = hashSessionToken(input.token)
     const passwordHash = await hashPassword(input.password)
@@ -500,15 +572,18 @@ export class StaffService {
   }
 
   /**
-   * Acceptance is unauthenticated and hashes the password before the token is
-   * checked, so an unbounded caller could force expensive hashing. Apply the
-   * same per-IP authentication budget as sign-in.
+   * Invitation lookup and acceptance are unauthenticated, and acceptance hashes
+   * the password before the token is checked, so an unbounded caller could force
+   * expensive work. Apply the same per-IP authentication budget as sign-in.
    */
-  private limitInviteAcceptance(ip: string | undefined): void {
-    const result = this.limiter.check(`staff-invite:ip:${ip ?? "unknown"}`, {
-      windowMs: this.config.auth.rateLimitWindowMs,
-      max: this.config.auth.ipMax,
-    })
+  private limitInviteTraffic(scope: string, ip: string | undefined): void {
+    const result = this.limiter.check(
+      `staff-invite:${scope}:ip:${ip ?? "unknown"}`,
+      {
+        windowMs: this.config.auth.rateLimitWindowMs,
+        max: this.config.auth.ipMax,
+      },
+    )
     if (!result.allowed) {
       throw rateLimited(result.retryAfterSeconds)
     }

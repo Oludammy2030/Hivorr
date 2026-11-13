@@ -160,7 +160,7 @@
 ### CP-010 — Staff records and lifecycle
 
 - **Class:** `[REVIEW]` — authorization, personal data, schema, API contract and UI change.
-- **Scope in:** `admin.staff_invites`; staff directory; invite, attach-existing, suspend, reactivate, offboard and department functions; `GET /v1/control/staff`; `POST /v1/control/staff/invites`; `POST /v1/control/staff/attach`; `POST /v1/control/staff/:userId/{suspend,reactivate,offboard}`; `PATCH /v1/control/staff/:userId/department`; `POST /v1/auth/staff-invite/accept`; Staff screen; `/invite.html` acceptance page; ZeptoMail invitation email with copy-link fallback.
+- **Scope in:** `admin.staff_invites`; staff directory; invite, attach-existing, suspend, reactivate, offboard and department functions; `GET /v1/control/staff`; `POST /v1/control/staff/invites`; `POST /v1/control/staff/attach`; `POST /v1/control/staff/:userId/{suspend,reactivate,offboard}`; `PATCH /v1/control/staff/:userId/department`; `POST /v1/auth/staff-invite/accept`; `GET /v1/auth/staff-invite`; Staff screen; `/invite.html` acceptance page; ZeptoMail invitation email with copy-link fallback; two-address invitations (official `@hivorr.com` account, personal delivery address).
 - **Scope out:** role and permission assignment (CP-012); maker-checker approvals (CP-020); bulk import; marketing or bulk email.
 - **Reuse:** `admin.staff_profiles`, `admin.department_members`, `identity.users`, `identity.credentials`, `admin.actor_has_platform_permission`, `appendAudit`, existing controller and audience patterns.
 - **Dependencies:** CP-002, CP-006.
@@ -182,9 +182,11 @@
 | PR #71 (CPaaS API endpoint) | Merged into `staging`; CI run `43371795264` green; Fly deployment green; `ZEPTOMAIL_API_URL=https://cpaas.zoho.com/v1.1/email` present on staging |
 | PR #72 (token that already carries the auth scheme) | Merged into `staging`; CI run `43373923656` green; Fly deployment `1eabb61` green; the send-only token authenticates against the live endpoint |
 | Transactional email end-to-end | `mail.hivorr.com` verified in Zoho CPaaS with DKIM `1221557._domainkey` and bounce CNAME `bounce-zem.mail.hivorr.com → cluster89.zeptomail.com`; a real staff invitation from the control screen was delivered |
+| PR #74 (branded invitation email) | Merged into `staging`; CI green; Fly release `9218786` |
+| PR #75 (one email layout, inline brand mark, recovery pages) | Merged into `staging`; CI run `43381859309` green; Fly release `v57` on `e82f673`; `https://staging.hivorr.com/reset` and `/verify` serve `200` |
 | Staging deployment gate | Runs `43301894294` and later green; Pages job deployed all four bundles |
 | `pnpm typecheck`, `lint`, `format:check`, `lint:boundaries`, `docs:check`, `lint:migrations`, `config:check` | PASS |
-| `pnpm test` | PASS — 54 files, 372 passed, 32 skipped |
+| `pnpm test` | PASS — 54 files, 385 passed, 32 skipped |
 | `pnpm openapi:check`, `build:all` | PASS — 36 paths |
 | Live staging | `https://staging.hivorr.com/invite.html` serves the invitation page; the staff API route is registered |
 | `pnpm test:db` | Not run locally (Docker unavailable); the CI database job passed |
@@ -209,11 +211,16 @@
    foundation shell with no authorisation screen to label.
 10. Staff invitation email uses ZeptoMail under the Zoho CPaaS name. It is live on staging against
     the verified `mail.hivorr.com` sending domain. The copy-link fallback remains for a provider
-    failure. The invitee's email must also be added to Cloudflare Access separately. (CP-010)
+    failure. The invitee's **official** `@hivorr.com` address must also be added to Cloudflare
+    Access separately; the personal address is delivery-only. (CP-010)
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
     real-browser pass on staging. (EP-01-031)
+12. A staff invitation carries two addresses: the official `@hivorr.com` address becomes the
+    account, and the personal address only receives the invitation. Acceptance never asks for an
+    email, so the personal address cannot be used to register or sign in. The official mailbox is
+    still created in the mail system by hand; the portal does not provision or suspend it. (CP-010)
 
 ---
 

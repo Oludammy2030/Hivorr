@@ -115,9 +115,9 @@ export type SetGrantDepartmentResponse = { "id": string; "userId": string; "emai
 
 export type ListStaffResponse = ({ "id": string; "userId": string; "email": string; "displayName": string | null; "jobTitle": string | null; "departmentKey": string | null; "departmentName": string | null; "engagementStatus": string; "startedOn": string | null; "endedOn": string | null; "confirmedFactors": number; "createdAt": string })[]
 
-export type CreateStaffInviteRequest = { "email": string; "departmentKey"?: string; "jobTitle"?: string; "reason": string }
+export type CreateStaffInviteRequest = { "email": string; "deliveryEmail"?: string; "departmentKey"?: string; "jobTitle"?: string; "reason": string }
 
-export type CreateStaffInviteResponse = { "id": string; "email": string; "departmentKey": string | null; "expiresAt": string; "token": string; "emailSent"?: boolean }
+export type CreateStaffInviteResponse = { "id": string; "email": string; "deliveryEmail": string; "departmentKey": string | null; "expiresAt": string; "token": string; "emailSent"?: boolean }
 
 export type AttachStaffProfileRequest = { "email": string; "departmentKey"?: string; "jobTitle"?: string; "reason": string }
 
@@ -138,6 +138,8 @@ export type OffboardStaffResponse = { "userId": string; "engagementStatus": stri
 export type SetStaffDepartmentRequest = { "departmentKey": string; "reason": string }
 
 export type SetStaffDepartmentResponse = { "userId": string; "departmentKey": string | null }
+
+export type StaffInviteDetailsResponse = { "email": string; "jobTitle": string | null; "departmentKey": string | null; "expiresAt": string }
 
 export type AcceptStaffInviteRequest = { "token": string; "password": string; "displayName"?: string }
 
@@ -455,6 +457,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "PATCH",
         `/v1/control/staff/${encodeURIComponent(params.userId)}/department`,
         input,
+        [200],
+      ),
+    staffInviteDetails: () =>
+      request<StaffInviteDetailsResponse>(
+        "GET",
+        "/v1/auth/staff-invite",
+        undefined,
         [200],
       ),
     acceptStaffInvite: (input: AcceptStaffInviteRequest) =>

@@ -274,7 +274,10 @@ export const staffViewResponse = z.object({
 export const staffListResponse = z.array(staffViewResponse)
 
 export const createStaffInviteRequest = z.strictObject({
+  /** Official company address that becomes the account. */
   email: z.string().min(3).max(254),
+  /** Personal address the invitation is delivered to. Defaults to `email`. */
+  deliveryEmail: z.string().min(3).max(254).optional(),
   departmentKey: z.string().min(1).max(64).optional(),
   jobTitle: z.string().max(120).optional(),
   reason: z.string().min(5).max(500),
@@ -283,6 +286,7 @@ export const createStaffInviteRequest = z.strictObject({
 export const createStaffInviteResponse = z.object({
   id: z.string(),
   email: z.string(),
+  deliveryEmail: z.string(),
   departmentKey: z.string().nullable(),
   expiresAt: z.string(),
   token: z.string(),
@@ -332,6 +336,14 @@ export const acceptStaffInviteRequest = z.strictObject({
 
 export const acceptStaffInviteResponse = z.object({
   email: z.string(),
+})
+
+/** Why the invitation page can show the official address before registration. */
+export const staffInviteDetailsResponse = z.object({
+  email: z.string(),
+  jobTitle: z.string().nullable(),
+  departmentKey: z.string().nullable(),
+  expiresAt: z.string(),
 })
 
 export const ownGrantsResponse = z.object({
