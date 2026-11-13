@@ -456,7 +456,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [roleQuery, setRoleQuery] = useState("")
   const [roleStatusFilter, setRoleStatusFilter] = useState("active")
   const [roleFilterKey, setRoleFilterKey] = useState("")
-  const [grantUser, setGrantUser] = useState("")
+  const [accessPerson, setAccessPerson] = useState("")
   const [users, setUsers] = useState<readonly UserSummary[] | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [userSearch, setUserSearch] = useState("")
@@ -507,14 +507,14 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     const departmentParam = params.get("department")?.trim() ?? ""
     if (departmentParam) {
       setOpenDepartment(departmentParam)
-      setGrantUser("")
+      setAccessPerson("")
     }
     if (userParam) {
-      setGrantUser(userParam)
+      setAccessPerson(userParam)
       setOpenDepartment(null)
     }
     if (!departmentParam && !userParam) {
-      setGrantUser("")
+      setAccessPerson("")
       setOpenDepartment(null)
     }
   }, [section, location.search])
@@ -842,12 +842,12 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   }
 
   const grantRows = grants ?? []
-  const grantUserQuery = grantUser.trim().toLowerCase()
-  const userScopedGrants = grantUserQuery
-    ? grantRows.filter(
-        (grant) =>
-          (grant.email ?? "").toLowerCase() === grantUserQuery ||
-          grant.userId.toLowerCase() === grantUserQuery,
+  const accessPersonQuery = accessPerson.trim().toLowerCase()
+  const userScopedGrants = accessPersonQuery
+    ? grantRows.filter((grant) =>
+        [grant.email, grant.userName, grant.userId].some((value) =>
+          (value ?? "").toLowerCase().includes(accessPersonQuery),
+        ),
       )
     : []
   const activeOwnGrants = (own?.grants ?? []).filter(
@@ -939,6 +939,14 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
         return false
       }
       if (roleFilterKey && assignment.roleKey !== roleFilterKey) return false
+      if (
+        accessPersonQuery &&
+        ![assignment.displayName, assignment.email].some((value) =>
+          (value ?? "").toLowerCase().includes(accessPersonQuery),
+        )
+      ) {
+        return false
+      }
       if (!assignmentQuery) return true
       return [
         assignment.displayName,
@@ -1038,26 +1046,36 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
 
         {knownPath && (section === "roles" || section === "grants") && (
           <nav className="access-tabs" aria-label="Access">
-            {canReadRoles && (
-              <NavLink
-                to="/access/roles"
-                className={({ isActive }) =>
-                  `access-tab${isActive ? " is-active" : ""}`
-                }
-              >
-                Roles
-              </NavLink>
-            )}
-            {canReadGrants && (
-              <NavLink
-                to="/access/grants"
-                className={({ isActive }) =>
-                  `access-tab${isActive ? " is-active" : ""}`
-                }
-              >
-                Grants
-              </NavLink>
-            )}
+            <div className="access-tab-list">
+              {canReadRoles && (
+                <NavLink
+                  to="/access/roles"
+                  className={({ isActive }) =>
+                    `access-tab${isActive ? " is-active" : ""}`
+                  }
+                >
+                  Roles
+                </NavLink>
+              )}
+              {canReadGrants && (
+                <NavLink
+                  to="/access/grants"
+                  className={({ isActive }) =>
+                    `access-tab${isActive ? " is-active" : ""}`
+                  }
+                >
+                  Grants
+                </NavLink>
+              )}
+            </div>
+            <input
+              className="search-input access-person"
+              type="search"
+              placeholder="Find a person by name or email"
+              value={accessPerson}
+              onChange={(event) => setAccessPerson(event.target.value)}
+              aria-label="Find a person across roles and grants"
+            />
           </nav>
         )}
 
@@ -1480,11 +1498,11 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </form>
             </section>
 
-            {grantUserQuery !== "" && (
+            {accessPersonQuery !== "" && (
               <section className="panel">
                 <div className="panel-head">
                   <div>
-                    <h2>Grants for {grantUser}</h2>
+                    <h2>Grants for {accessPerson}</h2>
                     <span className="muted">
                       {userScopedGrants.length}{" "}
                       {userScopedGrants.length === 1 ? "grant" : "grants"}
@@ -1494,7 +1512,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                     type="button"
                     className="button button-quiet button-small"
                     onClick={() => {
-                      setGrantUser("")
+                      setAccessPerson("")
                       navigate("/access/grants", { replace: true })
                     }}
                   >
@@ -1547,7 +1565,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </section>
             )}
 
-            {openSummary === null && grantUserQuery === "" && (
+            {openSummary === null && accessPersonQuery === "" && (
               <section className="panel">
                 <div className="panel-head">
                   <h2>Departments</h2>
@@ -1591,7 +1609,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                                   setOpenDepartment(summary.key)
                                   setGrantSearch("")
                                   setGrantStatusFilter("all")
-                                  setGrantUser("")
+                                  setAccessPerson("")
                                   navigate(
                                     `/grants?department=${encodeURIComponent(summary.key)}`,
                                   )
@@ -1609,7 +1627,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </section>
             )}
 
-            {openSummary !== null && grantUserQuery === "" && (
+            {openSummary !== null && accessPersonQuery === "" && (
               <section className="panel">
                 <div className="panel-head">
                   <div>
