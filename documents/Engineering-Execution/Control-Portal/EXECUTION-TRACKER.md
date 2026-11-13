@@ -297,6 +297,17 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Rollback:** drop the three functions in a forward migration; existing requests and decisions remain readable. Account closure already executed is not undone.
 - **Approver:** Architect; founder for the separation-of-duties rule.
 
+#### CP-020 evidence (13 November 2026)
+
+| Gate | Result |
+|---|---|
+| Migration | `20261114000500_admin_add_approvals.sql` applied; history verified **33 of 33** |
+| API | Release `9f215e3`; `/v1/control/approvals` returns `403` unauthenticated for GET and POST |
+| Pages | Control bundle `index-DcP2dcBx.js` contains **Approvals**, **Request closure** and the second-approver note |
+| Approval integration | 4 of 4: request, self-decision refusal, duplicate refusal, approval that closes and revokes, rejection that leaves the target active |
+| Account integration | 5 of 5 after the direct close path was retired |
+| Full suite | 391 passed; typecheck, lint, boundaries, format, bundles and OpenAPI (51 paths, 0 breaking) pass |
+
 ## 5. Known follow-ups
 
 1. Role permissions now compose into `GET /v1/session` for every portal. Only platform-scoped
