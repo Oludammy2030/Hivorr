@@ -10,6 +10,8 @@ export interface EmailMessage {
   readonly to: string
   readonly subject: string
   readonly text: string
+  /** Optional rich alternative. Providers that support it prefer this. */
+  readonly html?: string
 }
 
 export interface EmailAdapter {

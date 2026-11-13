@@ -12,6 +12,7 @@ import {
   EMAIL_ADAPTER,
   type EmailAdapter,
 } from "../../integrations/email/email.adapter"
+import { buildStaffInviteEmail } from "../../integrations/email/templates/staff-invite"
 import {
   createSessionToken,
   hashPassword,
@@ -235,7 +236,7 @@ export class StaffService {
         },
       )
 
-      const emailSent = await this.deliverInvite(created)
+      const emailSent = await this.deliverInvite(created, input.jobTitle)
       return { ...created, emailSent }
     } catch (error) {
       mapDatabaseError(error)
@@ -249,6 +250,7 @@ export class StaffService {
    */
   private async deliverInvite(
     invite: Omit<StaffInviteResult, "emailSent">,
+    jobTitle?: string,
   ): Promise<boolean> {
     const { token, fromAddress, appOrigin } = this.config.mail
     if (!token || !fromAddress || !appOrigin) return false
@@ -256,21 +258,18 @@ export class StaffService {
     const link = `${appOrigin.replace(/\/$/, "")}/invite.html?token=${encodeURIComponent(invite.token)}`
 
     try {
+      const email = buildStaffInviteEmail({
+        to: invite.email,
+        link,
+        expiresAt: invite.expiresAt,
+        jobTitle,
+      })
+
       await this.email.send({
         to: invite.email,
-        subject: "Your Hivorr staff invitation",
-        text: [
-          "Hello,",
-          "",
-          "You have been invited to join Hivorr as a staff member.",
-          "",
-          "Open this single-use link within 7 days to set your password and authenticator:",
-          link,
-          "",
-          `The link expires on ${invite.expiresAt}. If you were not expecting this invitation, ignore this email.`,
-          "",
-          "— Hivorr",
-        ].join("\n"),
+        subject: email.subject,
+        text: email.text,
+        html: email.html,
       })
       return true
     } catch {
