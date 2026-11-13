@@ -417,6 +417,19 @@ export const partnerRepresentativeListResponse = z.array(
   partnerRepresentativeResponse,
 )
 
+export const ownPartnerOrganisationResponse = z.object({
+  organisationId: z.string(),
+  legalName: z.string(),
+  tradingName: z.string().nullable().optional(),
+  status: z.string(),
+  role: z.string(),
+  effectiveFrom: z.string(),
+})
+
+export const ownPartnerOrganisationListResponse = z.array(
+  ownPartnerOrganisationResponse,
+)
+
 export const assignableStaffResponse = z.object({
   userId: z.string(),
   email: z.string(),

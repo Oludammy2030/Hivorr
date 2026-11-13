@@ -17,6 +17,7 @@ import {
   partnerRepresentativeListResponse,
   partnerRepresentativeResponse,
   partnerStatusRequest,
+  ownPartnerOrganisationListResponse,
   activityViewSchema,
   assignRoleRequest,
   auditEntryListResponse,
@@ -1122,6 +1123,22 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 201,
         description: "The representative link",
         schema: partnerRepresentativeResponse,
+      },
+    ],
+  },
+  {
+    id: "partnerOrganisations",
+    method: "get",
+    path: "/v1/partner/organisations",
+    summary: "List the organisations the signed-in partner represents",
+    tag: "partners",
+    audience: ["partner"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Organisations derived from the caller's active representative links; no organisation id is accepted",
+        schema: ownPartnerOrganisationListResponse,
       },
     ],
   },
