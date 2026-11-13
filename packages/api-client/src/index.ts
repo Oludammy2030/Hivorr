@@ -169,6 +169,10 @@ export type ReactivateAccountRequest = { "reason"?: string }
 
 export type ReactivateAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
 
+export type CloseAccountRequest = { "reason"?: string }
+
+export type CloseAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number } | { "error": { "code": "UNAUTHENTICATED" | "FORBIDDEN" | "ACTIVITY_INACTIVE" | "VALIDATION_FAILED" | "NOT_FOUND" | "CONFLICT" | "RATE_LIMITED" | "SERVICE_UNAVAILABLE" | "INTERNAL_ERROR"; "message": string; "correlationId"?: string } }
+
 export type RevokeUserSessionsRequest = { "reason"?: string }
 
 export type RevokeUserSessionsResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
@@ -574,6 +578,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
         `/v1/control/users/${encodeURIComponent(params.id)}/reactivate`,
         input,
         [200],
+      ),
+    closeAccount: (params: { id: string }, input: CloseAccountRequest) =>
+      request<CloseAccountResponse>(
+        "POST",
+        `/v1/control/users/${encodeURIComponent(params.id)}/close`,
+        input,
+        [200, 409],
       ),
     revokeUserSessions: (params: { id: string }, input: RevokeUserSessionsRequest) =>
       request<RevokeUserSessionsResponse>(

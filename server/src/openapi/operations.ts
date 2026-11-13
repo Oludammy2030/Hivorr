@@ -892,6 +892,25 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     ],
   },
   {
+    id: "closeAccount",
+    method: "post",
+    path: "/v1/control/users/{id}/close",
+    summary: "Close an account (deprecated: use approvals)",
+    tag: "users",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: { schema: accountReasonRequest, description: "Reason" },
+    success: [
+      {
+        status: 200,
+        description:
+          "Deprecated. Closure now requires an approval request; this route answers 409 APPROVAL_REQUIRED.",
+        schema: accountActionResponse,
+      },
+    ],
+    expected: [409],
+  },
+  {
     id: "revokeUserSessions",
     method: "post",
     path: "/v1/control/users/{id}/revoke-sessions",

@@ -333,10 +333,11 @@ UI-only change: no migration, no API contract change and no permission change.
     filters role assignments by name or email and shows that person's grants across departments; each
     tab keeps its own permission gate and URL, and `/roles` and `/grants` redirect to the new URLs so
     contextual links keep working. (CP-012)
-14. Account closure now goes through CP-020: the control UI raises a request, the direct close route is
-    removed, and a second administrator must approve. The approver needs both `admin.approval.decide`
-    and `admin.user.manage`, so the decision carries the authority to perform the action. Reopening a
-    closed account still has no supported path.
+14. Account closure now goes through CP-020: the control UI raises a request and a second administrator
+    must approve. The old `POST /users/{id}/close` path is kept for contract compatibility but answers
+    `409` and points at `/v1/control/approvals`; the direct close is gone. The approver needs both
+    `admin.approval.decide` and `admin.user.manage`, so the decision carries the authority to perform
+    the action. Reopening a closed account still has no supported path.
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
