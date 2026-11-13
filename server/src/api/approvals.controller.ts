@@ -16,6 +16,7 @@ import { API_CONFIG, type ApiConfig } from "../config"
 import {
   createApprovalRequest,
   decideApprovalRequest,
+  caseDecisionRequest,
 } from "../contracts/schemas"
 import { ApprovalsService } from "../modules/admin/approvals.service"
 import {
@@ -83,6 +84,26 @@ export class ApprovalsController {
       userId: session.userId,
       requestId: id,
       decision: input.decision,
+      reason: input.reason,
+      context,
+    })
+  }
+
+  @Post("control/cases/:id/decision")
+  @HttpCode(201)
+  @Audience("control")
+  async requestCaseDecision(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    const input = parseBody(caseDecisionRequest, body)
+    const { context, session } = await this.session(request)
+    return this.approvals.requestCaseDecision({
+      accountId: session.accountId,
+      userId: session.userId,
+      caseId: id,
+      outcome: input.outcome,
       reason: input.reason,
       context,
     })

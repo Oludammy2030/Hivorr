@@ -40,6 +40,7 @@ import {
   controlAuthorityResponse,
   createApprovalRequest,
   decideApprovalRequest,
+  caseDecisionRequest,
   departmentListResponse,
   emailVerificationCompleteRequest,
   grantListResponse,
@@ -1048,6 +1049,26 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
       {
         status: 200,
         description: "The decided request",
+        schema: approvalRequestViewResponse,
+      },
+    ],
+  },
+  {
+    id: "requestCaseDecision",
+    method: "post",
+    path: "/v1/control/cases/{id}/decision",
+    summary: "Request a case decision from a second administrator",
+    tag: "cases",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: caseDecisionRequest,
+      description: "Outcome and reason for the decision request",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The pending approval request for the decision",
         schema: approvalRequestViewResponse,
       },
     ],

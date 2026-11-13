@@ -578,6 +578,11 @@ export const api = {
       `/control/evidence/${encodeURIComponent(evidenceId)}/supersede`,
       { method: "POST", body: JSON.stringify({ replacementId, reason }) },
     ),
+  requestCaseDecision: (id: string, outcome: string, reason: string) =>
+    request<ApprovalRequest>(
+      `/control/cases/${encodeURIComponent(id)}/decision`,
+      { method: "POST", body: JSON.stringify({ outcome, reason }) },
+    ),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),
   createGrant: (input: CreateGrantInput) =>
