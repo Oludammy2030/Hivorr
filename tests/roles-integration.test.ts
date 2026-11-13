@@ -20,6 +20,11 @@ interface EnrolledUser {
   secret: string
 }
 
+interface AssignableStaffRow {
+  userId: string
+  email: string
+}
+
 const mainHost = "staging.hivorr.com"
 const controlHost = "control-staging.hivorr.com"
 const json = { "content-type": "application/json" }
@@ -53,6 +58,7 @@ describeIntegration("role administration integration", () => {
   let auditorAssignmentId: string
   let founderAssignmentId: string
   let financialDepartmentId: string
+  let amaraId: string
 
   async function registerAndEnroll(
     email: string,
@@ -203,6 +209,15 @@ describeIntegration("role administration integration", () => {
 
       await registerAndEnroll("amara@example.test", "amara-test-password")
 
+      const amara = await setup.query(
+        "select id from identity.users where email = 'amara@example.test'",
+      )
+      amaraId = amara.rows[0].id
+      await setup.query(
+        "insert into admin.staff_profiles (user_id, engagement_status) values ($1, 'active')",
+        [amaraId],
+      )
+
       // The first role assignment is bootstrapped out of band, never by a
       // migration: the founder role carries admin.role.manage.
       const founder = await setup.query(
@@ -273,6 +288,25 @@ describeIntegration("role administration integration", () => {
     expect(founder?.permissions).toContain("admin.role.manage")
     expect(founder?.activeAssignments).toBeGreaterThanOrEqual(1)
     expect(roles.some((role) => role.key === "auditor")).toBe(true)
+  })
+
+  it("offers only active staff to the role picker", async () => {
+    const denied = await app.inject({
+      method: "GET",
+      url: "/v1/control/roles/assignable-staff",
+      headers: { host: controlHost, cookie: workerControlCookie },
+    })
+    expect(denied.statusCode).toBe(403)
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/control/roles/assignable-staff",
+      headers: { host: controlHost, cookie: adminControlCookie },
+    })
+    expect(response.statusCode).toBe(200)
+    const staff = response.json() as AssignableStaffRow[]
+    expect(staff.some((row) => row.userId === amaraId)).toBe(true)
+    expect(staff.map((row) => row.email)).not.toContain("worker@example.test")
   })
 
   it("assigns a seeded role and refuses duplicates, self-change and unknown targets", async () => {

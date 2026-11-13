@@ -74,6 +74,14 @@ export interface RoleScopeTarget {
   readonly name: string
 }
 
+export interface AssignableStaff {
+  readonly userId: string
+  readonly email: string
+  readonly displayName: string | null
+  readonly departmentKey: string | null
+  readonly departmentName: string | null
+}
+
 export type RoleScopeType = "platform" | "department" | "organisation"
 
 export interface AssignRoleInput {
@@ -326,6 +334,8 @@ export const api = {
     request<readonly RoleScopeTarget[]>(
       `/control/roles/scope-targets?type=${encodeURIComponent(scopeType)}`,
     ),
+  listAssignableStaff: () =>
+    request<readonly AssignableStaff[]>("/control/roles/assignable-staff"),
   assignRole: (input: AssignRoleInput) =>
     request<RoleAssignment>("/control/role-assignments", {
       method: "POST",

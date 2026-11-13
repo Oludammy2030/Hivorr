@@ -303,6 +303,16 @@ export const roleScopeTargetResponse = z.object({
 
 export const roleScopeTargetListResponse = z.array(roleScopeTargetResponse)
 
+export const assignableStaffResponse = z.object({
+  userId: z.string(),
+  email: z.string(),
+  displayName: z.string().nullable().optional(),
+  departmentKey: z.string().nullable().optional(),
+  departmentName: z.string().nullable().optional(),
+})
+
+export const assignableStaffListResponse = z.array(assignableStaffResponse)
+
 export const userSummaryResponse = z.object({
   id: z.string(),
   accountId: z.string(),

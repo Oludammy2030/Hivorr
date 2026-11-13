@@ -721,8 +721,7 @@ h1 {
   }
 }
 
-/* Overview cards: equal height, one-line summaries, expandable detail. */
-.dash-grid > .panel {
+/* Overview cards: equal height, one-line summaries, expandable detail. */.dash-grid > .panel {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -781,4 +780,24 @@ h1 {
 .overview-list li:last-child {
   padding-bottom: 0;
   border-bottom: 0;
+}
+
+/* Collapsed role catalogue: one line until opened. */
+.catalogue-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.catalogue-summary {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.catalogue-details[open] > summary {
+  margin-bottom: 14px;
 }

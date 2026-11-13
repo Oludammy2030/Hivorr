@@ -155,6 +155,8 @@ export type AssignRoleResponse = { "id": string; "userId": string; "email": stri
 
 export type ListRoleScopeTargetsResponse = ({ "id": string; "name": string })[]
 
+export type ListAssignableStaffResponse = ({ "userId": string; "email": string; "displayName"?: string | null; "departmentKey"?: string | null; "departmentName"?: string | null })[]
+
 export type RevokeRoleRequest = { "reason"?: string }
 
 export type RevokeRoleResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "roleKey": string; "roleName": string; "scopeType": string; "scopeId"?: string | null; "expiresAt"?: string | null; "revokedAt"?: string | null; "createdAt": string; "grantedBy"?: string | null; "reason"?: string | null }
@@ -512,6 +514,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<ListRoleScopeTargetsResponse>(
         "GET",
         "/v1/control/roles/scope-targets",
+        undefined,
+        [200],
+      ),
+    listAssignableStaff: () =>
+      request<ListAssignableStaffResponse>(
+        "GET",
+        "/v1/control/roles/assignable-staff",
         undefined,
         [200],
       ),

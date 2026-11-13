@@ -15,6 +15,7 @@ import {
   type RoleAssignment,
   type RoleScopeTarget,
   type RoleScopeType,
+  type AssignableStaff,
   type Session,
   type UserSummary,
 } from "./api"
@@ -444,6 +445,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     readonly department: readonly RoleScopeTarget[]
     readonly organisation: readonly RoleScopeTarget[]
   }>({ department: [], organisation: [] })
+  const [assignableStaff, setAssignableStaff] =
+    useState<readonly AssignableStaff[]>([])
+  const [staffSearch, setStaffSearch] = useState("")
+  const [assignStaffEmail, setAssignStaffEmail] = useState("")
   const [assignRoleKey, setAssignRoleKey] = useState("")
   const [assignScopeType, setAssignScopeType] =
     useState<RoleScopeType>("platform")
@@ -592,17 +597,27 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       api.listRoleAssignments(),
       api.listRoleScopeTargets("department"),
       api.listRoleScopeTargets("organisation"),
+      api.listAssignableStaff(),
     ])
-      .then(([roleRows, assignmentRows, departmentRows, organisationRows]) => {
-        if (!active) return
-        setRoles(roleRows)
-        setRoleAssignments(assignmentRows)
-        setScopeTargets({
-          department: departmentRows,
-          organisation: organisationRows,
-        })
-        setAssignRoleKey((current) => current || (roleRows[0]?.key ?? ""))
-      })
+      .then(
+        ([
+          roleRows,
+          assignmentRows,
+          departmentRows,
+          organisationRows,
+          staffRows,
+        ]) => {
+          if (!active) return
+          setRoles(roleRows)
+          setRoleAssignments(assignmentRows)
+          setScopeTargets({
+            department: departmentRows,
+            organisation: organisationRows,
+          })
+          setAssignableStaff(staffRows)
+          setAssignRoleKey((current) => current || (roleRows[0]?.key ?? ""))
+        },
+      )
       .catch((value: unknown) => {
         if (active) setError(errorMessage(value))
       })
@@ -617,7 +632,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   async function handleAssignRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
-    const email = String(form.get("email") ?? "").trim()
+    const email = assignStaffEmail
     const roleKey = String(form.get("roleKey") ?? "")
     const scopeType = String(
       form.get("scopeType") ?? "platform",
@@ -627,7 +642,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     const reason = String(form.get("reason") ?? "").trim()
 
     if (!email || !roleKey || reason.length < 3) {
-      setError("An email, a role and a reason are required.")
+      setError("Choose a staff member, a role and a reason.")
       return
     }
     if (scopeType !== "platform" && !scopeId) {
@@ -659,6 +674,8 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       event.currentTarget.reset()
       setAssignScopeType("platform")
       setAssignScopeId("")
+      setAssignStaffEmail("")
+      setStaffSearch("")
     } catch (value) {
       setError(errorMessage(value))
     } finally {
@@ -945,6 +962,17 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       : assignScopeType === "organisation"
         ? scopeTargets.organisation
         : []
+
+  const staffQuery = staffSearch.trim().toLowerCase()
+  const matchingStaff = assignableStaff.filter((staff) =>
+    [staff.displayName, staff.email, staff.departmentName].some((value) =>
+      (value ?? "").toLowerCase().includes(staffQuery),
+    ),
+  )
+  const visibleStaff =
+    matchingStaff.length > 0
+      ? matchingStaff
+      : assignableStaff.filter((staff) => staff.email === assignStaffEmail)
 
   return (
     <div className="app-shell">
@@ -1697,18 +1725,57 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               <section className="panel">
                 <div className="panel-head">
                   <h2>Assign a role</h2>
-                  <span className="muted">Seeded roles only</span>
+                  <button
+                    className="button button-small"
+                    type="submit"
+                    form="assign-role-form"
+                    disabled={busy || assignableStaff.length === 0}
+                  >
+                    {busy ? "Working…" : "Assign role"}
+                  </button>
                 </div>
-                <form className="form" onSubmit={handleAssignRole}>
+                <form
+                  id="assign-role-form"
+                  className="form"
+                  onSubmit={handleAssignRole}
+                >
                   <div className="form-row">
                     <label className="field">
-                      <span>User email</span>
+                      <span>Find a staff member</span>
                       <input
-                        name="email"
-                        type="email"
-                        required
+                        type="search"
+                        placeholder="Filter by name, email or department"
+                        value={staffSearch}
+                        onChange={(event) => setStaffSearch(event.target.value)}
                         disabled={busy}
+                        aria-label="Filter staff"
                       />
+                    </label>
+                    <label className="field">
+                      <span>Staff member</span>
+                      <select
+                        value={assignStaffEmail}
+                        onChange={(event) =>
+                          setAssignStaffEmail(event.target.value)
+                        }
+                        disabled={busy || assignableStaff.length === 0}
+                        required
+                        aria-label="Choose a staff member"
+                      >
+                        <option value="">
+                          {assignableStaff.length === 0
+                            ? "No active staff yet"
+                            : "Choose a staff member"}
+                        </option>
+                        {visibleStaff.map((staff) => (
+                          <option key={staff.userId} value={staff.email}>
+                            {staff.displayName ?? staff.email} — {staff.email}
+                            {staff.departmentName
+                              ? ` — ${staff.departmentName}`
+                              : ""}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
                       <span>Role</span>
@@ -1785,69 +1852,70 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                   </label>
                   <p className="hint">
                     You cannot change your own roles, and the last role manager
-                    cannot be removed.
+                    cannot be removed. Only active staff can be chosen.
                   </p>
-                  <button className="button" type="submit" disabled={busy}>
-                    {busy ? "Working…" : "Assign role"}
-                  </button>
                 </form>
               </section>
             )}
 
             <section className="panel">
-              <div className="panel-head">
-                <h2>Role catalogue</h2>
-                <span className="muted">
-                  {roles === null ? "Loading…" : `${roles.length} roles`}
-                </span>
-              </div>
-              <p className="muted">
-                Roles are fixed, reviewed collections of permissions. Expand a
-                role to see what it allows.
-              </p>
-              {roles !== null && (
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Role</th>
-                        <th>Permissions</th>
-                        <th>Active assignments</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {roles.map((role) => (
-                        <tr key={role.key}>
-                          <td>
-                            <div>{role.name}</div>
-                            <div className="muted mono">{role.key}</div>
-                          </td>
-                          <td>
-                            <details className="overview-details">
-                              <summary title="Show the permissions">
-                                <span className="overview-summary">
-                                  {role.permissions.length} permissions
-                                </span>
-                              </summary>
-                              <ul className="overview-list">
-                                {role.permissions.map((permission) => (
-                                  <li key={permission}>
-                                    <span>{capabilityLabel(permission)}</span>
-                                    <span className="mono muted">
-                                      {permission}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </details>
-                          </td>
-                          <td>{role.activeAssignments}</td>
+              <details className="catalogue-details">
+                <summary>
+                  <span className="catalogue-summary">Role catalogue</span>
+                  <span className="muted">
+                    {roles === null
+                      ? "Loading…"
+                      : `${roles.length} roles · expand to see permissions`}
+                  </span>
+                </summary>
+                <p className="muted">
+                  Roles are fixed, reviewed collections of permissions. Expand a
+                  role to see what it allows.
+                </p>
+                {roles !== null && (
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Role</th>
+                          <th>Permissions</th>
+                          <th>Active assignments</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {roles.map((role) => (
+                          <tr key={role.key}>
+                            <td>
+                              <div>{role.name}</div>
+                              <div className="muted mono">{role.key}</div>
+                            </td>
+                            <td>
+                              <details className="overview-details">
+                                <summary title="Show the permissions">
+                                  <span className="overview-summary">
+                                    {role.permissions.length} permissions
+                                  </span>
+                                </summary>
+                                <ul className="overview-list">
+                                  {role.permissions.map((permission) => (
+                                    <li key={permission}>
+                                      <span>{capabilityLabel(permission)}</span>
+                                      <span className="mono muted">
+                                        {permission}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </details>
+                            </td>
+                            <td>{role.activeAssignments}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </details>
             </section>
 
             <section className="panel">
