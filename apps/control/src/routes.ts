@@ -4,6 +4,8 @@ export interface SectionLink {
   readonly id: Section
   readonly label: string
   readonly path: string
+  /** Paths that keep this item highlighted, such as the sibling tab. */
+  readonly activePaths?: readonly string[]
   /** Any one of these capabilities reveals the item. Omitted means always visible. */
   readonly capabilities?: readonly string[]
 }
@@ -40,9 +42,15 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       {
         id: "roles",
-        label: "Roles",
-        path: "/roles",
-        capabilities: ["admin.role.read", "admin.role.manage"],
+        label: "Access",
+        path: "/access/roles",
+        activePaths: ["/access/grants"],
+        capabilities: [
+          "admin.role.read",
+          "admin.role.manage",
+          "admin.grant.read",
+          "admin.grant.manage",
+        ],
       },
       {
         id: "audit",
@@ -63,8 +71,8 @@ export const SECTION_PATHS: readonly SectionPath[] = [
   { section: "overview", path: "/" },
   { section: "users", path: "/users" },
   { section: "staff", path: "/staff" },
-  { section: "grants", path: "/grants" },
-  { section: "roles", path: "/roles" },
+  { section: "roles", path: "/access/roles" },
+  { section: "grants", path: "/access/grants" },
   { section: "audit", path: "/audit" },
 ]
 

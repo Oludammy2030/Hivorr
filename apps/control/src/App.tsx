@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
-import { Link, NavLink, useLocation, useNavigate } from "react-router"
+import { Link, Navigate, NavLink, useLocation, useNavigate } from "react-router"
 import { capabilityLabel, grantTypeLabel } from "@hivorr/shared"
 
 import {
@@ -974,6 +974,20 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       ? matchingStaff
       : assignableStaff.filter((staff) => staff.email === assignStaffEmail)
 
+  if (location.pathname === "/roles" || location.pathname === "/grants") {
+    return (
+      <Navigate to={`/access${location.pathname}${location.search}`} replace />
+    )
+  }
+
+  if (knownPath && section === "roles" && !canReadRoles && canReadGrants) {
+    return <Navigate to="/access/grants" replace />
+  }
+
+  if (knownPath && section === "grants" && !canReadGrants && canReadRoles) {
+    return <Navigate to="/access/roles" replace />
+  }
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
@@ -982,18 +996,21 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           {visibleGroups.map((group) => (
             <div key={group.label} className="nav-group">
               <p className="nav-label">{group.label}</p>
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={item.path}
-                  end
-                  className={({ isActive }) =>
-                    `nav-item${isActive ? " is-active" : ""}`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
+              {group.items.map((item) => {
+                const active =
+                  location.pathname === item.path ||
+                  (item.activePaths ?? []).includes(location.pathname)
+                return (
+                  <NavLink
+                    key={item.id}
+                    to={item.path}
+                    end
+                    className={`nav-item${active ? " is-active" : ""}`}
+                  >
+                    {item.label}
+                  </NavLink>
+                )
+              })}
             </div>
           ))}
         </nav>
@@ -1018,6 +1035,31 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           </div>
           <span className="badge">{session.environment}</span>
         </header>
+
+        {knownPath && (section === "roles" || section === "grants") && (
+          <nav className="access-tabs" aria-label="Access">
+            {canReadRoles && (
+              <NavLink
+                to="/access/roles"
+                className={({ isActive }) =>
+                  `access-tab${isActive ? " is-active" : ""}`
+                }
+              >
+                Roles
+              </NavLink>
+            )}
+            {canReadGrants && (
+              <NavLink
+                to="/access/grants"
+                className={({ isActive }) =>
+                  `access-tab${isActive ? " is-active" : ""}`
+                }
+              >
+                Grants
+              </NavLink>
+            )}
+          </nav>
+        )}
 
         {error && (
           <p className="error" role="alert">
@@ -1141,7 +1183,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                 </p>
                 <Link
                   className="button button-quiet button-small button-link"
-                  to="/grants"
+                  to="/access/grants"
                 >
                   Open grants
                 </Link>
@@ -1453,7 +1495,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                     className="button button-quiet button-small"
                     onClick={() => {
                       setGrantUser("")
-                      navigate("/grants", { replace: true })
+                      navigate("/access/grants", { replace: true })
                     }}
                   >
                     Clear
@@ -1576,7 +1618,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                       className="button button-quiet button-small"
                       onClick={() => {
                         setOpenDepartment(null)
-                        navigate("/grants", { replace: true })
+                        navigate("/access/grants", { replace: true })
                       }}
                     >
                       ← All departments

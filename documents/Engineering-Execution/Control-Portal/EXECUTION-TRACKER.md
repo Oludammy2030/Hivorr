@@ -246,6 +246,17 @@ UI-only change: no migration, no API contract change and no permission change.
   without a staff profile is not offered.
 - Migration `20261114000300_admin_add_assignable_staff.sql`.
 
+#### Access page (13 November 2026)
+
+- Roles and Grants now share `/access/roles` and `/access/grants` under one **Access** navigation
+  item, shown when the caller holds any role or grant capability.
+- Each tab keeps its own capability gate; a caller with only grant rights is redirected to the Grants
+  tab and never sees a role screen they cannot use.
+- Legacy `/roles` and `/grants` redirect, preserving `?user=` and `?department=`, so the Overview card
+  and user-detail links keep working.
+- Route-manifest tests assert one section per path, the Access item's sibling highlight, and that
+  Grants remains reachable without its own navigation item.
+
 ## 5. Known follow-ups
 
 1. The session capability list (`GET /v1/session`) still composes grants and activities only. Role
@@ -279,9 +290,9 @@ UI-only change: no migration, no API contract change and no permission change.
     assignment cannot reach production in practice; the reasoning is recorded rather than adding a
     column that would change every role query. Revisit if one database ever hosts two environments.
     (CP-012)
-13. Roles and grants are still two screens. The agreed direction is one Access section with two tabs
-    and shared person search, keeping each tab's permission gate and redirecting `/roles` and
-    `/grants`. Not built yet.
+13. Roles and grants now share one Access section with two tabs. Each tab keeps its own search,
+    permission gate and URL; `/roles` and `/grants` redirect to the new URLs so contextual links keep
+    working. A single person search spanning both tabs is still a follow-up. (CP-012)
 11. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
