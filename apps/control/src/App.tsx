@@ -11,6 +11,10 @@ import {
   type Department,
   type Grant,
   type MfaChallenge,
+  type Role,
+  type RoleAssignment,
+  type RoleScopeTarget,
+  type RoleScopeType,
   type Session,
   type UserSummary,
 } from "./api"
@@ -76,6 +80,25 @@ function grantStatusOf(grant: Grant): GrantStatus {
 }
 
 function grantStatusChip(status: GrantStatus): string {
+  if (status === "active") return "chip chip-ok"
+  if (status === "expired") return "chip"
+  return "chip chip-danger"
+}
+
+type AssignmentStatus = "active" | "expired" | "revoked"
+
+function assignmentStatusOf(assignment: RoleAssignment): AssignmentStatus {
+  if (assignment.revokedAt) return "revoked"
+  if (
+    assignment.expiresAt &&
+    new Date(assignment.expiresAt).getTime() <= Date.now()
+  ) {
+    return "expired"
+  }
+  return "active"
+}
+
+function assignmentStatusChip(status: AssignmentStatus): string {
   if (status === "active") return "chip chip-ok"
   if (status === "expired") return "chip"
   return "chip chip-danger"
@@ -414,6 +437,20 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [openDepartment, setOpenDepartment] = useState<string | null>(null)
   const [grantSearch, setGrantSearch] = useState("")
   const [grantStatusFilter, setGrantStatusFilter] = useState("all")
+  const [roles, setRoles] = useState<readonly Role[] | null>(null)
+  const [roleAssignments, setRoleAssignments] =
+    useState<readonly RoleAssignment[] | null>(null)
+  const [scopeTargets, setScopeTargets] = useState<{
+    readonly department: readonly RoleScopeTarget[]
+    readonly organisation: readonly RoleScopeTarget[]
+  }>({ department: [], organisation: [] })
+  const [assignRoleKey, setAssignRoleKey] = useState("")
+  const [assignScopeType, setAssignScopeType] =
+    useState<RoleScopeType>("platform")
+  const [assignScopeId, setAssignScopeId] = useState("")
+  const [roleQuery, setRoleQuery] = useState("")
+  const [roleStatusFilter, setRoleStatusFilter] = useState("active")
+  const [roleFilterKey, setRoleFilterKey] = useState("")
   const [grantUser, setGrantUser] = useState("")
   const [users, setUsers] = useState<readonly UserSummary[] | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -430,6 +467,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     capabilities.includes("admin.grant.read") ||
     capabilities.includes("admin.grant.manage")
   const canReadAudit = capabilities.includes("admin.audit.read")
+  const canReadRoles =
+    capabilities.includes("admin.role.read") ||
+    capabilities.includes("admin.role.manage")
+  const canManageRoles = capabilities.includes("admin.role.manage")
 
   useEffect(() => {
     let active = true
@@ -541,6 +582,120 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       active = false
     }
   }, [section, audit, canReadAudit])
+
+  useEffect(() => {
+    if (section !== "roles" || roles !== null || !canReadRoles) return
+    let active = true
+    setBusy(true)
+    Promise.all([
+      api.listRoles(),
+      api.listRoleAssignments(),
+      api.listRoleScopeTargets("department"),
+      api.listRoleScopeTargets("organisation"),
+    ])
+      .then(([roleRows, assignmentRows, departmentRows, organisationRows]) => {
+        if (!active) return
+        setRoles(roleRows)
+        setRoleAssignments(assignmentRows)
+        setScopeTargets({
+          department: departmentRows,
+          organisation: organisationRows,
+        })
+        setAssignRoleKey((current) => current || (roleRows[0]?.key ?? ""))
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, roles, canReadRoles])
+
+  async function handleAssignRole(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const email = String(form.get("email") ?? "").trim()
+    const roleKey = String(form.get("roleKey") ?? "")
+    const scopeType = String(
+      form.get("scopeType") ?? "platform",
+    ) as RoleScopeType
+    const scopeId = String(form.get("scopeId") ?? "").trim()
+    const expiresAtRaw = String(form.get("expiresAt") ?? "").trim()
+    const reason = String(form.get("reason") ?? "").trim()
+
+    if (!email || !roleKey || reason.length < 3) {
+      setError("An email, a role and a reason are required.")
+      return
+    }
+    if (scopeType !== "platform" && !scopeId) {
+      setError("Choose the target this role applies to.")
+      return
+    }
+
+    setBusy(true)
+    setError(undefined)
+    try {
+      const created = await api.assignRole({
+        email,
+        roleKey,
+        scopeType,
+        ...(scopeType === "platform" ? {} : { scopeId }),
+        ...(expiresAtRaw
+          ? { expiresAt: new Date(expiresAtRaw).toISOString() }
+          : {}),
+        reason,
+      })
+      setRoleAssignments((current) => [created, ...(current ?? [])])
+      setRoles((current) =>
+        (current ?? []).map((role) =>
+          role.key === created.roleKey
+            ? { ...role, activeAssignments: role.activeAssignments + 1 }
+            : role,
+        ),
+      )
+      event.currentTarget.reset()
+      setAssignScopeType("platform")
+      setAssignScopeId("")
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRevokeRole(assignment: RoleAssignment) {
+    const reason = window.prompt(
+      `Reason for removing ${assignment.roleName} from ${assignment.email}:`,
+    )
+    if (!reason || reason.trim().length < 3) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const revoked = await api.revokeRole(assignment.id, reason.trim())
+      setRoleAssignments((current) =>
+        (current ?? []).map((entry) =>
+          entry.id === revoked.id ? revoked : entry,
+        ),
+      )
+      setRoles((current) =>
+        (current ?? []).map((role) =>
+          role.key === revoked.roleKey
+            ? {
+                ...role,
+                activeAssignments: Math.max(0, role.activeAssignments - 1),
+              }
+            : role,
+        ),
+      )
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function handleCreateGrant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -741,6 +896,55 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
         right.userName ?? right.email ?? "",
       )
     })
+
+  const scopeName = (assignment: RoleAssignment): string => {
+    if (assignment.scopeType === "platform") return "Platform"
+    const choices =
+      assignment.scopeType === "department"
+        ? scopeTargets.department
+        : scopeTargets.organisation
+    const label = assignment.scopeId
+      ? choices.find((target) => target.id === assignment.scopeId)?.name
+      : undefined
+    return (
+      label ??
+      `${assignment.scopeType} ${assignment.scopeId?.slice(0, 8) ?? ""}`
+    )
+  }
+
+  const assignmentQuery = roleQuery.trim().toLowerCase()
+  const visibleAssignments = (roleAssignments ?? [])
+    .filter((assignment) => {
+      if (
+        roleStatusFilter !== "all" &&
+        assignmentStatusOf(assignment) !== roleStatusFilter
+      ) {
+        return false
+      }
+      if (roleFilterKey && assignment.roleKey !== roleFilterKey) return false
+      if (!assignmentQuery) return true
+      return [
+        assignment.displayName,
+        assignment.email,
+        assignment.roleName,
+        scopeName(assignment),
+      ].some((value) => (value ?? "").toLowerCase().includes(assignmentQuery))
+    })
+    .sort((left, right) => {
+      const leftRank = assignmentStatusOf(left) === "active" ? 0 : 1
+      const rightRank = assignmentStatusOf(right) === "active" ? 0 : 1
+      if (leftRank !== rightRank) return leftRank - rightRank
+      return (left.displayName ?? left.email).localeCompare(
+        right.displayName ?? right.email,
+      )
+    })
+
+  const scopeChoices =
+    assignScopeType === "department"
+      ? scopeTargets.department
+      : assignScopeType === "organisation"
+        ? scopeTargets.organisation
+        : []
 
   return (
     <div className="app-shell">
@@ -1475,6 +1679,293 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                 )}
               </section>
             )}
+          </div>
+        )}
+
+        {knownPath && section === "roles" && !canReadRoles && (
+          <section className="panel">
+            <h2>Roles</h2>
+            <p className="muted">
+              Your governance role does not include role administration.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "roles" && canReadRoles && (
+          <div className="dash-stack">
+            {canManageRoles && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>Assign a role</h2>
+                  <span className="muted">Seeded roles only</span>
+                </div>
+                <form className="form" onSubmit={handleAssignRole}>
+                  <div className="form-row">
+                    <label className="field">
+                      <span>User email</span>
+                      <input
+                        name="email"
+                        type="email"
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Role</span>
+                      <select
+                        name="roleKey"
+                        value={assignRoleKey}
+                        onChange={(event) =>
+                          setAssignRoleKey(event.target.value)
+                        }
+                        disabled={busy || roles === null}
+                        required
+                      >
+                        {(roles ?? []).map((role) => (
+                          <option key={role.key} value={role.key}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Scope</span>
+                      <select
+                        name="scopeType"
+                        value={assignScopeType}
+                        onChange={(event) => {
+                          setAssignScopeType(
+                            event.target.value as RoleScopeType,
+                          )
+                          setAssignScopeId("")
+                        }}
+                        disabled={busy}
+                      >
+                        <option value="platform">Platform</option>
+                        <option value="department">Department</option>
+                        <option value="organisation">Organisation</option>
+                      </select>
+                    </label>
+                    {assignScopeType !== "platform" && (
+                      <label className="field">
+                        <span>Target</span>
+                        <select
+                          name="scopeId"
+                          value={assignScopeId}
+                          onChange={(event) =>
+                            setAssignScopeId(event.target.value)
+                          }
+                          disabled={busy}
+                          required
+                        >
+                          <option value="">Choose…</option>
+                          {scopeChoices.map((target) => (
+                            <option key={target.id} value={target.id}>
+                              {target.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    <label className="field">
+                      <span>Expires (optional)</span>
+                      <input name="expiresAt" type="date" disabled={busy} />
+                    </label>
+                  </div>
+                  <label className="field">
+                    <span>Reason</span>
+                    <input
+                      name="reason"
+                      type="text"
+                      minLength={3}
+                      maxLength={500}
+                      required
+                      disabled={busy}
+                    />
+                  </label>
+                  <p className="hint">
+                    You cannot change your own roles, and the last role manager
+                    cannot be removed.
+                  </p>
+                  <button className="button" type="submit" disabled={busy}>
+                    {busy ? "Working…" : "Assign role"}
+                  </button>
+                </form>
+              </section>
+            )}
+
+            <section className="panel">
+              <div className="panel-head">
+                <h2>Role catalogue</h2>
+                <span className="muted">
+                  {roles === null ? "Loading…" : `${roles.length} roles`}
+                </span>
+              </div>
+              <p className="muted">
+                Roles are fixed, reviewed collections of permissions. Expand a
+                role to see what it allows.
+              </p>
+              {roles !== null && (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Role</th>
+                        <th>Permissions</th>
+                        <th>Active assignments</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {roles.map((role) => (
+                        <tr key={role.key}>
+                          <td>
+                            <div>{role.name}</div>
+                            <div className="muted mono">{role.key}</div>
+                          </td>
+                          <td>
+                            <details className="overview-details">
+                              <summary title="Show the permissions">
+                                <span className="overview-summary">
+                                  {role.permissions.length} permissions
+                                </span>
+                              </summary>
+                              <ul className="overview-list">
+                                {role.permissions.map((permission) => (
+                                  <li key={permission}>
+                                    <span>{capabilityLabel(permission)}</span>
+                                    <span className="mono muted">
+                                      {permission}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          </td>
+                          <td>{role.activeAssignments}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <section className="panel">
+              <div className="panel-head">
+                <h2>Assignments</h2>
+                <span className="muted">
+                  {roleAssignments === null
+                    ? "Loading…"
+                    : `${visibleAssignments.length} of ${roleAssignments.length}`}
+                </span>
+              </div>
+              <form
+                className="user-toolbar"
+                onSubmit={(event) => event.preventDefault()}
+              >
+                <input
+                  className="search-input"
+                  type="search"
+                  placeholder="Search person, role or scope"
+                  value={roleQuery}
+                  onChange={(event) => setRoleQuery(event.target.value)}
+                  aria-label="Search role assignments"
+                />
+                <select
+                  className="filter-select"
+                  value={roleFilterKey}
+                  onChange={(event) => setRoleFilterKey(event.target.value)}
+                  aria-label="Filter by role"
+                >
+                  <option value="">All roles</option>
+                  {(roles ?? []).map((role) => (
+                    <option key={role.key} value={role.key}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="filter-select"
+                  value={roleStatusFilter}
+                  onChange={(event) => setRoleStatusFilter(event.target.value)}
+                  aria-label="Filter by status"
+                >
+                  <option value="active">Active</option>
+                  <option value="expired">Expired</option>
+                  <option value="revoked">Revoked</option>
+                  <option value="all">All</option>
+                </select>
+              </form>
+
+              {visibleAssignments.length === 0 && (
+                <p className="muted">No assignments match this view.</p>
+              )}
+
+              {visibleAssignments.length > 0 && (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Person</th>
+                        <th>Role</th>
+                        <th>Scope</th>
+                        <th>Expires</th>
+                        <th>Status</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleAssignments.map((assignment) => {
+                        const status = assignmentStatusOf(assignment)
+                        const self = assignment.userId === session.userId
+                        return (
+                          <tr key={assignment.id}>
+                            <td>
+                              <div>{assignment.displayName ?? "—"}</div>
+                              <div className="muted">{assignment.email}</div>
+                            </td>
+                            <td>
+                              <div>{assignment.roleName}</div>
+                              <div className="muted mono">
+                                {assignment.roleKey}
+                              </div>
+                            </td>
+                            <td>{scopeName(assignment)}</td>
+                            <td>
+                              {assignment.expiresAt
+                                ? formatTime(assignment.expiresAt)
+                                : "Never"}
+                            </td>
+                            <td>
+                              <span className={assignmentStatusChip(status)}>
+                                {status}
+                              </span>
+                            </td>
+                            <td>
+                              {self && status !== "revoked" ? (
+                                <span className="muted">You</span>
+                              ) : (
+                                canManageRoles &&
+                                status !== "revoked" && (
+                                  <button
+                                    type="button"
+                                    className="button button-quiet button-small"
+                                    onClick={() => handleRevokeRole(assignment)}
+                                    disabled={busy}
+                                  >
+                                    Revoke
+                                  </button>
+                                )
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
           </div>
         )}
 

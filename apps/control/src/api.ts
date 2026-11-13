@@ -44,6 +44,47 @@ export interface Department {
   readonly name: string
 }
 
+export interface Role {
+  readonly key: string
+  readonly name: string
+  readonly description: string | null
+  readonly system: boolean
+  readonly permissions: readonly string[]
+  readonly activeAssignments: number
+}
+
+export interface RoleAssignment {
+  readonly id: string
+  readonly userId: string
+  readonly email: string
+  readonly displayName: string | null
+  readonly roleKey: string
+  readonly roleName: string
+  readonly scopeType: string
+  readonly scopeId: string | null
+  readonly expiresAt: string | null
+  readonly revokedAt: string | null
+  readonly createdAt: string
+  readonly grantedBy: string | null
+  readonly reason: string | null
+}
+
+export interface RoleScopeTarget {
+  readonly id: string
+  readonly name: string
+}
+
+export type RoleScopeType = "platform" | "department" | "organisation"
+
+export interface AssignRoleInput {
+  readonly email: string
+  readonly roleKey: string
+  readonly scopeType: RoleScopeType
+  readonly scopeId?: string
+  readonly expiresAt?: string
+  readonly reason: string
+}
+
 export interface OwnGrants {
   readonly grants: readonly Grant[]
   readonly capabilities: readonly string[]
@@ -278,6 +319,26 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ departmentKey, reason }),
     }),
+  listRoles: () => request<readonly Role[]>("/control/roles"),
+  listRoleAssignments: () =>
+    request<readonly RoleAssignment[]>("/control/role-assignments"),
+  listRoleScopeTargets: (scopeType: RoleScopeType) =>
+    request<readonly RoleScopeTarget[]>(
+      `/control/roles/scope-targets?type=${encodeURIComponent(scopeType)}`,
+    ),
+  assignRole: (input: AssignRoleInput) =>
+    request<RoleAssignment>("/control/role-assignments", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  revokeRole: (id: string, reason: string) =>
+    request<RoleAssignment>(
+      `/control/role-assignments/${encodeURIComponent(id)}/revoke`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      },
+    ),
   revokeGrant: (id: string, reason: string) =>
     request<Grant>(`/control/grants/${encodeURIComponent(id)}/revoke`, {
       method: "POST",

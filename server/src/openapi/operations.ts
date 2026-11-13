@@ -4,6 +4,7 @@ import type { z } from "zod"
 import {
   activityListResponse,
   activityViewSchema,
+  assignRoleRequest,
   auditEntryListResponse,
   codeRequest,
   createGrantRequest,
@@ -37,6 +38,11 @@ import {
   setStaffDepartmentRequest,
   setStaffDepartmentResponse,
   signInRequest,
+  roleAssignmentListResponse,
+  roleAssignmentViewResponse,
+  roleListResponse,
+  roleReasonRequest,
+  roleScopeTargetListResponse,
   staffListResponse,
   staffInviteDetailsResponse,
   staffReasonRequest,
@@ -59,7 +65,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -734,6 +740,93 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 201,
         description: "The account created for the invitation",
         schema: acceptStaffInviteResponse,
+      },
+    ],
+  },
+  {
+    id: "listRoles",
+    method: "get",
+    path: "/v1/control/roles",
+    summary: "List the governance role catalogue",
+    tag: "roles",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Seeded roles with their permission keys and active assignment count, for a caller holding admin.role.read or admin.role.manage",
+        schema: roleListResponse,
+      },
+    ],
+  },
+  {
+    id: "listRoleAssignments",
+    method: "get",
+    path: "/v1/control/role-assignments",
+    summary: "List role assignments",
+    tag: "roles",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Every role assignment with its holder, scope and lifecycle",
+        schema: roleAssignmentListResponse,
+      },
+    ],
+  },
+  {
+    id: "listRoleScopeTargets",
+    method: "get",
+    path: "/v1/control/roles/scope-targets",
+    summary: "List the targets a role assignment may use",
+    tag: "roles",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Active departments or partner organisations for the requested scope type; pass type=department or type=organisation",
+        schema: roleScopeTargetListResponse,
+      },
+    ],
+  },
+  {
+    id: "assignRole",
+    method: "post",
+    path: "/v1/control/role-assignments",
+    summary: "Assign a seeded role",
+    tag: "roles",
+    audience: ["control"],
+    request: {
+      schema: assignRoleRequest,
+      description: "Holder, role, scope, optional expiry and reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The created role assignment",
+        schema: roleAssignmentViewResponse,
+      },
+    ],
+  },
+  {
+    id: "revokeRole",
+    method: "post",
+    path: "/v1/control/role-assignments/{id}/revoke",
+    summary: "Revoke a role assignment",
+    tag: "roles",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: roleReasonRequest,
+      description: "Reason for the revocation",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The revoked role assignment",
+        schema: roleAssignmentViewResponse,
       },
     ],
   },

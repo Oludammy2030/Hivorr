@@ -1,4 +1,4 @@
-export type Section = "overview" | "users" | "staff" | "grants" | "audit"
+export type Section = "overview" | "users" | "staff" | "grants" | "audit" | "roles"
 
 export interface SectionLink {
   readonly id: Section
@@ -39,6 +39,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: "Security",
     items: [
       {
+        id: "roles",
+        label: "Roles",
+        path: "/roles",
+        capabilities: ["admin.role.read", "admin.role.manage"],
+      },
+      {
         id: "audit",
         label: "Audit",
         path: "/audit",
@@ -58,6 +64,7 @@ export const SECTION_PATHS: readonly SectionPath[] = [
   { section: "users", path: "/users" },
   { section: "staff", path: "/staff" },
   { section: "grants", path: "/grants" },
+  { section: "roles", path: "/roles" },
   { section: "audit", path: "/audit" },
 ]
 
@@ -71,6 +78,7 @@ export const SECTION_TITLES: Readonly<Record<Section, string>> = {
   users: "Users",
   staff: "Staff",
   grants: "Grants",
+  roles: "Roles",
   audit: "Audit",
 }
 

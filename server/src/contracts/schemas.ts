@@ -101,6 +101,30 @@ export const revokeGrantRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const ROLE_SCOPE_VALUES = [
+  "platform",
+  "department",
+  "organisation",
+] as const
+
+export const assignRoleRequest = z.strictObject({
+  email: z.string().min(3).max(254),
+  roleKey: z.string().min(1).max(64),
+  scopeType: z.enum(ROLE_SCOPE_VALUES),
+  scopeId: z.string().uuid().optional(),
+  expiresAt: z
+    .string()
+    .min(1)
+    .max(40)
+    .refine((value) => !Number.isNaN(Date.parse(value)), "invalid date")
+    .optional(),
+  reason: z.string().min(3).max(500).optional(),
+})
+
+export const roleReasonRequest = z.strictObject({
+  reason: z.string().min(3).max(500).optional(),
+})
+
 // --- Responses --------------------------------------------------------------
 
 export const registrationResponse = z.object({
@@ -242,6 +266,42 @@ export const departmentViewResponse = z.object({
 })
 
 export const departmentListResponse = z.array(departmentViewResponse)
+
+export const roleViewResponse = z.object({
+  key: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  system: z.boolean(),
+  permissions: z.array(z.string()).optional(),
+  activeAssignments: z.number().int().optional(),
+})
+
+export const roleListResponse = z.array(roleViewResponse)
+
+export const roleAssignmentViewResponse = z.object({
+  id: z.string(),
+  userId: z.string(),
+  email: z.string(),
+  displayName: z.string().nullable().optional(),
+  roleKey: z.string(),
+  roleName: z.string(),
+  scopeType: z.string(),
+  scopeId: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  revokedAt: z.string().nullable().optional(),
+  createdAt: z.string(),
+  grantedBy: z.string().nullable().optional(),
+  reason: z.string().nullable().optional(),
+})
+
+export const roleAssignmentListResponse = z.array(roleAssignmentViewResponse)
+
+export const roleScopeTargetResponse = z.object({
+  id: z.string(),
+  name: z.string(),
+})
+
+export const roleScopeTargetListResponse = z.array(roleScopeTargetResponse)
 
 export const userSummaryResponse = z.object({
   id: z.string(),
