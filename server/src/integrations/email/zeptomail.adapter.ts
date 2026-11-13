@@ -53,6 +53,16 @@ export class ZeptoMailAdapter implements EmailAdapter {
         subject: message.subject,
         textbody: message.text,
         ...(message.html ? { htmlbody: message.html } : {}),
+        ...(message.images?.length
+          ? {
+              inline_images: message.images.map((image) => ({
+                mime_type: image.mimeType,
+                name: image.name,
+                content: image.content,
+                cid: image.cid,
+              })),
+            }
+          : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     })

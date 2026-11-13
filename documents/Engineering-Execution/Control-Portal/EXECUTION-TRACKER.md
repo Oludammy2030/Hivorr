@@ -210,6 +210,10 @@
 10. Staff invitation email uses ZeptoMail under the Zoho CPaaS name. It is live on staging against
     the verified `mail.hivorr.com` sending domain. The copy-link fallback remains for a provider
     failure. The invitee's email must also be added to Cloudflare Access separately. (CP-010)
+11. Every transactional message renders through one shared layout, so the brand cannot drift between
+    messages. Password reset and email verification now carry a link to `/reset.html` and
+    `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
+    real-browser pass on staging. (EP-01-031)
 
 ---
 
