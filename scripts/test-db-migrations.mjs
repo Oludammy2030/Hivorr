@@ -583,6 +583,25 @@ try {
     "operator notes are stored in admin.user_notes",
   )
 
+  const approvalListDenied = await testClient
+    .query("select * from admin.list_approval_requests($1)", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    approvalListDenied,
+    "the approval register requires an approval permission",
+  )
+
+  const approvalPermission = await testClient.query(
+    "select 1 from admin.permissions where key = 'admin.approval.decide'",
+  )
+  assert(
+    approvalPermission.rowCount === 1,
+    "the approval decision permission is registered",
+  )
+
   const seededRoles = await testClient.query(
     "select count(*)::int as count from admin.roles",
   )

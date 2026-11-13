@@ -11,6 +11,7 @@ import {
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
+import { ApiError } from "../common/errors"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
 import {
@@ -94,14 +95,18 @@ export class AccountGovernanceController {
   }
 
   @Post("control/users/:id/close")
-  @HttpCode(200)
+  @HttpCode(409)
   @Audience("control")
   async close(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
-    return this.action(request, id, "close", body)
+    @Param("id") _id: string,
+    @Body() _body: unknown,
+    @Req() _request: FastifyRequest,
+  ): Promise<never> {
+    throw new ApiError(
+      "CONFLICT",
+      "Closure requires an approval request. Use POST /v1/control/approvals.",
+      409,
+    )
   }
 
   @Post("control/users/:id/revoke-sessions")

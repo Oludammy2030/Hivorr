@@ -312,7 +312,7 @@ describeIntegration("account governance integration", () => {
     expect(allowed.statusCode).toBe(200)
   })
 
-  it("revokes sessions, closes an account and removes its authority", async () => {
+  it("revokes every session for an account", async () => {
     const revoke = await app.inject({
       method: "POST",
       url: `/v1/control/users/${amaraId}/revoke-sessions`,
@@ -321,35 +321,6 @@ describeIntegration("account governance integration", () => {
     })
     expect(revoke.statusCode).toBe(200)
     expect(revoke.json().sessionsRevoked).toBeGreaterThanOrEqual(1)
-
-    await setup.query(
-      "insert into identity.grants (user_id, grant_type, scope, environment) values ($1, 'staff', 'staff.support.handle', 'staging')",
-      [amaraId],
-    )
-    await setup.query(
-      `insert into admin.role_assignments (user_id, role_id, scope_type)
-       select $1, id, 'platform' from admin.roles where key = 'auditor'`,
-      [amaraId],
-    )
-
-    const closed = await app.inject({
-      method: "POST",
-      url: `/v1/control/users/${amaraId}/close`,
-      headers: { host: controlHost, cookie: adminControlCookie, ...json },
-      payload: { reason: "Customer requested account closure" },
-    })
-    expect(closed.statusCode).toBe(200)
-    expect(closed.json()).toMatchObject({ status: "closed" })
-    expect(closed.json().grantsRevoked).toBeGreaterThanOrEqual(1)
-    expect(closed.json().rolesRevoked).toBeGreaterThanOrEqual(1)
-
-    const signIn = await app.inject({
-      method: "POST",
-      url: "/v1/auth/sign-in",
-      headers: { host: controlHost, ...json },
-      payload: { email: "amara@example.test", password: "amara-test-password" },
-    })
-    expect(signIn.statusCode).toBeGreaterThanOrEqual(400)
   })
 
   it("records notes and a timeline with the operator and reason", async () => {
@@ -381,19 +352,19 @@ describeIntegration("account governance integration", () => {
       (row) => row.action,
     )
     expect(actions).toContain("account.suspended")
-    expect(actions).toContain("account.closed")
+    expect(actions).toContain("account.sessions_revoked")
     expect(actions).toContain("account.note_added")
 
     const audit = await setup.query(
       "select action, reason, capability from platform.audit_log where target_id = $1 and action like 'account.%' order by occurred_at",
       [amaraId],
     )
-    expect(audit.rows.map((row) => row.action)).toContain("account.closed")
+    expect(audit.rows.map((row) => row.action)).toContain(
+      "account.sessions_revoked",
+    )
     expect(
       audit.rows.every((row) => row.capability === "admin.user.manage"),
     ).toBe(true)
-    expect(audit.rows.map((row) => row.reason)).toContain(
-      "Customer requested account closure",
-    )
+    expect(audit.rows.map((row) => row.reason)).toContain("Device lost")
   })
 })
