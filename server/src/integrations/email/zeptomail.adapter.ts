@@ -12,6 +12,18 @@ interface ZeptoMailSettings {
   readonly fromName: string
 }
 
+const AUTH_SCHEME = "Zoho-enczapikey"
+
+/**
+ * ZeptoMail shows the send-mail token already carrying the scheme, while the
+ * API documentation shows the scheme in the header. Accept either form so a
+ * copied token is never sent with the scheme twice.
+ */
+function authorizationHeader(token: string): string {
+  const value = token.trim()
+  return value.startsWith(AUTH_SCHEME) ? value : `${AUTH_SCHEME} ${value}`
+}
+
 /**
  * Sends through the ZeptoMail transactional API (Zoho).
  *
@@ -28,7 +40,7 @@ export class ZeptoMailAdapter implements EmailAdapter {
     const response = await this.fetchImpl(this.settings.apiUrl, {
       method: "POST",
       headers: {
-        authorization: `Zoho-enczapikey ${this.settings.token}`,
+        authorization: authorizationHeader(this.settings.token),
         "content-type": "application/json",
         accept: "application/json",
       },
