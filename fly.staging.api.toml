@@ -16,6 +16,7 @@ primary_region = "jnb"
   PUBLIC_APP_ORIGIN = "https://staging.hivorr.com"
   MAIL_FROM_ADDRESS = "no-reply@mail.hivorr.com"
   MAIL_FROM_NAME = "Hivorr"
+  ZEPTOMAIL_API_URL = "https://cpaas.zoho.com/v1.1/email"
 
 [http_service]
   internal_port = 3000

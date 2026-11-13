@@ -63,7 +63,7 @@ const baseConfigSchema = z.object({
   ZEPTOMAIL_API_URL: z
     .string()
     .regex(/^https:\/\/\S+$/)
-    .default("https://api.zeptomail.com/v1.1/email"),
+    .default("https://cpaas.zoho.com/v1.1/email"),
   MAIL_FROM_ADDRESS: z.string().min(3).max(254).optional(),
   MAIL_FROM_NAME: z.string().min(1).max(120).default("Hivorr"),
   PUBLIC_APP_ORIGIN: z
