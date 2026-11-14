@@ -363,8 +363,8 @@ export class StaffService {
         { identity: { accountId: input.accountId, userId: input.userId } },
         async (transaction) => {
           const before = await transaction.query<{ engagement_status: string }>(
-            "select engagement_status from admin.staff_profiles where user_id = $1",
-            [input.targetUserId],
+            "select admin.staff_status_of($1, $2) as engagement_status",
+            [input.userId, input.targetUserId],
           )
           const result = await transaction.query<{
             user_id: string
