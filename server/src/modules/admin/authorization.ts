@@ -204,6 +204,7 @@ export async function loadAdminAuthority(
     `select permission_key, scope_type, scope_id, expires_at
        from admin.access_denials
       where user_id = $1
+        and revoked_at is null
         and (expires_at is null or expires_at > now())`,
     [userId],
   )

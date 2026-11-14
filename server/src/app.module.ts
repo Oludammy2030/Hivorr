@@ -22,6 +22,7 @@ import { UsersController } from "./api/users.controller"
 import { StaffController } from "./api/staff.controller"
 import { StaffInviteController } from "./api/staff-invite.controller"
 import { RolesController } from "./api/roles.controller"
+import { DenialsController } from "./api/denials.controller"
 import { AccountGovernanceController } from "./api/account-governance.controller"
 import { ApprovalsController } from "./api/approvals.controller"
 import { PartnersController } from "./api/partners.controller"
@@ -31,6 +32,7 @@ import { EvidenceController } from "./api/evidence.controller"
 import { VerificationController } from "./api/verification.controller"
 import { StaffService } from "./modules/admin/staff.service"
 import { RolesService } from "./modules/admin/roles.service"
+import { DenialsService } from "./modules/admin/denials.service"
 import { AccountGovernanceService } from "./modules/admin/account-governance.service"
 import { ApprovalsService } from "./modules/admin/approvals.service"
 import { PartnersService } from "./modules/admin/partners.service"
@@ -56,6 +58,7 @@ export class AppModule {
         StaffController,
         StaffInviteController,
         RolesController,
+        DenialsController,
         AccountGovernanceController,
         ApprovalsController,
         PartnersController,
@@ -97,6 +100,7 @@ export class AppModule {
         GrantsService,
         StaffService,
         RolesService,
+        DenialsService,
         AccountGovernanceService,
         ApprovalsService,
         PartnersService,

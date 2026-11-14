@@ -125,6 +125,20 @@ export const roleReasonRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
+export const createAccessDenialRequest = z.strictObject({
+  email: z.string().min(3).max(254),
+  permissionKey: z.string().min(1).max(128),
+  scopeType: z.enum(ROLE_SCOPE_VALUES),
+  scopeId: z.string().uuid().optional(),
+  expiresAt: z
+    .string()
+    .min(1)
+    .max(40)
+    .refine((value) => !Number.isNaN(Date.parse(value)), "invalid date")
+    .optional(),
+  reason: z.string().min(3).max(500).optional(),
+})
+
 export const accountReasonRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
@@ -397,6 +411,24 @@ export const roleViewResponse = z.object({
 })
 
 export const roleListResponse = z.array(roleViewResponse)
+
+export const accessDenialViewResponse = z.object({
+  id: z.string(),
+  userId: z.string(),
+  email: z.string(),
+  displayName: z.string().nullable().optional(),
+  permissionKey: z.string(),
+  scopeType: z.string().nullable().optional(),
+  scopeId: z.string().nullable().optional(),
+  reason: z.string(),
+  expiresAt: z.string().nullable().optional(),
+  createdAt: z.string(),
+  createdBy: z.string().nullable().optional(),
+  revokedAt: z.string().nullable().optional(),
+  revokedReason: z.string().nullable().optional(),
+})
+
+export const accessDenialListResponse = z.array(accessDenialViewResponse)
 
 export const roleAssignmentViewResponse = z.object({
   id: z.string(),

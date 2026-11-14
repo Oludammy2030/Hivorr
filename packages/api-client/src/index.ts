@@ -161,6 +161,16 @@ export type RevokeRoleRequest = { "reason"?: string }
 
 export type RevokeRoleResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "roleKey": string; "roleName": string; "scopeType": string; "scopeId"?: string | null; "expiresAt"?: string | null; "revokedAt"?: string | null; "createdAt": string; "grantedBy"?: string | null; "reason"?: string | null }
 
+export type ListAccessDenialsResponse = ({ "id": string; "userId": string; "email": string; "displayName"?: string | null; "permissionKey": string; "scopeType"?: string | null; "scopeId"?: string | null; "reason": string; "expiresAt"?: string | null; "createdAt": string; "createdBy"?: string | null; "revokedAt"?: string | null; "revokedReason"?: string | null })[]
+
+export type CreateAccessDenialRequest = { "email": string; "permissionKey": string; "scopeType": "platform" | "department" | "organisation"; "scopeId"?: string; "expiresAt"?: string; "reason"?: string }
+
+export type CreateAccessDenialResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "permissionKey": string; "scopeType"?: string | null; "scopeId"?: string | null; "reason": string; "expiresAt"?: string | null; "createdAt": string; "createdBy"?: string | null; "revokedAt"?: string | null; "revokedReason"?: string | null }
+
+export type RevokeAccessDenialRequest = { "reason"?: string }
+
+export type RevokeAccessDenialResponse = { "id": string; "userId": string; "email": string; "displayName"?: string | null; "permissionKey": string; "scopeType"?: string | null; "scopeId"?: string | null; "reason": string; "expiresAt"?: string | null; "createdAt": string; "createdBy"?: string | null; "revokedAt"?: string | null; "revokedReason"?: string | null }
+
 export type SuspendAccountRequest = { "reason"?: string }
 
 export type SuspendAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number }
@@ -624,6 +634,27 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<RevokeRoleResponse>(
         "POST",
         `/v1/control/role-assignments/${encodeURIComponent(params.id)}/revoke`,
+        input,
+        [200],
+      ),
+    listAccessDenials: () =>
+      request<ListAccessDenialsResponse>(
+        "GET",
+        "/v1/control/denials",
+        undefined,
+        [200],
+      ),
+    createAccessDenial: (input: CreateAccessDenialRequest) =>
+      request<CreateAccessDenialResponse>(
+        "POST",
+        "/v1/control/denials",
+        input,
+        [201],
+      ),
+    revokeAccessDenial: (params: { id: string }, input: RevokeAccessDenialRequest) =>
+      request<RevokeAccessDenialResponse>(
+        "POST",
+        `/v1/control/denials/${encodeURIComponent(params.id)}/revoke`,
         input,
         [200],
       ),
