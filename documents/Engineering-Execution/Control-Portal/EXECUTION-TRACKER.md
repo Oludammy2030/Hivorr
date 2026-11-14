@@ -30,10 +30,10 @@
 | CP-020 | Approval and maker-checker | EP-02 | **COMPLETED** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows. **Signed off 14 November 2026 — see §4.1.** |
 | CP-014 | Partner organisations | EP-02 | **REVIEWED** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
 | CP-015 | Partner isolation | EP-02 | **REVIEWED** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
-| CP-016 | Case spine and timeline | EP-02 | **REVIEWED** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
-| CP-017 | Case evidence metadata | EP-02 | **REVIEWED** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
-| CP-018 | Support and dispute operations | EP-02 | **REVIEWED** | `20261114001000_admin_add_case_decisions.sql`; case decisions routed through CP-020; outcome and closure reason on the case; decision events on the timeline; "Request decision" in the case detail; OpenAPI regenerated |
-| CP-019 | Verification review | EP-02 | **REVIEWED** | `20261114001100_admin_add_verification_reviews.sql`; verification queue over review cases; evidence-gated approval; approve/reject/request-information with reason; Verification screen; audit rows |
+| CP-016 | Case spine and timeline | EP-02 | **COMPLETED** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
+| CP-017 | Case evidence metadata | EP-02 | **COMPLETED** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
+| CP-018 | Support and dispute operations | EP-02 | **COMPLETED** | `20261114001000_admin_add_case_decisions.sql`; case decisions routed through CP-020; outcome and closure reason on the case; decision events on the timeline; "Request decision" in the case detail; OpenAPI regenerated |
+| CP-019 | Verification review | EP-02 | **COMPLETED** | `20261114001100_admin_add_verification_reviews.sql`; verification queue over review cases; evidence-gated approval; approve/reject/request-information with reason; Verification screen; audit rows |
 | CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
@@ -58,9 +58,9 @@ Findings closed by pull request: #100 (F-A-01), #101 and #102 (F-A-02, F-A-07), 
 F-B-02, F-B-04), #107 (F-C-02, F-C-03), #108 (F-C-01). #103 wired the governance database suites
 into CI, which is what turned their evidence from assertion into execution.
 
-`REVIEWED` is not `COMPLETED`. CP-012 and CP-020 were signed off by the founder on 14 November 2026
-and are recorded in §4.1. The other seventeen packages still need that signature, and the open
-findings above are recorded rather than waived.
+`REVIEWED` is not `COMPLETED`. CP-012, CP-020, CP-016, CP-017, CP-018 and CP-019 were signed off by
+the founder on 14 November 2026 and are recorded in §4.1. The other thirteen packages still need that
+signature, and the open findings above are recorded rather than waived.
 
 ## 2. CP-001 evidence
 
@@ -161,6 +161,54 @@ signature rests on the recorded evidence, not on an assertion that the code is d
 
 This is the package where the portal's central claim — that no single administrator executes a
 sensitive action alone — is implemented, locked and tested in both directions.
+
+#### CP-016 — Case spine and timeline, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114000800_admin_add_case_spine.sql` and the visibility rule in `…001500`; the five integration tests in `tests/cases.test.ts` and the six in `tests/case-visibility.test.ts`, executing in CI; Batch C review, finding F-C-01 closed by #108 |
+| **Guarantees confirmed** | Append-only timeline; assignment and status changes audited with a reason; visibility scoped to the assignee, the creator, the owning department or the unfiled pool; an invisible case answers not-found rather than forbidden |
+| **Accepted limitations** | Follow-up 25 — the five case **write** paths still act on any case id, requiring a UUID the actor cannot obtain by listing; follow-up 26 — `create_case` sets no department, so a new case enters the unfiled pool until filed or assigned |
+| **Open findings** | None. F-C-01 was High and is closed |
+| **Status** | `COMPLETED` |
+
+#### CP-017 — Case evidence metadata, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114000900_admin_add_case_evidence.sql`, re-gated in `…001400` and scoped in `…001500`; the evidence test in `tests/cases.test.ts`, plus `tests/case-permissions.test.ts` and `tests/case-visibility.test.ts`; Batch C review, finding F-C-02 closed by #107 |
+| **Guarantees confirmed** | Evidence is immutable by construction — `hivorr_api` holds no `UPDATE` or `DELETE` on the table; superseding preserves the original; reads require `admin.evidence.read` **and** case visibility; recorded access appends a timeline event |
+| **Accepted limitations** | F-C-05, wording only: listing evidence metadata is not recorded, because binary download does not exist. The G0 record now says "every recorded access" |
+| **Open findings** | None |
+| **Status** | `COMPLETED` |
+
+#### CP-018 — Support and dispute operations, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114001000_admin_add_case_decisions.sql`; the case-decision test in `tests/approvals.test.ts` and the refusal in `tests/case-permissions.test.ts`; Batch C review, finding F-C-03 closed by #107 |
+| **Guarantees confirmed** | A decision request requires `admin.case.recommend`; the approver must hold `admin.approval.decide` **and** `admin.case.approve` at decision time; requester ≠ approver under the row lock; outcome and closure reason written to the case with timeline events |
+| **Accepted limitations** | Threaded messages, SLA timers and automated escalation remain out of scope, as stated in the package |
+| **Open findings** | None |
+| **Status** | `COMPLETED` |
+
+#### CP-019 — Verification review, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114001100_admin_add_verification_reviews.sql`; the three tests in `tests/verification.test.ts`, executing in CI; Batch C review, **no findings** |
+| **Guarantees confirmed** | Queue requires `admin.verification.review`; a decision requires a reason and a valid outcome; approving without evidence is refused (`23514`); request-information moves the case to pending information; each decision writes an audit row with the officer, reason and evidence count |
+| **Accepted limitations** | No automated lane routing, SLA timers, document OCR or identity-provider integration, as stated in the package |
+| **Open findings** | None |
+| **Status** | `COMPLETED` |
 
 ### CP-002 - Administrative authorization model
 
@@ -439,7 +487,7 @@ UI-only change: no migration, no API contract change and no permission change.
 - **Reuse:** `admin.case_evidence`, `admin.case_events`, `admin.actor_holds_platform_permission`, `appendAudit`.
 - **Dependencies:** CP-016.
 - **Test plan:** migration asserts the evidence register refuses without permission; the case suite proves metadata registration, hash validation, access events, supersede and the 403 for a reader without the case permission.
-- **Audit impact:** R3 evidence metadata. Upload registration and supersede are audited; every access appends a timeline event.
+- **Audit impact:** R3 evidence metadata. Upload registration and supersede are audited; every **recorded** access appends a timeline event. Listing evidence metadata is not yet recorded, because binary download does not exist; that is recorded as F-C-05 and is a wording limit, not a control gap.
 - **Rollback:** drop the four functions in a forward migration; evidence rows remain stored.
 - **Approver:** Architect; founder for evidence retention and the private storage policy.
 
