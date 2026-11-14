@@ -25,7 +25,7 @@
 | CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REVIEWED** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
 | CP-011 | Grant organisation by department | EP-02 | **REVIEWED** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
 | CP-010 | Staff records and lifecycle | EP-02 | **REVIEWED** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
-| CP-012 | Role administration | EP-02 | **REVIEWED** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated |
+| CP-012 | Role administration | EP-02 | **COMPLETED** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated. **Signed off 14 November 2026 — see §4.1.** |
 | CP-013 | Account governance | EP-02 | **REVIEWED** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
 | CP-020 | Approval and maker-checker | EP-02 | **REVIEWED** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
 | CP-014 | Partner organisations | EP-02 | **REVIEWED** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
@@ -58,8 +58,9 @@ Findings closed by pull request: #100 (F-A-01), #101 and #102 (F-A-02, F-A-07), 
 F-B-02, F-B-04), #107 (F-C-02, F-C-03), #108 (F-C-01). #103 wired the governance database suites
 into CI, which is what turned their evidence from assertion into execution.
 
-`REVIEWED` is not `COMPLETED`. Every package below still needs the founder's signature, and the
-open findings above are recorded rather than waived.
+`REVIEWED` is not `COMPLETED`. CP-012 was signed off by the founder on 14 November 2026 and is
+recorded in §4.1. The other eighteen packages still need that signature, and the open findings above
+are recorded rather than waived.
 
 ## 2. CP-001 evidence
 
@@ -129,7 +130,24 @@ open findings above are recorded rather than waived.
 
 ## 4. G0 records for the implemented packages
 
-### CP-002 — Administrative authorization model
+### 4.1 Sign-off records
+
+#### CP-012 — Role administration, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | Migration `20261114000200` and `…000300`; the seven integration tests in `tests/roles-integration.test.ts`, executing in CI since #103; Batch B review (`REVIEW-BATCH-B.md`), verdict `REVIEWED` with no findings against CP-012; `REVIEW-REGISTER.md` evidence row |
+| **Guards confirmed** | Read and manage capabilities checked inside the database; self-change refused on assign and revoke; last role manager cannot be removed (`23514`); reason, scope, expiry and duplicate validation; seeded catalogue only |
+| **Accepted limitations** | Department-scoped assignments are stored and audited but inert until a resource-scoped feature consumes them (follow-up 1); custom roles are out of scope by design; historical deployment blemish `G-05` on `92213dd`, fixed by #81 and #86 |
+| **Open findings** | None attributable to CP-012. Access denials are a separate surface built later and gated by the same `admin.role.manage` |
+| **Status** | `COMPLETED` |
+
+This is the first package to pass the full `REQUIRES_REVIEW` → `REVIEWED` → `COMPLETED` ladder. The
+signature rests on the recorded evidence, not on an assertion that the code is defect-free.
+
+### CP-002 - Administrative authorization model
 
 - **Class:** `[REVIEW]` — capability and migration change; second reviewer required (DEV-003 residual).
 - **Scope in:** `admin` authorization tables; pure composition/evaluation; RLS; tests.
