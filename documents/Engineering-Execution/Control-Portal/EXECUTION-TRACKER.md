@@ -15,16 +15,16 @@
 | ID | Package | Owning phase | Status | Evidence |
 |---|---|---|---|---|
 | CP-001 | Decision closure and governance charter | Cross-phase (pre-EP-02) | **COMPLETED** | Decision record; governance architecture; architecture/matrix/execution-structure amendments |
-| CP-002 | Administrative authorization model | EP-02 (foundation) | **REVIEWED** | `20261111000100_admin_create_authorization_tables.sql`; `server/src/modules/admin/authorization.ts`; pure tests; database migration run passed 2026-11-11 |
-| CP-003 | Capability registry and context extension | EP-02 (foundation) | **REVIEWED** | Capability registry additions; permission/deny rules; registry tests; OpenAPI regenerated |
-| CP-004 | Admin read path and user-directory remediation | EP-02 (foundation) | **REVIEWED** | `20261111000200_admin_create_user_read_functions.sql`; scoped user read; audit; cursor pagination; control UI update; database migration run passed 2026-11-11 |
-| CP-005 | Audit contract extension | EP-02 | **REVIEWED** | `20261111000400_platform_alter_audit_contract.sql`; audit read filters/cursor; read-of-audit record; control UI; tests; database migration run passed 2026-11-11 |
-| CP-006 | Admin module schema foundation | EP-02 | **REVIEWED** | `20261111000500_admin_create_organisation_tables.sql`; `20261111000600_admin_create_case_and_approval_tables.sql`; schema tests; database migration run passed 2026-11-11 |
-| CP-007 | Control shell foundation | EP-02 | **REVIEWED** | `react-router` routes; permission-aware navigation; `GET /v1/control/authority`; 404 and unauthorised states; **design-token migration still partial** |
-| CP-008 | Deny/allow/RLS evidence pack | EP-02 | **REVIEWED** | `P0-EVIDENCE-PACK.md`; `tests/control-p0-matrix.test.ts`; `tests/control-routes.test.ts`; local gates and database run green; **CI/review/staging outstanding** |
+| CP-002 | Administrative authorization model | EP-02 (foundation) | **COMPLETED** | `20261111000100_admin_create_authorization_tables.sql`; `server/src/modules/admin/authorization.ts`; pure tests; database migration run passed 2026-11-11 |
+| CP-003 | Capability registry and context extension | EP-02 (foundation) | **COMPLETED** | Capability registry additions; permission/deny rules; registry tests; OpenAPI regenerated |
+| CP-004 | Admin read path and user-directory remediation | EP-02 (foundation) | **COMPLETED** | `20261111000200_admin_create_user_read_functions.sql`; scoped user read; audit; cursor pagination; control UI update; database migration run passed 2026-11-11 |
+| CP-005 | Audit contract extension | EP-02 | **COMPLETED** | `20261111000400_platform_alter_audit_contract.sql`; audit read filters/cursor; read-of-audit record; control UI; tests; database migration run passed 2026-11-11 |
+| CP-006 | Admin module schema foundation | EP-02 | **COMPLETED** | `20261111000500_admin_create_organisation_tables.sql`; `20261111000600_admin_create_case_and_approval_tables.sql`; schema tests; database migration run passed 2026-11-11 |
+| CP-007 | Control shell foundation | EP-02 | **COMPLETED** | `react-router` routes; permission-aware navigation; `GET /v1/control/authority`; 404 and unauthorised states; **design-token migration still partial** |
+| CP-008 | Deny/allow/RLS evidence pack | EP-02 | **COMPLETED** | `P0-EVIDENCE-PACK.md`; `tests/control-p0-matrix.test.ts`; `tests/control-routes.test.ts`; local gates and database run green; **CI/review/staging outstanding** |
 | CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **COMPLETED** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
 | CP-011 | Grant organisation by department | EP-02 | **COMPLETED** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
-| CP-010 | Staff records and lifecycle | EP-02 | **REVIEWED** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
+| CP-010 | Staff records and lifecycle | EP-02 | **COMPLETED** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
 | CP-012 | Role administration | EP-02 | **COMPLETED** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated. **Signed off 14 November 2026 — see §4.1.** |
 | CP-013 | Account governance | EP-02 | **COMPLETED** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
 | CP-020 | Approval and maker-checker | EP-02 | **COMPLETED** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows. **Signed off 14 November 2026 — see §4.1.** |
@@ -59,10 +59,10 @@ Findings closed by pull request: #100 (F-A-01), #101 and #102 (F-A-02, F-A-07), 
 F-B-02, F-B-04), #107 (F-C-02, F-C-03), #108 (F-C-01). #103 wired the governance database suites
 into CI, which is what turned their evidence from assertion into execution.
 
-`REVIEWED` is not `COMPLETED`. Eleven packages were signed off on 14 November 2026 and are recorded
-in §4.1: CP-009, CP-011, CP-012, CP-013, CP-014, CP-015, CP-016, CP-017, CP-018, CP-019 and CP-020.
-The remaining eight — CP-002 through CP-008 and CP-010 — still need that signature, and the open
-findings above are recorded rather than waived.
+`REVIEWED` is not `COMPLETED`. All nineteen implemented packages are now `COMPLETED`: eleven signed
+individually in §4.1 and eight signed as a group after #114 closed the last three findings. CP-001
+predates this programme. The informational findings recorded against signed packages are accepted
+limitations, not waivers of an unresolved control.
 
 ## 2. CP-001 evidence
 
@@ -266,6 +266,24 @@ sensitive action alone — is implemented, locked and tested in both directions.
 | **Guarantees confirmed** | The read model is keyed by the authenticated user with no organisation id parameter; terminated organisations disappear; a partner session is refused on control and activity routes; no governance capability appears in a partner session |
 | **Accepted limitations** | Partner screens consume the endpoint later; the API contract is the guarantee today |
 | **Status** | `COMPLETED` |
+
+#### Foundation packages — signed off 14 November 2026
+
+The remaining eight packages, signed as a group after the three findings that blocked them were
+closed (#114). Each traces to the same evidence: the merge commit's CI, Fly and staging-gate runs from
+`REVIEW-REGISTER.md`, its integration suite executing in CI since #103, and its Batch A or Batch B
+verdict.
+
+| Package | Guarantee signed | Accepted limitations |
+|---|---|---|
+| CP-002 | Authority is composed from roles, individual grants and scope-aware denials, and denies by default | F-A-02's denial surface was built later (#101) and is gated by `admin.role.manage` |
+| CP-003 | Every capability names its permission or grant, and an explicit denial precedes a missing permission | F-C-04 (Info): permissions for unbuilt packages appear as capabilities |
+| CP-004 | The directory is a bounded, capability-gated definer read that re-checks inside the database | F-A-01 and F-A-03 closed by #100 and #114 |
+| CP-005 | The audit contract is additive and append-only, and a governed change cannot be recorded without a reason | F-A-05 (Info): matrix tests assert on SQL text; behavioural proof is the CI database job |
+| CP-006 | Every admin table has forced RLS, reference data is the only broadly readable surface, and cases, evidence and approvals are function-only | None |
+| CP-007 | Routes are permission-aware, and an undeclared audience fails closed | F-A-01 closed by #100 |
+| CP-008 | The deny/allow/RLS evidence pack existed and was independently reviewed | F-A-06 (Info): the pack is now superseded by `REVIEW-REGISTER.md` |
+| CP-010 | Staff onboarding creates an identity on the official address only, and offboarding revokes sessions, identity grants, individual permission grants and role assignments | F-B-05 (Info) per-process invite limiter; F-B-06 (Info) implicit consumer account |
 
 ### CP-002 - Administrative authorization model
 
@@ -655,11 +673,11 @@ UI-only change: no migration, no API contract change and no permission change.
 19. `admin.list_departments` is gated by `admin.grant.read` or `admin.grant.manage`, but the Staff
     screen also calls it to populate the invite form. A staff manager without a grant capability
     currently sees an error there. Stage 2 will also accept `admin.user.read`. (CP-010/CP-011)
-20. Open review finding F-A-03: `admin.list_users` passes `%` and `_` through to `ilike` unescaped.
+20. **Closed 14 November 2026 (#114).** F-A-03: `admin.list_users` passes `%` and `_` through to `ilike` unescaped.
     No injection, but wildcard enumeration and a forced scan. (CP-004)
-21. Open review finding F-A-04: the audit "reason is required" rule is a column comment. Neither the
+21. **Closed 14 November 2026 (#114).** F-A-04: the audit "reason is required" rule is a column comment. Neither the
     schema nor `appendAudit` enforces it for sensitive actions. (CP-005)
-22. Open review finding F-B-03: the staff status audit before-state reads `admin.staff_profiles`
+22. **Closed 14 November 2026 (#114).** F-B-03: the staff status audit before-state reads `admin.staff_profiles`
     under self-only RLS, so it is empty for every target other than the actor. (CP-010)
 23. Open review finding F-B-05: the invite rate limiter is per API process, so the budget multiplies
     across Fly machines and resets on restart. Move it to shared state before production scale.
