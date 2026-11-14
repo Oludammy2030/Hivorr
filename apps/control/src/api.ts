@@ -93,6 +93,31 @@ export interface AssignRoleInput {
   readonly reason: string
 }
 
+export interface AccessDenial {
+  readonly id: string
+  readonly userId: string
+  readonly email: string
+  readonly displayName: string | null
+  readonly permissionKey: string
+  readonly scopeType: string | null
+  readonly scopeId: string | null
+  readonly reason: string
+  readonly expiresAt: string | null
+  readonly createdAt: string
+  readonly createdBy: string | null
+  readonly revokedAt: string | null
+  readonly revokedReason: string | null
+}
+
+export interface CreateDenialInput {
+  readonly email: string
+  readonly permissionKey: string
+  readonly scopeType: RoleScopeType
+  readonly scopeId?: string
+  readonly expiresAt?: string
+  readonly reason: string
+}
+
 export interface OwnGrants {
   readonly grants: readonly Grant[]
   readonly capabilities: readonly string[]
@@ -647,6 +672,17 @@ export const api = {
     ),
   revokeGrant: (id: string, reason: string) =>
     request<Grant>(`/control/grants/${encodeURIComponent(id)}/revoke`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
+  listDenials: () => request<readonly AccessDenial[]>("/control/denials"),
+  createDenial: (input: CreateDenialInput) =>
+    request<AccessDenial>("/control/denials", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  revokeDenial: (id: string, reason: string) =>
+    request<AccessDenial>(`/control/denials/${encodeURIComponent(id)}/revoke`, {
       method: "POST",
       body: JSON.stringify({ reason }),
     }),

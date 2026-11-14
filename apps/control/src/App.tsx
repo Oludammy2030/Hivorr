@@ -7,6 +7,7 @@ import {
   errorMessage,
   isMfaChallenge,
   type AuditEntry,
+  type AccessDenial,
   type ControlAuthority,
   type Department,
   type Grant,
@@ -472,6 +473,13 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   const [roleStatusFilter, setRoleStatusFilter] = useState("active")
   const [roleFilterKey, setRoleFilterKey] = useState("")
   const [accessPerson, setAccessPerson] = useState("")
+  const [denials, setDenials] = useState<readonly AccessDenial[] | null>(null)
+  const [denialEmail, setDenialEmail] = useState("")
+  const [denialPermission, setDenialPermission] = useState("")
+  const [denialScopeType, setDenialScopeType] =
+    useState<RoleScopeType>("platform")
+  const [denialScopeId, setDenialScopeId] = useState("")
+  const [denialReason, setDenialReason] = useState("")
   const [users, setUsers] = useState<readonly UserSummary[] | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [userSearch, setUserSearch] = useState("")
@@ -1276,6 +1284,93 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     }
   }, [section, roles, canReadRoles])
 
+  useEffect(() => {
+    if (section !== "denials" || denials !== null || !canReadRoles) return
+    let active = true
+    setBusy(true)
+    Promise.all([
+      api.listDenials(),
+      roles === null ? api.listRoles() : Promise.resolve(roles),
+      api.listRoleScopeTargets("department"),
+      api.listRoleScopeTargets("organisation"),
+    ])
+      .then(([denialRows, roleRows, departmentRows, organisationRows]) => {
+        if (!active) return
+        setDenials(denialRows)
+        if (roles === null) {
+          setRoles(roleRows)
+          setAssignRoleKey((current) => current || (roleRows[0]?.key ?? ""))
+        }
+        setScopeTargets({
+          department: departmentRows,
+          organisation: organisationRows,
+        })
+      })
+      .catch((value: unknown) => {
+        if (active) setError(errorMessage(value))
+      })
+      .finally(() => {
+        if (active) setBusy(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [section, denials, canReadRoles, roles])
+
+  async function handleCreateDenial(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const email = denialEmail.trim()
+    const reason = denialReason.trim()
+
+    if (!email || !denialPermission || reason.length < 3) {
+      setError("Choose a person, a permission and a reason.")
+      return
+    }
+    if (denialScopeType !== "platform" && !denialScopeId) {
+      setError("Choose the scope this denial applies to.")
+      return
+    }
+
+    setBusy(true)
+    setError(undefined)
+    try {
+      const created = await api.createDenial({
+        email,
+        permissionKey: denialPermission,
+        scopeType: denialScopeType,
+        ...(denialScopeType === "platform" ? {} : { scopeId: denialScopeId }),
+        reason,
+      })
+      setDenials((current) => [created, ...(current ?? [])])
+      setDenialReason("")
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRevokeDenial(denial: AccessDenial) {
+    const reason = window.prompt(
+      `Reason for lifting ${denial.permissionKey} for ${denial.email}:`,
+    )
+    if (!reason || reason.trim().length < 3) return
+    setBusy(true)
+    setError(undefined)
+    try {
+      const revoked = await api.revokeDenial(denial.id, reason.trim())
+      setDenials((current) =>
+        (current ?? []).map((entry) =>
+          entry.id === revoked.id ? revoked : entry,
+        ),
+      )
+    } catch (value) {
+      setError(errorMessage(value))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleAssignRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -1629,6 +1724,19 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
       ? matchingStaff
       : assignableStaff.filter((staff) => staff.email === assignStaffEmail)
 
+  const deniablePermissions = Array.from(
+    new Set((roles ?? []).flatMap((role) => role.permissions ?? [])),
+  ).sort()
+  const denialScopeTargets =
+    denialScopeType === "platform" ? [] : scopeTargets[denialScopeType]
+  const visibleDenials = (denials ?? []).filter((denial) => {
+    const person = accessPerson.trim().toLowerCase()
+    if (!person) return true
+    return [denial.email, denial.displayName, denial.permissionKey]
+      .filter((value): value is string => Boolean(value))
+      .some((value) => value.toLowerCase().includes(person))
+  })
+
   if (location.pathname === "/roles" || location.pathname === "/grants") {
     return (
       <Navigate to={`/access${location.pathname}${location.search}`} replace />
@@ -1641,6 +1749,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
 
   if (knownPath && section === "grants" && !canReadGrants && canReadRoles) {
     return <Navigate to="/access/roles" replace />
+  }
+
+  if (knownPath && section === "denials" && !canReadRoles) {
+    return <Navigate to={canReadGrants ? "/access/grants" : "/"} replace />
   }
 
   return (
@@ -1691,40 +1803,53 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
           <span className="badge">{session.environment}</span>
         </header>
 
-        {knownPath && (section === "roles" || section === "grants") && (
-          <nav className="access-tabs" aria-label="Access">
-            <div className="access-tab-list">
-              {canReadRoles && (
-                <NavLink
-                  to="/access/roles"
-                  className={({ isActive }) =>
-                    `access-tab${isActive ? " is-active" : ""}`
-                  }
-                >
-                  Roles
-                </NavLink>
-              )}
-              {canReadGrants && (
-                <NavLink
-                  to="/access/grants"
-                  className={({ isActive }) =>
-                    `access-tab${isActive ? " is-active" : ""}`
-                  }
-                >
-                  Grants
-                </NavLink>
-              )}
-            </div>
-            <input
-              className="search-input access-person"
-              type="search"
-              placeholder="Find a person by name or email"
-              value={accessPerson}
-              onChange={(event) => setAccessPerson(event.target.value)}
-              aria-label="Find a person across roles and grants"
-            />
-          </nav>
-        )}
+        {knownPath &&
+          (section === "roles" ||
+            section === "grants" ||
+            section === "denials") && (
+            <nav className="access-tabs" aria-label="Access">
+              <div className="access-tab-list">
+                {canReadRoles && (
+                  <NavLink
+                    to="/access/roles"
+                    className={({ isActive }) =>
+                      `access-tab${isActive ? " is-active" : ""}`
+                    }
+                  >
+                    Roles
+                  </NavLink>
+                )}
+                {canReadGrants && (
+                  <NavLink
+                    to="/access/grants"
+                    className={({ isActive }) =>
+                      `access-tab${isActive ? " is-active" : ""}`
+                    }
+                  >
+                    Grants
+                  </NavLink>
+                )}
+                {canReadRoles && (
+                  <NavLink
+                    to="/access/denials"
+                    className={({ isActive }) =>
+                      `access-tab${isActive ? " is-active" : ""}`
+                    }
+                  >
+                    Denials
+                  </NavLink>
+                )}
+              </div>
+              <input
+                className="search-input access-person"
+                type="search"
+                placeholder="Find a person by name or email"
+                value={accessPerson}
+                onChange={(event) => setAccessPerson(event.target.value)}
+                aria-label="Find a person across roles and grants"
+              />
+            </nav>
+          )}
 
         {error && (
           <p className="error" role="alert">
@@ -2531,6 +2656,207 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
                 )}
               </section>
             )}
+          </div>
+        )}
+
+        {knownPath && section === "denials" && canReadRoles && (
+          <div className="dash-stack">
+            {canManageRoles && (
+              <section className="panel">
+                <div className="panel-head">
+                  <h2>Deny a permission</h2>
+                  <button
+                    className="button button-small"
+                    type="submit"
+                    form="deny-permission-form"
+                    disabled={busy || deniablePermissions.length === 0}
+                  >
+                    {busy ? "Working." : "Deny"}
+                  </button>
+                </div>
+                <p className="muted">
+                  A denial removes one governance permission from one person in
+                  one scope until it expires or is lifted. It overrides a role.
+                  Privileged grants are outside this list: revoke the grant
+                  instead.
+                </p>
+                <form
+                  id="deny-permission-form"
+                  className="form"
+                  onSubmit={handleCreateDenial}
+                >
+                  <div className="form-row">
+                    <label className="field">
+                      <span>Person (email)</span>
+                      <input
+                        type="email"
+                        value={denialEmail}
+                        onChange={(event) => setDenialEmail(event.target.value)}
+                        required
+                        disabled={busy}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Permission</span>
+                      <select
+                        value={denialPermission}
+                        onChange={(event) =>
+                          setDenialPermission(event.target.value)
+                        }
+                        required
+                        disabled={busy || deniablePermissions.length === 0}
+                      >
+                        <option value="">
+                          {deniablePermissions.length === 0
+                            ? "No permissions available"
+                            : "Choose a permission"}
+                        </option>
+                        {deniablePermissions.map((permission) => (
+                          <option key={permission} value={permission}>
+                            {capabilityLabel(permission)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Scope</span>
+                      <select
+                        value={denialScopeType}
+                        onChange={(event) => {
+                          setDenialScopeType(
+                            event.target.value as RoleScopeType,
+                          )
+                          setDenialScopeId("")
+                        }}
+                        disabled={busy}
+                      >
+                        <option value="platform">Platform</option>
+                        <option value="department">Department</option>
+                        <option value="organisation">Organisation</option>
+                      </select>
+                    </label>
+                    {denialScopeType !== "platform" && (
+                      <label className="field">
+                        <span>
+                          {denialScopeType === "department"
+                            ? "Department"
+                            : "Organisation"}
+                        </span>
+                        <select
+                          value={denialScopeId}
+                          onChange={(event) =>
+                            setDenialScopeId(event.target.value)
+                          }
+                          required
+                          disabled={busy || denialScopeTargets.length === 0}
+                        >
+                          <option value="">
+                            {denialScopeTargets.length === 0
+                              ? "Nothing to choose"
+                              : "Choose a target"}
+                          </option>
+                          {denialScopeTargets.map((target) => (
+                            <option key={target.id} value={target.id}>
+                              {target.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                  </div>
+                  <label className="field">
+                    <span>Reason</span>
+                    <input
+                      type="text"
+                      minLength={3}
+                      maxLength={500}
+                      value={denialReason}
+                      onChange={(event) => setDenialReason(event.target.value)}
+                      required
+                      disabled={busy}
+                    />
+                  </label>
+                  <p className="hint">
+                    You cannot deny your own authority, and the last platform
+                    holder of a role or grant administration permission cannot
+                    be denied.
+                  </p>
+                </form>
+              </section>
+            )}
+
+            <section className="panel">
+              <h2>Denials</h2>
+              <p className="muted">
+                Active denials take precedence over a role. Revoked denials are
+                kept with the reason they were lifted.
+              </p>
+              {denials !== null && visibleDenials.length === 0 && (
+                <p className="muted">No denials apply to this filter.</p>
+              )}
+              {visibleDenials.length > 0 && (
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Person</th>
+                        <th>Permission</th>
+                        <th>Scope</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleDenials.map((denial) => (
+                        <tr key={denial.id}>
+                          <td>
+                            <div>{denial.displayName ?? denial.email}</div>
+                            <div className="muted mono">{denial.email}</div>
+                          </td>
+                          <td>
+                            <div>{capabilityLabel(denial.permissionKey)}</div>
+                            <div className="muted mono">
+                              {denial.permissionKey}
+                            </div>
+                            <div className="muted">{denial.reason}</div>
+                          </td>
+                          <td>
+                            {denial.scopeType ?? "all scopes"}
+                            {denial.scopeId ? (
+                              <div className="muted mono">{denial.scopeId}</div>
+                            ) : null}
+                          </td>
+                          <td>
+                            {denial.revokedAt ? (
+                              <>
+                                <div>Lifted</div>
+                                <div className="muted">
+                                  {denial.revokedReason}
+                                </div>
+                              </>
+                            ) : (
+                              <div>Active</div>
+                            )}
+                          </td>
+                          <td>
+                            {!denial.revokedAt && canManageRoles && (
+                              <button
+                                className="button button-small button-quiet"
+                                type="button"
+                                onClick={() => handleRevokeDenial(denial)}
+                                disabled={busy}
+                              >
+                                Lift
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
           </div>
         )}
 
