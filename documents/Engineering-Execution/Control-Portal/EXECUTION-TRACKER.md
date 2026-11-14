@@ -22,14 +22,14 @@
 | CP-006 | Admin module schema foundation | EP-02 | **REVIEWED** | `20261111000500_admin_create_organisation_tables.sql`; `20261111000600_admin_create_case_and_approval_tables.sql`; schema tests; database migration run passed 2026-11-11 |
 | CP-007 | Control shell foundation | EP-02 | **REVIEWED** | `react-router` routes; permission-aware navigation; `GET /v1/control/authority`; 404 and unauthorised states; **design-token migration still partial** |
 | CP-008 | Deny/allow/RLS evidence pack | EP-02 | **REVIEWED** | `P0-EVIDENCE-PACK.md`; `tests/control-p0-matrix.test.ts`; `tests/control-routes.test.ts`; local gates and database run green; **CI/review/staging outstanding** |
-| CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REVIEWED** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
-| CP-011 | Grant organisation by department | EP-02 | **REVIEWED** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
+| CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **COMPLETED** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
+| CP-011 | Grant organisation by department | EP-02 | **COMPLETED** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
 | CP-010 | Staff records and lifecycle | EP-02 | **REVIEWED** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
 | CP-012 | Role administration | EP-02 | **COMPLETED** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated. **Signed off 14 November 2026 — see §4.1.** |
-| CP-013 | Account governance | EP-02 | **REVIEWED** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
+| CP-013 | Account governance | EP-02 | **COMPLETED** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
 | CP-020 | Approval and maker-checker | EP-02 | **COMPLETED** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows. **Signed off 14 November 2026 — see §4.1.** |
-| CP-014 | Partner organisations | EP-02 | **REVIEWED** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
-| CP-015 | Partner isolation | EP-02 | **REVIEWED** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
+| CP-014 | Partner organisations | EP-02 | **COMPLETED** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
+| CP-015 | Partner isolation | EP-02 | **COMPLETED** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
 | CP-016 | Case spine and timeline | EP-02 | **COMPLETED** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
 | CP-017 | Case evidence metadata | EP-02 | **COMPLETED** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
 | CP-018 | Support and dispute operations | EP-02 | **COMPLETED** | `20261114001000_admin_add_case_decisions.sql`; case decisions routed through CP-020; outcome and closure reason on the case; decision events on the timeline; "Request decision" in the case detail; OpenAPI regenerated |
@@ -40,15 +40,16 @@
 
 ## 1.1 Independent review evidence
 
-Three review passes under `DEV-002` cover every implemented package. Each read the diff at the
-merge commit, not the pull-request description (`QUA-30`), and recorded findings with the rule they
-breach.
+Three review passes under `DEV-002` cover every implemented package, plus an addendum for CP-009,
+which the batch boundaries initially skipped. Each read the diff at the merge commit, not the
+pull-request description (`QUA-30`), and recorded findings with the rule they breach.
 
 | Batch | Packages | Record | Findings | Closed | Open |
 |---|---|---|---|---|---|
 | A | CP-002 → CP-008 | `REVIEW-BATCH-A.md` | 7 | F-A-01, F-A-02, F-A-07 | F-A-03, F-A-04, F-A-05, F-A-06 |
 | B | CP-010 → CP-015 | `REVIEW-BATCH-B.md` | 6 | F-B-01, F-B-02, F-B-04 | F-B-03, F-B-05, F-B-06 |
 | C | CP-016 → CP-020 | `REVIEW-BATCH-C.md` | 5 | F-C-01, F-C-02, F-C-03 | F-C-04, F-C-05 |
+| — | CP-009 | `REVIEW-BATCH-A.md` §7 (addendum) | 1 | — | F-A-08 (Info) |
 
 The evidence index itself is `REVIEW-REGISTER.md` (Phase 1), which maps every package to its pull
 requests, merge commit, CI run, Fly release, staging gate, migration and test files, and records
@@ -58,9 +59,10 @@ Findings closed by pull request: #100 (F-A-01), #101 and #102 (F-A-02, F-A-07), 
 F-B-02, F-B-04), #107 (F-C-02, F-C-03), #108 (F-C-01). #103 wired the governance database suites
 into CI, which is what turned their evidence from assertion into execution.
 
-`REVIEWED` is not `COMPLETED`. CP-012, CP-020, CP-016, CP-017, CP-018 and CP-019 were signed off by
-the founder on 14 November 2026 and are recorded in §4.1. The other thirteen packages still need that
-signature, and the open findings above are recorded rather than waived.
+`REVIEWED` is not `COMPLETED`. Eleven packages were signed off on 14 November 2026 and are recorded
+in §4.1: CP-009, CP-011, CP-012, CP-013, CP-014, CP-015, CP-016, CP-017, CP-018, CP-019 and CP-020.
+The remaining eight — CP-002 through CP-008 and CP-010 — still need that signature, and the open
+findings above are recorded rather than waived.
 
 ## 2. CP-001 evidence
 
@@ -208,6 +210,61 @@ sensitive action alone — is implemented, locked and tested in both directions.
 | **Guarantees confirmed** | Queue requires `admin.verification.review`; a decision requires a reason and a valid outcome; approving without evidence is refused (`23514`); request-information moves the case to pending information; each decision writes an audit row with the officer, reason and evidence count |
 | **Accepted limitations** | No automated lane routing, SLA timers, document OCR or identity-provider integration, as stated in the package |
 | **Open findings** | None |
+| **Status** | `COMPLETED` |
+
+#### CP-009 — Audit actor accountability, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261112000100` and `…0200`; the nine tests in `tests/audit.test.ts`, executing in CI; the CP-009 addendum in `REVIEW-BATCH-A.md` §7, recorded when the batch split was found to have skipped this package |
+| **Guarantees confirmed** | The actor snapshot is taken at write time and is not a join; historical rows keep an empty snapshot rather than an invented one; role scope is captured alongside the role key; a non-UUID actor resolves to an empty snapshot instead of failing the write; portal bundles deploy from the verified artifact |
+| **Accepted limitations** | F-A-08 (Info): `resolve_audit_actor` is an unguarded definer lookup of personal data, necessary for the audit writer and to revisit if that writer's database role changes |
+| **Status** | `COMPLETED` |
+
+#### CP-011 — Grant organisation by department, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261112000300`; the seven tests in `tests/grants-integration.test.ts`, executing in CI; Batch B review, verdict `REVIEWED` with no findings |
+| **Guarantees confirmed** | A grant records its owning department with a reason; re-homing is audited; the department catalogue is capability-gated; departments carry no authority, so a grant still decides what a user may do |
+| **Accepted limitations** | No department administration screen; a new grant defaults to the first department alphabetically (follow-up 18) |
+| **Status** | `COMPLETED` |
+
+#### CP-013 — Account governance, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114000400`; the five tests in `tests/account-governance.test.ts`, executing in CI; Batch B review, verdict `REVIEWED` with no findings |
+| **Guarantees confirmed** | Self-action refused in the database; state transitions validated; suspension revokes sessions; closure revokes sessions, identity grants, individual permission grants and role assignments; every action writes an audit row with the operator and a reason |
+| **Accepted limitations** | Closure goes through CP-020 and the direct path answers `409`; reopening a closed account has no supported path |
+| **Status** | `COMPLETED` |
+
+#### CP-014 — Partner organisations, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114000600`; the four tests in `tests/partners.test.ts`, executing in CI; Batch B review, verdict `REVIEWED` with no findings |
+| **Guarantees confirmed** | The register, lifecycle and representatives sit behind `admin.partner.read` and `admin.partner.manage`; every mutation goes through a definer function and writes an audit row |
+| **Accepted limitations** | The partner portal is still a foundation shell (follow-up 15) |
+| **Status** | `COMPLETED` |
+
+#### CP-015 — Partner isolation, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114000700`; the four tests in `tests/partner-isolation.test.ts`, executing in CI; Batch B review, verdict `REVIEWED` with no findings |
+| **Guarantees confirmed** | The read model is keyed by the authenticated user with no organisation id parameter; terminated organisations disappear; a partner session is refused on control and activity routes; no governance capability appears in a partner session |
+| **Accepted limitations** | Partner screens consume the endpoint later; the API contract is the guarantee today |
 | **Status** | `COMPLETED` |
 
 ### CP-002 - Administrative authorization model

@@ -208,3 +208,45 @@ remediation, because both are "fix the code" or "change the rule", not obviously
 - Staging runtime probes of the deny paths. `test:db` covers this in CI; it cannot run locally.
 - The control UI beyond the capability list it consumes.
 - CP-009's audit actor snapshot, which is the next batch boundary but shares CP-005's contract.
+
+## 7. Addendum — CP-009 audit actor snapshot, reviewed 14 November 2026
+
+CP-009 fell between the batch boundaries: Batch A ended at CP-008 and Batch B began at CP-010, so no
+record covered it. That gap was mine, not the package's. It is reviewed here.
+
+**Subject:** `458ffec` (#55) and `92d49a5` (#56); migrations `20261112000100` and `20261112000200`;
+`server/src/modules/platform/audit.ts`; the `deploy-pages` job.
+
+**What it does:** snapshots the actor's display name, email, governance role keys and role assignment
+scopes onto each audit row at write time, adds the authorising capability, and publishes all four
+portal bundles from the verified release artifact.
+
+**Checked and sound:**
+
+- **The snapshot is a snapshot, not a join.** `resolve_audit_actor` reads the actor's assignments
+  once, when the row is written; a later role change does not rewrite history. Historical rows keep
+  an empty array rather than a fabricated value, which is the correct choice for evidence.
+- **Scope is captured, not just the role key.** `actor_role_scopes` records `{roleKey, scopeType,
+  scopeId}`, so two holders of the same role are distinguishable after the fact.
+- **The text signature is deliberate.** Moving from `uuid` to `text` means a background actor with a
+  non-UUID identifier resolves to an empty snapshot instead of raising a cast error inside the
+  caller's transaction — a failure that would have rolled back the audited action itself.
+- **Actor classification is normalised centrally** once, which is why staff actions recorded as
+  `user` with a `control` audience land as `admin`.
+- **Deployment parity is real.** `deploy-pages` publishes the bundles from the verified artifact
+  rather than rebuilding, so what ships is what was verified (`AUD-75`).
+
+**F-A-08 — Info — `resolve_audit_actor` is an unguarded definer lookup**
+
+`platform.resolve_audit_actor(text)` is granted to `hivorr_api` and returns the display name, email,
+role keys and role scopes for **any** user id. The grant is necessary: the audit writer runs as
+`hivorr_api` and must resolve the actor inside the same transaction. The function is narrow and its
+purpose is documented.
+
+It is recorded because it is the same shape as `admin.case_view` before #108 — a definer read of
+personal data with no capability check, safe only because nothing calls it with hostile input. The
+difference is that this one is used and cannot simply be revoked; if the writer ever moves to a
+database role with different privileges, the grant should be revisited.
+
+**Verdict:** CP-009 is **REVIEWED** with no defects and one informational note. It is a candidate for
+sign-off.
