@@ -8,8 +8,10 @@
 --
 --   * the case is assigned to the actor, or
 --   * the case belongs to a department where the actor is an active member, or
+--   * the actor opened the case, or
 --   * the case has neither an assignee nor a department and the actor holds
---     `admin.case.assign` — an unassigned pool nobody could otherwise triage.
+--     `admin.case.read` or `admin.case.assign` — an unassigned pool nobody
+--     could otherwise triage.
 --
 -- The rule keys on department membership rather than `queue_key` because
 -- `queue_key` is free text with nothing mapping it to people, while
@@ -40,6 +42,7 @@ as $$
      where c.id = p_case_id
        and (
          c.assignee_id = p_actor_user_id
+         or c.created_by = p_actor_user_id
          or exists (
            select 1
              from admin.department_members dm

@@ -18,6 +18,7 @@ describeIntegration("case visibility scope", () => {
   let governanceId: string
   let careCaseId: string
   let governanceCaseId: string
+  let governancePrivateCaseId: string
   let unassignedCaseId: string
 
   async function createUser(email: string): Promise<string> {
@@ -95,6 +96,10 @@ describeIntegration("case visibility scope", () => {
       "Governance investigation",
     )
     unassignedCaseId = await createCase(careId, "Unfiled case")
+    governancePrivateCaseId = await createCase(
+      governanceId,
+      "Governance private case",
+    )
 
     await database.query(
       `update admin.cases set department_id =
@@ -105,8 +110,8 @@ describeIntegration("case visibility scope", () => {
     await database.query(
       `update admin.cases set department_id =
          (select id from admin.departments where key = 'governance')
-       where id = $1`,
-      [governanceCaseId],
+       where id = any($1::uuid[])`,
+      [[governanceCaseId, governancePrivateCaseId]],
     )
   }, 60_000)
 
@@ -155,7 +160,7 @@ describeIntegration("case visibility scope", () => {
     const error = await database
       .query("select * from admin.list_case_events($1, $2)", [
         careId,
-        governanceCaseId,
+        governancePrivateCaseId,
       ])
       .catch((value: unknown) => value)
 
