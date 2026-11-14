@@ -183,7 +183,7 @@ describeIntegration("case spine integration", () => {
     workerCookie = worker.cookie
 
     await setup.query(
-      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.case.assign', 'platform'), ($1, 'admin.case.read', 'platform')",
+      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.case.assign', 'platform'), ($1, 'admin.case.read', 'platform'), ($1, 'admin.evidence.read', 'platform')",
       [manager.userId],
     )
   }, 60_000)

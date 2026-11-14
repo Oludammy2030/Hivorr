@@ -221,7 +221,7 @@ describeIntegration("approval integration", () => {
       [requesterId],
     )
     await setup.query(
-      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.case.assign', 'platform'), ($1, 'admin.case.read', 'platform')",
+      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.case.assign', 'platform'), ($1, 'admin.case.read', 'platform'), ($1, 'admin.case.recommend', 'platform')",
       [requesterId],
     )
     await setup.query(
