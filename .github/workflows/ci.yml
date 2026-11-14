@@ -292,7 +292,7 @@ jobs:
     name: database migrations
     needs: install
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:17
@@ -365,6 +365,11 @@ jobs:
         env:
           IDENTITY_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         run: pnpm test:identity
+
+      - name: Governance integration
+        env:
+          IDENTITY_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: pnpm test:integration
 
       - name: Worker outbox integration
         env:
