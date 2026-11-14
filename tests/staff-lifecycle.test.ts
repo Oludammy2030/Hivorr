@@ -138,31 +138,47 @@ describeIntegration("staff status guards", () => {
     }
   })
 
-  async function actAsOperator() {
-    await database.query("select platform.set_identity_context($1, $2)", [
-      accountId,
-      operatorId,
-    ])
+  async function asOperator<T>(work: () => Promise<T>): Promise<T> {
+    // The identity context is transaction-local, exactly as the API sets it, so
+    // the whole call must happen inside one transaction.
+    await database.query("begin")
+    try {
+      await database.query("select platform.set_identity_context($1, $2)", [
+        accountId,
+        operatorId,
+      ])
+      const result = await work()
+      await database.query("commit")
+      return result
+    } catch (error) {
+      await database.query("rollback")
+      throw error
+    }
   }
 
   it("refuses to change the operator's own staff status", async () => {
-    await actAsOperator()
-    await expect(
+    const error = await asOperator(() =>
       database.query(
         "select * from admin.set_staff_status($1, 'suspended', 'testing self')",
         [operatorId],
       ),
-    ).rejects.toMatchObject({ code: "42501" })
+    ).catch((value: unknown) => value)
+
+    expect(error).toMatchObject({ code: "42501" })
+    expect(String((error as Error).message)).toContain(
+      "self_staff_change_forbidden",
+    )
   })
 
   it("revokes individual permission grants when offboarding", async () => {
-    await actAsOperator()
-    const result = await database.query<{
-      permission_grants_revoked: string
-      grants_revoked: string
-    }>(
-      "select * from admin.set_staff_status($1, 'offboarded', 'left the company')",
-      [revokeeId],
+    const result = await asOperator(() =>
+      database.query<{
+        permission_grants_revoked: string
+        grants_revoked: string
+      }>(
+        "select * from admin.set_staff_status($1, 'offboarded', 'left the company')",
+        [revokeeId],
+      ),
     )
 
     expect(Number(result.rows[0]!.permission_grants_revoked)).toBe(1)
@@ -191,12 +207,14 @@ describeIntegration("staff status guards", () => {
   })
 
   it("refuses to offboard the last governance administrator", async () => {
-    await actAsOperator()
-    await expect(
+    const error = await asOperator(() =>
       database.query(
         "select * from admin.set_staff_status($1, 'offboarded', 'left the company')",
         [lastHolderId],
       ),
-    ).rejects.toMatchObject({ code: "23514" })
+    ).catch((value: unknown) => value)
+
+    expect(error).toMatchObject({ code: "23514" })
+    expect(String((error as Error).message)).toContain("last_staff_manager")
   })
 })
