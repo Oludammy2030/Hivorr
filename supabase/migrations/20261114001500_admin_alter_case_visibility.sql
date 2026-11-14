@@ -18,8 +18,9 @@
 -- An invisible case answers `P0002`, not `FORBIDDEN`: a refusal that confirms
 -- existence is itself a disclosure.
 --
--- `admin.case_view(uuid)` is dropped. It took no actor, checked no permission,
--- read any case by id, and is called by nothing in the server or the apps.
+-- `admin.case_view(uuid)` stays as an internal helper for `create_case`, but
+-- `hivorr_api` loses EXECUTE: it took no actor and checked no permission, so it
+-- must not be callable directly. Definer functions still reach it.
 
 set local lock_timeout = '5s';
 
@@ -63,7 +64,8 @@ comment on function admin.case_visible_to(uuid, uuid) is
 
 revoke all on function admin.case_visible_to(uuid, uuid) from public;
 
-drop function if exists admin.case_view(uuid);
+-- Internal helper only. `create_case` calls it; no client may.
+revoke execute on function admin.case_view(uuid) from hivorr_api;
 
 create or replace function admin.list_cases(
   p_actor_user_id uuid,

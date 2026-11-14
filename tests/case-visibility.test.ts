@@ -176,10 +176,10 @@ describeIntegration("case visibility scope", () => {
     expect(error).toMatchObject({ code: "P0002" })
   })
 
-  it("removed the unguarded case view", async () => {
-    const result = await database.query<{ exists: boolean }>(
-      "select to_regprocedure('admin.case_view(uuid)') is not null as exists",
+  it("makes the unguarded case view internal only", async () => {
+    const result = await database.query<{ callable: boolean }>(
+      "select has_function_privilege('hivorr_api', 'admin.case_view(uuid)', 'execute') as callable",
     )
-    expect(result.rows[0]!.exists).toBe(false)
+    expect(result.rows[0]!.callable).toBe(false)
   })
 })
