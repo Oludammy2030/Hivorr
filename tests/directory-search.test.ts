@@ -15,6 +15,7 @@ describeIntegration("directory search and staff status reads", () => {
   let database: Client
 
   let operatorId: string
+  let operatorAccountId: string
   let targetId: string
 
   async function createUser(email: string): Promise<string> {
@@ -50,6 +51,12 @@ describeIntegration("directory search and staff status reads", () => {
       operatorId = await createUser("operator@hivorr.com")
       targetId = await createUser("target@hivorr.com")
 
+      const operator = await database.query<{ account_id: string }>(
+        "select account_id from identity.users where id = $1",
+        [operatorId],
+      )
+      operatorAccountId = operator.rows[0]!.account_id
+
       await database.query(
         `insert into admin.staff_profiles (user_id, engagement_status)
        values ($1, 'active')`,
@@ -81,11 +88,24 @@ describeIntegration("directory search and staff status reads", () => {
   })
 
   async function search(term: string): Promise<readonly string[]> {
-    const result = await database.query<{ email: string }>(
-      "select * from admin.list_users($1, '', null, null, 50)",
-      [term],
-    )
-    return result.rows.map((row) => row.email)
+    // `list_users` reads the caller from the transaction-scoped identity
+    // context, exactly as the API sets it.
+    await database.query("begin")
+    try {
+      await database.query("select platform.set_identity_context($1, $2)", [
+        operatorAccountId,
+        operatorId,
+      ])
+      const result = await database.query<{ email: string }>(
+        "select * from admin.list_users($1, '', null, null, 50)",
+        [term],
+      )
+      await database.query("commit")
+      return result.rows.map((row) => row.email)
+    } catch (error) {
+      await database.query("rollback")
+      throw error
+    }
   }
 
   it("treats a percent in the search term as a literal character", async () => {
