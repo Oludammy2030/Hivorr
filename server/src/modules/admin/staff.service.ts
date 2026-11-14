@@ -61,6 +61,7 @@ export interface StaffStatusResult {
   readonly engagementStatus: string
   readonly sessionsRevoked: number
   readonly grantsRevoked: number
+  readonly permissionGrantsRevoked: number
 }
 
 export interface StaffDepartmentResult {
@@ -370,6 +371,7 @@ export class StaffService {
             engagement_status: string
             sessions_revoked: string
             grants_revoked: string
+            permission_grants_revoked: string
           }>("select * from admin.set_staff_status($1, $2, $3)", [
             input.targetUserId,
             input.status,
@@ -390,6 +392,7 @@ export class StaffService {
               engagementStatus: row.engagement_status,
               sessionsRevoked: Number(row.sessions_revoked),
               grantsRevoked: Number(row.grants_revoked),
+              permissionGrantsRevoked: Number(row.permission_grants_revoked),
             },
             ip: input.context.ip,
             userAgent: input.context.userAgent,
@@ -403,6 +406,7 @@ export class StaffService {
             engagementStatus: row.engagement_status,
             sessionsRevoked: Number(row.sessions_revoked),
             grantsRevoked: Number(row.grants_revoked),
+            permissionGrantsRevoked: Number(row.permission_grants_revoked),
           }
         },
       )
