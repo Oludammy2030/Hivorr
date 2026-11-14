@@ -684,6 +684,7 @@ export const staffStatusResponse = z.object({
   engagementStatus: z.string(),
   sessionsRevoked: z.number().int(),
   grantsRevoked: z.number().int(),
+  permissionGrantsRevoked: z.number().int().optional(),
 })
 
 export const setStaffDepartmentRequest = z.strictObject({

@@ -16391,6 +16391,11 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "permissionGrantsRevoked": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
@@ -16861,6 +16866,11 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "permissionGrantsRevoked": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
@@ -17328,6 +17338,11 @@
                       "maximum": 9007199254740991
                     },
                     "grantsRevoked": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "permissionGrantsRevoked": {
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
