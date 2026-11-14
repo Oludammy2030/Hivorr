@@ -16402,8 +16402,7 @@
                     "userId",
                     "engagementStatus",
                     "sessionsRevoked",
-                    "grantsRevoked",
-                    "permissionGrantsRevoked"
+                    "grantsRevoked"
                   ],
                   "additionalProperties": false
                 }
@@ -16878,8 +16877,7 @@
                     "userId",
                     "engagementStatus",
                     "sessionsRevoked",
-                    "grantsRevoked",
-                    "permissionGrantsRevoked"
+                    "grantsRevoked"
                   ],
                   "additionalProperties": false
                 }
@@ -17354,8 +17352,7 @@
                     "userId",
                     "engagementStatus",
                     "sessionsRevoked",
-                    "grantsRevoked",
-                    "permissionGrantsRevoked"
+                    "grantsRevoked"
                   ],
                   "additionalProperties": false
                 }

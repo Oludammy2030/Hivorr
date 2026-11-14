@@ -125,15 +125,15 @@ export type AttachStaffProfileResponse = { "userId": string; "staffProfileId": s
 
 export type SuspendStaffRequest = { "reason": string }
 
-export type SuspendStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number; "permissionGrantsRevoked": number }
+export type SuspendStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number; "permissionGrantsRevoked"?: number }
 
 export type ReactivateStaffRequest = { "reason": string }
 
-export type ReactivateStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number; "permissionGrantsRevoked": number }
+export type ReactivateStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number; "permissionGrantsRevoked"?: number }
 
 export type OffboardStaffRequest = { "reason": string }
 
-export type OffboardStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number; "permissionGrantsRevoked": number }
+export type OffboardStaffResponse = { "userId": string; "engagementStatus": string; "sessionsRevoked": number; "grantsRevoked": number; "permissionGrantsRevoked"?: number }
 
 export type SetStaffDepartmentRequest = { "departmentKey": string; "reason": string }
 
