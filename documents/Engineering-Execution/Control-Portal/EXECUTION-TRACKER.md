@@ -27,7 +27,7 @@
 | CP-010 | Staff records and lifecycle | EP-02 | **REVIEWED** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
 | CP-012 | Role administration | EP-02 | **COMPLETED** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated. **Signed off 14 November 2026 — see §4.1.** |
 | CP-013 | Account governance | EP-02 | **REVIEWED** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
-| CP-020 | Approval and maker-checker | EP-02 | **REVIEWED** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
+| CP-020 | Approval and maker-checker | EP-02 | **COMPLETED** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows. **Signed off 14 November 2026 — see §4.1.** |
 | CP-014 | Partner organisations | EP-02 | **REVIEWED** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
 | CP-015 | Partner isolation | EP-02 | **REVIEWED** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
 | CP-016 | Case spine and timeline | EP-02 | **REVIEWED** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
@@ -58,9 +58,9 @@ Findings closed by pull request: #100 (F-A-01), #101 and #102 (F-A-02, F-A-07), 
 F-B-02, F-B-04), #107 (F-C-02, F-C-03), #108 (F-C-01). #103 wired the governance database suites
 into CI, which is what turned their evidence from assertion into execution.
 
-`REVIEWED` is not `COMPLETED`. CP-012 was signed off by the founder on 14 November 2026 and is
-recorded in §4.1. The other eighteen packages still need that signature, and the open findings above
-are recorded rather than waived.
+`REVIEWED` is not `COMPLETED`. CP-012 and CP-020 were signed off by the founder on 14 November 2026
+and are recorded in §4.1. The other seventeen packages still need that signature, and the open
+findings above are recorded rather than waived.
 
 ## 2. CP-001 evidence
 
@@ -146,6 +146,21 @@ are recorded rather than waived.
 
 This is the first package to pass the full `REQUIRES_REVIEW` → `REVIEWED` → `COMPLETED` ladder. The
 signature rests on the recorded evidence, not on an assertion that the code is defect-free.
+
+#### CP-020 — Approval and maker-checker, signed off 14 November 2026
+
+| Field | Value |
+|---|---|
+| **Signed by** | Prince Abidemi Oluwadamilare, founder |
+| **Date** | 14 November 2026 |
+| **Evidence reviewed** | `20261114000500_admin_add_approvals.sql` and its `…001000` extension; the five integration tests in `tests/approvals.test.ts`, executing in CI since #103; Batch C review (`REVIEW-BATCH-C.md`), verdict `REVIEWED` with no findings against CP-020; `REVIEW-REGISTER.md` evidence row |
+| **Guarantees confirmed** | Requester cannot decide (`approval_self_decision_forbidden`, inside the `for update` lock); the approver must hold `admin.approval.decide` **and** the action permission at decision time; requesting itself requires the action permission, so approval never grants new authority; a decided request cannot be re-decided; unknown action types fail closed; a rejection leaves the target untouched |
+| **Accepted limitations** | One approval stage, by design (`D-06`: no workflow engine); only `account.closure` and `case.decision` are wired; no request expiry and no notification until CP-023 |
+| **Open findings** | None attributable to CP-020 |
+| **Status** | `COMPLETED` |
+
+This is the package where the portal's central claim — that no single administrator executes a
+sensitive action alone — is implemented, locked and tested in both directions.
 
 ### CP-002 - Administrative authorization model
 
