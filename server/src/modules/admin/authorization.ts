@@ -1,5 +1,7 @@
 import type { PoolClient } from "pg"
 
+import type { AccessContext } from "../../domain/capabilities"
+
 /**
  * Governance authority (CP-002/CP-003).
  *
@@ -138,6 +140,26 @@ export function composeAuthority(
     deniedPermissions: denied.sort(),
     assignments,
     denials,
+  }
+}
+
+/**
+ * Builds the capability inputs for a governance caller.
+ *
+ * Only platform-scoped assignments may become capabilities, so this function —
+ * not `authority.permissions` — is the correct input for `computeCapabilities`.
+ * Folding the raw union in would turn a department-, case- or
+ * organisation-scoped role into a platform-wide capability and let a controller
+ * gate pass a check the database is about to refuse.
+ */
+export function withPlatformAuthority(
+  context: AccessContext,
+  authority: GovernanceAuthority,
+): AccessContext {
+  return {
+    ...context,
+    adminPermissions: platformPermissions(authority),
+    deniedPermissions: authority.deniedPermissions,
   }
 }
 

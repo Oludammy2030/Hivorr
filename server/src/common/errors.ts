@@ -71,3 +71,19 @@ export function requireCapability(
     )
   }
 }
+
+/**
+ * A security-definer function raises SQLSTATE 42501 when the caller lacks the
+ * permission the function checks. Services map it where they call the function;
+ * a controller that calls one directly must map it too, or the denial reaches
+ * the error filter as an unmapped driver error and becomes a 500.
+ */
+export function databasePermissionDenial(error: unknown): ApiError | undefined {
+  if (typeof error !== "object" || error === null) return undefined
+  if ((error as { code?: unknown }).code !== "42501") return undefined
+  return new ApiError(
+    "FORBIDDEN",
+    "You do not have permission to perform this action.",
+    403,
+  )
+}

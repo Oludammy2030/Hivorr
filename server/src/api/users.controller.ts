@@ -2,11 +2,15 @@ import { Controller, Get, Inject, Query, Req, Res } from "@nestjs/common"
 import type { FastifyReply, FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
-import { ApiError, requireCapability } from "../common/errors"
+import {
+  ApiError,
+  databasePermissionDenial,
+  requireCapability,
+} from "../common/errors"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { DatabaseService } from "../db/database.service"
 import { computeCapabilities } from "../domain/capabilities"
-import { loadAdminAuthority } from "../modules/admin"
+import { loadAdminAuthority, withPlatformAuthority } from "../modules/admin"
 import {
   IdentityService,
   accessToken,
@@ -93,33 +97,33 @@ export class UsersController {
           session.userId,
         )
         requireCapability(
-          computeCapabilities({
-            ...access,
-            adminPermissions: authority.permissions,
-            deniedPermissions: authority.deniedPermissions,
-          }),
+          computeCapabilities(withPlatformAuthority(access, authority)),
           "admin.user.read",
         )
 
         const search = (query ?? "").trim()
         const statusFilter = (status ?? "").trim()
 
-        const result = await transaction.query<{
-          id: string
-          account_id: string
-          email: string
-          display_name: string | null
-          status: string
-          email_verified_at: string | null
-          created_at: string
-          confirmed_factors: string
-        }>("select * from admin.list_users($1, $2, $3, $4, $5)", [
-          search,
-          statusFilter,
-          page.before,
-          page.beforeId,
-          USER_PAGE_SIZE + 1,
-        ])
+        const result = await transaction
+          .query<{
+            id: string
+            account_id: string
+            email: string
+            display_name: string | null
+            status: string
+            email_verified_at: string | null
+            created_at: string
+            confirmed_factors: string
+          }>("select * from admin.list_users($1, $2, $3, $4, $5)", [
+            search,
+            statusFilter,
+            page.before,
+            page.beforeId,
+            USER_PAGE_SIZE + 1,
+          ])
+          .catch((error: unknown) => {
+            throw databasePermissionDenial(error) ?? error
+          })
 
         const visible = result.rows.slice(0, USER_PAGE_SIZE)
         const last = visible[visible.length - 1]
