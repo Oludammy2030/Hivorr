@@ -56,7 +56,7 @@
     "smoke:staging": "node scripts/smoke-staging.mjs",
     "e2e:slice": "node scripts/e2e-slice.mjs",
     "test:identity": "vitest run tests/identity-integration.test.ts",
-    "test:integration": "vitest run --no-file-parallelism tests/account-governance.test.ts tests/approvals.test.ts tests/cases.test.ts tests/denials.test.ts tests/grants-integration.test.ts tests/partner-isolation.test.ts tests/partners.test.ts tests/roles-integration.test.ts tests/staff-lifecycle.test.ts tests/verification.test.ts",
+    "test:integration": "vitest run --no-file-parallelism tests/account-governance.test.ts tests/approvals.test.ts tests/case-permissions.test.ts tests/cases.test.ts tests/denials.test.ts tests/grants-integration.test.ts tests/partner-isolation.test.ts tests/partners.test.ts tests/roles-integration.test.ts tests/staff-lifecycle.test.ts tests/verification.test.ts",
     "test:worker": "vitest run tests/worker-outbox.test.ts",
     "test:worker-smoke": "node scripts/smoke-worker.mjs",
     "test:push-protection": "node scripts/test-push-protection.mjs",
