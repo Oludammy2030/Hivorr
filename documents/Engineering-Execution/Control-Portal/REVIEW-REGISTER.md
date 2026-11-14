@@ -54,8 +54,8 @@ A three-state ladder is proposed so that "reviewed" and "signed" are distinguish
 | `COMPLETED` | Signed off against the reviewed evidence | **founder only** |
 
 **Adopted 14 November 2026.** Every implemented package moved to `REVIEWED` in
-`EXECUTION-TRACKER.md`; CP-012 has since moved to `COMPLETED` on founder sign-off (§4.1 of the
-tracker). The rest await the same signature.
+`EXECUTION-TRACKER.md`; CP-012 and CP-020 have since moved to `COMPLETED` on founder sign-off (§4.1
+of the tracker). The rest await the same signature.
 
 ## 4. Evidence register
 
