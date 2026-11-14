@@ -4,9 +4,9 @@
 |---|---|
 | **Document** | `documents/Engineering-Execution/Control-Portal/EXECUTION-TRACKER.md` |
 | **Workstream** | `CP` — Control Portal governance programme |
-| **Updated** | 11 November 2026 |
+| **Updated** | 14 November 2026 |
 | **Authority** | `DECISION-RECORD.md` (approved 11 November 2026) |
-| **Status rule** | A package is `COMPLETED` only with a linked artifact. Code alone is `REQUIRES_REVIEW`. |
+| **Status rule** | `REQUIRES_REVIEW` — implemented, no recorded review. `REVIEWED` — independent review pass recorded, findings closed, CI green on the merge commit, staging evidence present. `COMPLETED` — signed off by the founder against the reviewed evidence. |
 
 ---
 
@@ -15,28 +15,51 @@
 | ID | Package | Owning phase | Status | Evidence |
 |---|---|---|---|---|
 | CP-001 | Decision closure and governance charter | Cross-phase (pre-EP-02) | **COMPLETED** | Decision record; governance architecture; architecture/matrix/execution-structure amendments |
-| CP-002 | Administrative authorization model | EP-02 (foundation) | **REQUIRES_REVIEW** | `20261111000100_admin_create_authorization_tables.sql`; `server/src/modules/admin/authorization.ts`; pure tests; database migration run passed 2026-11-11 |
-| CP-003 | Capability registry and context extension | EP-02 (foundation) | **REQUIRES_REVIEW** | Capability registry additions; permission/deny rules; registry tests; OpenAPI regenerated |
-| CP-004 | Admin read path and user-directory remediation | EP-02 (foundation) | **REQUIRES_REVIEW** | `20261111000200_admin_create_user_read_functions.sql`; scoped user read; audit; cursor pagination; control UI update; database migration run passed 2026-11-11 |
-| CP-005 | Audit contract extension | EP-02 | **REQUIRES_REVIEW** | `20261111000400_platform_alter_audit_contract.sql`; audit read filters/cursor; read-of-audit record; control UI; tests; database migration run passed 2026-11-11 |
-| CP-006 | Admin module schema foundation | EP-02 | **REQUIRES_REVIEW** | `20261111000500_admin_create_organisation_tables.sql`; `20261111000600_admin_create_case_and_approval_tables.sql`; schema tests; database migration run passed 2026-11-11 |
-| CP-007 | Control shell foundation | EP-02 | **REQUIRES_REVIEW** | `react-router` routes; permission-aware navigation; `GET /v1/control/authority`; 404 and unauthorised states; **design-token migration still partial** |
-| CP-008 | Deny/allow/RLS evidence pack | EP-02 | **REQUIRES_REVIEW** | `P0-EVIDENCE-PACK.md`; `tests/control-p0-matrix.test.ts`; `tests/control-routes.test.ts`; local gates and database run green; **CI/review/staging outstanding** |
-| CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REQUIRES_REVIEW** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
-| CP-011 | Grant organisation by department | EP-02 | **REQUIRES_REVIEW** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
-| CP-010 | Staff records and lifecycle | EP-02 | **REQUIRES_REVIEW** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
-| CP-012 | Role administration | EP-02 | **REQUIRES_REVIEW** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated |
-| CP-013 | Account governance | EP-02 | **REQUIRES_REVIEW** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
-| CP-020 | Approval and maker-checker | EP-02 | **REQUIRES_REVIEW** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
-| CP-014 | Partner organisations | EP-02 | **REQUIRES_REVIEW** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
-| CP-015 | Partner isolation | EP-02 | **REQUIRES_REVIEW** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
-| CP-016 | Case spine and timeline | EP-02 | **REQUIRES_REVIEW** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
-| CP-017 | Case evidence metadata | EP-02 | **REQUIRES_REVIEW** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
-| CP-018 | Support and dispute operations | EP-02 | **REQUIRES_REVIEW** | `20261114001000_admin_add_case_decisions.sql`; case decisions routed through CP-020; outcome and closure reason on the case; decision events on the timeline; "Request decision" in the case detail; OpenAPI regenerated |
-| CP-019 | Verification review | EP-02 | **REQUIRES_REVIEW** | `20261114001100_admin_add_verification_reviews.sql`; verification queue over review cases; evidence-gated approval; approve/reject/request-information with reason; Verification screen; audit rows |
+| CP-002 | Administrative authorization model | EP-02 (foundation) | **REVIEWED** | `20261111000100_admin_create_authorization_tables.sql`; `server/src/modules/admin/authorization.ts`; pure tests; database migration run passed 2026-11-11 |
+| CP-003 | Capability registry and context extension | EP-02 (foundation) | **REVIEWED** | Capability registry additions; permission/deny rules; registry tests; OpenAPI regenerated |
+| CP-004 | Admin read path and user-directory remediation | EP-02 (foundation) | **REVIEWED** | `20261111000200_admin_create_user_read_functions.sql`; scoped user read; audit; cursor pagination; control UI update; database migration run passed 2026-11-11 |
+| CP-005 | Audit contract extension | EP-02 | **REVIEWED** | `20261111000400_platform_alter_audit_contract.sql`; audit read filters/cursor; read-of-audit record; control UI; tests; database migration run passed 2026-11-11 |
+| CP-006 | Admin module schema foundation | EP-02 | **REVIEWED** | `20261111000500_admin_create_organisation_tables.sql`; `20261111000600_admin_create_case_and_approval_tables.sql`; schema tests; database migration run passed 2026-11-11 |
+| CP-007 | Control shell foundation | EP-02 | **REVIEWED** | `react-router` routes; permission-aware navigation; `GET /v1/control/authority`; 404 and unauthorised states; **design-token migration still partial** |
+| CP-008 | Deny/allow/RLS evidence pack | EP-02 | **REVIEWED** | `P0-EVIDENCE-PACK.md`; `tests/control-p0-matrix.test.ts`; `tests/control-routes.test.ts`; local gates and database run green; **CI/review/staging outstanding** |
+| CP-009 | Audit actor accountability and portal deploy parity | EP-02 | **REVIEWED** | `20261112000100_platform_alter_audit_actor_snapshot.sql`; `20261112000200_platform_alter_audit_actor_role_scope.sql`; actor name/email/role/scope/capability snapshots; Actor column shows role, scope and name; `deploy-pages` job publishes all four bundles from the verified artifact; local gates green |
+| CP-011 | Grant organisation by department | EP-02 | **REVIEWED** | `20261112000300_identity_grants_department.sql`; department on each grant; department list and drill-in with search and status filter; grant holder's name in the read model; assignment audited with a reason |
+| CP-010 | Staff records and lifecycle | EP-02 | **REVIEWED** | `20261113000100_admin_create_staff_lifecycle.sql`; `20261113000200_admin_add_staff_profile_attachment.sql`; `staff.controller.ts`; `staff-invite.controller.ts`; `staff.service.ts`; Staff screen; `/invite.html` page; existing-account onboarding; ZeptoMail invitation email; OpenAPI regenerated; staging deploy green |
+| CP-012 | Role administration | EP-02 | **REVIEWED** | `20261114000200_admin_add_role_administration.sql`; seeded role catalogue with permissions; assign and revoke with scope, expiry and reason; self-change and last-manager guards; Roles screen; audit rows; OpenAPI regenerated |
+| CP-013 | Account governance | EP-02 | **REVIEWED** | `20261114000400_admin_add_account_governance.sql`; suspend, reactivate, close and revoke-sessions functions; operator notes; account timeline; Users detail actions; audit rows; OpenAPI regenerated |
+| CP-020 | Approval and maker-checker | EP-02 | **REVIEWED** | `20261114000500_admin_add_approvals.sql`; typed requests over the existing approval tables; requester cannot decide; approver needs both `admin.approval.decide` and the action permission; account closure wired as the first action; Approvals screen; audit rows |
+| CP-014 | Partner organisations | EP-02 | **REVIEWED** | `20261114000600_admin_add_partner_governance.sql`; partner register, lifecycle and representatives; `admin.partner.read/manage` permissions; partners screen; audit rows; OpenAPI regenerated |
+| CP-015 | Partner isolation | EP-02 | **REVIEWED** | `20261114000700_admin_add_partner_isolation.sql`; self-scoped partner read model; `GET /v1/partner/organisations`; partner audience refuses control/activity surfaces; isolation integration tests |
+| CP-016 | Case spine and timeline | EP-02 | **REVIEWED** | `20261114000800_admin_add_case_spine.sql`; case register, creation, append-only timeline, assignment and status; Cases screen; audit rows; OpenAPI regenerated |
+| CP-017 | Case evidence metadata | EP-02 | **REVIEWED** | `20261114000900_admin_add_case_evidence.sql`; evidence metadata with SHA-256, access audit on the timeline, supersede link; case evidence UI; OpenAPI regenerated |
+| CP-018 | Support and dispute operations | EP-02 | **REVIEWED** | `20261114001000_admin_add_case_decisions.sql`; case decisions routed through CP-020; outcome and closure reason on the case; decision events on the timeline; "Request decision" in the case detail; OpenAPI regenerated |
+| CP-019 | Verification review | EP-02 | **REVIEWED** | `20261114001100_admin_add_verification_reviews.sql`; verification queue over review cases; evidence-gated approval; approve/reject/request-information with reason; Verification screen; audit rows |
 | CP-021…CP-024 | P1 core governance | EP-02 | `PENDING` / gated | — |
 | CP-030…CP-038 | P2 advanced governance | EP-02–EP-05 | `PENDING` / gated | — |
 | CP-040…CP-043 | P3 future | Later | `PENDING` / gated | — |
+
+## 1.1 Independent review evidence
+
+Three review passes under `DEV-002` cover every implemented package. Each read the diff at the
+merge commit, not the pull-request description (`QUA-30`), and recorded findings with the rule they
+breach.
+
+| Batch | Packages | Record | Findings | Closed | Open |
+|---|---|---|---|---|---|
+| A | CP-002 → CP-008 | `REVIEW-BATCH-A.md` | 7 | F-A-01, F-A-02, F-A-07 | F-A-03, F-A-04, F-A-05, F-A-06 |
+| B | CP-010 → CP-015 | `REVIEW-BATCH-B.md` | 6 | F-B-01, F-B-02, F-B-04 | F-B-03, F-B-05, F-B-06 |
+| C | CP-016 → CP-020 | `REVIEW-BATCH-C.md` | 5 | F-C-01, F-C-02, F-C-03 | F-C-04, F-C-05 |
+
+The evidence index itself is `REVIEW-REGISTER.md` (Phase 1), which maps every package to its pull
+requests, merge commit, CI run, Fly release, staging gate, migration and test files, and records
+the eleven gaps it found (`G-01` → `G-11`).
+
+Findings closed by pull request: #100 (F-A-01), #101 and #102 (F-A-02, F-A-07), #105 (F-B-01,
+F-B-02, F-B-04), #107 (F-C-02, F-C-03), #108 (F-C-01). #103 wired the governance database suites
+into CI, which is what turned their evidence from assertion into execution.
+
+`REVIEWED` is not `COMPLETED`. Every package below still needs the founder's signature, and the
+open findings above are recorded rather than waived.
 
 ## 2. CP-001 evidence
 
@@ -141,6 +164,45 @@
 - **Audit impact:** R2 identity data; every directory read writes `admin.users_listed`; no evidence or financial data.
 - **Rollback:** revert the endpoint to a deny-only state by removing the capability assignment; the function can remain but is unreachable without the permission.
 - **Approver:** Architect; founder for the read scope.
+
+### CP-005 — Audit contract extension
+
+- **Class:** `[REVIEW]` — audit schema and API contract.
+- **Scope in:** `reason`, `approval_reference` and `session_id` columns (additive); filtered, cursor-paged audit reads; `admin.audit_read` written on every read; Audit screen; `audit_log_action_idx`.
+- **Scope out:** hash chain and signed export (approved in principle, later); historical backfill.
+- **Reuse:** `platform.audit_log`, the append-only trigger, `appendAudit`, existing capability checks.
+- **Test plan:** unit tests for actor classification, capability and scope parsing; `tests/audit.test.ts` covers filters and pagination; the CI database job applies the migration and verifies history.
+- **Gap recorded at review:** "reason is required" exists only as a column comment (F-A-04). The columns are intentionally nullable so historical rows remain valid.
+- **Approver:** Architect; founder for the audit-read presentation.
+
+### CP-006 — Admin module schema foundation
+
+- **Class:** `[REVIEW]` — new schema and RLS surface.
+- **Scope in:** permissions, roles, role permissions, role assignments, permission grants, access denials, departments, staff profiles, department members, partner entities, cases, case events, evidence, findings, recommendations, decisions, actions, approvals, work items and configuration tables; forced RLS with self-scoped select policies only.
+- **Scope out:** any feature endpoint; any write grant to `hivorr_api`.
+- **Reuse:** `platform.uuidv7()`, `identity.users`, `platform.touch_updated_at()`.
+- **Test plan:** schema assertions; `control-p0-matrix` proves enable/force RLS on every table and that no write grant exists; sensitive tables (cases, evidence, approvals) have no direct `SELECT` grant at all.
+- **Review note:** the strongest part of the batch — access is function-only by construction.
+- **Approver:** Architect.
+
+### CP-007 — Control shell foundation
+
+- **Class:** `[REVIEW]` — new control surface and a new authority endpoint.
+- **Scope in:** `react-router` routes, permission-aware navigation, `GET /v1/control/authority`, 404 and unauthorised states, design tokens.
+- **Scope out:** staff and partner shells; the design-token migration remains partial.
+- **Reuse:** `computeCapabilities`, `loadAccessContext`, `AudienceGuard`.
+- **Test plan:** `control-routes` covers path and title mapping; `control-p0-matrix` covers the audience of every admin capability; `slice-screens` covers rendering.
+- **Finding at review:** the authority endpoint folded unscoped permissions into capabilities (F-A-01), fixed in #100.
+- **Approver:** Architect.
+
+### CP-008 — Deny/allow/RLS evidence pack
+
+- **Class:** `[REVIEW]` — evidence, not code.
+- **Scope in:** `P0-EVIDENCE-PACK.md`, `tests/control-p0-matrix.test.ts`, `tests/control-routes.test.ts`, local gate output, the first database run.
+- **Scope out:** runtime proof of every deny path, which is the CI database job's role.
+- **Evidence:** CI `43047734311`, Fly `43047734163` and staging gate `43047734228` on `4e29364`; the pack itself is now superseded by `REVIEW-REGISTER.md` and the batch reviews.
+- **Finding at review:** the matrix tests assert on migration SQL text rather than behaviour (F-A-05); the pack's description overstated the runtime half (F-A-06).
+- **Approver:** Architect.
 
 ### CP-009 — Audit actor accountability and portal deploy parity
 
@@ -408,8 +470,10 @@ UI-only change: no migration, no API contract change and no permission change.
 5. Explicit denials are scope-aware. Future resource policies must call `permissionScopes` rather than
    treating `deniedPermissions` as the whole answer.
 6. Retention, legal hold, financial definitions and verification decisions remain open (O-01…O-12).
-7. CI on the exact commit and independent review are the remaining gates before CP-002/003/004 move
-   from `REQUIRES_REVIEW` to `COMPLETED`.
+7. The independent review gate is closed for every implemented package: three batch passes are
+   recorded in `REVIEW-BATCH-A.md`, `-B.md` and `-C.md`, their High and Medium findings are fixed on
+   `staging`, and the governance database suites now run in CI. The remaining gate is founder
+   sign-off: no package is `COMPLETED` until it is signed against that evidence.
 8. Departments are seeded by migration and there is no department administration screen yet. A grant
    is placed in a department when it is created; grants issued before CP-011 appear under
    "Unassigned" until an administrator records the department. (CP-011)
@@ -439,20 +503,44 @@ UI-only change: no migration, no API contract change and no permission change.
 15. The partner boundary is enforced at the API, but the partner portal is still a foundation shell.
     Its screens will consume `GET /v1/partner/organisations`; no organisation id is accepted, so the
     portal inherits the isolation instead of re-implementing it. (CP-015)
-11. Every transactional message renders through one shared layout, so the brand cannot drift between
+16. Every transactional message renders through one shared layout, so the brand cannot drift between
     messages. Password reset and email verification now carry a link to `/reset.html` and
     `/verify.html`; before this they sent a bare token with no page to use it on. Both pages need a
     real-browser pass on staging. (EP-01-031)
-12. A staff invitation carries two addresses: the official `@hivorr.com` address becomes the
+17. A staff invitation carries two addresses: the official `@hivorr.com` address becomes the
     account, and the personal address only receives the invitation. Acceptance never asks for an
     email, so the personal address cannot be used to register or sign in. The official mailbox is
     still created in the mail system by hand; the portal does not provision or suspend it. (CP-010)
-13. A new grant still defaults to the first department alphabetically because the session response
+18. A new grant still defaults to the first department alphabetically because the session response
     does not expose the operator's own department. Stage 2 will add that field so the form can
     pre-select it while keeping a free choice. (CP-011)
-14. `admin.list_departments` is gated by `admin.grant.read` or `admin.grant.manage`, but the Staff
+19. `admin.list_departments` is gated by `admin.grant.read` or `admin.grant.manage`, but the Staff
     screen also calls it to populate the invite form. A staff manager without a grant capability
     currently sees an error there. Stage 2 will also accept `admin.user.read`. (CP-010/CP-011)
+20. Open review finding F-A-03: `admin.list_users` passes `%` and `_` through to `ilike` unescaped.
+    No injection, but wildcard enumeration and a forced scan. (CP-004)
+21. Open review finding F-A-04: the audit "reason is required" rule is a column comment. Neither the
+    schema nor `appendAudit` enforces it for sensitive actions. (CP-005)
+22. Open review finding F-B-03: the staff status audit before-state reads `admin.staff_profiles`
+    under self-only RLS, so it is empty for every target other than the actor. (CP-010)
+23. Open review finding F-B-05: the invite rate limiter is per API process, so the budget multiplies
+    across Fly machines and resets on restart. Move it to shared state before production scale.
+    (CP-010)
+24. Open review finding F-C-04: eight governance permissions are seeded and shown as capabilities
+    but checked by nothing. `admin.case.investigate`, `admin.payment.review`,
+    `admin.dispute.resolve`, `admin.account.suspend`, `admin.configuration.write` and
+    `admin.report.export` belong to unbuilt packages; `admin.case.recommend` and
+    `admin.evidence.read` are now enforced. (CP-003)
+25. Case **write** paths (`add_case_event`, `assign_case`, `set_case_status`, `add_case_evidence`,
+    `supersede_case_evidence`) still act on any case id, including one the actor cannot see. A case
+    read is now scoped (F-C-01); the write paths are the remaining half and need the same predicate.
+    (CP-016)
+26. `create_case` does not set `department_id`, so a new case enters the unfiled pool until someone
+    files or assigns it. A department picker on creation is the natural follow-up to the visibility
+    rule. (CP-016)
+27. No browser pass has been recorded for the Denials tab (`/access/denials`), and the control portal
+    still has no visual baseline. The staff invite flow, `/reset` and `/verify` are also unverified
+    in a real browser on staging. (CP-002/CP-010)
 
 ---
 
