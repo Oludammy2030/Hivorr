@@ -5,7 +5,7 @@ import { Audience } from "../common/audience"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { DatabaseService } from "../db/database.service"
 import { computeCapabilities } from "../domain/capabilities"
-import { loadAdminAuthority, platformPermissions } from "../modules/admin"
+import { loadAdminAuthority, withPlatformAuthority } from "../modules/admin"
 import {
   IdentityService,
   accessToken,
@@ -61,11 +61,7 @@ export class SessionController {
         return {
           ...session,
           capabilities: [
-            ...computeCapabilities({
-              ...access,
-              adminPermissions: platformPermissions(authority),
-              deniedPermissions: authority.deniedPermissions,
-            }),
+            ...computeCapabilities(withPlatformAuthority(access, authority)),
           ],
         }
       },
