@@ -27,10 +27,56 @@ export interface AuditEntry {
   readonly capability?: string | undefined
 }
 
+/**
+ * Actions that change authority, a case's state or a partner relationship. Each
+ * must carry a reason: an audit row with no reason is indistinguishable from a
+ * defect, and the reason is the evidence that a human decided.
+ *
+ * Reads, authentication events and actions whose input *is* the explanation
+ * (a case note) are deliberately absent.
+ */
+const REASON_REQUIRED_ACTIONS: ReadonlySet<string> = new Set([
+  "identity.role_assigned",
+  "identity.role_revoked",
+  "admin.access_denied",
+  "admin.access_denial_revoked",
+  "admin.staff_invite_created",
+  "admin.staff_status_changed",
+  "admin.staff_department_changed",
+  "admin.staff_profile_attached",
+  "account.closed",
+  "approval.requested",
+  "case.created",
+  "case.status_changed",
+  "case.evidence_added",
+  "case.evidence_superseded",
+  "case.decision_requested",
+  "partner.created",
+  "partner.status_changed",
+  "partner.representative_added",
+])
+
+const MINIMUM_REASON_LENGTH = 3
+
+/** True when the action may not be recorded without a reason. */
+export function requiresReason(action: string): boolean {
+  return REASON_REQUIRED_ACTIONS.has(action)
+}
+
+function hasReason(reason: string | undefined): boolean {
+  return (reason ?? "").trim().length >= MINIMUM_REASON_LENGTH
+}
+
 export async function appendAudit(
   client: PoolClient,
   entry: AuditEntry,
 ): Promise<void> {
+  if (requiresReason(entry.action) && !hasReason(entry.reason)) {
+    throw new Error(
+      `audit reason required for ${entry.action}: a governed change cannot be recorded without one`,
+    )
+  }
+
   const actorType =
     entry.actorType === "user" && entry.actorAudience === "control"
       ? "admin"
