@@ -53,9 +53,9 @@ A three-state ladder is proposed so that "reviewed" and "signed" are distinguish
 | `REVIEWED` | Review pass recorded, findings closed, CI green on the merge commit, staging evidence present | the reviewing agent, with the record in this register |
 | `COMPLETED` | Signed off against the reviewed evidence | **founder only** |
 
-No package may move from `REQUIRES_REVIEW` to `COMPLETED` in one step, because the author and the
-approver would be the same actor. Adopting this vocabulary is a founder decision; until it is
-adopted, every row below stays at its current tracker status.
+**Adopted 14 November 2026.** Every implemented package moved to `REVIEWED` in
+`EXECUTION-TRACKER.md`; none is `COMPLETED`, because sign-off is the founder's act and has not been
+given.
 
 ## 4. Evidence register
 
@@ -121,7 +121,10 @@ packages; the register records which, so Phase 2 does not re-litigate resolved i
 
 ## 7. Review batches
 
-Phase 2 reads the diff at each merge commit against `QUA-33` and `AUT-39`, in three batches.
+Phase 2 ran on 14 November 2026 and is complete. The three records are `REVIEW-BATCH-A.md`
+(CP-002 → CP-008), `REVIEW-BATCH-B.md` (CP-010 → CP-015) and `REVIEW-BATCH-C.md`
+(CP-016 → CP-020). Eighteen findings were recorded; the two High and five Medium findings are fixed
+on `staging`, and the rest are carried as follow-ups 20–27 in `EXECUTION-TRACKER.md`.
 
 | Batch | Packages | Focus |
 |---|---|---|

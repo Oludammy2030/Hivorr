@@ -6,11 +6,17 @@
 | **Pack date** | 11 November 2026 |
 | **Workstream** | `CP` |
 | **Scope** | CP-001 … CP-008 (P0 foundation) |
-| **Status** | **PARTIAL — local code and tests verified; database run, CI and independent review outstanding.** |
-| **Approver status** | Not signed. `REQUIRES_REVIEW`. |
+| **Status** | **SUPERSEDED — 14 November 2026.** Kept for history; the current evidence index is `REVIEW-REGISTER.md` and the review records are `REVIEW-BATCH-A.md`, `-B.md` and `-C.md`. |
+| **Approver status** | Not signed. Superseded before sign-off; the packages it covers are now `REVIEWED` in `EXECUTION-TRACKER.md`, awaiting founder sign-off. |
 
 > This pack states what was run and what it proves. It is not a claim that the Control Portal is
 > complete, secure or production-ready. A criterion without an artifact is unmet.
+
+> **Superseded.** This pack was written on 11 November 2026, before CI produced a run for `4e29364`
+> and before any independent review existed. The packages it covers are now recorded in
+> `REVIEW-REGISTER.md`, independently reviewed in `REVIEW-BATCH-A.md`, and carry `REVIEWED` status in
+> the execution tracker. Do not cite this pack as current evidence; the register and the batch
+> reviews replace it.
 
 ---
 
