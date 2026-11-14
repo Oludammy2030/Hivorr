@@ -36,7 +36,10 @@ import {
   verificationReviewListResponse,
   verificationReviewResponse,
   activityViewSchema,
+  accessDenialListResponse,
+  accessDenialViewResponse,
   assignRoleRequest,
+  createAccessDenialRequest,
   auditEntryListResponse,
   codeRequest,
   createGrantRequest,
@@ -880,6 +883,62 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The revoked role assignment",
         schema: roleAssignmentViewResponse,
+      },
+    ],
+  },
+  {
+    id: "listAccessDenials",
+    method: "get",
+    path: "/v1/control/denials",
+    summary: "List access denials",
+    tag: "roles",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Every access denial with its target, permission, scope, reason and lifecycle",
+        schema: accessDenialListResponse,
+      },
+    ],
+  },
+  {
+    id: "createAccessDenial",
+    method: "post",
+    path: "/v1/control/denials",
+    summary: "Deny a governance permission for one person",
+    tag: "roles",
+    audience: ["control"],
+    request: {
+      schema: createAccessDenialRequest,
+      description:
+        "Holder, permission, scope, optional expiry and the reason for the denial",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The created access denial",
+        schema: accessDenialViewResponse,
+      },
+    ],
+  },
+  {
+    id: "revokeAccessDenial",
+    method: "post",
+    path: "/v1/control/denials/{id}/revoke",
+    summary: "Lift an access denial",
+    tag: "roles",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: roleReasonRequest,
+      description: "Reason for lifting the denial",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The revoked access denial",
+        schema: accessDenialViewResponse,
       },
     ],
   },

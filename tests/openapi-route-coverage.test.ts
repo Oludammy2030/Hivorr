@@ -11,6 +11,7 @@ import { UsersController } from "../server/src/api/users.controller"
 import { StaffController } from "../server/src/api/staff.controller"
 import { StaffInviteController } from "../server/src/api/staff-invite.controller"
 import { RolesController } from "../server/src/api/roles.controller"
+import { DenialsController } from "../server/src/api/denials.controller"
 import { AccountGovernanceController } from "../server/src/api/account-governance.controller"
 import { ApprovalsController } from "../server/src/api/approvals.controller"
 import { PartnersController } from "../server/src/api/partners.controller"
@@ -38,6 +39,7 @@ describe("OpenAPI route coverage", () => {
       StaffController,
       StaffInviteController,
       RolesController,
+      DenialsController,
       AccountGovernanceController,
       ApprovalsController,
       PartnersController,
