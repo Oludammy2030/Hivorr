@@ -48,7 +48,10 @@ describeIntegration("staff status guards", () => {
   let lastHolderId: string
 
   async function createUser(email: string): Promise<string> {
-    const result = await database.query<{ user_id: string account_id: string }>(
+    const result = await database.query<{
+      user_id: string
+      account_id: string
+    }>(
       `with account as (
          insert into identity.accounts default values returning id
        ), created as (

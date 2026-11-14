@@ -327,7 +327,7 @@ export interface StaffStatusResult {
   readonly engagementStatus: string
   readonly sessionsRevoked: number
   readonly grantsRevoked: number
-  readonly permissionGrantsRevoked: number
+  readonly permissionGrantsRevoked?: number
 }
 
 export interface AttachedStaffProfile {
