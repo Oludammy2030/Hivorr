@@ -1594,7 +1594,7 @@ profile | profiles | postgres | TRIGGER | YES
 profile | profiles | postgres | TRUNCATE | YES
 profile | profiles | postgres | UPDATE | YES
 
-## functions (76)
+## functions (80)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -1657,6 +1657,8 @@ identity | grant_scope_is_valid | p_grant_type text, p_scope text | false | i | 
 identity | list_grants | p_actor_user_id uuid, p_environment text | true | v | search_path=identity, pg_temp
 identity | revoke_grant | p_actor_user_id uuid, p_grant_id uuid, p_environment text | true | v | search_path=identity, pg_temp
 identity | set_grant_department | p_actor_user_id uuid, p_grant_id uuid, p_department_key text, p_environment text | true | v | search_path=identity, pg_temp
+platform | create_taxonomy_attribute | p_actor_user_id uuid, p_node_id uuid, p_key text, p_label text, p_data_type text, p_is_required boolean, p_enum_values text[], p_unit text, p_sort_order integer | true | v | search_path=""
+platform | create_taxonomy_node | p_actor_user_id uuid, p_taxonomy text, p_level text, p_parent_id uuid, p_slug text, p_name text, p_description text, p_version integer, p_effective_from timestamp with time zone | true | v | search_path=""
 platform | current_account_id |  | true | s | search_path=private, pg_temp
 platform | current_user_id |  | true | s | search_path=private, pg_temp
 platform | outbox_health |  | true | s | search_path=platform, pg_temp
@@ -1664,6 +1666,8 @@ platform | reject_append_only_mutation |  | false | v | -
 platform | resolve_audit_actor | p_actor_id text | true | s | search_path=""
 platform | set_identity_context | account_id uuid, user_id uuid | true | v | search_path=private, pg_temp
 platform | touch_updated_at |  | false | v | -
+platform | update_taxonomy_attribute | p_actor_user_id uuid, p_id uuid, p_label text, p_data_type text, p_is_required boolean, p_enum_values text[], p_unit text, p_sort_order integer | true | v | search_path=""
+platform | update_taxonomy_node | p_actor_user_id uuid, p_id uuid, p_name text, p_description text, p_version integer, p_effective_from timestamp with time zone, p_effective_to timestamp with time zone, p_is_active boolean | true | v | search_path=""
 platform | uuidv7 |  | false | v | -
 platform | validate_taxonomy_attribute |  | false | v | search_path=""
 platform | validate_taxonomy_node |  | false | v | search_path=""
