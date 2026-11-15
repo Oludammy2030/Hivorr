@@ -149,8 +149,15 @@ No provider resource, credential or production record changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-10 |
 | **Code complete** | 2026-11-10 |
 | **Closes when** | `F-08`/`F-49` are closed and the CI run is green; the topology itself is observed |
 | **Execution record** | `execution-records/EP-01-060.md` |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** Accepted for staging: readiness 503 is honest and `F-08` TLS CA verification remains; both must close before production.

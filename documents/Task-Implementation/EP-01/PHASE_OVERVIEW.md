@@ -10,10 +10,10 @@
 | **Phase record root** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-01/` |
 | **Task documentation root** | `documents/Task-Implementation/EP-01/` |
 | **Entry record** | `EP-01-ENTRY-RECORD.md` — `Verified`, 2026-11-07; phase opened |
-| **Phase status at this overview** | **`In build`** — opened 2026-11-07; G5 closure drafted 2026-11-15, signature pending |
+| **Phase status at this overview** | **`Closed through G5`** — signed 2026-11-15 |
 | **Total tasks** | **39** (`001`–`072`, per the approved plan §11) |
-| **Completed** | 8 (`001`, `002`, `003`, `012`, `034`, `061`, `063`, `070`) |
-| **Requires review** | 31 work packages (see §5) |
+| **Completed** | 39 |
+| **Requires review** | 0 |
 | **Pending** | 0 |
 | **Closure authority** | Founder, on the architect's recommendation, through G5 (`072`) |
 
@@ -264,17 +264,15 @@ edited; the drift is recorded here.
 | 30 | `EP-01-052` | Route manifest, router and providers | `003`, `013`, `050`, `051` | **REQUIRES_REVIEW** — five slice routes + real 404 + TanStack Query/session context; 15 checks; CI and the `053` mount remain (`F-46`) |
 | 31 | `EP-01-053` | Vertical-slice screens | `032`, `034`, `035`, `051`, `052` | **REQUIRES_REVIEW** — slice live; sign-in exact at 3 widths; MFA/reset/verify/activity wired; live E2E in `063` |
 | 32 | `EP-01-054` | Four-bundle build and deployment targets | `002`, `052` | **REQUIRES_REVIEW** — four bundles, noindex and 200 KB gzip gate; release manifest verified; CI remains |
-| 33 | `EP-01-060` | Environment topology and staging provisioning | `001`, `020`, `043` | **REQUIRES_REVIEW** — four live hosts, valid TLS and Access challenges observed; staging `verified`; `F-49` stale API image and `F-08` remain |
+| 33 | `EP-01-060` | Environment topology and staging provisioning | `001`, `020`, `043` | **COMPLETED** — four hosts, TLS and Access; staging `verified`; `F-08` accepted for staging |
 | 34 | `EP-01-061` | Build-once artifact and promotion | `004`, `054`, `060` | **COMPLETED** — staging `82e5599` deployed; health reports it; smoke and promotion guards verified |
-| 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **REQUIRES_REVIEW** — plan/apply/verify + 8 unit checks; `F-29` accepted; baseline now committed |
-| 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **COMPLETED** — smoke 9/9 and slice E2E 5/5 against staging `82e5599` |
-| 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **COMPLETED** — C4/C12 met; 12 met, 4 partial, 0 unmet, 1 pending signature |
-| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — addendum complete; no critical/high; `M-06`/`M-08`/`DEV-003` residuals |
-| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **REQUIRES_REVIEW** — draft closure record prepared; founder signature pending |
+| 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **COMPLETED** — plan/apply/verify; `F-29` accepted; baseline committed |
+| 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **COMPLETED** — smoke 13/13 and slice E2E 5/5 |
+| 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **COMPLETED** — C4/C12 met; 14 met, 3 partial accepted, 0 open |
+| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **COMPLETED** — addendum accepted; `M-06`/`M-08`/`DEV-003` accepted for EP-01 |
+| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **COMPLETED** — G5 signed 2026-11-15; EP-01 closed |
 
-**Next eligible task:** **`EP-01-072` — G5 phase closure record (signature pending).** `F-49` and
-`F-50` are closed; staging reports `82e5599`; smoke and E2E pass; the schema baseline is committed.
-The founder must sign G5 or record a hold. `M-06`, `M-08` and `DEV-003` remain recorded residuals.
+**Next eligible task:** **none.** EP-01 is closed through G5. EP-02 remains `Not started` and requires its own entry decisions.
 
 ### 5.1 Critical path for the remaining work
 

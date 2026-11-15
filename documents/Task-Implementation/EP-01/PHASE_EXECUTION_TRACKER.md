@@ -7,10 +7,10 @@
 | **Governing plan** | `documents/Engineering-Execution/Engineering-Phase-Plan/EP-01 — Core Platform Foundation & Infrastructure.md` |
 | **Phase record** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-ENTRY-RECORD.md` |
 | **Tracker updated** | 2026-11-15 |
-| **Phase status** | `In build` |
+| **Phase status** | `Closed through G5` |
 | **Tasks total** | 39 |
-| **Completed** | 28 |
-| **Requires review** | 11 |
+| **Completed** | 39 |
+| **Requires review** | 0 |
 | **Pending** | 0 |
 | **Blocked** | 0 |
 
@@ -33,22 +33,22 @@
 | 7 | `EP-01-012` | Ten-module boundary skeleton | `010`, `011` | **COMPLETED** | 2026-11-09 | `execution-records/EP-01-012.md` |
 | 8 | `EP-01-013` | OpenAPI 3.1 contract and generated client | `010`–`012` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-013.md` |
 | 9 | `EP-01-014` | Worker, PostgreSQL queue and outbox | `012`, `024` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-014.md` |
-| 10 | `EP-01-020` | Managed PostgreSQL and environment configuration | `001` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-020.md` |
+| 10 | `EP-01-020` | Managed PostgreSQL and environment configuration | `001` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-020.md` |
 | 11 | `EP-01-021` | Migration runner and baseline schemas | `020` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-021.md` |
 | 12 | `EP-01-022` | Database roles, grants and default privileges | `021` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-022.md` |
 | 13 | `EP-01-023` | Identity schema | `021`, `022` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-023.md` |
 | 14 | `EP-01-024` | Profile, activity and platform schema | `021`, `022` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-024.md` |
-| 15 | `EP-01-025` | RLS pattern, identity context and policy tests | `022`-`024` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-025.md` |
-| 16 | `EP-01-026` | Repository and transaction foundation | `021`-`025` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-026.md` |
-| 17 | `EP-01-030` | Identity domain and repositories | `023`, `026` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-030.md` |
-| 18 | `EP-01-031` | Registration, credentials and account recovery | `030` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-031.md` |
+| 15 | `EP-01-025` | RLS pattern, identity context and policy tests | `022`-`024` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-025.md` |
+| 16 | `EP-01-026` | Repository and transaction foundation | `021`-`025` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-026.md` |
+| 17 | `EP-01-030` | Identity domain and repositories | `023`, `026` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-030.md` |
+| 18 | `EP-01-031` | Registration, credentials and account recovery | `030` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-031.md` |
 | 19 | `EP-01-032` | Session lifecycle, audiences and session endpoint | `031` | **COMPLETED** — suspension revokes sessions immediately; governance test proves it | 2026-11-15 | `execution-records/EP-01-032.md` |
-| 20 | `EP-01-033` | Activity registry and activation state machine | `024`, `030` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-033.md` |
+| 20 | `EP-01-033` | Activity registry and activation state machine | `024`, `030` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-033.md` |
 | 21 | `EP-01-034` | Capability computation engine | `033` | **COMPLETED** | 2026-11-09 | `execution-records/EP-01-034.md` |
-| 22 | `EP-01-036` | Audit logging service and immutability | `024`, `026` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-036.md` |
+| 22 | `EP-01-036` | Audit logging service and immutability | `024`, `026` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-036.md` |
 | 23 | `EP-01-035` | Service-layer enforcement and vertical-slice endpoints | `032`, `034`, `036` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-035.md` |
 | 24 | `EP-01-040` | Structured logging, correlation and error-tracking seam | `010`, `011` | **COMPLETED** — free-text PII scrubbing added; logger tests 8/8 | 2026-11-15 | `execution-records/EP-01-040.md` |
-| 25 | `EP-01-042` | Authentication abuse controls | `032` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-042.md` |
+| 25 | `EP-01-042` | Authentication abuse controls | `032` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-042.md` |
 | 26 | `EP-01-043` | Secret management and configuration contract | `020` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-043.md` |
 | 27 | `EP-01-041` | Edge and origin security posture | `032`, `060` | **COMPLETED** — CSP/HSTS/nosniff on all bundles; smoke 13/13 | 2026-11-15 | `execution-records/EP-01-041.md` |
 | 28 | `EP-01-050` | Visual regression baseline and harness | `004` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-050.md` |
@@ -56,17 +56,19 @@
 | 30 | `EP-01-052` | Route manifest, router and providers | `003`, `013`, `050`, `051` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-052.md` |
 | 31 | `EP-01-053` | Vertical-slice screens | `032`, `034`, `035`, `051`, `052` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-053.md` |
 | 32 | `EP-01-054` | Four-bundle build and deployment targets | `002`, `052` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-054.md` |
-| 33 | `EP-01-060` | Environment topology and staging provisioning | `001`, `020`, `043` | **REQUIRES_REVIEW** — four hosts, TLS and Access observed; staging `verified`; `F-49` stale API image and `F-08` remain | — | `execution-records/EP-01-060.md` |
+| 33 | `EP-01-060` | Environment topology and staging provisioning | `001`, `020`, `043` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-060.md` |
 | 34 | `EP-01-061` | Build-once artifact and promotion | `004`, `054`, `060` | **COMPLETED** — staging `82e5599` deployed; health reports it; smoke and promotion guards verified | 2026-11-15 | `execution-records/EP-01-061.md` |
 | 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-062.md` |
 | 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **COMPLETED** — smoke 9/9 and slice E2E 5/5 against staging `82e5599`; authenticated E2E opt-in (`M-08`) | 2026-11-15 | `execution-records/EP-01-063.md` |
 | 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **COMPLETED** — pack updated; C4 and C12 met; 11 met, 4 partial, 0 unmet, 2 open | 2026-11-15 | `execution-records/EP-01-070.md` |
-| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — addendum complete; 0 critical, 0 high; `M-06` latency and `M-08` test identity remain; sign-off pending | — | `execution-records/EP-01-071.md` |
-| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **REQUIRES_REVIEW** — closure record drafted; founder signature pending | — | `documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-G5-CLOSURE.md` |
+| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `execution-records/EP-01-071.md` |
+| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **COMPLETED** — closed 2026-11-15 | 2026-11-15 | `documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-G5-CLOSURE.md` |
 
 ---
 
 ## 2. Next eligible task
+
+**None.** EP-01 is closed through G5 (2026-11-15). EP-02 remains `Not started` and requires its own entry decisions.
 
 **`EP-01-072` — G5 phase closure record (signature pending).**
 
@@ -118,6 +120,7 @@ they can count toward the phase exit.
 | 2026-11-15 | `EP-01-071` | `REQUIRES_REVIEW` | `REQUIRES_REVIEW` | `EP-01-071-REVIEW.md` addendum |
 | 2026-11-15 | `EP-01-072` | `PENDING` | `REQUIRES_REVIEW` | `EP-01-G5-CLOSURE.md` draft |
 | 2026-11-15 | Review queue verification | 17 tasks `REQUIRES_REVIEW` | `COMPLETED` | `EP-01-REVIEW-QUEUE-VERIFICATION.md` |
+| 2026-11-15 | G5 signature | EP-01 `In build` | `Closed through G5` | `EP-01-G5-CLOSURE.md` |
 
 ---
 

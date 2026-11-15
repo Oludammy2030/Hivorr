@@ -125,8 +125,16 @@ Present the EP-01 evidence pack and review outcome to the founder for a G5 closu
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Prepared** | 2026-11-15 |
-| **Execution record** | `EP-01-G5-CLOSURE.md` (draft) |
-| **Blocked by** | Founder signature |
-| **Next action** | Founder reviews and signs, or records a hold |
+| **Signed** | 2026-11-15 |
+| **Execution record** | `execution-records/EP-01-072.md` |
+| **Blocked by** | — |
+| **Next action** | EP-01 closed; EP-02 remains blocked by its own entry decisions |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** G5 signed by the founder on 2026-11-15. EP-01 is closed; EP-02 is not opened and still requires its own entry decisions.

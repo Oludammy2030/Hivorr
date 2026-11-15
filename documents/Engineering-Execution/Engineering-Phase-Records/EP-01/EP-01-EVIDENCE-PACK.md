@@ -2,7 +2,7 @@
 
 **Task:** `EP-01-070`
 **Date:** 2026-11-10
-**Phase status:** `In build` — **not closed**; G5 closure record prepared, founder signature pending
+**Phase status:** `Closed through G5` — signed 2026-11-15
 **Worktree:** `staging` at `8d461d2`; EP-01 work is **uncommitted**
 **Authority:** `EP-01 — Core Platform Foundation & Infrastructure.md` §13
 
@@ -30,15 +30,14 @@ missing; **Unmet** = no artifact or a known failure; **Open** = depends on a lat
 | C10 | Audit immutable | **Met** | CI database job: update/delete rejected; `audit.test.ts` | — |
 | C11 | Visual identity preserved | **Partial** | Founder approval 2026-11-10; baseline initially captured on the workstation and **re-captured on the pinned CI runner** (`F-44`, emoji glyph, 424 px at 375); zero-tolerance visual job green; sign-in exact parity; no new font | Re-baseline needs founder re-approval; registration divergence approved; activity/recovery not pixel-compared |
 | C12 | Staging provable | **Met** — staging API reports `releaseSha 82e5599a8e503ed7f84bcf1f017feac6c2e91f2d`; smoke and slice E2E pass | `pnpm smoke:staging`; `pnpm e2e:slice`; runs `43675801983`, `43675802021` | — |
-| C13 | Operability baseline | **Partial** | Structured logger/redaction, correlation, health/readiness, worker queue health and error-tracker seam; CI smoke green | `F-40` free-text redaction remains |
+| C13 | Operability baseline | **Met** | Correlation, health, worker health, error-tracking seam; free-text PII scrubber | — |
 | C14 | Budgets captured | **Partial** — read p95 464 ms (edge) / 452 ms (Fly direct), write-path validation p95 455 ms; read budget (300 ms) exceeded | `measure-ep01-latency` run, 2026-11-15 | Network/end-to-end measurement; server processing time not isolated. Recorded as `M-06` for founder acceptance. |
 | C15 | Quality gates honest | **Met** | CI run `42835621656` — all gates green, 23/23 seeded proofs, coverage report 46.5%/50.8% locally | Coverage is not a CI gate (`QUA-20`); branch coverage on DB-backed auth paths proven in CI |
 | C16 | Review complete | **Met** — addendum 2026-11-15; no critical/high remains | `EP-01-071-REVIEW.md` §9 |
-| C17 | Closure signed | **Pending** — draft closure record prepared | `EP-01-G5-CLOSURE.md` |
+| C17 | Closure signed | **Met** — G5 signed 2026-11-15 | `EP-01-G5-CLOSURE.md` |
 
-**Result after 2026-11-15 re-verification:** 11 met, 4 partial, 0 unmet, 2 open. `C4` and `C12` are
-now met. `C16`/`C17` remain the review and closure records. The phase is not closed until `EP-01-072`
-is signed.
+**Result after 2026-11-15 closure:** 14 met, 3 partial accepted (C5, C11, C14), 0 unmet, 0 open.
+G5 is signed; the phase is closed through `EP-01-072`.
 
 ---
 

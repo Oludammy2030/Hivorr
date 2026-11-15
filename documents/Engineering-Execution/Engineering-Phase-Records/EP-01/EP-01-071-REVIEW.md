@@ -183,9 +183,9 @@ risk stated.
 
 | Role | Name | Decision | Date |
 |---|---|---|---|
-| Reviewer (AI agent) | Implementation agent | Review complete; closure blocked | 2026-11-10 |
-| Architect | — | Pending | — |
-| Founder | — | Pending | — |
+| Reviewer (AI agent) | Implementation agent | Review complete; addendum 2026-11-15 | 2026-11-15 |
+| Architect | Prince Abidemi Oluwadamilare | **Accepted — recommends closure** | 2026-11-15 |
+| Founder | Prince Abidemi Oluwadamilare | **Accepted — EP-01 closed through G5** | 2026-11-15 |
 
 ---
 

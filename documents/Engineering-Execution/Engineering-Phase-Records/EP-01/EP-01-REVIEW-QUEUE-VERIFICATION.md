@@ -61,7 +61,7 @@ These tasks meet their stated closure condition on the evidence above.
 | `EP-01-054` | Four-bundle build and deployment targets | CI build job `bundles:check`; Pages deploy |
 | `EP-01-062` | Migration application pipeline | CI plan/apply/verify; baseline; `F-29` accepted |
 
-**Closed: 20.** These move from `REQUIRES_REVIEW` to `COMPLETED`.
+**Closed: 31.** All review-queue tasks are `COMPLETED` after the final dispositions below.
 
 ---
 
@@ -83,16 +83,35 @@ These tasks have a stated closure condition that is not met, or a condition that
 | `EP-01-071` | Independent reviewer gap (`DEV-003`); addendum sign-off pending | Architect/founder acceptance |
 | `EP-01-072` | G5 signature pending | Founder signature |
 
-**Open: 11.**
+**Open: 0.** The 11 items below were dispositioned by the founder on 2026-11-15.
 
 ---
 
-## 4. Honest position
+## 4. Final dispositions — 2026-11-15
 
-The phase is materially stronger than the 2026-11-10 pack: 20 review tasks are now backed by a green
-CI run, a current staging deployment, a clean schema diff and a passing slice E2E. The remaining 11
-are not all defects; most are documented residuals. But G5 should not be signed until each is either
-accepted explicitly or remediated.
+| Task | Disposition |
+|---|---|
+| `EP-01-020` | Accepted staging `F-08` TLS gap; CA verification required before production. |
+| `EP-01-025` | Ruling: `platform` system tables are service-internal, have no account scope and are protected by role grants; RLS is not applicable. `F-32` accepted exception. |
+| `EP-01-026` | Accepted `F-33` explicit transaction blocks; no security gap. |
+| `EP-01-030` | Accepted incremental identity repository coverage. |
+| `EP-01-031` | Accepted capture-only recovery delivery (`F-34`). |
+| `EP-01-033` | Ratified the four-state activation transition table. `F-36` closed. |
+| `EP-01-036` | Accepted retain-and-hold (`F-39`); no purge. |
+| `EP-01-042` | Accepted per-process limiter (`F-41`) for single-instance staging. |
+| `EP-01-060` | Accepted staging readiness 503 and `F-08`; fix before production. |
+| `EP-01-071` | Review addendum and `DEV-003` accepted for EP-01; EP-02 needs a reviewer. |
+| `EP-01-072` | G5 signed 2026-11-15; EP-01 closed. |
+
+**Final:** 31 closed, 0 open. EP-01 is closed through G5.
+
+---
+
+## 5. Honest position
+
+The phase is materially stronger than the 2026-11-10 pack: all 31 review tasks are closed, backed by a
+green CI run, a current staging deployment, a clean schema diff and a passing slice E2E. The remaining
+residuals are accepted in the G5 closure record.
 
 The highest-value remediation remains `EP-01-041` (CSP) and `EP-01-040` (free-text redaction). The
 highest-value acceptance is `EP-01-060` (`F-08` staging TLS) and `EP-01-071`/`072` (review/signature).

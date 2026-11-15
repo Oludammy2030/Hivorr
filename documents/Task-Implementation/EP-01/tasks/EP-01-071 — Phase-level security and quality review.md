@@ -84,10 +84,17 @@ resolved; `DEV-003` must be renewed or a reviewer appointed before EP-02 verific
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-10 |
 | **Review complete** | 2026-11-10 |
 | **Addendum** | 2026-11-15 |
 | **Closes when** | The addendum is accepted by the architect/founder and `DEV-003` is resolved or renewed for EP-02 |
 | **Review record** | `Engineering-Phase-Records/EP-01/EP-01-071-REVIEW.md` |
 | **Execution record** | `execution-records/EP-01-071.md` |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** Accepted by the founder 2026-11-15: the review addendum and `DEV-003` are accepted for EP-01. EP-02 verification and finance changes still require a second reviewer or a renewed deviation.
