@@ -343,10 +343,21 @@ jobs:
       - name: Validate the database connection and version
         run: pnpm db:check -- --expect-major 17
 
-      - name: Schema snapshot and diff review artefact
+      - name: Schema snapshot
         run: |
           mkdir -p artifacts
           pnpm db:snapshot -- --out artifacts/db-schema.txt
+
+      - name: Upload the schema snapshot
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: db-schema-snapshot
+          path: artifacts/db-schema.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Schema diff review artefact
+        run: |
           if [ -f supabase/schema-baseline.txt ]; then
             pnpm db:diff -- --base supabase/schema-baseline.txt --head artifacts/db-schema.txt --out artifacts/db-schema-diff.md --fail-on-change
           else
@@ -360,14 +371,6 @@ jobs:
             echo "### Database schema diff"
             cat artifacts/db-schema-diff.md
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload the schema snapshot
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: db-schema-snapshot
-          path: artifacts/db-schema.txt
-          if-no-files-found: error
-          retention-days: 30
 
       - name: Identity integration
         env:
