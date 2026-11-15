@@ -217,28 +217,32 @@ describeIntegration("case visibility scope", () => {
 
   it("refuses every write path on a case it cannot see", async () => {
     const attempts = [
-      database.query(
-        "select * from admin.add_case_event($1, $2, 'note', 'x')",
-        [careId, governancePrivateCaseId],
-      ),
-      database.query("select * from admin.assign_case($1, $2, null, 'queue')", [
-        careId,
-        governancePrivateCaseId,
-      ]),
-      database.query(
-        "select * from admin.set_case_status($1, $2, 'OPEN', 'trying')",
-        [careId, governancePrivateCaseId],
-      ),
-      database.query(
-        `select * from admin.add_case_evidence(
-           $1, $2, 'staging/evidence/x.pdf', 'x.pdf', 'application/pdf', 10,
-           repeat('b', 64), 'standard', 'trying')`,
-        [careId, governancePrivateCaseId],
-      ),
+      () =>
+        database.query(
+          "select * from admin.add_case_event($1, $2, 'note', 'attempt')",
+          [careId, governancePrivateCaseId],
+        ),
+      () =>
+        database.query(
+          "select * from admin.assign_case($1, $2, null, 'queue')",
+          [careId, governancePrivateCaseId],
+        ),
+      () =>
+        database.query(
+          "select * from admin.set_case_status($1, $2, 'OPEN', 'trying')",
+          [careId, governancePrivateCaseId],
+        ),
+      () =>
+        database.query(
+          `select * from admin.add_case_evidence(
+             $1, $2, 'staging/evidence/x.pdf', 'x.pdf', 'application/pdf', 10,
+             repeat('b', 64), 'standard', 'trying')`,
+          [careId, governancePrivateCaseId],
+        ),
     ]
 
     for (const attempt of attempts) {
-      const error = await attempt.catch((value: unknown) => value)
+      const error = await attempt().catch((value: unknown) => value)
       expect(error).toMatchObject({ code: "P0002" })
     }
   })
