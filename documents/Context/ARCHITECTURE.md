@@ -1295,6 +1295,13 @@ in this document: holding user funds, escrow, and payouts may constitute a regul
 in Nigeria. Two paths — a licensed provider holds and splits funds, or Hivorr holds balances and
 pursues the licence. It must be settled with counsel before wallet code is written.
 
+**[FOUNDER DECISION — 15 November 2026]** The product and custody model is the pooled collection and
+settlement account operated by Hivorr under a VFD-approved banking arrangement, with individual wallet
+balances and internal escrow in Hivorr's ledger. This supersedes the BD-D01 partner-held product model
+for engineering. Counsel must still confirm the licensing, safeguarding, segregation, insolvency and
+reporting treatment before production; VFD must confirm the account structure and marketplace escrow
+use case in writing. See `documents/Engineering-Execution/PAYMENT-WALLET-ESCROW-ARCHITECTURE.md`.
+
 ### 9.11 Messaging and notifications
 
 **[DECIDED]**
@@ -2301,7 +2308,7 @@ so there is one list, not three.
 | # | Decision | Blocks | Owner | Source |
 | --- | --- | --- | --- | --- |
 | 1 | **Managed Postgres provider** — **DECIDED 7 November 2026:** Supabase, managed Postgres only (Position A). The Data API, Supabase Auth and Supabase Storage are not used; identity is built in the NestJS API and storage is Cloudflare R2 (§9.12). | §4–§8 applicability of the database rules; hosting | Founder + architect | db rules #1; EP-01 entry record §5 |
-| 2 | **Funds custody** — licensed provider holds funds, or Hivorr pursues a licence | Wallet design; legal structure; launch timeline | Founder + counsel | §9.10 |
+| 2 | **Funds custody** — **DECIDED 15 November 2026:** pooled collection and settlement account operated by Hivorr under a VFD-approved banking arrangement, with internal wallets and internal escrow. Counsel must confirm the licensing, safeguarding, segregation and reporting treatment; VFD must confirm the account structure and marketplace escrow use case in writing. | Wallet design; legal structure; launch timeline | Founder + counsel | §9.10; `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md` |
 | 3 | **MVP activity scope** — all six at launch, or Explore-first | Which modules ship first | Founder | matrix #3 |
 | 4 | **Deactivation with open obligations** — blocked, or allowed | Activity state machine | Founder | matrix #4 |
 | 5 | **Business as account or profile** | `identity.account` cardinality; team features | Founder | matrix #5 |

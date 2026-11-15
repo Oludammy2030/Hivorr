@@ -1020,6 +1020,15 @@ decided on 3 November 2026 and are marked as such; the rest remain open.
 
 **Question.** Does Hivorr hold customer money, or does a licensed third party hold it?
 
+> **Amendment — 15 November 2026 — founder decision.** The product and custody model is now the
+> pooled collection and settlement account operated by Hivorr under a VFD-approved banking
+> arrangement, with individual Hivorr wallet balances and internal escrow. This supersedes the
+> partner-held product model below for engineering. Counsel must still confirm the licensing,
+> safeguarding, segregation, insolvency and reporting treatment; VFD must confirm the account
+> structure and marketplace escrow use case in writing. The 3 November analysis remains the record of
+> why the earlier model was chosen and what risks the new model must answer. See
+> `documents/Engineering-Execution/PAYMENT-WALLET-ESCROW-ARCHITECTURE.md`.
+
 **Decision — 3 November 2026: partner-held, in two distinct roles.** A licensed payment processor
 collects funds and executes payouts; a licensed deposit-taking institution is the account of record
 holding escrow balances. Hivorr never takes possession of customer money at any point, including in
