@@ -172,7 +172,7 @@ sensitive action alone — is implemented, locked and tested in both directions.
 | **Date** | 14 November 2026 |
 | **Evidence reviewed** | `20261114000800_admin_add_case_spine.sql` and the visibility rule in `…001500`; the five integration tests in `tests/cases.test.ts` and the six in `tests/case-visibility.test.ts`, executing in CI; Batch C review, finding F-C-01 closed by #108 |
 | **Guarantees confirmed** | Append-only timeline; assignment and status changes audited with a reason; visibility scoped to the assignee, the creator, the owning department or the unfiled pool; an invisible case answers not-found rather than forbidden |
-| **Accepted limitations** | Follow-up 25 — the five case **write** paths still act on any case id, requiring a UUID the actor cannot obtain by listing; follow-up 26 — `create_case` sets no department, so a new case enters the unfiled pool until filed or assigned |
+| **Accepted limitations** | None outstanding — follow-ups 25 and 26 were closed by #117: the five write paths now require case visibility, and a new case is filed in its creator's department |
 | **Open findings** | None. F-C-01 was High and is closed |
 | **Status** | `COMPLETED` |
 
@@ -687,13 +687,14 @@ UI-only change: no migration, no API contract change and no permission change.
     `admin.dispute.resolve`, `admin.account.suspend`, `admin.configuration.write` and
     `admin.report.export` belong to unbuilt packages; `admin.case.recommend` and
     `admin.evidence.read` are now enforced. (CP-003)
-25. Case **write** paths (`add_case_event`, `assign_case`, `set_case_status`, `add_case_evidence`,
-    `supersede_case_evidence`) still act on any case id, including one the actor cannot see. A case
-    read is now scoped (F-C-01); the write paths are the remaining half and need the same predicate.
-    (CP-016)
-26. `create_case` does not set `department_id`, so a new case enters the unfiled pool until someone
-    files or assigns it. A department picker on creation is the natural follow-up to the visibility
-    rule. (CP-016)
+25. **Closed 15 November 2026 (#117).** Case **write** paths (`add_case_event`, `assign_case`,
+    `set_case_status`, `add_case_evidence`, `supersede_case_evidence`) applied only a capability
+    check; each now applies the case-visibility predicate and answers not-found for a case the actor
+    cannot see. (CP-016)
+26. **Closed 15 November 2026 (#117).** `create_case` now files the case in the creator's earliest
+    active department membership, so a new case no longer lands in the unfiled pool by default. A
+    creator with no department still creates into that pool, which is the triage case the visibility
+    rule describes. A department picker on creation remains a UI nicety. (CP-016)
 27. **Closed 15 November 2026.** Browser verification of the control portal and the recovery pages ran
     in real Chrome against the built bundles with a mocked API, at 1440×900 and 375×667: 17 of 17
     checks passed and two defects were found and fixed. First, `/access/denials` redirected to the
