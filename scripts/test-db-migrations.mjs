@@ -238,6 +238,36 @@ try {
     "api role may read taxonomy nodes",
   )
 
+  const createdByAdmin = await testClient.query(
+    `select id from platform.create_taxonomy_node(
+       $1, 'profession', 'industry', null, 'legal', 'Legal', null, 1, now()
+     )`,
+    [actorId],
+  )
+  assert(
+    createdByAdmin.rowCount === 1,
+    "an authorised administrator can create a taxonomy node",
+  )
+  const outsider = await testClient.query(
+    "insert into identity.users (account_id, email, display_name) values ($1, 'outsider@example.test', 'Outsider') returning id",
+    [snapshotAccount.rows[0].id],
+  )
+  let outsideWriteRejected = false
+  try {
+    await testClient.query(
+      `select id from platform.create_taxonomy_node(
+         $1, 'profession', 'industry', null, 'outside', 'Outside', null, 1, now()
+       )`,
+      [outsider.rows[0].id],
+    )
+  } catch {
+    outsideWriteRejected = true
+  }
+  assert(
+    outsideWriteRejected,
+    "a user without configuration.write cannot create a taxonomy node",
+  )
+
   await testClient.query(
     "insert into platform.audit_log (actor_type, environment, action) values ('system', 'test', 'test.action')",
   )

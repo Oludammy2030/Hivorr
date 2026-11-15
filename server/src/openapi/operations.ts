@@ -35,6 +35,13 @@ import {
   verificationDecisionRequest,
   verificationReviewListResponse,
   verificationReviewResponse,
+  taxonomyRegistryResponse,
+  taxonomyNodeView,
+  taxonomyAttributeView,
+  createTaxonomyNodeRequest,
+  updateTaxonomyNodeRequest,
+  createTaxonomyAttributeRequest,
+  updateTaxonomyAttributeRequest,
   activityViewSchema,
   accessDenialListResponse,
   accessDenialViewResponse,
@@ -105,7 +112,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases" | "taxonomy"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -1453,6 +1460,100 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The replacement evidence carrying the supersede link",
         schema: evidenceViewResponse,
+      },
+    ],
+  },
+  {
+    id: "listTaxonomy",
+    method: "get",
+    path: "/v1/control/taxonomy",
+    summary: "List taxonomy nodes and attribute definitions",
+    tag: "taxonomy",
+    audience: ["control"],
+    queryParams: ["taxonomy"],
+    success: [
+      {
+        status: 200,
+        description: "The selected taxonomy registry",
+        schema: taxonomyRegistryResponse,
+      },
+    ],
+  },
+  {
+    id: "createTaxonomyNode",
+    method: "post",
+    path: "/v1/control/taxonomy/nodes",
+    summary: "Add a taxonomy node",
+    tag: "taxonomy",
+    audience: ["control"],
+    request: {
+      schema: createTaxonomyNodeRequest,
+      description: "Taxonomy, level, parent, slug, name and reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The created node with its version and effective date",
+        schema: taxonomyNodeView,
+      },
+    ],
+  },
+  {
+    id: "updateTaxonomyNode",
+    method: "patch",
+    path: "/v1/control/taxonomy/nodes/{id}",
+    summary: "Update a taxonomy node",
+    tag: "taxonomy",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: updateTaxonomyNodeRequest,
+      description: "Name, description, version, effective window and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The updated node",
+        schema: taxonomyNodeView,
+      },
+    ],
+  },
+  {
+    id: "createTaxonomyAttribute",
+    method: "post",
+    path: "/v1/control/taxonomy/attributes",
+    summary: "Add a typed taxonomy attribute",
+    tag: "taxonomy",
+    audience: ["control"],
+    request: {
+      schema: createTaxonomyAttributeRequest,
+      description: "Node, key, label, type, enum values and reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The created attribute definition",
+        schema: taxonomyAttributeView,
+      },
+    ],
+  },
+  {
+    id: "updateTaxonomyAttribute",
+    method: "patch",
+    path: "/v1/control/taxonomy/attributes/{id}",
+    summary: "Update a typed taxonomy attribute",
+    tag: "taxonomy",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: updateTaxonomyAttributeRequest,
+      description: "Label, type, enum values and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The updated attribute definition",
+        schema: taxonomyAttributeView,
       },
     ],
   },

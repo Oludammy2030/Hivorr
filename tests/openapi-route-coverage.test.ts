@@ -19,6 +19,7 @@ import { PartnerController } from "../server/src/api/partner.controller"
 import { CasesController } from "../server/src/api/cases.controller"
 import { EvidenceController } from "../server/src/api/evidence.controller"
 import { VerificationController } from "../server/src/api/verification.controller"
+import { TaxonomyController } from "../server/src/api/taxonomy.controller"
 import { buildDocument } from "../server/src/openapi/build"
 import { scanControllerRoutes } from "../server/src/openapi/scan"
 
@@ -47,6 +48,7 @@ describe("OpenAPI route coverage", () => {
       CasesController,
       EvidenceController,
       VerificationController,
+      TaxonomyController,
       GrantsController,
     ]
       .flatMap((controller) => scanControllerRoutes(controller))

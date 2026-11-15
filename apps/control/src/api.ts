@@ -431,6 +431,41 @@ async function requestPage<T>(
   }
 }
 
+export interface TaxonomyNode {
+  readonly id: string
+  readonly taxonomy: "profession" | "product"
+  readonly level: string
+  readonly parentId: string | null
+  readonly slug: string
+  readonly name: string
+  readonly description: string | null
+  readonly version: number
+  readonly effectiveFrom: string
+  readonly effectiveTo: string | null
+  readonly isActive: boolean
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface TaxonomyAttribute {
+  readonly id: string
+  readonly nodeId: string
+  readonly key: string
+  readonly label: string
+  readonly dataType: string
+  readonly isRequired: boolean
+  readonly enumValues: readonly string[] | null
+  readonly unit: string | null
+  readonly sortOrder: number
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface TaxonomyRegistry {
+  readonly nodes: readonly TaxonomyNode[]
+  readonly attributes: readonly TaxonomyAttribute[]
+}
+
 export const api = {
   session: () => request<Session>("/session"),
   signIn: (email: string, password: string) =>
@@ -743,6 +778,75 @@ export const api = {
       {
         method: "PATCH",
         body: JSON.stringify({ departmentKey, reason }),
+      },
+    ),
+  listTaxonomy: (taxonomy?: "profession" | "product") => {
+    const suffix = taxonomy ? `?taxonomy=${taxonomy}` : ""
+    return request<TaxonomyRegistry>(`/control/taxonomy${suffix}`)
+  },
+  createTaxonomyNode: (input: {
+    taxonomy: "profession" | "product"
+    level: string
+    parentId?: string | null
+    slug: string
+    name: string
+    description?: string
+    version?: number
+    effectiveFrom?: string
+    reason: string
+  }) =>
+    request<TaxonomyNode>("/control/taxonomy/nodes", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  updateTaxonomyNode: (
+    id: string,
+    input: {
+      name: string
+      description?: string
+      version?: number
+      effectiveFrom?: string
+      effectiveTo?: string | null
+      isActive?: boolean
+      reason: string
+    },
+  ) =>
+    request<TaxonomyNode>(`/control/taxonomy/nodes/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  createTaxonomyAttribute: (input: {
+    nodeId: string
+    key: string
+    label: string
+    dataType: string
+    isRequired?: boolean
+    enumValues?: readonly string[] | null
+    unit?: string
+    sortOrder?: number
+    reason: string
+  }) =>
+    request<TaxonomyAttribute>("/control/taxonomy/attributes", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  updateTaxonomyAttribute: (
+    id: string,
+    input: {
+      label: string
+      dataType: string
+      isRequired?: boolean
+      enumValues?: readonly string[] | null
+      unit?: string
+      sortOrder?: number
+      reason: string
+    },
+  ) =>
+    request<TaxonomyAttribute>(
+      `/control/taxonomy/attributes/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(input),
       },
     ),
 }

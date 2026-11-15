@@ -267,6 +267,24 @@ export type SupersedeCaseEvidenceRequest = { "replacementId": string; "reason"?:
 
 export type SupersedeCaseEvidenceResponse = { "id": string; "fileName": string; "mimeType"?: string | null; "sizeBytes"?: number | null; "sha256"?: string | null; "classification": string; "status": string; "supersedesId"?: string | null; "uploadedByName"?: string | null; "uploadedByEmail"?: string | null; "uploadedAt": string }
 
+export type ListTaxonomyResponse = { "nodes": ({ "id": string; "taxonomy": "profession" | "product"; "level": "industry" | "profession" | "vertical" | "category" | "subcategory" | "product_type"; "parentId": string | null; "slug": string; "name": string; "description": string | null; "version": number; "effectiveFrom": string; "effectiveTo": string | null; "isActive": boolean; "createdAt": string; "updatedAt": string })[]; "attributes": ({ "id": string; "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired": boolean; "enumValues": (string)[] | null; "unit": string | null; "sortOrder": number; "createdAt": string; "updatedAt": string })[] }
+
+export type CreateTaxonomyNodeRequest = { "taxonomy": "profession" | "product"; "level": "industry" | "profession" | "vertical" | "category" | "subcategory" | "product_type"; "parentId"?: string | null; "slug": string; "name": string; "description"?: string; "version"?: number; "effectiveFrom"?: string; "reason": string }
+
+export type CreateTaxonomyNodeResponse = { "id": string; "taxonomy": "profession" | "product"; "level": "industry" | "profession" | "vertical" | "category" | "subcategory" | "product_type"; "parentId": string | null; "slug": string; "name": string; "description": string | null; "version": number; "effectiveFrom": string; "effectiveTo": string | null; "isActive": boolean; "createdAt": string; "updatedAt": string }
+
+export type UpdateTaxonomyNodeRequest = { "name": string; "description"?: string; "version"?: number; "effectiveFrom"?: string; "effectiveTo"?: string | null; "isActive"?: boolean; "reason": string }
+
+export type UpdateTaxonomyNodeResponse = { "id": string; "taxonomy": "profession" | "product"; "level": "industry" | "profession" | "vertical" | "category" | "subcategory" | "product_type"; "parentId": string | null; "slug": string; "name": string; "description": string | null; "version": number; "effectiveFrom": string; "effectiveTo": string | null; "isActive": boolean; "createdAt": string; "updatedAt": string }
+
+export type CreateTaxonomyAttributeRequest = { "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired"?: boolean; "enumValues"?: (string)[] | null; "unit"?: string; "sortOrder"?: number; "reason": string }
+
+export type CreateTaxonomyAttributeResponse = { "id": string; "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired": boolean; "enumValues": (string)[] | null; "unit": string | null; "sortOrder": number; "createdAt": string; "updatedAt": string }
+
+export type UpdateTaxonomyAttributeRequest = { "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired"?: boolean; "enumValues"?: (string)[] | null; "unit"?: string; "sortOrder"?: number; "reason": string }
+
+export type UpdateTaxonomyAttributeResponse = { "id": string; "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired": boolean; "enumValues": (string)[] | null; "unit": string | null; "sortOrder": number; "createdAt": string; "updatedAt": string }
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -858,6 +876,41 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<SupersedeCaseEvidenceResponse>(
         "POST",
         `/v1/control/evidence/${encodeURIComponent(params.id)}/supersede`,
+        input,
+        [200],
+      ),
+    listTaxonomy: () =>
+      request<ListTaxonomyResponse>(
+        "GET",
+        "/v1/control/taxonomy",
+        undefined,
+        [200],
+      ),
+    createTaxonomyNode: (input: CreateTaxonomyNodeRequest) =>
+      request<CreateTaxonomyNodeResponse>(
+        "POST",
+        "/v1/control/taxonomy/nodes",
+        input,
+        [201],
+      ),
+    updateTaxonomyNode: (params: { id: string }, input: UpdateTaxonomyNodeRequest) =>
+      request<UpdateTaxonomyNodeResponse>(
+        "PATCH",
+        `/v1/control/taxonomy/nodes/${encodeURIComponent(params.id)}`,
+        input,
+        [200],
+      ),
+    createTaxonomyAttribute: (input: CreateTaxonomyAttributeRequest) =>
+      request<CreateTaxonomyAttributeResponse>(
+        "POST",
+        "/v1/control/taxonomy/attributes",
+        input,
+        [201],
+      ),
+    updateTaxonomyAttribute: (params: { id: string }, input: UpdateTaxonomyAttributeRequest) =>
+      request<UpdateTaxonomyAttributeResponse>(
+        "PATCH",
+        `/v1/control/taxonomy/attributes/${encodeURIComponent(params.id)}`,
         input,
         [200],
       ),

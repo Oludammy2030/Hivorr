@@ -12,9 +12,9 @@
 | **Entry record** | `EP-02-ENTRY-RECORD.md` — `PARTIAL START`, 2026-11-15 |
 | **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation |
 | **Total tasks** | **40** (`001`–`073`, per the approved plan §10) |
-| **Completed** | 3 (`EP-02-001`, `EP-02-002`, `EP-02-020`) |
+| **Completed** | 4 (`EP-02-001`, `EP-02-002`, `EP-02-020`, `EP-02-021`) |
 | **Blocked** | Verification, VFD adapter and dependent scopes |
-| **Pending** | 37 |
+| **Pending** | 36 |
 | **Closure authority** | Founder, on the architect’s recommendation, through G5 (`EP-02-073`) |
 
 > **Why this file exists.** The approved phase plan defines what EP-02 must achieve. This overview, the tracker and the task documents turn that plan into the execution record required by the development protocol. They do not open the phase.
@@ -133,7 +133,7 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | 8 | `EP-02-015` | Control review integration and immutable decision record | EP-02-011/012/013/014; CP-016/017/019; `admin.verification` queue. | **PENDING** |
 | 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** |
 | 10 | `EP-02-020` | Taxonomy registry schema and hierarchy domain | EP-02-002; EP-01-021/022/025; G0 ruling on depth. | **COMPLETED** — schema, triggers, RLS, domain |
-| 11 | `EP-02-021` | Taxonomy administration API, versioning and control UI | EP-02-020; CP-022 configuration; CP-012 roles. | **PENDING** |
+| 11 | `EP-02-021` | Taxonomy administration API, versioning and control UI | EP-02-020; CP-022 configuration; CP-012 roles. | **COMPLETED** — API, audit, control screen |
 | 12 | `EP-02-022` | Taxonomy seed data and read contracts | EP-02-020, EP-02-021. | **PENDING** |
 | 13 | `EP-02-030` | Finance schema, ledger accounts and RLS | EP-02-002; EP-01-021/022/025. | **PENDING** |
 | 14 | `EP-02-031` | Posting engine, double-entry invariants and property tests | EP-02-030. | **PENDING** |
