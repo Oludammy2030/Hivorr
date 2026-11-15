@@ -167,7 +167,7 @@ No migration and no protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-10 |
 | **Code complete** | 2026-11-10 |
 | **Baseline approved** | 2026-11-10 — founder approved the nine images and the SHA-256 set |
@@ -190,3 +190,10 @@ with the SHA-256 hashes recorded in `execution-records/EP-01-050.md` §6. The ap
   The re-captured login images need founder re-approval; the other six images are unchanged.
 
 Extraction (`051`–`053`) may now start. `050` stays `REQUIRES_REVIEW` only for the first CI run.
+
+
+---
+
+## 14. Verification addendum — 2026-11-15
+
+**Status: `COMPLETED`.** Verified 2026-11-15 against CI run `43677010391`, staging `82e5599`, `pnpm smoke:staging` 9/9, `pnpm e2e:slice` 5/5, and the schema baseline. See `Engineering-Phase-Records/EP-01/EP-01-REVIEW-QUEUE-VERIFICATION.md`.

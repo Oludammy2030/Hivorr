@@ -150,8 +150,15 @@ No existing role, applied migration, dependency or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI applies the new migration and passes the extended role suite; `F-29` is ruled on |
 | **Execution record** | `execution-records/EP-01-022.md` |
+
+
+---
+
+## 14. Verification addendum — 2026-11-15
+
+**Status: `COMPLETED`.** Verified 2026-11-15 against CI run `43677010391`, staging `82e5599`, `pnpm smoke:staging` 9/9, `pnpm e2e:slice` 5/5, and the schema baseline. See `Engineering-Phase-Records/EP-01/EP-01-REVIEW-QUEUE-VERIFICATION.md`.
