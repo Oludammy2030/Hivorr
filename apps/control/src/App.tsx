@@ -1751,7 +1751,7 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     return <Navigate to="/access/roles" replace />
   }
 
-  if (knownPath && section === "denials" && !canReadRoles) {
+  if (knownPath && own !== null && section === "denials" && !canReadRoles) {
     return <Navigate to={canReadGrants ? "/access/grants" : "/"} replace />
   }
 

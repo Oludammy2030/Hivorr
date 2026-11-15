@@ -841,6 +841,14 @@ h1 {
 }
 
 @media (max-width: 720px) {
+  .access-tabs {
+    flex-wrap: wrap;
+  }
+
+  .access-tabs > * {
+    min-width: 0;
+  }
+
   .access-person {
     margin-left: 0;
     max-width: none;
