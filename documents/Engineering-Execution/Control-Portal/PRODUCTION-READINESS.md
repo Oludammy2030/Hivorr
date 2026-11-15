@@ -71,6 +71,7 @@ missing in `staging` or `production`. The table is the checklist; **status refle
 | `WORKER_DATABASE_URL`, `WORKER_*` | worker only | Outbox consumer | unset |
 | `ZEPTOMAIL_TOKEN`, `MAIL_FROM_ADDRESS`, `PUBLIC_APP_ORIGIN` | email only | Invitations, reset, verification | unset |
 | `CORS_ALLOWED_ORIGINS` | no | Browser origin allowlist | unset |
+| `SENTRY_DSN` | no — recommended in production | Error reporting; absent means capture-only | unset, adapter ready |
 | `FOUNDER_GITHUB_LOGIN` (repo variable) | yes for deploy | Restricts production dispatch | **check** |
 
 `DATABASE_SSL_CA` was a configuration trap: the variable was optional, so a production boot would
@@ -87,7 +88,7 @@ when `HIVORR_ENV=production`, and the API refuses to boot without it (#121).
 | 4 | No restore drill | `AR-4` | Restore a production-shaped database from backup and record the time and result |
 | 5 | No vulnerability triage record | `AR-4` | The dependency scan runs; no one has triaged its output into a decision |
 | 6 | No visual baseline or staging E2E | Release confidence | The control portal's UI evidence is a local browser pass with a mocked API (#116) |
-| 7 | Errors are captured, not shipped | Operations | `CaptureErrorTracker` holds errors in memory and makes no network call; a production sink has to be chosen |
+| 7 | Error sink **implemented**, not enabled | Operations | `SentryErrorTracker` posts a scrubbed envelope and is disabled without `SENTRY_DSN`; the vendor review, DPA and the production DSN remain |
 | 8 | No branch protection on `staging`/`main` | `QUA-29` | Compensating controls only: pre-push hook, branch guard, founder review |
 | 9 | Legal hold and retention **decided** (`D-P0-4`), not implemented | Data governance | Seven-year retention with legal hold overriding; the mechanism belongs to CP-035/CP-038 |
 

@@ -169,6 +169,13 @@
       "description": "Comma-separated exact origin allowlist. Empty means same-origin only."
     },
     {
+      "name": "SENTRY_DSN",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "Sentry DSN for production error reporting. Unset keeps the in-memory capture tracker active."
+    },
+    {
       "name": "ZEPTOMAIL_TOKEN",
       "source": "config",
       "classification": "secret",

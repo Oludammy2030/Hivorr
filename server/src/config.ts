@@ -59,6 +59,11 @@ const baseConfigSchema = z.object({
   WORKER_HEALTH_HOST: z.string().min(1).default("0.0.0.0"),
   WORKER_ID: z.string().min(1).max(120).optional(),
   CORS_ALLOWED_ORIGINS: z.string().optional(),
+  // Sentry DSN. Optional: without it errors stay in memory and nothing is sent.
+  SENTRY_DSN: z
+    .string()
+    .regex(/^https:\/\/[0-9a-f]+@[^/]+\/\d+$/)
+    .optional(),
   ZEPTOMAIL_TOKEN: z.string().min(1).optional(),
   ZEPTOMAIL_API_URL: z
     .string()
@@ -293,6 +298,8 @@ export interface ApiConfig {
   readonly databaseUrl: string | undefined
   /** PEM root certificate for the database host, when supplied. */
   readonly databaseSslCa: string | undefined
+  /** Sentry DSN for production error reporting. Undefined means capture-only. */
+  readonly sentryDsn: string | undefined
   /** Shared secret the edge proxy must present for a forwarded host. */
   readonly edgeSharedSecret: string | undefined
   readonly corsAllowedOrigins: readonly string[]
@@ -338,6 +345,7 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
     releaseDigest: value.RELEASE_DIGEST ?? null,
     databaseUrl: value.DATABASE_URL,
     databaseSslCa: value.DATABASE_SSL_CA,
+    sentryDsn: value.SENTRY_DSN,
     edgeSharedSecret: value.EDGE_SHARED_SECRET,
     corsAllowedOrigins: (value.CORS_ALLOWED_ORIGINS ?? "")
       .split(",")
