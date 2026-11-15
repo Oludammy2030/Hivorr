@@ -64,7 +64,7 @@ missing in `staging` or `production`. The table is the checklist; **status refle
 | `BACKEND_ENVIRONMENT` | yes | Which data plane this process talks to | unset |
 | `SUPABASE_PROJECT_REF` | yes | Managed Postgres project | unset |
 | `DATABASE_URL` | yes | API database role connection | unset |
-| `DATABASE_SSL_CA` | **no, but should be** | Verifies TLS to the managed database | **unset — the API would connect without CA verification** |
+| `DATABASE_SSL_CA` | **yes in production** | Verifies TLS to the managed database | unset — the API now **refuses to boot** in production without it |
 | `SESSION_ISSUER` | yes | Session token issuer | unset |
 | `MFA_ENCRYPTION_KEY` | yes | Encrypts TOTP secrets at rest | unset |
 | `EDGE_SHARED_SECRET` | no, but required for forwarded-host trust | Lets the edge prove the original host | unset |
@@ -73,9 +73,9 @@ missing in `staging` or `production`. The table is the checklist; **status refle
 | `CORS_ALLOWED_ORIGINS` | no | Browser origin allowlist | unset |
 | `FOUNDER_GITHUB_LOGIN` (repo variable) | yes for deploy | Restricts production dispatch | **check** |
 
-`DATABASE_SSL_CA` deserves attention: it is optional in the schema, so a production boot would
-succeed while silently connecting without certificate verification. That is a configuration trap, not
-a validation failure — worth making required for `production` in a future config change.
+`DATABASE_SSL_CA` was a configuration trap: the variable was optional, so a production boot would
+succeed while connecting to the managed database without certificate verification. It is now required
+when `HIVORR_ENV=production`, and the API refuses to boot without it (#121).
 
 ## 4. What is missing, in the order it blocks
 

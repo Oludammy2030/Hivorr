@@ -84,6 +84,8 @@ describe("API configuration", () => {
       SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
       DATABASE_URL:
         "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+      DATABASE_SSL_CA:
+        "-----BEGIN CERTIFICATE-----fake-----END CERTIFICATE-----",
       SESSION_ISSUER: "hivorr-production",
       MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
       API_PORT: "8080",
@@ -96,6 +98,33 @@ describe("API configuration", () => {
       "https://hivorr.com",
       "https://control.hivorr.com",
     ])
+  })
+
+  it("refuses a production configuration without a database CA", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "production",
+        BACKEND_ENVIRONMENT: "production",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        SESSION_ISSUER: "hivorr-production",
+        MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      }),
+    ).toThrow(/DATABASE_SSL_CA/)
+  })
+
+  it("still allows staging without a database CA", () => {
+    const config = parseConfig({
+      HIVORR_ENV: "staging",
+      BACKEND_ENVIRONMENT: "staging",
+      SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+      DATABASE_URL:
+        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+      SESSION_ISSUER: "hivorr-staging",
+      MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    })
+    expect(config.databaseSslCa).toBeUndefined()
   })
 
   it("rejects a backend environment that does not match the deployment", () => {
