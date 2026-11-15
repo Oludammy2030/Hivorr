@@ -238,36 +238,6 @@ try {
     "api role may read taxonomy nodes",
   )
 
-  const createdByAdmin = await testClient.query(
-    `select id from platform.create_taxonomy_node(
-       $1, 'profession', 'industry', null, 'legal', 'Legal', null, 1, now()
-     )`,
-    [actorId],
-  )
-  assert(
-    createdByAdmin.rowCount === 1,
-    "an authorised administrator can create a taxonomy node",
-  )
-  const outsider = await testClient.query(
-    "insert into identity.users (account_id, email, display_name) values ($1, 'outsider@example.test', 'Outsider') returning id",
-    [snapshotAccount.rows[0].id],
-  )
-  let outsideWriteRejected = false
-  try {
-    await testClient.query(
-      `select id from platform.create_taxonomy_node(
-         $1, 'profession', 'industry', null, 'outside', 'Outside', null, 1, now()
-       )`,
-      [outsider.rows[0].id],
-    )
-  } catch {
-    outsideWriteRejected = true
-  }
-  assert(
-    outsideWriteRejected,
-    "a user without configuration.write cannot create a taxonomy node",
-  )
-
   await testClient.query(
     "insert into platform.audit_log (actor_type, environment, action) values ('system', 'test', 'test.action')",
   )
@@ -325,6 +295,37 @@ try {
      select $1, id, 'department', $2 from admin.roles where key = 'support_officer'`,
     [actorId, "00000000-0000-7000-8000-000000000123"],
   )
+
+  const createdByAdmin = await testClient.query(
+    `select id from platform.create_taxonomy_node(
+       $1, 'profession', 'industry', null, 'legal', 'Legal', null, 1, now()
+     )`,
+    [actorId],
+  )
+  assert(
+    createdByAdmin.rowCount === 1,
+    "an authorised administrator can create a taxonomy node",
+  )
+  const outsider = await testClient.query(
+    "insert into identity.users (account_id, email, display_name) values ($1, 'outsider@example.test', 'Outsider') returning id",
+    [snapshotAccount.rows[0].id],
+  )
+  let outsideWriteRejected = false
+  try {
+    await testClient.query(
+      `select id from platform.create_taxonomy_node(
+         $1, 'profession', 'industry', null, 'outside', 'Outside', null, 1, now()
+       )`,
+      [outsider.rows[0].id],
+    )
+  } catch {
+    outsideWriteRejected = true
+  }
+  assert(
+    outsideWriteRejected,
+    "a user without configuration.write cannot create a taxonomy node",
+  )
+
   const snapshot = await testClient.query(
     "select display_name, email, role_keys, role_scopes from platform.resolve_audit_actor($1)",
     [actorId],
