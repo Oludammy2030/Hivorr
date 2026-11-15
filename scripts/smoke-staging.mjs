@@ -150,14 +150,17 @@ try {
   if (csp.includes("style-src 'self' 'unsafe-inline'"))
     pass("CSP records the approved inline-style exception")
   else fail("CSP does not record the approved style-src exception")
-  if (response.headers.get("strict-transport-security"))
-    pass("HSTS is served")
+  if (response.headers.get("strict-transport-security")) pass("HSTS is served")
   else fail("HSTS is missing")
   if (response.headers.get("x-content-type-options") === "nosniff")
     pass("nosniff is served")
   else fail("nosniff is missing")
 } catch (error) {
-  fail(`security headers failed: ${error instanceof Error ? error.message : error}`)
+  fail(
+    `security headers failed: ${
+      error instanceof Error ? error.message : error
+    }`,
+  )
 }
 
 if (failures.length) {
