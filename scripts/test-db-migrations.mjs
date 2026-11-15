@@ -116,6 +116,128 @@ try {
     assert(adminTableNames.has(table), `admin.${table} exists`)
   }
 
+  const platformTables = await testClient.query(
+    "select tablename from pg_tables where schemaname = 'platform'",
+  )
+  const platformTableNames = new Set(
+    platformTables.rows.map((row) => row.tablename),
+  )
+  for (const table of ["taxonomy_nodes", "taxonomy_attributes"]) {
+    assert(platformTableNames.has(table), `platform.${table} exists`)
+  }
+
+  const industry = await testClient.query(
+    `insert into platform.taxonomy_nodes (taxonomy, level, slug, name)
+     values ('profession', 'industry', 'construction', 'Construction')
+     returning id`,
+  )
+  const industryId = industry.rows[0].id
+  const profession = await testClient.query(
+    `insert into platform.taxonomy_nodes (taxonomy, level, parent_id, slug, name)
+     values ('profession', 'profession', $1, 'electrician', 'Electrician')
+     returning id`,
+    [industryId],
+  )
+  assert(profession.rowCount === 1, "taxonomy accepts a profession node")
+
+  let duplicateSibling = false
+  try {
+    await testClient.query(
+      `insert into platform.taxonomy_nodes (taxonomy, level, parent_id, slug, name)
+       values ('profession', 'profession', $1, 'electrician', 'Electrician 2')`,
+      [industryId],
+    )
+  } catch {
+    duplicateSibling = true
+  }
+  assert(duplicateSibling, "taxonomy rejects a duplicate sibling slug")
+
+  let orphanRejected = false
+  try {
+    await testClient.query(
+      `insert into platform.taxonomy_nodes (taxonomy, level, parent_id, slug, name)
+       values ('product', 'category', '00000000-0000-7000-8000-000000000999', 'grocery', 'Grocery')`,
+    )
+  } catch {
+    orphanRejected = true
+  }
+  assert(orphanRejected, "taxonomy rejects an orphan node")
+
+  let invalidLevelRejected = false
+  try {
+    await testClient.query(
+      `insert into platform.taxonomy_nodes (taxonomy, level, parent_id, slug, name)
+       values ('profession', 'category', $1, 'bad-level', 'Bad level')`,
+      [industryId],
+    )
+  } catch {
+    invalidLevelRejected = true
+  }
+  assert(invalidLevelRejected, "taxonomy rejects a cross-taxonomy level")
+
+  const productType = await testClient.query(
+    `insert into platform.taxonomy_nodes (taxonomy, level, slug, name)
+     values ('product', 'vertical', 'electronics', 'Electronics')
+     returning id`,
+  )
+  const category = await testClient.query(
+    `insert into platform.taxonomy_nodes (taxonomy, level, parent_id, slug, name)
+     values ('product', 'category', $1, 'audio', 'Audio')
+     returning id`,
+    [productType.rows[0].id],
+  )
+  const subcategory = await testClient.query(
+    `insert into platform.taxonomy_nodes (taxonomy, level, parent_id, slug, name)
+     values ('product', 'subcategory', $1, 'headphones', 'Headphones')
+     returning id`,
+    [category.rows[0].id],
+  )
+  const leaf = await testClient.query(
+    `insert into platform.taxonomy_nodes (taxonomy, level, parent_id, slug, name)
+     values ('product', 'product_type', $1, 'wireless', 'Wireless')
+     returning id`,
+    [subcategory.rows[0].id],
+  )
+  await testClient.query(
+    `insert into platform.taxonomy_attributes (node_id, key, label, data_type, is_required)
+     values ($1, 'colour', 'Colour', 'text', true)`,
+    [leaf.rows[0].id],
+  )
+  const attributes = await testClient.query(
+    "select count(*)::int as count from platform.taxonomy_attributes",
+  )
+  assert(attributes.rows[0].count === 1, "taxonomy accepts a typed attribute")
+
+  let attributeLevelRejected = false
+  try {
+    await testClient.query(
+      `insert into platform.taxonomy_attributes (node_id, key, label, data_type)
+       values ($1, 'size', 'Size', 'text')`,
+      [category.rows[0].id],
+    )
+  } catch {
+    attributeLevelRejected = true
+  }
+  assert(
+    attributeLevelRejected,
+    "taxonomy rejects an attribute on a category node",
+  )
+
+  const taxonomyWrite = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'platform.taxonomy_nodes', 'insert') as allowed",
+  )
+  assert(
+    taxonomyWrite.rows[0].allowed === false,
+    "api role cannot write taxonomy nodes directly",
+  )
+  const taxonomyRead = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'platform.taxonomy_nodes', 'select') as allowed",
+  )
+  assert(
+    taxonomyRead.rows[0].allowed === true,
+    "api role may read taxonomy nodes",
+  )
+
   await testClient.query(
     "insert into platform.audit_log (actor_type, environment, action) values ('system', 'test', 'test.action')",
   )

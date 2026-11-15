@@ -16,7 +16,7 @@ profile
 public
 services
 
-## tables (53)
+## tables (55)
 admin | access_denials
 admin | approval_decisions
 admin | approval_requests
@@ -68,10 +68,12 @@ platform | idempotency_keys
 platform | outbox
 platform | reference_counters
 platform | schema_migrations
+platform | taxonomy_attributes
+platform | taxonomy_nodes
 profile | activity_activations
 profile | profiles
 
-## columns (478)
+## columns (502)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -533,6 +535,30 @@ platform | reference_counters | updated_at | timestamp with time zone | timestam
 platform | schema_migrations | filename | text | text | NO | -
 platform | schema_migrations | checksum | text | text | NO | -
 platform | schema_migrations | applied_at | timestamp with time zone | timestamptz | NO | now()
+platform | taxonomy_attributes | id | uuid | uuid | NO | platform.uuidv7()
+platform | taxonomy_attributes | node_id | uuid | uuid | NO | -
+platform | taxonomy_attributes | key | text | text | NO | -
+platform | taxonomy_attributes | label | text | text | NO | -
+platform | taxonomy_attributes | data_type | text | text | NO | -
+platform | taxonomy_attributes | is_required | boolean | bool | NO | false
+platform | taxonomy_attributes | enum_values | ARRAY | _text | YES | -
+platform | taxonomy_attributes | unit | text | text | YES | -
+platform | taxonomy_attributes | sort_order | integer | int4 | NO | 0
+platform | taxonomy_attributes | created_at | timestamp with time zone | timestamptz | NO | now()
+platform | taxonomy_attributes | updated_at | timestamp with time zone | timestamptz | NO | now()
+platform | taxonomy_nodes | id | uuid | uuid | NO | platform.uuidv7()
+platform | taxonomy_nodes | taxonomy | text | text | NO | -
+platform | taxonomy_nodes | level | text | text | NO | -
+platform | taxonomy_nodes | parent_id | uuid | uuid | YES | -
+platform | taxonomy_nodes | slug | text | text | NO | -
+platform | taxonomy_nodes | name | text | text | NO | -
+platform | taxonomy_nodes | description | text | text | YES | -
+platform | taxonomy_nodes | version | integer | int4 | NO | 1
+platform | taxonomy_nodes | effective_from | timestamp with time zone | timestamptz | NO | now()
+platform | taxonomy_nodes | effective_to | timestamp with time zone | timestamptz | YES | -
+platform | taxonomy_nodes | is_active | boolean | bool | NO | true
+platform | taxonomy_nodes | created_at | timestamp with time zone | timestamptz | NO | now()
+platform | taxonomy_nodes | updated_at | timestamp with time zone | timestamptz | NO | now()
 profile | activity_activations | id | uuid | uuid | NO | platform.uuidv7()
 profile | activity_activations | account_id | uuid | uuid | NO | -
 profile | activity_activations | activity_id | text | text | NO | -
@@ -551,7 +577,7 @@ profile | profiles | timezone | text | text | YES | -
 profile | profiles | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | profiles | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (246)
+## constraints (264)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -791,6 +817,24 @@ platform | outbox | outbox_pkey | p | PRIMARY KEY (id)
 platform | reference_counters | reference_counters_pkey | p | PRIMARY KEY (name)
 platform | reference_counters | reference_counters_value_check | c | CHECK (value >= 0)
 platform | schema_migrations | schema_migrations_pkey | p | PRIMARY KEY (filename)
+platform | taxonomy_attributes | taxonomy_attributes_check | c | CHECK (data_type <> 'enum'::text OR enum_values IS NOT NULL AND cardinality(enum_values) > 0)
+platform | taxonomy_attributes | taxonomy_attributes_data_type_check | c | CHECK (data_type = ANY (ARRAY['text'::text, 'number'::text, 'boolean'::text, 'enum'::text, 'date'::text]))
+platform | taxonomy_attributes | taxonomy_attributes_key_check | c | CHECK (key ~ '^[a-z][a-z0-9_]*$'::text)
+platform | taxonomy_attributes | taxonomy_attributes_label_check | c | CHECK (length(btrim(label)) >= 1 AND length(btrim(label)) <= 120)
+platform | taxonomy_attributes | taxonomy_attributes_node_id_fkey | f | FOREIGN KEY (node_id) REFERENCES platform.taxonomy_nodes(id) ON DELETE CASCADE
+platform | taxonomy_attributes | taxonomy_attributes_node_id_key_key | u | UNIQUE (node_id, key)
+platform | taxonomy_attributes | taxonomy_attributes_pkey | p | PRIMARY KEY (id)
+platform | taxonomy_attributes | taxonomy_attributes_sort_order_check | c | CHECK (sort_order >= 0)
+platform | taxonomy_nodes | taxonomy_nodes_check | c | CHECK (parent_id IS NULL OR parent_id <> id)
+platform | taxonomy_nodes | taxonomy_nodes_check1 | c | CHECK (effective_to IS NULL OR effective_to > effective_from)
+platform | taxonomy_nodes | taxonomy_nodes_check2 | c | CHECK (taxonomy = 'profession'::text AND (level = ANY (ARRAY['industry'::text, 'profession'::text])) OR taxonomy = 'product'::text AND (level = ANY (ARRAY['vertical'::text, 'category'::text, 'subcategory'::text, 'product_type'::text])))
+platform | taxonomy_nodes | taxonomy_nodes_level_check | c | CHECK (level = ANY (ARRAY['industry'::text, 'profession'::text, 'vertical'::text, 'category'::text, 'subcategory'::text, 'product_type'::text]))
+platform | taxonomy_nodes | taxonomy_nodes_name_check | c | CHECK (length(btrim(name)) >= 1 AND length(btrim(name)) <= 160)
+platform | taxonomy_nodes | taxonomy_nodes_parent_id_fkey | f | FOREIGN KEY (parent_id) REFERENCES platform.taxonomy_nodes(id) ON DELETE RESTRICT
+platform | taxonomy_nodes | taxonomy_nodes_pkey | p | PRIMARY KEY (id)
+platform | taxonomy_nodes | taxonomy_nodes_slug_check | c | CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)
+platform | taxonomy_nodes | taxonomy_nodes_taxonomy_check | c | CHECK (taxonomy = ANY (ARRAY['profession'::text, 'product'::text]))
+platform | taxonomy_nodes | taxonomy_nodes_version_check | c | CHECK (version > 0)
 profile | activity_activations | activity_activations_account_id_activity_id_key | u | UNIQUE (account_id, activity_id)
 profile | activity_activations | activity_activations_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | activity_activations | activity_activations_activity_id_check | c | CHECK (activity_id = ANY (ARRAY['market.buy'::text, 'services.hire'::text, 'errands.request'::text, 'market.sell'::text, 'services.offer'::text, 'logistics.provide'::text]))
@@ -799,7 +843,7 @@ profile | activity_activations | activity_activations_state_check | c | CHECK (s
 profile | profiles | profiles_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | profiles | profiles_pkey | p | PRIMARY KEY (account_id)
 
-## indexes (152)
+## indexes (159)
 admin | access_denials | access_denials_active_unique | CREATE UNIQUE INDEX access_denials_active_unique ON admin.access_denials USING btree (user_id, permission_key, COALESCE(scope_type, ''::text), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
 admin | access_denials | access_denials_pkey | CREATE UNIQUE INDEX access_denials_pkey ON admin.access_denials USING btree (id)
 admin | access_denials | access_denials_user_active_idx | CREATE INDEX access_denials_user_active_idx ON admin.access_denials USING btree (user_id, permission_key) WHERE (revoked_at IS NULL)
@@ -947,13 +991,20 @@ platform | outbox | outbox_dead_letter_idx | CREATE INDEX outbox_dead_letter_idx
 platform | outbox | outbox_pkey | CREATE UNIQUE INDEX outbox_pkey ON platform.outbox USING btree (id)
 platform | reference_counters | reference_counters_pkey | CREATE UNIQUE INDEX reference_counters_pkey ON platform.reference_counters USING btree (name)
 platform | schema_migrations | schema_migrations_pkey | CREATE UNIQUE INDEX schema_migrations_pkey ON platform.schema_migrations USING btree (filename)
+platform | taxonomy_attributes | taxonomy_attributes_node_id_key_key | CREATE UNIQUE INDEX taxonomy_attributes_node_id_key_key ON platform.taxonomy_attributes USING btree (node_id, key)
+platform | taxonomy_attributes | taxonomy_attributes_pkey | CREATE UNIQUE INDEX taxonomy_attributes_pkey ON platform.taxonomy_attributes USING btree (id)
+platform | taxonomy_nodes | taxonomy_nodes_active_idx | CREATE INDEX taxonomy_nodes_active_idx ON platform.taxonomy_nodes USING btree (taxonomy, level, is_active)
+platform | taxonomy_nodes | taxonomy_nodes_parent_idx | CREATE INDEX taxonomy_nodes_parent_idx ON platform.taxonomy_nodes USING btree (parent_id)
+platform | taxonomy_nodes | taxonomy_nodes_pkey | CREATE UNIQUE INDEX taxonomy_nodes_pkey ON platform.taxonomy_nodes USING btree (id)
+platform | taxonomy_nodes | taxonomy_nodes_root_slug_idx | CREATE UNIQUE INDEX taxonomy_nodes_root_slug_idx ON platform.taxonomy_nodes USING btree (taxonomy, slug) WHERE (parent_id IS NULL)
+platform | taxonomy_nodes | taxonomy_nodes_sibling_slug_idx | CREATE UNIQUE INDEX taxonomy_nodes_sibling_slug_idx ON platform.taxonomy_nodes USING btree (taxonomy, parent_id, slug) WHERE (parent_id IS NOT NULL)
 profile | activity_activations | activity_activations_account_id_activity_id_key | CREATE UNIQUE INDEX activity_activations_account_id_activity_id_key ON profile.activity_activations USING btree (account_id, activity_id)
 profile | activity_activations | activity_activations_account_state_idx | CREATE INDEX activity_activations_account_state_idx ON profile.activity_activations USING btree (account_id, state)
 profile | activity_activations | activity_activations_activity_state_idx | CREATE INDEX activity_activations_activity_state_idx ON profile.activity_activations USING btree (activity_id, state)
 profile | activity_activations | activity_activations_pkey | CREATE UNIQUE INDEX activity_activations_pkey ON profile.activity_activations USING btree (id)
 profile | profiles | profiles_pkey | CREATE UNIQUE INDEX profiles_pkey ON profile.profiles USING btree (account_id)
 
-## row-level-security (53)
+## row-level-security (55)
 admin | access_denials | true | true
 admin | approval_decisions | true | true
 admin | approval_requests | true | true
@@ -1005,10 +1056,12 @@ platform | idempotency_keys | false | false
 platform | outbox | false | false
 platform | reference_counters | false | false
 platform | schema_migrations | false | false
+platform | taxonomy_attributes | true | false
+platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
 profile | profiles | true | true
 
-## policies (61)
+## policies (63)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1064,6 +1117,8 @@ identity | users | users_definer_select | PERMISSIVE | {hivorr_migrator,postgres
 identity | users | users_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 identity | users | users_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 identity | users | users_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+platform | taxonomy_attributes | taxonomy_attributes_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
+platform | taxonomy_nodes | taxonomy_nodes_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
 profile | activity_activations | activity_activations_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 profile | activity_activations | activity_activations_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | activity_activations | activity_activations_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
@@ -1071,7 +1126,7 @@ profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | 
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (448)
+## table-grants (466)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -1498,6 +1553,24 @@ platform | schema_migrations | postgres | SELECT | YES
 platform | schema_migrations | postgres | TRIGGER | YES
 platform | schema_migrations | postgres | TRUNCATE | YES
 platform | schema_migrations | postgres | UPDATE | YES
+platform | taxonomy_attributes | hivorr_api | SELECT | NO
+platform | taxonomy_attributes | hivorr_readonly | SELECT | NO
+platform | taxonomy_attributes | postgres | DELETE | YES
+platform | taxonomy_attributes | postgres | INSERT | YES
+platform | taxonomy_attributes | postgres | REFERENCES | YES
+platform | taxonomy_attributes | postgres | SELECT | YES
+platform | taxonomy_attributes | postgres | TRIGGER | YES
+platform | taxonomy_attributes | postgres | TRUNCATE | YES
+platform | taxonomy_attributes | postgres | UPDATE | YES
+platform | taxonomy_nodes | hivorr_api | SELECT | NO
+platform | taxonomy_nodes | hivorr_readonly | SELECT | NO
+platform | taxonomy_nodes | postgres | DELETE | YES
+platform | taxonomy_nodes | postgres | INSERT | YES
+platform | taxonomy_nodes | postgres | REFERENCES | YES
+platform | taxonomy_nodes | postgres | SELECT | YES
+platform | taxonomy_nodes | postgres | TRIGGER | YES
+platform | taxonomy_nodes | postgres | TRUNCATE | YES
+platform | taxonomy_nodes | postgres | UPDATE | YES
 profile | activity_activations | hivorr_api | INSERT | NO
 profile | activity_activations | hivorr_api | SELECT | NO
 profile | activity_activations | hivorr_api | UPDATE | NO
@@ -1521,7 +1594,7 @@ profile | profiles | postgres | TRIGGER | YES
 profile | profiles | postgres | TRUNCATE | YES
 profile | profiles | postgres | UPDATE | YES
 
-## functions (74)
+## functions (76)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -1592,6 +1665,8 @@ platform | resolve_audit_actor | p_actor_id text | true | s | search_path=""
 platform | set_identity_context | account_id uuid, user_id uuid | true | v | search_path=private, pg_temp
 platform | touch_updated_at |  | false | v | -
 platform | uuidv7 |  | false | v | -
+platform | validate_taxonomy_attribute |  | false | v | search_path=""
+platform | validate_taxonomy_node |  | false | v | search_path=""
 private | current_account_id |  | false | s | -
 private | current_user_id |  | false | s | -
 private | set_identity_context | account_id uuid, user_id uuid | false | v | -

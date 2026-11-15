@@ -6,3 +6,28 @@
  */
 export { appendAudit, listAuditEntries, requiresReason } from "./audit"
 export type { AuditEntry, AuditEntryView, AuditPage, AuditQuery } from "./audit"
+export {
+  TAXONOMY_ATTRIBUTE_TYPES,
+  TAXONOMY_KINDS,
+  TAXONOMY_LEVELS,
+  TAXONOMY_LEVELS_BY_KIND,
+  createsCycle,
+  expectedParentLevel,
+  isRootLevel,
+  isTaxonomyKind,
+  isTaxonomyLevel,
+  validateTaxonomyAttribute,
+  validateTaxonomyNode,
+} from "./taxonomy"
+export type {
+  TaxonomyAttributeInput,
+  TaxonomyAttributeType,
+  TaxonomyAttributeValidationCode,
+  TaxonomyAttributeValidationError,
+  TaxonomyKind,
+  TaxonomyLevel,
+  TaxonomyNodeInput,
+  TaxonomyParent,
+  TaxonomyValidationCode,
+  TaxonomyValidationError,
+} from "./taxonomy"
