@@ -162,9 +162,9 @@ $$;
 revoke all on function platform.create_taxonomy_node(uuid, text, text, uuid, text, text, text, integer, timestamptz) from public;
 revoke all on function platform.update_taxonomy_node(uuid, uuid, text, text, integer, timestamptz, timestamptz, boolean) from public;
 revoke all on function platform.create_taxonomy_attribute(uuid, uuid, text, text, text, boolean, text[], text, integer) from public;
-revoke all on function platform.update_taxonomy_attribute(uuid, uuid, text, text, text, boolean, text[], text, integer) from public;
+revoke all on function platform.update_taxonomy_attribute(uuid, uuid, text, text, boolean, text[], text, integer) from public;
 
 grant execute on function platform.create_taxonomy_node(uuid, text, text, uuid, text, text, text, integer, timestamptz) to hivorr_api;
 grant execute on function platform.update_taxonomy_node(uuid, uuid, text, text, integer, timestamptz, timestamptz, boolean) to hivorr_api;
 grant execute on function platform.create_taxonomy_attribute(uuid, uuid, text, text, text, boolean, text[], text, integer) to hivorr_api;
-grant execute on function platform.update_taxonomy_attribute(uuid, uuid, text, text, text, boolean, text[], text, integer) to hivorr_api;
+grant execute on function platform.update_taxonomy_attribute(uuid, uuid, text, text, boolean, text[], text, integer) to hivorr_api;
