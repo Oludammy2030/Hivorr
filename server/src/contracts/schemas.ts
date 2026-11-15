@@ -742,6 +742,136 @@ export const controlAuthorityResponse = z.object({
   capabilities: z.array(capabilitySchema),
 })
 
+export const taxonomyKindSchema = z.enum(["profession", "product"])
+export const taxonomyLevelSchema = z.enum([
+  "industry",
+  "profession",
+  "vertical",
+  "category",
+  "subcategory",
+  "product_type",
+])
+export const taxonomyAttributeTypeSchema = z.enum([
+  "text",
+  "number",
+  "boolean",
+  "enum",
+  "date",
+])
+
+export const taxonomyNodeView = z.object({
+  id: z.string().uuid(),
+  taxonomy: taxonomyKindSchema,
+  level: taxonomyLevelSchema,
+  parentId: z.string().uuid().nullable(),
+  slug: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  version: z.number().int().positive(),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().nullable(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+export const taxonomyAttributeView = z.object({
+  id: z.string().uuid(),
+  nodeId: z.string().uuid(),
+  key: z.string(),
+  label: z.string(),
+  dataType: taxonomyAttributeTypeSchema,
+  isRequired: z.boolean(),
+  enumValues: z.array(z.string()).nullable(),
+  unit: z.string().nullable(),
+  sortOrder: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+export const taxonomyRegistryResponse = z.object({
+  nodes: z.array(taxonomyNodeView),
+  attributes: z.array(taxonomyAttributeView),
+})
+
+export const createTaxonomyNodeRequest = z.strictObject({
+  taxonomy: taxonomyKindSchema,
+  level: taxonomyLevelSchema,
+  parentId: z.string().uuid().nullable().optional(),
+  slug: z.string().min(1).max(80),
+  name: z.string().min(1).max(160),
+  description: z.string().max(2000).optional(),
+  version: z.number().int().positive().optional(),
+  effectiveFrom: z.string().datetime().optional(),
+  reason: z.string().min(5).max(500),
+})
+
+export const updateTaxonomyNodeRequest = z.strictObject({
+  name: z.string().min(1).max(160),
+  description: z.string().max(2000).optional(),
+  version: z.number().int().positive().optional(),
+  effectiveFrom: z.string().datetime().optional(),
+  effectiveTo: z.string().datetime().nullable().optional(),
+  isActive: z.boolean().optional(),
+  reason: z.string().min(5).max(500),
+})
+
+export const createTaxonomyAttributeRequest = z
+  .strictObject({
+    nodeId: z.string().uuid(),
+    key: z.string().min(1).max(64),
+    label: z.string().min(1).max(120),
+    dataType: taxonomyAttributeTypeSchema,
+    isRequired: z.boolean().optional(),
+    enumValues: z
+      .array(z.string().min(1).max(80))
+      .max(100)
+      .nullable()
+      .optional(),
+    unit: z.string().max(40).optional(),
+    sortOrder: z.number().int().nonnegative().optional(),
+    reason: z.string().min(5).max(500),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.dataType === "enum" &&
+      (!value.enumValues || value.enumValues.length === 0)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["enumValues"],
+        message: "An enum attribute needs at least one value.",
+      })
+    }
+  })
+
+export const updateTaxonomyAttributeRequest = z
+  .strictObject({
+    label: z.string().min(1).max(120),
+    dataType: taxonomyAttributeTypeSchema,
+    isRequired: z.boolean().optional(),
+    enumValues: z
+      .array(z.string().min(1).max(80))
+      .max(100)
+      .nullable()
+      .optional(),
+    unit: z.string().max(40).optional(),
+    sortOrder: z.number().int().nonnegative().optional(),
+    reason: z.string().min(5).max(500),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.dataType === "enum" &&
+      (!value.enumValues || value.enumValues.length === 0)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["enumValues"],
+        message: "An enum attribute needs at least one value.",
+      })
+    }
+  })
+
 export const healthResponse = z.object({
   status: z.literal("ok"),
   service: z.literal("hivorr-api"),

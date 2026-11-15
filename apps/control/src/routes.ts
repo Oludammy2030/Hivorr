@@ -1,4 +1,4 @@
-export type Section = "overview" | "users" | "staff" | "grants" | "audit" | "roles" | "denials" | "approvals" | "partners" | "cases" | "verification"
+export type Section = "overview" | "users" | "staff" | "grants" | "audit" | "roles" | "denials" | "approvals" | "partners" | "cases" | "verification" | "taxonomy"
 
 export interface SectionLink {
   readonly id: Section
@@ -18,7 +18,15 @@ export interface NavGroup {
 export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: "Governance",
-    items: [{ id: "overview", label: "Overview", path: "/" }],
+    items: [
+      { id: "overview", label: "Overview", path: "/" },
+      {
+        id: "taxonomy",
+        label: "Taxonomy",
+        path: "/taxonomy",
+        capabilities: ["admin.configuration.read", "admin.configuration.write"],
+      },
+    ],
   },
   {
     label: "People",
@@ -93,6 +101,7 @@ interface SectionPath {
 
 export const SECTION_PATHS: readonly SectionPath[] = [
   { section: "overview", path: "/" },
+  { section: "taxonomy", path: "/taxonomy" },
   { section: "users", path: "/users" },
   { section: "staff", path: "/staff" },
   { section: "partners", path: "/partners" },
@@ -112,6 +121,7 @@ export const SECTION_PATHS: readonly SectionPath[] = [
  */
 export const SECTION_TITLES: Readonly<Record<Section, string>> = {
   overview: "Overview",
+  taxonomy: "Taxonomy",
   users: "Users",
   staff: "Staff",
   partners: "Partners",

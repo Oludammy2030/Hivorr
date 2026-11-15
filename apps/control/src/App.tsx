@@ -37,6 +37,7 @@ import {
   sectionTitle,
 } from "./routes"
 import { StaffPage } from "./StaffPage"
+import { TaxonomyPage } from "./TaxonomyPage"
 
 interface LoadingView {
   kind: "loading"
@@ -529,6 +530,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
   )
   const canReadStaff = capabilities.includes("admin.user.read")
   const canManageStaff = capabilities.includes("admin.user.manage")
+  const canReadTaxonomy =
+    capabilities.includes("admin.configuration.read") ||
+    capabilities.includes("admin.configuration.write")
+  const canManageTaxonomy = capabilities.includes("admin.configuration.write")
   const canReadGrants =
     capabilities.includes("admin.grant.read") ||
     capabilities.includes("admin.grant.manage")
@@ -1980,6 +1985,19 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
               </section>
             )}
           </div>
+        )}
+
+        {knownPath && section === "taxonomy" && !canReadTaxonomy && (
+          <section className="panel">
+            <h2>Taxonomy</h2>
+            <p className="muted">
+              Your governance role does not include configuration access.
+            </p>
+          </section>
+        )}
+
+        {knownPath && section === "taxonomy" && canReadTaxonomy && (
+          <TaxonomyPage canManage={canManageTaxonomy} />
         )}
 
         {knownPath && section === "users" && !canReadUsers && (
