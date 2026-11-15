@@ -161,8 +161,15 @@ No dependency or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI passes the activation lifecycle and trigger tests; `F-36` is ratified |
 | **Execution record** | `execution-records/EP-01-033.md` |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** Architect ratification: the four-state activation transition table implemented by the trigger is the approved table. `F-36` closed.

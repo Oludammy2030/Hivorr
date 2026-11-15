@@ -152,8 +152,15 @@ No migration, dependency or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI proves lockout and the privileged audit; a shared limiter is decided |
 | **Execution record** | `execution-records/EP-01-042.md` |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** Accepted: rate limits are per process (`F-41`) for single-instance staging; a shared store is required before horizontal scaling.

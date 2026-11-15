@@ -172,8 +172,15 @@ No schema, migration, dependency, provider resource or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI runs `db:check` against Postgres; staging runs `db:check --expect-role hivorr_api`; `F-27` is ruled on |
 | **Execution record** | `execution-records/EP-01-020.md` |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** Accepted for EP-01: staging `F-08` (`DATABASE_SSL_CA` unset) is a recorded residual; certificate verification is required before production. `F-27` is closed and CI runs `db:check`.

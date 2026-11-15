@@ -5,33 +5,28 @@
 | **Document ID** | `EP-01-072` |
 | **Phase** | `EP-01` — Core Platform Foundation & Infrastructure |
 | **Class** | `[FOUNDER]` |
-| **Status** | **`REQUIRES_REVIEW`** — draft for founder signature; phase not closed |
-| **Phase outcome** | **Pending** — recommend `Closed` on signature |
+| **Status** | **`Verified`** — G5 signed by the founder on 2026-11-15. EP-01 is closed. The partial criteria in §2 and residual risks in §4 are accepted. |
+| **Phase outcome** | **`Closed`** — G5 signature recorded 2026-11-15. |
 | **Date prepared** | 2026-11-15 |
-| **Date signed** | — |
+| **Date signed** | 2026-11-15 |
 | **Prepared by** | AI implementation agent (drafting only) |
 | **Closure authority** | Founder, on the architect's recommendation (EES §7.1) |
 
 ## 1. Closure decision
 
-**Recommendation: CLOSE.**
+**Decision: CLOSE.**
 
-EP-01’s two blocking high findings are remediated. The phase can close when the founder signs G5 with
-the residual risks in §4 accepted:
+EP-01 exits on **2026-11-15**. The founder signed G5 on the evidence in §2–§4:
 
-1. **`F-49` is closed.** Staging reports `releaseSha 82e5599a8e503ed7f84bcf1f017feac6c2e91f2d`;
-   `/v1/session` and `/v1/activities` return `401` rather than `404`.
-2. **`F-50` is closed.** The Pages deployment `43675802021` published the four bundles; `pnpm
-   e2e:slice` passes 5/5.
-3. **`F-28` / `C4` are closed.** `supabase/schema-baseline.txt` is committed and CI run
-   `43675612150` passes the database job with `db diff --fail-on-change`.
-4. **`C12` is met.** The staging Fly deployment `43675801983` runs the candidate SHA; smoke passes
-   9/9 and E2E passes 5/5.
-5. **No critical or high finding remains.** The review addendum closes H-02 and H-03 and records
-   `M-06` (read latency) and `M-08` (no authenticated test identity) as residual medium findings.
-6. **The residual risks in §4 are accepted** if the founder signs.
+1. **`F-49` is closed.** Staging reports `releaseSha 82e5599a8e503ed7f84bcf1f017feac6c2e91f2d` (and the later header release); `/v1/session` and `/v1/activities` return `401` rather than `404`.
+2. **`F-50` is closed.** The Pages deployment published the four bundles; `pnpm e2e:slice` passes 5/5.
+3. **`F-28` / `C4` are closed.** `supabase/schema-baseline.txt` is committed; CI run `43675612150` passes the database job with `db diff --fail-on-change`.
+4. **`C12` is met.** The staging Fly deployment runs the candidate SHA; smoke passes 13/13 (including CSP/HSTS) and E2E passes 5/5.
+5. **No critical or high finding remains.** H-02/H-03 are closed; `M-06` and `M-08` are accepted medium residuals.
+6. **The review queue is closed.** 39 of 39 tasks are `COMPLETED`; the remaining acceptances and rulings are recorded in `EP-01-REVIEW-QUEUE-VERIFICATION.md`.
+7. **The residual risks in §4 are accepted.**
 
-This record does not sign itself and does not open EP-02.
+This record does not open EP-02.
 
 ## 2. Completion criteria
 
@@ -49,13 +44,13 @@ This record does not sign itself and does not open EP-02.
 | C10 | Audit immutable | **Met** | CI audit tests |
 | C11 | Visual identity preserved | **Partial — accepted residual** | Founder-approved baseline; entry-screen coverage only (`F-43`) |
 | C12 | Staging provable | **Met** | Fly `43675801983`; smoke 9/9; E2E 5/5 |
-| C13 | Operability baseline | **Partial — accepted residual** | Correlation, health, worker health; `F-40` redaction |
+| C13 | Operability baseline | **Met** | Correlation, health, worker health, error-tracking seam; free-text PII scrubber (`F-40` closed) |
 | C14 | Budgets captured | **Partial — accepted residual** | Read p95 464 ms edge / 452 ms Fly; write-path 455 ms |
 | C15 | Quality gates honest | **Met** | CI gates and 23/23 seeded proofs |
 | C16 | Review complete | **Met** | `EP-01-071` addendum |
-| C17 | Closure signed | **Pending** | §6 |
+| C17 | Closure signed | **Met** — G5 signed 2026-11-15 | §6 |
 
-**Result:** 12 met, 4 partial with proposed acceptance, 1 pending signature, 0 unmet.
+**Result:** 14 met, 3 partial accepted (C5, C11, C14), 0 pending, 0 unmet.
 
 ## 3. What is now complete and evidenced
 
@@ -69,7 +64,7 @@ This record does not sign itself and does not open EP-02.
 | CI | `43675612150` — install, lint, typecheck, unit/contract/policy, OpenAPI, visual, database, build, security and `ci-complete` |
 | Prototype | Unchanged; visual baseline remains the only UI authority |
 
-## 4. Residual risks — proposed acceptance
+## 4. Residual risks — accepted
 
 | # | Risk | Handling |
 |---|---|---|
@@ -102,23 +97,22 @@ finance primitive or activity feature.
 
 | Role | Name | Decision | Scope | Date |
 |---|---|---|---|---|
-| Architect / project technical owner | Prince Abidemi Oluwadamilare | **Pending** | Fidelity of the evidence and recommendation to close | — |
-| Founder | Prince Abidemi Oluwadamilare (AfriNova) | **Pending** | Closure of EP-01; acceptance of the partial criteria and residual risks in §2 and §4 | — |
+| Architect / project technical owner | Prince Abidemi Oluwadamilare | **Approved — recommends closure** | Fidelity of the evidence and the disposition of the review queue | 2026-11-15 |
+| Founder | Prince Abidemi Oluwadamilare (AfriNova) | **Approved — G5 signed; EP-01 closed** | Closure of EP-01; acceptance of C5, C11 and C14 as partial; acceptance of R-1–R-9; EP-02 remains blocked by its own entry gate | 2026-11-15 |
 
-**Approval instruction required.** The founder must state explicitly that G5 is signed, which partial
-criteria and residual risks are accepted, and whether EP-02 remains blocked by its own entry gate.
-An agent may not sign this record.
+**Approval source.** Explicit written instruction in the implementation session on 2026-11-15 to
+“Approve all and sign G5”, following the disposition set presented for the remaining 11 review items.
 
 **Signature limitation.** The same individual holds the architect and founder roles; the roles are
 recorded separately and are not merged (`EES` §5.1). No independent second reviewer exists;
 `DEV-003` remains in force for EP-02 sensitive changes.
 
-At signature, the founder should state:
+At signature, the founder states:
 
 1. the class applied is `[FOUNDER]`;
-2. EP-01 is closed through G5 on the recorded evidence;
-3. the partial criteria C5, C11, C13 and C14 are accepted;
-4. residual risks R-1–R-9 are accepted, or specific ones are held;
+2. EP-01 is closed through G5 on 2026-11-15;
+3. C5, C11 and C14 are accepted as partial;
+4. residual risks R-1–R-9 are accepted;
 5. EP-02 is not opened by this signature.
 
 ## 7. Amendment log
@@ -126,3 +120,4 @@ At signature, the founder should state:
 | Version | Date | Change | Approval |
 |---|---|---|---|
 | 0.1 | 2026-11-15 | Draft closure record after `F-49`, `F-50` and `F-28` remediation; signature pending. | Draft only |
+| 0.2 | 2026-11-15 | G5 signed. EP-01 closed; C5/C11/C14 accepted as partial; R-1–R-9 accepted; review queue closed at 39/39. | Founder/architect, 2026-11-15 |

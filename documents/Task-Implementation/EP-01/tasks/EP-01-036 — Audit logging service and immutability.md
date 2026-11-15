@@ -155,8 +155,15 @@ No schema, dependency or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI passes the delete/privilege and summary integration tests; retention is decided |
 | **Execution record** | `execution-records/EP-01-036.md` |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** Accepted: retention is `[OPEN]`; the phase retains and does not purge (`F-39`). Delete is not built.

@@ -27,28 +27,30 @@ EP-02 §1 defines the entry gate as:
 
 | # | Entry-gate condition | State | Evidence inspected | Owner |
 |---|---|---|---|---|
-| 1 | EP-01 G5 signed | **UNMET** | `EP-01-EVIDENCE-PACK.md`; `EP-01-071-REVIEW.md`; `PHASE_EXECUTION_TRACKER.md`: `EP-01-072` `PENDING`; 2 high findings (`F-49`, `F-50`) | Founder |
+| 1 | EP-01 G5 signed | **MET** | `EP-01-G5-CLOSURE.md` signed 2026-11-15; EP-01 closed through G5 | Founder |
 | 2 | Funds-custody register records BD-D01 partner-held custody | **UNMET** | `ARCHITECTURE.md` §16.4 #2 still lists funds custody as open; BD-D01 adopted partner-held custody on 3 Nov 2026 | Founder / architect |
 | 3 | VFD written licence-scope confirmation | **UNMET** | BD-D11 conditions 1–6; `documents/integrations/vfd/VFD_INTEGRATION_NOTES.md` records the missing written scope, licence category and settlement terms | Founder / counsel |
 | 4 | KYC tier ladder and limits decided | **UNMET** | `ARCHITECTURE.md` §16.4 #6; matrix §7.4 and §18 #6; BD-D05 is a recommendation, not a decision | Founder |
 | 5 | Verification vendor decided | **UNMET** | `ARCHITECTURE.md` §16.4 #15; matrix §18 #12 | Founder |
 | 6 | Reviewer capacity / second reviewer recorded | **UNMET** | `DEV-003` remains in force; EES §11.2 #2 records the one-person-plus-agents problem | Founder / architect |
 
-**Result:** 0 of 6 entry conditions met. EP-02 cannot become `Ready`.
+**Result:** 1 of 6 entry conditions met. EP-01 is closed, but EP-02 still cannot become `Ready`.
 
 ---
 
 ## 2. EP-01 position
 
-EP-01 is `In build`, not exited. The tracker records:
+EP-01 is **closed through G5** on 2026-11-15. The closure record is
+`Engineering-Phase-Records/EP-01/EP-01-G5-CLOSURE.md`.
 
-- `EP-01-071` — review complete; **0 critical, 2 high** findings.
-- `F-49` — the deployed staging API predates `/v1/session` and `/v1/activities`; both return 404.
-- `F-50` — the frontend Pages rollout is manual; the slice bundle is not deployed.
-- `EP-01-072` — G5 closure record is `PENDING`.
-- 15 EP-01 packages remain `REQUIRES_REVIEW` with unverified DoDs.
+- `F-49` — closed; staging reports the candidate release and the session/activity routes return `401`.
+- `F-50` — closed; the four bundles are deployed and slice E2E passes 5/5.
+- `F-28` / `C4` — closed; `supabase/schema-baseline.txt` is committed and `db diff --fail-on-change` passes.
+- `C12` — met; smoke 13/13 (including CSP/HSTS) and E2E 5/5 against staging.
+- Review queue — 39/39 tasks `COMPLETED`; no critical/high finding remains.
+- Partial criteria C5, C11 and C14 and residuals R-1–R-9 are accepted in the closure record.
 
-The EP-01 evidence pack records `C4` (reproducible schema / `db diff`) and `C12` (staging provable) as unmet, and `C16`/`C17` as open. No EP-02 evidence may be built on an unclosed phase (EES §3.4, one phase in build).
+EP-01 closure does not open EP-02. The remaining EP-02 blockers are its own decisions, not EP-01.
 
 ---
 
@@ -103,7 +105,7 @@ The approved plan §5.3 records readings that need confirmation before implement
 
 | # | Blocker | Owner | Closure evidence |
 |---|---|---|---|
-| B-01 | EP-01 G5 not signed; `F-49` and `F-50` remain high | Founder / architect | `EP-01-072` signed closure record; staging API current; slice deployed |
+| B-01 | EP-01 G5 not signed; `F-49` and `F-50` remain high | Founder / architect | **CLOSED 2026-11-15** — G5 signed; staging current; slice deployed |
 | B-02 | Funds-custody register still open | Founder / architect | `ARCHITECTURE.md` §16.4 #2 updated to record BD-D01 |
 | B-03 | VFD written licence scope missing | Founder / counsel | Written confirmation from VFD MFB covering escrow, nationwide operation, third-party release, licence category and limits |
 | B-04 | KYC tier ladder undecided | Founder | Recorded tier ladder and limits in the owning register |
@@ -125,7 +127,7 @@ The approved plan §5.3 records readings that need confirmation before implement
 
 ## 8. Next action
 
-1. Founder/architect closes B-01: resolve `F-49` and `F-50`, complete `EP-01-071`, and sign `EP-01-072`.
+1. ~~Founder/architect closes B-01~~ — **closed 2026-11-15**; EP-01 G5 signed.
 2. Founder records B-02, B-04 and B-05 in the owning registers.
 3. Founder/counsel obtains B-03.
 4. Founder/architect records B-06.

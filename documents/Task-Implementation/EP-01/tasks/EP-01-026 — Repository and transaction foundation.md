@@ -152,8 +152,15 @@ No schema, migration, dependency or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI passes the grant integration suite after the refactor; `030` adopts the helper in identity repositories |
 | **Execution record** | `execution-records/EP-01-026.md` |
+
+
+---
+
+## 14. Disposition — 2026-11-15
+
+**Status: `COMPLETED`.** Accepted: remaining identity flows use explicit transaction blocks (`F-33`); the unit-of-work helper is the target pattern where it applies. No security gap.
