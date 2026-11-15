@@ -184,8 +184,15 @@ snapshot is derived output, never authoritative.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Gate code complete** | 2026-11-09 |
 | **Closes when** | a green GitHub Actions run is observed, plus the `test:gates` job |
 | **Execution record** | `execution-records/EP-01-004.md` |
+
+
+---
+
+## 14. Verification addendum — 2026-11-15
+
+**Status: `COMPLETED`.** Verified 2026-11-15 against CI run `43677010391`, staging `82e5599`, `pnpm smoke:staging` 9/9, `pnpm e2e:slice` 5/5, and the schema baseline. See `Engineering-Phase-Records/EP-01/EP-01-REVIEW-QUEUE-VERIFICATION.md`.

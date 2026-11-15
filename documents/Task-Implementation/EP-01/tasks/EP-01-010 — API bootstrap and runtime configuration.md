@@ -180,8 +180,15 @@ correlation generator, a second body-limit setting, or a duplicated capability l
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | a Linux CI run observes `pnpm test:api` and `tests/api-bootstrap.test.ts` passing |
 | **Execution record** | `execution-records/EP-01-010.md` |
+
+
+---
+
+## 14. Verification addendum — 2026-11-15
+
+**Status: `COMPLETED`.** Verified 2026-11-15 against CI run `43677010391`, staging `82e5599`, `pnpm smoke:staging` 9/9, `pnpm e2e:slice` 5/5, and the schema baseline. See `Engineering-Phase-Records/EP-01/EP-01-REVIEW-QUEUE-VERIFICATION.md`.

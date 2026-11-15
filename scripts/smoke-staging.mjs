@@ -139,6 +139,30 @@ for (const [application, host] of Object.entries(hosts)) {
   }
 }
 
+// Security headers on the public host. The CSP allows inline styles until EX-01
+// completes (EX-02/SEC-49) and keeps script-src strict.
+try {
+  const { response } = await request(`${base}/`)
+  const csp = response.headers.get("content-security-policy") ?? ""
+  if (csp.includes("script-src 'self'") && csp.includes("default-src 'self'"))
+    pass("CSP is served with a strict script-src")
+  else fail("CSP is missing or does not contain default-src/script-src 'self'")
+  if (csp.includes("style-src 'self' 'unsafe-inline'"))
+    pass("CSP records the approved inline-style exception")
+  else fail("CSP does not record the approved style-src exception")
+  if (response.headers.get("strict-transport-security")) pass("HSTS is served")
+  else fail("HSTS is missing")
+  if (response.headers.get("x-content-type-options") === "nosniff")
+    pass("nosniff is served")
+  else fail("nosniff is missing")
+} catch (error) {
+  fail(
+    `security headers failed: ${
+      error instanceof Error ? error.message : error
+    }`,
+  )
+}
+
 if (failures.length) {
   console.error(`\nsmoke:staging: FAILED — ${failures.length} check(s)`)
   process.exit(1)

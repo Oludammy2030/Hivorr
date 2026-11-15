@@ -160,8 +160,15 @@ DoD-10 is **unmet**: no baseline exists (`F-28`). The task remains `REQUIRES_REV
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI runs the double apply, `migrations:verify` and `test:db`; a committed baseline closes `F-28` |
 | **Execution record** | `execution-records/EP-01-021.md` |
+
+
+---
+
+## 14. Verification addendum — 2026-11-15
+
+**Status: `COMPLETED`.** Verified 2026-11-15 against CI run `43677010391`, staging `82e5599`, `pnpm smoke:staging` 9/9, `pnpm e2e:slice` 5/5, and the schema baseline. See `Engineering-Phase-Records/EP-01/EP-01-REVIEW-QUEUE-VERIFICATION.md`.
