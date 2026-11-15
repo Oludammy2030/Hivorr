@@ -9,11 +9,11 @@
 | **Tracker updated** | 2026-11-15 |
 | **Phase status** | `In build` — partial scope: non-provider finance foundation only |
 | **Tasks total** | 40 |
-| **Completed** | 1 |
+| **Completed** | 2 |
 | **In progress** | 0 |
 | **Requires review** | 0 |
 | **Blocked** | 0 |
-| **Pending** | 39 |
+| **Pending** | 38 |
 
 > **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. Frontend and exit tasks are pending their dependencies.
 
@@ -26,7 +26,7 @@
 | # | Task | Title | Dependencies | Status | Completed | Record |
 |---:|---|---|---|---|---|---|
 | 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder decisions | **COMPLETED** — partial start: EP-01 closed; pooled wallet/escrow model recorded; verification and provider scopes blocked | 2026-11-15 | `execution-records/EP-02-001.md` |
-| 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **PENDING** | — | — |
+| 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **COMPLETED** — lane/tier/ledger/payout contracts; capability states | 2026-11-15 | `execution-records/EP-02-002.md` |
 | 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **PENDING** | — | — |
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** | — | — |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** | — | — |
@@ -70,10 +70,11 @@
 
 ## 2. Next eligible task
 
-**`EP-02-002` — Shared contracts, capability inputs and error semantics.**
+**`EP-02-020` — Taxonomy registry schema and hierarchy domain.**
 
-EP-01 is closed, the pooled wallet/internal escrow model is recorded, and the founder approved a
-partial start. `EP-02-002` and the finance foundation (`030`–`036`) are eligible.
+`EP-02-002` is complete. `EP-02-010` remains blocked on the KYC ladder and vendor. The taxonomy registry
+is independent of verification and provider decisions, so it is the next eligible task. `EP-02-030`
+(finance schema) is also eligible and follows.
 
 Still open and blocking specific scopes:
 
@@ -87,6 +88,7 @@ Still open and blocking specific scopes:
 |---|---|---|---|---|
 | 2026-11-15 | `EP-02-001` | `PENDING` | `BLOCKED` | `execution-records/EP-02-001.md` |
 | 2026-11-15 | `EP-02-001` | `BLOCKED` | `COMPLETED` — partial start | `execution-records/EP-02-001.md` |
+| 2026-11-15 | `EP-02-002` | `PENDING` | `COMPLETED` | `execution-records/EP-02-002.md` |
 
 ---
 

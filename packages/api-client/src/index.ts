@@ -181,7 +181,7 @@ export type ReactivateAccountResponse = { "userId": string; "status": string; "s
 
 export type CloseAccountRequest = { "reason"?: string }
 
-export type CloseAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number } | { "error": { "code": "UNAUTHENTICATED" | "FORBIDDEN" | "ACTIVITY_INACTIVE" | "VALIDATION_FAILED" | "NOT_FOUND" | "CONFLICT" | "RATE_LIMITED" | "SERVICE_UNAVAILABLE" | "INTERNAL_ERROR"; "message": string; "correlationId"?: string } }
+export type CloseAccountResponse = { "userId": string; "status": string; "sessionsRevoked": number; "grantsRevoked": number; "rolesRevoked": number } | { "error": { "code": "UNAUTHENTICATED" | "FORBIDDEN" | "ACTIVITY_INACTIVE" | "VALIDATION_FAILED" | "VERIFICATION_REQUIRED" | "KYC_REQUIRED" | "PAYOUT_ACCOUNT_REQUIRED" | "INSUFFICIENT_FUNDS" | "LIMIT_EXCEEDED" | "DUPLICATE_REQUEST" | "PROVIDER_ERROR" | "NOT_FOUND" | "CONFLICT" | "RATE_LIMITED" | "SERVICE_UNAVAILABLE" | "INTERNAL_ERROR"; "message": string; "correlationId"?: string } }
 
 export type RevokeUserSessionsRequest = { "reason"?: string }
 

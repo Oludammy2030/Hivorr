@@ -5,7 +5,10 @@ import {
   type CapabilityId,
   type EnvironmentId,
   type GrantId,
+  type KycTier,
   type PortalId,
+  type VerificationLane,
+  type VerificationState,
 } from "@hivorr/shared"
 
 /**
@@ -39,14 +42,6 @@ export type CapabilityDecision = { readonly allowed: true } | {
   readonly reason: CapabilityDenyReason
 }
 
-export type VerificationLane = "identity" | "trade" | "seller" | "logistics" | "business"
-
-/**
- * The financial ladder is OPEN beyond tier_1; the capability engine only needs
- * to distinguish unverified (tier_0) from verified (tier_1 and above).
- */
-export type KycTier = "tier_0" | "tier_1"
-
 export type AdminRole = "verification.review" | "payment.review" | "dispute.resolve" | "account.manage" | "configuration.write"
 
 export interface AccessContext {
@@ -56,7 +51,7 @@ export interface AccessContext {
   readonly grants: readonly GrantId[]
   /** Activities whose state is ACTIVE, RESTRICTED or SUSPENDED. */
   readonly activities?: readonly ActivityId[]
-  readonly verification?: Partial<Record<VerificationLane, boolean>>
+  readonly verification?: Partial<Record<VerificationLane, VerificationState>>
   readonly kycTier?: KycTier
   /** Effective governance permissions composed from roles and individual grants. */
   readonly adminPermissions?: readonly string[]
@@ -382,7 +377,10 @@ export function evaluateCapability(
   if (rule.activity && !(context.activities ?? []).includes(rule.activity)) {
     return deny("ACTIVITY_INACTIVE")
   }
-  if (rule.verification && context.verification?.[rule.verification] !== true) {
+  if (
+    rule.verification &&
+    context.verification?.[rule.verification] !== "APPROVED"
+  ) {
     return deny("VERIFICATION_REQUIRED")
   }
   if (rule.kyc && context.kycTier !== "tier_1") {

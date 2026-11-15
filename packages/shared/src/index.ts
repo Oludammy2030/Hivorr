@@ -126,6 +126,8 @@ export function isProductionHost(host: string): boolean {
 export * from "./activities.js"
 export * from "./capabilities.js"
 export * from "./errors.js"
+export * from "./finance.js"
 export * from "./labels.js"
 export * from "./pagination.js"
 export * from "./routes.js"
+export * from "./verification.js"

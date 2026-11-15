@@ -167,12 +167,19 @@ describe("capability and grant contract", () => {
 })
 
 describe("API error contract", () => {
-  it("exports the nine stable error codes", () => {
+  it("exports the stable error codes", () => {
     expect(API_ERROR_CODES).toEqual([
       "UNAUTHENTICATED",
       "FORBIDDEN",
       "ACTIVITY_INACTIVE",
       "VALIDATION_FAILED",
+      "VERIFICATION_REQUIRED",
+      "KYC_REQUIRED",
+      "PAYOUT_ACCOUNT_REQUIRED",
+      "INSUFFICIENT_FUNDS",
+      "LIMIT_EXCEEDED",
+      "DUPLICATE_REQUEST",
+      "PROVIDER_ERROR",
       "NOT_FOUND",
       "CONFLICT",
       "RATE_LIMITED",
