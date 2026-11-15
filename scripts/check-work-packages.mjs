@@ -5,7 +5,7 @@
 // cannot drift apart:
 // - one plan per phase, one identifier per package;
 // - identifiers match EP-<phase>-<nnn> and stay inside their phase;
-// - EP-00 is contiguous (000..max); EP-01 uses ten-wide stage blocks;
+// - EP-00 is contiguous (000..max); EP-01 and EP-02 use ten-wide stage blocks;
 // - every document under documents/Task-Implementation belongs to a plan item,
 //   so a package added during execution must be added to the plan in the same
 //   change.
@@ -30,11 +30,13 @@ const planDirectory = path.join(
 )
 const taskDirectory = path.join(root, "documents/Task-Implementation")
 
-// EP-00 predates the block scheme and was allocated contiguously. EP-01 is the
-// documented ten-wide stage-block exception. New phases default to contiguous.
+// EP-00 predates the block scheme and was allocated contiguously. EP-01 and
+// EP-02 use the documented ten-wide stage-block scheme. New phases default to
+// contiguous.
 const schemes = new Map([
   ["EP-00", "contiguous"],
   ["EP-01", "stage-blocks"],
+  ["EP-02", "stage-blocks"],
 ])
 
 const errors = []
