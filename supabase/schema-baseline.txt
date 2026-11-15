@@ -1,0 +1,1609 @@
+# Hivorr database schema snapshot
+# Derived output. Migrations remain the source of truth (DB rules §9.1).
+# Contains schema objects only: no rows, secrets or connection details.
+
+## schemas (12)
+admin
+errands
+finance
+identity
+logistics
+market
+messaging
+platform
+private
+profile
+public
+services
+
+## tables (53)
+admin | access_denials
+admin | approval_decisions
+admin | approval_requests
+admin | approval_steps
+admin | case_actions
+admin | case_assignments
+admin | case_decisions
+admin | case_events
+admin | case_evidence
+admin | case_findings
+admin | case_links
+admin | case_recommendations
+admin | case_team_members
+admin | cases
+admin | configuration_entries
+admin | configuration_versions
+admin | department_members
+admin | departments
+admin | partner_agreements
+admin | partner_applications
+admin | partner_organisations
+admin | partner_representatives
+admin | partner_scopes
+admin | permission_grants
+admin | permissions
+admin | role_assignments
+admin | role_permissions
+admin | roles
+admin | staff_invites
+admin | staff_profiles
+admin | user_notes
+admin | verification_reviews
+admin | work_items
+identity | accounts
+identity | credentials
+identity | devices
+identity | grants
+identity | memberships
+identity | mfa_challenges
+identity | mfa_factors
+identity | recovery_codes
+identity | refresh_tokens
+identity | sessions
+identity | tokens
+identity | users
+platform | audit_log
+platform | feature_flags
+platform | idempotency_keys
+platform | outbox
+platform | reference_counters
+platform | schema_migrations
+profile | activity_activations
+profile | profiles
+
+## columns (478)
+admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
+admin | access_denials | user_id | uuid | uuid | NO | -
+admin | access_denials | permission_key | text | text | NO | -
+admin | access_denials | scope_type | text | text | YES | -
+admin | access_denials | scope_id | uuid | uuid | YES | -
+admin | access_denials | reason | text | text | NO | -
+admin | access_denials | expires_at | timestamp with time zone | timestamptz | YES | -
+admin | access_denials | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | access_denials | created_by | uuid | uuid | YES | -
+admin | access_denials | revoked_at | timestamp with time zone | timestamptz | YES | -
+admin | access_denials | revoked_by | uuid | uuid | YES | -
+admin | access_denials | revoked_reason | text | text | YES | -
+admin | approval_decisions | id | uuid | uuid | NO | platform.uuidv7()
+admin | approval_decisions | request_id | uuid | uuid | NO | -
+admin | approval_decisions | step_id | uuid | uuid | NO | -
+admin | approval_decisions | decision | text | text | NO | -
+admin | approval_decisions | decided_by | uuid | uuid | NO | -
+admin | approval_decisions | reason | text | text | NO | -
+admin | approval_decisions | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | approval_requests | id | uuid | uuid | NO | platform.uuidv7()
+admin | approval_requests | reference | text | text | NO | -
+admin | approval_requests | action_type | text | text | NO | -
+admin | approval_requests | target_type | text | text | NO | -
+admin | approval_requests | target_id | text | text | NO | -
+admin | approval_requests | amount | numeric | numeric | YES | -
+admin | approval_requests | currency | text | text | YES | -
+admin | approval_requests | risk_level | text | text | NO | 'medium'::text
+admin | approval_requests | requester_user_id | uuid | uuid | NO | -
+admin | approval_requests | reason | text | text | NO | -
+admin | approval_requests | status | text | text | NO | 'pending'::text
+admin | approval_requests | current_stage | integer | int4 | NO | 1
+admin | approval_requests | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | approval_requests | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | approval_requests | decided_at | timestamp with time zone | timestamptz | YES | -
+admin | approval_requests | payload | jsonb | jsonb | NO | '{}'::jsonb
+admin | approval_steps | id | uuid | uuid | NO | platform.uuidv7()
+admin | approval_steps | request_id | uuid | uuid | NO | -
+admin | approval_steps | stage | integer | int4 | NO | -
+admin | approval_steps | required_permission | text | text | NO | -
+admin | approval_steps | assignee_user_id | uuid | uuid | YES | -
+admin | approval_steps | status | text | text | NO | 'pending'::text
+admin | approval_steps | decided_by | uuid | uuid | YES | -
+admin | approval_steps | decided_at | timestamp with time zone | timestamptz | YES | -
+admin | approval_steps | reason | text | text | YES | -
+admin | approval_steps | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_actions | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_actions | case_id | uuid | uuid | NO | -
+admin | case_actions | decision_id | uuid | uuid | YES | -
+admin | case_actions | action_type | text | text | NO | -
+admin | case_actions | target_type | text | text | YES | -
+admin | case_actions | target_id | text | text | YES | -
+admin | case_actions | status | text | text | NO | 'pending'::text
+admin | case_actions | executed_by | uuid | uuid | YES | -
+admin | case_actions | executed_at | timestamp with time zone | timestamptz | YES | -
+admin | case_actions | result | jsonb | jsonb | YES | -
+admin | case_actions | failure_reason | text | text | YES | -
+admin | case_assignments | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_assignments | case_id | uuid | uuid | NO | -
+admin | case_assignments | assignee_user_id | uuid | uuid | NO | -
+admin | case_assignments | assigned_by | uuid | uuid | YES | -
+admin | case_assignments | assigned_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_assignments | unassigned_at | timestamp with time zone | timestamptz | YES | -
+admin | case_assignments | reason | text | text | YES | -
+admin | case_decisions | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_decisions | case_id | uuid | uuid | NO | -
+admin | case_decisions | recommendation_id | uuid | uuid | YES | -
+admin | case_decisions | decision | text | text | NO | -
+admin | case_decisions | reason | text | text | NO | -
+admin | case_decisions | decided_by | uuid | uuid | NO | -
+admin | case_decisions | decided_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_decisions | approval_reference | text | text | YES | -
+admin | case_decisions | outcome | text | text | YES | -
+admin | case_events | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_events | case_id | uuid | uuid | NO | -
+admin | case_events | event_type | text | text | NO | -
+admin | case_events | actor_user_id | uuid | uuid | YES | -
+admin | case_events | summary | text | text | NO | -
+admin | case_events | detail | jsonb | jsonb | YES | -
+admin | case_events | occurred_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_evidence | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_evidence | case_id | uuid | uuid | NO | -
+admin | case_evidence | storage_key | text | text | NO | -
+admin | case_evidence | file_name | text | text | NO | -
+admin | case_evidence | mime_type | text | text | YES | -
+admin | case_evidence | size_bytes | bigint | int8 | YES | -
+admin | case_evidence | sha256 | text | text | YES | -
+admin | case_evidence | source | text | text | YES | -
+admin | case_evidence | classification | text | text | NO | 'sensitive'::text
+admin | case_evidence | retention_class | text | text | YES | -
+admin | case_evidence | uploaded_by | uuid | uuid | YES | -
+admin | case_evidence | uploaded_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_evidence | supersedes_id | uuid | uuid | YES | -
+admin | case_evidence | status | text | text | NO | 'active'::text
+admin | case_evidence | access_notes | text | text | YES | -
+admin | case_findings | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_findings | case_id | uuid | uuid | NO | -
+admin | case_findings | author_user_id | uuid | uuid | NO | -
+admin | case_findings | summary | text | text | NO | -
+admin | case_findings | detail | text | text | YES | -
+admin | case_findings | policy_reference | text | text | YES | -
+admin | case_findings | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_links | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_links | case_id | uuid | uuid | NO | -
+admin | case_links | entity_type | text | text | NO | -
+admin | case_links | entity_id | text | text | NO | -
+admin | case_links | link_role | text | text | NO | 'related'::text
+admin | case_links | linked_by | uuid | uuid | YES | -
+admin | case_links | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_recommendations | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_recommendations | case_id | uuid | uuid | NO | -
+admin | case_recommendations | author_user_id | uuid | uuid | NO | -
+admin | case_recommendations | recommended_action | text | text | NO | -
+admin | case_recommendations | rationale | text | text | NO | -
+admin | case_recommendations | status | text | text | NO | 'draft'::text
+admin | case_recommendations | approval_request_id | uuid | uuid | YES | -
+admin | case_recommendations | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_recommendations | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_team_members | id | uuid | uuid | NO | platform.uuidv7()
+admin | case_team_members | case_id | uuid | uuid | NO | -
+admin | case_team_members | user_id | uuid | uuid | NO | -
+admin | case_team_members | team_role | text | text | NO | 'member'::text
+admin | case_team_members | added_by | uuid | uuid | YES | -
+admin | case_team_members | added_at | timestamp with time zone | timestamptz | NO | now()
+admin | case_team_members | removed_at | timestamp with time zone | timestamptz | YES | -
+admin | cases | id | uuid | uuid | NO | platform.uuidv7()
+admin | cases | reference | text | text | NO | -
+admin | cases | case_type | text | text | NO | -
+admin | cases | category | text | text | YES | -
+admin | cases | title | text | text | NO | -
+admin | cases | description | text | text | YES | -
+admin | cases | source | text | text | YES | -
+admin | cases | priority | text | text | NO | 'normal'::text
+admin | cases | severity | text | text | NO | 'medium'::text
+admin | cases | sensitivity | text | text | NO | 'standard'::text
+admin | cases | status | text | text | NO | 'RECEIVED'::text
+admin | cases | subject_type | text | text | YES | -
+admin | cases | subject_id | text | text | YES | -
+admin | cases | activity_id | text | text | YES | -
+admin | cases | department_id | uuid | uuid | YES | -
+admin | cases | queue_key | text | text | YES | -
+admin | cases | assignee_id | uuid | uuid | YES | -
+admin | cases | parent_case_id | uuid | uuid | YES | -
+admin | cases | created_by | uuid | uuid | YES | -
+admin | cases | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | cases | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | cases | closed_at | timestamp with time zone | timestamptz | YES | -
+admin | cases | outcome | text | text | YES | -
+admin | cases | closure_reason | text | text | YES | -
+admin | configuration_entries | id | uuid | uuid | NO | platform.uuidv7()
+admin | configuration_entries | key | text | text | NO | -
+admin | configuration_entries | namespace | text | text | NO | -
+admin | configuration_entries | description | text | text | NO | -
+admin | configuration_entries | value_type | text | text | NO | -
+admin | configuration_entries | sensitivity | text | text | NO | 'standard'::text
+admin | configuration_entries | status | text | text | NO | 'draft'::text
+admin | configuration_entries | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | configuration_entries | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | configuration_versions | id | uuid | uuid | NO | platform.uuidv7()
+admin | configuration_versions | entry_id | uuid | uuid | NO | -
+admin | configuration_versions | version | integer | int4 | NO | -
+admin | configuration_versions | value | jsonb | jsonb | NO | -
+admin | configuration_versions | effective_from | timestamp with time zone | timestamptz | NO | now()
+admin | configuration_versions | effective_to | timestamp with time zone | timestamptz | YES | -
+admin | configuration_versions | change_reason | text | text | NO | -
+admin | configuration_versions | created_by | uuid | uuid | YES | -
+admin | configuration_versions | approval_reference | text | text | YES | -
+admin | configuration_versions | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | department_members | id | uuid | uuid | NO | platform.uuidv7()
+admin | department_members | department_id | uuid | uuid | NO | -
+admin | department_members | user_id | uuid | uuid | NO | -
+admin | department_members | membership_role | text | text | NO | 'member'::text
+admin | department_members | effective_from | timestamp with time zone | timestamptz | NO | now()
+admin | department_members | effective_to | timestamp with time zone | timestamptz | YES | -
+admin | department_members | created_by | uuid | uuid | YES | -
+admin | department_members | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | departments | id | uuid | uuid | NO | platform.uuidv7()
+admin | departments | key | text | text | NO | -
+admin | departments | name | text | text | NO | -
+admin | departments | description | text | text | YES | -
+admin | departments | parent_id | uuid | uuid | YES | -
+admin | departments | leader_user_id | uuid | uuid | YES | -
+admin | departments | status | text | text | NO | 'active'::text
+admin | departments | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | departments | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_agreements | id | uuid | uuid | NO | platform.uuidv7()
+admin | partner_agreements | organisation_id | uuid | uuid | NO | -
+admin | partner_agreements | reference | text | text | NO | -
+admin | partner_agreements | starts_on | date | date | NO | -
+admin | partner_agreements | ends_on | date | date | YES | -
+admin | partner_agreements | status | text | text | NO | 'draft'::text
+admin | partner_agreements | document_reference | text | text | YES | -
+admin | partner_agreements | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_agreements | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_applications | id | uuid | uuid | NO | platform.uuidv7()
+admin | partner_applications | organisation_id | uuid | uuid | NO | -
+admin | partner_applications | status | text | text | NO | 'submitted'::text
+admin | partner_applications | submitted_at | timestamp with time zone | timestamptz | YES | -
+admin | partner_applications | reviewed_by | uuid | uuid | YES | -
+admin | partner_applications | reviewed_at | timestamp with time zone | timestamptz | YES | -
+admin | partner_applications | decision_reason | text | text | YES | -
+admin | partner_applications | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_applications | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_organisations | id | uuid | uuid | NO | platform.uuidv7()
+admin | partner_organisations | legal_name | text | text | NO | -
+admin | partner_organisations | trading_name | text | text | YES | -
+admin | partner_organisations | registration_number | text | text | YES | -
+admin | partner_organisations | category | text | text | YES | -
+admin | partner_organisations | status | text | text | NO | 'applicant'::text
+admin | partner_organisations | country | text | text | YES | -
+admin | partner_organisations | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_organisations | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_representatives | id | uuid | uuid | NO | platform.uuidv7()
+admin | partner_representatives | organisation_id | uuid | uuid | NO | -
+admin | partner_representatives | user_id | uuid | uuid | NO | -
+admin | partner_representatives | representative_role | text | text | NO | 'member'::text
+admin | partner_representatives | authority_evidence_reference | text | text | YES | -
+admin | partner_representatives | effective_from | timestamp with time zone | timestamptz | NO | now()
+admin | partner_representatives | effective_to | timestamp with time zone | timestamptz | YES | -
+admin | partner_representatives | created_by | uuid | uuid | YES | -
+admin | partner_representatives | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | partner_scopes | id | uuid | uuid | NO | platform.uuidv7()
+admin | partner_scopes | organisation_id | uuid | uuid | NO | -
+admin | partner_scopes | scope_key | text | text | NO | -
+admin | partner_scopes | granted_by | uuid | uuid | YES | -
+admin | partner_scopes | expires_at | timestamp with time zone | timestamptz | YES | -
+admin | partner_scopes | revoked_at | timestamp with time zone | timestamptz | YES | -
+admin | partner_scopes | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | permission_grants | id | uuid | uuid | NO | platform.uuidv7()
+admin | permission_grants | user_id | uuid | uuid | NO | -
+admin | permission_grants | permission_key | text | text | NO | -
+admin | permission_grants | scope_type | text | text | NO | -
+admin | permission_grants | scope_id | uuid | uuid | YES | -
+admin | permission_grants | granted_by | uuid | uuid | YES | -
+admin | permission_grants | reason | text | text | YES | -
+admin | permission_grants | approval_reference | text | text | YES | -
+admin | permission_grants | expires_at | timestamp with time zone | timestamptz | YES | -
+admin | permission_grants | revoked_at | timestamp with time zone | timestamptz | YES | -
+admin | permission_grants | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | permissions | key | text | text | NO | -
+admin | permissions | namespace | text | text | NO | -
+admin | permissions | description | text | text | NO | -
+admin | permissions | sensitivity | text | text | NO | 'standard'::text
+admin | permissions | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | role_assignments | id | uuid | uuid | NO | platform.uuidv7()
+admin | role_assignments | user_id | uuid | uuid | NO | -
+admin | role_assignments | role_id | uuid | uuid | NO | -
+admin | role_assignments | scope_type | text | text | NO | -
+admin | role_assignments | scope_id | uuid | uuid | YES | -
+admin | role_assignments | granted_by | uuid | uuid | YES | -
+admin | role_assignments | reason | text | text | YES | -
+admin | role_assignments | approval_reference | text | text | YES | -
+admin | role_assignments | expires_at | timestamp with time zone | timestamptz | YES | -
+admin | role_assignments | revoked_at | timestamp with time zone | timestamptz | YES | -
+admin | role_assignments | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | role_permissions | role_id | uuid | uuid | NO | -
+admin | role_permissions | permission_key | text | text | NO | -
+admin | role_permissions | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | roles | id | uuid | uuid | NO | platform.uuidv7()
+admin | roles | key | text | text | NO | -
+admin | roles | name | text | text | NO | -
+admin | roles | description | text | text | YES | -
+admin | roles | system | boolean | bool | NO | false
+admin | roles | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | roles | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | staff_invites | id | uuid | uuid | NO | platform.uuidv7()
+admin | staff_invites | email | text | text | NO | -
+admin | staff_invites | department_key | text | text | YES | -
+admin | staff_invites | job_title | text | text | YES | -
+admin | staff_invites | token_hash | text | text | NO | -
+admin | staff_invites | invited_by | uuid | uuid | YES | -
+admin | staff_invites | reason | text | text | NO | -
+admin | staff_invites | expires_at | timestamp with time zone | timestamptz | NO | (now() + '7 days'::interval)
+admin | staff_invites | consumed_at | timestamp with time zone | timestamptz | YES | -
+admin | staff_invites | revoked_at | timestamp with time zone | timestamptz | YES | -
+admin | staff_invites | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | staff_invites | delivery_email | text | text | NO | -
+admin | staff_profiles | id | uuid | uuid | NO | platform.uuidv7()
+admin | staff_profiles | user_id | uuid | uuid | NO | -
+admin | staff_profiles | employee_reference | text | text | YES | -
+admin | staff_profiles | job_title | text | text | YES | -
+admin | staff_profiles | department_id | uuid | uuid | YES | -
+admin | staff_profiles | supervisor_user_id | uuid | uuid | YES | -
+admin | staff_profiles | engagement_status | text | text | NO | 'invited'::text
+admin | staff_profiles | started_on | date | date | YES | -
+admin | staff_profiles | ended_on | date | date | YES | -
+admin | staff_profiles | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | staff_profiles | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | user_notes | id | uuid | uuid | NO | platform.uuidv7()
+admin | user_notes | user_id | uuid | uuid | NO | -
+admin | user_notes | author_user_id | uuid | uuid | YES | -
+admin | user_notes | body | text | text | NO | -
+admin | user_notes | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | verification_reviews | id | uuid | uuid | NO | platform.uuidv7()
+admin | verification_reviews | case_id | uuid | uuid | NO | -
+admin | verification_reviews | lane | text | text | NO | 'identity'::text
+admin | verification_reviews | status | text | text | NO | 'pending'::text
+admin | verification_reviews | decided_by | uuid | uuid | YES | -
+admin | verification_reviews | decided_at | timestamp with time zone | timestamptz | YES | -
+admin | verification_reviews | decision_reason | text | text | YES | -
+admin | verification_reviews | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | verification_reviews | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | work_items | id | uuid | uuid | NO | platform.uuidv7()
+admin | work_items | user_id | uuid | uuid | NO | -
+admin | work_items | case_id | uuid | uuid | YES | -
+admin | work_items | task_type | text | text | NO | -
+admin | work_items | title | text | text | NO | -
+admin | work_items | priority | text | text | NO | 'normal'::text
+admin | work_items | status | text | text | NO | 'open'::text
+admin | work_items | due_at | timestamp with time zone | timestamptz | YES | -
+admin | work_items | created_by | uuid | uuid | YES | -
+admin | work_items | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | work_items | completed_at | timestamp with time zone | timestamptz | YES | -
+admin | work_items | escalated_at | timestamp with time zone | timestamptz | YES | -
+identity | accounts | id | uuid | uuid | NO | platform.uuidv7()
+identity | accounts | status | text | text | NO | 'active'::text
+identity | accounts | legal_name | text | text | YES | -
+identity | accounts | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | accounts | updated_at | timestamp with time zone | timestamptz | NO | now()
+identity | credentials | user_id | uuid | uuid | NO | -
+identity | credentials | password_hash | text | text | NO | -
+identity | credentials | password_updated_at | timestamp with time zone | timestamptz | NO | now()
+identity | credentials | failed_attempts | integer | int4 | NO | 0
+identity | credentials | locked_until | timestamp with time zone | timestamptz | YES | -
+identity | credentials | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | devices | id | uuid | uuid | NO | platform.uuidv7()
+identity | devices | user_id | uuid | uuid | NO | -
+identity | devices | name | text | text | YES | -
+identity | devices | fingerprint_hash | text | text | YES | -
+identity | devices | last_seen_at | timestamp with time zone | timestamptz | YES | -
+identity | devices | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | grants | id | uuid | uuid | NO | platform.uuidv7()
+identity | grants | user_id | uuid | uuid | NO | -
+identity | grants | grant_type | text | text | NO | -
+identity | grants | scope | text | text | NO | -
+identity | grants | environment | text | text | NO | -
+identity | grants | granted_by | uuid | uuid | YES | -
+identity | grants | expires_at | timestamp with time zone | timestamptz | YES | -
+identity | grants | revoked_at | timestamp with time zone | timestamptz | YES | -
+identity | grants | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | grants | department_id | uuid | uuid | YES | -
+identity | memberships | id | uuid | uuid | NO | platform.uuidv7()
+identity | memberships | user_id | uuid | uuid | NO | -
+identity | memberships | account_id | uuid | uuid | NO | -
+identity | memberships | role | text | text | NO | 'member'::text
+identity | memberships | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | mfa_challenges | id | uuid | uuid | NO | platform.uuidv7()
+identity | mfa_challenges | user_id | uuid | uuid | NO | -
+identity | mfa_challenges | challenge_hash | text | text | NO | -
+identity | mfa_challenges | audience | text | text | NO | -
+identity | mfa_challenges | environment | text | text | NO | -
+identity | mfa_challenges | device_name | text | text | YES | -
+identity | mfa_challenges | attempts | integer | int4 | NO | 0
+identity | mfa_challenges | expires_at | timestamp with time zone | timestamptz | NO | -
+identity | mfa_challenges | consumed_at | timestamp with time zone | timestamptz | YES | -
+identity | mfa_challenges | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | mfa_factors | id | uuid | uuid | NO | platform.uuidv7()
+identity | mfa_factors | user_id | uuid | uuid | NO | -
+identity | mfa_factors | factor_type | text | text | NO | -
+identity | mfa_factors | label | text | text | YES | -
+identity | mfa_factors | secret_ciphertext | text | text | NO | -
+identity | mfa_factors | key_version | text | text | NO | -
+identity | mfa_factors | confirmed_at | timestamp with time zone | timestamptz | YES | -
+identity | mfa_factors | last_used_at | timestamp with time zone | timestamptz | YES | -
+identity | mfa_factors | revoked_at | timestamp with time zone | timestamptz | YES | -
+identity | mfa_factors | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | recovery_codes | id | uuid | uuid | NO | platform.uuidv7()
+identity | recovery_codes | user_id | uuid | uuid | NO | -
+identity | recovery_codes | code_hash | text | text | NO | -
+identity | recovery_codes | used_at | timestamp with time zone | timestamptz | YES | -
+identity | recovery_codes | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | refresh_tokens | id | uuid | uuid | NO | platform.uuidv7()
+identity | refresh_tokens | session_id | uuid | uuid | NO | -
+identity | refresh_tokens | token_hash | text | text | NO | -
+identity | refresh_tokens | issued_at | timestamp with time zone | timestamptz | NO | now()
+identity | refresh_tokens | expires_at | timestamp with time zone | timestamptz | NO | -
+identity | refresh_tokens | used_at | timestamp with time zone | timestamptz | YES | -
+identity | refresh_tokens | replaced_by | uuid | uuid | YES | -
+identity | sessions | id | uuid | uuid | NO | platform.uuidv7()
+identity | sessions | user_id | uuid | uuid | NO | -
+identity | sessions | device_id | uuid | uuid | YES | -
+identity | sessions | audience | text | text | NO | -
+identity | sessions | environment | text | text | NO | -
+identity | sessions | refresh_token_hash | text | text | NO | -
+identity | sessions | issued_at | timestamp with time zone | timestamptz | NO | now()
+identity | sessions | last_seen_at | timestamp with time zone | timestamptz | NO | now()
+identity | sessions | idle_expires_at | timestamp with time zone | timestamptz | NO | -
+identity | sessions | expires_at | timestamp with time zone | timestamptz | NO | -
+identity | sessions | mfa_satisfied_at | timestamp with time zone | timestamptz | YES | -
+identity | sessions | revoked_at | timestamp with time zone | timestamptz | YES | -
+identity | sessions | revoked_reason | text | text | YES | -
+identity | sessions | access_token_hash | text | text | NO | -
+identity | sessions | access_expires_at | timestamp with time zone | timestamptz | NO | -
+identity | tokens | id | uuid | uuid | NO | platform.uuidv7()
+identity | tokens | user_id | uuid | uuid | NO | -
+identity | tokens | purpose | text | text | NO | -
+identity | tokens | token_hash | text | text | NO | -
+identity | tokens | expires_at | timestamp with time zone | timestamptz | NO | -
+identity | tokens | consumed_at | timestamp with time zone | timestamptz | YES | -
+identity | tokens | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | users | id | uuid | uuid | NO | platform.uuidv7()
+identity | users | account_id | uuid | uuid | NO | -
+identity | users | email | text | text | NO | -
+identity | users | phone | text | text | YES | -
+identity | users | display_name | text | text | YES | -
+identity | users | status | text | text | NO | 'active'::text
+identity | users | email_verified_at | timestamp with time zone | timestamptz | YES | -
+identity | users | phone_verified_at | timestamp with time zone | timestamptz | YES | -
+identity | users | created_at | timestamp with time zone | timestamptz | NO | now()
+identity | users | updated_at | timestamp with time zone | timestamptz | NO | now()
+platform | audit_log | id | uuid | uuid | NO | gen_random_uuid()
+platform | audit_log | occurred_at | timestamp with time zone | timestamptz | NO | now()
+platform | audit_log | actor_type | text | text | NO | -
+platform | audit_log | actor_id | uuid | uuid | YES | -
+platform | audit_log | actor_audience | text | text | YES | -
+platform | audit_log | environment | text | text | NO | -
+platform | audit_log | action | text | text | NO | -
+platform | audit_log | target_type | text | text | YES | -
+platform | audit_log | target_id | text | text | YES | -
+platform | audit_log | before_summary | jsonb | jsonb | YES | -
+platform | audit_log | after_summary | jsonb | jsonb | YES | -
+platform | audit_log | ip | inet | inet | YES | -
+platform | audit_log | user_agent | text | text | YES | -
+platform | audit_log | correlation_id | text | text | YES | -
+platform | audit_log | reason | text | text | YES | -
+platform | audit_log | approval_reference | text | text | YES | -
+platform | audit_log | session_id | uuid | uuid | YES | -
+platform | audit_log | actor_display_name | text | text | YES | -
+platform | audit_log | actor_email | text | text | YES | -
+platform | audit_log | actor_role_keys | ARRAY | _text | NO | '{}'::text[]
+platform | audit_log | capability | text | text | YES | -
+platform | audit_log | actor_role_scopes | jsonb | jsonb | NO | '[]'::jsonb
+platform | feature_flags | key | text | text | NO | -
+platform | feature_flags | enabled | boolean | bool | NO | false
+platform | feature_flags | description | text | text | YES | -
+platform | feature_flags | updated_at | timestamp with time zone | timestamptz | NO | now()
+platform | idempotency_keys | key | text | text | NO | -
+platform | idempotency_keys | scope | text | text | NO | -
+platform | idempotency_keys | request_hash | text | text | NO | -
+platform | idempotency_keys | response_status | integer | int4 | YES | -
+platform | idempotency_keys | response_body | jsonb | jsonb | YES | -
+platform | idempotency_keys | created_at | timestamp with time zone | timestamptz | NO | now()
+platform | idempotency_keys | expires_at | timestamp with time zone | timestamptz | NO | -
+platform | outbox | id | uuid | uuid | NO | gen_random_uuid()
+platform | outbox | event_type | text | text | NO | -
+platform | outbox | aggregate_type | text | text | NO | -
+platform | outbox | aggregate_id | text | text | NO | -
+platform | outbox | payload | jsonb | jsonb | NO | '{}'::jsonb
+platform | outbox | occurred_at | timestamp with time zone | timestamptz | NO | now()
+platform | outbox | available_at | timestamp with time zone | timestamptz | NO | now()
+platform | outbox | processed_at | timestamp with time zone | timestamptz | YES | -
+platform | outbox | attempts | integer | int4 | NO | 0
+platform | outbox | last_error | text | text | YES | -
+platform | outbox | locked_at | timestamp with time zone | timestamptz | YES | -
+platform | outbox | locked_by | text | text | YES | -
+platform | outbox | dead_lettered_at | timestamp with time zone | timestamptz | YES | -
+platform | reference_counters | name | text | text | NO | -
+platform | reference_counters | value | bigint | int8 | NO | 0
+platform | reference_counters | updated_at | timestamp with time zone | timestamptz | NO | now()
+platform | schema_migrations | filename | text | text | NO | -
+platform | schema_migrations | checksum | text | text | NO | -
+platform | schema_migrations | applied_at | timestamp with time zone | timestamptz | NO | now()
+profile | activity_activations | id | uuid | uuid | NO | platform.uuidv7()
+profile | activity_activations | account_id | uuid | uuid | NO | -
+profile | activity_activations | activity_id | text | text | NO | -
+profile | activity_activations | state | text | text | NO | 'INACTIVE'::text
+profile | activity_activations | activated_at | timestamp with time zone | timestamptz | YES | -
+profile | activity_activations | deactivated_at | timestamp with time zone | timestamptz | YES | -
+profile | activity_activations | state_changed_at | timestamp with time zone | timestamptz | NO | now()
+profile | activity_activations | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | activity_activations | updated_at | timestamp with time zone | timestamptz | NO | now()
+profile | profiles | account_id | uuid | uuid | NO | -
+profile | profiles | display_name | text | text | YES | -
+profile | profiles | avatar_url | text | text | YES | -
+profile | profiles | bio | text | text | YES | -
+profile | profiles | locale | text | text | YES | -
+profile | profiles | timezone | text | text | YES | -
+profile | profiles | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | profiles | updated_at | timestamp with time zone | timestamptz | NO | now()
+
+## constraints (246)
+admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
+admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
+admin | access_denials | access_denials_pkey | p | PRIMARY KEY (id)
+admin | access_denials | access_denials_revocation_shape | c | CHECK (revoked_at IS NULL AND revoked_by IS NULL AND revoked_reason IS NULL OR revoked_at IS NOT NULL AND revoked_reason IS NOT NULL)
+admin | access_denials | access_denials_revoked_by_fkey | f | FOREIGN KEY (revoked_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | access_denials | access_denials_scope_shape | c | CHECK (scope_type IS NULL AND scope_id IS NULL OR scope_type = 'platform'::text AND scope_id IS NULL OR scope_type <> 'platform'::text AND scope_id IS NOT NULL)
+admin | access_denials | access_denials_scope_type_check | c | CHECK (scope_type = ANY (ARRAY['platform'::text, 'department'::text, 'organisation'::text, 'activity'::text, 'case'::text, 'team'::text, 'queue'::text]))
+admin | access_denials | access_denials_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | approval_decisions | approval_decisions_decided_by_fkey | f | FOREIGN KEY (decided_by) REFERENCES identity.users(id) ON DELETE RESTRICT
+admin | approval_decisions | approval_decisions_decision_check | c | CHECK (decision = ANY (ARRAY['approve'::text, 'reject'::text, 'request_information'::text]))
+admin | approval_decisions | approval_decisions_pkey | p | PRIMARY KEY (id)
+admin | approval_decisions | approval_decisions_request_id_fkey | f | FOREIGN KEY (request_id) REFERENCES admin.approval_requests(id) ON DELETE CASCADE
+admin | approval_decisions | approval_decisions_step_id_fkey | f | FOREIGN KEY (step_id) REFERENCES admin.approval_steps(id) ON DELETE CASCADE
+admin | approval_requests | approval_requests_amount | c | CHECK (amount IS NULL OR amount >= 0::numeric)
+admin | approval_requests | approval_requests_currency | c | CHECK (amount IS NULL OR currency IS NOT NULL)
+admin | approval_requests | approval_requests_current_stage_check | c | CHECK (current_stage >= 1)
+admin | approval_requests | approval_requests_pkey | p | PRIMARY KEY (id)
+admin | approval_requests | approval_requests_reference_key | u | UNIQUE (reference)
+admin | approval_requests | approval_requests_requester_user_id_fkey | f | FOREIGN KEY (requester_user_id) REFERENCES identity.users(id) ON DELETE RESTRICT
+admin | approval_requests | approval_requests_risk_level_check | c | CHECK (risk_level = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'critical'::text]))
+admin | approval_requests | approval_requests_status_check | c | CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'cancelled'::text, 'expired'::text]))
+admin | approval_steps | approval_steps_assignee_user_id_fkey | f | FOREIGN KEY (assignee_user_id) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | approval_steps | approval_steps_decided_by_fkey | f | FOREIGN KEY (decided_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | approval_steps | approval_steps_pkey | p | PRIMARY KEY (id)
+admin | approval_steps | approval_steps_request_id_fkey | f | FOREIGN KEY (request_id) REFERENCES admin.approval_requests(id) ON DELETE CASCADE
+admin | approval_steps | approval_steps_request_id_stage_key | u | UNIQUE (request_id, stage)
+admin | approval_steps | approval_steps_required_permission_fkey | f | FOREIGN KEY (required_permission) REFERENCES admin.permissions(key) ON DELETE RESTRICT
+admin | approval_steps | approval_steps_stage_check | c | CHECK (stage >= 1)
+admin | approval_steps | approval_steps_status_check | c | CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'skipped'::text]))
+admin | case_actions | case_actions_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_actions | case_actions_decision_id_fkey | f | FOREIGN KEY (decision_id) REFERENCES admin.case_decisions(id) ON DELETE SET NULL
+admin | case_actions | case_actions_executed_by_fkey | f | FOREIGN KEY (executed_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | case_actions | case_actions_pkey | p | PRIMARY KEY (id)
+admin | case_actions | case_actions_status_check | c | CHECK (status = ANY (ARRAY['pending'::text, 'executed'::text, 'failed'::text, 'cancelled'::text]))
+admin | case_assignments | case_assignments_assigned_by_fkey | f | FOREIGN KEY (assigned_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | case_assignments | case_assignments_assignee_user_id_fkey | f | FOREIGN KEY (assignee_user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | case_assignments | case_assignments_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_assignments | case_assignments_pkey | p | PRIMARY KEY (id)
+admin | case_decisions | case_decisions_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_decisions | case_decisions_decided_by_fkey | f | FOREIGN KEY (decided_by) REFERENCES identity.users(id) ON DELETE RESTRICT
+admin | case_decisions | case_decisions_pkey | p | PRIMARY KEY (id)
+admin | case_decisions | case_decisions_recommendation_id_fkey | f | FOREIGN KEY (recommendation_id) REFERENCES admin.case_recommendations(id) ON DELETE SET NULL
+admin | case_events | case_events_actor_user_id_fkey | f | FOREIGN KEY (actor_user_id) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | case_events | case_events_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_events | case_events_pkey | p | PRIMARY KEY (id)
+admin | case_evidence | case_evidence_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_evidence | case_evidence_classification_check | c | CHECK (classification = ANY (ARRAY['standard'::text, 'sensitive'::text, 'critical'::text]))
+admin | case_evidence | case_evidence_pkey | p | PRIMARY KEY (id)
+admin | case_evidence | case_evidence_sha256_check | c | CHECK (sha256 IS NULL OR sha256 ~ '^[0-9a-f]{64}$'::text)
+admin | case_evidence | case_evidence_size_bytes_check | c | CHECK (size_bytes IS NULL OR size_bytes >= 0)
+admin | case_evidence | case_evidence_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'superseded'::text, 'quarantined'::text, 'released'::text]))
+admin | case_evidence | case_evidence_storage_key_key | u | UNIQUE (storage_key)
+admin | case_evidence | case_evidence_supersedes_id_fkey | f | FOREIGN KEY (supersedes_id) REFERENCES admin.case_evidence(id) ON DELETE SET NULL
+admin | case_evidence | case_evidence_uploaded_by_fkey | f | FOREIGN KEY (uploaded_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | case_findings | case_findings_author_user_id_fkey | f | FOREIGN KEY (author_user_id) REFERENCES identity.users(id) ON DELETE RESTRICT
+admin | case_findings | case_findings_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_findings | case_findings_pkey | p | PRIMARY KEY (id)
+admin | case_links | case_links_case_id_entity_type_entity_id_link_role_key | u | UNIQUE (case_id, entity_type, entity_id, link_role)
+admin | case_links | case_links_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_links | case_links_linked_by_fkey | f | FOREIGN KEY (linked_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | case_links | case_links_pkey | p | PRIMARY KEY (id)
+admin | case_recommendations | case_recommendations_approval_request_id_fkey | f | FOREIGN KEY (approval_request_id) REFERENCES admin.approval_requests(id) ON DELETE SET NULL
+admin | case_recommendations | case_recommendations_author_user_id_fkey | f | FOREIGN KEY (author_user_id) REFERENCES identity.users(id) ON DELETE RESTRICT
+admin | case_recommendations | case_recommendations_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_recommendations | case_recommendations_pkey | p | PRIMARY KEY (id)
+admin | case_recommendations | case_recommendations_status_check | c | CHECK (status = ANY (ARRAY['draft'::text, 'submitted'::text, 'approved'::text, 'rejected'::text, 'withdrawn'::text]))
+admin | case_team_members | case_team_members_added_by_fkey | f | FOREIGN KEY (added_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | case_team_members | case_team_members_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | case_team_members | case_team_members_pkey | p | PRIMARY KEY (id)
+admin | case_team_members | case_team_members_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | cases | cases_activity_id_check | c | CHECK (activity_id = ANY (ARRAY['market.buy'::text, 'services.hire'::text, 'errands.request'::text, 'market.sell'::text, 'services.offer'::text, 'logistics.provide'::text]))
+admin | cases | cases_assignee_id_fkey | f | FOREIGN KEY (assignee_id) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | cases | cases_case_type_check | c | CHECK (case_type = ANY (ARRAY['support'::text, 'complaint'::text, 'dispute'::text, 'investigation'::text, 'incident'::text, 'verification_review'::text, 'financial_exception'::text, 'security_incident'::text, 'staff_conduct'::text, 'partner_conduct'::text]))
+admin | cases | cases_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | cases | cases_department_id_fkey | f | FOREIGN KEY (department_id) REFERENCES admin.departments(id) ON DELETE SET NULL
+admin | cases | cases_parent_case_id_fkey | f | FOREIGN KEY (parent_case_id) REFERENCES admin.cases(id) ON DELETE SET NULL
+admin | cases | cases_pkey | p | PRIMARY KEY (id)
+admin | cases | cases_priority_check | c | CHECK (priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text]))
+admin | cases | cases_reference_key | u | UNIQUE (reference)
+admin | cases | cases_sensitivity_check | c | CHECK (sensitivity = ANY (ARRAY['standard'::text, 'sensitive'::text, 'critical'::text]))
+admin | cases | cases_severity_check | c | CHECK (severity = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'critical'::text]))
+admin | cases | cases_status_check | c | CHECK (status = ANY (ARRAY['RECEIVED'::text, 'TRIAGED'::text, 'OPEN'::text, 'INVESTIGATING'::text, 'PENDING_INFORMATION'::text, 'ESCALATED'::text, 'REVIEW'::text, 'DECIDED'::text, 'ACTION_PENDING'::text, 'CLOSED'::text, 'REOPENED'::text, 'MERGED'::text, 'ARCHIVED'::text]))
+admin | configuration_entries | configuration_entries_key_format | c | CHECK (key ~ '^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$'::text)
+admin | configuration_entries | configuration_entries_key_key | u | UNIQUE (key)
+admin | configuration_entries | configuration_entries_pkey | p | PRIMARY KEY (id)
+admin | configuration_entries | configuration_entries_sensitivity_check | c | CHECK (sensitivity = ANY (ARRAY['standard'::text, 'sensitive'::text, 'critical'::text]))
+admin | configuration_entries | configuration_entries_status_check | c | CHECK (status = ANY (ARRAY['draft'::text, 'active'::text, 'retired'::text]))
+admin | configuration_entries | configuration_entries_value_type_check | c | CHECK (value_type = ANY (ARRAY['string'::text, 'number'::text, 'boolean'::text, 'json'::text]))
+admin | configuration_versions | configuration_versions_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | configuration_versions | configuration_versions_entry_id_fkey | f | FOREIGN KEY (entry_id) REFERENCES admin.configuration_entries(id) ON DELETE CASCADE
+admin | configuration_versions | configuration_versions_entry_id_version_key | u | UNIQUE (entry_id, version)
+admin | configuration_versions | configuration_versions_pkey | p | PRIMARY KEY (id)
+admin | configuration_versions | configuration_versions_version_check | c | CHECK (version >= 1)
+admin | configuration_versions | configuration_versions_window | c | CHECK (effective_to IS NULL OR effective_to > effective_from)
+admin | department_members | department_members_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | department_members | department_members_dates | c | CHECK (effective_to IS NULL OR effective_to > effective_from)
+admin | department_members | department_members_department_id_fkey | f | FOREIGN KEY (department_id) REFERENCES admin.departments(id) ON DELETE CASCADE
+admin | department_members | department_members_membership_role_check | c | CHECK (membership_role = ANY (ARRAY['lead'::text, 'member'::text]))
+admin | department_members | department_members_pkey | p | PRIMARY KEY (id)
+admin | department_members | department_members_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | departments | departments_key_format | c | CHECK (key ~ '^[a-z][a-z0-9_]*$'::text)
+admin | departments | departments_key_key | u | UNIQUE (key)
+admin | departments | departments_leader_user_id_fkey | f | FOREIGN KEY (leader_user_id) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | departments | departments_parent_id_fkey | f | FOREIGN KEY (parent_id) REFERENCES admin.departments(id) ON DELETE SET NULL
+admin | departments | departments_pkey | p | PRIMARY KEY (id)
+admin | departments | departments_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'archived'::text]))
+admin | partner_agreements | partner_agreements_dates | c | CHECK (ends_on IS NULL OR ends_on >= starts_on)
+admin | partner_agreements | partner_agreements_organisation_id_fkey | f | FOREIGN KEY (organisation_id) REFERENCES admin.partner_organisations(id) ON DELETE CASCADE
+admin | partner_agreements | partner_agreements_pkey | p | PRIMARY KEY (id)
+admin | partner_agreements | partner_agreements_reference_key | u | UNIQUE (reference)
+admin | partner_agreements | partner_agreements_status_check | c | CHECK (status = ANY (ARRAY['draft'::text, 'active'::text, 'expired'::text, 'terminated'::text]))
+admin | partner_applications | partner_applications_organisation_id_fkey | f | FOREIGN KEY (organisation_id) REFERENCES admin.partner_organisations(id) ON DELETE CASCADE
+admin | partner_applications | partner_applications_pkey | p | PRIMARY KEY (id)
+admin | partner_applications | partner_applications_reviewed_by_fkey | f | FOREIGN KEY (reviewed_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | partner_applications | partner_applications_status_check | c | CHECK (status = ANY (ARRAY['draft'::text, 'submitted'::text, 'under_review'::text, 'approved'::text, 'rejected'::text, 'withdrawn'::text]))
+admin | partner_organisations | partner_organisations_pkey | p | PRIMARY KEY (id)
+admin | partner_organisations | partner_organisations_registration_number_key | u | UNIQUE (registration_number)
+admin | partner_organisations | partner_organisations_status_check | c | CHECK (status = ANY (ARRAY['applicant'::text, 'active'::text, 'suspended'::text, 'terminated'::text]))
+admin | partner_representatives | partner_representatives_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | partner_representatives | partner_representatives_dates | c | CHECK (effective_to IS NULL OR effective_to > effective_from)
+admin | partner_representatives | partner_representatives_organisation_id_fkey | f | FOREIGN KEY (organisation_id) REFERENCES admin.partner_organisations(id) ON DELETE CASCADE
+admin | partner_representatives | partner_representatives_pkey | p | PRIMARY KEY (id)
+admin | partner_representatives | partner_representatives_representative_role_check | c | CHECK (representative_role = ANY (ARRAY['owner'::text, 'admin'::text, 'member'::text, 'viewer'::text]))
+admin | partner_representatives | partner_representatives_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | partner_scopes | partner_scopes_granted_by_fkey | f | FOREIGN KEY (granted_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | partner_scopes | partner_scopes_organisation_id_fkey | f | FOREIGN KEY (organisation_id) REFERENCES admin.partner_organisations(id) ON DELETE CASCADE
+admin | partner_scopes | partner_scopes_pkey | p | PRIMARY KEY (id)
+admin | permission_grants | permission_grants_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
+admin | permission_grants | permission_grants_granted_by_fkey | f | FOREIGN KEY (granted_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | permission_grants | permission_grants_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
+admin | permission_grants | permission_grants_pkey | p | PRIMARY KEY (id)
+admin | permission_grants | permission_grants_scope_shape | c | CHECK (scope_type = 'platform'::text AND scope_id IS NULL OR scope_type <> 'platform'::text AND scope_id IS NOT NULL)
+admin | permission_grants | permission_grants_scope_type_check | c | CHECK (scope_type = ANY (ARRAY['platform'::text, 'department'::text, 'organisation'::text, 'activity'::text, 'case'::text, 'team'::text, 'queue'::text]))
+admin | permission_grants | permission_grants_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | permissions | permissions_key_format | c | CHECK (key ~ '^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$'::text)
+admin | permissions | permissions_pkey | p | PRIMARY KEY (key)
+admin | permissions | permissions_sensitivity_check | c | CHECK (sensitivity = ANY (ARRAY['standard'::text, 'sensitive'::text, 'critical'::text]))
+admin | role_assignments | role_assignments_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
+admin | role_assignments | role_assignments_granted_by_fkey | f | FOREIGN KEY (granted_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | role_assignments | role_assignments_pkey | p | PRIMARY KEY (id)
+admin | role_assignments | role_assignments_role_id_fkey | f | FOREIGN KEY (role_id) REFERENCES admin.roles(id) ON DELETE RESTRICT
+admin | role_assignments | role_assignments_scope_shape | c | CHECK (scope_type = 'platform'::text AND scope_id IS NULL OR scope_type <> 'platform'::text AND scope_id IS NOT NULL)
+admin | role_assignments | role_assignments_scope_type_check | c | CHECK (scope_type = ANY (ARRAY['platform'::text, 'department'::text, 'organisation'::text, 'activity'::text, 'case'::text, 'team'::text, 'queue'::text]))
+admin | role_assignments | role_assignments_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | role_permissions | role_permissions_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
+admin | role_permissions | role_permissions_pkey | p | PRIMARY KEY (role_id, permission_key)
+admin | role_permissions | role_permissions_role_id_fkey | f | FOREIGN KEY (role_id) REFERENCES admin.roles(id) ON DELETE CASCADE
+admin | roles | roles_key_format | c | CHECK (key ~ '^[a-z][a-z0-9_]*$'::text)
+admin | roles | roles_key_key | u | UNIQUE (key)
+admin | roles | roles_pkey | p | PRIMARY KEY (id)
+admin | staff_invites | staff_invites_delivery_email_format | c | CHECK (delivery_email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'::text)
+admin | staff_invites | staff_invites_department_key_fkey | f | FOREIGN KEY (department_key) REFERENCES admin.departments(key) ON DELETE SET NULL
+admin | staff_invites | staff_invites_invited_by_fkey | f | FOREIGN KEY (invited_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | staff_invites | staff_invites_pkey | p | PRIMARY KEY (id)
+admin | staff_invites | staff_invites_reason_length | c | CHECK (length(TRIM(BOTH FROM reason)) >= 5)
+admin | staff_invites | staff_invites_token_hash_key | u | UNIQUE (token_hash)
+admin | staff_profiles | staff_profiles_dates | c | CHECK (ended_on IS NULL OR started_on IS NULL OR ended_on >= started_on)
+admin | staff_profiles | staff_profiles_department_id_fkey | f | FOREIGN KEY (department_id) REFERENCES admin.departments(id) ON DELETE SET NULL
+admin | staff_profiles | staff_profiles_employee_reference_key | u | UNIQUE (employee_reference)
+admin | staff_profiles | staff_profiles_engagement_status_check | c | CHECK (engagement_status = ANY (ARRAY['invited'::text, 'active'::text, 'suspended'::text, 'leave'::text, 'offboarded'::text]))
+admin | staff_profiles | staff_profiles_pkey | p | PRIMARY KEY (id)
+admin | staff_profiles | staff_profiles_supervisor_user_id_fkey | f | FOREIGN KEY (supervisor_user_id) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | staff_profiles | staff_profiles_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | staff_profiles | staff_profiles_user_id_key | u | UNIQUE (user_id)
+admin | user_notes | user_notes_author_user_id_fkey | f | FOREIGN KEY (author_user_id) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | user_notes | user_notes_body_length | c | CHECK (length(btrim(body)) >= 3 AND length(btrim(body)) <= 2000)
+admin | user_notes | user_notes_pkey | p | PRIMARY KEY (id)
+admin | user_notes | user_notes_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+admin | verification_reviews | verification_reviews_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | verification_reviews | verification_reviews_case_id_key | u | UNIQUE (case_id)
+admin | verification_reviews | verification_reviews_decided_by_fkey | f | FOREIGN KEY (decided_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | verification_reviews | verification_reviews_lane_check | c | CHECK (lane = ANY (ARRAY['identity'::text, 'business'::text, 'address'::text, 'phone'::text, 'document'::text]))
+admin | verification_reviews | verification_reviews_pkey | p | PRIMARY KEY (id)
+admin | verification_reviews | verification_reviews_status_check | c | CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'information_requested'::text]))
+admin | work_items | work_items_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
+admin | work_items | work_items_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
+admin | work_items | work_items_pkey | p | PRIMARY KEY (id)
+admin | work_items | work_items_priority_check | c | CHECK (priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text]))
+admin | work_items | work_items_status_check | c | CHECK (status = ANY (ARRAY['open'::text, 'in_progress'::text, 'blocked'::text, 'done'::text, 'cancelled'::text]))
+admin | work_items | work_items_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | accounts | accounts_pkey | p | PRIMARY KEY (id)
+identity | accounts | accounts_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text, 'closed'::text]))
+identity | credentials | credentials_failed_attempts_check | c | CHECK (failed_attempts >= 0)
+identity | credentials | credentials_pkey | p | PRIMARY KEY (user_id)
+identity | credentials | credentials_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | devices | devices_pkey | p | PRIMARY KEY (id)
+identity | devices | devices_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | grants | grants_department_id_fkey | f | FOREIGN KEY (department_id) REFERENCES admin.departments(id) ON DELETE RESTRICT
+identity | grants | grants_environment_check | c | CHECK (environment = ANY (ARRAY['development'::text, 'test'::text, 'staging'::text, 'production'::text]))
+identity | grants | grants_grant_type_check | c | CHECK (grant_type = ANY (ARRAY['admin'::text, 'staff'::text, 'partner'::text, 'platform_engineering'::text]))
+identity | grants | grants_granted_by_fkey | f | FOREIGN KEY (granted_by) REFERENCES identity.users(id) ON DELETE SET NULL
+identity | grants | grants_pkey | p | PRIMARY KEY (id)
+identity | grants | grants_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | memberships | memberships_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE RESTRICT
+identity | memberships | memberships_pkey | p | PRIMARY KEY (id)
+identity | memberships | memberships_role_check | c | CHECK (role = ANY (ARRAY['owner'::text, 'member'::text]))
+identity | memberships | memberships_user_id_account_id_key | u | UNIQUE (user_id, account_id)
+identity | memberships | memberships_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE RESTRICT
+identity | mfa_challenges | mfa_challenges_attempts_check | c | CHECK (attempts >= 0)
+identity | mfa_challenges | mfa_challenges_audience_check | c | CHECK (audience = ANY (ARRAY['app'::text, 'control'::text, 'staff'::text, 'partner'::text]))
+identity | mfa_challenges | mfa_challenges_challenge_hash_key | u | UNIQUE (challenge_hash)
+identity | mfa_challenges | mfa_challenges_environment_check | c | CHECK (environment = ANY (ARRAY['development'::text, 'test'::text, 'staging'::text, 'production'::text]))
+identity | mfa_challenges | mfa_challenges_pkey | p | PRIMARY KEY (id)
+identity | mfa_challenges | mfa_challenges_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | mfa_factors | mfa_factors_factor_type_check | c | CHECK (factor_type = ANY (ARRAY['totp'::text, 'webauthn'::text]))
+identity | mfa_factors | mfa_factors_pkey | p | PRIMARY KEY (id)
+identity | mfa_factors | mfa_factors_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | recovery_codes | recovery_codes_code_hash_key | u | UNIQUE (code_hash)
+identity | recovery_codes | recovery_codes_pkey | p | PRIMARY KEY (id)
+identity | recovery_codes | recovery_codes_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | refresh_tokens | refresh_tokens_pkey | p | PRIMARY KEY (id)
+identity | refresh_tokens | refresh_tokens_replaced_by_fkey | f | FOREIGN KEY (replaced_by) REFERENCES identity.refresh_tokens(id) ON DELETE SET NULL
+identity | refresh_tokens | refresh_tokens_session_id_fkey | f | FOREIGN KEY (session_id) REFERENCES identity.sessions(id) ON DELETE CASCADE
+identity | refresh_tokens | refresh_tokens_token_hash_key | u | UNIQUE (token_hash)
+identity | sessions | sessions_audience_check | c | CHECK (audience = ANY (ARRAY['app'::text, 'control'::text, 'staff'::text, 'partner'::text]))
+identity | sessions | sessions_device_id_fkey | f | FOREIGN KEY (device_id) REFERENCES identity.devices(id) ON DELETE SET NULL
+identity | sessions | sessions_environment_check | c | CHECK (environment = ANY (ARRAY['development'::text, 'test'::text, 'staging'::text, 'production'::text]))
+identity | sessions | sessions_pkey | p | PRIMARY KEY (id)
+identity | sessions | sessions_refresh_token_hash_key | u | UNIQUE (refresh_token_hash)
+identity | sessions | sessions_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | tokens | tokens_pkey | p | PRIMARY KEY (id)
+identity | tokens | tokens_purpose_check | c | CHECK (purpose = ANY (ARRAY['email_verification'::text, 'phone_verification'::text, 'password_reset'::text, 'account_invite'::text]))
+identity | tokens | tokens_token_hash_key | u | UNIQUE (token_hash)
+identity | tokens | tokens_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+identity | users | users_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE RESTRICT
+identity | users | users_pkey | p | PRIMARY KEY (id)
+identity | users | users_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text, 'closed'::text]))
+platform | audit_log | audit_log_actor_audience_check | c | CHECK (actor_audience = ANY (ARRAY['app'::text, 'control'::text, 'staff'::text, 'partner'::text, 'system'::text]))
+platform | audit_log | audit_log_actor_type_check | c | CHECK (actor_type = ANY (ARRAY['user'::text, 'staff'::text, 'admin'::text, 'partner'::text, 'developer'::text, 'system'::text]))
+platform | audit_log | audit_log_environment_check | c | CHECK (environment = ANY (ARRAY['development'::text, 'test'::text, 'staging'::text, 'production'::text]))
+platform | audit_log | audit_log_pkey | p | PRIMARY KEY (id)
+platform | feature_flags | feature_flags_pkey | p | PRIMARY KEY (key)
+platform | idempotency_keys | idempotency_keys_pkey | p | PRIMARY KEY (key)
+platform | outbox | outbox_attempts_check | c | CHECK (attempts >= 0)
+platform | outbox | outbox_pkey | p | PRIMARY KEY (id)
+platform | reference_counters | reference_counters_pkey | p | PRIMARY KEY (name)
+platform | reference_counters | reference_counters_value_check | c | CHECK (value >= 0)
+platform | schema_migrations | schema_migrations_pkey | p | PRIMARY KEY (filename)
+profile | activity_activations | activity_activations_account_id_activity_id_key | u | UNIQUE (account_id, activity_id)
+profile | activity_activations | activity_activations_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | activity_activations | activity_activations_activity_id_check | c | CHECK (activity_id = ANY (ARRAY['market.buy'::text, 'services.hire'::text, 'errands.request'::text, 'market.sell'::text, 'services.offer'::text, 'logistics.provide'::text]))
+profile | activity_activations | activity_activations_pkey | p | PRIMARY KEY (id)
+profile | activity_activations | activity_activations_state_check | c | CHECK (state = ANY (ARRAY['INACTIVE'::text, 'ACTIVE'::text, 'RESTRICTED'::text, 'SUSPENDED'::text]))
+profile | profiles | profiles_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | profiles | profiles_pkey | p | PRIMARY KEY (account_id)
+
+## indexes (152)
+admin | access_denials | access_denials_active_unique | CREATE UNIQUE INDEX access_denials_active_unique ON admin.access_denials USING btree (user_id, permission_key, COALESCE(scope_type, ''::text), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
+admin | access_denials | access_denials_pkey | CREATE UNIQUE INDEX access_denials_pkey ON admin.access_denials USING btree (id)
+admin | access_denials | access_denials_user_active_idx | CREATE INDEX access_denials_user_active_idx ON admin.access_denials USING btree (user_id, permission_key) WHERE (revoked_at IS NULL)
+admin | access_denials | access_denials_user_idx | CREATE INDEX access_denials_user_idx ON admin.access_denials USING btree (user_id)
+admin | approval_decisions | approval_decisions_pkey | CREATE UNIQUE INDEX approval_decisions_pkey ON admin.approval_decisions USING btree (id)
+admin | approval_decisions | approval_decisions_request_idx | CREATE INDEX approval_decisions_request_idx ON admin.approval_decisions USING btree (request_id)
+admin | approval_requests | approval_requests_pkey | CREATE UNIQUE INDEX approval_requests_pkey ON admin.approval_requests USING btree (id)
+admin | approval_requests | approval_requests_reference_key | CREATE UNIQUE INDEX approval_requests_reference_key ON admin.approval_requests USING btree (reference)
+admin | approval_requests | approval_requests_requester_idx | CREATE INDEX approval_requests_requester_idx ON admin.approval_requests USING btree (requester_user_id)
+admin | approval_requests | approval_requests_status_idx | CREATE INDEX approval_requests_status_idx ON admin.approval_requests USING btree (status, created_at)
+admin | approval_steps | approval_steps_assignee_idx | CREATE INDEX approval_steps_assignee_idx ON admin.approval_steps USING btree (assignee_user_id, status)
+admin | approval_steps | approval_steps_pkey | CREATE UNIQUE INDEX approval_steps_pkey ON admin.approval_steps USING btree (id)
+admin | approval_steps | approval_steps_request_id_stage_key | CREATE UNIQUE INDEX approval_steps_request_id_stage_key ON admin.approval_steps USING btree (request_id, stage)
+admin | case_actions | case_actions_case_idx | CREATE INDEX case_actions_case_idx ON admin.case_actions USING btree (case_id, status)
+admin | case_actions | case_actions_pkey | CREATE UNIQUE INDEX case_actions_pkey ON admin.case_actions USING btree (id)
+admin | case_assignments | case_assignments_active_unique | CREATE UNIQUE INDEX case_assignments_active_unique ON admin.case_assignments USING btree (case_id, assignee_user_id) WHERE (unassigned_at IS NULL)
+admin | case_assignments | case_assignments_pkey | CREATE UNIQUE INDEX case_assignments_pkey ON admin.case_assignments USING btree (id)
+admin | case_assignments | case_assignments_user_idx | CREATE INDEX case_assignments_user_idx ON admin.case_assignments USING btree (assignee_user_id) WHERE (unassigned_at IS NULL)
+admin | case_decisions | case_decisions_case_idx | CREATE INDEX case_decisions_case_idx ON admin.case_decisions USING btree (case_id, decided_at)
+admin | case_decisions | case_decisions_pkey | CREATE UNIQUE INDEX case_decisions_pkey ON admin.case_decisions USING btree (id)
+admin | case_events | case_events_case_idx | CREATE INDEX case_events_case_idx ON admin.case_events USING btree (case_id, occurred_at)
+admin | case_events | case_events_pkey | CREATE UNIQUE INDEX case_events_pkey ON admin.case_events USING btree (id)
+admin | case_evidence | case_evidence_case_idx | CREATE INDEX case_evidence_case_idx ON admin.case_evidence USING btree (case_id, uploaded_at)
+admin | case_evidence | case_evidence_pkey | CREATE UNIQUE INDEX case_evidence_pkey ON admin.case_evidence USING btree (id)
+admin | case_evidence | case_evidence_status_idx | CREATE INDEX case_evidence_status_idx ON admin.case_evidence USING btree (status)
+admin | case_evidence | case_evidence_storage_key_key | CREATE UNIQUE INDEX case_evidence_storage_key_key ON admin.case_evidence USING btree (storage_key)
+admin | case_findings | case_findings_case_idx | CREATE INDEX case_findings_case_idx ON admin.case_findings USING btree (case_id, created_at)
+admin | case_findings | case_findings_pkey | CREATE UNIQUE INDEX case_findings_pkey ON admin.case_findings USING btree (id)
+admin | case_links | case_links_case_id_entity_type_entity_id_link_role_key | CREATE UNIQUE INDEX case_links_case_id_entity_type_entity_id_link_role_key ON admin.case_links USING btree (case_id, entity_type, entity_id, link_role)
+admin | case_links | case_links_entity_idx | CREATE INDEX case_links_entity_idx ON admin.case_links USING btree (entity_type, entity_id)
+admin | case_links | case_links_pkey | CREATE UNIQUE INDEX case_links_pkey ON admin.case_links USING btree (id)
+admin | case_recommendations | case_recommendations_case_idx | CREATE INDEX case_recommendations_case_idx ON admin.case_recommendations USING btree (case_id, created_at)
+admin | case_recommendations | case_recommendations_pkey | CREATE UNIQUE INDEX case_recommendations_pkey ON admin.case_recommendations USING btree (id)
+admin | case_team_members | case_team_members_active_unique | CREATE UNIQUE INDEX case_team_members_active_unique ON admin.case_team_members USING btree (case_id, user_id) WHERE (removed_at IS NULL)
+admin | case_team_members | case_team_members_pkey | CREATE UNIQUE INDEX case_team_members_pkey ON admin.case_team_members USING btree (id)
+admin | cases | cases_assignee_idx | CREATE INDEX cases_assignee_idx ON admin.cases USING btree (assignee_id, status)
+admin | cases | cases_department_idx | CREATE INDEX cases_department_idx ON admin.cases USING btree (department_id, status)
+admin | cases | cases_parent_idx | CREATE INDEX cases_parent_idx ON admin.cases USING btree (parent_case_id)
+admin | cases | cases_pkey | CREATE UNIQUE INDEX cases_pkey ON admin.cases USING btree (id)
+admin | cases | cases_reference_key | CREATE UNIQUE INDEX cases_reference_key ON admin.cases USING btree (reference)
+admin | cases | cases_status_idx | CREATE INDEX cases_status_idx ON admin.cases USING btree (status, priority, created_at)
+admin | cases | cases_subject_idx | CREATE INDEX cases_subject_idx ON admin.cases USING btree (subject_type, subject_id)
+admin | configuration_entries | configuration_entries_key_key | CREATE UNIQUE INDEX configuration_entries_key_key ON admin.configuration_entries USING btree (key)
+admin | configuration_entries | configuration_entries_pkey | CREATE UNIQUE INDEX configuration_entries_pkey ON admin.configuration_entries USING btree (id)
+admin | configuration_versions | configuration_versions_entry_id_version_key | CREATE UNIQUE INDEX configuration_versions_entry_id_version_key ON admin.configuration_versions USING btree (entry_id, version)
+admin | configuration_versions | configuration_versions_entry_idx | CREATE INDEX configuration_versions_entry_idx ON admin.configuration_versions USING btree (entry_id, effective_from DESC)
+admin | configuration_versions | configuration_versions_pkey | CREATE UNIQUE INDEX configuration_versions_pkey ON admin.configuration_versions USING btree (id)
+admin | department_members | department_members_active_unique | CREATE UNIQUE INDEX department_members_active_unique ON admin.department_members USING btree (department_id, user_id) WHERE (effective_to IS NULL)
+admin | department_members | department_members_pkey | CREATE UNIQUE INDEX department_members_pkey ON admin.department_members USING btree (id)
+admin | department_members | department_members_user_idx | CREATE INDEX department_members_user_idx ON admin.department_members USING btree (user_id)
+admin | departments | departments_key_key | CREATE UNIQUE INDEX departments_key_key ON admin.departments USING btree (key)
+admin | departments | departments_leader_idx | CREATE INDEX departments_leader_idx ON admin.departments USING btree (leader_user_id)
+admin | departments | departments_parent_idx | CREATE INDEX departments_parent_idx ON admin.departments USING btree (parent_id)
+admin | departments | departments_pkey | CREATE UNIQUE INDEX departments_pkey ON admin.departments USING btree (id)
+admin | partner_agreements | partner_agreements_org_idx | CREATE INDEX partner_agreements_org_idx ON admin.partner_agreements USING btree (organisation_id)
+admin | partner_agreements | partner_agreements_pkey | CREATE UNIQUE INDEX partner_agreements_pkey ON admin.partner_agreements USING btree (id)
+admin | partner_agreements | partner_agreements_reference_key | CREATE UNIQUE INDEX partner_agreements_reference_key ON admin.partner_agreements USING btree (reference)
+admin | partner_applications | partner_applications_active_unique | CREATE UNIQUE INDEX partner_applications_active_unique ON admin.partner_applications USING btree (organisation_id) WHERE (status = ANY (ARRAY['submitted'::text, 'under_review'::text]))
+admin | partner_applications | partner_applications_org_idx | CREATE INDEX partner_applications_org_idx ON admin.partner_applications USING btree (organisation_id)
+admin | partner_applications | partner_applications_pkey | CREATE UNIQUE INDEX partner_applications_pkey ON admin.partner_applications USING btree (id)
+admin | partner_organisations | partner_organisations_pkey | CREATE UNIQUE INDEX partner_organisations_pkey ON admin.partner_organisations USING btree (id)
+admin | partner_organisations | partner_organisations_registration_number_key | CREATE UNIQUE INDEX partner_organisations_registration_number_key ON admin.partner_organisations USING btree (registration_number)
+admin | partner_organisations | partner_organisations_status_idx | CREATE INDEX partner_organisations_status_idx ON admin.partner_organisations USING btree (status)
+admin | partner_representatives | partner_representatives_active_unique | CREATE UNIQUE INDEX partner_representatives_active_unique ON admin.partner_representatives USING btree (organisation_id, user_id) WHERE (effective_to IS NULL)
+admin | partner_representatives | partner_representatives_pkey | CREATE UNIQUE INDEX partner_representatives_pkey ON admin.partner_representatives USING btree (id)
+admin | partner_representatives | partner_representatives_user_idx | CREATE INDEX partner_representatives_user_idx ON admin.partner_representatives USING btree (user_id)
+admin | partner_scopes | partner_scopes_active_unique | CREATE UNIQUE INDEX partner_scopes_active_unique ON admin.partner_scopes USING btree (organisation_id, scope_key) WHERE (revoked_at IS NULL)
+admin | partner_scopes | partner_scopes_org_idx | CREATE INDEX partner_scopes_org_idx ON admin.partner_scopes USING btree (organisation_id) WHERE (revoked_at IS NULL)
+admin | partner_scopes | partner_scopes_pkey | CREATE UNIQUE INDEX partner_scopes_pkey ON admin.partner_scopes USING btree (id)
+admin | permission_grants | permission_grants_active_unique | CREATE UNIQUE INDEX permission_grants_active_unique ON admin.permission_grants USING btree (user_id, permission_key, scope_type, COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
+admin | permission_grants | permission_grants_pkey | CREATE UNIQUE INDEX permission_grants_pkey ON admin.permission_grants USING btree (id)
+admin | permission_grants | permission_grants_user_active_idx | CREATE INDEX permission_grants_user_active_idx ON admin.permission_grants USING btree (user_id, expires_at) WHERE (revoked_at IS NULL)
+admin | permissions | permissions_pkey | CREATE UNIQUE INDEX permissions_pkey ON admin.permissions USING btree (key)
+admin | role_assignments | role_assignments_active_unique | CREATE UNIQUE INDEX role_assignments_active_unique ON admin.role_assignments USING btree (user_id, role_id, scope_type, COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
+admin | role_assignments | role_assignments_pkey | CREATE UNIQUE INDEX role_assignments_pkey ON admin.role_assignments USING btree (id)
+admin | role_assignments | role_assignments_role_idx | CREATE INDEX role_assignments_role_idx ON admin.role_assignments USING btree (role_id)
+admin | role_assignments | role_assignments_scope_idx | CREATE INDEX role_assignments_scope_idx ON admin.role_assignments USING btree (scope_type, scope_id) WHERE (revoked_at IS NULL)
+admin | role_assignments | role_assignments_user_active_idx | CREATE INDEX role_assignments_user_active_idx ON admin.role_assignments USING btree (user_id, expires_at) WHERE (revoked_at IS NULL)
+admin | role_permissions | role_permissions_pkey | CREATE UNIQUE INDEX role_permissions_pkey ON admin.role_permissions USING btree (role_id, permission_key)
+admin | roles | roles_key_key | CREATE UNIQUE INDEX roles_key_key ON admin.roles USING btree (key)
+admin | roles | roles_pkey | CREATE UNIQUE INDEX roles_pkey ON admin.roles USING btree (id)
+admin | staff_invites | staff_invites_expiry_idx | CREATE INDEX staff_invites_expiry_idx ON admin.staff_invites USING btree (expires_at) WHERE ((consumed_at IS NULL) AND (revoked_at IS NULL))
+admin | staff_invites | staff_invites_pending_email | CREATE UNIQUE INDEX staff_invites_pending_email ON admin.staff_invites USING btree (lower(email)) WHERE ((consumed_at IS NULL) AND (revoked_at IS NULL))
+admin | staff_invites | staff_invites_pkey | CREATE UNIQUE INDEX staff_invites_pkey ON admin.staff_invites USING btree (id)
+admin | staff_invites | staff_invites_token_hash_key | CREATE UNIQUE INDEX staff_invites_token_hash_key ON admin.staff_invites USING btree (token_hash)
+admin | staff_profiles | staff_profiles_department_idx | CREATE INDEX staff_profiles_department_idx ON admin.staff_profiles USING btree (department_id)
+admin | staff_profiles | staff_profiles_employee_reference_key | CREATE UNIQUE INDEX staff_profiles_employee_reference_key ON admin.staff_profiles USING btree (employee_reference)
+admin | staff_profiles | staff_profiles_pkey | CREATE UNIQUE INDEX staff_profiles_pkey ON admin.staff_profiles USING btree (id)
+admin | staff_profiles | staff_profiles_status_idx | CREATE INDEX staff_profiles_status_idx ON admin.staff_profiles USING btree (engagement_status)
+admin | staff_profiles | staff_profiles_user_id_key | CREATE UNIQUE INDEX staff_profiles_user_id_key ON admin.staff_profiles USING btree (user_id)
+admin | user_notes | user_notes_pkey | CREATE UNIQUE INDEX user_notes_pkey ON admin.user_notes USING btree (id)
+admin | user_notes | user_notes_user_idx | CREATE INDEX user_notes_user_idx ON admin.user_notes USING btree (user_id, created_at DESC)
+admin | verification_reviews | verification_reviews_case_id_key | CREATE UNIQUE INDEX verification_reviews_case_id_key ON admin.verification_reviews USING btree (case_id)
+admin | verification_reviews | verification_reviews_pkey | CREATE UNIQUE INDEX verification_reviews_pkey ON admin.verification_reviews USING btree (id)
+admin | verification_reviews | verification_reviews_status_idx | CREATE INDEX verification_reviews_status_idx ON admin.verification_reviews USING btree (status, created_at)
+admin | work_items | work_items_pkey | CREATE UNIQUE INDEX work_items_pkey ON admin.work_items USING btree (id)
+admin | work_items | work_items_user_idx | CREATE INDEX work_items_user_idx ON admin.work_items USING btree (user_id, status, due_at)
+identity | accounts | accounts_pkey | CREATE UNIQUE INDEX accounts_pkey ON identity.accounts USING btree (id)
+identity | credentials | credentials_pkey | CREATE UNIQUE INDEX credentials_pkey ON identity.credentials USING btree (user_id)
+identity | devices | devices_pkey | CREATE UNIQUE INDEX devices_pkey ON identity.devices USING btree (id)
+identity | devices | devices_user_fingerprint_unique | CREATE UNIQUE INDEX devices_user_fingerprint_unique ON identity.devices USING btree (user_id, fingerprint_hash) WHERE (fingerprint_hash IS NOT NULL)
+identity | grants | grants_active_unique | CREATE UNIQUE INDEX grants_active_unique ON identity.grants USING btree (user_id, grant_type, scope, environment) WHERE (revoked_at IS NULL)
+identity | grants | grants_department_idx | CREATE INDEX grants_department_idx ON identity.grants USING btree (department_id)
+identity | grants | grants_pkey | CREATE UNIQUE INDEX grants_pkey ON identity.grants USING btree (id)
+identity | grants | grants_user_idx | CREATE INDEX grants_user_idx ON identity.grants USING btree (user_id)
+identity | memberships | memberships_one_owner | CREATE UNIQUE INDEX memberships_one_owner ON identity.memberships USING btree (account_id) WHERE (role = 'owner'::text)
+identity | memberships | memberships_pkey | CREATE UNIQUE INDEX memberships_pkey ON identity.memberships USING btree (id)
+identity | memberships | memberships_user_id_account_id_key | CREATE UNIQUE INDEX memberships_user_id_account_id_key ON identity.memberships USING btree (user_id, account_id)
+identity | memberships | memberships_user_idx | CREATE INDEX memberships_user_idx ON identity.memberships USING btree (user_id)
+identity | mfa_challenges | mfa_challenges_challenge_hash_key | CREATE UNIQUE INDEX mfa_challenges_challenge_hash_key ON identity.mfa_challenges USING btree (challenge_hash)
+identity | mfa_challenges | mfa_challenges_live_idx | CREATE INDEX mfa_challenges_live_idx ON identity.mfa_challenges USING btree (expires_at) WHERE (consumed_at IS NULL)
+identity | mfa_challenges | mfa_challenges_pkey | CREATE UNIQUE INDEX mfa_challenges_pkey ON identity.mfa_challenges USING btree (id)
+identity | mfa_challenges | mfa_challenges_user_idx | CREATE INDEX mfa_challenges_user_idx ON identity.mfa_challenges USING btree (user_id)
+identity | mfa_factors | mfa_factors_pkey | CREATE UNIQUE INDEX mfa_factors_pkey ON identity.mfa_factors USING btree (id)
+identity | mfa_factors | mfa_factors_user_idx | CREATE INDEX mfa_factors_user_idx ON identity.mfa_factors USING btree (user_id)
+identity | recovery_codes | recovery_codes_code_hash_key | CREATE UNIQUE INDEX recovery_codes_code_hash_key ON identity.recovery_codes USING btree (code_hash)
+identity | recovery_codes | recovery_codes_pkey | CREATE UNIQUE INDEX recovery_codes_pkey ON identity.recovery_codes USING btree (id)
+identity | recovery_codes | recovery_codes_user_idx | CREATE INDEX recovery_codes_user_idx ON identity.recovery_codes USING btree (user_id)
+identity | refresh_tokens | refresh_tokens_pkey | CREATE UNIQUE INDEX refresh_tokens_pkey ON identity.refresh_tokens USING btree (id)
+identity | refresh_tokens | refresh_tokens_session_idx | CREATE INDEX refresh_tokens_session_idx ON identity.refresh_tokens USING btree (session_id)
+identity | refresh_tokens | refresh_tokens_token_hash_key | CREATE UNIQUE INDEX refresh_tokens_token_hash_key ON identity.refresh_tokens USING btree (token_hash)
+identity | sessions | sessions_access_token_hash_unique | CREATE UNIQUE INDEX sessions_access_token_hash_unique ON identity.sessions USING btree (access_token_hash)
+identity | sessions | sessions_active_idx | CREATE INDEX sessions_active_idx ON identity.sessions USING btree (user_id, expires_at) WHERE (revoked_at IS NULL)
+identity | sessions | sessions_pkey | CREATE UNIQUE INDEX sessions_pkey ON identity.sessions USING btree (id)
+identity | sessions | sessions_refresh_token_hash_key | CREATE UNIQUE INDEX sessions_refresh_token_hash_key ON identity.sessions USING btree (refresh_token_hash)
+identity | sessions | sessions_user_idx | CREATE INDEX sessions_user_idx ON identity.sessions USING btree (user_id)
+identity | tokens | tokens_pkey | CREATE UNIQUE INDEX tokens_pkey ON identity.tokens USING btree (id)
+identity | tokens | tokens_token_hash_key | CREATE UNIQUE INDEX tokens_token_hash_key ON identity.tokens USING btree (token_hash)
+identity | tokens | tokens_user_purpose_idx | CREATE INDEX tokens_user_purpose_idx ON identity.tokens USING btree (user_id, purpose)
+identity | users | users_account_idx | CREATE INDEX users_account_idx ON identity.users USING btree (account_id)
+identity | users | users_email_unique | CREATE UNIQUE INDEX users_email_unique ON identity.users USING btree (lower(email))
+identity | users | users_phone_unique | CREATE UNIQUE INDEX users_phone_unique ON identity.users USING btree (phone) WHERE (phone IS NOT NULL)
+identity | users | users_pkey | CREATE UNIQUE INDEX users_pkey ON identity.users USING btree (id)
+platform | audit_log | audit_log_action_idx | CREATE INDEX audit_log_action_idx ON platform.audit_log USING btree (action, occurred_at DESC)
+platform | audit_log | audit_log_actor_idx | CREATE INDEX audit_log_actor_idx ON platform.audit_log USING btree (actor_id, occurred_at DESC)
+platform | audit_log | audit_log_correlation_idx | CREATE INDEX audit_log_correlation_idx ON platform.audit_log USING btree (correlation_id)
+platform | audit_log | audit_log_occurred_at_idx | CREATE INDEX audit_log_occurred_at_idx ON platform.audit_log USING btree (occurred_at DESC)
+platform | audit_log | audit_log_pkey | CREATE UNIQUE INDEX audit_log_pkey ON platform.audit_log USING btree (id)
+platform | audit_log | audit_log_target_idx | CREATE INDEX audit_log_target_idx ON platform.audit_log USING btree (target_type, target_id, occurred_at DESC)
+platform | feature_flags | feature_flags_pkey | CREATE UNIQUE INDEX feature_flags_pkey ON platform.feature_flags USING btree (key)
+platform | idempotency_keys | idempotency_keys_expiry_idx | CREATE INDEX idempotency_keys_expiry_idx ON platform.idempotency_keys USING btree (expires_at)
+platform | idempotency_keys | idempotency_keys_pkey | CREATE UNIQUE INDEX idempotency_keys_pkey ON platform.idempotency_keys USING btree (key)
+platform | outbox | outbox_claimable_idx | CREATE INDEX outbox_claimable_idx ON platform.outbox USING btree (available_at) WHERE ((processed_at IS NULL) AND (dead_lettered_at IS NULL))
+platform | outbox | outbox_dead_letter_idx | CREATE INDEX outbox_dead_letter_idx ON platform.outbox USING btree (dead_lettered_at DESC) WHERE (dead_lettered_at IS NOT NULL)
+platform | outbox | outbox_pkey | CREATE UNIQUE INDEX outbox_pkey ON platform.outbox USING btree (id)
+platform | reference_counters | reference_counters_pkey | CREATE UNIQUE INDEX reference_counters_pkey ON platform.reference_counters USING btree (name)
+platform | schema_migrations | schema_migrations_pkey | CREATE UNIQUE INDEX schema_migrations_pkey ON platform.schema_migrations USING btree (filename)
+profile | activity_activations | activity_activations_account_id_activity_id_key | CREATE UNIQUE INDEX activity_activations_account_id_activity_id_key ON profile.activity_activations USING btree (account_id, activity_id)
+profile | activity_activations | activity_activations_account_state_idx | CREATE INDEX activity_activations_account_state_idx ON profile.activity_activations USING btree (account_id, state)
+profile | activity_activations | activity_activations_activity_state_idx | CREATE INDEX activity_activations_activity_state_idx ON profile.activity_activations USING btree (activity_id, state)
+profile | activity_activations | activity_activations_pkey | CREATE UNIQUE INDEX activity_activations_pkey ON profile.activity_activations USING btree (id)
+profile | profiles | profiles_pkey | CREATE UNIQUE INDEX profiles_pkey ON profile.profiles USING btree (account_id)
+
+## row-level-security (53)
+admin | access_denials | true | true
+admin | approval_decisions | true | true
+admin | approval_requests | true | true
+admin | approval_steps | true | true
+admin | case_actions | true | true
+admin | case_assignments | true | true
+admin | case_decisions | true | true
+admin | case_events | true | true
+admin | case_evidence | true | true
+admin | case_findings | true | true
+admin | case_links | true | true
+admin | case_recommendations | true | true
+admin | case_team_members | true | true
+admin | cases | true | true
+admin | configuration_entries | true | true
+admin | configuration_versions | true | true
+admin | department_members | true | true
+admin | departments | true | true
+admin | partner_agreements | true | true
+admin | partner_applications | true | true
+admin | partner_organisations | true | true
+admin | partner_representatives | true | true
+admin | partner_scopes | true | true
+admin | permission_grants | true | true
+admin | permissions | true | true
+admin | role_assignments | true | true
+admin | role_permissions | true | true
+admin | roles | true | true
+admin | staff_invites | true | true
+admin | staff_profiles | true | true
+admin | user_notes | true | true
+admin | verification_reviews | true | true
+admin | work_items | true | true
+identity | accounts | true | true
+identity | credentials | true | true
+identity | devices | true | true
+identity | grants | true | true
+identity | memberships | true | true
+identity | mfa_challenges | true | true
+identity | mfa_factors | true | true
+identity | recovery_codes | true | true
+identity | refresh_tokens | true | true
+identity | sessions | true | true
+identity | tokens | true | true
+identity | users | true | true
+platform | audit_log | false | false
+platform | feature_flags | false | false
+platform | idempotency_keys | false | false
+platform | outbox | false | false
+platform | reference_counters | false | false
+platform | schema_migrations | false | false
+profile | activity_activations | true | true
+profile | profiles | true | true
+
+## policies (61)
+admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
+admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
+admin | partner_representatives | partner_representatives_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+admin | permission_grants | permission_grants_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+admin | permissions | permissions_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
+admin | role_assignments | role_assignments_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+admin | role_permissions | role_permissions_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
+admin | roles | roles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
+admin | staff_profiles | staff_profiles_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+admin | work_items | work_items_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | accounts | accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (id = platform.current_account_id())
+identity | accounts | accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (id = platform.current_account_id()) | -
+identity | accounts | accounts_update | PERMISSIVE | {hivorr_api} | UPDATE | (id = platform.current_account_id()) | (id = platform.current_account_id())
+identity | credentials | credentials_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | credentials | credentials_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (user_id = platform.current_user_id())
+identity | credentials | credentials_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | credentials | credentials_update | PERMISSIVE | {hivorr_api} | UPDATE | (user_id = platform.current_user_id()) | (user_id = platform.current_user_id())
+identity | devices | devices_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | devices | devices_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (user_id = platform.current_user_id())
+identity | devices | devices_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | devices | devices_update | PERMISSIVE | {hivorr_api} | UPDATE | (user_id = platform.current_user_id()) | (user_id = platform.current_user_id())
+identity | grants | grants_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | grants | grants_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | memberships | memberships_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
+identity | memberships | memberships_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
+identity | memberships | memberships_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+identity | mfa_challenges | mfa_challenges_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | mfa_challenges | mfa_challenges_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (user_id = platform.current_user_id())
+identity | mfa_challenges | mfa_challenges_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | mfa_challenges | mfa_challenges_update | PERMISSIVE | {hivorr_api} | UPDATE | (user_id = platform.current_user_id()) | (user_id = platform.current_user_id())
+identity | mfa_factors | mfa_factors_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (user_id = platform.current_user_id())
+identity | mfa_factors | mfa_factors_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | mfa_factors | mfa_factors_update | PERMISSIVE | {hivorr_api} | UPDATE | (user_id = platform.current_user_id()) | (user_id = platform.current_user_id())
+identity | recovery_codes | recovery_codes_delete | PERMISSIVE | {hivorr_api} | DELETE | (user_id = platform.current_user_id()) | -
+identity | recovery_codes | recovery_codes_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (user_id = platform.current_user_id())
+identity | recovery_codes | recovery_codes_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | recovery_codes | recovery_codes_update | PERMISSIVE | {hivorr_api} | UPDATE | (user_id = platform.current_user_id()) | (user_id = platform.current_user_id())
+identity | refresh_tokens | refresh_tokens_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | refresh_tokens | refresh_tokens_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (session_id IN ( SELECT sessions.id FROM identity.sessions WHERE (sessions.user_id = platform.current_user_id())))
+identity | refresh_tokens | refresh_tokens_select | PERMISSIVE | {hivorr_api} | SELECT | (session_id IN ( SELECT sessions.id FROM identity.sessions WHERE (sessions.user_id = platform.current_user_id()))) | -
+identity | refresh_tokens | refresh_tokens_update | PERMISSIVE | {hivorr_api} | UPDATE | (session_id IN ( SELECT sessions.id FROM identity.sessions WHERE (sessions.user_id = platform.current_user_id()))) | (session_id IN ( SELECT sessions.id FROM identity.sessions WHERE (sessions.user_id = platform.current_user_id())))
+identity | sessions | sessions_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | sessions | sessions_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (user_id = platform.current_user_id())
+identity | sessions | sessions_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | sessions | sessions_update | PERMISSIVE | {hivorr_api} | UPDATE | (user_id = platform.current_user_id()) | (user_id = platform.current_user_id())
+identity | tokens | tokens_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | tokens | tokens_delete | PERMISSIVE | {hivorr_api} | DELETE | (user_id = platform.current_user_id()) | -
+identity | tokens | tokens_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (user_id = platform.current_user_id())
+identity | tokens | tokens_select | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+identity | tokens | tokens_update | PERMISSIVE | {hivorr_api} | UPDATE | (user_id = platform.current_user_id()) | (user_id = platform.current_user_id())
+identity | users | users_definer_select | PERMISSIVE | {hivorr_migrator,postgres} | SELECT | true | -
+identity | users | users_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
+identity | users | users_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
+identity | users | users_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+profile | activity_activations | activity_activations_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
+profile | activity_activations | activity_activations_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
+profile | activity_activations | activity_activations_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
+profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
+profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+
+## table-grants (448)
+admin | access_denials | hivorr_api | SELECT | NO
+admin | access_denials | postgres | DELETE | YES
+admin | access_denials | postgres | INSERT | YES
+admin | access_denials | postgres | REFERENCES | YES
+admin | access_denials | postgres | SELECT | YES
+admin | access_denials | postgres | TRIGGER | YES
+admin | access_denials | postgres | TRUNCATE | YES
+admin | access_denials | postgres | UPDATE | YES
+admin | approval_decisions | postgres | DELETE | YES
+admin | approval_decisions | postgres | INSERT | YES
+admin | approval_decisions | postgres | REFERENCES | YES
+admin | approval_decisions | postgres | SELECT | YES
+admin | approval_decisions | postgres | TRIGGER | YES
+admin | approval_decisions | postgres | TRUNCATE | YES
+admin | approval_decisions | postgres | UPDATE | YES
+admin | approval_requests | postgres | DELETE | YES
+admin | approval_requests | postgres | INSERT | YES
+admin | approval_requests | postgres | REFERENCES | YES
+admin | approval_requests | postgres | SELECT | YES
+admin | approval_requests | postgres | TRIGGER | YES
+admin | approval_requests | postgres | TRUNCATE | YES
+admin | approval_requests | postgres | UPDATE | YES
+admin | approval_steps | hivorr_api | SELECT | NO
+admin | approval_steps | postgres | DELETE | YES
+admin | approval_steps | postgres | INSERT | YES
+admin | approval_steps | postgres | REFERENCES | YES
+admin | approval_steps | postgres | SELECT | YES
+admin | approval_steps | postgres | TRIGGER | YES
+admin | approval_steps | postgres | TRUNCATE | YES
+admin | approval_steps | postgres | UPDATE | YES
+admin | case_actions | postgres | DELETE | YES
+admin | case_actions | postgres | INSERT | YES
+admin | case_actions | postgres | REFERENCES | YES
+admin | case_actions | postgres | SELECT | YES
+admin | case_actions | postgres | TRIGGER | YES
+admin | case_actions | postgres | TRUNCATE | YES
+admin | case_actions | postgres | UPDATE | YES
+admin | case_assignments | hivorr_api | SELECT | NO
+admin | case_assignments | postgres | DELETE | YES
+admin | case_assignments | postgres | INSERT | YES
+admin | case_assignments | postgres | REFERENCES | YES
+admin | case_assignments | postgres | SELECT | YES
+admin | case_assignments | postgres | TRIGGER | YES
+admin | case_assignments | postgres | TRUNCATE | YES
+admin | case_assignments | postgres | UPDATE | YES
+admin | case_decisions | postgres | DELETE | YES
+admin | case_decisions | postgres | INSERT | YES
+admin | case_decisions | postgres | REFERENCES | YES
+admin | case_decisions | postgres | SELECT | YES
+admin | case_decisions | postgres | TRIGGER | YES
+admin | case_decisions | postgres | TRUNCATE | YES
+admin | case_decisions | postgres | UPDATE | YES
+admin | case_events | postgres | DELETE | YES
+admin | case_events | postgres | INSERT | YES
+admin | case_events | postgres | REFERENCES | YES
+admin | case_events | postgres | SELECT | YES
+admin | case_events | postgres | TRIGGER | YES
+admin | case_events | postgres | TRUNCATE | YES
+admin | case_events | postgres | UPDATE | YES
+admin | case_evidence | postgres | DELETE | YES
+admin | case_evidence | postgres | INSERT | YES
+admin | case_evidence | postgres | REFERENCES | YES
+admin | case_evidence | postgres | SELECT | YES
+admin | case_evidence | postgres | TRIGGER | YES
+admin | case_evidence | postgres | TRUNCATE | YES
+admin | case_evidence | postgres | UPDATE | YES
+admin | case_findings | postgres | DELETE | YES
+admin | case_findings | postgres | INSERT | YES
+admin | case_findings | postgres | REFERENCES | YES
+admin | case_findings | postgres | SELECT | YES
+admin | case_findings | postgres | TRIGGER | YES
+admin | case_findings | postgres | TRUNCATE | YES
+admin | case_findings | postgres | UPDATE | YES
+admin | case_links | postgres | DELETE | YES
+admin | case_links | postgres | INSERT | YES
+admin | case_links | postgres | REFERENCES | YES
+admin | case_links | postgres | SELECT | YES
+admin | case_links | postgres | TRIGGER | YES
+admin | case_links | postgres | TRUNCATE | YES
+admin | case_links | postgres | UPDATE | YES
+admin | case_recommendations | postgres | DELETE | YES
+admin | case_recommendations | postgres | INSERT | YES
+admin | case_recommendations | postgres | REFERENCES | YES
+admin | case_recommendations | postgres | SELECT | YES
+admin | case_recommendations | postgres | TRIGGER | YES
+admin | case_recommendations | postgres | TRUNCATE | YES
+admin | case_recommendations | postgres | UPDATE | YES
+admin | case_team_members | postgres | DELETE | YES
+admin | case_team_members | postgres | INSERT | YES
+admin | case_team_members | postgres | REFERENCES | YES
+admin | case_team_members | postgres | SELECT | YES
+admin | case_team_members | postgres | TRIGGER | YES
+admin | case_team_members | postgres | TRUNCATE | YES
+admin | case_team_members | postgres | UPDATE | YES
+admin | cases | postgres | DELETE | YES
+admin | cases | postgres | INSERT | YES
+admin | cases | postgres | REFERENCES | YES
+admin | cases | postgres | SELECT | YES
+admin | cases | postgres | TRIGGER | YES
+admin | cases | postgres | TRUNCATE | YES
+admin | cases | postgres | UPDATE | YES
+admin | configuration_entries | postgres | DELETE | YES
+admin | configuration_entries | postgres | INSERT | YES
+admin | configuration_entries | postgres | REFERENCES | YES
+admin | configuration_entries | postgres | SELECT | YES
+admin | configuration_entries | postgres | TRIGGER | YES
+admin | configuration_entries | postgres | TRUNCATE | YES
+admin | configuration_entries | postgres | UPDATE | YES
+admin | configuration_versions | postgres | DELETE | YES
+admin | configuration_versions | postgres | INSERT | YES
+admin | configuration_versions | postgres | REFERENCES | YES
+admin | configuration_versions | postgres | SELECT | YES
+admin | configuration_versions | postgres | TRIGGER | YES
+admin | configuration_versions | postgres | TRUNCATE | YES
+admin | configuration_versions | postgres | UPDATE | YES
+admin | department_members | postgres | DELETE | YES
+admin | department_members | postgres | INSERT | YES
+admin | department_members | postgres | REFERENCES | YES
+admin | department_members | postgres | SELECT | YES
+admin | department_members | postgres | TRIGGER | YES
+admin | department_members | postgres | TRUNCATE | YES
+admin | department_members | postgres | UPDATE | YES
+admin | departments | postgres | DELETE | YES
+admin | departments | postgres | INSERT | YES
+admin | departments | postgres | REFERENCES | YES
+admin | departments | postgres | SELECT | YES
+admin | departments | postgres | TRIGGER | YES
+admin | departments | postgres | TRUNCATE | YES
+admin | departments | postgres | UPDATE | YES
+admin | partner_agreements | postgres | DELETE | YES
+admin | partner_agreements | postgres | INSERT | YES
+admin | partner_agreements | postgres | REFERENCES | YES
+admin | partner_agreements | postgres | SELECT | YES
+admin | partner_agreements | postgres | TRIGGER | YES
+admin | partner_agreements | postgres | TRUNCATE | YES
+admin | partner_agreements | postgres | UPDATE | YES
+admin | partner_applications | postgres | DELETE | YES
+admin | partner_applications | postgres | INSERT | YES
+admin | partner_applications | postgres | REFERENCES | YES
+admin | partner_applications | postgres | SELECT | YES
+admin | partner_applications | postgres | TRIGGER | YES
+admin | partner_applications | postgres | TRUNCATE | YES
+admin | partner_applications | postgres | UPDATE | YES
+admin | partner_organisations | postgres | DELETE | YES
+admin | partner_organisations | postgres | INSERT | YES
+admin | partner_organisations | postgres | REFERENCES | YES
+admin | partner_organisations | postgres | SELECT | YES
+admin | partner_organisations | postgres | TRIGGER | YES
+admin | partner_organisations | postgres | TRUNCATE | YES
+admin | partner_organisations | postgres | UPDATE | YES
+admin | partner_representatives | hivorr_api | SELECT | NO
+admin | partner_representatives | postgres | DELETE | YES
+admin | partner_representatives | postgres | INSERT | YES
+admin | partner_representatives | postgres | REFERENCES | YES
+admin | partner_representatives | postgres | SELECT | YES
+admin | partner_representatives | postgres | TRIGGER | YES
+admin | partner_representatives | postgres | TRUNCATE | YES
+admin | partner_representatives | postgres | UPDATE | YES
+admin | partner_scopes | postgres | DELETE | YES
+admin | partner_scopes | postgres | INSERT | YES
+admin | partner_scopes | postgres | REFERENCES | YES
+admin | partner_scopes | postgres | SELECT | YES
+admin | partner_scopes | postgres | TRIGGER | YES
+admin | partner_scopes | postgres | TRUNCATE | YES
+admin | partner_scopes | postgres | UPDATE | YES
+admin | permission_grants | hivorr_api | SELECT | NO
+admin | permission_grants | postgres | DELETE | YES
+admin | permission_grants | postgres | INSERT | YES
+admin | permission_grants | postgres | REFERENCES | YES
+admin | permission_grants | postgres | SELECT | YES
+admin | permission_grants | postgres | TRIGGER | YES
+admin | permission_grants | postgres | TRUNCATE | YES
+admin | permission_grants | postgres | UPDATE | YES
+admin | permissions | hivorr_api | SELECT | NO
+admin | permissions | hivorr_readonly | SELECT | NO
+admin | permissions | postgres | DELETE | YES
+admin | permissions | postgres | INSERT | YES
+admin | permissions | postgres | REFERENCES | YES
+admin | permissions | postgres | SELECT | YES
+admin | permissions | postgres | TRIGGER | YES
+admin | permissions | postgres | TRUNCATE | YES
+admin | permissions | postgres | UPDATE | YES
+admin | role_assignments | hivorr_api | SELECT | NO
+admin | role_assignments | postgres | DELETE | YES
+admin | role_assignments | postgres | INSERT | YES
+admin | role_assignments | postgres | REFERENCES | YES
+admin | role_assignments | postgres | SELECT | YES
+admin | role_assignments | postgres | TRIGGER | YES
+admin | role_assignments | postgres | TRUNCATE | YES
+admin | role_assignments | postgres | UPDATE | YES
+admin | role_permissions | hivorr_api | SELECT | NO
+admin | role_permissions | hivorr_readonly | SELECT | NO
+admin | role_permissions | postgres | DELETE | YES
+admin | role_permissions | postgres | INSERT | YES
+admin | role_permissions | postgres | REFERENCES | YES
+admin | role_permissions | postgres | SELECT | YES
+admin | role_permissions | postgres | TRIGGER | YES
+admin | role_permissions | postgres | TRUNCATE | YES
+admin | role_permissions | postgres | UPDATE | YES
+admin | roles | hivorr_api | SELECT | NO
+admin | roles | hivorr_readonly | SELECT | NO
+admin | roles | postgres | DELETE | YES
+admin | roles | postgres | INSERT | YES
+admin | roles | postgres | REFERENCES | YES
+admin | roles | postgres | SELECT | YES
+admin | roles | postgres | TRIGGER | YES
+admin | roles | postgres | TRUNCATE | YES
+admin | roles | postgres | UPDATE | YES
+admin | staff_invites | postgres | DELETE | YES
+admin | staff_invites | postgres | INSERT | YES
+admin | staff_invites | postgres | REFERENCES | YES
+admin | staff_invites | postgres | SELECT | YES
+admin | staff_invites | postgres | TRIGGER | YES
+admin | staff_invites | postgres | TRUNCATE | YES
+admin | staff_invites | postgres | UPDATE | YES
+admin | staff_profiles | hivorr_api | SELECT | NO
+admin | staff_profiles | postgres | DELETE | YES
+admin | staff_profiles | postgres | INSERT | YES
+admin | staff_profiles | postgres | REFERENCES | YES
+admin | staff_profiles | postgres | SELECT | YES
+admin | staff_profiles | postgres | TRIGGER | YES
+admin | staff_profiles | postgres | TRUNCATE | YES
+admin | staff_profiles | postgres | UPDATE | YES
+admin | user_notes | postgres | DELETE | YES
+admin | user_notes | postgres | INSERT | YES
+admin | user_notes | postgres | REFERENCES | YES
+admin | user_notes | postgres | SELECT | YES
+admin | user_notes | postgres | TRIGGER | YES
+admin | user_notes | postgres | TRUNCATE | YES
+admin | user_notes | postgres | UPDATE | YES
+admin | verification_reviews | postgres | DELETE | YES
+admin | verification_reviews | postgres | INSERT | YES
+admin | verification_reviews | postgres | REFERENCES | YES
+admin | verification_reviews | postgres | SELECT | YES
+admin | verification_reviews | postgres | TRIGGER | YES
+admin | verification_reviews | postgres | TRUNCATE | YES
+admin | verification_reviews | postgres | UPDATE | YES
+admin | work_items | hivorr_api | SELECT | NO
+admin | work_items | postgres | DELETE | YES
+admin | work_items | postgres | INSERT | YES
+admin | work_items | postgres | REFERENCES | YES
+admin | work_items | postgres | SELECT | YES
+admin | work_items | postgres | TRIGGER | YES
+admin | work_items | postgres | TRUNCATE | YES
+admin | work_items | postgres | UPDATE | YES
+identity | accounts | hivorr_api | INSERT | NO
+identity | accounts | hivorr_api | SELECT | NO
+identity | accounts | hivorr_api | UPDATE | NO
+identity | accounts | postgres | DELETE | YES
+identity | accounts | postgres | INSERT | YES
+identity | accounts | postgres | REFERENCES | YES
+identity | accounts | postgres | SELECT | YES
+identity | accounts | postgres | TRIGGER | YES
+identity | accounts | postgres | TRUNCATE | YES
+identity | accounts | postgres | UPDATE | YES
+identity | credentials | hivorr_api | INSERT | NO
+identity | credentials | hivorr_api | SELECT | NO
+identity | credentials | hivorr_api | UPDATE | NO
+identity | credentials | postgres | DELETE | YES
+identity | credentials | postgres | INSERT | YES
+identity | credentials | postgres | REFERENCES | YES
+identity | credentials | postgres | SELECT | YES
+identity | credentials | postgres | TRIGGER | YES
+identity | credentials | postgres | TRUNCATE | YES
+identity | credentials | postgres | UPDATE | YES
+identity | devices | hivorr_api | INSERT | NO
+identity | devices | hivorr_api | SELECT | NO
+identity | devices | hivorr_api | UPDATE | NO
+identity | devices | postgres | DELETE | YES
+identity | devices | postgres | INSERT | YES
+identity | devices | postgres | REFERENCES | YES
+identity | devices | postgres | SELECT | YES
+identity | devices | postgres | TRIGGER | YES
+identity | devices | postgres | TRUNCATE | YES
+identity | devices | postgres | UPDATE | YES
+identity | grants | hivorr_api | INSERT | NO
+identity | grants | hivorr_api | SELECT | NO
+identity | grants | hivorr_api | UPDATE | NO
+identity | grants | postgres | DELETE | YES
+identity | grants | postgres | INSERT | YES
+identity | grants | postgres | REFERENCES | YES
+identity | grants | postgres | SELECT | YES
+identity | grants | postgres | TRIGGER | YES
+identity | grants | postgres | TRUNCATE | YES
+identity | grants | postgres | UPDATE | YES
+identity | memberships | hivorr_api | INSERT | NO
+identity | memberships | hivorr_api | SELECT | NO
+identity | memberships | hivorr_api | UPDATE | NO
+identity | memberships | postgres | DELETE | YES
+identity | memberships | postgres | INSERT | YES
+identity | memberships | postgres | REFERENCES | YES
+identity | memberships | postgres | SELECT | YES
+identity | memberships | postgres | TRIGGER | YES
+identity | memberships | postgres | TRUNCATE | YES
+identity | memberships | postgres | UPDATE | YES
+identity | mfa_challenges | hivorr_api | INSERT | NO
+identity | mfa_challenges | hivorr_api | SELECT | NO
+identity | mfa_challenges | hivorr_api | UPDATE | NO
+identity | mfa_challenges | postgres | DELETE | YES
+identity | mfa_challenges | postgres | INSERT | YES
+identity | mfa_challenges | postgres | REFERENCES | YES
+identity | mfa_challenges | postgres | SELECT | YES
+identity | mfa_challenges | postgres | TRIGGER | YES
+identity | mfa_challenges | postgres | TRUNCATE | YES
+identity | mfa_challenges | postgres | UPDATE | YES
+identity | mfa_factors | hivorr_api | INSERT | NO
+identity | mfa_factors | hivorr_api | SELECT | NO
+identity | mfa_factors | hivorr_api | UPDATE | NO
+identity | mfa_factors | postgres | DELETE | YES
+identity | mfa_factors | postgres | INSERT | YES
+identity | mfa_factors | postgres | REFERENCES | YES
+identity | mfa_factors | postgres | SELECT | YES
+identity | mfa_factors | postgres | TRIGGER | YES
+identity | mfa_factors | postgres | TRUNCATE | YES
+identity | mfa_factors | postgres | UPDATE | YES
+identity | recovery_codes | hivorr_api | DELETE | NO
+identity | recovery_codes | hivorr_api | INSERT | NO
+identity | recovery_codes | hivorr_api | SELECT | NO
+identity | recovery_codes | hivorr_api | UPDATE | NO
+identity | recovery_codes | postgres | DELETE | YES
+identity | recovery_codes | postgres | INSERT | YES
+identity | recovery_codes | postgres | REFERENCES | YES
+identity | recovery_codes | postgres | SELECT | YES
+identity | recovery_codes | postgres | TRIGGER | YES
+identity | recovery_codes | postgres | TRUNCATE | YES
+identity | recovery_codes | postgres | UPDATE | YES
+identity | refresh_tokens | hivorr_api | INSERT | NO
+identity | refresh_tokens | hivorr_api | SELECT | NO
+identity | refresh_tokens | hivorr_api | UPDATE | NO
+identity | refresh_tokens | postgres | DELETE | YES
+identity | refresh_tokens | postgres | INSERT | YES
+identity | refresh_tokens | postgres | REFERENCES | YES
+identity | refresh_tokens | postgres | SELECT | YES
+identity | refresh_tokens | postgres | TRIGGER | YES
+identity | refresh_tokens | postgres | TRUNCATE | YES
+identity | refresh_tokens | postgres | UPDATE | YES
+identity | sessions | hivorr_api | INSERT | NO
+identity | sessions | hivorr_api | SELECT | NO
+identity | sessions | hivorr_api | UPDATE | NO
+identity | sessions | postgres | DELETE | YES
+identity | sessions | postgres | INSERT | YES
+identity | sessions | postgres | REFERENCES | YES
+identity | sessions | postgres | SELECT | YES
+identity | sessions | postgres | TRIGGER | YES
+identity | sessions | postgres | TRUNCATE | YES
+identity | sessions | postgres | UPDATE | YES
+identity | tokens | hivorr_api | DELETE | NO
+identity | tokens | hivorr_api | INSERT | NO
+identity | tokens | hivorr_api | SELECT | NO
+identity | tokens | hivorr_api | UPDATE | NO
+identity | tokens | postgres | DELETE | YES
+identity | tokens | postgres | INSERT | YES
+identity | tokens | postgres | REFERENCES | YES
+identity | tokens | postgres | SELECT | YES
+identity | tokens | postgres | TRIGGER | YES
+identity | tokens | postgres | TRUNCATE | YES
+identity | tokens | postgres | UPDATE | YES
+identity | users | hivorr_api | INSERT | NO
+identity | users | hivorr_api | SELECT | NO
+identity | users | hivorr_api | UPDATE | NO
+identity | users | postgres | DELETE | YES
+identity | users | postgres | INSERT | YES
+identity | users | postgres | REFERENCES | YES
+identity | users | postgres | SELECT | YES
+identity | users | postgres | TRIGGER | YES
+identity | users | postgres | TRUNCATE | YES
+identity | users | postgres | UPDATE | YES
+platform | audit_log | hivorr_api | INSERT | NO
+platform | audit_log | hivorr_api | SELECT | NO
+platform | audit_log | hivorr_readonly | SELECT | NO
+platform | audit_log | postgres | DELETE | YES
+platform | audit_log | postgres | INSERT | YES
+platform | audit_log | postgres | REFERENCES | YES
+platform | audit_log | postgres | SELECT | YES
+platform | audit_log | postgres | TRIGGER | YES
+platform | audit_log | postgres | TRUNCATE | YES
+platform | audit_log | postgres | UPDATE | YES
+platform | feature_flags | hivorr_api | SELECT | NO
+platform | feature_flags | hivorr_readonly | SELECT | NO
+platform | feature_flags | hivorr_worker | SELECT | NO
+platform | feature_flags | postgres | DELETE | YES
+platform | feature_flags | postgres | INSERT | YES
+platform | feature_flags | postgres | REFERENCES | YES
+platform | feature_flags | postgres | SELECT | YES
+platform | feature_flags | postgres | TRIGGER | YES
+platform | feature_flags | postgres | TRUNCATE | YES
+platform | feature_flags | postgres | UPDATE | YES
+platform | idempotency_keys | hivorr_api | INSERT | NO
+platform | idempotency_keys | hivorr_api | SELECT | NO
+platform | idempotency_keys | hivorr_api | UPDATE | NO
+platform | idempotency_keys | postgres | DELETE | YES
+platform | idempotency_keys | postgres | INSERT | YES
+platform | idempotency_keys | postgres | REFERENCES | YES
+platform | idempotency_keys | postgres | SELECT | YES
+platform | idempotency_keys | postgres | TRIGGER | YES
+platform | idempotency_keys | postgres | TRUNCATE | YES
+platform | idempotency_keys | postgres | UPDATE | YES
+platform | outbox | hivorr_api | INSERT | NO
+platform | outbox | hivorr_api | SELECT | NO
+platform | outbox | hivorr_api | UPDATE | NO
+platform | outbox | hivorr_worker | SELECT | NO
+platform | outbox | hivorr_worker | UPDATE | NO
+platform | outbox | postgres | DELETE | YES
+platform | outbox | postgres | INSERT | YES
+platform | outbox | postgres | REFERENCES | YES
+platform | outbox | postgres | SELECT | YES
+platform | outbox | postgres | TRIGGER | YES
+platform | outbox | postgres | TRUNCATE | YES
+platform | outbox | postgres | UPDATE | YES
+platform | reference_counters | hivorr_api | INSERT | NO
+platform | reference_counters | hivorr_api | SELECT | NO
+platform | reference_counters | hivorr_api | UPDATE | NO
+platform | reference_counters | postgres | DELETE | YES
+platform | reference_counters | postgres | INSERT | YES
+platform | reference_counters | postgres | REFERENCES | YES
+platform | reference_counters | postgres | SELECT | YES
+platform | reference_counters | postgres | TRIGGER | YES
+platform | reference_counters | postgres | TRUNCATE | YES
+platform | reference_counters | postgres | UPDATE | YES
+platform | schema_migrations | postgres | DELETE | YES
+platform | schema_migrations | postgres | INSERT | YES
+platform | schema_migrations | postgres | REFERENCES | YES
+platform | schema_migrations | postgres | SELECT | YES
+platform | schema_migrations | postgres | TRIGGER | YES
+platform | schema_migrations | postgres | TRUNCATE | YES
+platform | schema_migrations | postgres | UPDATE | YES
+profile | activity_activations | hivorr_api | INSERT | NO
+profile | activity_activations | hivorr_api | SELECT | NO
+profile | activity_activations | hivorr_api | UPDATE | NO
+profile | activity_activations | hivorr_readonly | SELECT | NO
+profile | activity_activations | postgres | DELETE | YES
+profile | activity_activations | postgres | INSERT | YES
+profile | activity_activations | postgres | REFERENCES | YES
+profile | activity_activations | postgres | SELECT | YES
+profile | activity_activations | postgres | TRIGGER | YES
+profile | activity_activations | postgres | TRUNCATE | YES
+profile | activity_activations | postgres | UPDATE | YES
+profile | profiles | hivorr_api | INSERT | NO
+profile | profiles | hivorr_api | SELECT | NO
+profile | profiles | hivorr_api | UPDATE | NO
+profile | profiles | hivorr_readonly | SELECT | NO
+profile | profiles | postgres | DELETE | YES
+profile | profiles | postgres | INSERT | YES
+profile | profiles | postgres | REFERENCES | YES
+profile | profiles | postgres | SELECT | YES
+profile | profiles | postgres | TRIGGER | YES
+profile | profiles | postgres | TRUNCATE | YES
+profile | profiles | postgres | UPDATE | YES
+
+## functions (74)
+admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
+admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
+admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
+admin | add_case_event | p_actor_user_id uuid, p_case_id uuid, p_event_type text, p_summary text | true | v | search_path=""
+admin | add_case_evidence | p_actor_user_id uuid, p_case_id uuid, p_storage_key text, p_file_name text, p_mime_type text, p_size_bytes bigint, p_sha256 text, p_classification text, p_reason text | true | v | search_path=""
+admin | add_partner_representative | p_actor_user_id uuid, p_organisation_id uuid, p_email text, p_role text, p_reason text | true | v | search_path=""
+admin | add_user_note | p_actor_user_id uuid, p_user_id uuid, p_body text | true | v | search_path=""
+admin | assign_case | p_actor_user_id uuid, p_case_id uuid, p_email text, p_queue_key text | true | v | search_path=""
+admin | assign_role | p_actor_user_id uuid, p_user_email text, p_role_key text, p_scope_type text, p_scope_id uuid, p_expires_at timestamp with time zone, p_reason text, p_environment text | true | v | search_path=""
+admin | attach_staff_profile | p_email text, p_job_title text, p_department_key text, p_reason text | true | v | search_path=""
+admin | case_view | p_case_id uuid | true | s | search_path=""
+admin | case_visible_to | p_actor_user_id uuid, p_case_id uuid | true | s | search_path=""
+admin | create_access_denial | p_actor_user_id uuid, p_user_email text, p_permission_key text, p_scope_type text, p_scope_id uuid, p_expires_at timestamp with time zone, p_reason text, p_environment text | true | v | search_path=""
+admin | create_case | p_actor_user_id uuid, p_case_type text, p_title text, p_description text, p_priority text, p_severity text, p_queue_key text, p_reason text | true | v | search_path=""
+admin | create_partner_organisation | p_actor_user_id uuid, p_legal_name text, p_trading_name text, p_category text, p_country text, p_reason text | true | v | search_path=""
+admin | create_staff_invite | p_email text, p_delivery_email text, p_department_key text, p_job_title text, p_token_hash text, p_reason text, p_expires_at timestamp with time zone, p_work_domain text | true | v | search_path=""
+admin | decide_approval | p_actor_user_id uuid, p_request_id uuid, p_decision text, p_reason text | true | v | search_path=""
+admin | get_staff_invite | p_token_hash text | true | s | search_path=""
+admin | govern_user | p_actor_user_id uuid, p_user_id uuid, p_action text, p_reason text | true | v | search_path=""
+admin | list_access_denials | p_actor_user_id uuid, p_environment text | true | s | search_path=""
+admin | list_account_timeline | p_actor_user_id uuid, p_user_id uuid | true | s | search_path=""
+admin | list_approval_requests | p_actor_user_id uuid | true | s | search_path=""
+admin | list_assignable_staff | p_actor_user_id uuid | true | s | search_path=""
+admin | list_case_events | p_actor_user_id uuid, p_case_id uuid | true | s | search_path=""
+admin | list_case_evidence | p_actor_user_id uuid, p_case_id uuid | true | s | search_path=""
+admin | list_cases | p_actor_user_id uuid, p_status text, p_type text, p_query text | true | s | search_path=""
+admin | list_departments | p_actor_user_id uuid, p_environment text | true | v | search_path=""
+admin | list_own_partner_organisations | p_user_id uuid | true | s | search_path=""
+admin | list_partner_organisations | p_actor_user_id uuid | true | s | search_path=""
+admin | list_partner_representatives | p_actor_user_id uuid, p_organisation_id uuid | true | s | search_path=""
+admin | list_role_assignments | p_actor_user_id uuid, p_environment text | true | s | search_path=""
+admin | list_role_scope_targets | p_actor_user_id uuid, p_scope_type text | true | s | search_path=""
+admin | list_roles | p_actor_user_id uuid, p_environment text | true | s | search_path=""
+admin | list_staff | p_query text, p_status text, p_limit integer | true | s | search_path=""
+admin | list_user_notes | p_actor_user_id uuid, p_user_id uuid | true | s | search_path=""
+admin | list_users | p_query text, p_status text, p_before timestamp with time zone, p_before_id uuid, p_limit integer | true | s | search_path=""
+admin | list_verification_queue | p_actor_user_id uuid, p_status text | true | s | search_path=""
+admin | platform_permission_holders | p_permission text | true | s | search_path=""
+admin | record_evidence_access | p_actor_user_id uuid, p_evidence_id uuid, p_purpose text | true | v | search_path=""
+admin | record_verification_decision | p_actor_user_id uuid, p_case_id uuid, p_decision text, p_reason text | true | v | search_path=""
+admin | request_approval | p_actor_user_id uuid, p_action_type text, p_target_type text, p_target_id text, p_reason text | true | v | search_path=""
+admin | request_case_decision | p_actor_user_id uuid, p_case_id uuid, p_outcome text, p_reason text | true | v | search_path=""
+admin | revoke_access_denial | p_actor_user_id uuid, p_denial_id uuid, p_reason text, p_environment text | true | v | search_path=""
+admin | revoke_role | p_actor_user_id uuid, p_assignment_id uuid, p_reason text, p_environment text | true | v | search_path=""
+admin | set_case_status | p_actor_user_id uuid, p_case_id uuid, p_status text, p_reason text | true | v | search_path=""
+admin | set_partner_status | p_actor_user_id uuid, p_organisation_id uuid, p_status text, p_reason text | true | v | search_path=""
+admin | set_staff_department | p_user_id uuid, p_department_key text, p_reason text | true | v | search_path=""
+admin | set_staff_status | p_user_id uuid, p_status text, p_reason text | true | v | search_path=""
+admin | staff_status_of | p_actor_user_id uuid, p_user_id uuid | true | s | search_path=""
+admin | supersede_case_evidence | p_actor_user_id uuid, p_evidence_id uuid, p_replacement_id uuid, p_reason text | true | v | search_path=""
+identity | actor_has_grant | p_actor_user_id uuid, p_scope text, p_environment text | true | s | search_path=identity, pg_temp
+identity | create_grant | p_actor_user_id uuid, p_email text, p_grant_type text, p_scope text, p_environment text, p_expires_at timestamp with time zone | true | v | search_path=identity, pg_temp
+identity | find_email_verification_token | p_token_hash text | true | s | search_path=identity, pg_temp
+identity | find_login_credential | p_email text | true | v | search_path=identity, pg_temp
+identity | find_mfa_challenge | p_challenge_hash text | true | v | search_path=identity, pg_temp
+identity | find_password_reset_token | p_token_hash text | true | s | search_path=identity, pg_temp
+identity | find_refresh_token | p_token_hash text | true | v | search_path=identity, pg_temp
+identity | find_session_by_access | p_token_hash text | true | v | search_path=identity, pg_temp
+identity | grant_scope_is_valid | p_grant_type text, p_scope text | false | i | -
+identity | list_grants | p_actor_user_id uuid, p_environment text | true | v | search_path=identity, pg_temp
+identity | revoke_grant | p_actor_user_id uuid, p_grant_id uuid, p_environment text | true | v | search_path=identity, pg_temp
+identity | set_grant_department | p_actor_user_id uuid, p_grant_id uuid, p_department_key text, p_environment text | true | v | search_path=identity, pg_temp
+platform | current_account_id |  | true | s | search_path=private, pg_temp
+platform | current_user_id |  | true | s | search_path=private, pg_temp
+platform | outbox_health |  | true | s | search_path=platform, pg_temp
+platform | reject_append_only_mutation |  | false | v | -
+platform | resolve_audit_actor | p_actor_id text | true | s | search_path=""
+platform | set_identity_context | account_id uuid, user_id uuid | true | v | search_path=private, pg_temp
+platform | touch_updated_at |  | false | v | -
+platform | uuidv7 |  | false | v | -
+private | current_account_id |  | false | s | -
+private | current_user_id |  | false | s | -
+private | set_identity_context | account_id uuid, user_id uuid | false | v | -
+profile | enforce_activation_transition |  | false | v | -
+
+## roles (6)
+hivorr_api | false | true | false | false | false | false
+hivorr_breakglass | false | true | false | false | false | false
+hivorr_migrator | false | true | false | false | false | false
+hivorr_readonly | false | true | false | false | false | false
+hivorr_worker | false | true | false | false | false | false
+postgres | true | true | true | true | true | true
+
+## extensions (1)
+plpgsql | 1.0
