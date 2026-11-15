@@ -50,18 +50,18 @@ finding.
 
 ## 5. Result
 
-**No critical finding. Five high findings remain unmitigated:**
+**No critical finding. No unmitigated high finding remains after the 2026-11-15 addendum.**
 
-| ID | Finding |
-|---|---|
-| H-01 | `F-29` migration credential / `nologin` migrator |
-| H-02 | `F-49` staging API stale |
-| H-03 | `F-50` slice not deployed |
-| H-04 | No CI run observed for the phase |
-| H-05 | `F-04` secret provider deviation |
+| ID | Finding | Disposition |
+|---|---|---|
+| H-01 | `F-29` migration credential / `nologin` migrator | Accepted residual 2026-11-10; login migrator before production |
+| H-02 | `F-49` staging API stale | **Closed 2026-11-15** — staging reports `82e5599`; session/activities return 401 |
+| H-03 | `F-50` slice not deployed | **Closed 2026-11-15** — Pages deploy `43675802021`; E2E 5/5 |
+| H-04 | No CI run observed | **Resolved 2026-11-10** — CI run `42835621656` green |
+| H-05 | `F-04` secret provider deviation | **Resolved 2026-11-10** — no Doppler; GitHub + Fly |
 
-Eight medium and four low findings are recorded. Full detail:
-`Engineering-Phase-Records/EP-01/EP-01-071-REVIEW.md`.
+`M-06` (read latency above budget) and `M-08` (no authenticated test identity) remain medium findings.
+Full detail: `Engineering-Phase-Records/EP-01/EP-01-071-REVIEW.md` and its §9 addendum.
 
 ## 6. Definition of Done
 
@@ -71,14 +71,14 @@ Eight medium and four low findings are recorded. Full detail:
 | DoD-02 | Findings are classified and owned | **Met** |
 | DoD-03 | Deviations are recorded | **Met** |
 | DoD-04 | Test adequacy is stated honestly | **Met** |
-| DoD-05 | No unmitigated critical/high finding remains | **Unmet** — 5 high |
-| DoD-06 | An independent reviewer signs | **Unmet** — `DEV-003` |
+| DoD-05 | No unmitigated critical/high finding remains | **Met** — H-02/H-03 closed; H-01 accepted; H-04/H-05 resolved |
+| DoD-06 | An independent reviewer signs | **Unmet** — `DEV-003` remains |
 
 ## 7. Conclusion
 
-The review is complete. Closure is blocked. `072` must not be signed until the five high findings are
-remediated or the founder records a scoped acceptance, and a second reviewer is appointed or
-`DEV-003` is explicitly renewed.
+The review is complete and recommends `EP-01-072` for founder closure, subject to acceptance of
+`M-06`, `M-08`, `DEV-003` and the other recorded residuals. The independent-reviewer gap is not
+resolved; `DEV-003` must be renewed or a reviewer appointed before EP-02 verification and finance work.
 
 ## 8. Execution status
 
@@ -87,6 +87,7 @@ remediated or the founder records a scoped acceptance, and a second reviewer is 
 | **Status** | `REQUIRES_REVIEW` |
 | **Started** | 2026-11-10 |
 | **Review complete** | 2026-11-10 |
-| **Closes when** | The five high findings are closed or accepted, and `DEV-003` is resolved or renewed |
+| **Addendum** | 2026-11-15 |
+| **Closes when** | The addendum is accepted by the architect/founder and `DEV-003` is resolved or renewed for EP-02 |
 | **Review record** | `Engineering-Phase-Records/EP-01/EP-01-071-REVIEW.md` |
 | **Execution record** | `execution-records/EP-01-071.md` |

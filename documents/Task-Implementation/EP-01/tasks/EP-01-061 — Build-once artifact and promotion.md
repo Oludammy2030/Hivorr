@@ -157,8 +157,9 @@ No migration or secret value changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-10 |
 | **Code complete** | 2026-11-10 |
-| **Closes when** | A staging run deploys the current SHA, `/v1/health/live` reports it, and promotion verifies the digest with no rebuild; `F-50`/`F-51` are accepted or closed |
+| **Completed** | 2026-11-15 |
+| **Closes when** | Met — staging reports `82e5599`; Fly deploy `43675801983`; smoke and E2E pass; `F-51` remains a recorded low residual |
 | **Execution record** | `execution-records/EP-01-061.md` |

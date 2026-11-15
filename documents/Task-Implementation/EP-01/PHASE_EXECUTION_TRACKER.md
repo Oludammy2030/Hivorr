@@ -9,9 +9,9 @@
 | **Tracker updated** | 2026-11-10 |
 | **Phase status** | `In build` |
 | **Tasks total** | 39 |
-| **Completed** | 5 |
-| **Requires review** | 32 |
-| **Pending** | 2 |
+| **Completed** | 8 |
+| **Requires review** | 31 |
+| **Pending** | 0 |
 | **Blocked** | 0 |
 
 > **Status rule.** A task moves to `COMPLETED` only when its task-specific DoD in `tasks/` has been
@@ -57,25 +57,26 @@
 | 31 | `EP-01-053` | Vertical-slice screens | `032`, `034`, `035`, `051`, `052` | **REQUIRES_REVIEW** — slice live; sign-in exact at 3 widths; MFA/reset/verify/activity wired; live E2E in `063` | — | `execution-records/EP-01-053.md` |
 | 32 | `EP-01-054` | Four-bundle build and deployment targets | `002`, `052` | **REQUIRES_REVIEW** — four bundles + noindex + 200 KB gzip budget gate; release manifest verified; CI remains | — | `execution-records/EP-01-054.md` |
 | 33 | `EP-01-060` | Environment topology and staging provisioning | `001`, `020`, `043` | **REQUIRES_REVIEW** — four hosts, TLS and Access observed; staging `verified`; `F-49` stale API image and `F-08` remain | — | `execution-records/EP-01-060.md` |
-| 34 | `EP-01-061` | Build-once artifact and promotion | `004`, `054`, `060` | **REQUIRES_REVIEW** — release identity in health; digest artifact + promotion checks; deployed SHA unobserved (`F-49`/`F-50`/`F-51`) | — | `execution-records/EP-01-061.md` |
+| 34 | `EP-01-061` | Build-once artifact and promotion | `004`, `054`, `060` | **COMPLETED** — staging `82e5599` deployed; health reports it; smoke and promotion guards verified | 2026-11-15 | `execution-records/EP-01-061.md` |
 | 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **REQUIRES_REVIEW** — plan/apply/verify + 8 unit checks; no DB/workflow run; `F-29` credential and `F-28` baseline remain | — | `execution-records/EP-01-062.md` |
-| 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **REQUIRES_REVIEW** — smoke + E2E wired as blocking promotion gates; both correctly fail on `F-49`/`F-50` | — | `execution-records/EP-01-063.md` |
-| 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **REQUIRES_REVIEW** — pack complete; C1 met, 11 partial, 2 unmet, 2 open | — | `execution-records/EP-01-070.md` |
-| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — review complete; 0 critical, **2 high** (`F-49`, `F-50`); CI green | — | `execution-records/EP-01-071.md` |
-| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **PENDING** | — | — |
+| 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **COMPLETED** — smoke 9/9 and slice E2E 5/5 against staging `82e5599`; authenticated E2E opt-in (`M-08`) | 2026-11-15 | `execution-records/EP-01-063.md` |
+| 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **COMPLETED** — pack updated; C4 and C12 met; 11 met, 4 partial, 0 unmet, 2 open | 2026-11-15 | `execution-records/EP-01-070.md` |
+| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — addendum complete; 0 critical, 0 high; `M-06` latency and `M-08` test identity remain; sign-off pending | — | `execution-records/EP-01-071.md` |
+| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **REQUIRES_REVIEW** — closure record drafted; founder signature pending | — | `documents/Engineering-Execution/Engineering-Phase-Records/EP-01/EP-01-G5-CLOSURE.md` |
 
 ---
 
 ## 2. Next eligible task
 
-**None.** `EP-01-072` cannot be signed while two high findings remain:
+**`EP-01-072` — G5 phase closure record (signature pending).**
 
-1. `F-49` — staging API stale.
-2. `F-50` — slice/Pages rollout.
+`F-49` and `F-50` are closed; staging reports `82e5599`, smoke and E2E pass, and the schema baseline is
+committed. `EP-01-072` is drafted and awaits the founder's G5 signature. `M-06` (read latency above
+budget), `M-08` (no authenticated test identity) and `DEV-003` (single reviewer) remain recorded
+residuals.
 
-CI run `42835621656` is green on every job, closing H-04. H-01 (`F-29`) is an accepted residual; H-05
-(`F-04`) is resolved by the no-Doppler ruling. `DEV-003` (single reviewer) ends at `G5` or on
-appointment of a second reviewer.
+CI run `42835621656` was green; deploy runs `43675801983` and `43675802021` are green; CI run
+`43675612150` is green with the schema baseline.
 
 ---
 
@@ -111,8 +112,13 @@ they can count toward the phase exit.
 |---|---|---|---|---|
 | 2026-11-07 | `EP-01-001` | `PENDING` | `COMPLETED` | `EP-01-ENTRY-RECORD.md` |
 | 2026-11-09 | `EP-01-002` | `PENDING` | `COMPLETED` | `execution-records/EP-01-002.md` |
+| 2026-11-15 | `EP-01-061` | `REQUIRES_REVIEW` | `COMPLETED` | `execution-records/EP-01-061.md` |
+| 2026-11-15 | `EP-01-063` | `REQUIRES_REVIEW` | `COMPLETED` | `execution-records/EP-01-063.md` |
+| 2026-11-15 | `EP-01-070` | `REQUIRES_REVIEW` | `COMPLETED` | `execution-records/EP-01-070.md` |
+| 2026-11-15 | `EP-01-071` | `REQUIRES_REVIEW` | `REQUIRES_REVIEW` | `EP-01-071-REVIEW.md` addendum |
+| 2026-11-15 | `EP-01-072` | `PENDING` | `REQUIRES_REVIEW` | `EP-01-G5-CLOSURE.md` draft |
 
 ---
 
-**Tracker status:** current to 2026-11-09. Every later status change requires a task doc, an
+**Tracker status:** current to 2026-11-15. Every later status change requires a task doc, an
 execution record, and this table.

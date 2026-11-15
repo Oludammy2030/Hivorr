@@ -10,11 +10,11 @@
 | **Phase record root** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-01/` |
 | **Task documentation root** | `documents/Task-Implementation/EP-01/` |
 | **Entry record** | `EP-01-ENTRY-RECORD.md` — `Verified`, 2026-11-07; phase opened |
-| **Phase status at this overview** | **`In build`** — opened 2026-11-07; reconciled against the as-built repository on 2026-11-09 |
+| **Phase status at this overview** | **`In build`** — opened 2026-11-07; G5 closure drafted 2026-11-15, signature pending |
 | **Total tasks** | **39** (`001`–`072`, per the approved plan §11) |
-| **Completed** | 3 (`001`, `002`, `003`) |
-| **Implemented but not verified** | 17 work packages (see §5) |
-| **Not implemented or materially incomplete** | 19 work packages (see §5) |
+| **Completed** | 8 (`001`, `002`, `003`, `012`, `034`, `061`, `063`, `070`) |
+| **Requires review** | 31 work packages (see §5) |
+| **Pending** | 0 |
 | **Closure authority** | Founder, on the architect's recommendation, through G5 (`072`) |
 
 > **Why this file exists.** The approved phase plan defines *what* EP-01 must achieve. It does not
@@ -265,17 +265,16 @@ edited; the drift is recorded here.
 | 31 | `EP-01-053` | Vertical-slice screens | `032`, `034`, `035`, `051`, `052` | **REQUIRES_REVIEW** — slice live; sign-in exact at 3 widths; MFA/reset/verify/activity wired; live E2E in `063` |
 | 32 | `EP-01-054` | Four-bundle build and deployment targets | `002`, `052` | **REQUIRES_REVIEW** — four bundles, noindex and 200 KB gzip gate; release manifest verified; CI remains |
 | 33 | `EP-01-060` | Environment topology and staging provisioning | `001`, `020`, `043` | **REQUIRES_REVIEW** — four live hosts, valid TLS and Access challenges observed; staging `verified`; `F-49` stale API image and `F-08` remain |
-| 34 | `EP-01-061` | Build-once artifact and promotion | `004`, `054`, `060` | **REQUIRES_REVIEW** — release identity in health; digest artifact + promotion guards; deployed SHA unobserved (`F-49`/`F-50`/`F-51`) |
-| 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **REQUIRES_REVIEW** — plan/apply/verify + 8 unit checks; no DB/workflow run; `F-29` credential and `F-28` baseline remain |
-| 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **REQUIRES_REVIEW** — blocking promotion gates; both correctly fail on `F-49`/`F-50` |
-| 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **REQUIRES_REVIEW** — pack complete; C1 met, 11 partial, 2 unmet (`C4`/`C12`), 2 open |
-| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — review complete; 0 critical, **2 high** (`F-49`, `F-50`); CI green |
-| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **PENDING** |
+| 34 | `EP-01-061` | Build-once artifact and promotion | `004`, `054`, `060` | **COMPLETED** — staging `82e5599` deployed; health reports it; smoke and promotion guards verified |
+| 35 | `EP-01-062` | Migration application pipeline | `021`, `022`, `060`, `061` | **REQUIRES_REVIEW** — plan/apply/verify + 8 unit checks; `F-29` accepted; baseline now committed |
+| 36 | `EP-01-063` | Staging smoke, E2E and gate wiring | `061`, `062`, `053` | **COMPLETED** — smoke 9/9 and slice E2E 5/5 against staging `82e5599` |
+| 37 | `EP-01-070` | Phase evidence pack and traceability index | all prior | **COMPLETED** — C4/C12 met; 12 met, 4 partial, 0 unmet, 1 pending signature |
+| 38 | `EP-01-071` | Phase-level security and quality review | `070` | **REQUIRES_REVIEW** — addendum complete; no critical/high; `M-06`/`M-08`/`DEV-003` residuals |
+| 39 | `EP-01-072` | G5 phase closure record | `070`, `071` | **REQUIRES_REVIEW** — draft closure record prepared; founder signature pending |
 
-**Next eligible task:** **none.** `EP-01-072` cannot be signed while two high findings remain: `F-49`
-(stale staging API) and `F-50` (slice/Pages rollout). CI run `42835621656` is green, closing the
-no-CI finding; H-01 (`F-29`) is an accepted residual and H-05 (`F-04`) is resolved by the no-Doppler
-ruling. `DEV-003` ends at `G5` or on a second reviewer's appointment.
+**Next eligible task:** **`EP-01-072` — G5 phase closure record (signature pending).** `F-49` and
+`F-50` are closed; staging reports `82e5599`; smoke and E2E pass; the schema baseline is committed.
+The founder must sign G5 or record a hold. `M-06`, `M-08` and `DEV-003` remain recorded residuals.
 
 ### 5.1 Critical path for the remaining work
 
