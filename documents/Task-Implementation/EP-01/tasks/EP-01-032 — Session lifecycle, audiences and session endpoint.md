@@ -160,8 +160,14 @@ No dependency or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
 | **Closes when** | CI passes the session-view and suspension tests; `036` revokes immediately on suspension |
 | **Execution record** | `execution-records/EP-01-032.md` |
+
+---
+
+## 14. Verification addendum — 2026-11-15
+
+**Status: `COMPLETED`.** The `F-35` condition is closed: `admin.govern_user` revokes every active session in the same transaction as suspension or closure (`20261114000400_admin_add_account_governance.sql`), and `tests/account-governance.test.ts` proves suspension returns `sessionsRevoked >= 1` and the suspended session is rejected. CI run `43677010391` runs the governance integration suite. See `EP-01-REVIEW-QUEUE-VERIFICATION.md`.

@@ -49,6 +49,7 @@ These tasks meet their stated closure condition on the evidence above.
 | `EP-01-022` | Database roles, grants and default privileges | CI database role suite; `F-29` accepted residual |
 | `EP-01-023` | Identity schema | CI catalog/identity suites |
 | `EP-01-024` | Profile, activity and platform schema | CI constraint/RLS assertions |
+| `EP-01-032` | Session lifecycle, audiences and session endpoint | `admin.govern_user` revokes sessions on suspension; `tests/account-governance.test.ts`; CI `43677010391` |
 | `EP-01-035` | Service-layer enforcement and vertical-slice endpoints | CI enforcement/audit deny and allow suites |
 | `EP-01-043` | Secret management and configuration contract | CI `config:check`; `F-04` closed by no-Doppler ruling |
 | `EP-01-050` | Visual regression baseline and harness | CI visual job green against the approved baseline |
@@ -58,7 +59,7 @@ These tasks meet their stated closure condition on the evidence above.
 | `EP-01-054` | Four-bundle build and deployment targets | CI build job `bundles:check`; Pages deploy |
 | `EP-01-062` | Migration application pipeline | CI plan/apply/verify; baseline; `F-29` accepted |
 
-**Closed: 17.** These move from `REQUIRES_REVIEW` to `COMPLETED`.
+**Closed: 18.** These move from `REQUIRES_REVIEW` to `COMPLETED`.
 
 ---
 
@@ -73,7 +74,6 @@ These tasks have a stated closure condition that is not met, or a condition that
 | `EP-01-026` | `F-33`: session/MFA/grant flows still use manual transaction blocks; identity adoption is incomplete | Accept technical debt or complete adoption |
 | `EP-01-030` | Identity repositories do not yet cover every flow (`031`/`032` remaining) | Accept or complete |
 | `EP-01-031` | Recovery delivery is capture-only (`F-34`); no email/SMS provider | Accept for EP-01 |
-| `EP-01-032` | Suspension revocation occurs on next session read (`F-35`), not immediately | Accept or implement immediate revocation |
 | `EP-01-033` | `F-36`: activation transition table needs ratification | Architect ratification |
 | `EP-01-036` | Retention is open (`F-39`); no purge is built | Accept retain-and-hold |
 | `EP-01-040` | `F-40`: key-based redaction can miss free-text PII | Accept or add a scrubber |
@@ -83,14 +83,14 @@ These tasks have a stated closure condition that is not met, or a condition that
 | `EP-01-071` | Independent reviewer gap (`DEV-003`); addendum sign-off pending | Architect/founder acceptance |
 | `EP-01-072` | G5 signature pending | Founder signature |
 
-**Open: 14.**
+**Open: 13.**
 
 ---
 
 ## 4. Honest position
 
-The phase is materially stronger than the 2026-11-10 pack: 17 review tasks are now backed by a green
-CI run, a current staging deployment, a clean schema diff and a passing slice E2E. The remaining 14
+The phase is materially stronger than the 2026-11-10 pack: 18 review tasks are now backed by a green
+CI run, a current staging deployment, a clean schema diff and a passing slice E2E. The remaining 13
 are not all defects; most are documented residuals. But G5 should not be signed until each is either
 accepted explicitly or remediated.
 
