@@ -70,7 +70,29 @@ const SENSITIVE_KEYS = new Set([
 
 const REDACTED = "[redacted]"
 
+const EMAIL_PATTERN = /\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/g
+const URL_PATTERN = /\bhttps?:\/\/[^\s"'<>]+/gi
+const PHONE_PATTERN = /(?:\+?\d[\d\s().-]{7,}\d)/g
+const LONG_TOKEN_PATTERN = /\b[A-Za-z0-9]{32,}\b/g
+const API_KEY_PATTERN = /\bsk_[A-Za-z0-9_]{16,}\b/g
+
+/**
+ * Free-text fields can carry PII the key-based redaction cannot see: a provider
+ * error may echo an email, a URL with a token, or a phone number. Scrub those
+ * shapes before the value reaches the sink. UUIDs keep their hyphens and are not
+ * matched by the long-token rule.
+ */
+export function scrubText(value: string): string {
+  return value
+    .replace(EMAIL_PATTERN, "[redacted-email]")
+    .replace(URL_PATTERN, "[redacted-url]")
+    .replace(API_KEY_PATTERN, "[redacted-key]")
+    .replace(PHONE_PATTERN, "[redacted-phone]")
+    .replace(LONG_TOKEN_PATTERN, "[redacted-token]")
+}
+
 export function redact(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (typeof value === "string") return scrubText(value)
   if (value === null || typeof value !== "object") return value
   if (seen.has(value)) return "[circular]"
   seen.add(value)
