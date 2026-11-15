@@ -107,6 +107,25 @@ describe("structured logger", () => {
     expect(lines[0]).not.toContain("person@example.test")
   })
 
+  it("scrubs PII and tokens inside free-text fields", () => {
+    const { logger, lines } = loggerWith()
+    logger.error("provider.error", {
+      message:
+        "failed for person@example.test at https://provider.test/pay?token=abc phone +2348012345678 key sk_live_1234567890abcdef",
+      reference: "keep-me",
+    })
+    const line = JSON.parse(lines[0]!)
+    expect(line.message).toContain("[redacted-email]")
+    expect(line.message).toContain("[redacted-url]")
+    expect(line.message).toContain("[redacted-phone]")
+    expect(line.message).toContain("[redacted-key]")
+    expect(line.message).not.toContain("person@example.test")
+    expect(line.message).not.toContain("provider.test")
+    expect(line.message).not.toContain("2348012345678")
+    expect(line.message).not.toContain("sk_live_")
+    expect(line.reference).toBe("keep-me")
+  })
+
   it("honours the configured level", () => {
     const { logger, lines } = loggerWith("error")
     logger.info("hidden")

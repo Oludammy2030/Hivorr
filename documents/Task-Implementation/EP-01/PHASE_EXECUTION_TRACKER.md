@@ -9,8 +9,8 @@
 | **Tracker updated** | 2026-11-15 |
 | **Phase status** | `In build` |
 | **Tasks total** | 39 |
-| **Completed** | 27 |
-| **Requires review** | 12 |
+| **Completed** | 28 |
+| **Requires review** | 11 |
 | **Pending** | 0 |
 | **Blocked** | 0 |
 
@@ -47,7 +47,7 @@
 | 21 | `EP-01-034` | Capability computation engine | `033` | **COMPLETED** | 2026-11-09 | `execution-records/EP-01-034.md` |
 | 22 | `EP-01-036` | Audit logging service and immutability | `024`, `026` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-036.md` |
 | 23 | `EP-01-035` | Service-layer enforcement and vertical-slice endpoints | `032`, `034`, `036` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-035.md` |
-| 24 | `EP-01-040` | Structured logging, correlation and error-tracking seam | `010`, `011` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-040.md` |
+| 24 | `EP-01-040` | Structured logging, correlation and error-tracking seam | `010`, `011` | **COMPLETED** — free-text PII scrubbing added; logger tests 8/8 | 2026-11-15 | `execution-records/EP-01-040.md` |
 | 25 | `EP-01-042` | Authentication abuse controls | `032` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-042.md` |
 | 26 | `EP-01-043` | Secret management and configuration contract | `020` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-043.md` |
 | 27 | `EP-01-041` | Edge and origin security posture | `032`, `060` | **COMPLETED** — CSP/HSTS/nosniff on all bundles; smoke 13/13 | 2026-11-15 | `execution-records/EP-01-041.md` |

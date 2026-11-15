@@ -153,8 +153,9 @@ No dependency or protected file changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-09 |
 | **Code complete** | 2026-11-09 |
-| **Closes when** | CI smoke exercises the API request log and worker structured output; `F-40` is accepted or fixed |
+| **Completed** | 2026-11-15 |
+| **Closes when** | Met — CI smoke exercises the request/worker logs; `F-40` fixed by free-text scrubbing |
 | **Execution record** | `execution-records/EP-01-040.md` |
