@@ -9,8 +9,8 @@
 | **Tracker updated** | 2026-11-15 |
 | **Phase status** | `In build` |
 | **Tasks total** | 39 |
-| **Completed** | 26 |
-| **Requires review** | 13 |
+| **Completed** | 27 |
+| **Requires review** | 12 |
 | **Pending** | 0 |
 | **Blocked** | 0 |
 
@@ -50,7 +50,7 @@
 | 24 | `EP-01-040` | Structured logging, correlation and error-tracking seam | `010`, `011` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-040.md` |
 | 25 | `EP-01-042` | Authentication abuse controls | `032` | **REQUIRES_REVIEW** | — | `execution-records/EP-01-042.md` |
 | 26 | `EP-01-043` | Secret management and configuration contract | `020` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-043.md` |
-| 27 | `EP-01-041` | Edge and origin security posture | `032`, `060` | **REQUIRES_REVIEW** — CSP, HSTS and nosniff added to all bundles; staging smoke pending | — | `execution-records/EP-01-041.md` |
+| 27 | `EP-01-041` | Edge and origin security posture | `032`, `060` | **COMPLETED** — CSP/HSTS/nosniff on all bundles; smoke 13/13 | 2026-11-15 | `execution-records/EP-01-041.md` |
 | 28 | `EP-01-050` | Visual regression baseline and harness | `004` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-050.md` |
 | 29 | `EP-01-051` | Design tokens and primitive extraction for the slice | `050`, `002` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-051.md` |
 | 30 | `EP-01-052` | Route manifest, router and providers | `003`, `013`, `050`, `051` | **COMPLETED** — verified 2026-11-15 | 2026-11-15 | `execution-records/EP-01-052.md` |
