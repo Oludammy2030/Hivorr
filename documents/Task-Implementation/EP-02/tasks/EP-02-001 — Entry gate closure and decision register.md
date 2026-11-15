@@ -154,8 +154,8 @@ No application code, schema, migration, capability or configuration was changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `BLOCKED` |
+| **Status** | `COMPLETED` — partial-start recorded |
 | **Execution date** | 2026-11-15 |
 | **Execution record** | `execution-records/EP-02-001.md` |
-| **Blocked by** | EP-01 G5; funds-custody register; VFD written scope; KYC ladder; verification vendor; second reviewer |
-| **Next action** | Founder/architect closes the blockers, then this task is re-executed to produce the signed entry record |
+| **Blocked by** | Verification tasks: KYC ladder and vendor; provider tasks: VFD written confirmation |
+| **Next action** | Begin `EP-02-002` under the partial-start decision |

@@ -28,13 +28,13 @@ EP-02 §1 defines the entry gate as:
 | # | Entry-gate condition | State | Evidence inspected | Owner |
 |---|---|---|---|---|
 | 1 | EP-01 G5 signed | **MET** | `EP-01-G5-CLOSURE.md` signed 2026-11-15; EP-01 closed through G5 | Founder |
-| 2 | Funds-custody register records BD-D01 partner-held custody | **UNMET** | `ARCHITECTURE.md` §16.4 #2 still lists funds custody as open; BD-D01 adopted partner-held custody on 3 Nov 2026 | Founder / architect |
+| 2 | Funds-custody model recorded | **MET** — founder decision 2026-11-15: pooled collection/settlement account, internal wallets and internal escrow; legal/regulatory confirmation remains open | `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md`; `ARCHITECTURE.md` §16.4 #2 | Founder / counsel |
 | 3 | VFD written licence-scope confirmation | **UNMET** | BD-D11 conditions 1–6; `documents/integrations/vfd/VFD_INTEGRATION_NOTES.md` records the missing written scope, licence category and settlement terms | Founder / counsel |
 | 4 | KYC tier ladder and limits decided | **UNMET** | `ARCHITECTURE.md` §16.4 #6; matrix §7.4 and §18 #6; BD-D05 is a recommendation, not a decision | Founder |
 | 5 | Verification vendor decided | **UNMET** | `ARCHITECTURE.md` §16.4 #15; matrix §18 #12 | Founder |
 | 6 | Reviewer capacity / second reviewer recorded | **UNMET** | `DEV-003` remains in force; EES §11.2 #2 records the one-person-plus-agents problem | Founder / architect |
 
-**Result:** 1 of 6 entry conditions met. EP-01 is closed, but EP-02 still cannot become `Ready`.
+**Result:** 2 of 6 entry conditions met. EP-01 is closed and the custody model is recorded, but EP-02 still cannot start verification or provider work without the remaining decisions.
 
 ---
 
@@ -60,7 +60,7 @@ No row is decided by this record. `ARCHITECTURE.md` §16.4 remains the single co
 
 | # | Decision | Register | State | Effect on EP-02 | Owner |
 |---|---|---|---|---|---|
-| 1 | Funds custody — record BD-D01 partner-held custody and update the register | `ARCHITECTURE.md` §16.4 #2; BD-D01 | **OPEN in the register**, though BD-D01 adopted partner-held custody | Blocks ledger, escrow and payout design | Founder / architect |
+| 1 | Funds custody — pooled collection/settlement account, internal wallets and internal escrow | `ARCHITECTURE.md` §16.4 #2; `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md` | **DECIDED 2026-11-15** — product/custody model approved; legal/regulatory confirmation open | Unblocks ledger, wallet and internal escrow design; provider tasks still need VFD confirmation | Founder / counsel |
 | 2 | VFD written licence scope — marketplace escrow, nationwide operation, third-party release, licence category and limits | BD-D11 conditions 1–6 | **NOT OBTAINED** | Blocks provider integration and any money movement | Founder / counsel |
 | 3 | KYC tier ladder and per-tier limits | `ARCHITECTURE.md` §16.4 #6; BD-D05 | **OPEN** | Blocks tier configuration and financial gating | Founder |
 | 4 | Verification vendor — review queue only, or identity provider | `ARCHITECTURE.md` §16.4 #15 | **OPEN** | Blocks identity/KYC lane implementation | Founder |
@@ -88,6 +88,24 @@ The approved plan §5.3 records readings that need confirmation before implement
 | 4 | Control portal reuse | **Proposed** — CP-016/017/019/020 own the case, evidence, review and approval surfaces; EP-02 owns lane submission, decision effect and immutable record. |
 | 5 | Escrow policy | **Proposed** — build the account and state model; disable release and refund until BD-D03. |
 | 6 | Limits | **Proposed** — configuration with effective dates; unset configuration denies. |
+
+---
+
+## 4A. Partial-start decision — 2026-11-15
+
+The founder approved the pooled wallet and internal escrow model and instructed that non-provider
+EP-02 work may start while the remaining entry decisions are recorded.
+
+| Scope | State |
+|---|---|
+| Shared contracts (`EP-02-002`) | **Eligible** |
+| Finance schema, ledger, wallet views, escrow, idempotency, limits, disputes (`EP-02-030`–`036`) | **Eligible** |
+| Verification lanes (`EP-02-010`–`016`) | **Blocked** on KYC ladder (#6) and verification vendor (#15) |
+| VFD adapter (`EP-02-040`–`045` and deposit/payout tasks that call it) | **Blocked** on VFD written API/account confirmation |
+| Frontend (`EP-02-060`–`063`) | **Blocked** until its API dependencies are built |
+| Exit and G5 (`EP-02-070`–`073`) | **Blocked** until the phase capability is complete |
+
+This is a recorded partial start, not a declaration that the full entry gate is met.
 
 ---
 

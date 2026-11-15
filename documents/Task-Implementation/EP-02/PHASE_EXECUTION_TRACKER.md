@@ -7,13 +7,15 @@
 | **Governing plan** | `documents/Engineering-Execution/Engineering-Phase-Plan/EP-02 — Trust, Identity & Financial Integrity Engine.md` |
 | **Phase record** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-02/EP-02-ENTRY-RECORD.md` |
 | **Tracker updated** | 2026-11-15 |
-| **Phase status** | `Not started` — entry gate blocked |
+| **Phase status** | `In build` — partial scope: non-provider finance foundation only |
 | **Tasks total** | 40 |
-| **Completed** | 0 |
+| **Completed** | 1 |
 | **In progress** | 0 |
 | **Requires review** | 0 |
-| **Blocked** | 1 |
+| **Blocked** | 0 |
 | **Pending** | 39 |
+
+> **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. Frontend and exit tasks are pending their dependencies.
 
 > **Status rule.** A task moves to `COMPLETED` only when its task-specific DoD is satisfied and validated, and an execution record exists. Existing code is never sufficient on its own. A criterion without an artefact is unmet.
 
@@ -23,7 +25,7 @@
 
 | # | Task | Title | Dependencies | Status | Completed | Record |
 |---:|---|---|---|---|---|---|
-| 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder for funds custody register, VFD scope, KYC ladder and verification vendor; architect for taxonomy depth, payer-name policy, second reviewer and CP integration. | **BLOCKED** | — | `execution-records/EP-02-001.md` |
+| 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder decisions | **COMPLETED** — partial start: EP-01 closed; pooled wallet/escrow model recorded; verification and provider scopes blocked | 2026-11-15 | `execution-records/EP-02-001.md` |
 | 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **PENDING** | — | — |
 | 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **PENDING** | — | — |
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** | — | — |
@@ -68,22 +70,23 @@
 
 ## 2. Next eligible task
 
-**None.** `EP-02-001` is `BLOCKED` because EP-01 has not exited and four entry decisions remain open:
+**`EP-02-002` — Shared contracts, capability inputs and error semantics.**
 
-1. EP-01 G5 — `EP-01-072` is PENDING; `EP-01-071` records two high findings (`F-49`, `F-50`).
-2. Funds-custody register — `ARCHITECTURE.md` §16.4 #2 still lists custody as open.
-3. VFD written licence-scope confirmation — BD-D11 conditions 1–6.
-4. KYC tier ladder (#6), verification vendor (#15) and the second reviewer (`DEV-003`).
+EP-01 is closed, the pooled wallet/internal escrow model is recorded, and the founder approved a
+partial start. `EP-02-002` and the finance foundation (`030`–`036`) are eligible.
 
-No other task may start while `EP-02-001` is blocked; every task depends on it.
+Still open and blocking specific scopes:
 
----
+1. VFD written API/account confirmation — blocks `040`–`045` and dependent deposit/payout tasks.
+2. KYC tier ladder (#6) and verification vendor (#15) — blocks `010`–`016`.
+3. Second reviewer / renewed `DEV-003` — required for G2 on verification and finance changes.
 
 ## 3. Status history
 
 | Date | Task | From | To | Record |
 |---|---|---|---|---|
 | 2026-11-15 | `EP-02-001` | `PENDING` | `BLOCKED` | `execution-records/EP-02-001.md` |
+| 2026-11-15 | `EP-02-001` | `BLOCKED` | `COMPLETED` — partial start | `execution-records/EP-02-001.md` |
 
 ---
 

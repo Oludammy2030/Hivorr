@@ -9,11 +9,11 @@
 | **Governing plan** | `documents/Engineering-Execution/Engineering-Phase-Plan/EP-02 — Trust, Identity & Financial Integrity Engine.md` |
 | **Phase record root** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-02/` |
 | **Task documentation root** | `documents/Task-Implementation/EP-02/` |
-| **Entry record** | `EP-02-ENTRY-RECORD.md` — `BLOCKED`, 2026-11-15 |
-| **Phase status at this overview** | **`Not started`** — entry gate blocked; no implementation started |
+| **Entry record** | `EP-02-ENTRY-RECORD.md` — `PARTIAL START`, 2026-11-15 |
+| **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation |
 | **Total tasks** | **40** (`001`–`073`, per the approved plan §10) |
-| **Completed** | 0 |
-| **Blocked** | 1 (`EP-02-001`) |
+| **Completed** | 1 (`EP-02-001`) |
+| **Blocked** | Verification, VFD adapter and dependent scopes |
 | **Pending** | 39 |
 | **Closure authority** | Founder, on the architect’s recommendation, through G5 (`EP-02-073`) |
 
@@ -91,16 +91,16 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 
 ## 4. Dependencies and prerequisites
 
-### 4.1 Entry gate — blocked 2026-11-15
+### 4.1 Entry gate — partial start, 2026-11-15
 
 | Condition | State | Evidence |
 |---|---|---|
-| EP-01 G5 signed | **Unmet** — `EP-01-072` PENDING; `EP-01-071` records 2 high findings (`F-49`, `F-50`) | `EP-01-EVIDENCE-PACK.md`, `PHASE_EXECUTION_TRACKER.md` |
-| Funds-custody register records BD-D01 partner-held custody | **Open** — `ARCHITECTURE.md` §16.4 #2 still lists custody as open | Architecture register |
-| VFD written licence-scope confirmation | **Not obtained** — BD-D11 conditions 1–6 | Roadmap BD-D11; VFD docs |
-| KYC tier ladder and limits | **Open** — `ARCHITECTURE.md` §16.4 #6 | Architecture register |
-| Verification vendor | **Open** — #15 | Architecture register |
-| Reviewer capacity / second reviewer | **Open** — `DEV-003` remains in force | Standards §13.3 |
+| EP-01 G5 signed | **Met** — 2026-11-15 | `EP-01-G5-CLOSURE.md` |
+| Funds-custody model recorded | **Met** — pooled collection/settlement, internal wallets, internal escrow | `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md`; `ARCHITECTURE.md` §16.4 #2 |
+| VFD written licence-scope confirmation | **Open** — blocks provider tasks | BD-D11; VFD docs |
+| KYC tier ladder and limits | **Open** — blocks verification tasks | `ARCHITECTURE.md` §16.4 #6 |
+| Verification vendor | **Open** — blocks verification tasks | Architecture register |
+| Reviewer capacity / second reviewer | **Open** — blocks G2 on sensitive changes | Standards §13.3 |
 
 ### 4.2 Internal dependencies
 
@@ -123,8 +123,8 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 
 | Order | Task | Title | Dependencies | Status |
 |---:|---|---|---|---|
-| 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder for funds custody register, VFD scope, KYC ladder and verification vendor; architect for taxonomy depth, payer-name policy, second reviewer and CP integration. | **BLOCKED** |
-| 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **PENDING** |
+| 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder decisions | **COMPLETED** — partial start |
+| 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **PENDING** — next eligible |
 | 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **PENDING** |
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** |
