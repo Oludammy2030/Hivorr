@@ -64,56 +64,64 @@ describeIntegration("case visibility scope", () => {
     return result.rows[0]!.id
   }
 
-  beforeAll(async () => {
-    admin = new Client({ connectionString: baseUrl })
-    await admin.connect()
-    await admin.query(`create database "${databaseName}"`)
+  beforeAll(
+    async () => {
+      admin = new Client({ connectionString: baseUrl })
+      await admin.connect()
+      await admin.query(`create database "${databaseName}"`)
 
-    const url = new URL(baseUrl!)
-    url.pathname = `/${databaseName}`
-    database = new Client({ connectionString: url.toString() })
-    await database.connect()
+      const url = new URL(baseUrl!)
+      url.pathname = `/${databaseName}`
+      database = new Client({ connectionString: url.toString() })
+      await database.connect()
 
-    for (const file of readdirSync(migrationsDirectory)
-      .filter((entry) => entry.endsWith(".sql"))
-      .sort()) {
-      await database.query(
-        readFileSync(path.join(migrationsDirectory, file), "utf8"),
+      for (const file of readdirSync(migrationsDirectory)
+        .filter((entry) => entry.endsWith(".sql"))
+        .sort()) {
+        await database.query(
+          readFileSync(path.join(migrationsDirectory, file), "utf8"),
+        )
+      }
+
+      careId = await createUser("care@hivorr.com")
+      governanceId = await createUser("governance@hivorr.com")
+
+      await grant(careId, "admin.case.read", "admin.case.assign")
+      await join(careId, "customer_care")
+      await grant(governanceId, "admin.case.read", "admin.case.assign")
+      await join(governanceId, "governance")
+
+      careCaseId = await createCase(careId, "Care case")
+      governanceCaseId = await createCase(
+        governanceId,
+        "Governance investigation",
       )
-    }
+      governancePrivateCaseId = await createCase(
+        governanceId,
+        "Governance private case",
+      )
 
-    careId = await createUser("care@hivorr.com")
-    governanceId = await createUser("governance@hivorr.com")
+      // A creator with no department leaves the case unfiled, which is the pool
+      // any case assigner may see.
+      const rootId = await createUser("unfiled@hivorr.com")
+      await grant(rootId, "admin.case.read", "admin.case.assign")
+      unassignedCaseId = await createCase(rootId, "Unfiled case")
 
-    await grant(careId, "admin.case.read", "admin.case.assign")
-    await join(careId, "customer_care")
-    await grant(governanceId, "admin.case.read", "admin.case.assign")
-    await join(governanceId, "governance")
-
-    careCaseId = await createCase(careId, "Care case")
-    governanceCaseId = await createCase(
-      governanceId,
-      "Governance investigation",
-    )
-    unassignedCaseId = await createCase(careId, "Unfiled case")
-    governancePrivateCaseId = await createCase(
-      governanceId,
-      "Governance private case",
-    )
-
-    await database.query(
-      `update admin.cases set department_id =
+      await database.query(
+        `update admin.cases set department_id =
          (select id from admin.departments where key = 'customer_care')
        where id = $1`,
-      [careCaseId],
-    )
-    await database.query(
-      `update admin.cases set department_id =
+        [careCaseId],
+      )
+      await database.query(
+        `update admin.cases set department_id =
          (select id from admin.departments where key = 'governance')
        where id = any($1::uuid[])`,
-      [[governanceCaseId, governancePrivateCaseId]],
-    )
-  }, 60_000)
+        [[governanceCaseId, governancePrivateCaseId]],
+      )
+    },
+    60_000,
+  )
 
   afterAll(async () => {
     await database?.end()
@@ -186,5 +194,52 @@ describeIntegration("case visibility scope", () => {
       "select has_function_privilege('hivorr_api', 'admin.case_view(uuid)', 'execute') as callable",
     )
     expect(result.rows[0]!.callable).toBe(false)
+  })
+
+  it("files a new case in the creator's department", async () => {
+    const result = await database.query<{ key: string | null }>(
+      `select d.key
+         from admin.cases c
+         left join admin.departments d on d.id = c.department_id
+        where c.id = $1`,
+      [careCaseId],
+    )
+    expect(result.rows[0]!.key).toBe("customer_care")
+  })
+
+  it("leaves a case unfiled when the creator has no department", async () => {
+    const result = await database.query<{ department_id: string | null }>(
+      "select department_id from admin.cases where id = $1",
+      [unassignedCaseId],
+    )
+    expect(result.rows[0]!.department_id).toBeNull()
+  })
+
+  it("refuses every write path on a case it cannot see", async () => {
+    const attempts = [
+      database.query(
+        "select * from admin.add_case_event($1, $2, 'note', 'x')",
+        [careId, governancePrivateCaseId],
+      ),
+      database.query("select * from admin.assign_case($1, $2, null, 'queue')", [
+        careId,
+        governancePrivateCaseId,
+      ]),
+      database.query(
+        "select * from admin.set_case_status($1, $2, 'OPEN', 'trying')",
+        [careId, governancePrivateCaseId],
+      ),
+      database.query(
+        `select * from admin.add_case_evidence(
+           $1, $2, 'staging/evidence/x.pdf', 'x.pdf', 'application/pdf', 10,
+           repeat('b', 64), 'standard', 'trying')`,
+        [careId, governancePrivateCaseId],
+      ),
+    ]
+
+    for (const attempt of attempts) {
+      const error = await attempt.catch((value: unknown) => value)
+      expect(error).toMatchObject({ code: "P0002" })
+    }
   })
 })
