@@ -172,6 +172,17 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
       message: "MFA_ENCRYPTION_KEY must be 32 bytes encoded as base64",
     })
   }
+  // Production must verify the database certificate. Without the CA the driver
+  // connects successfully and silently skips verification, which is worse than
+  // failing to boot.
+  if (value.HIVORR_ENV === "production" && !value.DATABASE_SSL_CA) {
+    context.addIssue({
+      code: "custom",
+      path: ["DATABASE_SSL_CA"],
+      message:
+        "DATABASE_SSL_CA is required in production: the API must verify database TLS",
+    })
+  }
   if (
     value.WORKER_DATABASE_URL &&
     value.SUPABASE_PROJECT_REF &&
