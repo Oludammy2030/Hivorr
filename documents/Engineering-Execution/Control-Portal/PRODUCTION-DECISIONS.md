@@ -24,10 +24,69 @@ on every `DEP-23` record.
 covers a one-person team and explicitly does **not** extend to `G4` production; `EES §7.3` provides no
 production deviation path. Appointing a reviewer is the only route that satisfies the rule as written.
 
-**Consequence.** `DEP-14` is **not yet satisfied**. It is satisfied when a person is named in writing
-and confirms the first release. Until then the production gate remains open, whatever else is ready.
+**Consequence.** `DEP-14` is **not yet satisfied**, and it is the one gate that cannot be worked
+around. The founder is currently the **only reviewer available**, and the founder also dispatches the
+production workflow — so the deployer and the only reviewer are the same person, which is precisely
+what `DEP-14` forbids. An AI agent cannot occupy the seat either: a reviewer with the ability to read
+and propose changes can affect the release, and the agent review passes recorded under `DEV-002` are a
+compensating control for **merges**, not for `G4` production.
 
-**Remaining action.** Name the reviewer, obtain written confirmation of the role, and record both here.
+**Remaining action.** Appoint a reviewer per §A. Until a name exists, production is blocked by design,
+not by oversight.
+
+## D-P0-1A — Appointing the reviewer
+
+### The independence test
+
+The person must satisfy all of these. One failure disqualifies the appointment.
+
+| Test | Why |
+|---|---|
+| **Not the deployer** | The whole point of the rule. The founder dispatches, so the founder cannot review |
+| **No ability to affect the release** | No push access to `main`/`staging`, no repository admin, no deploy trigger, no production write credentials. Read-only access to evidence is sufficient |
+| **Not paid contingent on approval** | A reviewer paid per approval has a reason to say yes |
+| **Access to the evidence** | Cannot verify what it is not shown |
+| **Technically able to read a diff** | `QUA-30`: a reviewer reads the diff, not the description. A signature on a summary is not a review |
+
+### Who can hold it
+
+A fractional or contract engineer is the best fit and the usual answer: a few hours per release, and
+they sign one record. An accountant or auditor can hold the seat **for the financial-control slice
+only** — closure, approvals, audit trail — but not for migrations or capability changes. A peer
+operator from another company works if genuinely independent. A security consultancy is justified once
+real customer money or identity data is in production.
+
+### What they are given
+
+A single evidence bundle, produced by CI and the tracker rather than by hand:
+
+- the release SHA and artifact digest, and the staging run that verified it;
+- the CI run for that commit: typecheck, lint, migrations, database suites, bundles, OpenAPI;
+- the review records — `REVIEW-BATCH-A/B/C.md` and the tracker's §4.1 sign-offs;
+- the migration list applied by this release and the verified history;
+- smoke output against the promoted host;
+- the restore drill result, vulnerability triage and rollback rehearsal for the release window;
+- every open finding, including the informational ones, with the package they belong to.
+
+### What they do
+
+1. Read the diff between the last released digest and this one.
+2. Check the claims against the artefacts — `AUD-75`: a gate is passed on evidence, not assertion.
+3. Confirm no High or Medium finding is open against a package this release changes.
+4. Sign the `DEP-23` record: reviewer name, date, artifact digest, what was reviewed, outcome, and any
+   condition attached.
+
+### What they sign, and for how long
+
+They sign **one release**. `DEP-15` is explicit that approval of one release does not authorise the
+next, so the seat is filled per release, and the appointment may lapse between releases without
+leaving a gap — the gap would be a release without a signature.
+
+### Where the record lives
+
+The release-candidate issue carries the reviewer's confirmation, and the deployment adds a
+`PRODUCTION-RELEASES.md` entry when the first release happens. That file does not exist yet; it is
+created with the first Phase 4 rehearsal, not before.
 
 ## D-P0-2 — Hosting region and data residency
 
