@@ -694,9 +694,17 @@ UI-only change: no migration, no API contract change and no permission change.
 26. `create_case` does not set `department_id`, so a new case enters the unfiled pool until someone
     files or assigns it. A department picker on creation is the natural follow-up to the visibility
     rule. (CP-016)
-27. No browser pass has been recorded for the Denials tab (`/access/denials`), and the control portal
-    still has no visual baseline. The staff invite flow, `/reset` and `/verify` are also unverified
-    in a real browser on staging. (CP-002/CP-010)
+27. **Closed 15 November 2026.** Browser verification of the control portal and the recovery pages ran
+    in real Chrome against the built bundles with a mocked API, at 1440×900 and 375×667: 17 of 17
+    checks passed and two defects were found and fixed. First, `/access/denials` redirected to the
+    overview before the authority response arrived, because the guard tested `canReadRoles` while the
+    claim was still loading — the Denials tab could not be reached by direct link at all. Second, the
+    Access page overflowed a 375px viewport by 76px on both `/access/roles` and `/access/denials`:
+    `.access-tabs` did not wrap, so the search input forced the row wider than the screen. Neither was
+    visible in the Stage 1 pass, which checked the overview. Evidence:
+    `evidence/browser-denials-1440.png` and `evidence/browser-denials-375.png`. The `/reset` and
+    `/verify` pages render their forms; the staff invite flow still needs a real official and personal
+    address pair, and staging itself remains behind Cloudflare Access.
 
 ---
 
