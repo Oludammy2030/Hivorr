@@ -27,7 +27,9 @@ function allowedContextFor(capability: CapabilityId): AccessContext {
     environment: "staging",
     grants: rule.grant ? [rule.grant] : [],
     activities: rule.activity ? [rule.activity] : [],
-    verification: rule.verification ? { [rule.verification]: true } : {},
+    verification: rule.verification
+      ? { [rule.verification]: "APPROVED" as const }
+      : {},
     kycTier: rule.kyc ? "tier_1" : "tier_0",
     adminPermissions: rule.permission ? [rule.permission] : [],
     deniedPermissions: [],
@@ -94,6 +96,35 @@ describe("capability registry", () => {
         capability,
       )
       expect(decision, capability).toEqual({ allowed: true })
+    }
+  })
+
+  it("denies a capability when a required lane is not APPROVED", () => {
+    const states = [
+      "NOT_STARTED",
+      "DRAFT",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "REJECTED",
+      "EXPIRED",
+    ] as const
+    for (const state of states) {
+      const denied = evaluateCapability(
+        {
+          authenticated: true,
+          audience: "app",
+          environment: "staging",
+          grants: [],
+          activities: ["services.offer"],
+          verification: { identity: "APPROVED", trade: state },
+          kycTier: "tier_0",
+        },
+        "services.service.publish",
+      )
+      expect(denied, state).toEqual({
+        allowed: false,
+        reason: "VERIFICATION_REQUIRED",
+      })
     }
   })
 

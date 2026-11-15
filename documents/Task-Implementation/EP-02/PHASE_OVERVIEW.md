@@ -12,9 +12,9 @@
 | **Entry record** | `EP-02-ENTRY-RECORD.md` — `PARTIAL START`, 2026-11-15 |
 | **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation |
 | **Total tasks** | **40** (`001`–`073`, per the approved plan §10) |
-| **Completed** | 1 (`EP-02-001`) |
+| **Completed** | 2 (`EP-02-001`, `EP-02-002`) |
 | **Blocked** | Verification, VFD adapter and dependent scopes |
-| **Pending** | 39 |
+| **Pending** | 38 |
 | **Closure authority** | Founder, on the architect’s recommendation, through G5 (`EP-02-073`) |
 
 > **Why this file exists.** The approved phase plan defines what EP-02 must achieve. This overview, the tracker and the task documents turn that plan into the execution record required by the development protocol. They do not open the phase.
@@ -124,7 +124,7 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | Order | Task | Title | Dependencies | Status |
 |---:|---|---|---|---|
 | 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder decisions | **COMPLETED** — partial start |
-| 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **PENDING** — next eligible |
+| 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **COMPLETED** — lane/tier/ledger/payout contracts |
 | 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **PENDING** |
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** |
