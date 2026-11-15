@@ -170,8 +170,9 @@ No application, API, migration or secret changed.
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-10 |
 | **Code complete** | 2026-11-10 |
-| **Closes when** | `F-49` and `F-50` are deployed, the smoke and E2E pass against staging, and the CI run is green |
+| **Completed** | 2026-11-15 |
+| **Closes when** | Met — smoke 9/9 and slice E2E 5/5 pass against the current staging deployment (`82e5599`); authenticated E2E remains opt-in (`M-08`) |
 | **Execution record** | `execution-records/EP-01-063.md` |

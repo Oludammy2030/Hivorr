@@ -2,7 +2,7 @@
 
 **Task:** `EP-01-070`
 **Date:** 2026-11-10
-**Phase status:** `In build` — **not complete**
+**Phase status:** `In build` — **not closed**; G5 closure record prepared, founder signature pending
 **Worktree:** `staging` at `8d461d2`; EP-01 work is **uncommitted**
 **Authority:** `EP-01 — Core Platform Foundation & Infrastructure.md` §13
 
@@ -21,7 +21,7 @@ missing; **Unmet** = no artifact or a known failure; **Open** = depends on a lat
 | C1 | Entry gate satisfied | **Met** | `Engineering-Phase-Records/EP-01/EP-01-ENTRY-RECORD.md`; `evidence/decision-pack.md`; `evidence/protection-403.log` | — |
 | C2 | Build graph works in CI | **Met** | CI run `42835621656`: install, lint, typecheck, unit/contract/policy, gates, build, secret scan and `ci-complete` all green | — |
 | C3 | Contract generated; breaking diff fails | **Met** | CI run `42835621656` — OpenAPI job green; `openapi:check` and `openapi:diff`; seeded proof | — |
-| C4 | Schema reproducible; `db diff` clean | **Unmet** | `scripts/test-db-migrations.mjs`; `migrations:plan/apply/verify`; 17 migrations | No local PostgreSQL; CI database job unobserved; **`F-28` no committed schema baseline**, so `db diff` cannot be clean |
+| C4 | Schema reproducible; `db diff` clean | **Met** | `supabase/schema-baseline.txt` committed; CI database job applies migrations, generates the snapshot, and `db diff --fail-on-change` passes | CI run `43675612150`; PR #126 |
 | C5 | Least privilege proven; migrator CI-only | **Partial** | CI database job (`42835621656`): five roles cannot log in, API cannot DDL/alter/truncate; distinct CI-only `MIGRATOR_DATABASE_URL` | `F-29` accepted residual — `hivorr_migrator` stays `nologin`, login role is a pre-production follow-up |
 | C6 | RLS fails closed | **Met** | `test-db-migrations.mjs` and the CI database job (`42835621656`): 14 tables, FORCE RLS, one policy per operation, allow and deny probes | — |
 | C7 | Session isolation proven | **Met** | CI run `42835621656` — identity/session suites, audience guard, refresh rotation/reuse | — |
@@ -29,15 +29,34 @@ missing; **Unmet** = no artifact or a known failure; **Open** = depends on a lat
 | C9 | Enforcement in transaction | **Met** | CI run `42835621656` — enforcement and transaction suites | — |
 | C10 | Audit immutable | **Met** | CI database job: update/delete rejected; `audit.test.ts` | — |
 | C11 | Visual identity preserved | **Partial** | Founder approval 2026-11-10; baseline initially captured on the workstation and **re-captured on the pinned CI runner** (`F-44`, emoji glyph, 424 px at 375); zero-tolerance visual job green; sign-in exact parity; no new font | Re-baseline needs founder re-approval; registration divergence approved; activity/recovery not pixel-compared |
-| C12 | Staging provable | **Unmet** | Topology probe: four hosts, valid TLS, Access challenges, edge health (`evidence/staging-topology/2026-11-10.md`) | **`F-49` staging API predates `/v1/session` and `/v1/activities` (404)**; **`F-50` slice bundle not deployed**; smoke and E2E correctly fail |
+| C12 | Staging provable | **Met** — staging API reports `releaseSha 82e5599a8e503ed7f84bcf1f017feac6c2e91f2d`; smoke and slice E2E pass | `pnpm smoke:staging`; `pnpm e2e:slice`; runs `43675801983`, `43675802021` | — |
 | C13 | Operability baseline | **Partial** | Structured logger/redaction, correlation, health/readiness, worker queue health and error-tracker seam; CI smoke green | `F-40` free-text redaction remains |
-| C14 | Budgets captured | **Partial** | `bundles:check`: main 121.4 KB gzip, each portal 71.0 KB, inside 200 KB | **API read/write latency not measured**; route-JS budget measured on the built artifact |
+| C14 | Budgets captured | **Partial** — read p95 464 ms (edge) / 452 ms (Fly direct), write-path validation p95 455 ms; read budget (300 ms) exceeded | `measure-ep01-latency` run, 2026-11-15 | Network/end-to-end measurement; server processing time not isolated. Recorded as `M-06` for founder acceptance. |
 | C15 | Quality gates honest | **Met** | CI run `42835621656` — all gates green, 23/23 seeded proofs, coverage report 46.5%/50.8% locally | Coverage is not a CI gate (`QUA-20`); branch coverage on DB-backed auth paths proven in CI |
-| C16 | Review complete | **Open** | — | `EP-01-071` not started |
-| C17 | Closure signed | **Open** | — | `EP-01-072` not started |
+| C16 | Review complete | **Met** — addendum 2026-11-15; no critical/high remains | `EP-01-071-REVIEW.md` §9 |
+| C17 | Closure signed | **Pending** — draft closure record prepared | `EP-01-G5-CLOSURE.md` |
 
-**Result: 9 met, 4 partial, 2 unmet, 2 open.** The phase is **not** complete and must not be reported
-as closed. `C4` and `C12` remain unmet; `C16`/`C17` are the review and closure records.
+**Result after 2026-11-15 re-verification:** 11 met, 4 partial, 0 unmet, 2 open. `C4` and `C12` are
+now met. `C16`/`C17` remain the review and closure records. The phase is not closed until `EP-01-072`
+is signed.
+
+---
+
+## 1.1 Re-verification — 2026-11-15
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Staging API identity | `GET https://staging.hivorr.com/api/v1/health/live` | **Pass** — `releaseSha 82e5599a8e503ed7f84bcf1f017feac6c2e91f2d` |
+| Session and activity routes | `GET /api/v1/session`, `GET /api/v1/activities` | **Pass** — `401`, routes exist |
+| Staging smoke | `pnpm smoke:staging` | **Pass** — 9/9 checks |
+| Slice E2E | `pnpm e2e:slice` | **Pass** — 5/5 checks; authenticated checks skipped because no test identity |
+| Schema baseline | `supabase/schema-baseline.txt`; CI run `43675612150` | **Pass** — baseline committed; `db diff --fail-on-change` green |
+| Deploy runs | `43675801983` (Fly), `43675802021` (Pages) | **Pass** |
+| Read latency | 200 requests, edge and Fly direct | **Budget exceeded** — p95 464 ms edge / 452 ms Fly against 300 ms |
+| Write-path validation latency | 30 invalid sign-in requests | p95 455 ms against 800 ms |
+
+The read measurement is end-to-end from the measurement host, not server processing time. It is
+recorded as `M-06` for founder acceptance; it is not presented as a pass.
 
 ---
 

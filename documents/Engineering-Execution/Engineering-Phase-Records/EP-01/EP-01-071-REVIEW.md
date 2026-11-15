@@ -86,8 +86,8 @@ None found in the reviewed code paths.
 | ID | Finding | Existing control | Required action |
 |---|---|---|---|
 | H-01 | `F-29` — migrations run with the deployment credential; `hivorr_migrator` is `nologin`. A single CI-only applying role is not proven. | **Accepted 2026-11-10.** The migration job uses a distinct `MIGRATOR_DATABASE_URL`, never set on Fly; the role stays `nologin`. Residual: the credential is broader than a login migrator role. | Provision a login migrator role before production (follow-up). |
-| H-02 | `F-49` — the deployed staging API predates `/v1/session` and `/v1/activities`. | None; the smoke catches it. | Deploy the current digest; rerun smoke. |
-| H-03 | `F-50` — the slice bundle is not deployed; Pages rollout is manual. | CI produces a digest-verified artifact. | Publish the four bundles with `slice.html`; rerun E2E. |
+| H-02 | `F-49` — the deployed staging API predates `/v1/session` and `/v1/activities`. | None; the smoke catches it. | **Resolved 2026-11-15** — staging reports `82e5599`; session and activities return `401`. |
+| H-03 | `F-50` — the slice bundle is not deployed; Pages rollout is manual. | CI produces a digest-verified artifact. | **Resolved 2026-11-15** — Pages deploy `43675802021`; slice E2E passes. |
 | H-04 | No CI run has been observed for the phase. | **Resolved 2026-11-10** — CI run `42835621656` is green: install, lint, typecheck, unit/contract/policy, gates, OpenAPI, visual, database migrations, build, secret scan and `ci-complete`. | — |
 | H-05 | `F-04` — the recorded secret provider is Doppler; the runtime uses GitHub environment secrets and Fly secrets. Rotation and scoped service tokens are weaker than recorded. | **Resolved 2026-11-10.** Founder ruled no Doppler; GitHub + Fly are the provider, with private repo, environment scoping, founder-only admin and deploy-time injection. Residual: manual rotation and GitHub Free reviewer limits. | Update standards §16 #8; record the residual at `G4`. |
 
@@ -95,7 +95,7 @@ None found in the reviewed code paths.
 
 | ID | Finding | Action |
 |---|---|---|
-| M-01 | `F-28` — no committed schema baseline; `db diff` cannot be clean. | Generate and commit a baseline from a migrated database. |
+| M-01 | `F-28` — no committed schema baseline; `db diff` cannot be clean. | **Resolved 2026-11-15** — `supabase/schema-baseline.txt` committed; CI `db diff --fail-on-change` green (run `43675612150`). |
 | M-02 | `F-08` — `DATABASE_SSL_CA` unset; the pooler certificate is not verified. | Set the CA and verify with `rejectUnauthorized: true`. |
 | M-03 | `F-40` — key-based redaction misses PII in free-text provider errors. | Add a scrubber or accept the residual. |
 | M-04 | `F-41` — rate limits are per process; horizontal scaling weakens them. | Shared store before multi-instance. |
@@ -186,3 +186,28 @@ risk stated.
 | Reviewer (AI agent) | Implementation agent | Review complete; closure blocked | 2026-11-10 |
 | Architect | — | Pending | — |
 | Founder | — | Pending | — |
+
+---
+
+## 9. Re-review addendum — 2026-11-15
+
+**Trigger:** `F-49`, `F-50` and `F-28` were remediated after the 2026-11-10 review.
+
+| Check | Result |
+|---|---|
+| Staging API reports the candidate SHA | **Pass** — `82e5599a8e503ed7f84bcf1f017feac6c2e91f2d` |
+| `pnpm smoke:staging` | **Pass** — 9/9 |
+| `pnpm e2e:slice` | **Pass** — 5/5; authenticated checks skipped (no test identity) |
+| Schema baseline committed and diff clean | **Pass** — `supabase/schema-baseline.txt`; CI run `43675612150` |
+| Fly and Pages deploys | **Pass** — runs `43675801983`, `43675802021` |
+| API read latency | **Measured** — p95 464 ms edge / 452 ms Fly, above the 300 ms budget; recorded as `M-06` |
+| API write-path validation latency | **Measured** — p95 455 ms, within the 800 ms budget; not a DB-writing request |
+
+**Disposition:** H-02, H-03 and M-01 are closed. No critical or high finding remains. `M-06` is a
+measured medium finding: the end-to-end read path exceeds the 300 ms budget, but the measurement is
+network-inclusive and does not isolate server processing. `M-08` (no authenticated test identity)
+remains open. `DEV-003` remains the recorded single-reviewer deviation.
+
+**Recommendation:** EP-01 may proceed to `EP-01-072` for founder closure, with `M-06` and `M-08`
+recorded as accepted residual risks or remediation conditions. This addendum is not a signature and
+does not close the phase.
