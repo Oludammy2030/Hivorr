@@ -81,7 +81,7 @@ a validation failure — worth making required for `production` in a future conf
 
 | # | Gap | Blocks | Nature |
 |---|---|---|---|
-| 1 | **No named second reviewer** (`DEV-002`) | `DEP-14` | Founder decision: appoint a reviewer, or record a production-scope deviation with compensating controls. `DEV-002` does not extend to `G4` production release |
+| 1 | **Reviewer not yet named** (`DEP-14`) | `DEP-14` | Decided `D-P0-1`: a named reviewer will be appointed. The gate stays open until the name and written confirmation exist |
 | 2 | Production environment not provisioned | Everything | Fly API + worker, Postgres, R2, Pages project, DNS for the four production hosts |
 | 3 | Production configuration incomplete | Boot | §3, including the TLS CA |
 | 4 | No restore drill | `AR-4` | Restore a production-shaped database from backup and record the time and result |
@@ -89,17 +89,18 @@ a validation failure — worth making required for `production` in a future conf
 | 6 | No visual baseline or staging E2E | Release confidence | The control portal's UI evidence is a local browser pass with a mocked API (#116) |
 | 7 | Errors are captured, not shipped | Operations | `CaptureErrorTracker` holds errors in memory and makes no network call; a production sink has to be chosen |
 | 8 | No branch protection on `staging`/`main` | `QUA-29` | Compensating controls only: pre-push hook, branch guard, founder review |
-| 9 | Legal hold and retention undecided (`D-12`) | Data governance | Retention of cases, evidence and audit rows in production |
+| 9 | Legal hold and retention **decided** (`D-P0-4`), not implemented | Data governance | Seven-year retention with legal hold overriding; the mechanism belongs to CP-035/CP-038 |
 
 ## 5. Sequenced plan
 
 ### Phase 0 — Decisions only (no infrastructure)
 
-1. **Second reviewer.** Appoint one, or record a production deviation naming the compensating controls
-   and its expiry. Without this, `DEP-14` fails on principle before any deploy is attempted.
-2. **Hosting region and data residency**, consistent with the data classes in `ARCHITECTURE §11`.
-3. **Error sink** — which vendor, or explicitly "logs only" with an alerting consequence stated.
-4. **Retention** for cases, evidence and audit (`D-12`), or an explicit temporary policy.
+**Decided 15 November 2026 — see `PRODUCTION-DECISIONS.md`.** A named reviewer will be appointed
+(`D-P0-1`), the data plane is EU (`D-P0-2`), errors ship to Sentry EU with scrubbing (`D-P0-3`), and
+retention is seven years with legal hold overriding (`D-P0-4`).
+
+The decision that still blocks is `D-P0-1`: the reviewer must be **named**, not merely agreed. Until
+then `DEP-14` is unmet and Phase 1 should not start.
 
 ### Phase 1 — Provision, least privilege first
 
