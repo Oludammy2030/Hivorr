@@ -125,8 +125,9 @@ Apply the approved security-header posture on every host: TLS/HSTS, host-only co
 
 | Field | Value |
 |---|---|
-| **Status** | `REQUIRES_REVIEW` |
+| **Status** | `COMPLETED` |
 | **Started** | 2026-11-15 |
 | **Code complete** | 2026-11-15 |
-| **Closes when** | Staging serves the headers and `pnpm smoke:staging` passes |
-| **Execution record** | `execution-records/EP-01-041.md` (to be created) |
+| **Completed** | 2026-11-15 |
+| **Closes when** | Met — staging serves CSP/HSTS/nosniff and `pnpm smoke:staging` passes 13/13 |
+| **Execution record** | `execution-records/EP-01-041.md` |
