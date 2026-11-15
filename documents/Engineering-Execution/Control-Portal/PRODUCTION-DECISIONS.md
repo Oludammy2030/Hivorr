@@ -123,6 +123,12 @@ identifiers, so scrubbing is part of the requirement, not a refinement.
 **Remaining action.** Vendor review and DPA; then implement the adapter and configure the DSN in the
 production environment only.
 
+**Status 15 November 2026.** The adapter is implemented: `SentryErrorTracker` posts a Sentry envelope
+over `fetch`, adds no package, scrubs addresses, credentialed URLs and secret assignments out of the
+message and stack, and sends only the existing `ErrorContext`. It is **disabled unless `SENTRY_DSN` is
+set**, so local, test and staging keep the capture-only behaviour. The vendor review, the DPA and the
+production DSN remain outstanding.
+
 ## D-P0-4 — Retention and legal hold (`D-12`)
 
 **Decision.**

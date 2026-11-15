@@ -3,7 +3,8 @@ import { APP_FILTER, APP_GUARD, Reflector } from "@nestjs/core"
 
 import { ApiErrorFilter } from "./common/api-error.filter"
 import { AudienceGuard } from "./common/audience"
-import { ERROR_TRACKER, CaptureErrorTracker } from "./common/error-tracker"
+import { ERROR_TRACKER } from "./common/error-tracker"
+import { createErrorTracker } from "./common/sentry-error-tracker"
 import { LOGGER, createLogger } from "./common/logger"
 import { API_CONFIG, type ApiConfig } from "./config"
 import { DatabaseService } from "./db/database.service"
@@ -87,7 +88,16 @@ export class AppModule {
             }),
           inject: [API_CONFIG],
         },
-        { provide: ERROR_TRACKER, useClass: CaptureErrorTracker },
+        {
+          provide: ERROR_TRACKER,
+          useFactory: (apiConfig: ApiConfig) =>
+            createErrorTracker({
+              dsn: apiConfig.sentryDsn,
+              environment: apiConfig.environment,
+              release: apiConfig.releaseDigest ?? apiConfig.releaseSha,
+            }),
+          inject: [API_CONFIG],
+        },
         {
           provide: EMAIL_ADAPTER,
           useFactory: (apiConfig: ApiConfig) =>
