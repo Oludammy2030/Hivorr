@@ -82,7 +82,7 @@ when `HIVORR_ENV=production`, and the API refuses to boot without it (#121).
 
 | # | Gap | Blocks | Nature |
 |---|---|---|---|
-| 1 | **Reviewer not named — founder is the only reviewer** (`DEP-14`) | `DEP-14` | `D-P0-1`: the deployer and the only reviewer are the same person, so the gate is unmet. Appointment terms in `D-P0-1A`; an agent cannot hold the seat |
+| 1 | **Reviewer not named — founder is the only reviewer** (`DEP-14`) | `DEP-14` | `D-P0-1B`: `DEP-14` stays as written; each release records a founder-signed single-reviewer exception in `PRODUCTION-RELEASES.md` §3, visible on the release record |
 | 2 | Production environment not provisioned | Everything | Fly API + worker, Postgres, R2, Pages project, DNS for the four production hosts |
 | 3 | Production configuration incomplete | Boot | §3, including the TLS CA |
 | 4 | No restore drill | `AR-4` | Restore a production-shaped database from backup and record the time and result |
@@ -102,8 +102,8 @@ Sentry EU with scrubbing (`D-P0-3`), and retention is seven years with legal hol
 (`D-P0-4`).
 
 The decision that still blocks is `D-P0-1`: the founder is currently the **only reviewer available**,
-and the founder also dispatches the release, so `DEP-14` is unmet by definition. An agent cannot hold
-the seat. Phase 1 provisioning should wait for a named reviewer.
+and the founder also dispatches the release, so `DEP-14` is unmet by definition. `D-P0-1B` defines the
+per-release exception that records this honestly rather than deleting the rule.
 
 ### Phase 1 — Provision, least privilege first
 

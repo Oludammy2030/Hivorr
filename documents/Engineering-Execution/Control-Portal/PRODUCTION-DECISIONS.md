@@ -31,8 +31,28 @@ what `DEP-14` forbids. An AI agent cannot occupy the seat either: a reviewer wit
 and propose changes can affect the release, and the agent review passes recorded under `DEV-002` are a
 compensating control for **merges**, not for `G4` production.
 
-**Remaining action.** Appoint a reviewer per §A. Until a name exists, production is blocked by design,
-not by oversight.
+**Remaining action.** Appoint a reviewer per §A, or record the single-reviewer exception in
+`D-P0-1B`. Until one of those exists, production is blocked by design, not by oversight.
+
+## D-P0-1B — Single-reviewer exception
+
+`DEP-14` stays as written. Where no second qualified person exists, a release may proceed **only**
+with a founder-signed exception recorded in that release's `DEP-23` entry, per
+`PRODUCTION-RELEASES.md` §3.
+
+The exception must state, in the entry itself: that `DEP-14` is **not met**; the compensating controls
+relied on; the residual risk being accepted; the signature and a UTC timestamp; and an expiry at the
+next release or 90 days, whichever is sooner. It is a risk acceptance, **not compliance** — it does
+not amend the standard, and it may never be cited as satisfying `DEP-14`.
+
+Two conditions void it: a second qualified reviewer becoming available (appoint them and delete the
+exception), or any High or Medium finding being open against a package the release changes.
+
+It also does not cover `DEP-18` migration review, financial-control or data-protection scope once real
+customer data is in production, or disaster recovery.
+
+**Consequence.** Each release carries the exception until a reviewer exists. The gap stays visible on
+every release record rather than being deleted from the standard.
 
 ## D-P0-1A — Appointing the reviewer
 
