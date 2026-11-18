@@ -1825,18 +1825,21 @@ try {
     "the api may create an escrow ledger account but no other kind",
   )
 
-  const lifecycleLedger = await testClient.query(
-    `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
-     values ('escrow', 'activity', $1, 'NGN')
-     returning id`,
-    [lifecycleRef],
+  const lifecycleLedgerId = (
+    await testClient.query("select platform.uuidv7() as id")
+  ).rows[0].id
+  await testClient.query(
+    `insert into finance.ledger_accounts
+       (id, kind, owner_type, owner_id, currency)
+     values ($1, 'escrow', 'activity', $2, 'NGN')`,
+    [lifecycleLedgerId, lifecycleRef],
   )
   const lifecycleEscrow = await testClient.query(
     `insert into finance.escrow_accounts
        (ledger_account_id, payer_account_id, activity_id, activity_ref, currency)
      values ($1, $2, 'services.hire', $3, 'NGN')
      returning id`,
-    [lifecycleLedger.rows[0].id, accountId, lifecycleRef],
+    [lifecycleLedgerId, accountId, lifecycleRef],
   )
   const lifecycleEscrowId = lifecycleEscrow.rows[0].id
   assert(

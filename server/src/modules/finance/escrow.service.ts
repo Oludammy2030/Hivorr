@@ -200,17 +200,24 @@ export class EscrowService {
           },
         },
         async (transaction) => {
-          const ledger = await transaction.query<{ id: string }>(
-            `insert into finance.ledger_accounts
-               (kind, owner_type, owner_id, currency)
-             values ('escrow', 'activity', $1, $2)
-             returning id`,
-            [validated.activityRef, validated.currency],
+          // The ledger account is inserted with an explicit id and no
+          // RETURNING: the select policy hides an escrow account until its
+          // reservation row exists, so a returning clause would fail its own
+          // read check. The id is still the platform UUIDv7 generator.
+          const generated = await transaction.query<{ id: string }>(
+            "select platform.uuidv7() as id",
           )
-          const ledgerAccountId = ledger.rows[0]?.id
+          const ledgerAccountId = generated.rows[0]?.id
           if (!ledgerAccountId) {
-            throw new Error("The escrow ledger account insert returned no row.")
+            throw new Error("The escrow identifier was not generated.")
           }
+
+          await transaction.query(
+            `insert into finance.ledger_accounts
+               (id, kind, owner_type, owner_id, currency)
+             values ($1, 'escrow', 'activity', $2, $3)`,
+            [ledgerAccountId, validated.activityRef, validated.currency],
+          )
 
           const escrow = await transaction.query<EscrowRow>(
             `insert into finance.escrow_accounts

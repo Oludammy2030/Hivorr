@@ -51,8 +51,12 @@ class FakeTransaction {
   query = async (text: string, values?: readonly unknown[]) => {
     this.calls.push({ text, values })
 
-    if (text.includes("insert into finance.ledger_accounts")) {
+    if (text.includes("select platform.uuidv7()")) {
       return { rows: [{ id: this.ledgerAccountId }], rowCount: 1 }
+    }
+
+    if (text.includes("insert into finance.ledger_accounts")) {
+      return { rows: [], rowCount: 1 }
     }
 
     if (text.startsWith("insert into finance.escrow_accounts")) {
@@ -134,7 +138,11 @@ describe("escrow service", () => {
     const ledgerCall = transaction.calls.find((call) =>
       call.text.includes("insert into finance.ledger_accounts"),
     )
-    expect(ledgerCall?.values).toEqual([expect.any(String), "NGN"])
+    expect(ledgerCall?.values).toEqual([
+      transaction.ledgerAccountId,
+      expect.any(String),
+      "NGN",
+    ])
 
     const auditCall = transaction.calls.find((call) =>
       call.text.includes("insert into platform.audit_log"),
