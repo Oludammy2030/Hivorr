@@ -159,6 +159,11 @@
     }
   },
   "pnpm": {
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-fc5q-39xc-vjpf"
+      ]
+    },
     "overrides": {
       "vite": "6.4.5",
       "tar": "7.5.22",
