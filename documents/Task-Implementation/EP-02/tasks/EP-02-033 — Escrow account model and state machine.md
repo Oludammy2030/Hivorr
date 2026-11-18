@@ -83,11 +83,14 @@ The task DoD must record what was inspected and why nothing existing served the 
 
 Anticipated paths; update this section if implementation reveals more.
 
-- `supabase/migrations/*_finance_*.sql`
-- `server/src/modules/finance/**`
-- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts`
-- `tests/ledger*.test.ts`, `tests/finance*.test.ts`
-- `tests/db-*` policy suite
+- `supabase/migrations/*_finance_*.sql` — `20261118000400_finance_add_escrow_lifecycle.sql`
+- `server/src/modules/finance/escrow.service.ts`, `index.ts`
+- `server/src/app.module.ts` — provider registration
+- `packages/shared/src/finance.ts` — `ESCROW_TRANSITIONS` and evaluator
+- `supabase/schema-baseline.txt` — refreshed snapshot
+- `tests/escrow-service.test.ts`, `tests/ep02-contracts.test.ts`
+- `scripts/test-db-migrations.mjs` — open, transition, deny and RLS assertions
+- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts` — unchanged; no endpoint in this task
 
 ## 9. Definition of Done
 
@@ -131,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-18 |
+| **Execution record** | `execution-records/EP-02-033.md` |
+| **Blocked by** | — (release, refund and cancellation remain disabled until BD-D03; that is a recorded product decision, not an unmet dependency) |
+| **Notes** | Shared lifecycle table, escrow service with in-transaction audit, narrow grants and a database trigger that refuses every disabled transition. No money posting, fee or split. |
 
