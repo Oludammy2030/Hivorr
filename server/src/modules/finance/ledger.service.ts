@@ -3,7 +3,12 @@ import { Inject, Injectable } from "@nestjs/common"
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
 import type { TransactionContext } from "../../db/transaction"
-import { appendAudit } from "../platform"
+import { claimIdempotency, completeIdempotency, appendAudit } from "../platform"
+import {
+  LEDGER_IDEMPOTENCY_SCOPE,
+  hashLedgerEntry,
+  ledgerIdempotencyKey,
+} from "./idempotency"
 import {
   LedgerValidationError,
   deriveAccountEffects,
@@ -129,6 +134,18 @@ export class LedgerService {
     input: LedgerEntryInput,
     context: LedgerPostingContext,
   ): Promise<PostedJournalEntry> {
+    const clientKey = input.idempotencyKey?.trim()
+    if (!clientKey) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "Every money movement needs an idempotency key.",
+        400,
+      )
+    }
+
+    const idempotencyKey = ledgerIdempotencyKey(context.accountId, clientKey)
+    const requestHash = hashLedgerEntry(input)
+
     try {
       return await this.database.withTransaction(
         {
@@ -138,6 +155,24 @@ export class LedgerService {
           },
         },
         async (transaction) => {
+          const claim = await claimIdempotency(transaction.client, {
+            key: idempotencyKey,
+            scope: LEDGER_IDEMPOTENCY_SCOPE,
+            requestHash,
+            expiresAt: "infinity",
+          })
+
+          if (claim.status === "conflict") {
+            throw new ApiError(
+              "CONFLICT",
+              "That idempotency key was already used for a different request.",
+              409,
+            )
+          }
+          if (claim.status === "replay") {
+            return claim.responseBody as PostedJournalEntry
+          }
+
           const reversalTarget = input.reversesEntryId
             ? await this.loadReversalTarget(transaction, input.reversesEntryId)
             : undefined
@@ -189,7 +224,7 @@ export class LedgerService {
             correlationId: context.correlationId,
           })
 
-          return {
+          const posted = {
             id: row.id,
             kind: entry.kind,
             reference: entry.reference,
@@ -197,6 +232,14 @@ export class LedgerService {
             createdAt: toIso(row.created_at),
             effects: deriveAccountEffects(entry.postings),
           }
+
+          await completeIdempotency(transaction.client, {
+            key: idempotencyKey,
+            responseStatus: 201,
+            responseBody: posted,
+          })
+
+          return posted
         },
       )
     } catch (error) {

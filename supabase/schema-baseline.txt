@@ -82,7 +82,7 @@ platform | taxonomy_nodes
 profile | activity_activations
 profile | profiles
 
-## columns (615)
+## columns (616)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -468,6 +468,7 @@ finance | provider_references | currency | text | text | NO | -
 finance | provider_references | journal_entry_id | uuid | uuid | YES | -
 finance | provider_references | created_at | timestamp with time zone | timestamptz | NO | now()
 finance | provider_references | updated_at | timestamp with time zone | timestamptz | NO | now()
+finance | provider_references | account_id | uuid | uuid | NO | -
 finance | reconciliation_items | id | uuid | uuid | NO | platform.uuidv7()
 finance | reconciliation_items | run_id | uuid | uuid | NO | -
 finance | reconciliation_items | provider_reference | text | text | YES | -
@@ -699,7 +700,7 @@ profile | profiles | timezone | text | text | YES | -
 profile | profiles | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | profiles | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (342)
+## constraints (343)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -936,6 +937,7 @@ finance | postings | postings_direction_check | c | CHECK (direction = ANY (ARRA
 finance | postings | postings_entry_id_fkey | f | FOREIGN KEY (entry_id) REFERENCES finance.journal_entries(id) ON DELETE RESTRICT
 finance | postings | postings_ledger_account_id_fkey | f | FOREIGN KEY (ledger_account_id) REFERENCES finance.ledger_accounts(id) ON DELETE RESTRICT
 finance | postings | postings_pkey | p | PRIMARY KEY (id)
+finance | provider_references | provider_references_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE RESTRICT
 finance | provider_references | provider_references_amount_check | c | CHECK (amount > 0::numeric)
 finance | provider_references | provider_references_check | c | CHECK (status <> 'posted'::text OR journal_entry_id IS NOT NULL)
 finance | provider_references | provider_references_currency_check | c | CHECK (currency ~ '^[A-Z]{3}$'::text)
@@ -1043,7 +1045,7 @@ profile | activity_activations | activity_activations_state_check | c | CHECK (s
 profile | profiles | profiles_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | profiles | profiles_pkey | p | PRIMARY KEY (account_id)
 
-## indexes (194)
+## indexes (195)
 admin | access_denials | access_denials_active_unique | CREATE UNIQUE INDEX access_denials_active_unique ON admin.access_denials USING btree (user_id, permission_key, COALESCE(scope_type, ''::text), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
 admin | access_denials | access_denials_pkey | CREATE UNIQUE INDEX access_denials_pkey ON admin.access_denials USING btree (id)
 admin | access_denials | access_denials_user_active_idx | CREATE INDEX access_denials_user_active_idx ON admin.access_denials USING btree (user_id, permission_key) WHERE (revoked_at IS NULL)
@@ -1146,7 +1148,7 @@ finance | escrow_accounts | escrow_accounts_ledger_account_id_key | CREATE UNIQU
 finance | escrow_accounts | escrow_accounts_payer_idx | CREATE INDEX escrow_accounts_payer_idx ON finance.escrow_accounts USING btree (payer_account_id, currency)
 finance | escrow_accounts | escrow_accounts_pkey | CREATE UNIQUE INDEX escrow_accounts_pkey ON finance.escrow_accounts USING btree (id)
 finance | journal_entries | journal_entries_activity_idx | CREATE INDEX journal_entries_activity_idx ON finance.journal_entries USING btree (activity_id, created_at) WHERE (activity_id IS NOT NULL)
-finance | journal_entries | journal_entries_idempotency_idx | CREATE UNIQUE INDEX journal_entries_idempotency_idx ON finance.journal_entries USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL)
+finance | journal_entries | journal_entries_idempotency_idx | CREATE UNIQUE INDEX journal_entries_idempotency_idx ON finance.journal_entries USING btree (COALESCE(created_by, '00000000-0000-0000-0000-000000000000'::uuid), idempotency_key) WHERE (idempotency_key IS NOT NULL)
 finance | journal_entries | journal_entries_pkey | CREATE UNIQUE INDEX journal_entries_pkey ON finance.journal_entries USING btree (id)
 finance | journal_entries | journal_entries_reference_idx | CREATE UNIQUE INDEX journal_entries_reference_idx ON finance.journal_entries USING btree (reference)
 finance | journal_entries | journal_entries_reversal_unique_idx | CREATE UNIQUE INDEX journal_entries_reversal_unique_idx ON finance.journal_entries USING btree (reverses_entry_id) WHERE (reverses_entry_id IS NOT NULL)
@@ -1167,6 +1169,7 @@ finance | postings | postings_account_idx | CREATE INDEX postings_account_idx ON
 finance | postings | postings_activity_idx | CREATE INDEX postings_activity_idx ON finance.postings USING btree (activity_id) WHERE (activity_id IS NOT NULL)
 finance | postings | postings_entry_idx | CREATE INDEX postings_entry_idx ON finance.postings USING btree (entry_id)
 finance | postings | postings_pkey | CREATE UNIQUE INDEX postings_pkey ON finance.postings USING btree (id)
+finance | provider_references | provider_references_account_idx | CREATE INDEX provider_references_account_idx ON finance.provider_references USING btree (account_id, status, created_at)
 finance | provider_references | provider_references_entry_idx | CREATE INDEX provider_references_entry_idx ON finance.provider_references USING btree (journal_entry_id) WHERE (journal_entry_id IS NOT NULL)
 finance | provider_references | provider_references_pkey | CREATE UNIQUE INDEX provider_references_pkey ON finance.provider_references USING btree (id)
 finance | provider_references | provider_references_provider_provider_reference_key | CREATE UNIQUE INDEX provider_references_provider_provider_reference_key ON finance.provider_references USING btree (provider, provider_reference)
@@ -1305,7 +1308,7 @@ platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
 profile | profiles | true | true
 
-## policies (75)
+## policies (77)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1328,7 +1331,9 @@ finance | limits | limits_select | PERMISSIVE | {hivorr_api} | SELECT | ((platfo
 finance | payout_accounts | payout_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 finance | postings | postings_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (platform.current_account_id() IS NOT NULL)
 finance | postings | postings_select | PERMISSIVE | {hivorr_api} | SELECT | ((EXISTS ( SELECT 1 FROM finance.ledger_accounts a WHERE ((a.id = postings.ledger_account_id) AND (a.owner_type = 'account'::text) AND (a.owner_id = platform.current_account_id())))) OR (EXISTS ( SELECT 1 FROM finance.escrow_accounts ea WHERE ((ea.ledger_account_id = postings.ledger_account_id) AND (ea.payer_account_id = platform.current_account_id()))))) | -
-finance | provider_references | provider_references_select | PERMISSIVE | {hivorr_api} | SELECT | ((journal_entry_id IS NOT NULL) AND (EXISTS ( SELECT 1 FROM finance.journal_entries je WHERE (je.id = provider_references.journal_entry_id)))) | -
+finance | provider_references | provider_references_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
+finance | provider_references | provider_references_select | PERMISSIVE | {hivorr_api} | SELECT | ((account_id = platform.current_account_id()) OR ((journal_entry_id IS NOT NULL) AND (EXISTS ( SELECT 1 FROM finance.journal_entries je WHERE (je.id = provider_references.journal_entry_id))))) | -
+finance | provider_references | provider_references_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 identity | accounts | accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (id = platform.current_account_id())
 identity | accounts | accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (id = platform.current_account_id()) | -
 identity | accounts | accounts_update | PERMISSIVE | {hivorr_api} | UPDATE | (id = platform.current_account_id()) | (id = platform.current_account_id())
@@ -1382,7 +1387,7 @@ profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | 
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (556)
+## table-grants (557)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -1680,6 +1685,7 @@ finance | postings | postgres | SELECT | YES
 finance | postings | postgres | TRIGGER | YES
 finance | postings | postgres | TRUNCATE | YES
 finance | postings | postgres | UPDATE | YES
+finance | provider_references | hivorr_api | INSERT | NO
 finance | provider_references | hivorr_api | SELECT | NO
 finance | provider_references | postgres | DELETE | YES
 finance | provider_references | postgres | INSERT | YES

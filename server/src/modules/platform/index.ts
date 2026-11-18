@@ -6,6 +6,8 @@
  */
 export { appendAudit, listAuditEntries, requiresReason } from "./audit"
 export type { AuditEntry, AuditEntryView, AuditPage, AuditQuery } from "./audit"
+export { claimIdempotency, completeIdempotency } from "./idempotency"
+export type { IdempotencyClaim, IdempotencyClaimInput } from "./idempotency"
 export {
   TAXONOMY_ATTRIBUTE_TYPES,
   TAXONOMY_KINDS,
