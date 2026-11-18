@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { activityIdSchema } from "./activities.js"
+
 /**
  * Ledger, wallet, escrow and payout vocabulary.
  *
@@ -223,6 +225,36 @@ export const walletBalanceViewSchema = z.strictObject({
 })
 
 export type WalletBalanceView = z.infer<typeof walletBalanceViewSchema>
+
+/**
+ * A statement amount carries a sign because a wallet credit and a wallet debit
+ * are shown as opposite movements of the same figure.
+ */
+export const signedMoneyAmountSchema = z
+  .string()
+  .regex(/^-?(0|[1-9]\d{0,19})(\.\d{1,4})?$/)
+
+export type SignedMoneyAmount = z.infer<typeof signedMoneyAmountSchema>
+
+/**
+ * One ledger posting as it appears on the owner's wallet statement. The amount
+ * is always positive; `signedAmount` is the display figure, positive for a
+ * wallet credit and negative for a wallet debit.
+ */
+export const walletStatementEntrySchema = z.strictObject({
+  postingId: z.string().uuid(),
+  entryId: z.string().uuid(),
+  reference: z.string(),
+  entryKind: journalEntryKindSchema,
+  currency: currencyCodeSchema,
+  direction: postingDirectionSchema,
+  amount: moneyAmountSchema,
+  signedAmount: signedMoneyAmountSchema,
+  activityId: activityIdSchema.nullable(),
+  occurredAt: z.string().datetime(),
+})
+
+export type WalletStatementEntry = z.infer<typeof walletStatementEntrySchema>
 
 export const payoutAccountSchema = z.strictObject({
   id: z.string().uuid(),

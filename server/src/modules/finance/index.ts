@@ -3,7 +3,8 @@
  *
  * Owns the `finance` schema: ledger accounts, journal entries, escrow,
  * payouts, limits, reconciliation and commission. Other modules import from
- * this file only. `EP-02-031` adds the posting domain and write path.
+ * this file only. `EP-02-031` adds the posting domain and write path;
+ * `EP-02-032` adds the derived wallet and statement reads.
  */
 export {
   LedgerValidationError,
@@ -28,3 +29,9 @@ export type {
 } from "./ledger"
 export { LedgerService } from "./ledger.service"
 export type { LedgerPostingContext, PostedJournalEntry } from "./ledger.service"
+export {
+  DEFAULT_STATEMENT_LIMIT,
+  MAXIMUM_STATEMENT_LIMIT,
+  WalletService,
+} from "./wallet.service"
+export type { WalletReadContext, WalletStatementQuery } from "./wallet.service"

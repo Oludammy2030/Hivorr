@@ -246,6 +246,43 @@ try {
     )
   }
 
+  const financeViews = await testClient.query(
+    "select viewname from pg_views where schemaname = 'finance'",
+  )
+  const financeViewNames = new Set(financeViews.rows.map((row) => row.viewname))
+  for (const view of ["wallet_balances", "wallet_statement"]) {
+    assert(financeViewNames.has(view), `finance.${view} exists`)
+  }
+
+  const viewOptions = await testClient.query(
+    `select relname, reloptions
+       from pg_class
+      where relnamespace = 'finance'::regnamespace and relkind = 'v'`,
+  )
+  const optionsByView = new Map(
+    viewOptions.rows.map((row) => [row.relname, row.reloptions ?? []]),
+  )
+  for (const view of ["wallet_balances", "wallet_statement"]) {
+    const options = optionsByView.get(view) ?? []
+    assert(
+      options.includes("security_invoker=true"),
+      `finance.${view} is security_invoker`,
+    )
+    const read = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.${view}', 'select') as allowed`,
+    )
+    assert(read.rows[0].allowed === true, `api may read finance.${view}`)
+    for (const privilege of ["insert", "update", "delete"]) {
+      const write = await testClient.query(
+        `select has_table_privilege('hivorr_api', 'finance.${view}', '${privilege}') as allowed`,
+      )
+      assert(
+        write.rows[0].allowed === false,
+        `api cannot ${privilege} finance.${view}`,
+      )
+    }
+  }
+
   const industry = await testClient.query(
     `insert into platform.taxonomy_nodes (taxonomy, level, slug, name)
      values ('profession', 'industry', 'construction', 'Construction')
@@ -1371,6 +1408,107 @@ try {
   }
   assert(mixedLimitRejected, "a limit targets a tier or an account, never both")
 
+  await testClient.query("begin")
+  const walletDepositEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, created_by)
+     values ('deposit', 'WAL-TEST-0001', 'NGN', $1)
+     returning id`,
+    [userId],
+  )
+  await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency)
+     values ($1, $2, 'debit', 10.0000, 'NGN'),
+            ($1, $3, 'credit', 10.0000, 'NGN')`,
+    [walletDepositEntry.rows[0].id, walletLedgerId, clearingLedgerId],
+  )
+  await testClient.query("commit")
+
+  await testClient.query("begin")
+  const escrowHoldEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, activity_id, created_by)
+     values ('escrow_hold', 'WAL-TEST-0002', 'NGN', 'services.hire', $1)
+     returning id`,
+    [userId],
+  )
+  await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency, activity_id)
+     values ($1, $2, 'credit', 3.0000, 'NGN', 'services.hire'),
+            ($1, $3, 'debit', 3.0000, 'NGN', 'services.hire')`,
+    [escrowHoldEntry.rows[0].id, walletLedgerId, escrowLedgerId],
+  )
+  await testClient.query("commit")
+
+  const walletBalance = await testClient.query(
+    `select currency, available::text, pending::text, total::text,
+            withdrawable::text
+       from finance.wallet_balances
+      where account_id = $1 and currency = 'NGN'`,
+    [accountId],
+  )
+  assert(walletBalance.rowCount === 1, "a wallet balance row is derived")
+  assert(
+    walletBalance.rows[0].available === "7.0000",
+    "available is the net of wallet postings",
+  )
+  assert(
+    walletBalance.rows[0].pending === "3.0000",
+    "pending is the held escrow amount",
+  )
+  assert(
+    walletBalance.rows[0].total === "10.0000",
+    "total is available plus pending",
+  )
+  assert(
+    walletBalance.rows[0].withdrawable === "7.0000",
+    "withdrawable equals available until payout reservations exist",
+  )
+
+  const walletStatement = await testClient.query(
+    `select reference, entry_kind, direction, signed_amount::text,
+            activity_id
+       from finance.wallet_statement
+      where account_id = $1 and currency = 'NGN'
+      order by occurred_at desc, posting_id desc`,
+    [accountId],
+  )
+  assert(
+    walletStatement.rowCount === 4,
+    "the statement lists every wallet posting, not the counterparty lines",
+  )
+  const statementTotal = walletStatement.rows.reduce(
+    (sum, row) => sum + Number(row.signed_amount),
+    0,
+  )
+  assert(
+    statementTotal === 7,
+    "the statement's signed amounts reconcile to the derived balance",
+  )
+  const escrowStatement = walletStatement.rows.filter(
+    (row) => row.activity_id === "services.hire",
+  )
+  assert(
+    escrowStatement.length === 1 &&
+      escrowStatement[0].entry_kind === "escrow_hold" &&
+      escrowStatement[0].signed_amount === "-3.0000",
+    "statement rows carry activity attribution",
+  )
+
+  const emptyAccount = await testClient.query(
+    "insert into identity.accounts default values returning id",
+  )
+  const emptyBalance = await testClient.query(
+    "select count(*)::int as count from finance.wallet_balances where account_id = $1",
+    [emptyAccount.rows[0].id],
+  )
+  assert(
+    emptyBalance.rows[0].count === 0,
+    "an account with no ledger history has no stored wallet row",
+  )
+
   await testClient.query("grant hivorr_api to postgres with set true")
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
@@ -1438,15 +1576,15 @@ try {
     "select count(*)::int as count from finance.postings",
   )
   assert(
-    ownPostings.rows[0].count === 2,
-    "rls shows only postings on the current account's ledger",
+    ownPostings.rows[0].count === 5,
+    "rls shows only postings on the current account's ledger and escrow",
   )
 
   const ownEntries = await testClient.query(
     "select count(*)::int as count from finance.journal_entries",
   )
   assert(
-    ownEntries.rows[0].count === 2,
+    ownEntries.rows[0].count === 4,
     "rls shows only journal entries touching the current account",
   )
 
@@ -1480,6 +1618,30 @@ try {
   assert(
     ownLimits.rows[0].count === 1,
     "rls shows tier limits and only the current account's overrides",
+  )
+
+  const ownWalletBalance = await testClient.query(
+    `select available::text, pending::text, total::text
+       from finance.wallet_balances
+      where currency = 'NGN'`,
+  )
+  assert(
+    ownWalletBalance.rowCount === 1,
+    "the wallet view shows only the current account",
+  )
+  assert(
+    ownWalletBalance.rows[0].available === "7.0000" &&
+      ownWalletBalance.rows[0].pending === "3.0000" &&
+      ownWalletBalance.rows[0].total === "10.0000",
+    "the wallet figures reconcile to the current account's postings",
+  )
+
+  const ownStatement = await testClient.query(
+    "select count(*)::int as count from finance.wallet_statement",
+  )
+  assert(
+    ownStatement.rows[0].count === 4,
+    "the statement is owner-scoped and lists only wallet postings",
   )
 
   let reconciliationReadDenied = false
@@ -1641,6 +1803,20 @@ try {
     foreignLimits.rows[0].count === 2,
     "rls shows tier limits plus this account's own override",
   )
+  const foreignWallet = await testClient.query(
+    "select count(*)::int as count from finance.wallet_balances",
+  )
+  assert(
+    foreignWallet.rows[0].count === 0,
+    "the wallet view hides another account's figures",
+  )
+  const foreignStatement = await testClient.query(
+    "select count(*)::int as count from finance.wallet_statement",
+  )
+  assert(
+    foreignStatement.rows[0].count === 0,
+    "the statement view hides another account's postings",
+  )
   await testClient.query("reset role")
   await testClient.query("commit")
 
@@ -1694,6 +1870,20 @@ try {
   assert(
     noContextLimits.rows[0].count === 0,
     "limit rls denies without an identity context",
+  )
+  const noContextWallet = await testClient.query(
+    "select count(*)::int as count from finance.wallet_balances",
+  )
+  assert(
+    noContextWallet.rows[0].count === 0,
+    "wallet view rls denies without an identity context",
+  )
+  const noContextStatement = await testClient.query(
+    "select count(*)::int as count from finance.wallet_statement",
+  )
+  assert(
+    noContextStatement.rows[0].count === 0,
+    "statement view rls denies without an identity context",
   )
 
   let noContextEntryDenied = false
