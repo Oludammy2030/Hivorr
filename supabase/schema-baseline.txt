@@ -1305,7 +1305,7 @@ platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
 profile | profiles | true | true
 
-## policies (72)
+## policies (75)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1317,9 +1317,12 @@ admin | role_permissions | role_permissions_select | PERMISSIVE | {hivorr_api,hi
 admin | roles | roles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
 admin | staff_profiles | staff_profiles_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | work_items | work_items_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
+finance | escrow_accounts | escrow_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (payer_account_id = platform.current_account_id())
 finance | escrow_accounts | escrow_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (payer_account_id = platform.current_account_id()) | -
+finance | escrow_accounts | escrow_accounts_update | PERMISSIVE | {hivorr_api} | UPDATE | (payer_account_id = platform.current_account_id()) | (payer_account_id = platform.current_account_id())
 finance | journal_entries | journal_entries_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (platform.current_account_id() IS NOT NULL)
 finance | journal_entries | journal_entries_select | PERMISSIVE | {hivorr_api} | SELECT | ((created_by = platform.current_user_id()) OR (EXISTS ( SELECT 1 FROM (finance.postings p JOIN finance.ledger_accounts a ON ((a.id = p.ledger_account_id))) WHERE ((p.entry_id = journal_entries.id) AND (a.owner_type = 'account'::text) AND (a.owner_id = platform.current_account_id()))))) | -
+finance | ledger_accounts | ledger_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | ((kind = 'escrow'::text) AND (owner_type = 'activity'::text) AND (owner_id IS NOT NULL) AND (platform.current_account_id() IS NOT NULL))
 finance | ledger_accounts | ledger_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | ((owner_type = 'account'::text) AND (owner_id = platform.current_account_id())) | -
 finance | limits | limits_select | PERMISSIVE | {hivorr_api} | SELECT | ((platform.current_account_id() IS NOT NULL) AND ((account_id = platform.current_account_id()) OR ((account_id IS NULL) AND (tier IS NOT NULL)))) | -
 finance | payout_accounts | payout_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
@@ -1379,7 +1382,7 @@ profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | 
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (554)
+## table-grants (556)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -1625,6 +1628,7 @@ admin | work_items | postgres | SELECT | YES
 admin | work_items | postgres | TRIGGER | YES
 admin | work_items | postgres | TRUNCATE | YES
 admin | work_items | postgres | UPDATE | YES
+finance | escrow_accounts | hivorr_api | INSERT | NO
 finance | escrow_accounts | hivorr_api | SELECT | NO
 finance | escrow_accounts | postgres | DELETE | YES
 finance | escrow_accounts | postgres | INSERT | YES
@@ -1642,6 +1646,7 @@ finance | journal_entries | postgres | SELECT | YES
 finance | journal_entries | postgres | TRIGGER | YES
 finance | journal_entries | postgres | TRUNCATE | YES
 finance | journal_entries | postgres | UPDATE | YES
+finance | ledger_accounts | hivorr_api | INSERT | NO
 finance | ledger_accounts | hivorr_api | SELECT | NO
 finance | ledger_accounts | postgres | DELETE | YES
 finance | ledger_accounts | postgres | INSERT | YES
@@ -1935,7 +1940,7 @@ profile | profiles | postgres | TRIGGER | YES
 profile | profiles | postgres | TRUNCATE | YES
 profile | profiles | postgres | UPDATE | YES
 
-## functions (85)
+## functions (86)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -2019,6 +2024,7 @@ private | reject_ledger_mutation |  | true | v | search_path=""
 private | reject_ledger_truncate |  | true | v | search_path=""
 private | set_identity_context | account_id uuid, user_id uuid | false | v | -
 private | validate_escrow_account |  | true | v | search_path=""
+private | validate_escrow_transition |  | true | v | search_path=""
 private | validate_posting |  | true | v | search_path=""
 profile | enforce_activation_transition |  | false | v | -
 

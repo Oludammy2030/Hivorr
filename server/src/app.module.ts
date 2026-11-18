@@ -44,6 +44,7 @@ import { EvidenceService } from "./modules/admin/evidence.service"
 import { VerificationService } from "./modules/admin/verification.service"
 import { ProfileService } from "./modules/profile/profile.service"
 import { LedgerService } from "./modules/finance/ledger.service"
+import { EscrowService } from "./modules/finance/escrow.service"
 import { WalletService } from "./modules/finance/wallet.service"
 import { TaxonomyAdminService } from "./modules/platform/taxonomy.service"
 
@@ -126,6 +127,7 @@ export class AppModule {
         TaxonomyAdminService,
         LedgerService,
         WalletService,
+        EscrowService,
       ],
     }
   }

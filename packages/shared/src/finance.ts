@@ -58,6 +58,51 @@ export const ESCROW_STATES = [
 
 export type EscrowState = typeof ESCROW_STATES[number]
 
+/**
+ * The defined escrow lifecycle. `enabled` is deliberately false for every
+ * transition that moves money or ends the reservation: release, refund and
+ * cancellation are BD-D03 and remain unapproved. Opening a dispute is enabled
+ * because it moves no money and only asks for review.
+ *
+ * The database enforces the same list; `EP-02-033` refuses a disabled
+ * transition even if a caller bypasses this helper.
+ */
+export interface EscrowTransitionRule {
+  readonly from: EscrowState
+  readonly to: EscrowState
+  readonly enabled: boolean
+  readonly policy?: "BD-D03"
+}
+
+export const ESCROW_TRANSITIONS: readonly EscrowTransitionRule[] = [
+  { from: "held", to: "disputed", enabled: true },
+  { from: "held", to: "released", enabled: false, policy: "BD-D03" },
+  { from: "held", to: "refunded", enabled: false, policy: "BD-D03" },
+  { from: "held", to: "cancelled", enabled: false, policy: "BD-D03" },
+  { from: "disputed", to: "released", enabled: false, policy: "BD-D03" },
+  { from: "disputed", to: "refunded", enabled: false, policy: "BD-D03" },
+] as const
+
+export type EscrowTransitionStatus = "enabled" | "disabled" | "invalid"
+
+export interface EscrowTransitionEvaluation {
+  readonly status: EscrowTransitionStatus
+  readonly rule: EscrowTransitionRule | null
+}
+
+/** Evaluates one transition against the defined lifecycle. */
+export function evaluateEscrowTransition(
+  from: string,
+  to: string,
+): EscrowTransitionEvaluation {
+  const rule =
+    ESCROW_TRANSITIONS.find(
+      (candidate) => candidate.from === from && candidate.to === to,
+    ) ?? null
+  if (!rule) return { status: "invalid", rule: null }
+  return { status: rule.enabled ? "enabled" : "disabled", rule }
+}
+
 export const PAYOUT_ACCOUNT_STATES = [
   "pending",
   "verified",

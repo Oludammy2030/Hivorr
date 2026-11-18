@@ -70,8 +70,9 @@ describe("ten-module skeleton", () => {
     }
   })
 
-  it("exposes the finance posting and wallet domains from its public interface", () => {
+  it("exposes the finance posting, wallet and escrow domains from its public interface", () => {
     expect(sourceFiles(path.join(modulesRoot, "finance"))).toEqual([
+      "escrow.service.ts",
       "index.ts",
       "ledger.service.ts",
       "ledger.ts",
