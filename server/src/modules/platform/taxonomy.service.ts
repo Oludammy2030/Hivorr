@@ -12,6 +12,11 @@ export interface TaxonomyAuditContext {
   readonly correlationId?: string
 }
 
+export interface TaxonomyReadInput {
+  readonly taxonomy?: string
+  readonly level?: string
+}
+
 export interface TaxonomyNodeView {
   readonly id: string
   readonly taxonomy: string
@@ -187,6 +192,43 @@ export class TaxonomyAdminService {
         }
       },
     )
+  }
+
+  async readActive(input: TaxonomyReadInput): Promise<{
+    readonly nodes: readonly TaxonomyNodeView[]
+    readonly attributes: readonly TaxonomyAttributeView[]
+  }> {
+    return this.database.withTransaction({}, async (transaction) => {
+      const nodes = await transaction.query<NodeRow>(
+        `select id, taxonomy, level, parent_id, slug, name, description,
+                version, effective_from, effective_to, is_active,
+                created_at, updated_at
+           from platform.taxonomy_nodes
+          where is_active
+            and effective_from <= now()
+            and (effective_to is null or effective_to > now())
+            and ($1::text is null or taxonomy = $1)
+            and ($2::text is null or level = $2)
+          order by taxonomy, level, name`,
+        [input.taxonomy?.trim() || null, input.level?.trim() || null],
+      )
+      const ids = nodes.rows.map((row) => row.id)
+      const attributes =
+        ids.length === 0
+          ? { rows: [] as AttributeRow[] }
+          : await transaction.query<AttributeRow>(
+              `select id, node_id, key, label, data_type, is_required,
+                      enum_values, unit, sort_order, created_at, updated_at
+                 from platform.taxonomy_attributes
+                where node_id = any($1::uuid[])
+                order by node_id, sort_order, key`,
+              [ids],
+            )
+      return {
+        nodes: nodes.rows.map(toNodeView),
+        attributes: attributes.rows.map(toAttributeView),
+      }
+    })
   }
 
   async createNode(input: {

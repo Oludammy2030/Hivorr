@@ -1,3 +1,12 @@
+import {
+  TAXONOMY_KINDS,
+  TAXONOMY_LEVELS,
+  TAXONOMY_LEVELS_BY_KIND,
+  type TaxonomyAttributeType,
+  type TaxonomyKind,
+  type TaxonomyLevel,
+} from "@hivorr/shared"
+
 /**
  * Taxonomy hierarchy domain (EP-02-020).
  *
@@ -5,36 +14,17 @@
  * belong to the `platform` repository/API; this module never imports the
  * database, HTTP or a client.
  */
-export const TAXONOMY_KINDS = ["profession", "product"] as const
-
-export type TaxonomyKind = typeof TAXONOMY_KINDS[number]
-
-export const TAXONOMY_LEVELS = [
-  "industry",
-  "profession",
-  "vertical",
-  "category",
-  "subcategory",
-  "product_type",
-] as const
-
-export type TaxonomyLevel = typeof TAXONOMY_LEVELS[number]
-
-export const TAXONOMY_LEVELS_BY_KIND: Readonly<Record<TaxonomyKind, readonly TaxonomyLevel[]>> =
-  {
-    profession: ["industry", "profession"],
-    product: ["vertical", "category", "subcategory", "product_type"],
-  }
-
-export const TAXONOMY_ATTRIBUTE_TYPES = [
-  "text",
-  "number",
-  "boolean",
-  "enum",
-  "date",
-] as const
-
-export type TaxonomyAttributeType = typeof TAXONOMY_ATTRIBUTE_TYPES[number]
+export {
+  TAXONOMY_ATTRIBUTE_TYPES,
+  TAXONOMY_KINDS,
+  TAXONOMY_LEVELS,
+  TAXONOMY_LEVELS_BY_KIND,
+} from "@hivorr/shared"
+export type {
+  TaxonomyAttributeType,
+  TaxonomyKind,
+  TaxonomyLevel,
+} from "@hivorr/shared"
 
 export type TaxonomyNodeInput = {
   readonly id?: string

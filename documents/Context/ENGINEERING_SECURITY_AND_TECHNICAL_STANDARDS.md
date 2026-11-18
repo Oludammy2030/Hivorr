@@ -2431,6 +2431,7 @@ treats them as precedent, and so that the exit condition is visible.
 | **EX-17** | `default_shadcn_theme.css` holds the old Figma palette at the project root | Reference copy, not imported | Project root | Deleted once confirmed unreferenced |
 | **EX-18** | Five dev-only entries used caret ranges (`typescript`, `oxfmt`, `@types/node`, `@types/react`, `@types/react-dom`) while every runtime dependency is exact and `ARCHITECTURE.md` §2.5 says dependencies are pinned exactly | Dev tooling, not shipped; the lockfile still pins the resolved tree | `package.json` devDependencies | **Resolved 3 November 2026** - all five are pinned exactly: `typescript` 5.9.3, `oxfmt` 0.2.0, `@types/node` 22.20.5, `@types/react` 18.3.31, `@types/react-dom` 18.3.7 |
 | **EX-19** | `package.json` was changed on 3 November 2026 (EX-07, EX-08, EX-18, and the new `typecheck` script) but `pnpm-lock.yaml` was not regenerated: this environment has no Node, pnpm or npm, so nothing could be installed or verified | The lockfile's importer block no longer matches `package.json`. `pnpm install --frozen-lockfile` would fail, and no type check has been run against the React 18 types | `package.json`, `pnpm-lock.yaml` | Run `pnpm install` from the repository root, review the diff, commit the regenerated lockfile, then run `pnpm typecheck`. Until that happens, no dependency claim in this repository is verified |
+| **EX-20** | `picomatch` 4.0.7 carries `GHSA-fc5q-39xc-vjpf` (High, ReDoS through single-branch repeated extglobs); the advisory covers `<=4.0.7` and lists no patched release, so no version bump can close it | Only reachable through dev-only build tooling (`typescript-eslint` → `tinyglobby`, `vite`, `vitest`); it is absent from the server and portal bundles, and every glob on those paths is repository-authored, not attacker-supplied. Accepted risk owner: founder (Prince Abidemi Oluwadamilare); expiry 18 December 2026 | `package.json` (`pnpm.auditConfig.ignoreGhsas`), `pnpm-lock.yaml` | A `picomatch` release above 4.0.7 is published: raise the `pnpm.overrides` pin, regenerate the lockfile, confirm `pnpm audit` is clean without the ignore entry, then delete this row and the ignore entry |
 
 **Deviation records approved under §13.2.** The register above lists standing exceptions. Approved, time-boxed deviations from a **[STD]** rule are recorded below, in the Appendix C format.
 
@@ -2694,7 +2695,17 @@ Nothing here may be implemented as though it were decided, except where a row is
 
 ## 17. Changelog
 
-### 7 November 2026 — `DEV-003` and the EP-01 entry decisions recorded
+### 18 November 2026 - `EX-20` picomatch advisory accepted
+
+Recorded `EX-20` in §13.3 and a narrow `pnpm.auditConfig.ignoreGhsas` entry for
+`GHSA-fc5q-39xc-vjpf`, the High-severity ReDoS advisory against `picomatch`. Version 4.0.7 is the
+latest release and the advisory lists no patched version, so the finding cannot be closed by a
+version move. The package is reachable only through dev-only build tooling and is absent from the
+shipped server and portal bundles. Accepted by the founder on 18 November 2026 as the risk owner,
+expiring 18 December 2026. Every other High or Critical advisory still blocks CI; no other rule
+changed meaning.
+
+### 7 November 2026 - `DEV-003` and the EP-01 entry decisions recorded
 
 Recorded `DEV-003` in §13.3: a time-boxed deviation from `QUA-29` and `QUA-31` for EP-01 pull
 requests that change authentication, authorisation, session handling, identity, capability

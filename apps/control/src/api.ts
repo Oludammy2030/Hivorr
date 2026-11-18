@@ -431,41 +431,17 @@ async function requestPage<T>(
   }
 }
 
-export interface TaxonomyNode {
-  readonly id: string
-  readonly taxonomy: "profession" | "product"
-  readonly level: string
-  readonly parentId: string | null
-  readonly slug: string
-  readonly name: string
-  readonly description: string | null
-  readonly version: number
-  readonly effectiveFrom: string
-  readonly effectiveTo: string | null
-  readonly isActive: boolean
-  readonly createdAt: string
-  readonly updatedAt: string
-}
+import type {
+  TaxonomyAttribute,
+  TaxonomyNode,
+  TaxonomyRegistry,
+} from "@hivorr/shared"
 
-export interface TaxonomyAttribute {
-  readonly id: string
-  readonly nodeId: string
-  readonly key: string
-  readonly label: string
-  readonly dataType: string
-  readonly isRequired: boolean
-  readonly enumValues: readonly string[] | null
-  readonly unit: string | null
-  readonly sortOrder: number
-  readonly createdAt: string
-  readonly updatedAt: string
-}
-
-export interface TaxonomyRegistry {
-  readonly nodes: readonly TaxonomyNode[]
-  readonly attributes: readonly TaxonomyAttribute[]
-}
-
+export type {
+  TaxonomyAttribute,
+  TaxonomyNode,
+  TaxonomyRegistry,
+} from "@hivorr/shared"
 export const api = {
   session: () => request<Session>("/session"),
   signIn: (email: string, password: string) =>

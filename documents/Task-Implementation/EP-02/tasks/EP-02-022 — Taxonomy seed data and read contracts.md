@@ -130,9 +130,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-15 |
+| **Execution record** | `execution-records/EP-02-022.md` |
+| **Blocked by** | — |
+| **Notes** | Shared read contract, active taxonomy endpoint and empty production seed recorded. |
 

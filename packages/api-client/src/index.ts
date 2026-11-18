@@ -267,6 +267,8 @@ export type SupersedeCaseEvidenceRequest = { "replacementId": string; "reason"?:
 
 export type SupersedeCaseEvidenceResponse = { "id": string; "fileName": string; "mimeType"?: string | null; "sizeBytes"?: number | null; "sha256"?: string | null; "classification": string; "status": string; "supersedesId"?: string | null; "uploadedByName"?: string | null; "uploadedByEmail"?: string | null; "uploadedAt": string }
 
+export type ListActiveTaxonomyResponse = { "nodes": ({ "id": string; "taxonomy": "profession" | "product"; "level": "industry" | "profession" | "vertical" | "category" | "subcategory" | "product_type"; "parentId": string | null; "slug": string; "name": string; "description": string | null; "version": number; "effectiveFrom": string; "effectiveTo": string | null; "isActive": boolean; "createdAt": string; "updatedAt": string })[]; "attributes": ({ "id": string; "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired": boolean; "enumValues": (string)[] | null; "unit": string | null; "sortOrder": number; "createdAt": string; "updatedAt": string })[] }
+
 export type ListTaxonomyResponse = { "nodes": ({ "id": string; "taxonomy": "profession" | "product"; "level": "industry" | "profession" | "vertical" | "category" | "subcategory" | "product_type"; "parentId": string | null; "slug": string; "name": string; "description": string | null; "version": number; "effectiveFrom": string; "effectiveTo": string | null; "isActive": boolean; "createdAt": string; "updatedAt": string })[]; "attributes": ({ "id": string; "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired": boolean; "enumValues": (string)[] | null; "unit": string | null; "sortOrder": number; "createdAt": string; "updatedAt": string })[] }
 
 export type CreateTaxonomyNodeRequest = { "taxonomy": "profession" | "product"; "level": "industry" | "profession" | "vertical" | "category" | "subcategory" | "product_type"; "parentId"?: string | null; "slug": string; "name": string; "description"?: string; "version"?: number; "effectiveFrom"?: string; "reason": string }
@@ -877,6 +879,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "POST",
         `/v1/control/evidence/${encodeURIComponent(params.id)}/supersede`,
         input,
+        [200],
+      ),
+    listActiveTaxonomy: () =>
+      request<ListActiveTaxonomyResponse>(
+        "GET",
+        "/v1/taxonomy",
+        undefined,
         [200],
       ),
     listTaxonomy: () =>
