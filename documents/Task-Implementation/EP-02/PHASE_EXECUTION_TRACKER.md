@@ -9,11 +9,11 @@
 | **Tracker updated** | 2026-11-18 |
 | **Phase status** | `In build` — partial scope: non-provider finance foundation only |
 | **Tasks total** | 40 |
-| **Completed** | 9 |
+| **Completed** | 10 |
 | **In progress** | 0 |
 | **Requires review** | 0 |
 | **Blocked** | 0 |
-| **Pending** | 31 |
+| **Pending** | 30 |
 
 > **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. Frontend and exit tasks are pending their dependencies.
 
@@ -41,7 +41,7 @@
 | 14 | `EP-02-031` | Posting engine, double-entry invariants and property tests | EP-02-030. | **COMPLETED** — pure engine, property tests, transactional write path, in-transaction audit | 2026-11-18 | `execution-records/EP-02-031.md` |
 | 15 | `EP-02-032` | Wallet derived views and statement read model | EP-02-031. | **COMPLETED** — security_invoker views, owner-scoped reads, keyset statement | 2026-11-18 | `execution-records/EP-02-032.md` |
 | 16 | `EP-02-033` | Escrow account model and state machine | EP-02-031; BD-D03 for transition enablement. | **COMPLETED** — ledger-backed reservations; dispute enabled; release/refund disabled in domain and database | 2026-11-18 | `execution-records/EP-02-033.md` |
-| 17 | `EP-02-034` | Money idempotency and provider reference model | EP-02-030, EP-02-031. | **PENDING** | — | — |
+| 17 | `EP-02-034` | Money idempotency and provider reference model | EP-02-030, EP-02-031. | **COMPLETED** — claim/replay, account-scoped keys, provider reference replay and linking | 2026-11-18 | `execution-records/EP-02-034.md` |
 | 18 | `EP-02-035` | Financial limits, KYC gating and capability enforcement | EP-02-014, EP-02-032, EP-02-034. | **PENDING** | — | — |
 | 19 | `EP-02-036` | Dispute case record and evidence linkage | EP-02-030; CP-016, CP-017. | **PENDING** | — | — |
 | 20 | `EP-02-040` | PaymentProvider port and adapter contract | EP-02-031, EP-02-034. | **PENDING** | — | — |
@@ -70,11 +70,12 @@
 
 ## 2. Next eligible task
 
-**`EP-02-034` — Money idempotency and provider reference model.**
+**`EP-02-035` — Financial limits, KYC gating and capability enforcement.**
 
-The escrow lifecycle is in place. Idempotency is the next unblocked scope: a provider retry must not
-apply a money movement twice. `EP-02-010` (verification) remains blocked on the KYC ladder and vendor;
-the VFD adapter remains blocked on written confirmation.
+Idempotency is in place. Limits and tier gating are the next finance task, but `EP-02-035` depends on
+`EP-02-014`, which is blocked on the KYC tier ladder (#6). I will confirm the dependency before
+starting rather than invent a ladder. `EP-02-010` (verification) remains blocked on the vendor; the
+VFD adapter remains blocked on written confirmation.
 
 Still open and blocking specific scopes:
 
@@ -97,6 +98,7 @@ Still open and blocking specific scopes:
 | 2026-11-18 | `EP-02-031` | `PENDING` | `COMPLETED` | `execution-records/EP-02-031.md` |
 | 2026-11-18 | `EP-02-032` | `PENDING` | `COMPLETED` | `execution-records/EP-02-032.md` |
 | 2026-11-18 | `EP-02-033` | `PENDING` | `COMPLETED` | `execution-records/EP-02-033.md` |
+| 2026-11-18 | `EP-02-034` | `PENDING` | `COMPLETED` | `execution-records/EP-02-034.md` |
 
 ---
 
