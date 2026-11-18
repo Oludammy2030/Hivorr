@@ -1513,29 +1513,6 @@ try {
   }
   assert(ledgerInsertDenied, "the api role cannot create a ledger account")
 
-  const apiEntry = await testClient.query(
-    `insert into finance.journal_entries
-       (kind, reference, currency, created_by)
-     values ('deposit', 'DEP-API-0001', 'NGN', $1)
-     returning id`,
-    [userId],
-  )
-  assert(
-    apiEntry.rowCount === 1,
-    "the api role may append a journal entry with an identity context",
-  )
-  const apiPostings = await testClient.query(
-    `insert into finance.postings
-       (entry_id, ledger_account_id, direction, amount, currency)
-     values ($1, $2, 'debit', 7.0000, 'NGN'),
-            ($1, $3, 'credit', 7.0000, 'NGN')`,
-    [apiEntry.rows[0].id, walletLedgerId, clearingLedgerId],
-  )
-  assert(
-    apiPostings.rowCount === 2,
-    "the api role may append balanced postings with an identity context",
-  )
-
   const contextAccount = await testClient.query(
     "select platform.current_account_id() as account_id",
   )
@@ -1592,6 +1569,47 @@ try {
   assert(
     lookup.rows[0].user_id === userId,
     "pre-auth lookup returns the right user",
+  )
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
+  // The write path is tested in its own transaction: the service always starts
+  // a fresh transaction, sets the identity, inserts the entry and postings, and
+  // commits once.
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    accountId,
+    userId,
+  ])
+  const writeContext = await testClient.query(
+    "select platform.current_account_id() as account_id",
+  )
+  assert(
+    writeContext.rows[0].account_id === accountId,
+    "the write transaction carries the account context",
+  )
+  const apiEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, created_by)
+     values ('deposit', 'DEP-API-0001', 'NGN', $1)
+     returning id`,
+    [userId],
+  )
+  assert(
+    apiEntry.rowCount === 1,
+    "the api role may append a journal entry with an identity context",
+  )
+  const apiPostings = await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency)
+     values ($1, $2, 'debit', 7.0000, 'NGN'),
+            ($1, $3, 'credit', 7.0000, 'NGN')`,
+    [apiEntry.rows[0].id, walletLedgerId, clearingLedgerId],
+  )
+  assert(
+    apiPostings.rowCount === 2,
+    "the api role may append balanced postings with an identity context",
   )
   await testClient.query("reset role")
   await testClient.query("commit")
