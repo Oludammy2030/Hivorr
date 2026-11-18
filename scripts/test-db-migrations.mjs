@@ -1076,12 +1076,6 @@ try {
   )
   const walletLedgerId = walletAccount.rows[0].id
 
-  await testClient.query(
-    `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
-     values ('user_wallet', 'account', $1, 'NGN')`,
-    [secondAccountId],
-  )
-
   const clearingAccount = await testClient.query(
     `insert into finance.ledger_accounts (kind, owner_type, currency)
      values ('platform_clearing', 'platform', 'NGN')
