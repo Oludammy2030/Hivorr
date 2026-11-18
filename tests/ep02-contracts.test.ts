@@ -11,7 +11,9 @@ import {
   isVerificationLane,
   journalEntrySchema,
   kycTierSchema,
+  minorUnitsToMoney,
   moneyAmountSchema,
+  moneyToMinorUnits,
   payoutAccountSchema,
   verificationLaneSchema,
   verificationSubmissionSchema,
@@ -88,8 +90,9 @@ describe("EP-02 shared finance contracts", () => {
   it("owns the ledger account kinds and escrow states", () => {
     expect(LEDGER_ACCOUNT_KINDS).toContain("user_wallet")
     expect(LEDGER_ACCOUNT_KINDS).toContain("escrow")
-    expect(ESCROW_STATES).toContain("HELD")
-    expect(ESCROW_STATES).toContain("RELEASED")
+    expect(ESCROW_STATES).toContain("held")
+    expect(ESCROW_STATES).toContain("released")
+    expect(ESCROW_STATES).toContain("cancelled")
   })
 
   it("accepts a decimal money string and rejects floats, negatives and excess precision", () => {
@@ -128,7 +131,7 @@ describe("EP-02 shared finance contracts", () => {
       bankCode: "999999",
       accountNumberMasked: "******1234",
       accountName: "Test User",
-      state: "VERIFIED",
+      state: "verified",
       boundAt: "2026-11-15T00:00:00.000Z",
     }
     expect(payoutAccountSchema.safeParse(account).success).toBe(true)
@@ -172,6 +175,50 @@ describe("EP-02 shared finance contracts", () => {
         ],
       }).success,
     ).toBe(true)
+  })
+
+  it("rejects a journal entry that does not balance to zero", () => {
+    const entry = {
+      id: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7b",
+      kind: "deposit",
+      reference: "dep-2",
+      currency: "NGN",
+      idempotencyKey: "idem-2",
+      postings: [
+        {
+          accountId: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7c",
+          direction: "debit",
+          amount: "100.0000",
+          currency: "NGN",
+        },
+        {
+          accountId: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7d",
+          direction: "credit",
+          amount: "99.9999",
+          currency: "NGN",
+        },
+      ],
+      createdAt: "2026-11-15T00:00:00.000Z",
+    }
+    expect(journalEntrySchema.safeParse(entry).success).toBe(false)
+    expect(
+      journalEntrySchema.safeParse({
+        ...entry,
+        postings: [
+          entry.postings[0],
+          { ...entry.postings[1], currency: "USD" },
+        ],
+      }).success,
+    ).toBe(false)
+  })
+
+  it("round-trips money through integer minor units", () => {
+    expect(moneyToMinorUnits("100.0000")).toBe(1_000_000n)
+    expect(minorUnitsToMoney(1_000_000n)).toBe("100.0000")
+    expect(minorUnitsToMoney(-1n)).toBe("-0.0001")
+    expect(moneyToMinorUnits("0")).toBeNull()
+    expect(moneyToMinorUnits("1.00001")).toBeNull()
+    expect(moneyToMinorUnits("10000000000000000.0000")).toBeNull()
   })
 
   it("keeps the new API error codes stable", () => {

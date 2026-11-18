@@ -218,13 +218,23 @@ try {
   }
 
   for (const table of expectedFinanceTables) {
+    const insertAllowed = table === "journal_entries" || table === "postings"
     const write = await testClient.query(
       `select has_table_privilege('hivorr_api', 'finance.${table}', 'insert') as allowed`,
     )
     assert(
-      write.rows[0].allowed === false,
-      `api role cannot insert into finance.${table}`,
+      write.rows[0].allowed === insertAllowed,
+      `api role insert grant on finance.${table} matches the posting engine`,
     )
+    for (const privilege of ["update", "delete"]) {
+      const mutation = await testClient.query(
+        `select has_table_privilege('hivorr_api', 'finance.${table}', '${privilege}') as allowed`,
+      )
+      assert(
+        mutation.rows[0].allowed === false,
+        `api role cannot ${privilege} finance.${table}`,
+      )
+    }
     const read = await testClient.query(
       `select has_table_privilege('hivorr_api', 'finance.${table}', 'select') as allowed`,
     )
@@ -1141,6 +1151,50 @@ try {
     "wallet balance is derived from postings",
   )
 
+  await testClient.query("begin")
+  const reversalEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, reverses_entry_id, created_by)
+     values ('reversal', 'REV-TEST-0001', 'NGN', $1, $2)
+     returning id`,
+    [depositEntryId, userId],
+  )
+  const reversalEntryId = reversalEntry.rows[0].id
+  await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency)
+     values ($1, $2, 'credit', 100.0000, 'NGN'),
+            ($1, $3, 'debit', 100.0000, 'NGN')`,
+    [reversalEntryId, walletLedgerId, clearingLedgerId],
+  )
+  await testClient.query("commit")
+
+  const reversedBalance = await testClient.query(
+    `select coalesce(sum(
+              case direction when 'debit' then amount else -amount end
+            ), 0)::text as balance
+       from finance.postings
+      where ledger_account_id = $1`,
+    [walletLedgerId],
+  )
+  assert(
+    reversedBalance.rows[0].balance === "0.0000",
+    "a reversal restores the derived balance without editing a posting",
+  )
+
+  let duplicateReversalRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.journal_entries
+         (kind, reference, currency, reverses_entry_id)
+       values ('reversal', 'REV-TEST-0002', 'NGN', $1)`,
+      [depositEntryId],
+    )
+  } catch (error) {
+    duplicateReversalRejected = error?.code === "23505"
+  }
+  assert(duplicateReversalRejected, "an entry can be reversed only once")
+
   let unbalancedRejected = false
   await testClient.query("begin")
   try {
@@ -1384,7 +1438,7 @@ try {
     "select count(*)::int as count from finance.postings",
   )
   assert(
-    ownPostings.rows[0].count === 1,
+    ownPostings.rows[0].count === 2,
     "rls shows only postings on the current account's ledger",
   )
 
@@ -1392,7 +1446,7 @@ try {
     "select count(*)::int as count from finance.journal_entries",
   )
   assert(
-    ownEntries.rows[0].count === 1,
+    ownEntries.rows[0].count === 2,
     "rls shows only journal entries touching the current account",
   )
 
@@ -1519,6 +1573,47 @@ try {
   await testClient.query("reset role")
   await testClient.query("commit")
 
+  // The write path is tested in its own transaction: the service always starts
+  // a fresh transaction, sets the identity, inserts the entry and postings, and
+  // commits once.
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    accountId,
+    userId,
+  ])
+  const writeContext = await testClient.query(
+    "select platform.current_account_id() as account_id",
+  )
+  assert(
+    writeContext.rows[0].account_id === accountId,
+    "the write transaction carries the account context",
+  )
+  const apiEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, created_by)
+     values ('deposit', 'DEP-API-0001', 'NGN', $1)
+     returning id`,
+    [userId],
+  )
+  assert(
+    apiEntry.rowCount === 1,
+    "the api role may append a journal entry with an identity context",
+  )
+  const apiPostings = await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency)
+     values ($1, $2, 'debit', 7.0000, 'NGN'),
+            ($1, $3, 'credit', 7.0000, 'NGN')`,
+    [apiEntry.rows[0].id, walletLedgerId, clearingLedgerId],
+  )
+  assert(
+    apiPostings.rowCount === 2,
+    "the api role may append balanced postings with an identity context",
+  )
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
   await testClient.query("select platform.set_identity_context($1, $2)", [
@@ -1599,6 +1694,22 @@ try {
   assert(
     noContextLimits.rows[0].count === 0,
     "limit rls denies without an identity context",
+  )
+
+  let noContextEntryDenied = false
+  await testClient.query("savepoint finance_no_context_insert")
+  try {
+    await testClient.query(
+      `insert into finance.journal_entries (kind, reference, currency)
+       values ('adjustment', 'ADJ-NO-CONTEXT', 'NGN')`,
+    )
+  } catch (error) {
+    noContextEntryDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint finance_no_context_insert")
+  }
+  assert(
+    noContextEntryDenied,
+    "the ledger insert policy fails closed without an identity context",
   )
   await testClient.query("reset role")
   await testClient.query("commit")

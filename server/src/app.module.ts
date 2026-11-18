@@ -43,6 +43,7 @@ import { CasesService } from "./modules/admin/cases.service"
 import { EvidenceService } from "./modules/admin/evidence.service"
 import { VerificationService } from "./modules/admin/verification.service"
 import { ProfileService } from "./modules/profile/profile.service"
+import { LedgerService } from "./modules/finance/ledger.service"
 import { TaxonomyAdminService } from "./modules/platform/taxonomy.service"
 
 @Module({})
@@ -122,6 +123,7 @@ export class AppModule {
         EvidenceService,
         VerificationService,
         TaxonomyAdminService,
+        LedgerService,
       ],
     }
   }

@@ -12,9 +12,9 @@
 | **Entry record** | `EP-02-ENTRY-RECORD.md` — `PARTIAL START`, 2026-11-15 |
 | **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation |
 | **Total tasks** | **40** (`001`–`073`, per the approved plan §10) |
-| **Completed** | 6 (`EP-02-001`, `EP-02-002`, `EP-02-020`, `EP-02-021`, `EP-02-022`, `EP-02-030`) |
+| **Completed** | 7 (`EP-02-001`, `EP-02-002`, `EP-02-020`, `EP-02-021`, `EP-02-022`, `EP-02-030`, `EP-02-031`) |
 | **Blocked** | Verification, VFD adapter and dependent scopes |
-| **Pending** | 34 |
+| **Pending** | 33 |
 | **Closure authority** | Founder, on the architect’s recommendation, through G5 (`EP-02-073`) |
 
 > **Why this file exists.** The approved phase plan defines what EP-02 must achieve. This overview, the tracker and the task documents turn that plan into the execution record required by the development protocol. They do not open the phase.
@@ -136,7 +136,7 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | 11 | `EP-02-021` | Taxonomy administration API, versioning and control UI | EP-02-020; CP-022 configuration; CP-012 roles. | **COMPLETED** — API, audit, control screen |
 | 12 | `EP-02-022` | Taxonomy seed data and read contracts | EP-02-020, EP-02-021. | **COMPLETED** — read contract, active endpoint, no seed |
 | 13 | `EP-02-030` | Finance schema, ledger accounts and RLS | EP-02-002; EP-01-021/022/025. | **COMPLETED** — append-only ledger, invariants, encrypted payout shape, RLS |
-| 14 | `EP-02-031` | Posting engine, double-entry invariants and property tests | EP-02-030. | **PENDING** |
+| 14 | `EP-02-031` | Posting engine, double-entry invariants and property tests | EP-02-030. | **COMPLETED** — pure engine, property tests, audit-backed write path |
 | 15 | `EP-02-032` | Wallet derived views and statement read model | EP-02-031. | **PENDING** |
 | 16 | `EP-02-033` | Escrow account model and state machine | EP-02-031; BD-D03 for transition enablement. | **PENDING** |
 | 17 | `EP-02-034` | Money idempotency and provider reference model | EP-02-030, EP-02-031. | **PENDING** |
