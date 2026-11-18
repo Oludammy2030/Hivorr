@@ -1464,6 +1464,23 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     ],
   },
   {
+    id: "listActiveTaxonomy",
+    method: "get",
+    path: "/v1/taxonomy",
+    summary: "Read active taxonomy nodes and attributes",
+    tag: "taxonomy",
+    audience: ["app", "control", "staff", "partner"],
+    queryParams: ["taxonomy", "level"],
+    success: [
+      {
+        status: 200,
+        description:
+          "Active nodes effective now, optionally filtered by taxonomy and level",
+        schema: taxonomyRegistryResponse,
+      },
+    ],
+  },
+  {
     id: "listTaxonomy",
     method: "get",
     path: "/v1/control/taxonomy",

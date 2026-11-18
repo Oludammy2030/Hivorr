@@ -46,6 +46,15 @@ export class TaxonomyController {
     return { context, session }
   }
 
+  @Get("taxonomy")
+  @Audience("app", "control", "staff", "partner")
+  async read(
+    @Query("taxonomy") taxonomy: string | undefined,
+    @Query("level") level: string | undefined,
+  ) {
+    return this.taxonomy.readActive({ taxonomy, level })
+  }
+
   @Get("control/taxonomy")
   @Audience("control")
   async list(

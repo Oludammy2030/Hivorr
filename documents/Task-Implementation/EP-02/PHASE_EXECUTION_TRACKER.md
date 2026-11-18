@@ -9,11 +9,11 @@
 | **Tracker updated** | 2026-11-15 |
 | **Phase status** | `In build` — partial scope: non-provider finance foundation only |
 | **Tasks total** | 40 |
-| **Completed** | 4 |
+| **Completed** | 5 |
 | **In progress** | 0 |
 | **Requires review** | 0 |
 | **Blocked** | 0 |
-| **Pending** | 36 |
+| **Pending** | 35 |
 
 > **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. Frontend and exit tasks are pending their dependencies.
 
@@ -36,7 +36,7 @@
 | 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** | — | — |
 | 10 | `EP-02-020` | Taxonomy registry schema and hierarchy domain | EP-02-002; EP-01-021/022/025; G0 ruling on depth. | **COMPLETED** — node/attribute schema, hierarchy triggers, RLS, domain | 2026-11-15 | `execution-records/EP-02-020.md` |
 | 11 | `EP-02-021` | Taxonomy administration API, versioning and control UI | EP-02-020; CP-022 configuration; CP-012 roles. | **COMPLETED** — permission-gated API, audit, control screen | 2026-11-15 | `execution-records/EP-02-021.md` |
-| 12 | `EP-02-022` | Taxonomy seed data and read contracts | EP-02-020, EP-02-021. | **PENDING** | — | — |
+| 12 | `EP-02-022` | Taxonomy seed data and read contracts | EP-02-020, EP-02-021. | **COMPLETED** — shared read contract, active endpoint, no production seed | 2026-11-15 | `execution-records/EP-02-022.md` |
 | 13 | `EP-02-030` | Finance schema, ledger accounts and RLS | EP-02-002; EP-01-021/022/025. | **PENDING** | — | — |
 | 14 | `EP-02-031` | Posting engine, double-entry invariants and property tests | EP-02-030. | **PENDING** | — | — |
 | 15 | `EP-02-032` | Wallet derived views and statement read model | EP-02-031. | **PENDING** | — | — |
@@ -70,17 +70,18 @@
 
 ## 2. Next eligible task
 
-**`EP-02-022` — Taxonomy seed data and read contracts.**
+**`EP-02-030` — Finance schema, ledger accounts and RLS.**
 
-`EP-02-021` is complete. The read contract completes the taxonomy slice. `EP-02-030` (finance schema)
-follows.
+The taxonomy slice is complete. The finance foundation is the next unblocked scope. `EP-02-010`
+(verification) remains blocked on the KYC ladder and vendor; the VFD adapter remains blocked on
+written confirmation.
 
 Still open and blocking specific scopes:
 
 1. VFD written API/account confirmation — blocks `040`–`045` and dependent deposit/payout tasks.
 2. KYC tier ladder (#6) and verification vendor (#15) — blocks `010`–`016`.
 3. Second reviewer / renewed `DEV-003` — required for G2 on verification and finance changes.
-4. CP-022 approval workflow — the taxonomy write is permission-gated and audited, not approval-routed.
+4. CP-022 approval workflow — taxonomy writes are permission-gated and audited, not approval-routed.
 
 ## 3. Status history
 
@@ -91,6 +92,7 @@ Still open and blocking specific scopes:
 | 2026-11-15 | `EP-02-002` | `PENDING` | `COMPLETED` | `execution-records/EP-02-002.md` |
 | 2026-11-15 | `EP-02-020` | `PENDING` | `COMPLETED` | `execution-records/EP-02-020.md` |
 | 2026-11-15 | `EP-02-021` | `PENDING` | `COMPLETED` | `execution-records/EP-02-021.md` |
+| 2026-11-15 | `EP-02-022` | `PENDING` | `COMPLETED` | `execution-records/EP-02-022.md` |
 
 ---
 

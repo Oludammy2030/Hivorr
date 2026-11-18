@@ -6,6 +6,12 @@ import {
   PORTAL_IDS,
   activityIdSchema,
   apiErrorBodySchema,
+  taxonomyAttributeSchema,
+  taxonomyAttributeTypeSchema,
+  taxonomyKindSchema,
+  taxonomyLevelSchema,
+  taxonomyNodeSchema,
+  taxonomyRegistrySchema,
 } from "@hivorr/shared"
 import { z } from "zod"
 
@@ -742,57 +748,13 @@ export const controlAuthorityResponse = z.object({
   capabilities: z.array(capabilitySchema),
 })
 
-export const taxonomyKindSchema = z.enum(["profession", "product"])
-export const taxonomyLevelSchema = z.enum([
-  "industry",
-  "profession",
-  "vertical",
-  "category",
-  "subcategory",
-  "product_type",
-])
-export const taxonomyAttributeTypeSchema = z.enum([
-  "text",
-  "number",
-  "boolean",
-  "enum",
-  "date",
-])
+export { taxonomyAttributeTypeSchema, taxonomyKindSchema, taxonomyLevelSchema }
 
-export const taxonomyNodeView = z.object({
-  id: z.string().uuid(),
-  taxonomy: taxonomyKindSchema,
-  level: taxonomyLevelSchema,
-  parentId: z.string().uuid().nullable(),
-  slug: z.string(),
-  name: z.string(),
-  description: z.string().nullable(),
-  version: z.number().int().positive(),
-  effectiveFrom: z.string(),
-  effectiveTo: z.string().nullable(),
-  isActive: z.boolean(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-})
+export const taxonomyNodeView = taxonomyNodeSchema
 
-export const taxonomyAttributeView = z.object({
-  id: z.string().uuid(),
-  nodeId: z.string().uuid(),
-  key: z.string(),
-  label: z.string(),
-  dataType: taxonomyAttributeTypeSchema,
-  isRequired: z.boolean(),
-  enumValues: z.array(z.string()).nullable(),
-  unit: z.string().nullable(),
-  sortOrder: z.number().int(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-})
+export const taxonomyAttributeView = taxonomyAttributeSchema
 
-export const taxonomyRegistryResponse = z.object({
-  nodes: z.array(taxonomyNodeView),
-  attributes: z.array(taxonomyAttributeView),
-})
+export const taxonomyRegistryResponse = taxonomyRegistrySchema
 
 export const createTaxonomyNodeRequest = z.strictObject({
   taxonomy: taxonomyKindSchema,
