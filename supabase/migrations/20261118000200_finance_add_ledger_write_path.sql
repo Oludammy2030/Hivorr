@@ -24,6 +24,26 @@ create unique index journal_entries_reversal_unique_idx
 comment on index finance.journal_entries_reversal_unique_idx is
   'An entry is corrected by at most one reversal. A reversal of a reversal names that reversal, not the original.';
 
+-- The EP-02-030 select policy hid an entry until its postings existed, so
+-- `insert ... returning` failed its own read check. An actor may also read an
+-- entry they recorded; this is the same visibility a posting-based rule gives
+-- them once the postings exist, and it keeps the write atomic.
+drop policy journal_entries_select on finance.journal_entries;
+
+create policy journal_entries_select on finance.journal_entries
+  for select to hivorr_api
+  using (
+    created_by = platform.current_user_id()
+    or exists (
+      select 1
+        from finance.postings p
+        join finance.ledger_accounts a on a.id = p.ledger_account_id
+       where p.entry_id = finance.journal_entries.id
+         and a.owner_type = 'account'
+         and a.owner_id = platform.current_account_id()
+    )
+  );
+
 create policy journal_entries_insert on finance.journal_entries
   for insert to hivorr_api
   with check (platform.current_account_id() is not null);
