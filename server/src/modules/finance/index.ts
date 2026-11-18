@@ -35,3 +35,10 @@ export {
   WalletService,
 } from "./wallet.service"
 export type { WalletReadContext, WalletStatementQuery } from "./wallet.service"
+export { ESCROW_ACTIVITIES, EscrowService } from "./escrow.service"
+export type {
+  EscrowTransitionInput,
+  EscrowView,
+  EscrowWriteContext,
+  OpenEscrowInput,
+} from "./escrow.service"

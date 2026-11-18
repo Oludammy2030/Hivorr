@@ -1,12 +1,14 @@
 import {
   API_ERROR_CODES,
   ESCROW_STATES,
+  ESCROW_TRANSITIONS,
   KYC_TIERS,
   LEDGER_ACCOUNT_KINDS,
   VERIFICATION_LANES,
   VERIFICATION_STATES,
   currencyCodeSchema,
   evidenceReferenceSchema,
+  evaluateEscrowTransition,
   isKycTier,
   isVerificationLane,
   journalEntrySchema,
@@ -256,6 +258,26 @@ describe("EP-02 shared finance contracts", () => {
         activityId: "market.discover",
       }).success,
     ).toBe(false)
+  })
+
+  it("defines the escrow lifecycle with release and refund disabled", () => {
+    expect(evaluateEscrowTransition("held", "disputed")).toMatchObject({
+      status: "enabled",
+    })
+    expect(evaluateEscrowTransition("held", "released")).toMatchObject({
+      status: "disabled",
+      rule: { policy: "BD-D03" },
+    })
+    expect(evaluateEscrowTransition("held", "refunded").status).toBe("disabled")
+    expect(evaluateEscrowTransition("held", "cancelled").status).toBe(
+      "disabled",
+    )
+    expect(evaluateEscrowTransition("disputed", "released").status).toBe(
+      "disabled",
+    )
+    expect(evaluateEscrowTransition("held", "held").status).toBe("invalid")
+    expect(evaluateEscrowTransition("released", "held").status).toBe("invalid")
+    expect(ESCROW_TRANSITIONS.filter((rule) => rule.policy)).toHaveLength(5)
   })
 
   it("keeps the new API error codes stable", () => {

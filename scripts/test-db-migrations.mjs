@@ -218,7 +218,12 @@ try {
   }
 
   for (const table of expectedFinanceTables) {
-    const insertAllowed = table === "journal_entries" || table === "postings"
+    const insertAllowed = [
+      "journal_entries",
+      "postings",
+      "ledger_accounts",
+      "escrow_accounts",
+    ].includes(table)
     const write = await testClient.query(
       `select has_table_privilege('hivorr_api', 'finance.${table}', 'insert') as allowed`,
     )
@@ -243,6 +248,23 @@ try {
     assert(
       read.rows[0].allowed === readIsApproved,
       `api role read grant on finance.${table} matches the approved surface`,
+    )
+  }
+
+  const escrowStateUpdate = await testClient.query(
+    "select has_column_privilege('hivorr_api', 'finance.escrow_accounts', 'state', 'update') as allowed",
+  )
+  assert(
+    escrowStateUpdate.rows[0].allowed === true,
+    "api role may update the escrow state column",
+  )
+  for (const column of ["payer_account_id", "ledger_account_id", "currency"]) {
+    const mutation = await testClient.query(
+      `select has_column_privilege('hivorr_api', 'finance.escrow_accounts', '${column}', 'update') as allowed`,
+    )
+    assert(
+      mutation.rows[0].allowed === false,
+      `api role cannot rewrite escrow ${column}`,
     )
   }
 
@@ -1776,6 +1798,90 @@ try {
   await testClient.query("reset role")
   await testClient.query("commit")
 
+  // Escrow lifecycle: the API may open an escrow reservation and flag a
+  // dispute, but release, refund and cancellation are disabled until BD-D03.
+  const lifecycleRef = "00000000-0000-7000-8000-0000000000aa"
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    accountId,
+    userId,
+  ])
+
+  let nonEscrowLedgerDenied = false
+  await testClient.query("savepoint ledger_kind_guard")
+  try {
+    await testClient.query(
+      `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
+       values ('user_wallet', 'account', $1, 'NGN')`,
+      [accountId],
+    )
+  } catch (error) {
+    nonEscrowLedgerDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint ledger_kind_guard")
+  }
+  assert(
+    nonEscrowLedgerDenied,
+    "the api may create an escrow ledger account but no other kind",
+  )
+
+  const lifecycleLedger = await testClient.query(
+    `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
+     values ('escrow', 'activity', $1, 'NGN')
+     returning id`,
+    [lifecycleRef],
+  )
+  const lifecycleEscrow = await testClient.query(
+    `insert into finance.escrow_accounts
+       (ledger_account_id, payer_account_id, activity_id, activity_ref, currency)
+     values ($1, $2, 'services.hire', $3, 'NGN')
+     returning id`,
+    [lifecycleLedger.rows[0].id, accountId, lifecycleRef],
+  )
+  const lifecycleEscrowId = lifecycleEscrow.rows[0].id
+  assert(
+    lifecycleEscrow.rowCount === 1,
+    "the api may open an escrow reservation",
+  )
+
+  const disputed = await testClient.query(
+    "update finance.escrow_accounts set state = 'disputed' where id = $1",
+    [lifecycleEscrowId],
+  )
+  assert(disputed.rowCount === 1, "a held escrow may be flagged as disputed")
+
+  let releaseDenied = false
+  await testClient.query("savepoint escrow_release_guard")
+  try {
+    await testClient.query(
+      "update finance.escrow_accounts set state = 'released' where id = $1",
+      [lifecycleEscrowId],
+    )
+  } catch (error) {
+    releaseDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint escrow_release_guard")
+  }
+  assert(
+    releaseDenied,
+    "a release is refused while the release policy is undecided",
+  )
+
+  let invalidTransitionRejected = false
+  await testClient.query("savepoint escrow_invalid_transition")
+  try {
+    await testClient.query(
+      "update finance.escrow_accounts set state = 'held' where id = $1",
+      [lifecycleEscrowId],
+    )
+  } catch (error) {
+    invalidTransitionRejected = error?.code === "23514"
+    await testClient.query("rollback to savepoint escrow_invalid_transition")
+  }
+  assert(invalidTransitionRejected, "an undefined escrow transition is refused")
+
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
   await testClient.query("select platform.set_identity_context($1, $2)", [
@@ -1816,6 +1922,14 @@ try {
   assert(
     foreignStatement.rows[0].count === 0,
     "the statement view hides another account's postings",
+  )
+  const foreignEscrowUpdate = await testClient.query(
+    "update finance.escrow_accounts set state = 'disputed' where id = $1",
+    [lifecycleEscrowId],
+  )
+  assert(
+    foreignEscrowUpdate.rowCount === 0,
+    "rls blocks another account's escrow transition",
   )
   await testClient.query("reset role")
   await testClient.query("commit")
