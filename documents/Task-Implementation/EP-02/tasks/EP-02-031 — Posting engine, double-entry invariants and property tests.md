@@ -83,11 +83,15 @@ The task DoD must record what was inspected and why nothing existing served the 
 
 Anticipated paths; update this section if implementation reveals more.
 
-- `supabase/migrations/*_finance_*.sql`
-- `server/src/modules/finance/**`
-- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts`
-- `tests/ledger*.test.ts`, `tests/finance*.test.ts`
-- `tests/db-*` policy suite
+- `supabase/migrations/*_finance_*.sql` — `20261118000200_finance_add_ledger_write_path.sql`
+- `server/src/modules/finance/ledger.ts`, `ledger.service.ts`, `index.ts`
+- `server/src/app.module.ts` — provider registration
+- `packages/shared/src/finance.ts` — shared kinds, money helpers and vocabulary
+- `supabase/schema-baseline.txt` — refreshed snapshot
+- `tests/ledger-engine.test.ts`, `tests/ledger-service.test.ts`
+- `tests/ep02-contracts.test.ts`, `tests/module-boundaries.test.ts`
+- `scripts/test-db-migrations.mjs` — write-path and reversal assertions
+- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts` — unchanged; no endpoint in this task
 
 ## 9. Definition of Done
 
@@ -131,9 +135,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-18 |
+| **Execution record** | `execution-records/EP-02-031.md` |
+| **Blocked by** | — (verification `010`–`016` and VFD `040`–`045` remain blocked; neither blocks this task) |
+| **Notes** | Pure engine, property tests, transactional writer, in-transaction audit and the narrow insert path delivered. No endpoint, account provisioning or fee rule. |
 
