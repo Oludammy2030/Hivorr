@@ -18,6 +18,7 @@ import {
   verificationLaneSchema,
   verificationSubmissionSchema,
   walletBalanceViewSchema,
+  walletStatementEntrySchema,
 } from "@hivorr/shared"
 import { describe, expect, it } from "vitest"
 
@@ -219,6 +220,42 @@ describe("EP-02 shared finance contracts", () => {
     expect(moneyToMinorUnits("0")).toBeNull()
     expect(moneyToMinorUnits("1.00001")).toBeNull()
     expect(moneyToMinorUnits("10000000000000000.0000")).toBeNull()
+  })
+
+  it("describes a statement row with a signed display amount", () => {
+    const entry = {
+      postingId: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7b",
+      entryId: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7c",
+      reference: "DEP-1",
+      entryKind: "deposit",
+      currency: "NGN",
+      direction: "debit",
+      amount: "100.0000",
+      signedAmount: "100.0000",
+      activityId: "market.buy",
+      occurredAt: "2026-11-18T00:00:00.000Z",
+    }
+    expect(walletStatementEntrySchema.safeParse(entry).success).toBe(true)
+    expect(
+      walletStatementEntrySchema.safeParse({
+        ...entry,
+        signedAmount: "-30.0000",
+        activityId: null,
+        direction: "credit",
+      }).success,
+    ).toBe(true)
+    expect(
+      walletStatementEntrySchema.safeParse({
+        ...entry,
+        signedAmount: "100.00001",
+      }).success,
+    ).toBe(false)
+    expect(
+      walletStatementEntrySchema.safeParse({
+        ...entry,
+        activityId: "market.discover",
+      }).success,
+    ).toBe(false)
   })
 
   it("keeps the new API error codes stable", () => {

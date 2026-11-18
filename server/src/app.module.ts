@@ -44,6 +44,7 @@ import { EvidenceService } from "./modules/admin/evidence.service"
 import { VerificationService } from "./modules/admin/verification.service"
 import { ProfileService } from "./modules/profile/profile.service"
 import { LedgerService } from "./modules/finance/ledger.service"
+import { WalletService } from "./modules/finance/wallet.service"
 import { TaxonomyAdminService } from "./modules/platform/taxonomy.service"
 
 @Module({})
@@ -124,6 +125,7 @@ export class AppModule {
         VerificationService,
         TaxonomyAdminService,
         LedgerService,
+        WalletService,
       ],
     }
   }

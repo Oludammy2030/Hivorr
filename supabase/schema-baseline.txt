@@ -82,7 +82,7 @@ platform | taxonomy_nodes
 profile | activity_activations
 profile | profiles
 
-## columns (598)
+## columns (615)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -492,6 +492,23 @@ finance | reconciliation_runs | owner_user_id | uuid | uuid | YES | -
 finance | reconciliation_runs | notes | text | text | YES | -
 finance | reconciliation_runs | created_at | timestamp with time zone | timestamptz | NO | now()
 finance | reconciliation_runs | completed_at | timestamp with time zone | timestamptz | YES | -
+finance | wallet_balances | account_id | uuid | uuid | YES | -
+finance | wallet_balances | currency | text | text | YES | -
+finance | wallet_balances | available | numeric | numeric | YES | -
+finance | wallet_balances | pending | numeric | numeric | YES | -
+finance | wallet_balances | total | numeric | numeric | YES | -
+finance | wallet_balances | withdrawable | numeric | numeric | YES | -
+finance | wallet_statement | posting_id | uuid | uuid | YES | -
+finance | wallet_statement | account_id | uuid | uuid | YES | -
+finance | wallet_statement | currency | text | text | YES | -
+finance | wallet_statement | direction | text | text | YES | -
+finance | wallet_statement | amount | numeric | numeric | YES | -
+finance | wallet_statement | signed_amount | numeric | numeric | YES | -
+finance | wallet_statement | entry_id | uuid | uuid | YES | -
+finance | wallet_statement | entry_kind | text | text | YES | -
+finance | wallet_statement | reference | text | text | YES | -
+finance | wallet_statement | activity_id | text | text | YES | -
+finance | wallet_statement | occurred_at | timestamp with time zone | timestamptz | YES | -
 identity | accounts | id | uuid | uuid | NO | platform.uuidv7()
 identity | accounts | status | text | text | NO | 'active'::text
 identity | accounts | legal_name | text | text | YES | -
@@ -1307,7 +1324,7 @@ finance | ledger_accounts | ledger_accounts_select | PERMISSIVE | {hivorr_api} |
 finance | limits | limits_select | PERMISSIVE | {hivorr_api} | SELECT | ((platform.current_account_id() IS NOT NULL) AND ((account_id = platform.current_account_id()) OR ((account_id IS NULL) AND (tier IS NOT NULL)))) | -
 finance | payout_accounts | payout_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 finance | postings | postings_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (platform.current_account_id() IS NOT NULL)
-finance | postings | postings_select | PERMISSIVE | {hivorr_api} | SELECT | (EXISTS ( SELECT 1 FROM finance.ledger_accounts a WHERE ((a.id = postings.ledger_account_id) AND (a.owner_type = 'account'::text) AND (a.owner_id = platform.current_account_id())))) | -
+finance | postings | postings_select | PERMISSIVE | {hivorr_api} | SELECT | ((EXISTS ( SELECT 1 FROM finance.ledger_accounts a WHERE ((a.id = postings.ledger_account_id) AND (a.owner_type = 'account'::text) AND (a.owner_id = platform.current_account_id())))) OR (EXISTS ( SELECT 1 FROM finance.escrow_accounts ea WHERE ((ea.ledger_account_id = postings.ledger_account_id) AND (ea.payer_account_id = platform.current_account_id()))))) | -
 finance | provider_references | provider_references_select | PERMISSIVE | {hivorr_api} | SELECT | ((journal_entry_id IS NOT NULL) AND (EXISTS ( SELECT 1 FROM finance.journal_entries je WHERE (je.id = provider_references.journal_entry_id)))) | -
 identity | accounts | accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (id = platform.current_account_id())
 identity | accounts | accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (id = platform.current_account_id()) | -
@@ -1362,7 +1379,7 @@ profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | 
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (538)
+## table-grants (554)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -1680,6 +1697,22 @@ finance | reconciliation_runs | postgres | SELECT | YES
 finance | reconciliation_runs | postgres | TRIGGER | YES
 finance | reconciliation_runs | postgres | TRUNCATE | YES
 finance | reconciliation_runs | postgres | UPDATE | YES
+finance | wallet_balances | hivorr_api | SELECT | NO
+finance | wallet_balances | postgres | DELETE | YES
+finance | wallet_balances | postgres | INSERT | YES
+finance | wallet_balances | postgres | REFERENCES | YES
+finance | wallet_balances | postgres | SELECT | YES
+finance | wallet_balances | postgres | TRIGGER | YES
+finance | wallet_balances | postgres | TRUNCATE | YES
+finance | wallet_balances | postgres | UPDATE | YES
+finance | wallet_statement | hivorr_api | SELECT | NO
+finance | wallet_statement | postgres | DELETE | YES
+finance | wallet_statement | postgres | INSERT | YES
+finance | wallet_statement | postgres | REFERENCES | YES
+finance | wallet_statement | postgres | SELECT | YES
+finance | wallet_statement | postgres | TRIGGER | YES
+finance | wallet_statement | postgres | TRUNCATE | YES
+finance | wallet_statement | postgres | UPDATE | YES
 identity | accounts | hivorr_api | INSERT | NO
 identity | accounts | hivorr_api | SELECT | NO
 identity | accounts | hivorr_api | UPDATE | NO

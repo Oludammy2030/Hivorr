@@ -9,11 +9,11 @@
 | **Tracker updated** | 2026-11-18 |
 | **Phase status** | `In build` — partial scope: non-provider finance foundation only |
 | **Tasks total** | 40 |
-| **Completed** | 7 |
+| **Completed** | 8 |
 | **In progress** | 0 |
 | **Requires review** | 0 |
 | **Blocked** | 0 |
-| **Pending** | 33 |
+| **Pending** | 32 |
 
 > **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. Frontend and exit tasks are pending their dependencies.
 
@@ -39,7 +39,7 @@
 | 12 | `EP-02-022` | Taxonomy seed data and read contracts | EP-02-020, EP-02-021. | **COMPLETED** — shared read contract, active endpoint, no production seed | 2026-11-15 | `execution-records/EP-02-022.md` |
 | 13 | `EP-02-030` | Finance schema, ledger accounts and RLS | EP-02-002; EP-01-021/022/025. | **COMPLETED** — append-only ledger, deferred balance invariant, encryption shape, owner-scoped RLS | 2026-11-18 | `execution-records/EP-02-030.md` |
 | 14 | `EP-02-031` | Posting engine, double-entry invariants and property tests | EP-02-030. | **COMPLETED** — pure engine, property tests, transactional write path, in-transaction audit | 2026-11-18 | `execution-records/EP-02-031.md` |
-| 15 | `EP-02-032` | Wallet derived views and statement read model | EP-02-031. | **PENDING** | — | — |
+| 15 | `EP-02-032` | Wallet derived views and statement read model | EP-02-031. | **COMPLETED** — security_invoker views, owner-scoped reads, keyset statement | 2026-11-18 | `execution-records/EP-02-032.md` |
 | 16 | `EP-02-033` | Escrow account model and state machine | EP-02-031; BD-D03 for transition enablement. | **PENDING** | — | — |
 | 17 | `EP-02-034` | Money idempotency and provider reference model | EP-02-030, EP-02-031. | **PENDING** | — | — |
 | 18 | `EP-02-035` | Financial limits, KYC gating and capability enforcement | EP-02-014, EP-02-032, EP-02-034. | **PENDING** | — | — |
@@ -70,12 +70,12 @@
 
 ## 2. Next eligible task
 
-**`EP-02-032` — Wallet derived views and statement read model.**
+**`EP-02-033` — Escrow account model and state machine.**
 
-The posting engine is in place. The derived wallet views and statement read model are the next
-unblocked scope: the prototype's wallet semantics must come from entries, not a stored balance.
-`EP-02-010` (verification) remains blocked on the KYC ladder and vendor; the VFD adapter remains
-blocked on written confirmation.
+The wallet read model is in place. The escrow state machine is the next unblocked scope, but its
+release, refund and dispute transitions remain disabled until BD-D03 is decided. `EP-02-010`
+(verification) remains blocked on the KYC ladder and vendor; the VFD adapter remains blocked on
+written confirmation.
 
 Still open and blocking specific scopes:
 
@@ -96,6 +96,7 @@ Still open and blocking specific scopes:
 | 2026-11-15 | `EP-02-022` | `PENDING` | `COMPLETED` | `execution-records/EP-02-022.md` |
 | 2026-11-18 | `EP-02-030` | `PENDING` | `COMPLETED` | `execution-records/EP-02-030.md` |
 | 2026-11-18 | `EP-02-031` | `PENDING` | `COMPLETED` | `execution-records/EP-02-031.md` |
+| 2026-11-18 | `EP-02-032` | `PENDING` | `COMPLETED` | `execution-records/EP-02-032.md` |
 
 ---
 
