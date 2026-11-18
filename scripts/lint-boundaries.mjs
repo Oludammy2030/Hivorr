@@ -38,12 +38,18 @@ const MODULES = [
 ]
 
 /**
- * Modules allowed to contain code during EP-01. The six activity modules are
+ * Modules allowed to contain code. The remaining activity modules are
  * boundaries only: no tables, no endpoints and no implementation until their
  * owning phase. Adding code to one of them is a reviewed change to this list,
- * not an accident.
+ * not an accident. `finance` joined the list in EP-02-031, its owning phase.
  */
-const CODE_MODULES = new Set(["identity", "profile", "platform", "admin"])
+const CODE_MODULES = new Set([
+  "identity",
+  "profile",
+  "platform",
+  "admin",
+  "finance",
+])
 
 const modulesRoot = path.join(root, "server", "src", "modules")
 

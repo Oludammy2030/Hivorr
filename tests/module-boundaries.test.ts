@@ -59,10 +59,23 @@ describe("ten-module skeleton", () => {
     }
   })
 
-  it("keeps the six activity modules as boundaries with no code", () => {
-    for (const module of ACTIVITY_MODULES) {
-      expect(sourceFiles(path.join(modulesRoot, module))).toEqual(["index.ts"])
+  it("keeps activity modules without an owning phase as boundaries with no code", () => {
+    const dormantModules = ACTIVITY_MODULES.filter(
+      (module) => module !== "finance",
+    )
+    for (const module of dormantModules) {
+      expect(sourceFiles(path.join(modulesRoot, module)), module).toEqual([
+        "index.ts",
+      ])
     }
+  })
+
+  it("exposes the finance posting domain from its public interface", () => {
+    expect(sourceFiles(path.join(modulesRoot, "finance"))).toEqual([
+      "index.ts",
+      "ledger.service.ts",
+      "ledger.ts",
+    ])
   })
 
   it("does not export a controller from a module's public interface", () => {
