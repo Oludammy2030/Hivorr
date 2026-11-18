@@ -126,6 +126,116 @@ try {
     assert(platformTableNames.has(table), `platform.${table} exists`)
   }
 
+  // ---- Finance ledger foundation (EP-02-030) ----
+  const financeTables = await testClient.query(
+    "select tablename from pg_tables where schemaname = 'finance'",
+  )
+  const financeTableNames = new Set(
+    financeTables.rows.map((row) => row.tablename),
+  )
+  const expectedFinanceTables = [
+    "ledger_accounts",
+    "journal_entries",
+    "postings",
+    "provider_references",
+    "escrow_accounts",
+    "payout_accounts",
+    "limits",
+    "reconciliation_runs",
+    "reconciliation_items",
+  ]
+  for (const table of expectedFinanceTables) {
+    assert(financeTableNames.has(table), `finance.${table} exists`)
+  }
+
+  const financeColumnResult = await testClient.query(
+    `select table_name, column_name, data_type, numeric_precision, numeric_scale
+       from information_schema.columns
+      where table_schema = 'finance'`,
+  )
+  const financeColumns = financeColumnResult.rows
+  const moneyColumnNames = new Set([
+    "amount",
+    "provider_total",
+    "ledger_total",
+    "difference",
+    "provider_amount",
+    "ledger_amount",
+  ])
+  const moneyColumns = financeColumns.filter((row) =>
+    moneyColumnNames.has(row.column_name),
+  )
+  assert(moneyColumns.length >= 7, "finance money columns exist")
+  for (const column of moneyColumns) {
+    assert(
+      column.data_type === "numeric" &&
+        column.numeric_precision === 20 &&
+        column.numeric_scale === 4,
+      `finance.${column.table_name}.${column.column_name} is numeric(20,4)`,
+    )
+  }
+  assert(
+    !financeColumns.some((row) =>
+      ["balance", "available_balance", "wallet_balance"].includes(
+        row.column_name,
+      ),
+    ),
+    "no mutable balance column exists in finance",
+  )
+
+  const payoutColumns = new Set(
+    financeColumns
+      .filter((row) => row.table_name === "payout_accounts")
+      .map((row) => row.column_name),
+  )
+  for (const column of [
+    "account_number_ciphertext",
+    "encryption_key_id",
+    "account_number_last4",
+    "account_number_fingerprint",
+  ]) {
+    assert(payoutColumns.has(column), `payout_accounts has ${column}`)
+  }
+  assert(
+    !payoutColumns.has("account_number") &&
+      !payoutColumns.has("account_number_plaintext"),
+    "payout account numbers are never stored in plaintext",
+  )
+
+  const financeRls = await testClient.query(
+    `select relname, relrowsecurity
+       from pg_class
+      where relnamespace = 'finance'::regnamespace and relkind = 'r'`,
+  )
+  const financeRlsByTable = new Map(
+    financeRls.rows.map((row) => [row.relname, row.relrowsecurity]),
+  )
+  for (const table of expectedFinanceTables) {
+    assert(
+      financeRlsByTable.get(table) === true,
+      `finance.${table} has row level security`,
+    )
+  }
+
+  for (const table of expectedFinanceTables) {
+    const write = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.${table}', 'insert') as allowed`,
+    )
+    assert(
+      write.rows[0].allowed === false,
+      `api role cannot insert into finance.${table}`,
+    )
+    const read = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.${table}', 'select') as allowed`,
+    )
+    const readIsApproved =
+      table !== "reconciliation_runs" && table !== "reconciliation_items"
+    assert(
+      read.rows[0].allowed === readIsApproved,
+      `api role read grant on finance.${table} matches the approved surface`,
+    )
+  }
+
   const industry = await testClient.query(
     `insert into platform.taxonomy_nodes (taxonomy, level, slug, name)
      values ('profession', 'industry', 'construction', 'Construction')
@@ -957,6 +1067,256 @@ try {
     [closedUser.rows[0].id, "argon2id-placeholder"],
   )
 
+  // ---- Finance ledger fixtures and invariants (EP-02-030) ----
+  const walletAccount = await testClient.query(
+    `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
+     values ('user_wallet', 'account', $1, 'NGN')
+     returning id`,
+    [accountId],
+  )
+  const walletLedgerId = walletAccount.rows[0].id
+
+  const clearingAccount = await testClient.query(
+    `insert into finance.ledger_accounts (kind, owner_type, currency)
+     values ('platform_clearing', 'platform', 'NGN')
+     returning id`,
+  )
+  const clearingLedgerId = clearingAccount.rows[0].id
+
+  const escrowRef = "00000000-0000-7000-8000-000000000e5c"
+  const escrowLedger = await testClient.query(
+    `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
+     values ('escrow', 'activity', $1, 'NGN')
+     returning id`,
+    [escrowRef],
+  )
+  const escrowLedgerId = escrowLedger.rows[0].id
+
+  let unknownKindRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
+       values ('wallet', 'account', $1, 'NGN')`,
+      [accountId],
+    )
+  } catch (error) {
+    unknownKindRejected = error?.code === "23514"
+  }
+  assert(unknownKindRejected, "unknown ledger account kinds are refused")
+
+  await testClient.query("begin")
+  const depositEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, activity_id, idempotency_key, created_by)
+     values ('deposit', 'DEP-TEST-0001', 'NGN', 'market.buy',
+             'idem-deposit-0001', $1)
+     returning id`,
+    [userId],
+  )
+  const depositEntryId = depositEntry.rows[0].id
+  await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency, activity_id)
+     values ($1, $2, 'debit', 100.0000, 'NGN', 'market.buy')`,
+    [depositEntryId, walletLedgerId],
+  )
+  await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency, activity_id)
+     values ($1, $2, 'credit', 100.0000, 'NGN', 'market.buy')`,
+    [depositEntryId, clearingLedgerId],
+  )
+  await testClient.query("commit")
+
+  const derivedBalance = await testClient.query(
+    `select coalesce(sum(
+              case direction when 'debit' then amount else -amount end
+            ), 0)::text as balance
+       from finance.postings
+      where ledger_account_id = $1`,
+    [walletLedgerId],
+  )
+  assert(
+    derivedBalance.rows[0].balance === "100.0000",
+    "wallet balance is derived from postings",
+  )
+
+  let unbalancedRejected = false
+  await testClient.query("begin")
+  try {
+    const unbalanced = await testClient.query(
+      `insert into finance.journal_entries (kind, reference, currency)
+       values ('adjustment', 'ADJ-TEST-0001', 'NGN')
+       returning id`,
+    )
+    await testClient.query(
+      `insert into finance.postings
+         (entry_id, ledger_account_id, direction, amount, currency)
+       values ($1, $2, 'debit', 40.0000, 'NGN')`,
+      [unbalanced.rows[0].id, walletLedgerId],
+    )
+    await testClient.query("commit")
+  } catch (error) {
+    unbalancedRejected = error?.code === "23514"
+    await testClient.query("rollback")
+  }
+  assert(unbalancedRejected, "the ledger rejects an unbalanced entry")
+
+  let currencyMismatchRejected = false
+  await testClient.query("begin")
+  try {
+    const mismatched = await testClient.query(
+      `insert into finance.journal_entries (kind, reference, currency)
+       values ('adjustment', 'ADJ-TEST-0002', 'NGN')
+       returning id`,
+    )
+    await testClient.query(
+      `insert into finance.postings
+         (entry_id, ledger_account_id, direction, amount, currency)
+       values ($1, $2, 'debit', 10.0000, 'USD')`,
+      [mismatched.rows[0].id, walletLedgerId],
+    )
+  } catch (error) {
+    currencyMismatchRejected = error?.code === "23514"
+  } finally {
+    await testClient.query("rollback")
+  }
+  assert(currencyMismatchRejected, "a posting must match its entry currency")
+
+  const depositPosting = await testClient.query(
+    "select id from finance.postings where entry_id = $1 and ledger_account_id = $2",
+    [depositEntryId, walletLedgerId],
+  )
+  const depositPostingId = depositPosting.rows[0].id
+
+  let postingUpdateRejected = false
+  try {
+    await testClient.query(
+      "update finance.postings set amount = 1.0000 where id = $1",
+      [depositPostingId],
+    )
+  } catch (error) {
+    postingUpdateRejected = error?.code === "42501"
+  }
+  assert(postingUpdateRejected, "postings are append-only")
+
+  let entryDeleteRejected = false
+  try {
+    await testClient.query(
+      "delete from finance.journal_entries where id = $1",
+      [depositEntryId],
+    )
+  } catch (error) {
+    entryDeleteRejected = error?.code === "42501"
+  }
+  assert(entryDeleteRejected, "journal entries are append-only")
+
+  let truncateRejected = false
+  try {
+    await testClient.query("truncate finance.postings")
+  } catch (error) {
+    truncateRejected = error?.code === "42501"
+  }
+  assert(truncateRejected, "ledger tables reject truncate")
+
+  const escrow = await testClient.query(
+    `insert into finance.escrow_accounts
+       (ledger_account_id, payer_account_id, activity_id, activity_ref, currency)
+     values ($1, $2, 'services.hire', $3, 'NGN')
+     returning id`,
+    [escrowLedgerId, accountId, escrowRef],
+  )
+  const escrowId = escrow.rows[0].id
+
+  let escrowStateRejected = false
+  try {
+    await testClient.query(
+      "update finance.escrow_accounts set state = 'lost' where id = $1",
+      [escrowId],
+    )
+  } catch (error) {
+    escrowStateRejected = error?.code === "23514"
+  }
+  assert(escrowStateRejected, "unknown escrow states are refused")
+
+  const payoutAccount = await testClient.query(
+    `insert into finance.payout_accounts
+       (account_id, bank_code, bank_name, account_name, account_name_normalized,
+        account_number_ciphertext, encryption_key_id, account_number_last4,
+        account_number_fingerprint, status, verified_at)
+     values ($1, '058', 'Test Bank', 'Test Account', 'test account',
+             $2, 'test-key-1', '0123', $3, 'verified', now())
+     returning id`,
+    [accountId, Buffer.alloc(32, 7), "a".repeat(64)],
+  )
+  assert(payoutAccount.rowCount === 1, "a verified payout account is accepted")
+
+  let duplicatePayoutRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.payout_accounts
+         (account_id, bank_code, bank_name, account_name, account_name_normalized,
+          account_number_ciphertext, encryption_key_id, account_number_last4,
+          account_number_fingerprint)
+       values ($1, '058', 'Test Bank', 'Test Account', 'test account',
+               $2, 'test-key-1', '0123', $3)`,
+      [accountId, Buffer.alloc(32, 8), "a".repeat(64)],
+    )
+  } catch (error) {
+    duplicatePayoutRejected = error?.code === "23505"
+  }
+  assert(duplicatePayoutRejected, "duplicate payout destinations are refused")
+
+  await testClient.query(
+    `insert into finance.provider_references
+       (provider, provider_reference, direction, status, amount, currency,
+        journal_entry_id)
+     values ('vfd', 'VFD-TEST-0001', 'deposit', 'posted', 100.0000, 'NGN', $1)`,
+    [depositEntryId],
+  )
+
+  let duplicateProviderReferenceRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.provider_references
+         (provider, provider_reference, direction, status, amount, currency,
+          journal_entry_id)
+       values ('vfd', 'VFD-TEST-0001', 'deposit', 'posted', 100.0000, 'NGN', $1)`,
+      [depositEntryId],
+    )
+  } catch (error) {
+    duplicateProviderReferenceRejected = error?.code === "23505"
+  }
+  assert(
+    duplicateProviderReferenceRejected,
+    "provider references are unique per provider",
+  )
+
+  await testClient.query(
+    `insert into finance.limits
+       (tier, limit_type, currency, amount, period)
+     values ('tier_1', 'deposit', 'NGN', 50000.0000, 'daily')`,
+  )
+  await testClient.query(
+    `insert into finance.limits
+       (account_id, limit_type, currency, amount, period)
+     values ($1, 'withdrawal', 'NGN', 1000.0000, 'daily')`,
+    [secondAccountId],
+  )
+
+  let mixedLimitRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.limits
+         (tier, account_id, limit_type, currency, amount, period)
+       values ('tier_1', $1, 'payout', 'NGN', 10.0000, 'daily')`,
+      [secondAccountId],
+    )
+  } catch (error) {
+    mixedLimitRejected = error?.code === "23514"
+  }
+  assert(mixedLimitRejected, "a limit targets a tier or an account, never both")
+
   await testClient.query("grant hivorr_api to postgres with set true")
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
@@ -1011,6 +1371,93 @@ try {
     ownSessions.rows[0].count === 1,
     "rls shows only the current user's sessions",
   )
+
+  const ownLedgerAccounts = await testClient.query(
+    "select count(*)::int as count from finance.ledger_accounts",
+  )
+  assert(
+    ownLedgerAccounts.rows[0].count === 1,
+    "rls shows only the current account's ledger account",
+  )
+
+  const ownPostings = await testClient.query(
+    "select count(*)::int as count from finance.postings",
+  )
+  assert(
+    ownPostings.rows[0].count === 1,
+    "rls shows only postings on the current account's ledger",
+  )
+
+  const ownEntries = await testClient.query(
+    "select count(*)::int as count from finance.journal_entries",
+  )
+  assert(
+    ownEntries.rows[0].count === 1,
+    "rls shows only journal entries touching the current account",
+  )
+
+  const ownProviderReferences = await testClient.query(
+    "select count(*)::int as count from finance.provider_references",
+  )
+  assert(
+    ownProviderReferences.rows[0].count === 1,
+    "rls shows only provider references linked to the current account",
+  )
+
+  const ownEscrowAccounts = await testClient.query(
+    "select count(*)::int as count from finance.escrow_accounts",
+  )
+  assert(
+    ownEscrowAccounts.rows[0].count === 1,
+    "rls shows only the current account's escrow reservations",
+  )
+
+  const ownPayoutAccounts = await testClient.query(
+    "select count(*)::int as count from finance.payout_accounts",
+  )
+  assert(
+    ownPayoutAccounts.rows[0].count === 1,
+    "rls shows only the current account's payout accounts",
+  )
+
+  const ownLimits = await testClient.query(
+    "select count(*)::int as count from finance.limits",
+  )
+  assert(
+    ownLimits.rows[0].count === 1,
+    "rls shows tier limits and only the current account's overrides",
+  )
+
+  let reconciliationReadDenied = false
+  await testClient.query("savepoint finance_reconciliation_denied")
+  try {
+    await testClient.query(
+      "select count(*)::int as count from finance.reconciliation_runs",
+    )
+  } catch (error) {
+    reconciliationReadDenied = error?.code === "42501"
+    await testClient.query(
+      "rollback to savepoint finance_reconciliation_denied",
+    )
+  }
+  assert(
+    reconciliationReadDenied,
+    "reconciliation records require an audited administrator read",
+  )
+
+  let ledgerInsertDenied = false
+  await testClient.query("savepoint finance_insert_denied")
+  try {
+    await testClient.query(
+      `insert into finance.ledger_accounts (kind, owner_type, owner_id, currency)
+       values ('user_wallet', 'account', $1, 'NGN')`,
+      [accountId],
+    )
+  } catch (error) {
+    ledgerInsertDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint finance_insert_denied")
+  }
+  assert(ledgerInsertDenied, "the api role cannot create a ledger account")
 
   const contextAccount = await testClient.query(
     "select platform.current_account_id() as account_id",
@@ -1074,6 +1521,36 @@ try {
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    secondAccountId,
+    secondUserId,
+  ])
+  const foreignLedgerAccounts = await testClient.query(
+    "select count(*)::int as count from finance.ledger_accounts",
+  )
+  assert(
+    foreignLedgerAccounts.rows[0].count === 0,
+    "rls hides another account's ledger account",
+  )
+  const foreignPostings = await testClient.query(
+    "select count(*)::int as count from finance.postings",
+  )
+  assert(
+    foreignPostings.rows[0].count === 0,
+    "rls hides another account's postings",
+  )
+  const foreignLimits = await testClient.query(
+    "select count(*)::int as count from finance.limits",
+  )
+  assert(
+    foreignLimits.rows[0].count === 2,
+    "rls shows tier limits plus this account's own override",
+  )
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
   const noContext = await testClient.query(
     "select count(*)::int as count from identity.users",
   )
@@ -1101,6 +1578,27 @@ try {
   assert(
     noContextSessions.rows[0].count === 0,
     "session rls denies without an identity context",
+  )
+  const noContextLedger = await testClient.query(
+    "select count(*)::int as count from finance.ledger_accounts",
+  )
+  assert(
+    noContextLedger.rows[0].count === 0,
+    "ledger rls denies without an identity context",
+  )
+  const noContextPostings = await testClient.query(
+    "select count(*)::int as count from finance.postings",
+  )
+  assert(
+    noContextPostings.rows[0].count === 0,
+    "posting rls denies without an identity context",
+  )
+  const noContextLimits = await testClient.query(
+    "select count(*)::int as count from finance.limits",
+  )
+  assert(
+    noContextLimits.rows[0].count === 0,
+    "limit rls denies without an identity context",
   )
   await testClient.query("reset role")
   await testClient.query("commit")

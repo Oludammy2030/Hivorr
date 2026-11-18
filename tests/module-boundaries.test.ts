@@ -84,10 +84,13 @@ describe("ten-module skeleton", () => {
     ).toContain("appendAudit")
   })
 
-  it("has no tables in the activity schemas yet", () => {
+  it("has no tables in activity schemas that have not reached their owning phase", () => {
     const migrations = path.join(root, "supabase", "migrations")
+    const dormantModules = ACTIVITY_MODULES.filter(
+      (module) => module !== "finance",
+    )
     const pattern = new RegExp(
-      `create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?(?:${ACTIVITY_MODULES.join("|")})\\.`,
+      `create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?(?:${dormantModules.join("|")})\\.`,
       "i",
     )
     for (const file of readdirSync(migrations).filter((entry) =>
@@ -96,5 +99,18 @@ describe("ten-module skeleton", () => {
       const sql = readFileSync(path.join(migrations, file), "utf8")
       expect(sql, file).not.toMatch(pattern)
     }
+  })
+
+  it("creates finance tables only in the approved EP-02 ledger migration", () => {
+    const migrations = path.join(root, "supabase", "migrations")
+    const pattern = /create\s+table\s+(?:if\s+not\s+exists\s+)?finance\./i
+    const creators = readdirSync(migrations)
+      .filter((entry) => entry.endsWith(".sql"))
+      .filter((file) =>
+        pattern.test(readFileSync(path.join(migrations, file), "utf8")),
+      )
+    expect(creators).toEqual([
+      "20261118000100_finance_create_ledger_tables.sql",
+    ])
   })
 })
