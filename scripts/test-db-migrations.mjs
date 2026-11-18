@@ -223,6 +223,7 @@ try {
       "postings",
       "ledger_accounts",
       "escrow_accounts",
+      "provider_references",
     ].includes(table)
     const write = await testClient.query(
       `select has_table_privilege('hivorr_api', 'finance.${table}', 'insert') as allowed`,
@@ -1382,20 +1383,20 @@ try {
 
   await testClient.query(
     `insert into finance.provider_references
-       (provider, provider_reference, direction, status, amount, currency,
-        journal_entry_id)
-     values ('vfd', 'VFD-TEST-0001', 'deposit', 'posted', 100.0000, 'NGN', $1)`,
-    [depositEntryId],
+       (account_id, provider, provider_reference, direction, status, amount,
+        currency, journal_entry_id)
+     values ($1, 'vfd', 'VFD-TEST-0001', 'deposit', 'posted', 100.0000, 'NGN', $2)`,
+    [accountId, depositEntryId],
   )
 
   let duplicateProviderReferenceRejected = false
   try {
     await testClient.query(
       `insert into finance.provider_references
-         (provider, provider_reference, direction, status, amount, currency,
-          journal_entry_id)
-       values ('vfd', 'VFD-TEST-0001', 'deposit', 'posted', 100.0000, 'NGN', $1)`,
-      [depositEntryId],
+         (account_id, provider, provider_reference, direction, status, amount,
+          currency, journal_entry_id)
+       values ($1, 'vfd', 'VFD-TEST-0001', 'deposit', 'posted', 100.0000, 'NGN', $2)`,
+      [accountId, depositEntryId],
     )
   } catch (error) {
     duplicateProviderReferenceRejected = error?.code === "23505"
@@ -1882,8 +1883,111 @@ try {
   }
   assert(invalidTransitionRejected, "an undefined escrow transition is refused")
 
+  const providerReferenceRow = await testClient.query(
+    `insert into finance.provider_references
+       (account_id, provider, provider_reference, direction, status, amount,
+        currency)
+     values ($1, 'vfd', 'VFD-API-0001', 'deposit', 'received', 7.0000, 'NGN')
+     returning id`,
+    [accountId],
+  )
+  assert(
+    providerReferenceRow.rowCount === 1,
+    "the api may record a provider reference for its account",
+  )
+
+  const linkedProviderReference = await testClient.query(
+    `update finance.provider_references
+        set status = 'posted',
+            journal_entry_id = $1,
+            updated_at = now()
+      where provider = 'vfd' and provider_reference = 'VFD-API-0001'`,
+    [depositEntryId],
+  )
+  assert(
+    linkedProviderReference.rowCount === 1,
+    "the api may link a provider reference to its journal entry",
+  )
+
+  let duplicateProviderEventRejected = false
+  await testClient.query("savepoint provider_reference_duplicate")
+  try {
+    await testClient.query(
+      `insert into finance.provider_references
+         (account_id, provider, provider_reference, direction, status, amount,
+          currency)
+       values ($1, 'vfd', 'VFD-API-0001', 'deposit', 'received', 7.0000, 'NGN')`,
+      [accountId],
+    )
+  } catch (error) {
+    duplicateProviderEventRejected = error?.code === "23505"
+    await testClient.query("rollback to savepoint provider_reference_duplicate")
+  }
+  assert(duplicateProviderEventRejected, "a provider reference is stored once")
+
   await testClient.query("reset role")
   await testClient.query("commit")
+
+  const adjustmentLedger = await testClient.query(
+    `insert into finance.ledger_accounts (kind, owner_type, currency)
+     values ('adjustment', 'platform', 'NGN')
+     returning id`,
+  )
+  const adjustmentLedgerId = adjustmentLedger.rows[0].id
+
+  await testClient.query("begin")
+  const scopedKeyEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, idempotency_key, created_by)
+     values ('adjustment', 'IDEM-SCOPE-0001', 'NGN', 'IDEM-SCOPE-1', $1)
+     returning id`,
+    [userId],
+  )
+  await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency)
+     values ($1, $2, 'debit', 1.0000, 'NGN'),
+            ($1, $3, 'credit', 1.0000, 'NGN')`,
+    [scopedKeyEntry.rows[0].id, clearingLedgerId, adjustmentLedgerId],
+  )
+  await testClient.query("commit")
+
+  let duplicateIdempotencyKeyRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.journal_entries
+         (kind, reference, currency, idempotency_key, created_by)
+       values ('adjustment', 'IDEM-SCOPE-0002', 'NGN', 'IDEM-SCOPE-1', $1)`,
+      [userId],
+    )
+  } catch (error) {
+    duplicateIdempotencyKeyRejected = error?.code === "23505"
+  }
+  assert(
+    duplicateIdempotencyKeyRejected,
+    "the same creator cannot reuse an idempotency key",
+  )
+
+  await testClient.query("begin")
+  const otherCreatorEntry = await testClient.query(
+    `insert into finance.journal_entries
+       (kind, reference, currency, idempotency_key, created_by)
+     values ('adjustment', 'IDEM-SCOPE-0003', 'NGN', 'IDEM-SCOPE-1', $1)
+     returning id`,
+    [secondUserId],
+  )
+  await testClient.query(
+    `insert into finance.postings
+       (entry_id, ledger_account_id, direction, amount, currency)
+     values ($1, $2, 'debit', 1.0000, 'NGN'),
+            ($1, $3, 'credit', 1.0000, 'NGN')`,
+    [otherCreatorEntry.rows[0].id, clearingLedgerId, adjustmentLedgerId],
+  )
+  await testClient.query("commit")
+  assert(
+    otherCreatorEntry.rowCount === 1,
+    "two creators may use the same idempotency key",
+  )
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
@@ -1933,6 +2037,13 @@ try {
   assert(
     foreignEscrowUpdate.rowCount === 0,
     "rls blocks another account's escrow transition",
+  )
+  const foreignProviderReferences = await testClient.query(
+    "select count(*)::int as count from finance.provider_references",
+  )
+  assert(
+    foreignProviderReferences.rows[0].count === 0,
+    "rls hides another account's provider references",
   )
   await testClient.query("reset role")
   await testClient.query("commit")

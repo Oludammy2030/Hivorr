@@ -42,3 +42,16 @@ export type {
   EscrowWriteContext,
   OpenEscrowInput,
 } from "./escrow.service"
+export {
+  LEDGER_IDEMPOTENCY_SCOPE,
+  hashLedgerEntry,
+  ledgerIdempotencyKey,
+} from "./idempotency"
+export { ProviderReferenceService } from "./provider-reference.service"
+export type {
+  LinkProviderReferenceInput,
+  ProviderReferenceContext,
+  ProviderReferenceView,
+  RecordProviderReferenceInput,
+  RecordProviderReferenceResult,
+} from "./provider-reference.service"

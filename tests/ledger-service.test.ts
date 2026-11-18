@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 
 import { ApiError } from "../server/src/common/errors"
 import type { DatabaseService } from "../server/src/db/database.service"
+import { hashLedgerEntry } from "../server/src/modules/finance/idempotency"
 import type { LedgerPostingContext } from "../server/src/modules/finance/ledger.service"
 import { LedgerService } from "../server/src/modules/finance/ledger.service"
 
@@ -25,11 +26,32 @@ class FakeTransaction {
   readonly calls: Call[] = []
   reversalRows: ReversalRow[] = []
   failEntryCode: string | undefined
+  idempotencyClaimed = true
+  idempotencyRow: {
+    request_hash: string
+    response_status: number | null
+    response_body: unknown
+  } | null = null
 
   private readonly entryId = randomUUID()
 
   query = async (text: string, values?: readonly unknown[]) => {
     this.calls.push({ text, values })
+
+    if (text.includes("insert into platform.idempotency_keys")) {
+      return { rows: [], rowCount: this.idempotencyClaimed ? 1 : 0 }
+    }
+
+    if (text.includes("select request_hash")) {
+      return {
+        rows: this.idempotencyRow ? [this.idempotencyRow] : [],
+        rowCount: this.idempotencyRow ? 1 : 0,
+      }
+    }
+
+    if (text.includes("update platform.idempotency_keys")) {
+      return { rows: [], rowCount: 1 }
+    }
 
     if (text.includes("je.currency as entry_currency")) {
       return { rows: this.reversalRows, rowCount: this.reversalRows.length }
@@ -225,6 +247,7 @@ describe("ledger service", () => {
       reference: "REV-SERVICE-1",
       currency: "NGN",
       reversesEntryId: originalId,
+      idempotencyKey: "idem-reversal-0001",
       postings: originalPostings.map((posting) => ({
         ...posting,
         direction:
@@ -260,6 +283,7 @@ describe("ledger service", () => {
           kind: "reversal",
           reference: "REV-SERVICE-3",
           currency: "NGN",
+          idempotencyKey: "idem-reversal-0003",
           reversesEntryId: randomUUID(),
           postings: [
             {
@@ -279,5 +303,71 @@ describe("ledger service", () => {
         context(),
       ),
     ).rejects.toMatchObject({ code: "NOT_FOUND", statusCode: 404 })
+  })
+
+  it("replays the stored entry for the same idempotency key and request", async () => {
+    const transaction = new FakeTransaction()
+    const input = balancedInput()
+    transaction.idempotencyClaimed = false
+    transaction.idempotencyRow = {
+      request_hash: hashLedgerEntry(input),
+      response_status: 201,
+      response_body: {
+        id: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7b",
+        kind: "deposit",
+        reference: "DEP-SERVICE-1",
+        currency: "NGN",
+        createdAt: "2026-11-18T00:00:00.000Z",
+        effects: [],
+      },
+    }
+    const service = serviceWith(transaction)
+
+    const result = await service.postEntry(input, context())
+
+    expect(result.id).toBe("018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7b")
+    expect(
+      transaction.calls.some((call) =>
+        call.text.includes("insert into finance.journal_entries"),
+      ),
+    ).toBe(false)
+    expect(
+      transaction.calls.some((call) =>
+        call.text.includes("insert into finance.postings"),
+      ),
+    ).toBe(false)
+  })
+
+  it("refuses a reused key with a different request", async () => {
+    const transaction = new FakeTransaction()
+    transaction.idempotencyClaimed = false
+    transaction.idempotencyRow = {
+      request_hash: "a".repeat(64),
+      response_status: 201,
+      response_body: { id: "entry-1" },
+    }
+    const service = serviceWith(transaction)
+
+    await expect(
+      service.postEntry(balancedInput(), context()),
+    ).rejects.toMatchObject({ code: "CONFLICT", statusCode: 409 })
+
+    expect(
+      transaction.calls.some((call) =>
+        call.text.includes("insert into finance.journal_entries"),
+      ),
+    ).toBe(false)
+  })
+
+  it("requires an idempotency key before it opens a transaction", async () => {
+    const transaction = new FakeTransaction()
+    const service = serviceWith(transaction)
+    const { idempotencyKey: _key, ...withoutKey } = balancedInput()
+
+    await expect(
+      service.postEntry(withoutKey, context()),
+    ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
+
+    expect(transaction.calls).toHaveLength(0)
   })
 })
