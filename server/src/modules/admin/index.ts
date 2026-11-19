@@ -20,3 +20,9 @@ export type {
   GovernanceDenial,
   GovernanceScopeType,
 } from "./authorization"
+export { DisputeService } from "./dispute.service"
+export type {
+  DisputeEvidenceAccessInput,
+  DisputeStatusInput,
+  OpenDisputeInput,
+} from "./dispute.service"

@@ -1,5 +1,6 @@
 import {
   API_ERROR_CODES,
+  DISPUTE_STATUSES,
   ESCROW_STATES,
   ESCROW_TRANSITIONS,
   KYC_TIERS,
@@ -7,6 +8,7 @@ import {
   VERIFICATION_LANES,
   VERIFICATION_STATES,
   currencyCodeSchema,
+  disputeSchema,
   evidenceReferenceSchema,
   evaluateEscrowTransition,
   isKycTier,
@@ -278,6 +280,38 @@ describe("EP-02 shared finance contracts", () => {
     expect(evaluateEscrowTransition("held", "held").status).toBe("invalid")
     expect(evaluateEscrowTransition("released", "held").status).toBe("invalid")
     expect(ESCROW_TRANSITIONS.filter((rule) => rule.policy)).toHaveLength(5)
+  })
+
+  it("defines dispute statuses without an outcome state", () => {
+    expect(DISPUTE_STATUSES).toEqual([
+      "OPENED",
+      "UNDER_REVIEW",
+      "AWAITING_EVIDENCE",
+    ])
+    const dispute = {
+      id: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7b",
+      reference: "DSP-ABC123456",
+      caseId: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7c",
+      caseReference: "CASE-ABC123456",
+      caseStatus: "OPEN",
+      escrowId: null,
+      activityId: "market.buy",
+      activityRef: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7d",
+      openedByAccountId: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7e",
+      respondentAccountId: null,
+      currency: "NGN",
+      claimedAmount: "500.0000",
+      status: "OPENED",
+      createdAt: "2026-11-19T00:00:00.000Z",
+      updatedAt: "2026-11-19T00:00:00.000Z",
+    }
+    expect(disputeSchema.safeParse(dispute).success).toBe(true)
+    expect(
+      disputeSchema.safeParse({ ...dispute, status: "RESOLVED" }).success,
+    ).toBe(false)
+    expect(
+      disputeSchema.safeParse({ ...dispute, claimedAmount: -1 }).success,
+    ).toBe(false)
   })
 
   it("keeps the new API error codes stable", () => {

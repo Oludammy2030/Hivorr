@@ -12,9 +12,9 @@
 | **Entry record** | `EP-02-ENTRY-RECORD.md` — `PARTIAL START`, 2026-11-15 |
 | **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation |
 | **Total tasks** | **40** (`001`–`073`, per the approved plan §10) |
-| **Completed** | 10 (`EP-02-001`, `EP-02-002`, `EP-02-020`, `EP-02-021`, `EP-02-022`, `EP-02-030`, `EP-02-031`, `EP-02-032`, `EP-02-033`, `EP-02-034`) |
+| **Completed** | 11 (`EP-02-001`, `EP-02-002`, `EP-02-020`, `EP-02-021`, `EP-02-022`, `EP-02-030`, `EP-02-031`, `EP-02-032`, `EP-02-033`, `EP-02-034`, `EP-02-036`) |
 | **Blocked** | Verification, VFD adapter and dependent scopes |
-| **Pending** | 30 |
+| **Pending** | 29 |
 | **Closure authority** | Founder, on the architect’s recommendation, through G5 (`EP-02-073`) |
 
 > **Why this file exists.** The approved phase plan defines what EP-02 must achieve. This overview, the tracker and the task documents turn that plan into the execution record required by the development protocol. They do not open the phase.
@@ -141,7 +141,7 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | 16 | `EP-02-033` | Escrow account model and state machine | EP-02-031; BD-D03 for transition enablement. | **COMPLETED** — dispute only; release/refund disabled |
 | 17 | `EP-02-034` | Money idempotency and provider reference model | EP-02-030, EP-02-031. | **COMPLETED** — replay-safe postings; account-scoped provider references |
 | 18 | `EP-02-035` | Financial limits, KYC gating and capability enforcement | EP-02-014, EP-02-032, EP-02-034. | **PENDING** |
-| 19 | `EP-02-036` | Dispute case record and evidence linkage | EP-02-030; CP-016, CP-017. | **PENDING** |
+| 19 | `EP-02-036` | Dispute case record and evidence linkage | EP-02-030; CP-016, CP-017. | **COMPLETED** — typed dispute, procedural statuses, audited access |
 | 20 | `EP-02-040` | PaymentProvider port and adapter contract | EP-02-031, EP-02-034. | **PENDING** |
 | 21 | `EP-02-041` | VFD authentication and resilience client | EP-02-040; VFD sandbox credentials. | **PENDING** |
 | 22 | `EP-02-042` | VFD collections adapter | EP-02-041, EP-02-050. | **PENDING** |

@@ -301,6 +301,40 @@ export const walletStatementEntrySchema = z.strictObject({
 
 export type WalletStatementEntry = z.infer<typeof walletStatementEntrySchema>
 
+/**
+ * Procedural dispute statuses. There is deliberately no resolved, refunded,
+ * rejected or closed state: those are BD-D03 outcomes and are not implemented.
+ */
+export const DISPUTE_STATUSES = [
+  "OPENED",
+  "UNDER_REVIEW",
+  "AWAITING_EVIDENCE",
+] as const
+
+export type DisputeStatus = typeof DISPUTE_STATUSES[number]
+
+export const disputeStatusSchema = z.enum(DISPUTE_STATUSES)
+
+export const disputeSchema = z.strictObject({
+  id: z.string().uuid(),
+  reference: z.string(),
+  caseId: z.string().uuid(),
+  caseReference: z.string(),
+  caseStatus: z.string(),
+  escrowId: z.string().uuid().nullable(),
+  activityId: activityIdSchema,
+  activityRef: z.string().uuid(),
+  openedByAccountId: z.string().uuid(),
+  respondentAccountId: z.string().uuid().nullable(),
+  currency: currencyCodeSchema,
+  claimedAmount: moneyAmountSchema,
+  status: disputeStatusSchema,
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+
+export type Dispute = z.infer<typeof disputeSchema>
+
 export const payoutAccountSchema = z.strictObject({
   id: z.string().uuid(),
   bankCode: z.string().min(1).max(20),

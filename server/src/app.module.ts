@@ -42,6 +42,7 @@ import { PartnerPortalService } from "./modules/admin/partner-portal.service"
 import { CasesService } from "./modules/admin/cases.service"
 import { EvidenceService } from "./modules/admin/evidence.service"
 import { VerificationService } from "./modules/admin/verification.service"
+import { DisputeService } from "./modules/admin/dispute.service"
 import { ProfileService } from "./modules/profile/profile.service"
 import { LedgerService } from "./modules/finance/ledger.service"
 import { EscrowService } from "./modules/finance/escrow.service"
@@ -125,6 +126,7 @@ export class AppModule {
         CasesService,
         EvidenceService,
         VerificationService,
+        DisputeService,
         TaxonomyAdminService,
         LedgerService,
         WalletService,
