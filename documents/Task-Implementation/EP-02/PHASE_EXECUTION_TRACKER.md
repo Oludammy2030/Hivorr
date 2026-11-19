@@ -9,11 +9,11 @@
 | **Tracker updated** | 2026-11-18 |
 | **Phase status** | `In build` — partial scope: non-provider finance foundation only |
 | **Tasks total** | 40 |
-| **Completed** | 10 |
+| **Completed** | 11 |
 | **In progress** | 0 |
 | **Requires review** | 0 |
 | **Blocked** | 0 |
-| **Pending** | 30 |
+| **Pending** | 29 |
 
 > **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. Frontend and exit tasks are pending their dependencies.
 
@@ -43,7 +43,7 @@
 | 16 | `EP-02-033` | Escrow account model and state machine | EP-02-031; BD-D03 for transition enablement. | **COMPLETED** — ledger-backed reservations; dispute enabled; release/refund disabled in domain and database | 2026-11-18 | `execution-records/EP-02-033.md` |
 | 17 | `EP-02-034` | Money idempotency and provider reference model | EP-02-030, EP-02-031. | **COMPLETED** — claim/replay, account-scoped keys, provider reference replay and linking | 2026-11-18 | `execution-records/EP-02-034.md` |
 | 18 | `EP-02-035` | Financial limits, KYC gating and capability enforcement | EP-02-014, EP-02-032, EP-02-034. | **PENDING** | — | — |
-| 19 | `EP-02-036` | Dispute case record and evidence linkage | EP-02-030; CP-016, CP-017. | **PENDING** | — | — |
+| 19 | `EP-02-036` | Dispute case record and evidence linkage | EP-02-030; CP-016, CP-017. | **COMPLETED** — admin-owned typed dispute, procedural statuses, audited evidence access; signed URL pending EP-02-012 | 2026-11-19 | `execution-records/EP-02-036.md` |
 | 20 | `EP-02-040` | PaymentProvider port and adapter contract | EP-02-031, EP-02-034. | **PENDING** | — | — |
 | 21 | `EP-02-041` | VFD authentication and resilience client | EP-02-040; VFD sandbox credentials. | **PENDING** | — | — |
 | 22 | `EP-02-042` | VFD collections adapter | EP-02-041, EP-02-050. | **PENDING** | — | — |
@@ -70,12 +70,12 @@
 
 ## 2. Next eligible task
 
-**`EP-02-035` — Financial limits, KYC gating and capability enforcement.**
+**`EP-02-040` — PaymentProvider port and adapter contract.**
 
-Idempotency is in place. Limits and tier gating are the next finance task, but `EP-02-035` depends on
-`EP-02-014`, which is blocked on the KYC tier ladder (#6). I will confirm the dependency before
-starting rather than invent a ladder. `EP-02-010` (verification) remains blocked on the vendor; the
-VFD adapter remains blocked on written confirmation.
+The dispute record is in place; `EP-02-035` remains blocked on the KYC ladder (#6). The provider
+port is the next unblocked scope: it is provider-agnostic and testable against a fake provider, and
+`EP-02-040` does not need VFD credentials. VFD authentication and every adapter call remain blocked on
+written confirmation.
 
 Still open and blocking specific scopes:
 
@@ -99,6 +99,7 @@ Still open and blocking specific scopes:
 | 2026-11-18 | `EP-02-032` | `PENDING` | `COMPLETED` | `execution-records/EP-02-032.md` |
 | 2026-11-18 | `EP-02-033` | `PENDING` | `COMPLETED` | `execution-records/EP-02-033.md` |
 | 2026-11-18 | `EP-02-034` | `PENDING` | `COMPLETED` | `execution-records/EP-02-034.md` |
+| 2026-11-19 | `EP-02-036` | `PENDING` | `COMPLETED` — evidence signing partial | `execution-records/EP-02-036.md` |
 
 ---
 
