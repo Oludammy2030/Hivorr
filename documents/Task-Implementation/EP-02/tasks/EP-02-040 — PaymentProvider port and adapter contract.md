@@ -84,11 +84,11 @@ The task DoD must record what was inspected and why nothing existing served the 
 
 Anticipated paths; update this section if implementation reveals more.
 
-- `server/src/integrations/vfd/**`
-- `server/src/modules/finance/**` provider-reference paths
-- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts`
-- `tests/vfd*.test.ts`, `tests/provider-contract.test.ts`
-- `documents/Engineering-Execution/Engineering-Phase-Records/EP-02/evidence/**`
+- `server/src/integrations/payments/payment-provider.ts`, `fake-payment-provider.ts`, `index.ts`
+- `tests/support/payment-provider-contract.ts`
+- `tests/payment-provider.test.ts`
+- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts` — unchanged; no endpoint in this task
+- No migration or schema change
 
 ## 9. Definition of Done
 
@@ -132,9 +132,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-19 |
+| **Execution record** | `execution-records/EP-02-040.md` |
+| **Blocked by** | — (the VFD adapter `041`–`045` remains blocked on written confirmation and sandbox credentials; the port itself is provider-neutral) |
+| **Notes** | Provider-neutral port, typed errors, in-memory fake and a reusable contract suite passing under two provider identities. No VFD type, credential or schema change. |
 
