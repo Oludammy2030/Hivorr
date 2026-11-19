@@ -112,6 +112,7 @@ try {
     "work_items",
     "configuration_entries",
     "configuration_versions",
+    "disputes",
   ]) {
     assert(adminTableNames.has(table), `admin.${table} exists`)
   }
@@ -980,6 +981,146 @@ try {
       (error) => error?.code === "42501",
     )
   assert(evidenceDenied, "the evidence register requires a case permission")
+
+  const disputeTableGrant = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'admin.disputes', 'select') as allowed",
+  )
+  assert(
+    disputeTableGrant.rows[0].allowed === false,
+    "the api role has no direct dispute table grant",
+  )
+
+  const disputeListDenied = await testClient
+    .query("select * from admin.list_disputes($1, null)", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    disputeListDenied,
+    "the dispute register requires a dispute permission",
+  )
+
+  const disputeCase = await testClient.query(
+    `select * from admin.create_case(
+       $1, 'dispute', 'Damaged item', 'Buyer reports damage',
+       'normal', 'medium', null, 'open a dispute test case'
+     )`,
+    [actorId],
+  )
+  const disputeCaseId = disputeCase.rows[0].id
+  const disputeActivityRef = "00000000-0000-7000-8000-00000000d5a0"
+
+  const openedDispute = await testClient.query(
+    `select * from admin.open_dispute(
+       $1, $2, 'market.buy', $3, $4, $5, 'NGN', 500.0000, null,
+       'buyer reports a damaged item'
+     )`,
+    [actorId, disputeCaseId, disputeActivityRef, accountId, secondAccountId],
+  )
+  const disputeId = openedDispute.rows[0].id
+  assert(
+    openedDispute.rows[0].status === "OPENED" &&
+      openedDispute.rows[0].claimed_amount === "500.0000",
+    "a dispute opens with a procedural status and the claimed amount",
+  )
+  assert(
+    openedDispute.rows[0].reference.startsWith("DSP-"),
+    "a dispute carries its own reference",
+  )
+
+  const disputeView = await testClient.query(
+    "select * from admin.dispute_view($1, $2)",
+    [actorId, disputeId],
+  )
+  assert(disputeView.rowCount === 1, "a scoped admin can read the dispute")
+  assert(
+    disputeView.rows[0].case_id === disputeCaseId,
+    "the dispute points at its case",
+  )
+
+  const disputeList = await testClient.query(
+    "select * from admin.list_disputes($1, $2)",
+    [actorId, disputeCaseId],
+  )
+  assert(disputeList.rowCount === 1, "the dispute register lists the case")
+
+  const awaitingEvidence = await testClient.query(
+    `select * from admin.set_dispute_status(
+       $1, $2, 'AWAITING_EVIDENCE', 'request photographs from the buyer'
+     )`,
+    [actorId, disputeId],
+  )
+  assert(
+    awaitingEvidence.rows[0].status === "AWAITING_EVIDENCE",
+    "a procedural status change is allowed",
+  )
+
+  const backwardsTransition = await testClient
+    .query(
+      `select * from admin.set_dispute_status(
+         $1, $2, 'OPENED', 'attempt to move backwards'
+       )`,
+      [actorId, disputeId],
+    )
+    .then(
+      () => false,
+      (error) => error?.code === "22023",
+    )
+  assert(backwardsTransition, "a backwards procedural transition is refused")
+
+  const resolutionStatus = await testClient
+    .query(
+      `select * from admin.set_dispute_status(
+         $1, $2, 'RESOLVED', 'attempt an outcome'
+       )`,
+      [actorId, disputeId],
+    )
+    .then(
+      () => false,
+      (error) => error?.code === "22023",
+    )
+  assert(
+    resolutionStatus,
+    "no resolved outcome status exists while BD-D03 is open",
+  )
+
+  const disputeEvidence = await testClient.query(
+    `select * from admin.add_case_evidence(
+       $1, $2, 'disputes/evidence-1.pdf', 'damage.pdf', 'application/pdf',
+       1024, $3, 'sensitive', 'evidence for the dispute test'
+     )`,
+    [actorId, disputeCaseId, "a".repeat(64)],
+  )
+  const disputeEvidenceId = disputeEvidence.rows[0].id
+  await testClient.query(
+    "select admin.record_dispute_evidence_access($1, $2, $3, 'review')",
+    [actorId, disputeId, disputeEvidenceId],
+  )
+  const evidenceAccessed = await testClient.query(
+    `select count(*)::int as count
+       from admin.case_events
+      where case_id = $1 and event_type = 'evidence_accessed'`,
+    [disputeCaseId],
+  )
+  assert(
+    evidenceAccessed.rows[0].count === 1,
+    "access through a dispute is recorded on the case timeline",
+  )
+
+  const foreignEvidence = await testClient
+    .query(
+      "select admin.record_dispute_evidence_access($1, $2, $3, 'review')",
+      [actorId, disputeId, "00000000-0000-7000-8000-00000000e999"],
+    )
+    .then(
+      () => false,
+      (error) => error?.code === "P0002",
+    )
+  assert(
+    foreignEvidence,
+    "evidence outside the dispute's case cannot be accessed",
+  )
 
   const verificationDenied = await testClient
     .query("select * from admin.list_verification_queue($1, '')", [userId])
