@@ -1009,6 +1009,9 @@ try {
     [actorId],
   )
   const disputeCaseId = disputeCase.rows[0].id
+  const disputeRespondent = await testClient.query(
+    "insert into identity.accounts default values returning id",
+  )
   const disputeActivityRef = "00000000-0000-7000-8000-00000000d5a0"
 
   const openedDispute = await testClient.query(
@@ -1016,7 +1019,13 @@ try {
        $1, $2, 'market.buy', $3, $4, $5, 'NGN', 500.0000, null,
        'buyer reports a damaged item'
      )`,
-    [actorId, disputeCaseId, disputeActivityRef, accountId, secondAccountId],
+    [
+      actorId,
+      disputeCaseId,
+      disputeActivityRef,
+      accountId,
+      disputeRespondent.rows[0].id,
+    ],
   )
   const disputeId = openedDispute.rows[0].id
   assert(
