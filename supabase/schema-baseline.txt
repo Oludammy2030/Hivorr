@@ -16,7 +16,7 @@ profile
 public
 services
 
-## tables (64)
+## tables (65)
 admin | access_denials
 admin | approval_decisions
 admin | approval_requests
@@ -35,6 +35,7 @@ admin | configuration_entries
 admin | configuration_versions
 admin | department_members
 admin | departments
+admin | disputes
 admin | partner_agreements
 admin | partner_applications
 admin | partner_organisations
@@ -82,7 +83,7 @@ platform | taxonomy_nodes
 profile | activity_activations
 profile | profiles
 
-## columns (616)
+## columns (630)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -267,6 +268,20 @@ admin | departments | leader_user_id | uuid | uuid | YES | -
 admin | departments | status | text | text | NO | 'active'::text
 admin | departments | created_at | timestamp with time zone | timestamptz | NO | now()
 admin | departments | updated_at | timestamp with time zone | timestamptz | NO | now()
+admin | disputes | id | uuid | uuid | NO | platform.uuidv7()
+admin | disputes | reference | text | text | NO | -
+admin | disputes | case_id | uuid | uuid | NO | -
+admin | disputes | escrow_id | uuid | uuid | YES | -
+admin | disputes | activity_id | text | text | NO | -
+admin | disputes | activity_ref | uuid | uuid | NO | -
+admin | disputes | opened_by_account_id | uuid | uuid | NO | -
+admin | disputes | respondent_account_id | uuid | uuid | YES | -
+admin | disputes | currency | text | text | NO | -
+admin | disputes | claimed_amount | numeric | numeric | NO | -
+admin | disputes | status | text | text | NO | 'OPENED'::text
+admin | disputes | opened_by_user_id | uuid | uuid | NO | -
+admin | disputes | created_at | timestamp with time zone | timestamptz | NO | now()
+admin | disputes | updated_at | timestamp with time zone | timestamptz | NO | now()
 admin | partner_agreements | id | uuid | uuid | NO | platform.uuidv7()
 admin | partner_agreements | organisation_id | uuid | uuid | NO | -
 admin | partner_agreements | reference | text | text | NO | -
@@ -700,7 +715,7 @@ profile | profiles | timezone | text | text | YES | -
 profile | profiles | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | profiles | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (343)
+## constraints (356)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -808,6 +823,19 @@ admin | departments | departments_leader_user_id_fkey | f | FOREIGN KEY (leader_
 admin | departments | departments_parent_id_fkey | f | FOREIGN KEY (parent_id) REFERENCES admin.departments(id) ON DELETE SET NULL
 admin | departments | departments_pkey | p | PRIMARY KEY (id)
 admin | departments | departments_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'archived'::text]))
+admin | disputes | disputes_activity_id_check | c | CHECK (activity_id = ANY (ARRAY['market.buy'::text, 'services.hire'::text, 'errands.request'::text, 'market.sell'::text, 'services.offer'::text, 'logistics.provide'::text]))
+admin | disputes | disputes_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE RESTRICT
+admin | disputes | disputes_case_id_key | u | UNIQUE (case_id)
+admin | disputes | disputes_check | c | CHECK (respondent_account_id IS NULL OR respondent_account_id <> opened_by_account_id)
+admin | disputes | disputes_claimed_amount_check | c | CHECK (claimed_amount > 0::numeric)
+admin | disputes | disputes_currency_check | c | CHECK (currency ~ '^[A-Z]{3}$'::text)
+admin | disputes | disputes_escrow_id_fkey | f | FOREIGN KEY (escrow_id) REFERENCES finance.escrow_accounts(id) ON DELETE RESTRICT
+admin | disputes | disputes_opened_by_account_id_fkey | f | FOREIGN KEY (opened_by_account_id) REFERENCES identity.accounts(id) ON DELETE RESTRICT
+admin | disputes | disputes_opened_by_user_id_fkey | f | FOREIGN KEY (opened_by_user_id) REFERENCES identity.users(id) ON DELETE RESTRICT
+admin | disputes | disputes_pkey | p | PRIMARY KEY (id)
+admin | disputes | disputes_reference_key | u | UNIQUE (reference)
+admin | disputes | disputes_respondent_account_id_fkey | f | FOREIGN KEY (respondent_account_id) REFERENCES identity.accounts(id) ON DELETE RESTRICT
+admin | disputes | disputes_status_check | c | CHECK (status = ANY (ARRAY['OPENED'::text, 'UNDER_REVIEW'::text, 'AWAITING_EVIDENCE'::text]))
 admin | partner_agreements | partner_agreements_dates | c | CHECK (ends_on IS NULL OR ends_on >= starts_on)
 admin | partner_agreements | partner_agreements_organisation_id_fkey | f | FOREIGN KEY (organisation_id) REFERENCES admin.partner_organisations(id) ON DELETE CASCADE
 admin | partner_agreements | partner_agreements_pkey | p | PRIMARY KEY (id)
@@ -1045,7 +1073,7 @@ profile | activity_activations | activity_activations_state_check | c | CHECK (s
 profile | profiles | profiles_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | profiles | profiles_pkey | p | PRIMARY KEY (account_id)
 
-## indexes (195)
+## indexes (202)
 admin | access_denials | access_denials_active_unique | CREATE UNIQUE INDEX access_denials_active_unique ON admin.access_denials USING btree (user_id, permission_key, COALESCE(scope_type, ''::text), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
 admin | access_denials | access_denials_pkey | CREATE UNIQUE INDEX access_denials_pkey ON admin.access_denials USING btree (id)
 admin | access_denials | access_denials_user_active_idx | CREATE INDEX access_denials_user_active_idx ON admin.access_denials USING btree (user_id, permission_key) WHERE (revoked_at IS NULL)
@@ -1100,6 +1128,13 @@ admin | departments | departments_key_key | CREATE UNIQUE INDEX departments_key_
 admin | departments | departments_leader_idx | CREATE INDEX departments_leader_idx ON admin.departments USING btree (leader_user_id)
 admin | departments | departments_parent_idx | CREATE INDEX departments_parent_idx ON admin.departments USING btree (parent_id)
 admin | departments | departments_pkey | CREATE UNIQUE INDEX departments_pkey ON admin.departments USING btree (id)
+admin | disputes | disputes_activity_idx | CREATE INDEX disputes_activity_idx ON admin.disputes USING btree (activity_id, activity_ref)
+admin | disputes | disputes_case_id_key | CREATE UNIQUE INDEX disputes_case_id_key ON admin.disputes USING btree (case_id)
+admin | disputes | disputes_opened_by_idx | CREATE INDEX disputes_opened_by_idx ON admin.disputes USING btree (opened_by_account_id, created_at)
+admin | disputes | disputes_pkey | CREATE UNIQUE INDEX disputes_pkey ON admin.disputes USING btree (id)
+admin | disputes | disputes_reference_key | CREATE UNIQUE INDEX disputes_reference_key ON admin.disputes USING btree (reference)
+admin | disputes | disputes_respondent_idx | CREATE INDEX disputes_respondent_idx ON admin.disputes USING btree (respondent_account_id, created_at) WHERE (respondent_account_id IS NOT NULL)
+admin | disputes | disputes_status_idx | CREATE INDEX disputes_status_idx ON admin.disputes USING btree (status, created_at)
 admin | partner_agreements | partner_agreements_org_idx | CREATE INDEX partner_agreements_org_idx ON admin.partner_agreements USING btree (organisation_id)
 admin | partner_agreements | partner_agreements_pkey | CREATE UNIQUE INDEX partner_agreements_pkey ON admin.partner_agreements USING btree (id)
 admin | partner_agreements | partner_agreements_reference_key | CREATE UNIQUE INDEX partner_agreements_reference_key ON admin.partner_agreements USING btree (reference)
@@ -1242,7 +1277,7 @@ profile | activity_activations | activity_activations_activity_state_idx | CREAT
 profile | activity_activations | activity_activations_pkey | CREATE UNIQUE INDEX activity_activations_pkey ON profile.activity_activations USING btree (id)
 profile | profiles | profiles_pkey | CREATE UNIQUE INDEX profiles_pkey ON profile.profiles USING btree (account_id)
 
-## row-level-security (64)
+## row-level-security (65)
 admin | access_denials | true | true
 admin | approval_decisions | true | true
 admin | approval_requests | true | true
@@ -1261,6 +1296,7 @@ admin | configuration_entries | true | true
 admin | configuration_versions | true | true
 admin | department_members | true | true
 admin | departments | true | true
+admin | disputes | true | true
 admin | partner_agreements | true | true
 admin | partner_applications | true | true
 admin | partner_organisations | true | true
@@ -1387,7 +1423,7 @@ profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | 
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (557)
+## table-grants (564)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -1517,6 +1553,13 @@ admin | departments | postgres | SELECT | YES
 admin | departments | postgres | TRIGGER | YES
 admin | departments | postgres | TRUNCATE | YES
 admin | departments | postgres | UPDATE | YES
+admin | disputes | postgres | DELETE | YES
+admin | disputes | postgres | INSERT | YES
+admin | disputes | postgres | REFERENCES | YES
+admin | disputes | postgres | SELECT | YES
+admin | disputes | postgres | TRIGGER | YES
+admin | disputes | postgres | TRUNCATE | YES
+admin | disputes | postgres | UPDATE | YES
 admin | partner_agreements | postgres | DELETE | YES
 admin | partner_agreements | postgres | INSERT | YES
 admin | partner_agreements | postgres | REFERENCES | YES
@@ -1946,7 +1989,7 @@ profile | profiles | postgres | TRIGGER | YES
 profile | profiles | postgres | TRUNCATE | YES
 profile | profiles | postgres | UPDATE | YES
 
-## functions (86)
+## functions (91)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -1964,6 +2007,7 @@ admin | create_case | p_actor_user_id uuid, p_case_type text, p_title text, p_de
 admin | create_partner_organisation | p_actor_user_id uuid, p_legal_name text, p_trading_name text, p_category text, p_country text, p_reason text | true | v | search_path=""
 admin | create_staff_invite | p_email text, p_delivery_email text, p_department_key text, p_job_title text, p_token_hash text, p_reason text, p_expires_at timestamp with time zone, p_work_domain text | true | v | search_path=""
 admin | decide_approval | p_actor_user_id uuid, p_request_id uuid, p_decision text, p_reason text | true | v | search_path=""
+admin | dispute_view | p_actor_user_id uuid, p_dispute_id uuid | true | s | search_path=""
 admin | get_staff_invite | p_token_hash text | true | s | search_path=""
 admin | govern_user | p_actor_user_id uuid, p_user_id uuid, p_action text, p_reason text | true | v | search_path=""
 admin | list_access_denials | p_actor_user_id uuid, p_environment text | true | s | search_path=""
@@ -1974,6 +2018,7 @@ admin | list_case_events | p_actor_user_id uuid, p_case_id uuid | true | s | sea
 admin | list_case_evidence | p_actor_user_id uuid, p_case_id uuid | true | s | search_path=""
 admin | list_cases | p_actor_user_id uuid, p_status text, p_type text, p_query text | true | s | search_path=""
 admin | list_departments | p_actor_user_id uuid, p_environment text | true | v | search_path=""
+admin | list_disputes | p_actor_user_id uuid, p_case_id uuid | true | s | search_path=""
 admin | list_own_partner_organisations | p_user_id uuid | true | s | search_path=""
 admin | list_partner_organisations | p_actor_user_id uuid | true | s | search_path=""
 admin | list_partner_representatives | p_actor_user_id uuid, p_organisation_id uuid | true | s | search_path=""
@@ -1984,7 +2029,9 @@ admin | list_staff | p_query text, p_status text, p_limit integer | true | s | s
 admin | list_user_notes | p_actor_user_id uuid, p_user_id uuid | true | s | search_path=""
 admin | list_users | p_query text, p_status text, p_before timestamp with time zone, p_before_id uuid, p_limit integer | true | s | search_path=""
 admin | list_verification_queue | p_actor_user_id uuid, p_status text | true | s | search_path=""
+admin | open_dispute | p_actor_user_id uuid, p_case_id uuid, p_activity_id text, p_activity_ref uuid, p_opened_by_account_id uuid, p_respondent_account_id uuid, p_currency text, p_claimed_amount numeric, p_escrow_id uuid, p_reason text | true | v | search_path=""
 admin | platform_permission_holders | p_permission text | true | s | search_path=""
+admin | record_dispute_evidence_access | p_actor_user_id uuid, p_dispute_id uuid, p_evidence_id uuid, p_purpose text | true | v | search_path=""
 admin | record_evidence_access | p_actor_user_id uuid, p_evidence_id uuid, p_purpose text | true | v | search_path=""
 admin | record_verification_decision | p_actor_user_id uuid, p_case_id uuid, p_decision text, p_reason text | true | v | search_path=""
 admin | request_approval | p_actor_user_id uuid, p_action_type text, p_target_type text, p_target_id text, p_reason text | true | v | search_path=""
@@ -1992,6 +2039,7 @@ admin | request_case_decision | p_actor_user_id uuid, p_case_id uuid, p_outcome 
 admin | revoke_access_denial | p_actor_user_id uuid, p_denial_id uuid, p_reason text, p_environment text | true | v | search_path=""
 admin | revoke_role | p_actor_user_id uuid, p_assignment_id uuid, p_reason text, p_environment text | true | v | search_path=""
 admin | set_case_status | p_actor_user_id uuid, p_case_id uuid, p_status text, p_reason text | true | v | search_path=""
+admin | set_dispute_status | p_actor_user_id uuid, p_dispute_id uuid, p_status text, p_reason text | true | v | search_path=""
 admin | set_partner_status | p_actor_user_id uuid, p_organisation_id uuid, p_status text, p_reason text | true | v | search_path=""
 admin | set_staff_department | p_user_id uuid, p_department_key text, p_reason text | true | v | search_path=""
 admin | set_staff_status | p_user_id uuid, p_status text, p_reason text | true | v | search_path=""
