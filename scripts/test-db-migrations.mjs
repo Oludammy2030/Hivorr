@@ -225,6 +225,7 @@ try {
       "ledger_accounts",
       "escrow_accounts",
       "provider_references",
+      "limits",
     ].includes(table)
     const write = await testClient.query(
       `select has_table_privilege('hivorr_api', 'finance.${table}', 'insert') as allowed`,
@@ -2278,6 +2279,92 @@ try {
   assert(
     noContextEntryDenied,
     "the ledger insert policy fails closed without an identity context",
+  )
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    accountId,
+    userId,
+  ])
+
+  let limitWriteDenied = false
+  await testClient.query("savepoint limit_permission_guard")
+  try {
+    await testClient.query(
+      `insert into finance.limits
+         (account_id, limit_type, currency, amount, period, effective_from)
+       values ($1, 'deposit', 'NGN', 10.0000, 'daily', '2030-01-01')`,
+      [accountId],
+    )
+  } catch (error) {
+    limitWriteDenied = error?.code === "42501"
+    await testClient.query("rollback to savepoint limit_permission_guard")
+  }
+  assert(
+    limitWriteDenied,
+    "a user without configuration.write cannot create a limit",
+  )
+
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    accountId,
+    actorId,
+  ])
+  const writtenLimit = await testClient.query(
+    `insert into finance.limits
+       (account_id, limit_type, currency, amount, period, effective_from,
+        created_by)
+     values ($1, 'deposit', 'NGN', 123.0000, 'daily', '2030-01-01', $2)
+     returning id`,
+    [emptyAccount.rows[0].id, actorId],
+  )
+  assert(
+    writtenLimit.rowCount === 1,
+    "a configuration writer may add an effective-dated limit",
+  )
+
+  let duplicateLimitRejected = false
+  await testClient.query("savepoint limit_duplicate_guard")
+  try {
+    await testClient.query(
+      `insert into finance.limits
+         (account_id, limit_type, currency, amount, period, effective_from,
+          created_by)
+       values ($1, 'deposit', 'NGN', 123.0000, 'daily', '2030-01-01', $2)`,
+      [emptyAccount.rows[0].id, actorId],
+    )
+  } catch (error) {
+    duplicateLimitRejected = error?.code === "23505"
+    await testClient.query("rollback to savepoint limit_duplicate_guard")
+  }
+  assert(
+    duplicateLimitRejected,
+    "a duplicate limit scope and effective date is refused",
+  )
+
+  await testClient.query("reset role")
+  await testClient.query("commit")
+
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    accountId,
+    userId,
+  ])
+  const foreignLimit = await testClient.query(
+    "select count(*)::int as count from finance.limits where account_id = $1",
+    [emptyAccount.rows[0].id],
+  )
+  assert(
+    foreignLimit.rows[0].count === 0,
+    "an ordinary account cannot read another account's limit override",
   )
   await testClient.query("reset role")
   await testClient.query("commit")

@@ -46,6 +46,7 @@ import { DisputeService } from "./modules/admin/dispute.service"
 import { ProfileService } from "./modules/profile/profile.service"
 import { LedgerService } from "./modules/finance/ledger.service"
 import { EscrowService } from "./modules/finance/escrow.service"
+import { FinanceLimitService } from "./modules/finance/limit.service"
 import { ProviderReferenceService } from "./modules/finance/provider-reference.service"
 import { WalletService } from "./modules/finance/wallet.service"
 import { TaxonomyAdminService } from "./modules/platform/taxonomy.service"
@@ -132,6 +133,7 @@ export class AppModule {
         WalletService,
         EscrowService,
         ProviderReferenceService,
+        FinanceLimitService,
       ],
     }
   }

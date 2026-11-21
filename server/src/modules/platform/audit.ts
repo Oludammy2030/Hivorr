@@ -58,6 +58,7 @@ const REASON_REQUIRED_ACTIONS: ReadonlySet<string> = new Set([
   "taxonomy.node_updated",
   "taxonomy.attribute_created",
   "taxonomy.attribute_updated",
+  "finance.limit_created",
 ])
 
 const MINIMUM_REASON_LENGTH = 3
