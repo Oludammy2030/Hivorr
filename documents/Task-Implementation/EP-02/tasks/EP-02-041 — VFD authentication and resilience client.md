@@ -84,11 +84,12 @@ The task DoD must record what was inspected and why nothing existing served the 
 
 Anticipated paths; update this section if implementation reveals more.
 
-- `server/src/integrations/vfd/**`
-- `server/src/modules/finance/**` provider-reference paths
-- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts`
-- `tests/vfd*.test.ts`, `tests/provider-contract.test.ts`
-- `documents/Engineering-Execution/Engineering-Phase-Records/EP-02/evidence/**`
+- `server/src/integrations/vfd/auth.ts`, `index.ts`
+- `server/src/config.ts` — VFD mode, credentials and bounds
+- `server/src/app.module.ts` — `VFD_AUTH` provider
+- `config/configuration-contract.json`, `.env.example`
+- `tests/vfd-auth.test.ts`, `tests/vfd-auth.integration.test.ts`, `tests/server-config.test.ts`
+- No migration, schema change or API contract change
 
 ## 9. Definition of Done
 
@@ -132,9 +133,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-21 |
+| **Execution record** | `execution-records/EP-02-041.md` |
+| **Blocked by** | — (control-portal mode toggle and sandbox certification remain follow-ups; the written pooled-account confirmation is an accepted risk under the founder's direction) |
+| **Notes** | Bounded token client with cache, single-flight refresh, timeout, retries, error mapping, redaction and test/live URL selection. Live mode is refused outside production. No secret handled. |
 
