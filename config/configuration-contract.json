@@ -260,6 +260,55 @@
       "description": "Whether the HTTP adapter trusts proxy forwarding headers. Defaults to false."
     },
     {
+      "name": "VFD_MODE",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Payment provider mode, test or live. Defaults to test; live is accepted only in production."
+    },
+    {
+      "name": "VFD_CONSUMER_KEY",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "VFD VBaaS consumer key for the selected mode. Required with the secret when live mode is enabled."
+    },
+    {
+      "name": "VFD_CONSUMER_SECRET",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "VFD VBaaS consumer secret for the selected mode. Never logged or returned."
+    },
+    {
+      "name": "VFD_TOKEN_VALIDITY_MINUTES",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Requested access-token lifetime in minutes. Defaults to 30; a non-expiring token is never requested."
+    },
+    {
+      "name": "VFD_REQUEST_TIMEOUT_MS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Per-attempt VFD request timeout. Defaults to 5000."
+    },
+    {
+      "name": "VFD_MAX_RETRIES",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Bounded retries for retryable VFD failures. Defaults to 2."
+    },
+    {
+      "name": "VFD_RETRY_BASE_MS",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Exponential retry base for VFD requests. Defaults to 250."
+    },
+    {
       "name": "EXPECTED_SUPABASE_PROJECT_REF",
       "source": "tooling",
       "classification": "public",

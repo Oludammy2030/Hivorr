@@ -10,6 +10,7 @@ import { API_CONFIG, type ApiConfig } from "./config"
 import { DatabaseService } from "./db/database.service"
 import { EMAIL_ADAPTER } from "./integrations/email/email.adapter"
 import { createEmailAdapter } from "./integrations/email/zeptomail.adapter"
+import { VFD_AUTH, VfdAuthClient } from "./integrations/vfd"
 import { HealthController } from "./health/health.controller"
 import { GrantsController } from "./modules/identity/grants/grants.controller"
 import { GrantsService } from "./modules/identity/grants/grants.service"
@@ -111,6 +112,12 @@ export class AppModule {
           provide: EMAIL_ADAPTER,
           useFactory: (apiConfig: ApiConfig) =>
             createEmailAdapter(apiConfig.mail),
+          inject: [API_CONFIG],
+        },
+        {
+          provide: VFD_AUTH,
+          useFactory: (apiConfig: ApiConfig) =>
+            new VfdAuthClient(apiConfig.vfd),
           inject: [API_CONFIG],
         },
         DatabaseService,

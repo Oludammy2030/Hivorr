@@ -228,3 +228,52 @@ describe("API configuration", () => {
     ).toThrow(ConfigurationError)
   })
 })
+
+describe("VFD configuration", () => {
+  it("defaults to test mode with a bounded token lifetime", () => {
+    const config = parseConfig({ HIVORR_ENV: "test" })
+    expect(config.vfd).toEqual({
+      mode: "test",
+      consumerKey: undefined,
+      consumerSecret: undefined,
+      tokenValidityMinutes: 30,
+      requestTimeoutMs: 5_000,
+      maxRetries: 2,
+      retryBaseMs: 250,
+    })
+  })
+
+  it("refuses live mode outside production", () => {
+    try {
+      parseConfig({
+        HIVORR_ENV: "staging",
+        VFD_MODE: "live",
+        VFD_CONSUMER_KEY: "key",
+        VFD_CONSUMER_SECRET: "secret",
+      })
+      throw new Error("expected a configuration failure")
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConfigurationError)
+      expect(String(error)).toContain("VFD_MODE")
+    }
+  })
+
+  it("requires a key and secret pair", () => {
+    try {
+      parseConfig({ HIVORR_ENV: "test", VFD_CONSUMER_KEY: "key" })
+      throw new Error("expected a configuration failure")
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConfigurationError)
+      expect(String(error)).toContain("VFD_CONSUMER_KEY")
+    }
+  })
+
+  it("never accepts a non-expiring validity", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "test",
+        VFD_TOKEN_VALIDITY_MINUTES: "-1",
+      }),
+    ).toThrow(ConfigurationError)
+  })
+})

@@ -110,6 +110,25 @@ const baseConfigSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
+  // VFD provider. Test is the default everywhere; live requires production and
+  // a real credential pair. A non-expiring token is never requested.
+  VFD_MODE: z.enum(["test", "live"]).default("test"),
+  VFD_CONSUMER_KEY: z.string().min(1).optional(),
+  VFD_CONSUMER_SECRET: z.string().min(1).optional(),
+  VFD_TOKEN_VALIDITY_MINUTES: z.coerce
+    .number()
+    .int()
+    .min(5)
+    .max(60)
+    .default(30),
+  VFD_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(500)
+    .max(30_000)
+    .default(5_000),
+  VFD_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+  VFD_RETRY_BASE_MS: z.coerce.number().int().min(50).max(5_000).default(250),
 })
 
 /**
@@ -130,6 +149,31 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
       code: "custom",
       path: ["BACKEND_ENVIRONMENT"],
       message: "BACKEND_ENVIRONMENT must match HIVORR_ENV",
+    })
+  }
+
+  if (value.VFD_MODE === "live") {
+    if (value.HIVORR_ENV !== "production") {
+      context.addIssue({
+        code: "custom",
+        path: ["VFD_MODE"],
+        message: "VFD live mode is permitted only in production",
+      })
+    }
+    if (!value.VFD_CONSUMER_KEY || !value.VFD_CONSUMER_SECRET) {
+      context.addIssue({
+        code: "custom",
+        path: ["VFD_CONSUMER_KEY"],
+        message: "VFD live mode requires a consumer key and secret",
+      })
+    }
+  } else if (
+    Boolean(value.VFD_CONSUMER_KEY) !== Boolean(value.VFD_CONSUMER_SECRET)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["VFD_CONSUMER_KEY"],
+      message: "VFD credentials are supplied as a key and secret pair",
     })
   }
 
@@ -282,6 +326,16 @@ export interface MailConfig {
   readonly staffEmailDomain: string
 }
 
+export interface VfdConfig {
+  readonly mode: "test" | "live"
+  readonly consumerKey: string | undefined
+  readonly consumerSecret: string | undefined
+  readonly tokenValidityMinutes: number
+  readonly requestTimeoutMs: number
+  readonly maxRetries: number
+  readonly retryBaseMs: number
+}
+
 export interface ApiConfig {
   readonly environment: DeploymentEnvironment
   readonly backendEnvironment: DeploymentEnvironment
@@ -307,6 +361,7 @@ export interface ApiConfig {
   readonly mail: MailConfig
   readonly auth: AuthAbuseConfig
   readonly worker: WorkerConfig
+  readonly vfd: VfdConfig
 }
 
 export class ConfigurationError extends Error {
@@ -379,6 +434,15 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       workerId:
         value.WORKER_ID ??
         `hivorr-worker-${value.HIVORR_ENV}-${hostname()}-${process.pid}`,
+    },
+    vfd: {
+      mode: value.VFD_MODE,
+      consumerKey: value.VFD_CONSUMER_KEY,
+      consumerSecret: value.VFD_CONSUMER_SECRET,
+      tokenValidityMinutes: value.VFD_TOKEN_VALIDITY_MINUTES,
+      requestTimeoutMs: value.VFD_REQUEST_TIMEOUT_MS,
+      maxRetries: value.VFD_MAX_RETRIES,
+      retryBaseMs: value.VFD_RETRY_BASE_MS,
     },
   }
 }
