@@ -24,7 +24,9 @@
 
 ## 1. Account and money flow
 
-1. Every registered user is assigned an individual VFD virtual account for deposits.
+1. Every registered user is assigned an individual VFD virtual account for deposits. The virtual
+   account is a **collection identifier**, not a separately held balance: the funds settle into the
+   central pool account described in step 5.
 2. The user transfers money to that virtual account.
 3. VFD receives the payment and notifies Hivorr.
 4. Hivorr verifies the transaction, matches the payer, and credits the user’s internal wallet.
@@ -67,7 +69,11 @@ Internal escrow is a **ledger reservation**, not a separate legal escrow.
 
 - A funded job reserves the full contract value against the job’s escrow account.
 - A release moves the approved amount from escrow to the professional’s available wallet.
-- Daily, weekly, milestone-based and completion-based schedules are supported by the release policy.
+- Daily, weekly, monthly, milestone-based and completion-based schedules are supported by the release
+  policy. The schedule is chosen when the job is set up, not invented by the ledger.
+- For physical work, release follows evidence the client can review: before-and-after evidence for the
+  work, and an approval for the period, milestone or completion being paid. Evidence and approval are
+  product flows outside EP-02; the ledger records the resulting release posting.
 - A dispute can hold the reservation; release and refund remain governed by BD-D03 once decided.
 - Refunds reverse the reservation to the payer’s wallet or the original payment route, as the approved
   policy requires.
@@ -118,7 +124,9 @@ Internal escrow is a **ledger reservation**, not a separate legal escrow.
 - `profile` owns the virtual-account mapping and KYC tier.
 - `integrations/vfd` owns virtual-account provisioning, deposits, payouts and status queries.
 - EP-02-030 to EP-02-036 and EP-02-050 to EP-02-056 are buildable on this model.
-- EP-02-040 to EP-02-045 remain blocked on VFD’s written API/account confirmation.
+- EP-02-040 to EP-02-045 were blocked on VFD’s written API/account confirmation. On 2026-11-21 the
+  founder recorded that onboarding is complete and directed the integration to proceed; the written
+  confirmation remains an accepted risk, not a completed condition.
 - No implementation may describe the internal wallet as a bank deposit or Hivorr as the legal owner of
   customer funds until counsel confirms the structure.
 
@@ -128,3 +136,31 @@ Internal escrow is a **ledger reservation**, not a separate legal escrow.
 |---|---|---|
 | 2026-11-15 | Pooled collection/settlement account, internal wallets and internal escrow approved as the final product model | Founder |
 | 2026-11-15 | Legal/regulatory confirmation remains open; provider adapter tasks blocked | Founder / counsel |
+| 2026-11-21 | Virtual accounts are collection identifiers; **all collected funds settle into the central pool account**, and Hivorr records each user’s balance in its internal ledger | Founder |
+| 2026-11-21 | Internal escrow releases follow daily, weekly, monthly, milestone or completion arrangements, with client review of before-and-after evidence; VFD does not provide escrow | Founder |
+| 2026-11-21 | VFD onboarding is complete; integration proceeds on that basis. Written confirmation of the pooled structure and escrow use case, and counsel’s licensing confirmation, remain open accepted risks | Founder |
+| 2026-11-21 | KYC is to follow the CBN-approved tier model; the exact requirements and limits still require confirmation | Founder |
+
+## 10. Founder clarification — 21 November 2026
+
+The founder restated the model so the three layers are not confused:
+
+| Layer | Holds | Owner of the control |
+|---|---|---|
+| **VFD pool account** | the actual collected funds | VFD banking arrangement; Hivorr operates the account under it |
+| **Hivorr internal wallet and ledger** | each user’s beneficial balance and every posting | Hivorr application and database |
+| **Hivorr internal escrow** | the commitment of wallet funds to a job, period, milestone or completion | Hivorr application and database |
+
+- Incoming money lands in the pool; the virtual account is a collection endpoint that identifies the
+  payer, not a separate custodial balance.
+- A job reserves value from the client’s wallet into the job’s escrow ledger account.
+- The professional’s preferred arrangement — daily, weekly, monthly, milestone or completion — governs
+  when the client reviews evidence and approves a release.
+- A release posts from the job escrow to the professional’s wallet; a withdrawal posts from the wallet
+  and pays out from the pool.
+- VFD executes banking and payment instructions. It does not decide milestones, approvals, releases or
+  wallet balances.
+
+**Still open:** counsel’s licensing/safeguarding/segregation opinion; VFD’s written confirmation of the
+account structure, virtual-account ownership/name model and settlement terms; dispute outcomes and
+refund rules; platform fees. Dispute outcomes and refunds are not implemented.
