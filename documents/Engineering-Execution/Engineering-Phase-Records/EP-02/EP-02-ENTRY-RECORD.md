@@ -29,12 +29,14 @@ EP-02 §1 defines the entry gate as:
 |---|---|---|---|---|
 | 1 | EP-01 G5 signed | **MET** | `EP-01-G5-CLOSURE.md` signed 2026-11-15; EP-01 closed through G5 | Founder |
 | 2 | Funds-custody model recorded | **MET** — founder decision 2026-11-15: pooled collection/settlement account, internal wallets and internal escrow; legal/regulatory confirmation remains open | `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md`; `ARCHITECTURE.md` §16.4 #2 | Founder / counsel |
-| 3 | VFD written licence-scope confirmation | **UNMET** | BD-D11 conditions 1–6; `documents/integrations/vfd/VFD_INTEGRATION_NOTES.md` records the missing written scope, licence category and settlement terms | Founder / counsel |
-| 4 | KYC tier ladder and limits decided | **UNMET** | `ARCHITECTURE.md` §16.4 #6; matrix §7.4 and §18 #6; BD-D05 is a recommendation, not a decision | Founder |
+| 3 | VFD written licence-scope confirmation | **UNMET — founder directs proceeding (2026-11-21)** | BD-D11 conditions 1–6; onboarding is complete; the written scope and settlement terms are still absent and are an accepted risk | Founder / counsel |
+| 4 | KYC tier ladder and limits decided | **UNMET — CBN direction recorded 2026-11-21** | `ARCHITECTURE.md` §16.4 #6; matrix §7.4 and §18 #6; the CBN tier table and limits still need confirmation | Founder |
 | 5 | Verification vendor decided | **UNMET** | `ARCHITECTURE.md` §16.4 #15; matrix §18 #12 | Founder |
 | 6 | Reviewer capacity / second reviewer recorded | **UNMET** | `DEV-003` remains in force; EES §11.2 #2 records the one-person-plus-agents problem | Founder / architect |
 
-**Result:** 2 of 6 entry conditions met. EP-01 is closed and the custody model is recorded, but EP-02 still cannot start verification or provider work without the remaining decisions.
+**Result:** 2 of 6 entry conditions met. EP-01 is closed and the custody model is recorded; the founder
+has since given directions for VFD (proceed on onboarding) and KYC (CBN model), but neither is a
+completed entry condition. Verification and reviewer capacity remain unmet.
 
 ---
 
@@ -61,13 +63,13 @@ No row is decided by this record. `ARCHITECTURE.md` §16.4 remains the single co
 | # | Decision | Register | State | Effect on EP-02 | Owner |
 |---|---|---|---|---|---|
 | 1 | Funds custody — pooled collection/settlement account, internal wallets and internal escrow | `ARCHITECTURE.md` §16.4 #2; `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md` | **DECIDED 2026-11-15** — product/custody model approved; legal/regulatory confirmation open | Unblocks ledger, wallet and internal escrow design; provider tasks still need VFD confirmation | Founder / counsel |
-| 2 | VFD written licence scope — marketplace escrow, nationwide operation, third-party release, licence category and limits | BD-D11 conditions 1–6 | **NOT OBTAINED** | Blocks provider integration and any money movement | Founder / counsel |
-| 3 | KYC tier ladder and per-tier limits | `ARCHITECTURE.md` §16.4 #6; BD-D05 | **OPEN** | Blocks tier configuration and financial gating | Founder |
+| 2 | VFD written licence scope — marketplace escrow, nationwide operation, third-party release, licence category and limits | BD-D11 conditions 1–6 | **NOT OBTAINED — founder directs proceeding (2026-11-21)** on the basis of completed onboarding; accepted risk | Does not block adapter build; blocks production money movement and any claim of vendor confirmation | Founder / counsel |
+| 3 | KYC tier ladder and per-tier limits | `ARCHITECTURE.md` §16.4 #6; BD-D05 | **PARTIALLY DIRECTED 2026-11-21** — follow the CBN-approved tier model; exact requirements and limits still to be confirmed | Shapes tier configuration and financial gating | Founder |
 | 4 | Verification vendor — review queue only, or identity provider | `ARCHITECTURE.md` §16.4 #15 | **OPEN** | Blocks identity/KYC lane implementation | Founder |
 | 5 | Second reviewer / reviewer capacity | EES §11.2 #2; `DEV-003` | **OPEN** | Blocks G2 on verification and finance changes | Founder / architect |
 | 6 | Taxonomy depth — two levels or five-level model | `VISION.md` §10 Q10; EP-02 plan §5.3 | **OPEN** | Shapes the registry and seed data | Founder / architect |
 | 7 | Payer-name matching policy — verified legal name, normalisation, mismatch handling | `AGENTS.md` Rule 3; matrix §7.5; EP-02 plan §5.3 | **OPEN** | Shapes deposit matching and review | Founder / architect |
-| 8 | Escrow release timing, dispute outcomes and refund rules | BD-D03; `ARCHITECTURE.md` §16.4 #11 | **OPEN** | Release/refund transitions remain disabled | Founder |
+| 8 | Escrow release timing, dispute outcomes and refund rules | BD-D03; `ARCHITECTURE.md` §16.4 #11 | **PARTIALLY DECIDED 2026-11-21** — daily, weekly, monthly, milestone and completion arrangements, with client review of before-and-after evidence; dispute outcomes and refunds remain open | Release policy is recorded; transitions stay disabled until the release workflow exists | Founder |
 | 9 | Fee and take-rate numbers | BD-D02 | **OPEN** | Out of EP-02 scope; no fee computation | Founder |
 | 10 | Currency model | `ARCHITECTURE.md` §16.4 #8; BD-D07 | **OPEN** | Ledger carries a currency dimension; no conversion | Founder |
 | 11 | Retention periods | `ARCHITECTURE.md` §16.4 #7 | **OPEN** | Retain-and-hold; no purge | Founder / counsel |
@@ -106,6 +108,46 @@ EP-02 work may start while the remaining entry decisions are recorded.
 | Exit and G5 (`EP-02-070`–`073`) | **Blocked** until the phase capability is complete |
 
 This is a recorded partial start, not a declaration that the full entry gate is met.
+
+---
+
+## 4B. Founder clarification and direction — 2026-11-21
+
+The founder restated the payment model and gave three directions. They are recorded here because they
+change which tasks are buildable; they are not a claim that the entry gate is met.
+
+### 4B.1 Payment model
+
+| Layer | Holds | Decision |
+|---|---|---|
+| **VFD pool account** | the actual collected funds | All incoming money settles into the central collection/settlement account. An individual virtual account is a **collection identifier**, not a separately held balance. |
+| **Hivorr internal wallet and ledger** | each user’s beneficial balance and every posting | Hivorr records and derives individual balances internally; the pool is not divided into separate bank accounts per user. |
+| **Hivorr internal escrow** | the commitment of wallet value to a job, period, milestone or completion | Hivorr operates escrow in its own ledger. VFD does not provide escrow, approve work or decide releases. |
+| Release | from the job escrow to the professional’s wallet | Arrangements: **daily, weekly, monthly, milestone and completion**, chosen when the job is set up. Physical work uses before-and-after evidence and client approval for the period or milestone being paid. |
+| Withdrawal | from the professional’s wallet, paid from the pool | The ledger deducts the wallet and records the payout; VFD executes the bank transfer. |
+
+### 4B.2 Directions recorded
+
+1. **VFD:** onboarding is complete and the founder directs the integration to proceed. Written
+   confirmation of the pooled account structure and escrow use case, and counsel’s licensing
+   confirmation, remain **open accepted risks**. One credential pair may serve both the test and live
+   endpoints; `VFD_MODE` selects the URL, not a second secret.
+2. **KYC:** follow the **CBN-approved tier model**. The exact tier requirements and naira limits still
+   need to be confirmed before `EP-02-014` and the tier values in `EP-02-035` are complete.
+3. **Provider mode:** support **test and live** with a toggle in the control portal. The current server
+   reads `VFD_MODE` at startup. A runtime control toggle still needs its guardrails recorded:
+   production-only live, `admin.configuration.write`, dual control, reason and audit.
+
+### 4B.3 Effect on eligibility
+
+| Scope | State after 2026-11-21 |
+|---|---|
+| `EP-02-041` token client | **Complete**; live mode refused outside production. |
+| `EP-02-042`–`045` VFD product adapters | Buildable against the documented API and the `EP-02-040` contract, with sandbox credentials. Sandbox/live evidence still required for `045`. |
+| `EP-02-050`–`054` binding, deposits, payouts, reconciliation | Enter through `050`’s binding/encryption/name-enquiry portion, then `042`/`043`/`053`; the plan’s dependency cluster is recorded in the tracker. |
+| `EP-02-033` escrow release | Release **policy** is recorded; the transition remains disabled until the job/evidence/approval workflow exists, because enabling metadata release without that workflow would be a half-control. Dispute outcomes and refunds remain open. |
+| Verification lanes (`010`–`016`) | Still need the CBN tier table and a verification vendor. |
+| Fees, currency model, retention | Unchanged and open. |
 
 ---
 
