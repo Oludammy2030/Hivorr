@@ -9,11 +9,11 @@
 | **Tracker updated** | 2026-11-18 |
 | **Phase status** | `In build` — partial scope: non-provider finance foundation only |
 | **Tasks total** | 40 |
-| **Completed** | 13 |
+| **Completed** | 14 |
 | **In progress** | 0 |
 | **Requires review** | 0 |
 | **Blocked** | 0 |
-| **Pending** | 27 |
+| **Pending** | 26 |
 
 > **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. Frontend and exit tasks are pending their dependencies.
 
@@ -45,7 +45,7 @@
 | 18 | `EP-02-035` | Financial limits, KYC gating and capability enforcement | EP-02-014, EP-02-032, EP-02-034. | **COMPLETED** — configuration-only, founder-authorised; tier_0/unset deny; `014` partial | 2026-11-21 | `execution-records/EP-02-035.md` |
 | 19 | `EP-02-036` | Dispute case record and evidence linkage | EP-02-030; CP-016, CP-017. | **COMPLETED** — admin-owned typed dispute, procedural statuses, audited evidence access; signed URL pending EP-02-012 | 2026-11-19 | `execution-records/EP-02-036.md` |
 | 20 | `EP-02-040` | PaymentProvider port and adapter contract | EP-02-031, EP-02-034. | **COMPLETED** — provider-neutral port, typed errors, fake adapter, reusable contract suite | 2026-11-19 | `execution-records/EP-02-040.md` |
-| 21 | `EP-02-041` | VFD authentication and resilience client | EP-02-040; VFD sandbox credentials. | **PENDING** | — | — |
+| 21 | `EP-02-041` | VFD authentication and resilience client | EP-02-040; VFD sandbox credentials. | **COMPLETED** — bounded token client, cache/refresh, retry/redaction, test/live mode guard | 2026-11-21 | `execution-records/EP-02-041.md` |
 | 22 | `EP-02-042` | VFD collections adapter | EP-02-041, EP-02-050. | **PENDING** | — | — |
 | 23 | `EP-02-043` | VFD payouts adapter | EP-02-041, EP-02-053. | **PENDING** | — | — |
 | 24 | `EP-02-044` | VFD webhook intake, raw storage and dedupe | EP-02-042, EP-02-043, EP-02-034; founder approval for the new inbound webhook. | **PENDING** | — | — |
@@ -72,18 +72,17 @@
 
 **No unblocked task remains in EP-02.**
 
-The provider port and the configuration-only limit foundation are complete. Every remaining task now
-needs a founder decision or an external credential:
+The provider port and VFD authentication are complete. The remaining adapter tasks form a dependency
+cluster that needs one founder-authorised entry point:
 
-1. **KYC tier ladder (#6) and `EP-02-014`** — the verified tier source. `EP-02-035` is complete for the
-   configuration-only scope; `014` is its remaining input, and the wallet/payout UI depends on it.
-2. **VFD written API/account confirmation and sandbox credentials** — blocks `EP-02-041`–`045`, and
-   through them `EP-02-050`–`054` and the end-to-end suite.
-3. **Signed evidence access (`EP-02-012`)** — blocks the remaining verification tasks and the signed
-   URL part of the dispute evidence path.
-4. **Second reviewer / renewed `DEV-003`** — required for G2 on verification and finance changes.
-
-`EP-02-036` is complete with its evidence-signing sub-condition recorded as partial.
+1. **`EP-02-042` / `043`** need `EP-02-050` and `053` respectively; `EP-02-050` needs `043`. The cluster
+   can be entered at `050`’s binding/encryption/name-enquiry portion (which uses `040`/`041`) if the
+   founder authorises a partial start, with payout execution deferred.
+2. **Control-portal mode toggle** — needs the guardrails decision: production-only live,
+   `admin.configuration.write`, dual control, reason and audit.
+3. **KYC tier table under the CBN framework** — needed for `EP-02-014`, then the wallet/payout UI.
+4. **Signed evidence access (`EP-02-012`)** — blocks the remaining verification tasks.
+5. **Second reviewer / renewed `DEV-003`** — required for G2 on verification and finance changes.
 
 Still open and blocking specific scopes:
 
@@ -110,6 +109,7 @@ Still open and blocking specific scopes:
 | 2026-11-19 | `EP-02-036` | `PENDING` | `COMPLETED` — evidence signing partial | `execution-records/EP-02-036.md` |
 | 2026-11-19 | `EP-02-040` | `PENDING` | `COMPLETED` | `execution-records/EP-02-040.md` |
 | 2026-11-21 | `EP-02-035` | `PENDING` | `COMPLETED` — configuration-only, `014` partial | `execution-records/EP-02-035.md` |
+| 2026-11-21 | `EP-02-041` | `PENDING` | `COMPLETED` | `execution-records/EP-02-041.md` |
 
 ---
 
