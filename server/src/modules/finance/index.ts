@@ -55,3 +55,26 @@ export type {
   RecordProviderReferenceInput,
   RecordProviderReferenceResult,
 } from "./provider-reference.service"
+export {
+  FINANCE_LIMIT_PERIODS,
+  FINANCE_LIMIT_TYPES,
+  FINANCIALLY_ELIGIBLE_TIERS,
+  evaluateFinanceLimit,
+  financeLimitPeriodStart,
+  selectFinanceLimit,
+} from "./limits"
+export type {
+  FinanceLimitDecision,
+  FinanceLimitDenialReason,
+  FinanceLimitEvaluation,
+  FinanceLimitPeriod,
+  FinanceLimitRule,
+  FinanceLimitSelection,
+  FinanceLimitType,
+} from "./limits"
+export { FinanceLimitService } from "./limit.service"
+export type {
+  FinanceLimitCheckInput,
+  FinanceLimitView,
+  SetFinanceLimitInput,
+} from "./limit.service"
