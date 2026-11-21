@@ -83,11 +83,14 @@ The task DoD must record what was inspected and why nothing existing served the 
 
 Anticipated paths; update this section if implementation reveals more.
 
-- `supabase/migrations/*_finance_*.sql`
-- `server/src/modules/finance/**`
-- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts`
-- `tests/ledger*.test.ts`, `tests/finance*.test.ts`
-- `tests/db-*` policy suite
+- `server/src/modules/finance/limits.ts`, `limit.service.ts`, `index.ts`
+- `server/src/app.module.ts` — provider registration
+- `supabase/migrations/20261119000200_finance_add_limit_write_path.sql`
+- `server/src/modules/platform/audit.ts` — reason-required action
+- `supabase/schema-baseline.txt` — refreshed snapshot
+- `tests/finance-limits.test.ts`, `tests/module-boundaries.test.ts`
+- `scripts/test-db-migrations.mjs` — write-policy and cross-account assertions
+- `server/src/contracts/schemas.ts` and `server/src/openapi/operations.ts` — unchanged; no endpoint in this task
 
 ## 9. Definition of Done
 
@@ -131,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` — founder-authorised configuration-only scope; two conditions partial |
+| **Execution date** | 2026-11-21 |
+| **Execution record** | `execution-records/EP-02-035.md` |
+| **Blocked by** | — (`EP-02-014` remains the verified tier source and is recorded as a partial dependency; no money flow calls the check until `052`/`053`) |
+| **Notes** | Effective-dated limit resolution, tier_0/missing-tier denial, unset denial, transaction-scoped enforcement and a permission-gated audited configuration write. No thresholds in code or seed. |
 
