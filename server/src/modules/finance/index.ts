@@ -78,6 +78,12 @@ export type {
   FinanceLimitView,
   SetFinanceLimitInput,
 } from "./limit.service"
+export { DepositEligibilityService } from "./deposit-eligibility.service"
+export type {
+  DepositBlockReason,
+  DepositCheckInput,
+  DepositDecision,
+} from "./deposit-eligibility.service"
 export {
   PAYOUT_ACCOUNT_NAME_RESOLVER,
   PayoutAccountService,

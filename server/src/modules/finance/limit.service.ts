@@ -43,6 +43,7 @@ export interface SetFinanceLimitInput {
   readonly period: string
   readonly currency: string
   readonly amount: string
+  readonly isUnlimited?: boolean
   readonly effectiveFrom?: string | null
   readonly effectiveTo?: string | null
   readonly reason: string
@@ -68,6 +69,7 @@ export interface FinanceLimitView {
   readonly period: string
   readonly currency: string
   readonly amount: string
+  readonly isUnlimited: boolean
   readonly effectiveFrom: string
   readonly effectiveTo: string | null
   readonly createdAt: string
@@ -81,6 +83,7 @@ interface FinanceLimitRow {
   period: string
   currency: string
   amount: string
+  is_unlimited: boolean
   effective_from: string
   effective_to: string | null
   created_at: string
@@ -111,6 +114,7 @@ function toView(row: FinanceLimitRow): FinanceLimitView {
     period: row.period,
     currency: row.currency,
     amount: row.amount,
+    isUnlimited: row.is_unlimited === true,
     effectiveFrom: row.effective_from,
     effectiveTo: row.effective_to,
     createdAt: row.created_at,
@@ -128,6 +132,7 @@ function toRule(row: FinanceLimitRow): FinanceLimitRule | null {
     period: row.period as FinanceLimitPeriod,
     currency: row.currency,
     amountMinor,
+    isUnlimited: row.is_unlimited === true,
     effectiveFrom: new Date(row.effective_from),
     effectiveTo: row.effective_to === null ? null : new Date(row.effective_to),
   }
@@ -208,8 +213,8 @@ export class FinanceLimitService {
         async (transaction) => {
           const result = await transaction.query<FinanceLimitRow>(
             `select id, tier, account_id, limit_type, period, currency,
-                    amount::text as amount, effective_from, effective_to,
-                    created_at
+                    amount::text as amount, is_unlimited,
+                    effective_from, effective_to, created_at
                from finance.limits
               order by effective_from desc, id desc`,
           )
@@ -310,18 +315,20 @@ export class FinanceLimitService {
           const result = await transaction.query<FinanceLimitRow>(
             `insert into finance.limits
                (tier, account_id, limit_type, currency, amount, period,
-                effective_from, effective_to, created_by)
-             values ($1, $2, $3, $4, $5::numeric, $6, coalesce($7::timestamptz, now()), $8::timestamptz, $9)
+                is_unlimited, effective_from, effective_to, created_by)
+             values ($1, $2, $3, $4, $5::numeric, $6, $7,
+                     coalesce($8::timestamptz, now()), $9::timestamptz, $10)
              returning id, tier, account_id, limit_type, period, currency,
-                       amount::text as amount, effective_from, effective_to,
-                       created_at`,
+                       amount::text as amount, is_unlimited, effective_from,
+                       effective_to, created_at`,
             [
               input.tier ?? null,
               input.targetAccountId ?? null,
               input.limitType,
               input.currency,
-              minorUnitsToMoney(amountMinor),
+              input.isUnlimited ? "0.0000" : minorUnitsToMoney(amountMinor),
               input.period,
+              input.isUnlimited === true,
               input.effectiveFrom ?? null,
               input.effectiveTo ?? null,
               input.actorUserId,
@@ -346,6 +353,7 @@ export class FinanceLimitService {
               period: view.period,
               currency: view.currency,
               amount: view.amount,
+              isUnlimited: view.isUnlimited,
               effectiveFrom: view.effectiveFrom,
               effectiveTo: view.effectiveTo,
             },
@@ -375,6 +383,17 @@ export class FinanceLimitService {
   ): Promise<void> {
     const decision = await this.evaluate(transaction, input)
     if (!decision.allowed) deny(decision)
+  }
+
+  /**
+   * The decision without throwing, for a caller that must branch on the reason
+   * (the deposit cap sets a KYC-upgrade hold instead of only denying).
+   */
+  async evaluateWithin(
+    transaction: TransactionContext,
+    input: FinanceLimitCheckInput,
+  ): Promise<FinanceLimitDecision> {
+    return this.evaluate(transaction, input)
   }
 
   /** Read-only check in its own transaction, for a preflight or a test. */
@@ -432,7 +451,8 @@ export class FinanceLimitService {
     const tier = input.tier ?? "tier_0"
     const rules = await transaction.query<FinanceLimitRow>(
       `select id, tier, account_id, limit_type, period, currency,
-              amount::text as amount, effective_from, effective_to, created_at
+              amount::text as amount, is_unlimited, effective_from,
+              effective_to, created_at
          from finance.limits
         where currency = $1
           and limit_type = $2

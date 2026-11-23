@@ -63,6 +63,7 @@ function harness(
     readonly available?: string
     readonly denyLimit?: boolean
     readonly listRows?: Row[]
+    readonly hold?: string | null
   } = {},
 ) {
   const queries: QueryCall[] = []
@@ -91,6 +92,13 @@ function harness(
     },
     async query(text: string, values?: readonly unknown[]) {
       queries.push({ text, values })
+      if (
+        text.includes("select financial_hold_reason from identity.accounts")
+      ) {
+        return {
+          rows: [{ financial_hold_reason: options.hold ?? null }],
+        }
+      }
       if (text.includes("from finance.payout_requests pr")) {
         if (text.includes("idempotency_key")) {
           return { rows: existing ? [existing] : [] }
@@ -193,9 +201,18 @@ describe("payout request eligibility", () => {
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
   })
 
+  it("refuses while a KYC-upgrade hold is active", async () => {
+    const test = harness({ hold: "kyc_upgrade_required" })
+
+    await expect(test.service.request(requestInput())).rejects.toMatchObject({
+      code: "KYC_REQUIRED",
+      statusCode: 403,
+    })
+    expect(test.insertValues).toBeUndefined()
+  })
+
   it("refuses an unbound destination", async () => {
     const test = harness({ destination: null })
-
     await expect(test.service.request(requestInput())).rejects.toMatchObject({
       code: "PAYOUT_ACCOUNT_REQUIRED",
       statusCode: 403,

@@ -144,8 +144,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 - `finance.payout_requests` with the approved `PAYOUT_STATES`, owner-scoped RLS, a `REQUESTED`-only
   insert and a guarded update path (`20261123000200`, `20261123000300`).
-- `PayoutRequestService.request` refuses a missing/sub-`tier_1` tier, an invalid or non-NGN amount,
-  an unbound or unverified destination, an unmet `withdrawal` limit and an insufficient balance.
+- `PayoutRequestService.request` refuses a missing/sub-`tier_1` tier, an active KYC-upgrade hold, an
+  invalid or non-NGN amount, an unbound or unverified destination, an unmet `withdrawal` limit and an
+  insufficient balance.
 - Unique per-account idempotency; replay returns the first request, a changed amount/destination is a
   conflict. `list` projects only the last four.
 - `PayoutExecutionService.execute` posts the reserve (wallet credit, payout-payable debit), calls the
@@ -161,7 +162,9 @@ Planned tests; no run is claimed until the execution record records the result.
 - `EP-02-015` must set the tier from a verification decision; today a verifier assigns it through
   `POST /v1/control/accounts/{id}/kyc-tier`.
 - The CBN daily withdrawal limits are seeded at ₦30,000/₦100,000/₦1,000,000 for
-  `tier_1`/`tier_2`/`tier_3`; deposits are not CBN-capped. `VFD_SOURCE_ACCOUNT` must still be configured.
+  `tier_1`/`tier_2`/`tier_3`; the single-deposit caps are ₦20,000/₦50,000/unlimited. `EP-02-052` must
+  call `DepositEligibilityService`; an over-cap deposit sets a hold that blocks withdrawals.
+  `VFD_SOURCE_ACCOUNT` must still be configured.
 - Provider reference linkage to `finance.provider_references` remains for reconciliation/audit coverage.
 - `pnpm test:db`/`db:snapshot` must run in CI; no local PostgreSQL was available.
 - `EP-02-054` adds the independent RLS eligibility gate.

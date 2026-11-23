@@ -1772,6 +1772,28 @@ export class IdentityService {
   }
 
   /**
+   * The active fund-transaction hold, or null. A deposit above the tier's CBN
+   * cap sets `kyc_upgrade_required`; every fund transaction must check it.
+   */
+  async getFinancialHold(
+    accountId: string,
+    userId: string,
+  ): Promise<string | null> {
+    return this.database.withTransaction(
+      { identity: { accountId, userId } },
+      async (transaction) => {
+        const result = await transaction.query<{
+          financial_hold_reason: string | null
+        }>(
+          "select financial_hold_reason from identity.accounts where id = $1",
+          [accountId],
+        )
+        return result.rows[0]?.financial_hold_reason ?? null
+      },
+    )
+  }
+
+  /**
    * Assigns the effective KYC tier. Only the approved `tier_0`/`tier_1` values
    * are accepted; the database function re-checks the verifier permission. The
    * caller must be a control-portal verifier.

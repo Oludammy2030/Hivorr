@@ -134,11 +134,11 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `IN PROGRESS` — CBN 3-tier source, withdrawal caps, capability input and audited verifier assignment |
+| **Status** | `IN PROGRESS` — CBN 3-tier source, withdrawal/deposit caps, KYC-upgrade hold and audited verifier assignment |
 | **Execution date** | 2026-11-23 |
 | **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-014.md` |
-| **Blocked by** | Per-tier evidence rules; verification-to-tier wiring (`EP-02-015`); database integration gate |
-| **Notes** | Founder decision 2026-11-23: full CBN 3-tier model. Only withdrawals follow CBN; deposits are not capped because Hivorr is not a bank. |
+| **Blocked by** | Per-tier evidence rules; verification-to-tier wiring (`EP-02-015`); the deposit-posting caller (`EP-02-052`); database integration gate |
+| **Notes** | Founder decision 2026-11-23: full CBN 3-tier model. Deposits above the tier's single-deposit cap set a KYC-upgrade hold and block fund transactions; withdrawals have separate daily caps. |
 
 ## 14. Partial increment record
 
@@ -150,12 +150,18 @@ Planned tests; no run is claimed until the execution record records the result.
 - `kycTier` in the capability input and session contract, so `wallet.withdraw` can be evaluated.
 - `POST /v1/control/accounts/{id}/kyc-tier` for an audited verifier assignment.
 - `finance.limits` daily withdrawal caps: tier_1 ₦30,000, tier_2 ₦100,000, tier_3 ₦1,000,000.
+- `finance.limits` single-deposit caps: tier_1 ₦20,000, tier_2 ₦50,000, tier_3 unlimited.
+- `DepositEligibilityService`: an over-cap deposit sets `kyc_upgrade_required`, refuses the credit and
+  audits `finance.deposit_blocked_kyc_upgrade`; withdrawals/payouts check the hold.
 - Self-service withdrawal endpoints consume the session tier and the `withdrawal` limit.
 
 **Open items**
 
 - The evidence required for each CBN tier remains open.
 - `EP-02-015` must set the tier from a verification decision; today a verifier assigns it.
+- `EP-02-052` must call `DepositEligibilityService` when deposit posting lands.
+- An over-cap deposit cannot be stopped at the bank; the unmatched collection credit needs
+  reconciliation/manual review.
 - No tier history table; the audit log is the history.
 - `pnpm test:db`/`db:snapshot` must run in CI.
 - Deposits are not CBN-capped and do not trigger a hold; the earlier proposal was withdrawn.

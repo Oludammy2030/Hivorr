@@ -55,6 +55,7 @@ import { EvidenceService } from "./modules/admin/evidence.service"
 import { VerificationService } from "./modules/admin/verification.service"
 import { DisputeService } from "./modules/admin/dispute.service"
 import { ProfileService } from "./modules/profile/profile.service"
+import { DepositEligibilityService } from "./modules/finance/deposit-eligibility.service"
 import { LedgerService } from "./modules/finance/ledger.service"
 import { EscrowService } from "./modules/finance/escrow.service"
 import { FinanceLimitService } from "./modules/finance/limit.service"
@@ -194,6 +195,7 @@ export class AppModule {
         LedgerService,
         WalletService,
         EscrowService,
+        DepositEligibilityService,
         ProviderReferenceService,
         FinanceLimitService,
         PayoutAccountService,

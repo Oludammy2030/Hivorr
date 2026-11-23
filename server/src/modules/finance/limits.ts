@@ -42,6 +42,7 @@ export interface FinanceLimitRule {
   readonly period: FinanceLimitPeriod
   readonly currency: string
   readonly amountMinor: bigint
+  readonly isUnlimited: boolean
   readonly effectiveFrom: Date
   readonly effectiveTo: Date | null
 }
@@ -125,6 +126,10 @@ export function evaluateFinanceLimit(
 
   if (!input.rule) {
     return { allowed: false, reason: "not_configured", rule: null }
+  }
+
+  if (input.rule.isUnlimited) {
+    return { allowed: true, rule: input.rule }
   }
 
   if (input.rule.limitType === "wallet_balance") {

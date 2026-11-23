@@ -21,6 +21,7 @@ function rule(overrides: Partial<FinanceLimitRule> = {}): FinanceLimitRule {
     period: "per_transaction",
     currency: "NGN",
     amountMinor: 1_000_000_000n,
+    isUnlimited: false,
     effectiveFrom: new Date("2026-01-01T00:00:00.000Z"),
     effectiveTo: null,
     ...overrides,

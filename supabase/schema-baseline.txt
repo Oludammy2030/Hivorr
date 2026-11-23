@@ -451,6 +451,7 @@ finance | limits | effective_from | timestamp with time zone | timestamptz | NO 
 finance | limits | effective_to | timestamp with time zone | timestamptz | YES | -
 finance | limits | created_by | uuid | uuid | YES | -
 finance | limits | created_at | timestamp with time zone | timestamptz | NO | now()
+finance | limits | is_unlimited | boolean | bool | NO | false
 finance | payout_accounts | id | uuid | uuid | NO | platform.uuidv7()
 finance | payout_accounts | account_id | uuid | uuid | NO | -
 finance | payout_accounts | bank_code | text | text | NO | -
@@ -552,6 +553,8 @@ identity | accounts | created_at | timestamp with time zone | timestamptz | NO |
 identity | accounts | updated_at | timestamp with time zone | timestamptz | NO | now()
 identity | accounts | kyc_tier | text | text | NO | 'tier_0'::text
 identity | accounts | kyc_tier_updated_at | timestamp with time zone | timestamptz | NO | now()
+identity | accounts | financial_hold_reason | text | text | YES | -
+identity | accounts | financial_hold_at | timestamp with time zone | timestamptz | YES | -
 identity | credentials | user_id | uuid | uuid | NO | -
 identity | credentials | password_hash | text | text | NO | -
 identity | credentials | password_updated_at | timestamp with time zone | timestamptz | NO | now()
@@ -1028,6 +1031,7 @@ finance | reconciliation_runs | reconciliation_runs_pkey | p | PRIMARY KEY (id)
 finance | reconciliation_runs | reconciliation_runs_provider_check | c | CHECK (provider ~ '^[a-z][a-z0-9_-]{1,39}$'::text)
 finance | reconciliation_runs | reconciliation_runs_provider_period_start_period_end_curren_key | u | UNIQUE (provider, period_start, period_end, currency)
 finance | reconciliation_runs | reconciliation_runs_status_check | c | CHECK (status = ANY (ARRAY['running'::text, 'matched'::text, 'mismatch'::text, 'resolved'::text]))
+identity | accounts | accounts_financial_hold_reason_check | c | CHECK (financial_hold_reason = ANY (ARRAY['kyc_upgrade_required'::text]))
 identity | accounts | accounts_kyc_tier_check | c | CHECK (kyc_tier = ANY (ARRAY['tier_0'::text, 'tier_1'::text, 'tier_2'::text, 'tier_3'::text]))
 identity | accounts | accounts_pkey | p | PRIMARY KEY (id)
 identity | accounts | accounts_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text, 'closed'::text]))

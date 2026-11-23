@@ -334,6 +334,20 @@ export class PayoutRequestService {
         },
 
         async (transaction) => {
+          const hold = await transaction.query<{
+            financial_hold_reason: string | null
+          }>(
+            "select financial_hold_reason from identity.accounts where id = $1",
+            [input.accountId],
+          )
+          if (hold.rows[0]?.financial_hold_reason) {
+            throw new ApiError(
+              "KYC_REQUIRED",
+              "A deposit above your tier limit requires a KYC upgrade before further fund transactions.",
+              403,
+            )
+          }
+
           const existing = await transaction.query<PayoutRequestRow>(
             `select pr.id, pr.reference, pr.payout_account_id,
                     pa.account_number_last4, pr.amount::text as amount,

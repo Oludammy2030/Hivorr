@@ -72,6 +72,7 @@ describe("ten-module skeleton", () => {
 
   it("exposes the finance posting, wallet, escrow, provider and limit domains", () => {
     expect(sourceFiles(path.join(modulesRoot, "finance"))).toEqual([
+      "deposit-eligibility.service.ts",
       "escrow.service.ts",
       "idempotency.ts",
       "index.ts",
