@@ -257,7 +257,7 @@ export class PayoutExecutionService {
               accountId: input.accountId,
               userId: input.userId,
               tier,
-              limitType: "payout",
+              limitType: "withdrawal",
               currency: request.currency,
               amount: request.amount,
               direction: "out",

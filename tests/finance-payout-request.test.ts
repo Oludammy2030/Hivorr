@@ -259,7 +259,7 @@ describe("payout request eligibility", () => {
     expect(test.insertValues?.[6]).toBe("payout-key-1")
     expect(test.limitChecks).toHaveLength(1)
     expect(test.limitChecks[0]).toMatchObject({
-      limitType: "payout",
+      limitType: "withdrawal",
       direction: "out",
       amount: "50.0000",
     })

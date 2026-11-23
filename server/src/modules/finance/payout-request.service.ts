@@ -394,7 +394,7 @@ export class PayoutRequestService {
 
             tier,
 
-            limitType: "payout",
+            limitType: "withdrawal",
 
             currency: input.currency,
 

@@ -135,7 +135,7 @@ Planned tests; no run is claimed until the execution record records the result.
 | **Status** | `IN PROGRESS` — self-service API, automatic execution and a minimal KYC tier source built; verification wiring and DB certification deferred |
 | **Execution date** | 2026-11-23 |
 | **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-053.md` |
-| **Blocked by** | Verification-to-tier wiring (`EP-02-015`); a configured `payout` limit and `VFD_SOURCE_ACCOUNT`; database integration gate |
+| **Blocked by** | Verification-to-tier wiring (`EP-02-015`); CBN framework confirmation for the tier_1 cap; `VFD_SOURCE_ACCOUNT`; database integration gate |
 | **Notes** | Founder ruling 2026-11-23: a user must be able to withdraw their own funds without staff approval. `POST /v1/wallet/withdrawals` is self-service; the manual maker-checker is removed from scope. |
 
 ## 14. Partial increment record
@@ -145,7 +145,7 @@ Planned tests; no run is claimed until the execution record records the result.
 - `finance.payout_requests` with the approved `PAYOUT_STATES`, owner-scoped RLS, a `REQUESTED`-only
   insert and a guarded update path (`20261123000200`, `20261123000300`).
 - `PayoutRequestService.request` refuses a missing/sub-`tier_1` tier, an invalid or non-NGN amount,
-  an unbound or unverified destination, an unmet `payout` limit and an insufficient balance.
+  an unbound or unverified destination, an unmet `withdrawal` limit and an insufficient balance.
 - Unique per-account idempotency; replay returns the first request, a changed amount/destination is a
   conflict. `list` projects only the last four.
 - `PayoutExecutionService.execute` posts the reserve (wallet credit, payout-payable debit), calls the
@@ -160,7 +160,8 @@ Planned tests; no run is claimed until the execution record records the result.
 
 - `EP-02-015` must set the tier from a verification decision; today a verifier assigns it through
   `POST /v1/control/accounts/{id}/kyc-tier`.
-- A `payout` limit and `VFD_SOURCE_ACCOUNT` must be configured; no threshold or account is seeded.
+- The `tier_1` daily withdrawal limit is seeded at NGN 100,000 from CBN Level 2; higher tiers and the
+  exact framework mapping remain open. `VFD_SOURCE_ACCOUNT` must still be configured.
 - Provider reference linkage to `finance.provider_references` remains for reconciliation/audit coverage.
 - `pnpm test:db`/`db:snapshot` must run in CI; no local PostgreSQL was available.
 - `EP-02-054` adds the independent RLS eligibility gate.
