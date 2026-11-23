@@ -45,6 +45,8 @@ const validStaging = {
     "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
   SESSION_ISSUER: "hivorr-staging",
   MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+  PAYOUT_ENCRYPTION_KEY: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
+  PAYOUT_FINGERPRINT_KEY: "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=",
 } as Record<string, string>
 
 function keysOf(source: string) {
@@ -86,7 +88,12 @@ describe("configuration contract", () => {
   })
 
   it("fails startup when a staging secret is missing", () => {
-    for (const name of ["DATABASE_URL", "MFA_ENCRYPTION_KEY"]) {
+    for (const name of [
+      "DATABASE_URL",
+      "MFA_ENCRYPTION_KEY",
+      "PAYOUT_ENCRYPTION_KEY",
+      "PAYOUT_FINGERPRINT_KEY",
+    ]) {
       const incomplete = { ...validStaging }
       delete incomplete[name]
       expect(() => parseConfig(incomplete)).toThrow(ConfigurationError)

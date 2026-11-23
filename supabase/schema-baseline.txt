@@ -56,6 +56,7 @@ finance | journal_entries
 finance | ledger_accounts
 finance | limits
 finance | payout_accounts
+finance | payout_requests
 finance | postings
 finance | provider_references
 finance | reconciliation_items
@@ -465,6 +466,25 @@ finance | payout_accounts | provider_reference | text | text | YES | -
 finance | payout_accounts | verified_at | timestamp with time zone | timestamptz | YES | -
 finance | payout_accounts | created_at | timestamp with time zone | timestamptz | NO | now()
 finance | payout_accounts | updated_at | timestamp with time zone | timestamptz | NO | now()
+finance | payout_requests | id | uuid | uuid | NO | platform.uuidv7()
+finance | payout_requests | reference | text | text | NO | -
+finance | payout_requests | account_id | uuid | uuid | NO | -
+finance | payout_requests | payout_account_id | uuid | uuid | NO | -
+finance | payout_requests | amount | numeric | numeric | NO | -
+finance | payout_requests | currency | text | text | NO | -
+finance | payout_requests | status | text | text | NO | 'REQUESTED'::text
+finance | payout_requests | idempotency_key | text | text | NO | -
+finance | payout_requests | requested_by | uuid | uuid | NO | -
+finance | payout_requests | approved_by | uuid | uuid | YES | -
+finance | payout_requests | provider | text | text | YES | -
+finance | payout_requests | provider_reference | text | text | YES | -
+finance | payout_requests | failure_code | text | text | YES | -
+finance | payout_requests | failure_message | text | text | YES | -
+finance | payout_requests | journal_entry_id | uuid | uuid | YES | -
+finance | payout_requests | reversal_entry_id | uuid | uuid | YES | -
+finance | payout_requests | created_at | timestamp with time zone | timestamptz | NO | now()
+finance | payout_requests | updated_at | timestamp with time zone | timestamptz | NO | now()
+finance | payout_requests | completed_at | timestamp with time zone | timestamptz | YES | -
 finance | postings | id | uuid | uuid | NO | platform.uuidv7()
 finance | postings | entry_id | uuid | uuid | NO | -
 finance | postings | ledger_account_id | uuid | uuid | NO | -
@@ -957,6 +977,23 @@ finance | payout_accounts | payout_accounts_check | c | CHECK (status <> 'verifi
 finance | payout_accounts | payout_accounts_encryption_key_id_check | c | CHECK (length(btrim(encryption_key_id)) >= 1 AND length(btrim(encryption_key_id)) <= 120)
 finance | payout_accounts | payout_accounts_pkey | p | PRIMARY KEY (id)
 finance | payout_accounts | payout_accounts_status_check | c | CHECK (status = ANY (ARRAY['pending'::text, 'verified'::text, 'rejected'::text, 'disabled'::text]))
+finance | payout_requests | payout_requests_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE RESTRICT
+finance | payout_requests | payout_requests_account_id_idempotency_key_key | u | UNIQUE (account_id, idempotency_key)
+finance | payout_requests | payout_requests_amount_check | c | CHECK (amount > 0::numeric)
+finance | payout_requests | payout_requests_approved_by_fkey | f | FOREIGN KEY (approved_by) REFERENCES identity.users(id) ON DELETE RESTRICT
+finance | payout_requests | payout_requests_check | c | CHECK (approved_by IS NULL OR approved_by <> requested_by)
+finance | payout_requests | payout_requests_check1 | c | CHECK (status <> 'PAID'::text OR (provider_reference IS NOT NULL AND completed_at IS NOT NULL))
+finance | payout_requests | payout_requests_check2 | c | CHECK (status <> 'FAILED'::text OR failure_code IS NOT NULL)
+finance | payout_requests | payout_requests_currency_check | c | CHECK (currency ~ '^[A-Z]{3}$'::text)
+finance | payout_requests | payout_requests_idempotency_key_check | c | CHECK (length(btrim(idempotency_key)) >= 8 AND length(btrim(idempotency_key)) <= 200)
+finance | payout_requests | payout_requests_journal_entry_id_fkey | f | FOREIGN KEY (journal_entry_id) REFERENCES finance.journal_entries(id) ON DELETE RESTRICT
+finance | payout_requests | payout_requests_payout_account_id_fkey | f | FOREIGN KEY (payout_account_id) REFERENCES finance.payout_accounts(id) ON DELETE RESTRICT
+finance | payout_requests | payout_requests_pkey | p | PRIMARY KEY (id)
+finance | payout_requests | payout_requests_reference_check | c | CHECK (reference ~ '^PAY-[A-Z0-9]{10,24}$'::text)
+finance | payout_requests | payout_requests_reference_key | u | UNIQUE (reference)
+finance | payout_requests | payout_requests_requested_by_fkey | f | FOREIGN KEY (requested_by) REFERENCES identity.users(id) ON DELETE RESTRICT
+finance | payout_requests | payout_requests_reversal_entry_id_fkey | f | FOREIGN KEY (reversal_entry_id) REFERENCES finance.journal_entries(id) ON DELETE RESTRICT
+finance | payout_requests | payout_requests_status_check | c | CHECK (status = ANY (ARRAY['REQUESTED'::text, 'APPROVED'::text, 'RESERVED'::text, 'PROCESSING'::text, 'PAID'::text, 'FAILED'::text, 'CANCELLED'::text]))
 finance | postings | postings_activity_id_check | c | CHECK (activity_id = ANY (ARRAY['market.buy'::text, 'services.hire'::text, 'errands.request'::text, 'market.sell'::text, 'services.offer'::text, 'logistics.provide'::text]))
 finance | postings | postings_amount_check | c | CHECK (amount > 0::numeric)
 finance | postings | postings_balance | t | TRIGGER DEFERRABLE INITIALLY DEFERRED
@@ -1200,6 +1237,10 @@ finance | limits | limits_tier_idx | CREATE INDEX limits_tier_idx ON finance.lim
 finance | payout_accounts | payout_accounts_account_idx | CREATE INDEX payout_accounts_account_idx ON finance.payout_accounts USING btree (account_id, status)
 finance | payout_accounts | payout_accounts_active_idx | CREATE UNIQUE INDEX payout_accounts_active_idx ON finance.payout_accounts USING btree (account_id, bank_code, account_number_fingerprint) WHERE (status <> 'disabled'::text)
 finance | payout_accounts | payout_accounts_pkey | CREATE UNIQUE INDEX payout_accounts_pkey ON finance.payout_accounts USING btree (id)
+finance | payout_requests | payout_requests_account_idx | CREATE INDEX payout_requests_account_idx ON finance.payout_requests USING btree (account_id, created_at DESC)
+finance | payout_requests | payout_requests_pkey | CREATE UNIQUE INDEX payout_requests_pkey ON finance.payout_requests USING btree (id)
+finance | payout_requests | payout_requests_reference_key | CREATE UNIQUE INDEX payout_requests_reference_key ON finance.payout_requests USING btree (reference)
+finance | payout_requests | payout_requests_status_idx | CREATE INDEX payout_requests_status_idx ON finance.payout_requests USING btree (status, created_at) WHERE (status = ANY (ARRAY['REQUESTED'::text, 'APPROVED'::text, 'RESERVED'::text, 'PROCESSING'::text]))
 finance | postings | postings_account_idx | CREATE INDEX postings_account_idx ON finance.postings USING btree (ledger_account_id, created_at)
 finance | postings | postings_activity_idx | CREATE INDEX postings_activity_idx ON finance.postings USING btree (activity_id) WHERE (activity_id IS NOT NULL)
 finance | postings | postings_entry_idx | CREATE INDEX postings_entry_idx ON finance.postings USING btree (entry_id)
@@ -1317,6 +1358,7 @@ finance | journal_entries | true | false
 finance | ledger_accounts | true | false
 finance | limits | true | false
 finance | payout_accounts | true | false
+finance | payout_requests | true | false
 finance | postings | true | false
 finance | provider_references | true | false
 finance | reconciliation_items | true | false
@@ -1365,7 +1407,12 @@ finance | ledger_accounts | ledger_accounts_insert | PERMISSIVE | {hivorr_api} |
 finance | ledger_accounts | ledger_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | ((owner_type = 'account'::text) AND (owner_id = platform.current_account_id())) | -
 finance | limits | limits_insert | PERMISSIVE | {hivorr_api} | INSERT | - | admin.actor_holds_platform_permission(platform.current_user_id(), 'admin.configuration.write'::text)
 finance | limits | limits_select | PERMISSIVE | {hivorr_api} | SELECT | (((platform.current_account_id() IS NOT NULL) AND ((account_id = platform.current_account_id()) OR ((account_id IS NULL) AND (tier IS NOT NULL)))) OR admin.actor_holds_platform_permission(platform.current_user_id(), 'admin.configuration.write'::text)) | -
+finance | payout_accounts | payout_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 finance | payout_accounts | payout_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
+finance | payout_accounts | payout_accounts_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+finance | payout_requests | payout_requests_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (((account_id = platform.current_account_id()) AND (requested_by = platform.current_user_id()) AND (status = 'REQUESTED'::text) AND (approved_by IS NULL) AND (provider IS NULL) AND (provider_reference IS NULL) AND (journal_entry_id IS NULL) AND (reversal_entry_id IS NULL) AND (completed_at IS NULL)))
+finance | payout_requests | payout_requests_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
+finance | payout_requests | payout_requests_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 finance | postings | postings_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (platform.current_account_id() IS NOT NULL)
 finance | postings | postings_select | PERMISSIVE | {hivorr_api} | SELECT | ((EXISTS ( SELECT 1 FROM finance.ledger_accounts a WHERE ((a.id = postings.ledger_account_id) AND (a.owner_type = 'account'::text) AND (a.owner_id = platform.current_account_id())))) OR (EXISTS ( SELECT 1 FROM finance.escrow_accounts ea WHERE ((ea.ledger_account_id = postings.ledger_account_id) AND (ea.payer_account_id = platform.current_account_id()))))) | -
 finance | provider_references | provider_references_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
@@ -1713,7 +1760,9 @@ finance | limits | postgres | SELECT | YES
 finance | limits | postgres | TRIGGER | YES
 finance | limits | postgres | TRUNCATE | YES
 finance | limits | postgres | UPDATE | YES
+finance | payout_accounts | hivorr_api | INSERT | NO
 finance | payout_accounts | hivorr_api | SELECT | NO
+finance | payout_accounts | hivorr_api | UPDATE | NO
 finance | payout_accounts | postgres | DELETE | YES
 finance | payout_accounts | postgres | INSERT | YES
 finance | payout_accounts | postgres | REFERENCES | YES
@@ -1721,6 +1770,16 @@ finance | payout_accounts | postgres | SELECT | YES
 finance | payout_accounts | postgres | TRIGGER | YES
 finance | payout_accounts | postgres | TRUNCATE | YES
 finance | payout_accounts | postgres | UPDATE | YES
+finance | payout_requests | hivorr_api | INSERT | NO
+finance | payout_requests | hivorr_api | SELECT | NO
+finance | payout_requests | hivorr_api | UPDATE | NO
+finance | payout_requests | postgres | DELETE | YES
+finance | payout_requests | postgres | INSERT | YES
+finance | payout_requests | postgres | REFERENCES | YES
+finance | payout_requests | postgres | SELECT | YES
+finance | payout_requests | postgres | TRIGGER | YES
+finance | payout_requests | postgres | TRUNCATE | YES
+finance | payout_requests | postgres | UPDATE | YES
 finance | postings | hivorr_api | INSERT | NO
 finance | postings | hivorr_api | SELECT | NO
 finance | postings | postgres | DELETE | YES
@@ -2047,6 +2106,7 @@ admin | set_staff_department | p_user_id uuid, p_department_key text, p_reason t
 admin | set_staff_status | p_user_id uuid, p_status text, p_reason text | true | v | search_path=""
 admin | staff_status_of | p_actor_user_id uuid, p_user_id uuid | true | s | search_path=""
 admin | supersede_case_evidence | p_actor_user_id uuid, p_evidence_id uuid, p_replacement_id uuid, p_reason text | true | v | search_path=""
+finance | ensure_ledger_account | p_kind text, p_owner_type text, p_owner_id uuid, p_currency text | true | v | search_path=""
 identity | actor_has_grant | p_actor_user_id uuid, p_scope text, p_environment text | true | s | search_path=identity, pg_temp
 identity | create_grant | p_actor_user_id uuid, p_email text, p_grant_type text, p_scope text, p_environment text, p_expires_at timestamp with time zone | true | v | search_path=identity, pg_temp
 identity | find_email_verification_token | p_token_hash text | true | s | search_path=identity, pg_temp
@@ -2078,9 +2138,12 @@ private | current_account_id |  | false | s | -
 private | current_user_id |  | false | s | -
 private | reject_ledger_mutation |  | true | v | search_path=""
 private | reject_ledger_truncate |  | true | v | search_path=""
+private | reject_payout_account_delete |  | true | v | search_path=""
 private | set_identity_context | account_id uuid, user_id uuid | false | v | -
 private | validate_escrow_account |  | true | v | search_path=""
 private | validate_escrow_transition |  | true | v | search_path=""
+private | validate_payout_account_write |  | true | v | search_path=""
+private | validate_payout_request_transition |  | true | v | search_path=""
 private | validate_posting |  | true | v | search_path=""
 profile | enforce_activation_transition |  | false | v | -
 

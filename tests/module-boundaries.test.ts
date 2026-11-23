@@ -79,6 +79,10 @@ describe("ten-module skeleton", () => {
       "ledger.ts",
       "limit.service.ts",
       "limits.ts",
+      "payout-account-crypto.ts",
+      "payout-account.service.ts",
+      "payout-execution.service.ts",
+      "payout-request.service.ts",
       "provider-reference.service.ts",
       "wallet.service.ts",
     ])
@@ -120,7 +124,7 @@ describe("ten-module skeleton", () => {
     }
   })
 
-  it("creates finance tables only in the approved EP-02 ledger migration", () => {
+  it("creates finance tables only in the approved EP-02 migrations", () => {
     const migrations = path.join(root, "supabase", "migrations")
     const pattern = /create\s+table\s+(?:if\s+not\s+exists\s+)?finance\./i
     const creators = readdirSync(migrations)
@@ -130,6 +134,7 @@ describe("ten-module skeleton", () => {
       )
     expect(creators).toEqual([
       "20261118000100_finance_create_ledger_tables.sql",
+      "20261123000200_finance_add_payout_requests.sql",
     ])
   })
 })

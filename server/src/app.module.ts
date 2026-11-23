@@ -10,7 +10,15 @@ import { API_CONFIG, type ApiConfig } from "./config"
 import { DatabaseService } from "./db/database.service"
 import { EMAIL_ADAPTER } from "./integrations/email/email.adapter"
 import { createEmailAdapter } from "./integrations/email/zeptomail.adapter"
-import { VFD_AUTH, VfdAuthClient } from "./integrations/vfd"
+import {
+  VFD_ACCOUNT_NAME,
+  VFD_AUTH,
+  VFD_PAYOUTS,
+  VfdAccountNameClient,
+  VfdAuthClient,
+  VfdPayoutClient,
+  VfdSha512TransferSigner,
+} from "./integrations/vfd"
 import { HealthController } from "./health/health.controller"
 import { GrantsController } from "./modules/identity/grants/grants.controller"
 import { GrantsService } from "./modules/identity/grants/grants.service"
@@ -48,6 +56,15 @@ import { ProfileService } from "./modules/profile/profile.service"
 import { LedgerService } from "./modules/finance/ledger.service"
 import { EscrowService } from "./modules/finance/escrow.service"
 import { FinanceLimitService } from "./modules/finance/limit.service"
+import {
+  PayoutAccountService,
+  PAYOUT_ACCOUNT_NAME_RESOLVER,
+} from "./modules/finance/payout-account.service"
+import { PayoutRequestService } from "./modules/finance/payout-request.service"
+import {
+  PAYOUT_PROVIDER,
+  PayoutExecutionService,
+} from "./modules/finance/payout-execution.service"
 import { ProviderReferenceService } from "./modules/finance/provider-reference.service"
 import { WalletService } from "./modules/finance/wallet.service"
 import { TaxonomyAdminService } from "./modules/platform/taxonomy.service"
@@ -120,6 +137,40 @@ export class AppModule {
             new VfdAuthClient(apiConfig.vfd),
           inject: [API_CONFIG],
         },
+        {
+          provide: VFD_ACCOUNT_NAME,
+          useFactory: (apiConfig: ApiConfig, auth: VfdAuthClient) =>
+            new VfdAccountNameClient(auth, {
+              requestTimeoutMs: apiConfig.vfd.requestTimeoutMs,
+              maxRetries: apiConfig.vfd.maxRetries,
+              retryBaseMs: apiConfig.vfd.retryBaseMs,
+            }),
+          inject: [API_CONFIG, VFD_AUTH],
+        },
+        {
+          provide: PAYOUT_ACCOUNT_NAME_RESOLVER,
+          useExisting: VFD_ACCOUNT_NAME,
+        },
+        {
+          provide: PAYOUT_PROVIDER,
+          useExisting: VFD_PAYOUTS,
+        },
+        {
+          provide: VFD_PAYOUTS,
+          useFactory: (
+            apiConfig: ApiConfig,
+            auth: VfdAuthClient,
+            accountNames: VfdAccountNameClient,
+          ) =>
+            new VfdPayoutClient(auth, accountNames, {
+              requestTimeoutMs: apiConfig.vfd.requestTimeoutMs,
+              maxRetries: apiConfig.vfd.maxRetries,
+              retryBaseMs: apiConfig.vfd.retryBaseMs,
+              sourceAccountNumber: apiConfig.vfd.sourceAccount,
+              signer: new VfdSha512TransferSigner(),
+            }),
+          inject: [API_CONFIG, VFD_AUTH, VFD_ACCOUNT_NAME],
+        },
         DatabaseService,
         IdentityService,
         ProfileService,
@@ -141,6 +192,9 @@ export class AppModule {
         EscrowService,
         ProviderReferenceService,
         FinanceLimitService,
+        PayoutAccountService,
+        PayoutRequestService,
+        PayoutExecutionService,
       ],
     }
   }

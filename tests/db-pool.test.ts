@@ -11,6 +11,8 @@ const staging = parseConfig({
     "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
   SESSION_ISSUER: "hivorr-staging",
   MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+  PAYOUT_ENCRYPTION_KEY: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
+  PAYOUT_FINGERPRINT_KEY: "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=",
 })
 
 const certificate =
@@ -53,6 +55,8 @@ describe("database pool configuration", () => {
       DATABASE_SSL_CA: certificate,
       SESSION_ISSUER: "hivorr-staging",
       MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      PAYOUT_ENCRYPTION_KEY: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
+      PAYOUT_FINGERPRINT_KEY: "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=",
     })
     const pool = poolFor(withCa, { applicationName: "hivorr-api-staging" })
     try {

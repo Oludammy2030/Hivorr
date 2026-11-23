@@ -129,6 +129,36 @@ const baseConfigSchema = z.object({
     .default(5_000),
   VFD_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
   VFD_RETRY_BASE_MS: z.coerce.number().int().min(50).max(5_000).default(250),
+  /**
+   * The wallet account that funds a payout. Optional: the adapter refuses to
+   * send while it is unset. Never a credential, but financial data, so it is
+   * classified secret in the configuration contract.
+   */
+  VFD_SOURCE_ACCOUNT: z.preprocess(
+    (value) => (value === "" || value === undefined ? undefined : value),
+    z
+      .string()
+      .regex(/^[0-9]{10}$/)
+      .optional(),
+  ),
+  // Payout-account encryption. The account number is encrypted with AES-256-GCM
+  // under a managed key; the fingerprint uses a separate HMAC key. Neither key
+  // may be the other, and neither is ever logged or projected.
+  PAYOUT_ENCRYPTION_KEY: z.string().min(1).optional(),
+  PAYOUT_ENCRYPTION_KEY_ID: z
+    .string()
+    .min(1)
+    .max(120)
+    .regex(/^[a-zA-Z0-9._-]+$/)
+    .default("v1"),
+  PAYOUT_FINGERPRINT_KEY: z.string().min(1).optional(),
+  // The approved number of destinations is not decided. Unset means binding is
+  // refused rather than a number being invented in code. An empty template
+  // value is treated as unset.
+  PAYOUT_ACCOUNT_MAX_ACTIVE: z.preprocess(
+    (value) => (value === "" || value === undefined ? undefined : value),
+    z.coerce.number().int().min(1).max(100).optional(),
+  ),
 })
 
 /**
@@ -214,11 +244,82 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
       path: ["MFA_ENCRYPTION_KEY"],
       message: "MFA_ENCRYPTION_KEY is required in staging and production",
     })
-  } else if (mfaKeyLength(value.MFA_ENCRYPTION_KEY) !== 32) {
+  } else if (base64KeyLength(value.MFA_ENCRYPTION_KEY) !== 32) {
     context.addIssue({
       code: "custom",
       path: ["MFA_ENCRYPTION_KEY"],
       message: "MFA_ENCRYPTION_KEY must be 32 bytes encoded as base64",
+    })
+  }
+
+  if (!value.PAYOUT_ENCRYPTION_KEY) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_ENCRYPTION_KEY"],
+      message: "PAYOUT_ENCRYPTION_KEY is required in staging and production",
+    })
+  } else if (base64KeyLength(value.PAYOUT_ENCRYPTION_KEY) !== 32) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_ENCRYPTION_KEY"],
+      message: "PAYOUT_ENCRYPTION_KEY must be 32 bytes encoded as base64",
+    })
+  }
+  if (!value.PAYOUT_FINGERPRINT_KEY) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_FINGERPRINT_KEY"],
+      message: "PAYOUT_FINGERPRINT_KEY is required in staging and production",
+    })
+  } else if (base64KeyLength(value.PAYOUT_FINGERPRINT_KEY) !== 32) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_FINGERPRINT_KEY"],
+      message: "PAYOUT_FINGERPRINT_KEY must be 32 bytes encoded as base64",
+    })
+  }
+  // Payout keys are a pair: the encryption key protects the account number and
+  // the fingerprint key protects uniqueness. Supplying one without the other is
+  // a configuration error, not a mode.
+  if (
+    Boolean(value.PAYOUT_ENCRYPTION_KEY) !==
+    Boolean(value.PAYOUT_FINGERPRINT_KEY)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_ENCRYPTION_KEY"],
+      message: "Payout encryption and fingerprint keys are supplied as a pair",
+    })
+  }
+  if (
+    value.PAYOUT_ENCRYPTION_KEY &&
+    base64KeyLength(value.PAYOUT_ENCRYPTION_KEY) !== 32
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_ENCRYPTION_KEY"],
+      message: "PAYOUT_ENCRYPTION_KEY must be 32 bytes encoded as base64",
+    })
+  }
+  if (
+    value.PAYOUT_FINGERPRINT_KEY &&
+    base64KeyLength(value.PAYOUT_FINGERPRINT_KEY) !== 32
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_FINGERPRINT_KEY"],
+      message: "PAYOUT_FINGERPRINT_KEY must be 32 bytes encoded as base64",
+    })
+  }
+  if (
+    value.PAYOUT_ENCRYPTION_KEY &&
+    value.PAYOUT_FINGERPRINT_KEY &&
+    value.PAYOUT_ENCRYPTION_KEY === value.PAYOUT_FINGERPRINT_KEY
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["PAYOUT_FINGERPRINT_KEY"],
+      message: "The payout encryption and fingerprint keys must be different",
     })
   }
   // Production must verify the database certificate. Without the CA the driver
@@ -269,7 +370,7 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
  * connections use `db.<ref>.supabase.co`; pooler connections carry the project
  * reference in the username (for example `postgres.<ref>`).
  */
-export function mfaKeyLength(value: string): number {
+export function base64KeyLength(value: string): number {
   return Buffer.from(value, "base64").length
 }
 
@@ -334,6 +435,21 @@ export interface VfdConfig {
   readonly requestTimeoutMs: number
   readonly maxRetries: number
   readonly retryBaseMs: number
+  /** Wallet account that funds a payout. Undefined refuses to send. */
+  readonly sourceAccount: string | undefined
+}
+
+/**
+ * Payout-account protection. The keys are required in staging and production
+ * and are never logged, projected, or returned. The active-destination cap is
+ * deliberately optional: while it is unset, binding is refused rather than a
+ * number being invented.
+ */
+export interface PayoutConfig {
+  readonly encryptionKey: string | undefined
+  readonly encryptionKeyId: string
+  readonly fingerprintKey: string | undefined
+  readonly maxActiveAccounts: number | undefined
 }
 
 export interface ApiConfig {
@@ -362,6 +478,7 @@ export interface ApiConfig {
   readonly auth: AuthAbuseConfig
   readonly worker: WorkerConfig
   readonly vfd: VfdConfig
+  readonly payout: PayoutConfig
 }
 
 export class ConfigurationError extends Error {
@@ -443,6 +560,13 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       requestTimeoutMs: value.VFD_REQUEST_TIMEOUT_MS,
       maxRetries: value.VFD_MAX_RETRIES,
       retryBaseMs: value.VFD_RETRY_BASE_MS,
+      sourceAccount: value.VFD_SOURCE_ACCOUNT,
+    },
+    payout: {
+      encryptionKey: value.PAYOUT_ENCRYPTION_KEY,
+      encryptionKeyId: value.PAYOUT_ENCRYPTION_KEY_ID,
+      fingerprintKey: value.PAYOUT_FINGERPRINT_KEY,
+      maxActiveAccounts: value.PAYOUT_ACCOUNT_MAX_ACTIVE,
     },
   }
 }

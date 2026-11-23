@@ -10,11 +10,12 @@
 | **Phase record root** | `documents/Engineering-Execution/Engineering-Phase-Records/EP-02/` |
 | **Task documentation root** | `documents/Task-Implementation/EP-02/` |
 | **Entry record** | `EP-02-ENTRY-RECORD.md` — `PARTIAL START`, 2026-11-15 |
-| **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation |
+| **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation, payout-account binding and VFD payout adapter |
 | **Total tasks** | **40** (`001`–`073`, per the approved plan §10) |
 | **Completed** | 14 (`EP-02-001`, `EP-02-002`, `EP-02-020`, `EP-02-021`, `EP-02-022`, `EP-02-030`, `EP-02-031`, `EP-02-032`, `EP-02-033`, `EP-02-034`, `EP-02-035`, `EP-02-036`, `EP-02-040`, `EP-02-041`) |
+| **In progress** | 3 (`EP-02-050`, `EP-02-043`, `EP-02-053` — partial increments) |
 | **Blocked** | Verification, KYC ladder, adapter cluster and dependent scopes |
-| **Pending** | 26 |
+| **Pending** | 23 |
 | **Closure authority** | Founder, on the architect’s recommendation, through G5 (`EP-02-073`) |
 
 > **Why this file exists.** The approved phase plan defines what EP-02 must achieve. This overview, the tracker and the task documents turn that plan into the execution record required by the development protocol. They do not open the phase.
@@ -145,13 +146,13 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | 20 | `EP-02-040` | PaymentProvider port and adapter contract | EP-02-031, EP-02-034. | **COMPLETED** — neutral port, fake, contract suite |
 | 21 | `EP-02-041` | VFD authentication and resilience client | EP-02-040; VFD sandbox credentials. | **COMPLETED** — bounded token client, mode guard |
 | 22 | `EP-02-042` | VFD collections adapter | EP-02-041, EP-02-050. | **PENDING** |
-| 23 | `EP-02-043` | VFD payouts adapter | EP-02-041, EP-02-053. | **PENDING** |
+| 23 | `EP-02-043` | VFD payouts adapter | EP-02-041, EP-02-053. | **IN PROGRESS** — partial: documented transfer/status/recipient/source adapter with SHA-512 signer; sandbox deferred |
 | 24 | `EP-02-044` | VFD webhook intake, raw storage and dedupe | EP-02-042, EP-02-043, EP-02-034; founder approval for the new inbound webhook. | **PENDING** |
 | 25 | `EP-02-045` | VFD sandbox certification and settlement evidence | EP-02-042/043/044. | **PENDING** |
-| 26 | `EP-02-050` | Payout account binding, encryption and name enquiry | EP-02-035, EP-02-040, EP-02-043. | **PENDING** |
+| 26 | `EP-02-050` | Payout account binding, encryption and name enquiry | EP-02-035, EP-02-040, EP-02-043. | **IN PROGRESS** — partial: binding, encryption, name enquiry; execution/`043`/`014` deferred |
 | 27 | `EP-02-051` | Payer-name match rule and manual review path | EP-02-042, EP-02-050; G0 payer-name ruling. | **PENDING** |
 | 28 | `EP-02-052` | Deposit posting and idempotent ledger flow | EP-02-031, EP-02-034, EP-02-051. | **PENDING** |
-| 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020. | **PENDING** |
+| 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020. | **IN PROGRESS** — request/eligibility + automatic execution with reserve/reversal; manual maker-checker deferred |
 | 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **PENDING** |
 | 31 | `EP-02-055` | Reconciliation job and exception reporting | EP-02-043/044/052/053; worker. | **PENDING** |
 | 32 | `EP-02-056` | Financial audit coverage and traceability | EP-02-015/016/031/052/053/055; EP-01-036; CP-005. | **PENDING** |

@@ -64,6 +64,34 @@
       "description": "32-byte base64 key that encrypts TOTP secrets. Per environment."
     },
     {
+      "name": "PAYOUT_ENCRYPTION_KEY",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": ["staging", "production"],
+      "description": "32-byte base64 AES-256-GCM key that encrypts payout account numbers. Distinct from the fingerprint key."
+    },
+    {
+      "name": "PAYOUT_ENCRYPTION_KEY_ID",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Version label stored with payout ciphertext. Defaults to v1; rotating the key uses a new label."
+    },
+    {
+      "name": "PAYOUT_FINGERPRINT_KEY",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": ["staging", "production"],
+      "description": "32-byte base64 HMAC-SHA256 key for the payout account-number fingerprint. Distinct from the encryption key."
+    },
+    {
+      "name": "PAYOUT_ACCOUNT_MAX_ACTIVE",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Approved maximum active payout destinations per account. Unset refuses binding rather than inventing a number. [OPEN] pending product approval."
+    },
+    {
       "name": "RELEASE_SHA",
       "source": "config",
       "classification": "public",
@@ -307,6 +335,13 @@
       "classification": "public",
       "requiredIn": [],
       "description": "Exponential retry base for VFD requests. Defaults to 250."
+    },
+    {
+      "name": "VFD_SOURCE_ACCOUNT",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "Ten-digit VFD wallet account that funds a payout. Unset refuses to send. Financial data; never committed."
     },
     {
       "name": "EXPECTED_SUPABASE_PROJECT_REF",

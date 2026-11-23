@@ -132,9 +132,40 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` — partial increment (binding, encryption, name enquiry) |
+| **Execution date** | 2026-11-23 |
+| **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-050.md` |
+| **Blocked by** | `EP-02-043` (payout execution, not built); `EP-02-014` (trusted tier and legal-name source, not built); the approved destination count **[OPEN]** |
+| **Notes** | Founder-authorised partial start. Binding, field-level encryption, provider name enquiry, name match, disable and audit are implemented. Payout execution, payer-name matching, deposits and reconciliation remain deferred. |
+
+## 14. Partial increment record
+
+**Built in this increment**
+
+- Payout configuration: `PAYOUT_ENCRYPTION_KEY`, `PAYOUT_ENCRYPTION_KEY_ID`,
+  `PAYOUT_FINGERPRINT_KEY` and `PAYOUT_ACCOUNT_MAX_ACTIVE`, with pairing, length and distinctness
+  checks. Both keys are required in staging and production.
+- AES-256-GCM payout-account cipher with a separate HMAC-SHA256 fingerprint, last-four projection and
+  account-name normalisation (`server/src/modules/finance/payout-account-crypto.ts`).
+- VFD recipient name enquiry against the documented `/transfer/recipient` endpoint through the existing
+  auth client (`server/src/integrations/vfd/account-name.ts`).
+- `IdentityService.getAccountLegalName` as the public legal-name source.
+- `PayoutAccountService.bind/list/disable`: `tier_1` gate, legal-name match, configured cap, advisory
+  lock, encrypted insert as `verified`, masked reads and audited disable
+  (`server/src/modules/finance/payout-account.service.ts`).
+- Migration `20261123000100_finance_add_payout_account_write_path.sql`: owner-scoped insert/update
+  policies and grants, verified-only insert, disable-only update, immutable bank fields and no delete.
+
+**Open items**
+
+- The approved number of active destinations is **[OPEN]**. `PAYOUT_ACCOUNT_MAX_ACTIVE` unset refuses
+  binding; no number is invented.
+- `EP-02-014` must supply the verified KYC tier and populate the legal name. The service accepts the
+  tier at the session boundary and refuses an empty legal name.
+- `EP-02-043` must exist before payout execution, payer matching (`051`) and deposit posting (`052`)
+  can proceed.
+- The VFD recipient endpoint does not enumerate `transfer_type`; `inter` is used for every bank code
+  and must be confirmed during `EP-02-045` sandbox certification.
+- No HTTP endpoint or UI exposes binding yet.
+- `pnpm test:db` and `db:snapshot` were not run locally (no PostgreSQL instance); they must run in CI.
 

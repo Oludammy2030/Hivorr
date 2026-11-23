@@ -1727,6 +1727,27 @@ export class IdentityService {
     }
   }
 
+  /**
+   * The account's verified legal name, or null while it is unset. Finance calls
+   * this to compare a provider-resolved bank account name; it never reads
+   * `identity.accounts` directly.
+   */
+  async getAccountLegalName(
+    accountId: string,
+    userId: string,
+  ): Promise<string | null> {
+    return this.database.withTransaction(
+      { identity: { accountId, userId } },
+      async (transaction) => {
+        const result = await transaction.query<{ legal_name: string | null }>(
+          "select legal_name from identity.accounts where id = $1",
+          [accountId],
+        )
+        return result.rows[0]?.legal_name ?? null
+      },
+    )
+  }
+
   private cipher(): MfaCipher {
     const cipher = MfaCipher.fromBase64(this.config.mfaEncryptionKey)
     if (!cipher) {

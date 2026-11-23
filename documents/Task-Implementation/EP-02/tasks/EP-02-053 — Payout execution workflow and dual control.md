@@ -132,9 +132,36 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` — request/eligibility and automatic execution built; manual maker-checker and DB certification deferred |
+| **Execution date** | 2026-11-23 |
+| **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-053.md` |
+| **Blocked by** | Manual-payout maker-checker; a configured `payout` limit and `VFD_SOURCE_ACCOUNT`; database integration gate |
+| **Notes** | Founder-authorised. The permission matrix makes `wallet.withdraw` automatic after KYC, a bound verified destination and limits; only manual payouts need dual control. The automatic path is implemented, including reserve and reversal. |
+
+## 14. Partial increment record
+
+**Built in this increment**
+
+- `finance.payout_requests` with the approved `PAYOUT_STATES`, owner-scoped RLS, a `REQUESTED`-only
+  insert and a guarded update path (`20261123000200`, `20261123000300`).
+- `PayoutRequestService.request` refuses a missing/sub-`tier_1` tier, an invalid or non-NGN amount,
+  an unbound or unverified destination, an unmet `payout` limit and an insufficient balance.
+- Unique per-account idempotency; replay returns the first request, a changed amount/destination is a
+  conflict. `list` projects only the last four.
+- `PayoutExecutionService.execute` posts the reserve (wallet credit, payout-payable debit), calls the
+  provider with the request id as the idempotency key, and settles `PAID`/`PROCESSING`/`FAILED`.
+- A definitive failure posts a `reversal` entry in the same transaction as `FAILED`; a timeout or
+  duplicate stays `PROCESSING` without a reversal.
+- `finance.ensure_ledger_account` provisions the wallet and payout-payable accounts transactionally.
+- `LedgerService.postEntryInTransaction` lets the reserve/reversal share the request transaction.
+- Audits: requested, reserved, execution started, processing, paid, failed.
+
+**Open items**
+
+- Manual payouts require a distinct approver; wire them through CP-020 with a dedicated finance
+  approval permission.
+- A `payout` limit and `VFD_SOURCE_ACCOUNT` must be configured; no threshold or account is seeded.
+- Provider reference linkage to `finance.provider_references` remains for reconciliation/audit coverage.
+- `pnpm test:db`/`db:snapshot` must run in CI; no local PostgreSQL was available.
+- `EP-02-054` adds the independent RLS eligibility gate; no HTTP endpoint exists yet.
 

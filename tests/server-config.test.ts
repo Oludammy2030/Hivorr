@@ -6,6 +6,10 @@ import {
   parseConfig,
 } from "../server/src/config"
 
+const MFA_KEY = `${"A".repeat(43)}=`
+const PAYOUT_KEY = `${"B".repeat(43)}=`
+const PAYOUT_FINGERPRINT_KEY = `${"C".repeat(43)}=`
+
 describe("API configuration", () => {
   it("parses a test environment with development defaults", () => {
     const config = parseConfig({ HIVORR_ENV: "test" })
@@ -73,6 +77,8 @@ describe("API configuration", () => {
           "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
         SESSION_ISSUER: "hivorr-staging",
         MFA_ENCRYPTION_KEY: Buffer.from("too-short").toString("base64"),
+        PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+        PAYOUT_FINGERPRINT_KEY: PAYOUT_FINGERPRINT_KEY,
       }),
     ).toThrow(ConfigurationError)
   })
@@ -87,7 +93,9 @@ describe("API configuration", () => {
       DATABASE_SSL_CA:
         "-----BEGIN CERTIFICATE-----fake-----END CERTIFICATE-----",
       SESSION_ISSUER: "hivorr-production",
-      MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      MFA_ENCRYPTION_KEY: MFA_KEY,
+      PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+      PAYOUT_FINGERPRINT_KEY: PAYOUT_FINGERPRINT_KEY,
       API_PORT: "8080",
       CORS_ALLOWED_ORIGINS: "https://hivorr.com, https://control.hivorr.com",
     })
@@ -109,7 +117,9 @@ describe("API configuration", () => {
         DATABASE_URL:
           "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
         SESSION_ISSUER: "hivorr-production",
-        MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        MFA_ENCRYPTION_KEY: MFA_KEY,
+        PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+        PAYOUT_FINGERPRINT_KEY: PAYOUT_FINGERPRINT_KEY,
       }),
     ).toThrow(/DATABASE_SSL_CA/)
   })
@@ -122,7 +132,9 @@ describe("API configuration", () => {
       DATABASE_URL:
         "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
       SESSION_ISSUER: "hivorr-staging",
-      MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      MFA_ENCRYPTION_KEY: MFA_KEY,
+      PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+      PAYOUT_FINGERPRINT_KEY: PAYOUT_FINGERPRINT_KEY,
     })
     expect(config.databaseSslCa).toBeUndefined()
   })
@@ -209,7 +221,9 @@ describe("API configuration", () => {
         "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
       WORKER_DATABASE_URL: workerUrl,
       SESSION_ISSUER: "hivorr-staging",
-      MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      MFA_ENCRYPTION_KEY: MFA_KEY,
+      PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+      PAYOUT_FINGERPRINT_KEY: PAYOUT_FINGERPRINT_KEY,
     })
     expect(config.worker.databaseUrl).toBe(workerUrl)
 
@@ -223,7 +237,9 @@ describe("API configuration", () => {
         WORKER_DATABASE_URL:
           "postgresql://postgres:fake@db.zyxwvutsrqponmlkjihg.supabase.co:5432/postgres",
         SESSION_ISSUER: "hivorr-staging",
-        MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        MFA_ENCRYPTION_KEY: MFA_KEY,
+        PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+        PAYOUT_FINGERPRINT_KEY: PAYOUT_FINGERPRINT_KEY,
       }),
     ).toThrow(ConfigurationError)
   })
@@ -240,7 +256,28 @@ describe("VFD configuration", () => {
       requestTimeoutMs: 5_000,
       maxRetries: 2,
       retryBaseMs: 250,
+      sourceAccount: undefined,
     })
+  })
+
+  it("accepts a ten-digit source wallet account", () => {
+    const config = parseConfig({
+      HIVORR_ENV: "test",
+      VFD_SOURCE_ACCOUNT: "1000000001",
+    })
+    expect(config.vfd.sourceAccount).toBe("1000000001")
+
+    expect(() =>
+      parseConfig({ HIVORR_ENV: "test", VFD_SOURCE_ACCOUNT: "123" }),
+    ).toThrow(ConfigurationError)
+  })
+
+  it("treats an empty source account placeholder as unset", () => {
+    const config = parseConfig({
+      HIVORR_ENV: "test",
+      VFD_SOURCE_ACCOUNT: "",
+    })
+    expect(config.vfd.sourceAccount).toBeUndefined()
   })
 
   it("refuses live mode outside production", () => {
@@ -275,5 +312,82 @@ describe("VFD configuration", () => {
         VFD_TOKEN_VALIDITY_MINUTES: "-1",
       }),
     ).toThrow(ConfigurationError)
+  })
+})
+
+describe("payout configuration", () => {
+  it("leaves payout protection unset outside staging and production", () => {
+    const config = parseConfig({ HIVORR_ENV: "test" })
+    expect(config.payout).toEqual({
+      encryptionKey: undefined,
+      encryptionKeyId: "v1",
+      fingerprintKey: undefined,
+      maxActiveAccounts: undefined,
+    })
+  })
+
+  it("refuses a payout key that is not 32 bytes", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "staging",
+        BACKEND_ENVIRONMENT: "staging",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        SESSION_ISSUER: "hivorr-staging",
+        MFA_ENCRYPTION_KEY: MFA_KEY,
+        PAYOUT_ENCRYPTION_KEY: "not-base64-32-bytes",
+        PAYOUT_FINGERPRINT_KEY: PAYOUT_FINGERPRINT_KEY,
+      }),
+    ).toThrow(/PAYOUT_ENCRYPTION_KEY/)
+  })
+
+  it("refuses to reuse one key for encryption and fingerprinting", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "staging",
+        BACKEND_ENVIRONMENT: "staging",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        SESSION_ISSUER: "hivorr-staging",
+        MFA_ENCRYPTION_KEY: MFA_KEY,
+        PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+        PAYOUT_FINGERPRINT_KEY: PAYOUT_KEY,
+      }),
+    ).toThrow(/PAYOUT_FINGERPRINT_KEY/)
+  })
+
+  it("refuses a partial payout key pair", () => {
+    expect(() =>
+      parseConfig({
+        HIVORR_ENV: "production",
+        BACKEND_ENVIRONMENT: "production",
+        SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
+        DATABASE_URL:
+          "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+        DATABASE_SSL_CA:
+          "-----BEGIN CERTIFICATE-----fake-----END CERTIFICATE-----",
+        SESSION_ISSUER: "hivorr-production",
+        MFA_ENCRYPTION_KEY: MFA_KEY,
+        PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
+      }),
+    ).toThrow(/PAYOUT_FINGERPRINT_KEY/)
+  })
+
+  it("treats an empty destination cap as unset", () => {
+    const config = parseConfig({
+      HIVORR_ENV: "test",
+      PAYOUT_ACCOUNT_MAX_ACTIVE: "",
+    })
+    expect(config.payout.maxActiveAccounts).toBeUndefined()
+  })
+
+  it("accepts a configured destination cap", () => {
+    const config = parseConfig({
+      HIVORR_ENV: "test",
+      PAYOUT_ACCOUNT_MAX_ACTIVE: "3",
+    })
+    expect(config.payout.maxActiveAccounts).toBe(3)
   })
 })
