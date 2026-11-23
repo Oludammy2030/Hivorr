@@ -1,11 +1,12 @@
+import { FINANCIALLY_ELIGIBLE_KYC_TIERS } from "@hivorr/shared"
+
 /**
  * Financial limit resolution and evaluation (EP-02-035).
  *
  * Configuration holds the numbers; this module holds no threshold. It resolves
  * the effective rule for a tier or account override and decides whether a write
- * fits. `tier_1` is the only financially eligible tier in the approved shared
- * contract; the ladder above it is still open, so anything else is denied rather
- * than guessed.
+ * fits. The CBN tiers `tier_1`–`tier_3` are financially eligible; `tier_0` is
+ * denied. The tier limits are configuration, not code.
  *
  * The caller performs the check inside the same transaction as the write. The
  * database still owns the effective-dated rows and the permission to add one.
@@ -28,10 +29,10 @@ export const FINANCE_LIMIT_PERIODS = [
 
 export type FinanceLimitPeriod = typeof FINANCE_LIMIT_PERIODS[number]
 
-/** The approved contract has exactly these tiers today. */
-export const FINANCIALLY_ELIGIBLE_TIERS: ReadonlySet<string> = new Set([
-  "tier_1",
-])
+/** The CBN tiers that may move money; `tier_0` is denied. */
+export const FINANCIALLY_ELIGIBLE_TIERS: ReadonlySet<string> = new Set(
+  FINANCIALLY_ELIGIBLE_KYC_TIERS,
+)
 
 export interface FinanceLimitRule {
   readonly id: string

@@ -7409,7 +7409,9 @@
                       "type": "string",
                       "enum": [
                         "tier_0",
-                        "tier_1"
+                        "tier_1",
+                        "tier_2",
+                        "tier_3"
                       ]
                     }
                   },
@@ -47124,7 +47126,9 @@
                     "type": "string",
                     "enum": [
                       "tier_0",
-                      "tier_1"
+                      "tier_1",
+                      "tier_2",
+                      "tier_3"
                     ]
                   },
                   "reason": {
@@ -47159,7 +47163,9 @@
                       "type": "string",
                       "enum": [
                         "tier_0",
-                        "tier_1"
+                        "tier_1",
+                        "tier_2",
+                        "tier_3"
                       ]
                     },
                     "updatedAt": {

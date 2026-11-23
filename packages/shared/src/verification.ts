@@ -32,13 +32,23 @@ export const VERIFICATION_STATES = [
 export type VerificationState = typeof VERIFICATION_STATES[number]
 
 /**
- * The approved capability engine distinguishes unverified from verified. The
- * ladder above `tier_1` is still open (`ARCHITECTURE.md` §16.4 #6); do not add a
- * tier here until the founder records it.
+ * CBN 3-tier model, decided 23 November 2026. `tier_0` is unverified and cannot
+ * move money; `tier_1` is CBN Level 1, `tier_2` is Level 2 and `tier_3` is
+ * Level 3. Deposits are not CBN-capped because Hivorr is not a bank; the limits
+ * are withdrawal limits.
  */
-export const KYC_TIERS = ["tier_0", "tier_1"] as const
+export const KYC_TIERS = ["tier_0", "tier_1", "tier_2", "tier_3"] as const
 
 export type KycTier = typeof KYC_TIERS[number]
+
+/** Tiers that may perform a financial action. `tier_0` is always denied. */
+export const FINANCIALLY_ELIGIBLE_KYC_TIERS = [
+  "tier_1",
+  "tier_2",
+  "tier_3",
+] as const
+
+export type FinanciallyEligibleKycTier = typeof FINANCIALLY_ELIGIBLE_KYC_TIERS[number]
 
 export const VERIFICATION_DECISIONS = ["APPROVED", "REJECTED"] as const
 

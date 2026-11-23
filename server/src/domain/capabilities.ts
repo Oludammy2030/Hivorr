@@ -1,5 +1,6 @@
 import {
   CAPABILITY_IDS,
+  FINANCIALLY_ELIGIBLE_KYC_TIERS,
   isCapabilityId,
   type ActivityId,
   type CapabilityId,
@@ -383,7 +384,15 @@ export function evaluateCapability(
   ) {
     return deny("VERIFICATION_REQUIRED")
   }
-  if (rule.kyc && context.kycTier !== "tier_1") {
+  if (
+    rule.kyc &&
+    !(
+      context.kycTier &&
+      (FINANCIALLY_ELIGIBLE_KYC_TIERS as readonly string[]).includes(
+        context.kycTier,
+      )
+    )
+  ) {
     return deny("KYC_REQUIRED")
   }
   if (rule.requiresPayoutAccount && context.payoutAccountBound !== true) {

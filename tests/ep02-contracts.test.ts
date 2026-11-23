@@ -37,10 +37,11 @@ describe("EP-02 shared verification contracts", () => {
       "business",
     ])
     expect(VERIFICATION_STATES).toContain("UNDER_REVIEW")
-    expect(KYC_TIERS).toEqual(["tier_0", "tier_1"])
+    expect(KYC_TIERS).toEqual(["tier_0", "tier_1", "tier_2", "tier_3"])
     expect(isVerificationLane("trade")).toBe(true)
     expect(isVerificationLane("discover")).toBe(false)
     expect(isKycTier("tier_1")).toBe(true)
+    expect(isKycTier("tier_3")).toBe(true)
     expect(isKycTier("tier_9")).toBe(false)
   })
 
@@ -328,8 +329,10 @@ describe("EP-02 shared finance contracts", () => {
     )
   })
 
-  it("does not invent a KYC tier above tier_1", () => {
-    expect(kycTierSchema.safeParse("tier_2").success).toBe(false)
+  it("includes the CBN levels and rejects a tier beyond Level 3", () => {
+    expect(kycTierSchema.safeParse("tier_2").success).toBe(true)
+    expect(kycTierSchema.safeParse("tier_3").success).toBe(true)
+    expect(kycTierSchema.safeParse("tier_4").success).toBe(false)
     expect(verificationLaneSchema.safeParse("trade").success).toBe(true)
   })
 })

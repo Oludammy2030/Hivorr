@@ -97,7 +97,7 @@ describe("KYC tier assignment", () => {
     const test = harness()
 
     await expect(
-      test.service.setKycTier(input({ tier: "tier_2" })),
+      test.service.setKycTier(input({ tier: "tier_4" })),
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
     expect(test.audits).toHaveLength(0)
   })

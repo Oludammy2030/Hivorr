@@ -135,7 +135,7 @@ Planned tests; no run is claimed until the execution record records the result.
 | **Status** | `IN PROGRESS` — self-service API, automatic execution and a minimal KYC tier source built; verification wiring and DB certification deferred |
 | **Execution date** | 2026-11-23 |
 | **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-053.md` |
-| **Blocked by** | Verification-to-tier wiring (`EP-02-015`); CBN framework confirmation for the tier_1 cap; `VFD_SOURCE_ACCOUNT`; database integration gate |
+| **Blocked by** | Per-tier evidence rules and verification-to-tier wiring (`EP-02-015`); `VFD_SOURCE_ACCOUNT`; database integration gate |
 | **Notes** | Founder ruling 2026-11-23: a user must be able to withdraw their own funds without staff approval. `POST /v1/wallet/withdrawals` is self-service; the manual maker-checker is removed from scope. |
 
 ## 14. Partial increment record
@@ -160,8 +160,8 @@ Planned tests; no run is claimed until the execution record records the result.
 
 - `EP-02-015` must set the tier from a verification decision; today a verifier assigns it through
   `POST /v1/control/accounts/{id}/kyc-tier`.
-- The `tier_1` daily withdrawal limit is seeded at NGN 100,000 from CBN Level 2; higher tiers and the
-  exact framework mapping remain open. `VFD_SOURCE_ACCOUNT` must still be configured.
+- The CBN daily withdrawal limits are seeded at ₦30,000/₦100,000/₦1,000,000 for
+  `tier_1`/`tier_2`/`tier_3`; deposits are not CBN-capped. `VFD_SOURCE_ACCOUNT` must still be configured.
 - Provider reference linkage to `finance.provider_references` remains for reconciliation/audit coverage.
 - `pnpm test:db`/`db:snapshot` must run in CI; no local PostgreSQL was available.
 - `EP-02-054` adds the independent RLS eligibility gate.
@@ -180,7 +180,7 @@ A user who needs money urgently must not wait for an administrator.
 
 This supersedes the manual-payout maker-checker clauses in §3.1, §4 R-07 and §9 DoD-01:
 
-- a user withdrawal is self-service once the account is `tier_1`, the destination is bound and
+- a user withdrawal is self-service once the account is `tier_1` or above, the destination is bound and
   verified, the configured limit is met and the balance covers the amount;
 - staff approval is **not** part of the user withdrawal path;
 - the manual-payout approval model is removed from this task's required scope. If an operational
