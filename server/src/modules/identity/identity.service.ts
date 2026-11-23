@@ -2,7 +2,12 @@ import { createHash, randomBytes } from "node:crypto"
 
 import { Inject, Injectable } from "@nestjs/common"
 import { hash, verify } from "@node-rs/argon2"
-import type { EnvironmentId, PortalId } from "@hivorr/shared"
+import {
+  kycTierSchema,
+  type EnvironmentId,
+  type KycTier,
+  type PortalId,
+} from "@hivorr/shared"
 import type { PoolClient } from "pg"
 
 import { ApiError, rateLimited } from "../../common/errors"
@@ -90,6 +95,20 @@ export interface SessionActivityView {
   readonly state: string
 }
 
+export interface SetKycTierInput {
+  readonly actorUserId: string
+  readonly accountId: string
+  readonly tier: string
+  readonly reason: string
+  readonly context: RequestContext
+}
+
+export interface KycTierView {
+  readonly accountId: string
+  readonly tier: KycTier
+  readonly updatedAt: string
+}
+
 export interface CurrentSession extends SessionResult {
   readonly account: {
     readonly id: string
@@ -99,6 +118,7 @@ export interface CurrentSession extends SessionResult {
   }
   readonly activities: readonly SessionActivityView[]
   readonly capabilities: readonly CapabilityId[]
+  readonly kycTier: KycTier
 }
 
 export interface IssuedSession
@@ -843,9 +863,10 @@ export class IdentityService {
           account_status: string
           display_name: string | null
           email: string
+          kyc_tier: KycTier
         }>(
           `select u.status as user_status, a.status as account_status,
-                  u.display_name, u.email
+                  u.display_name, u.email, a.kyc_tier
            from identity.users u
            join identity.accounts a on a.id = u.account_id
            where u.id = $1`,
@@ -900,6 +921,7 @@ export class IdentityService {
               environment: context.environment,
               activities,
               grants: grants.rows,
+              kycTier: profile.kyc_tier,
             }),
           ),
         ]
@@ -926,6 +948,7 @@ export class IdentityService {
             state: activity.state,
           })),
           capabilities,
+          kycTier: profile.kyc_tier,
         }
       } catch (error) {
         await client.query("rollback").catch(() => undefined)
@@ -1746,6 +1769,109 @@ export class IdentityService {
         return result.rows[0]?.legal_name ?? null
       },
     )
+  }
+
+  /**
+   * Assigns the effective KYC tier. Only the approved `tier_0`/`tier_1` values
+   * are accepted; the database function re-checks the verifier permission. The
+   * caller must be a control-portal verifier.
+   */
+  async setKycTier(input: SetKycTierInput): Promise<KycTierView> {
+    if (!kycTierSchema.safeParse(input.tier).success) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "The KYC tier is not defined.",
+        400,
+      )
+    }
+    const reason = input.reason.trim()
+    if (reason.length < 5) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A KYC tier change needs a reason of at least five characters.",
+        400,
+      )
+    }
+
+    try {
+      return await this.database.withTransaction(
+        { identity: { accountId: input.accountId, userId: input.actorUserId } },
+        async (transaction) => {
+          const before = await transaction.query<{ kyc_tier: KycTier }>(
+            "select kyc_tier from identity.accounts where id = $1",
+            [input.accountId],
+          )
+          const previous = before.rows[0]?.kyc_tier
+
+          const result = await transaction.query<{
+            account_id: string
+            kyc_tier: KycTier
+            updated_at: string | Date
+          }>("select * from identity.set_kyc_tier($1, $2, $3, $4)", [
+            input.actorUserId,
+            input.accountId,
+            input.tier,
+            reason,
+          ])
+          const row = result.rows[0]
+          if (!row) {
+            throw new Error("The KYC tier update returned no row.")
+          }
+
+          await appendAudit(transaction.client, {
+            actorType: "admin",
+            actorId: input.actorUserId,
+            actorAudience: input.context.audience,
+            environment: input.context.environment,
+            action: "identity.kyc_tier_changed",
+            targetType: "account",
+            targetId: input.accountId,
+            beforeSummary: previous ? { tier: previous } : undefined,
+            afterSummary: { tier: row.kyc_tier },
+            reason,
+            capability: "admin.verification.review",
+            ip: input.context.ip,
+            userAgent: input.context.userAgent,
+            correlationId: input.context.correlationId,
+          })
+
+          return {
+            accountId: row.account_id,
+            tier: row.kyc_tier,
+            updatedAt:
+              row.updated_at instanceof Date
+                ? row.updated_at.toISOString()
+                : row.updated_at,
+          }
+        },
+      )
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error as { code?: unknown }).code
+          : undefined
+      if (code === "42501") {
+        throw new ApiError(
+          "FORBIDDEN",
+          "You do not have permission to change a KYC tier.",
+          403,
+        )
+      }
+      if (code === "P0002") {
+        throw new ApiError("NOT_FOUND", "The account was not found.", 404)
+      }
+      if (code === "22023") {
+        throw new ApiError(
+          "VALIDATION_FAILED",
+          "The KYC tier change is not valid.",
+          400,
+        )
+      }
+      throw error instanceof Error
+        ? error
+        : new Error("The KYC tier change failed.")
+    }
   }
 
   private cipher(): MfaCipher {

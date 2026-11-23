@@ -13,9 +13,9 @@
 | **Phase status at this overview** | **`In build`** — partial scope: non-provider finance foundation, payout-account binding and VFD payout adapter |
 | **Total tasks** | **40** (`001`–`073`, per the approved plan §10) |
 | **Completed** | 14 (`EP-02-001`, `EP-02-002`, `EP-02-020`, `EP-02-021`, `EP-02-022`, `EP-02-030`, `EP-02-031`, `EP-02-032`, `EP-02-033`, `EP-02-034`, `EP-02-035`, `EP-02-036`, `EP-02-040`, `EP-02-041`) |
-| **In progress** | 3 (`EP-02-050`, `EP-02-043`, `EP-02-053` — partial increments) |
+| **In progress** | 4 (`EP-02-050`, `EP-02-043`, `EP-02-053`, `EP-02-014` — partial increments) |
 | **Blocked** | Verification, KYC ladder, adapter cluster and dependent scopes |
-| **Pending** | 23 |
+| **Pending** | 22 |
 | **Closure authority** | Founder, on the architect’s recommendation, through G5 (`EP-02-073`) |
 
 > **Why this file exists.** The approved phase plan defines what EP-02 must achieve. This overview, the tracker and the task documents turn that plan into the execution record required by the development protocol. They do not open the phase.
@@ -130,7 +130,7 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** |
 | 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **PENDING** |
-| 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **PENDING** |
+| 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — minimal tier source, capability input, audited verifier assignment |
 | 8 | `EP-02-015` | Control review integration and immutable decision record | EP-02-011/012/013/014; CP-016/017/019; `admin.verification` queue. | **PENDING** |
 | 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** |
 | 10 | `EP-02-020` | Taxonomy registry schema and hierarchy domain | EP-02-002; EP-01-021/022/025; G0 ruling on depth. | **COMPLETED** — schema, triggers, RLS, domain |
@@ -152,7 +152,7 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | 26 | `EP-02-050` | Payout account binding, encryption and name enquiry | EP-02-035, EP-02-040, EP-02-043. | **IN PROGRESS** — partial: binding, encryption, name enquiry; execution/`043`/`014` deferred |
 | 27 | `EP-02-051` | Payer-name match rule and manual review path | EP-02-042, EP-02-050; G0 payer-name ruling. | **PENDING** |
 | 28 | `EP-02-052` | Deposit posting and idempotent ledger flow | EP-02-031, EP-02-034, EP-02-051. | **PENDING** |
-| 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020. | **IN PROGRESS** — request/eligibility + automatic execution with reserve/reversal; manual maker-checker deferred |
+| 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020 (not required for the user path). | **IN PROGRESS** — self-service withdrawal + automatic execution with reserve/reversal; manual approval out of scope |
 | 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **PENDING** |
 | 31 | `EP-02-055` | Reconciliation job and exception reporting | EP-02-043/044/052/053; worker. | **PENDING** |
 | 32 | `EP-02-056` | Financial audit coverage and traceability | EP-02-015/016/031/052/053/055; EP-01-036; CP-005. | **PENDING** |

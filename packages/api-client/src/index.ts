@@ -75,7 +75,7 @@ export type StepUpResponse = { "sessionId": string; "accountId": string; "userId
 
 export type RefreshResponse = { "sessionId": string; "accountId": string; "userId": string; "email": string; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "expiresAt": string; "idleExpiresAt": string }
 
-export type SessionResponse = { "sessionId": string; "accountId": string; "userId": string; "email": string; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "expiresAt": string; "idleExpiresAt": string; "account": { "id": string; "email": string; "displayName": string | null; "status": string }; "activities": ({ "id": "market.buy" | "services.hire" | "errands.request" | "market.sell" | "services.offer" | "logistics.provide"; "state": "ACTIVE" | "RESTRICTED" | "SUSPENDED" })[]; "capabilities": ("session.read" | "profile.read.self" | "profile.update.self" | "activity.activate" | "activity.deactivate" | "market.catalog.browse" | "market.cart.manage" | "market.order.place" | "market.order.cancel" | "market.order.dispute" | "services.job.post" | "services.job.post.business" | "services.application.review" | "services.engagement.fund" | "services.job.apply" | "services.service.publish" | "services.engagement.deliver" | "services.earnings.receive" | "errands.request.create" | "errands.request.cancel" | "errands.request.track" | "market.product.draft" | "market.product.publish" | "market.inventory.manage" | "market.order.fulfil" | "market.invoice.issue" | "market.earnings.receive" | "logistics.pool.browse" | "logistics.assignment.accept" | "logistics.delivery.progress" | "logistics.delivery.complete" | "logistics.earnings.receive" | "business.create" | "business.verification.submit" | "business.update" | "wallet.read" | "wallet.withdraw" | "wallet.payout_account.bind" | "wallet.convert" | "messaging.thread.read" | "messaging.message.send" | "notification.read" | "admin.verification.review" | "admin.payment.review" | "admin.dispute.resolve" | "admin.account.suspend" | "admin.configuration.write" | "admin.configuration.read" | "admin.audit.read" | "admin.grant.read" | "admin.grant.manage" | "admin.user.read" | "admin.user.manage" | "admin.role.read" | "admin.role.manage" | "admin.case.read" | "admin.case.assign" | "admin.case.investigate" | "admin.case.recommend" | "admin.case.approve" | "admin.evidence.read" | "admin.report.read" | "admin.report.export" | "admin.partner.read" | "admin.partner.manage" | "staff.support.handle" | "partner.referral.read" | "platform.engineering.access")[] }
+export type SessionResponse = { "sessionId": string; "accountId": string; "userId": string; "email": string; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "expiresAt": string; "idleExpiresAt": string; "account": { "id": string; "email": string; "displayName": string | null; "status": string }; "activities": ({ "id": "market.buy" | "services.hire" | "errands.request" | "market.sell" | "services.offer" | "logistics.provide"; "state": "ACTIVE" | "RESTRICTED" | "SUSPENDED" })[]; "capabilities": ("session.read" | "profile.read.self" | "profile.update.self" | "activity.activate" | "activity.deactivate" | "market.catalog.browse" | "market.cart.manage" | "market.order.place" | "market.order.cancel" | "market.order.dispute" | "services.job.post" | "services.job.post.business" | "services.application.review" | "services.engagement.fund" | "services.job.apply" | "services.service.publish" | "services.engagement.deliver" | "services.earnings.receive" | "errands.request.create" | "errands.request.cancel" | "errands.request.track" | "market.product.draft" | "market.product.publish" | "market.inventory.manage" | "market.order.fulfil" | "market.invoice.issue" | "market.earnings.receive" | "logistics.pool.browse" | "logistics.assignment.accept" | "logistics.delivery.progress" | "logistics.delivery.complete" | "logistics.earnings.receive" | "business.create" | "business.verification.submit" | "business.update" | "wallet.read" | "wallet.withdraw" | "wallet.payout_account.bind" | "wallet.convert" | "messaging.thread.read" | "messaging.message.send" | "notification.read" | "admin.verification.review" | "admin.payment.review" | "admin.dispute.resolve" | "admin.account.suspend" | "admin.configuration.write" | "admin.configuration.read" | "admin.audit.read" | "admin.grant.read" | "admin.grant.manage" | "admin.user.read" | "admin.user.manage" | "admin.role.read" | "admin.role.manage" | "admin.case.read" | "admin.case.assign" | "admin.case.investigate" | "admin.case.recommend" | "admin.case.approve" | "admin.evidence.read" | "admin.report.read" | "admin.report.export" | "admin.partner.read" | "admin.partner.manage" | "staff.support.handle" | "partner.referral.read" | "platform.engineering.access")[]; "kycTier": "tier_0" | "tier_1" }
 
 export type ListSessionsResponse = ({ "sessionId": string; "current": boolean; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "deviceName": string | null; "createdAt": string; "lastSeenAt": string; "idleExpiresAt": string; "expiresAt": string; "mfaSatisfied": boolean })[]
 
@@ -286,6 +286,16 @@ export type CreateTaxonomyAttributeResponse = { "id": string; "nodeId": string; 
 export type UpdateTaxonomyAttributeRequest = { "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired"?: boolean; "enumValues"?: (string)[] | null; "unit"?: string; "sortOrder"?: number; "reason": string }
 
 export type UpdateTaxonomyAttributeResponse = { "id": string; "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired": boolean; "enumValues": (string)[] | null; "unit": string | null; "sortOrder": number; "createdAt": string; "updatedAt": string }
+
+export type ListPayoutsResponse = ({ "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null })[]
+
+export type RequestWithdrawalRequest = { "payoutAccountId": string; "amount": string; "currency": string }
+
+export type RequestWithdrawalResponse = { "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null }
+
+export type AssignKycTierRequest = { "tier": "tier_0" | "tier_1"; "reason": string }
+
+export type AssignKycTierResponse = { "accountId": string; "tier": "tier_0" | "tier_1"; "updatedAt": string }
 
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
@@ -920,6 +930,27 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<UpdateTaxonomyAttributeResponse>(
         "PATCH",
         `/v1/control/taxonomy/attributes/${encodeURIComponent(params.id)}`,
+        input,
+        [200],
+      ),
+    listPayouts: () =>
+      request<ListPayoutsResponse>(
+        "GET",
+        "/v1/wallet/payouts",
+        undefined,
+        [200],
+      ),
+    requestWithdrawal: (input: RequestWithdrawalRequest) =>
+      request<RequestWithdrawalResponse>(
+        "POST",
+        "/v1/wallet/withdrawals",
+        input,
+        [201],
+      ),
+    assignKycTier: (params: { id: string }, input: AssignKycTierRequest) =>
+      request<AssignKycTierResponse>(
+        "POST",
+        `/v1/control/accounts/${encodeURIComponent(params.id)}/kyc-tier`,
         input,
         [200],
       ),

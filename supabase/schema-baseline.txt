@@ -550,6 +550,8 @@ identity | accounts | status | text | text | NO | 'active'::text
 identity | accounts | legal_name | text | text | YES | -
 identity | accounts | created_at | timestamp with time zone | timestamptz | NO | now()
 identity | accounts | updated_at | timestamp with time zone | timestamptz | NO | now()
+identity | accounts | kyc_tier | text | text | NO | 'tier_0'::text
+identity | accounts | kyc_tier_updated_at | timestamp with time zone | timestamptz | NO | now()
 identity | credentials | user_id | uuid | uuid | NO | -
 identity | credentials | password_hash | text | text | NO | -
 identity | credentials | password_updated_at | timestamp with time zone | timestamptz | NO | now()
@@ -1026,6 +1028,7 @@ finance | reconciliation_runs | reconciliation_runs_pkey | p | PRIMARY KEY (id)
 finance | reconciliation_runs | reconciliation_runs_provider_check | c | CHECK (provider ~ '^[a-z][a-z0-9_-]{1,39}$'::text)
 finance | reconciliation_runs | reconciliation_runs_provider_period_start_period_end_curren_key | u | UNIQUE (provider, period_start, period_end, currency)
 finance | reconciliation_runs | reconciliation_runs_status_check | c | CHECK (status = ANY (ARRAY['running'::text, 'matched'::text, 'mismatch'::text, 'resolved'::text]))
+identity | accounts | accounts_kyc_tier_check | c | CHECK (kyc_tier = ANY (ARRAY['tier_0'::text, 'tier_1'::text]))
 identity | accounts | accounts_pkey | p | PRIMARY KEY (id)
 identity | accounts | accounts_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text, 'closed'::text]))
 identity | credentials | credentials_failed_attempts_check | c | CHECK (failed_attempts >= 0)
@@ -2119,6 +2122,7 @@ identity | grant_scope_is_valid | p_grant_type text, p_scope text | false | i | 
 identity | list_grants | p_actor_user_id uuid, p_environment text | true | v | search_path=identity, pg_temp
 identity | revoke_grant | p_actor_user_id uuid, p_grant_id uuid, p_environment text | true | v | search_path=identity, pg_temp
 identity | set_grant_department | p_actor_user_id uuid, p_grant_id uuid, p_department_key text, p_environment text | true | v | search_path=identity, pg_temp
+identity | set_kyc_tier | p_actor_user_id uuid, p_account_id uuid, p_tier text, p_reason text | true | v | search_path=""
 platform | create_taxonomy_attribute | p_actor_user_id uuid, p_node_id uuid, p_key text, p_label text, p_data_type text, p_is_required boolean, p_enum_values text[], p_unit text, p_sort_order integer | true | v | search_path=""
 platform | create_taxonomy_node | p_actor_user_id uuid, p_taxonomy text, p_level text, p_parent_id uuid, p_slug text, p_name text, p_description text, p_version integer, p_effective_from timestamp with time zone | true | v | search_path=""
 platform | current_account_id |  | true | s | search_path=private, pg_temp

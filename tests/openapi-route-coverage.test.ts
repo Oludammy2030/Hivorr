@@ -20,6 +20,8 @@ import { CasesController } from "../server/src/api/cases.controller"
 import { EvidenceController } from "../server/src/api/evidence.controller"
 import { VerificationController } from "../server/src/api/verification.controller"
 import { TaxonomyController } from "../server/src/api/taxonomy.controller"
+import { WalletController } from "../server/src/api/wallet.controller"
+import { KycController } from "../server/src/api/kyc.controller"
 import { buildDocument } from "../server/src/openapi/build"
 import { scanControllerRoutes } from "../server/src/openapi/scan"
 
@@ -50,6 +52,8 @@ describe("OpenAPI route coverage", () => {
       VerificationController,
       TaxonomyController,
       GrantsController,
+      WalletController,
+      KycController,
     ]
       .flatMap((controller) => scanControllerRoutes(controller))
       .map((route) => `${route.method} ${route.path}`)

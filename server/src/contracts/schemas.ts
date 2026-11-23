@@ -3,9 +3,13 @@ import {
   ACTIVITY_IDS,
   CAPABILITY_IDS,
   ENVIRONMENT_IDS,
+  KYC_TIERS,
+  PAYOUT_STATES,
   PORTAL_IDS,
   activityIdSchema,
   apiErrorBodySchema,
+  currencyCodeSchema,
+  moneyAmountSchema,
   taxonomyAttributeSchema,
   taxonomyAttributeTypeSchema,
   taxonomyKindSchema,
@@ -343,6 +347,7 @@ export const currentSessionResponse = sessionResponse.extend({
   }),
   activities: z.array(sessionActivitySchema),
   capabilities: z.array(capabilitySchema),
+  kycTier: z.enum(KYC_TIERS),
 })
 
 export const mfaChallengeResponse = z.object({
@@ -833,6 +838,40 @@ export const updateTaxonomyAttributeRequest = z
       })
     }
   })
+
+export const payoutRequestViewResponse = z.object({
+  id: z.string().uuid(),
+  reference: z.string(),
+  payoutAccountId: z.string().uuid(),
+  accountNumberLast4: z.string(),
+  amount: moneyAmountSchema,
+  currency: currencyCodeSchema,
+  status: z.enum(PAYOUT_STATES),
+  provider: z.string().nullable(),
+  providerReference: z.string().nullable(),
+  failureCode: z.string().nullable(),
+  createdAt: z.string(),
+  completedAt: z.string().nullable(),
+})
+
+export const payoutRequestListResponse = z.array(payoutRequestViewResponse)
+
+export const withdrawRequest = z.strictObject({
+  payoutAccountId: z.string().uuid(),
+  amount: moneyAmountSchema,
+  currency: currencyCodeSchema,
+})
+
+export const assignKycTierRequest = z.strictObject({
+  tier: z.enum(KYC_TIERS),
+  reason: z.string().min(5).max(500),
+})
+
+export const kycTierResponse = z.object({
+  accountId: z.string().uuid(),
+  tier: z.enum(KYC_TIERS),
+  updatedAt: z.string(),
+})
 
 export const healthResponse = z.object({
   status: z.literal("ok"),

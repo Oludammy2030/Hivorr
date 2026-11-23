@@ -20,6 +20,8 @@ import {
   VfdSha512TransferSigner,
 } from "./integrations/vfd"
 import { HealthController } from "./health/health.controller"
+import { WalletController } from "./api/wallet.controller"
+import { KycController } from "./api/kyc.controller"
 import { GrantsController } from "./modules/identity/grants/grants.controller"
 import { GrantsService } from "./modules/identity/grants/grants.service"
 import { IdentityController } from "./modules/identity/identity.controller"
@@ -95,6 +97,8 @@ export class AppModule {
         VerificationController,
         TaxonomyController,
         GrantsController,
+        WalletController,
+        KycController,
       ],
       providers: [
         { provide: API_CONFIG, useValue: config },

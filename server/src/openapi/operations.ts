@@ -96,6 +96,11 @@ import {
   staffStatusResponse,
   totpConfirmRequest,
   userListResponse,
+  assignKycTierRequest,
+  kycTierResponse,
+  payoutRequestListResponse,
+  payoutRequestViewResponse,
+  withdrawRequest,
 } from "../contracts/schemas"
 
 export type ApiAudience = PortalId | "public"
@@ -112,7 +117,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases" | "taxonomy"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases" | "taxonomy" | "wallet"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -1571,6 +1576,60 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The updated attribute definition",
         schema: taxonomyAttributeView,
+      },
+    ],
+  },
+  {
+    id: "listPayouts",
+    method: "get",
+    path: "/v1/wallet/payouts",
+    summary: "List the caller's payout requests",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description: "The caller's payout requests",
+        schema: payoutRequestListResponse,
+      },
+    ],
+  },
+  {
+    id: "requestWithdrawal",
+    method: "post",
+    path: "/v1/wallet/withdrawals",
+    summary: "Withdraw the caller's funds to a verified payout destination",
+    tag: "wallet",
+    audience: ["app"],
+    request: {
+      schema: withdrawRequest,
+      description: "Destination, amount and currency",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The payout request and its current execution state",
+        schema: payoutRequestViewResponse,
+      },
+    ],
+  },
+  {
+    id: "assignKycTier",
+    method: "post",
+    path: "/v1/control/accounts/{id}/kyc-tier",
+    summary: "Assign the account's KYC tier",
+    tag: "users",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: assignKycTierRequest,
+      description: "Tier and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The updated tier",
+        schema: kycTierResponse,
       },
     ],
   },

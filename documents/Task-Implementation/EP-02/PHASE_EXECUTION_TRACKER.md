@@ -10,10 +10,10 @@
 | **Phase status** | `In build` — partial scope: non-provider finance foundation, payout-account binding and VFD payout adapter |
 | **Tasks total** | 40 |
 | **Completed** | 14 |
-| **In progress** | 3 |
+| **In progress** | 4 |
 | **Requires review** | 0 |
 | **Blocked** | 0 |
-| **Pending** | 23 |
+| **Pending** | 22 |
 
 > **Partial start.** `EP-02-002` and the finance foundation (`030`–`036`) are eligible. Verification (`010`–`016`) is blocked on the KYC ladder and vendor. VFD adapter and dependent deposit/payout tasks are blocked on written VFD confirmation. `EP-02-050`, `EP-02-043` and `EP-02-053` were founder-authorised for partial increments: binding/encryption/name enquiry, the documented payout adapter, and payout request/eligibility respectively.
 
@@ -31,7 +31,7 @@
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** | — | — |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** | — | — |
 | 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **PENDING** | — | — |
-| 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **PENDING** | — | — |
+| 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — minimal `tier_0`/`tier_1` source, capability input and audited verifier assignment; CBN ladder and verification wiring deferred | — | `execution-records/EP-02-014.md` |
 | 8 | `EP-02-015` | Control review integration and immutable decision record | EP-02-011/012/013/014; CP-016/017/019; `admin.verification` queue. | **PENDING** | — | — |
 | 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** | — | — |
 | 10 | `EP-02-020` | Taxonomy registry schema and hierarchy domain | EP-02-002; EP-01-021/022/025; G0 ruling on depth. | **COMPLETED** — node/attribute schema, hierarchy triggers, RLS, domain | 2026-11-15 | `execution-records/EP-02-020.md` |
@@ -53,7 +53,7 @@
 | 26 | `EP-02-050` | Payout account binding, encryption and name enquiry | EP-02-035, EP-02-040, EP-02-043. | **IN PROGRESS** — founder-authorised partial: binding, encryption, name enquiry, disable and audit; payout execution, `043` and `014` deferred; destination count [OPEN] | — | `execution-records/EP-02-050.md` |
 | 27 | `EP-02-051` | Payer-name match rule and manual review path | EP-02-042, EP-02-050; G0 payer-name ruling. | **PENDING** | — | — |
 | 28 | `EP-02-052` | Deposit posting and idempotent ledger flow | EP-02-031, EP-02-034, EP-02-051. | **PENDING** | — | — |
-| 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020. | **IN PROGRESS** — request/eligibility + automatic execution (reserve, provider call, reversal, idempotency, audit); manual maker-checker and DB certification deferred | — | `execution-records/EP-02-053.md` |
+| 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020 (not required for the user path). | **IN PROGRESS** — self-service withdrawal request/eligibility + automatic execution (reserve, provider call, reversal, idempotency, audit); manual approval out of scope per founder; HTTP endpoint and DB certification deferred | — | `execution-records/EP-02-053.md` |
 | 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **PENDING** | — | — |
 | 31 | `EP-02-055` | Reconciliation job and exception reporting | EP-02-043/044/052/053; worker. | **PENDING** | — | — |
 | 32 | `EP-02-056` | Financial audit coverage and traceability | EP-02-015/016/031/052/053/055; EP-01-036; CP-005. | **PENDING** | — | — |
@@ -115,6 +115,7 @@ Still open and blocking specific scopes:
 | 2026-11-23 | `EP-02-050` | `PENDING` | `IN PROGRESS` — partial increment: binding/encryption/name enquiry | `execution-records/EP-02-050.md` |
 | 2026-11-23 | `EP-02-043` | `PENDING` | `IN PROGRESS` — partial increment: documented payout/status/recipient adapter | `execution-records/EP-02-043.md` |
 | 2026-11-23 | `EP-02-053` | `PENDING` | `IN PROGRESS` — first increment: payout request and eligibility | `execution-records/EP-02-053.md` |
+| 2026-11-23 | `EP-02-014` | `PENDING` | `IN PROGRESS` — minimal tier source and capability input | `execution-records/EP-02-014.md` |
 
 ---
 

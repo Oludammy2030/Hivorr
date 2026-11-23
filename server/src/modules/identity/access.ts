@@ -2,6 +2,7 @@ import type {
   ActivityId,
   EnvironmentId,
   GrantId,
+  KycTier,
   PortalId,
 } from "@hivorr/shared"
 import type { PoolClient } from "pg"
@@ -26,6 +27,7 @@ export interface AccessContextInputs {
   readonly environment: EnvironmentId
   readonly activities: readonly ActivityRow[]
   readonly grants: readonly GrantRow[]
+  readonly kycTier: KycTier
 }
 
 /**
@@ -48,6 +50,7 @@ export function buildAccessContext(inputs: AccessContextInputs): AccessContext {
       )
       .map((grant) => grant.scope as GrantId),
     activities: inputs.activities.map((activity) => activity.id as ActivityId),
+    kycTier: inputs.kycTier,
   }
 }
 
@@ -73,10 +76,15 @@ export async function loadAccessContext(
     [input.userId],
   )
   const activities = await listActiveActivities(client, input.accountId)
+  const account = await client.query<{ kyc_tier: KycTier }>(
+    "select kyc_tier from identity.accounts where id = $1",
+    [input.accountId],
+  )
   return buildAccessContext({
     audience: input.audience,
     environment: input.environment,
     activities,
     grants: grants.rows,
+    kycTier: account.rows[0]?.kyc_tier ?? "tier_0",
   })
 }

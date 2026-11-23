@@ -132,11 +132,11 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `IN PROGRESS` — request/eligibility and automatic execution built; manual maker-checker and DB certification deferred |
+| **Status** | `IN PROGRESS` — self-service API, automatic execution and a minimal KYC tier source built; verification wiring and DB certification deferred |
 | **Execution date** | 2026-11-23 |
 | **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-053.md` |
-| **Blocked by** | Manual-payout maker-checker; a configured `payout` limit and `VFD_SOURCE_ACCOUNT`; database integration gate |
-| **Notes** | Founder-authorised. The permission matrix makes `wallet.withdraw` automatic after KYC, a bound verified destination and limits; only manual payouts need dual control. The automatic path is implemented, including reserve and reversal. |
+| **Blocked by** | Verification-to-tier wiring (`EP-02-015`); a configured `payout` limit and `VFD_SOURCE_ACCOUNT`; database integration gate |
+| **Notes** | Founder ruling 2026-11-23: a user must be able to withdraw their own funds without staff approval. `POST /v1/wallet/withdrawals` is self-service; the manual maker-checker is removed from scope. |
 
 ## 14. Partial increment record
 
@@ -158,10 +158,32 @@ Planned tests; no run is claimed until the execution record records the result.
 
 **Open items**
 
-- Manual payouts require a distinct approver; wire them through CP-020 with a dedicated finance
-  approval permission.
+- `EP-02-015` must set the tier from a verification decision; today a verifier assigns it through
+  `POST /v1/control/accounts/{id}/kyc-tier`.
 - A `payout` limit and `VFD_SOURCE_ACCOUNT` must be configured; no threshold or account is seeded.
 - Provider reference linkage to `finance.provider_references` remains for reconciliation/audit coverage.
 - `pnpm test:db`/`db:snapshot` must run in CI; no local PostgreSQL was available.
-- `EP-02-054` adds the independent RLS eligibility gate; no HTTP endpoint exists yet.
+- `EP-02-054` adds the independent RLS eligibility gate.
+
+**Self-service API**
+
+- `POST /v1/wallet/withdrawals` creates and executes a withdrawal for the signed-in account; there is
+  no staff approval.
+- `GET /v1/wallet/payouts` lists the caller's payout requests, last four only.
+- The controller passes the session `kycTier`; a body field cannot raise the tier.
+
+## 15. Founder scope amendment — 2026-11-23
+
+The founder directed that **a user must be able to withdraw their own funds without staff approval**.
+A user who needs money urgently must not wait for an administrator.
+
+This supersedes the manual-payout maker-checker clauses in §3.1, §4 R-07 and §9 DoD-01:
+
+- a user withdrawal is self-service once the account is `tier_1`, the destination is bound and
+  verified, the configured limit is met and the balance covers the amount;
+- staff approval is **not** part of the user withdrawal path;
+- the manual-payout approval model is removed from this task's required scope. If an operational
+  correction path is ever needed, it is a separate task with its own decision;
+- the automatic request, reserve, provider call, settlement and reversal path is the authoritative
+  implementation.
 

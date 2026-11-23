@@ -134,9 +134,28 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` — minimal `tier_0`/`tier_1` source, capability input and audited verifier assignment |
+| **Execution date** | 2026-11-23 |
+| **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-014.md` |
+| **Blocked by** | CBN tier table above `tier_1`; verification-to-tier wiring (`EP-02-015`); database integration gate |
+| **Notes** | Founder-authorised minimal tier source so a user can withdraw without staff approval. Only the approved shared values are implemented; no higher ladder is invented. |
+
+## 14. Partial increment record
+
+**Built in this increment**
+
+- `identity.accounts.kyc_tier` (`tier_0` default, `tier_0`/`tier_1` only) and `kyc_tier_updated_at`.
+- `identity.set_kyc_tier` security-definer function requiring `admin.verification.review`.
+- `IdentityService.setKycTier` with validation and `identity.kyc_tier_changed` audit.
+- `kycTier` in the capability input and session contract, so `wallet.withdraw` can be evaluated.
+- `POST /v1/control/accounts/{id}/kyc-tier` for an audited verifier assignment.
+- Self-service withdrawal endpoints consume the session tier.
+
+**Open items**
+
+- The CBN tier table and limits above `tier_1` remain open.
+- `EP-02-015` must set the tier from a verification decision; today a verifier assigns it.
+- No tier history table; the audit log is the history.
+- `pnpm test:db`/`db:snapshot` must run in CI.
+- Configuration-driven tier definitions are not implemented; only the two approved values exist.
 
