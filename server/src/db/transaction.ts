@@ -38,7 +38,7 @@ export async function withTransaction<T>(
 
   const transaction: TransactionContext = {
     client,
-    async query<R extends QueryResultRow = QueryResultRow,>(
+    async query<R extends QueryResultRow = QueryResultRow>(
       text: string,
       values?: readonly unknown[],
     ): Promise<QueryResult<R>> {

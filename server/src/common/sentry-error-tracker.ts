@@ -1,8 +1,4 @@
-import {
-  CaptureErrorTracker,
-  type ErrorContext,
-  type ErrorTracker,
-} from "./error-tracker"
+import { CaptureErrorTracker, type ErrorContext, type ErrorTracker } from "./error-tracker"
 
 /**
  * Sentry error sink (`D-P0-3`).
@@ -30,9 +26,7 @@ export interface SentryTransportRequest {
   readonly body: string
 }
 
-export type SentryTransport = (
-  request: SentryTransportRequest,
-) => Promise<unknown>
+export type SentryTransport = (request: SentryTransportRequest) => Promise<unknown>
 
 export interface SentryTrackerOptions {
   readonly dsn: string
@@ -69,10 +63,7 @@ export function scrubSentryText(value: string): string {
   return value
     .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "[redacted-email]")
     .replace(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+/gi, "[redacted-url]")
-    .replace(
-      /\b(password|token|secret|authorization)\s*[=:]\s*\S+/gi,
-      "$1=[redacted]",
-    )
+    .replace(/\b(password|token|secret|authorization)\s*[=:]\s*\S+/gi, "$1=[redacted]")
     .slice(0, MAX_TEXT_LENGTH)
 }
 
@@ -161,18 +152,14 @@ export class SentryErrorTracker implements ErrorTracker {
       tags: {
         ...(context.method ? { method: context.method } : {}),
         ...(context.status ? { status: String(context.status) } : {}),
-        ...(context.correlationId
-          ? { correlationId: context.correlationId }
-          : {}),
+        ...(context.correlationId ? { correlationId: context.correlationId } : {}),
       },
       exception: {
         values: [
           {
             type,
             value,
-            ...(errorStack(error)
-              ? { stacktrace: { raw: errorStack(error) } }
-              : {}),
+            ...(errorStack(error) ? { stacktrace: { raw: errorStack(error) } } : {}),
           },
         ],
       },
@@ -188,9 +175,7 @@ export class SentryErrorTracker implements ErrorTracker {
   }
 }
 
-async function defaultTransport(
-  request: SentryTransportRequest,
-): Promise<unknown> {
+async function defaultTransport(request: SentryTransportRequest): Promise<unknown> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 2_000)
   try {

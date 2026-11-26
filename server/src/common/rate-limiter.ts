@@ -30,11 +30,7 @@ export class FixedWindowRateLimiter {
     this.maxBuckets = maxBuckets
   }
 
-  check(
-    key: string,
-    options: RateLimitOptions,
-    now = Date.now(),
-  ): RateLimitResult {
+  check(key: string, options: RateLimitOptions, now = Date.now()): RateLimitResult {
     const existing = this.buckets.get(key)
     if (!existing || existing.resetAt <= now) {
       this.buckets.set(key, {
@@ -52,10 +48,7 @@ export class FixedWindowRateLimiter {
     if (existing.count >= options.max) {
       return {
         allowed: false,
-        retryAfterSeconds: Math.max(
-          1,
-          Math.ceil((existing.resetAt - now) / 1_000),
-        ),
+        retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1_000)),
         remaining: 0,
       }
     }

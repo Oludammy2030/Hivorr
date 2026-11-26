@@ -13,11 +13,7 @@ export type {
   VfdRecipientDetails,
   VfdSourceDetails,
 } from "./account-name"
-export {
-  VFD_TRANSFER_TYPE,
-  VfdPayoutClient,
-  VfdSha512TransferSigner,
-} from "./payouts"
+export { VFD_TRANSFER_TYPE, VfdPayoutClient, VfdSha512TransferSigner } from "./payouts"
 export type {
   VfdPayoutDependencies,
   VfdPayoutOptions,

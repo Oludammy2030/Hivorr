@@ -41,14 +41,10 @@ try {
     console.log(`  ${name.padEnd(8)} ${bundle.digest}  ${bundle.files} file(s)`)
   }
   console.log(`  backend  ${manifest.backend.digest}`)
-  console.log(
-    `  migrate  ${manifest.migrations.digest}  ${manifest.migrations.files} file(s)`,
-  )
+  console.log(`  migrate  ${manifest.migrations.digest}  ${manifest.migrations.files} file(s)`)
 } catch (error) {
   console.error(
-    `release-manifest: FAILED — ${
-      error instanceof Error ? error.message : String(error)
-    }`,
+    `release-manifest: FAILED — ${error instanceof Error ? error.message : String(error)}`,
   )
   process.exit(1)
 }

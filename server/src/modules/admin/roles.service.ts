@@ -16,11 +16,7 @@ export interface RoleView {
 
 export type RoleScopeType = "platform" | "department" | "organisation"
 
-export const ROLE_SCOPE_TYPES: readonly RoleScopeType[] = [
-  "platform",
-  "department",
-  "organisation",
-]
+export const ROLE_SCOPE_TYPES: readonly RoleScopeType[] = ["platform", "department", "organisation"]
 
 export interface RoleAssignmentView {
   readonly id: string
@@ -159,36 +155,20 @@ function mapRoleError(error: unknown): never {
         409,
       )
     case "23514":
-      throw new ApiError(
-        "CONFLICT",
-        "The last active role manager cannot be removed.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The last active role manager cannot be removed.", 409)
     case "22023":
       if (message.includes("role_reason_required")) {
-        throw new ApiError(
-          "VALIDATION_FAILED",
-          "A reason is required to change a role.",
-          400,
-        )
+        throw new ApiError("VALIDATION_FAILED", "A reason is required to change a role.", 400)
       }
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The role, scope or expiry is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The role, scope or expiry is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The role operation failed.")
+      throw error instanceof Error ? error : new Error("The role operation failed.")
   }
 }
 
 @Injectable()
 export class RolesService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async listRoles(input: {
     accountId: string
@@ -292,11 +272,7 @@ export class RolesService {
   ): Promise<RoleAssignmentView> {
     const reason = input.reason?.trim()
     if (!reason || reason.length < 3) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A reason is required to change a role.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A reason is required to change a role.", 400)
     }
 
     try {
@@ -356,11 +332,7 @@ export class RolesService {
   }): Promise<RoleAssignmentView> {
     const reason = input.reason?.trim()
     if (!reason || reason.length < 3) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A reason is required to change a role.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A reason is required to change a role.", 400)
     }
 
     try {

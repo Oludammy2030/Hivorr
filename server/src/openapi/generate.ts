@@ -15,14 +15,8 @@ const document = buildDocument()
 const client = buildClient(document)
 
 mkdirSync(path.join(root, "openapi"), { recursive: true })
-writeFileSync(
-  path.join(root, "openapi", "openapi.json"),
-  `${JSON.stringify(document, null, 2)}\n`,
-)
-writeFileSync(
-  path.join(root, "packages", "api-client", "src", "index.ts"),
-  client,
-)
+writeFileSync(path.join(root, "openapi", "openapi.json"), `${JSON.stringify(document, null, 2)}\n`)
+writeFileSync(path.join(root, "packages", "api-client", "src", "index.ts"), client)
 
 console.log(
   `openapi:generate: wrote openapi/openapi.json (${Object.keys(document.paths).length} paths) and packages/api-client/src/index.ts`,

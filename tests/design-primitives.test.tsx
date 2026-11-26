@@ -27,9 +27,7 @@ function designSources(directory = designRoot): string[] {
 
 function declaredTokens(): Set<string> {
   return new Set(
-    [...theme.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gim)].map(
-      (match) => match[1] as string,
-    ),
+    [...theme.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gim)].map((match) => match[1] as string),
   )
 }
 
@@ -63,9 +61,7 @@ describe("design token discipline", () => {
 
   it("references only tokens the theme declares", () => {
     const declared = declaredTokens()
-    const missing = [...referencedTokens()].filter(
-      (token) => !declared.has(token),
-    )
+    const missing = [...referencedTokens()].filter((token) => !declared.has(token))
     expect(missing).toEqual([])
   })
 
@@ -112,9 +108,7 @@ describe("Button", () => {
 
 describe("TextField", () => {
   it("renders the prototype's field and associates the label", () => {
-    const html = markup(
-      <TextField label="Email" placeholder="you@example.com" />,
-    )
+    const html = markup(<TextField label="Email" placeholder="you@example.com" />)
     expect(html).toContain(">Email</label>")
     expect(html).toContain('placeholder="you@example.com"')
     expect(html).toContain("background:var(--hivorr-surface-subtle)")
@@ -136,8 +130,6 @@ describe("Pill", () => {
   })
 
   it("defaults to the neutral tone", () => {
-    expect(markup(<Pill>Queued</Pill>)).toContain(
-      "background:var(--hivorr-surface-subtle)",
-    )
+    expect(markup(<Pill>Queued</Pill>)).toContain("background:var(--hivorr-surface-subtle)")
   })
 })

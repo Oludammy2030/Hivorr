@@ -10,9 +10,7 @@ import {
   type CapabilityRule,
 } from "../server/src/domain/capabilities"
 
-function audienceOutside(
-  allowed: readonly string[],
-): "app" | "control" | "staff" | "partner" {
+function audienceOutside(allowed: readonly string[]): "app" | "control" | "staff" | "partner" {
   if (!allowed.includes("control")) return "control"
   if (!allowed.includes("app")) return "app"
   if (!allowed.includes("staff")) return "staff"
@@ -27,9 +25,7 @@ function allowedContextFor(capability: CapabilityId): AccessContext {
     environment: "staging",
     grants: rule.grant ? [rule.grant] : [],
     activities: rule.activity ? [rule.activity] : [],
-    verification: rule.verification
-      ? { [rule.verification]: "APPROVED" as const }
-      : {},
+    verification: rule.verification ? { [rule.verification]: "APPROVED" as const } : {},
     kycTier: rule.kyc ? "tier_1" : "tier_0",
     adminPermissions: rule.permission ? [rule.permission] : [],
     deniedPermissions: [],
@@ -40,10 +36,7 @@ function allowedContextFor(capability: CapabilityId): AccessContext {
   }
 }
 
-function denyVariants(
-  capability: CapabilityId,
-  allowed: AccessContext,
-): AccessContext[] {
+function denyVariants(capability: CapabilityId, allowed: AccessContext): AccessContext[] {
   const rule = CAPABILITY_RULES[capability]
   const variants: AccessContext[] = []
 
@@ -80,21 +73,14 @@ function denyVariants(
 
 describe("capability registry", () => {
   it("has exactly one rule for every shared capability ID", () => {
-    expect(Object.keys(CAPABILITY_RULES).sort()).toEqual(
-      [...CAPABILITY_IDS].sort(),
-    )
+    expect(Object.keys(CAPABILITY_RULES).sort()).toEqual([...CAPABILITY_IDS].sort())
     expect(new Set(CAPABILITY_IDS).size).toBe(CAPABILITY_IDS.length)
-    expect(new Set(CAPABILITY_DENY_REASONS).size).toBe(
-      CAPABILITY_DENY_REASONS.length,
-    )
+    expect(new Set(CAPABILITY_DENY_REASONS).size).toBe(CAPABILITY_DENY_REASONS.length)
   })
 
   it("allows every capability when all of its inputs are supplied", () => {
     for (const capability of CAPABILITY_IDS) {
-      const decision = evaluateCapability(
-        allowedContextFor(capability),
-        capability,
-      )
+      const decision = evaluateCapability(allowedContextFor(capability), capability)
       expect(decision, capability).toEqual({ allowed: true })
     }
   })
@@ -132,9 +118,7 @@ describe("capability registry", () => {
     for (const capability of CAPABILITY_IDS) {
       const allowed = allowedContextFor(capability)
       for (const denied of denyVariants(capability, allowed)) {
-        expect(evaluateCapability(denied, capability).allowed, capability).toBe(
-          false,
-        )
+        expect(evaluateCapability(denied, capability).allowed, capability).toBe(false)
       }
     }
   })
@@ -146,21 +130,20 @@ describe("capability registry", () => {
       environment: "staging",
       grants: [],
     }
-    expect(
-      evaluateCapability({ ...base, authenticated: false }, "session.read"),
-    ).toEqual({ allowed: false, reason: "UNAUTHENTICATED" })
+    expect(evaluateCapability({ ...base, authenticated: false }, "session.read")).toEqual({
+      allowed: false,
+      reason: "UNAUTHENTICATED",
+    })
     expect(evaluateCapability(base, "admin.audit.read")).toEqual({
       allowed: false,
       reason: "WRONG_AUDIENCE",
     })
+    expect(evaluateCapability({ ...base, audience: "control" }, "admin.audit.read")).toEqual({
+      allowed: false,
+      reason: "MISSING_GRANT",
+    })
     expect(
-      evaluateCapability({ ...base, audience: "control" }, "admin.audit.read"),
-    ).toEqual({ allowed: false, reason: "MISSING_GRANT" })
-    expect(
-      evaluateCapability(
-        { ...base, audience: "control" },
-        "admin.verification.review",
-      ),
+      evaluateCapability({ ...base, audience: "control" }, "admin.verification.review"),
     ).toEqual({ allowed: false, reason: "MISSING_PERMISSION" })
     expect(
       evaluateCapability(
@@ -178,14 +161,12 @@ describe("capability registry", () => {
       reason: "ACTIVITY_INACTIVE",
     })
     expect(
-      evaluateCapability(
-        { ...base, activities: ["market.sell"] },
-        "market.product.publish",
-      ),
+      evaluateCapability({ ...base, activities: ["market.sell"] }, "market.product.publish"),
     ).toEqual({ allowed: false, reason: "VERIFICATION_REQUIRED" })
-    expect(
-      evaluateCapability({ ...base, kycTier: "tier_0" }, "wallet.withdraw"),
-    ).toEqual({ allowed: false, reason: "KYC_REQUIRED" })
+    expect(evaluateCapability({ ...base, kycTier: "tier_0" }, "wallet.withdraw")).toEqual({
+      allowed: false,
+      reason: "KYC_REQUIRED",
+    })
     expect(evaluateCapability(base, "not.a.capability")).toEqual({
       allowed: false,
       reason: "UNKNOWN_CAPABILITY",
@@ -220,11 +201,7 @@ describe("capability registry", () => {
       body: { grants: ["admin.audit.read"], adminRoles: ["account.manage"] },
     } as unknown as AccessContext
 
-    expect(evaluateCapability(context, "admin.account.suspend").allowed).toBe(
-      false,
-    )
-    expect(computeCapabilities(context).has("admin.account.suspend")).toBe(
-      false,
-    )
+    expect(evaluateCapability(context, "admin.account.suspend").allowed).toBe(false)
+    expect(computeCapabilities(context).has("admin.account.suspend")).toBe(false)
   })
 })

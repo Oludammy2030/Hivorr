@@ -69,10 +69,7 @@ function harness(
   }
 
   const database = {
-    async withTransaction(
-      _options: unknown,
-      work: (tx: unknown) => Promise<unknown>,
-    ) {
+    async withTransaction(_options: unknown, work: (tx: unknown) => Promise<unknown>) {
       return work(transaction)
     },
   }
@@ -113,24 +110,24 @@ describe("payment provider settings", () => {
 
     expect(view.provider).toBe("paystack")
     expect(test.audits).toHaveLength(1)
-    expect(JSON.stringify(test.audits[0])).toContain(
-      "platform.payment_provider_changed",
-    )
+    expect(JSON.stringify(test.audits[0])).toContain("platform.payment_provider_changed")
   })
 
   it("refuses a provider whose selected mode key is missing", async () => {
     const test = harness()
     // The service was built with a test key only; live is unconfigured.
-    await expect(
-      test.service.set(input({ mode: "live" })),
-    ).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE", statusCode: 503 })
+    await expect(test.service.set(input({ mode: "live" }))).rejects.toMatchObject({
+      code: "SERVICE_UNAVAILABLE",
+      statusCode: 503,
+    })
   })
 
   it("refuses a VFD mode that does not match VFD_MODE", async () => {
     const test = harness()
-    await expect(
-      test.service.set(input({ provider: "vfd", mode: "live" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
+    await expect(test.service.set(input({ provider: "vfd", mode: "live" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      statusCode: 400,
+    })
   })
 
   it("maps a missing configuration permission to forbidden", async () => {

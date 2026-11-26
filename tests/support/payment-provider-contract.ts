@@ -25,7 +25,9 @@ export interface PaymentProviderContractHarness {
   readonly expectedProviderErrorOnUnknownStatus: "PROVIDER_NOT_FOUND"
 }
 
-export type PaymentProviderHarnessFactory = (() => PaymentProviderContractHarness) | (() => Promise<PaymentProviderContractHarness>)
+export type PaymentProviderHarnessFactory =
+  | (() => PaymentProviderContractHarness)
+  | (() => Promise<PaymentProviderContractHarness>)
 
 export function describePaymentProviderContract(
   label: string,
@@ -43,14 +45,12 @@ export function describePaymentProviderContract(
     })
 
     it("provisions one collection account per reference", async () => {
-      const first = await harness.provider.provisionCollectionAccount(
-        harness.collectionAccount,
-        { idempotencyKey: "provision-1" },
-      )
-      const second = await harness.provider.provisionCollectionAccount(
-        harness.collectionAccount,
-        { idempotencyKey: "provision-1" },
-      )
+      const first = await harness.provider.provisionCollectionAccount(harness.collectionAccount, {
+        idempotencyKey: "provision-1",
+      })
+      const second = await harness.provider.provisionCollectionAccount(harness.collectionAccount, {
+        idempotencyKey: "provision-1",
+      })
 
       expect(first.provider).toBe(harness.provider.provider)
       expect(first.reference).toBe(harness.collectionAccount.reference)
@@ -66,9 +66,7 @@ export function describePaymentProviderContract(
     })
 
     it("normalises a deposit event and rejects an unknown payload", () => {
-      const event = harness.provider.normaliseDepositEvent(
-        harness.depositPayload,
-      )
+      const event = harness.provider.normaliseDepositEvent(harness.depositPayload)
 
       expect(event.provider).toBe(harness.provider.provider)
       expect(event.amount).toMatch(/^\d+\.\d{4}$/)
@@ -76,17 +74,15 @@ export function describePaymentProviderContract(
       expect(event.payerName.length).toBeGreaterThan(0)
       expect(event.occurredAt.length).toBeGreaterThan(0)
 
-      expect(() =>
-        harness.provider.normaliseDepositEvent(harness.invalidDepositPayload),
-      ).toThrow(PaymentProviderError)
+      expect(() => harness.provider.normaliseDepositEvent(harness.invalidDepositPayload)).toThrow(
+        PaymentProviderError,
+      )
 
       try {
         harness.provider.normaliseDepositEvent(harness.invalidDepositPayload)
       } catch (error) {
         expect(error).toBeInstanceOf(PaymentProviderError)
-        expect((error as PaymentProviderError).code).toBe(
-          "PROVIDER_INVALID_PAYLOAD",
-        )
+        expect((error as PaymentProviderError).code).toBe("PROVIDER_INVALID_PAYLOAD")
       }
     })
 
@@ -139,9 +135,7 @@ export function describePaymentProviderContract(
       })
 
       expect(enquiry.accountName.length).toBeGreaterThan(0)
-      expect(enquiry.accountNumberLast4).toBe(
-        harness.payout.accountNumber.slice(-4),
-      )
+      expect(enquiry.accountNumberLast4).toBe(harness.payout.accountNumber.slice(-4))
       expect(enquiry).not.toHaveProperty("accountNumber")
 
       await expect(

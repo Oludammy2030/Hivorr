@@ -1,18 +1,12 @@
-import {
-  ACTIVITY_ACTIVATION_STATES,
-  type ActivityActivationState,
-} from "@hivorr/shared"
+import { ACTIVITY_ACTIVATION_STATES, type ActivityActivationState } from "@hivorr/shared"
 
 /**
  * Persisted activation states. `INACTIVE` is a stored row state, not a
  * dashboard state: a deactivated activity keeps its row and history.
  */
-export const PERSISTED_ACTIVATION_STATES = [
-  "INACTIVE",
-  ...ACTIVITY_ACTIVATION_STATES,
-] as const
+export const PERSISTED_ACTIVATION_STATES = ["INACTIVE", ...ACTIVITY_ACTIVATION_STATES] as const
 
-export type PersistedActivationState = typeof PERSISTED_ACTIVATION_STATES[number]
+export type PersistedActivationState = (typeof PERSISTED_ACTIVATION_STATES)[number]
 
 const TRANSITIONS: Readonly<Record<PersistedActivationState, readonly PersistedActivationState[]>> =
   {

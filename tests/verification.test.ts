@@ -64,10 +64,7 @@ describeIntegration("verification review integration", () => {
       payload: { email, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const appCookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -104,10 +101,7 @@ describeIntegration("verification review integration", () => {
     expect(verified.statusCode).toBe(200)
     return {
       userId,
-      cookie: cookieHeader(
-        readCookies(verified.headers),
-        "__Host-hivorr_control_sid",
-      ),
+      cookie: cookieHeader(readCookies(verified.headers), "__Host-hivorr_control_sid"),
     }
   }
 
@@ -123,17 +117,11 @@ describeIntegration("verification review integration", () => {
     setup = new Client({ connectionString: testUrl })
     await setup.connect()
 
-    const migrationsDirectory = path.join(
-      process.cwd(),
-      "supabase",
-      "migrations",
-    )
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
     for (const file of readdirSync(migrationsDirectory)
       .filter((entry) => entry.endsWith(".sql"))
       .sort()) {
-      await setup.query(
-        readFileSync(path.join(migrationsDirectory, file), "utf8"),
-      )
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
     }
 
     const config: ApiConfig = {
@@ -173,20 +161,11 @@ describeIntegration("verification review integration", () => {
     await app.init()
     await app.getHttpAdapter().getInstance().ready()
 
-    const manager = await registerAndEnroll(
-      "manager@example.test",
-      "manager-test-password",
-    )
+    const manager = await registerAndEnroll("manager@example.test", "manager-test-password")
     managerCookie = manager.cookie
-    const officer = await registerAndEnroll(
-      "officer@example.test",
-      "officer-test-password",
-    )
+    const officer = await registerAndEnroll("officer@example.test", "officer-test-password")
     officerCookie = officer.cookie
-    const worker = await registerAndEnroll(
-      "worker@example.test",
-      "worker-test-password",
-    )
+    const worker = await registerAndEnroll("worker@example.test", "worker-test-password")
     workerCookie = worker.cookie
 
     await setup.query(
@@ -204,9 +183,7 @@ describeIntegration("verification review integration", () => {
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -255,10 +232,12 @@ describeIntegration("verification review integration", () => {
       headers: { host: controlHost, cookie: officerCookie },
     })
     expect(queue.statusCode).toBe(200)
-    const entry = (queue.json() as Array<{
-      caseId: string
-      evidenceCount: number
-    }>).find((row) => row.caseId === reviewedCaseId)
+    const entry = (
+      queue.json() as Array<{
+        caseId: string
+        evidenceCount: number
+      }>
+    ).find((row) => row.caseId === reviewedCaseId)
     expect(entry?.evidenceCount).toBe(1)
 
     const approved = await app.inject({
@@ -276,10 +255,9 @@ describeIntegration("verification review integration", () => {
       caseStatus: "DECIDED",
     })
 
-    const decided = await setup.query(
-      "select status, outcome from admin.cases where id = $1",
-      [reviewedCaseId],
-    )
+    const decided = await setup.query("select status, outcome from admin.cases where id = $1", [
+      reviewedCaseId,
+    ])
     expect(decided.rows[0]).toMatchObject({
       status: "DECIDED",
       outcome: "verification_approved",

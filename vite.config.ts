@@ -16,10 +16,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       // Tests and dev consume shared contracts from source. The API process
       // loads the compiled ESM package from `dist` (EP-01-010).
-      "@hivorr/shared": path.resolve(
-        __dirname,
-        "./packages/shared/src/index.ts",
-      ),
+      "@hivorr/shared": path.resolve(__dirname, "./packages/shared/src/index.ts"),
     },
   },
 

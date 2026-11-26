@@ -29,28 +29,16 @@ export function requireIdempotencyKey(request: FastifyRequest): string {
   const header = request.headers[IDEMPOTENCY_HEADER]
   const value = Array.isArray(header) ? header[0] : header
   if (value === undefined) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "An Idempotency-Key header is required.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "An Idempotency-Key header is required.", 400)
   }
   const result = idempotencyKeySchema.safeParse(value)
   if (!result.success) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "The Idempotency-Key header is invalid.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "The Idempotency-Key header is invalid.", 400)
   }
   return result.data
 }
 
-export function requestFingerprint(
-  method: string,
-  path: string,
-  body: unknown,
-): string {
+export function requestFingerprint(method: string, path: string, body: unknown): string {
   return createHash("sha256")
     .update(`${method.toUpperCase()} ${path}\n${stableJson(body)}`)
     .digest("hex")

@@ -46,9 +46,7 @@ describe("sentry dsn", () => {
     const envelope = parseSentryDsn(dsn)
     expect(envelope).toEqual({
       url: "https://o1.ingest.sentry.io/api/42/envelope/",
-      auth: expect.stringContaining(
-        "sentry_key=0123456789abcdef0123456789abcdef",
-      ),
+      auth: expect.stringContaining("sentry_key=0123456789abcdef0123456789abcdef"),
     })
   })
 
@@ -75,21 +73,19 @@ describe("scrubbing", () => {
 
 describe("error tracker selection", () => {
   it("stays capture-only without a dsn", () => {
-    expect(createErrorTracker({ environment: "staging" })).toBeInstanceOf(
+    expect(createErrorTracker({ environment: "staging" })).toBeInstanceOf(CaptureErrorTracker)
+  })
+
+  it("stays capture-only for an invalid dsn rather than crashing the boot", () => {
+    expect(createErrorTracker({ environment: "production", dsn: "not-a-dsn" })).toBeInstanceOf(
       CaptureErrorTracker,
     )
   })
 
-  it("stays capture-only for an invalid dsn rather than crashing the boot", () => {
-    expect(
-      createErrorTracker({ environment: "production", dsn: "not-a-dsn" }),
-    ).toBeInstanceOf(CaptureErrorTracker)
-  })
-
   it("returns the sentry sink for a valid dsn", () => {
-    expect(
-      createErrorTracker({ environment: "production", dsn }),
-    ).toBeInstanceOf(SentryErrorTracker)
+    expect(createErrorTracker({ environment: "production", dsn })).toBeInstanceOf(
+      SentryErrorTracker,
+    )
   })
 })
 

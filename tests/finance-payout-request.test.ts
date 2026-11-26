@@ -92,9 +92,7 @@ function harness(
     },
     async query(text: string, values?: readonly unknown[]) {
       queries.push({ text, values })
-      if (
-        text.includes("select financial_hold_reason from identity.accounts")
-      ) {
+      if (text.includes("select financial_hold_reason from identity.accounts")) {
         return {
           rows: [{ financial_hold_reason: options.hold ?? null }],
         }
@@ -123,10 +121,7 @@ function harness(
   }
 
   const database = {
-    async withTransaction(
-      _options: unknown,
-      work: (tx: unknown) => Promise<unknown>,
-    ) {
+    async withTransaction(_options: unknown, work: (tx: unknown) => Promise<unknown>) {
       return work(transaction)
     },
   }
@@ -135,11 +130,7 @@ function harness(
     async assertWithin(_transaction: unknown, input: unknown) {
       limitChecks.push(input)
       if (options.denyLimit) {
-        throw new ApiError(
-          "LIMIT_EXCEEDED",
-          "No payout limit is configured for this action.",
-          403,
-        )
+        throw new ApiError("LIMIT_EXCEEDED", "No payout limit is configured for this action.", 403)
       }
     },
   }
@@ -150,11 +141,7 @@ function harness(
     },
   }
 
-  const service = new PayoutRequestService(
-    database as never,
-    limits as never,
-    identity as never,
-  )
+  const service = new PayoutRequestService(database as never, limits as never, identity as never)
 
   return {
     service,
@@ -171,9 +158,10 @@ describe("payout request eligibility", () => {
   it("refuses a caller below tier_1 before any database work", async () => {
     const test = harness()
 
-    await expect(
-      test.service.request(requestInput({ tier: "tier_0" })),
-    ).rejects.toMatchObject({ code: "KYC_REQUIRED", statusCode: 403 })
+    await expect(test.service.request(requestInput({ tier: "tier_0" }))).rejects.toMatchObject({
+      code: "KYC_REQUIRED",
+      statusCode: 403,
+    })
     expect(test.queries).toHaveLength(0)
     expect(test.limitChecks).toHaveLength(0)
   })
@@ -190,17 +178,17 @@ describe("payout request eligibility", () => {
   it("refuses a non-NGN payout", async () => {
     const test = harness()
 
-    await expect(
-      test.service.request(requestInput({ currency: "USD" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
+    await expect(test.service.request(requestInput({ currency: "USD" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
   })
 
   it("refuses an invalid amount", async () => {
     const test = harness()
 
-    await expect(
-      test.service.request(requestInput({ amount: "0.0000" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
+    await expect(test.service.request(requestInput({ amount: "0.0000" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
   })
 
   it("refuses a short idempotency key", async () => {
@@ -310,9 +298,10 @@ describe("payout request eligibility", () => {
   it("rejects a reused key that describes a different payout", async () => {
     const test = harness({ existing: requestRow() })
 
-    await expect(
-      test.service.request(requestInput({ amount: "51.0000" })),
-    ).rejects.toMatchObject({ code: "CONFLICT", statusCode: 409 })
+    await expect(test.service.request(requestInput({ amount: "51.0000" }))).rejects.toMatchObject({
+      code: "CONFLICT",
+      statusCode: 409,
+    })
   })
 
   it("lists requests with only the last four digits", async () => {

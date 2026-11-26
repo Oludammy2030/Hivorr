@@ -1,10 +1,6 @@
 import { createHash } from "node:crypto"
 
-import {
-  currencyCodeSchema,
-  minorUnitsToMoney,
-  moneyToMinorUnits,
-} from "@hivorr/shared"
+import { currencyCodeSchema, minorUnitsToMoney, moneyToMinorUnits } from "@hivorr/shared"
 
 import {
   PaymentProviderError,
@@ -47,7 +43,10 @@ import { type VfdAuthClient } from "./auth"
  */
 export const VFD_TRANSFER_TYPE = "inter"
 
-export type VfdPayoutPort = Pick<PaymentProvider, "provider" | "initiatePayout" | "getPaymentStatus" | "resolveAccountName">
+export type VfdPayoutPort = Pick<
+  PaymentProvider,
+  "provider" | "initiatePayout" | "getPaymentStatus" | "resolveAccountName"
+>
 
 export interface VfdTransferSignatureInput {
   readonly fromAccount: string
@@ -119,15 +118,7 @@ const MAXIMUM_FAILURE_MESSAGE = 200
 const TRANSFER_PENDING_CODES = new Set(["01", "09", "25", "94", "96", "500"])
 const TRANSFER_SUCCESS_CODES = new Set(["00"])
 const TRANSACTION_QUERY_SUCCESS_CODES = new Set(["00", "26"])
-const TRANSACTION_QUERY_PENDING_CODES = new Set([
-  "01",
-  "02",
-  "09",
-  "25",
-  "94",
-  "96",
-  "500",
-])
+const TRANSACTION_QUERY_PENDING_CODES = new Set(["01", "02", "09", "25", "94", "96", "500"])
 
 function defaultSleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
@@ -156,11 +147,7 @@ function safeMessage(value: unknown): string | null {
 
 function parseVendorDate(value: unknown): string {
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw failure(
-      "PROVIDER_INVALID_PAYLOAD",
-      "VFD returned no transaction date.",
-      false,
-    )
+    throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned no transaction date.", false)
   }
   // The documented form is `YYYY-MM-DD HH:mm:ss.s`. The vendor does not state a
   // zone; the ledger stores UTC and the ambiguity is recorded for EP-02-045.
@@ -169,11 +156,7 @@ function parseVendorDate(value: unknown): string {
     /(?:Z|[+-]\d{2}:?\d{2})$/.test(normalised) ? normalised : `${normalised}Z`,
   )
   if (Number.isNaN(parsed.getTime())) {
-    throw failure(
-      "PROVIDER_INVALID_PAYLOAD",
-      "VFD returned an unreadable transaction date.",
-      false,
-    )
+    throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned an unreadable transaction date.", false)
   }
   return parsed.toISOString()
 }
@@ -195,10 +178,13 @@ export class VfdPayoutClient implements VfdPayoutPort {
   private readonly fetchImpl: typeof fetch
   private readonly sleep: (milliseconds: number) => Promise<void>
   private readonly now: () => number
-  private readonly attempts: Map<string, {
-    readonly fingerprint: string
-    readonly result: PayoutResult
-  }> = new Map()
+  private readonly attempts: Map<
+    string,
+    {
+      readonly fingerprint: string
+      readonly result: PayoutResult
+    }
+  > = new Map()
 
   constructor(
     private readonly auth: VfdAuthClient,
@@ -211,9 +197,7 @@ export class VfdPayoutClient implements VfdPayoutPort {
     this.now = dependencies.now ?? Date.now
   }
 
-  async resolveAccountName(
-    input: AccountNameEnquiryRequest,
-  ): Promise<AccountNameEnquiry> {
+  async resolveAccountName(input: AccountNameEnquiryRequest): Promise<AccountNameEnquiry> {
     return this.accountNames.resolveAccountName(input)
   }
 
@@ -225,11 +209,7 @@ export class VfdPayoutClient implements VfdPayoutPort {
 
     const sourceAccountNumber = this.options.sourceAccountNumber
     if (!sourceAccountNumber) {
-      throw failure(
-        "PROVIDER_AUTH_FAILED",
-        "VFD source account is not configured.",
-        false,
-      )
+      throw failure("PROVIDER_AUTH_FAILED", "VFD source account is not configured.", false)
     }
     const signer = this.options.signer ?? new VfdSha512TransferSigner()
 
@@ -301,11 +281,7 @@ export class VfdPayoutClient implements VfdPayoutPort {
   async getPaymentStatus(query: PaymentStatusQuery): Promise<PaymentStatus> {
     const reference = query.reference ?? query.providerReference
     if (!reference) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A status query needs a reference.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A status query needs a reference.", false)
     }
 
     const envelope = await this.send<VfdStatusEnvelope>({
@@ -316,41 +292,23 @@ export class VfdPayoutClient implements VfdPayoutPort {
 
     if (envelope.status !== "00") {
       if (envelope.status === "108") {
-        throw failure(
-          "PROVIDER_NOT_FOUND",
-          "VFD does not know that reference.",
-          false,
-        )
+        throw failure("PROVIDER_NOT_FOUND", "VFD does not know that reference.", false)
       }
-      throw failure(
-        "PROVIDER_REJECTED",
-        "VFD rejected the status query.",
-        false,
-      )
+      throw failure("PROVIDER_REJECTED", "VFD rejected the status query.", false)
     }
 
     const data = envelope.data
     const code = stringOf(data?.transactionStatus)
     if (!code) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "VFD returned no transaction status.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned no transaction status.", false)
     }
 
     const amountMinor = moneyToMinorUnits(stringOf(data?.amount) ?? "")
     if (amountMinor === null) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "VFD returned an unreadable amount.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned an unreadable amount.", false)
     }
 
-    const status: PaymentStatus["status"] = TRANSACTION_QUERY_SUCCESS_CODES.has(
-      code,
-    )
+    const status: PaymentStatus["status"] = TRANSACTION_QUERY_SUCCESS_CODES.has(code)
       ? "paid"
       : TRANSACTION_QUERY_PENDING_CODES.has(code)
         ? "pending"
@@ -359,8 +317,7 @@ export class VfdPayoutClient implements VfdPayoutPort {
     return {
       provider: this.provider,
       reference: query.reference ?? null,
-      providerReference:
-        stringOf(data?.TxnId) ?? stringOf(data?.sessionId) ?? reference,
+      providerReference: stringOf(data?.TxnId) ?? stringOf(data?.sessionId) ?? reference,
       status,
       amount: minorUnitsToMoney(amountMinor),
       // The documented TSQ response has no currency field. The VFD wallet is
@@ -379,18 +336,10 @@ export class VfdPayoutClient implements VfdPayoutPort {
       )
     }
     if (!currencyCodeSchema.safeParse(input.currency).success) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A payout currency is invalid.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A payout currency is invalid.", false)
     }
     if (input.currency !== "NGN") {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "The VFD wallet supports NGN payouts only.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "The VFD wallet supports NGN payouts only.", false)
     }
     const amountMinor = moneyToMinorUnits(input.amount)
     if (amountMinor === null) {
@@ -401,23 +350,12 @@ export class VfdPayoutClient implements VfdPayoutPort {
       )
     }
     if (!/^[0-9]{3,10}$/.test(input.bankCode)) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A payout bank code is three to ten digits.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A payout bank code is three to ten digits.", false)
     }
     if (!/^[0-9]{10}$/.test(input.accountNumber)) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A payout account number is ten digits.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A payout account number is ten digits.", false)
     }
-    if (
-      input.accountName.trim().length === 0 ||
-      input.accountName.trim().length > 160
-    ) {
+    if (input.accountName.trim().length === 0 || input.accountName.trim().length > 160) {
       throw failure(
         "PROVIDER_INVALID_PAYLOAD",
         "A payout account name is one to 160 characters.",
@@ -427,10 +365,7 @@ export class VfdPayoutClient implements VfdPayoutPort {
     return amountMinor
   }
 
-  private transferResult(
-    input: PayoutRequest,
-    envelope: VfdTransferEnvelope,
-  ): PayoutResult {
+  private transferResult(input: PayoutRequest, envelope: VfdTransferEnvelope): PayoutResult {
     const status = stringOf(envelope.status)
     if (!status) {
       throw failure(
@@ -441,20 +376,12 @@ export class VfdPayoutClient implements VfdPayoutPort {
     }
 
     if (status === "98") {
-      throw failure(
-        "PROVIDER_DUPLICATE",
-        "VFD already has a transfer with that reference.",
-        false,
-      )
+      throw failure("PROVIDER_DUPLICATE", "VFD already has a transfer with that reference.", false)
     }
     // The vendor table also lists 02 as a pending status, but the transfer
     // failure table defines it as a signature mismatch. Treat it as a refusal.
     if (status === "02") {
-      throw failure(
-        "PROVIDER_AUTH_FAILED",
-        "VFD rejected the transfer signature.",
-        false,
-      )
+      throw failure("PROVIDER_AUTH_FAILED", "VFD rejected the transfer signature.", false)
     }
 
     const providerReference =
@@ -494,21 +421,18 @@ export class VfdPayoutClient implements VfdPayoutPort {
       providerReference,
       status: "failed",
       failureCode: `VFD_${status}`,
-      failureMessage:
-        safeMessage(envelope.message) ?? "VFD reported a failed transfer.",
+      failureMessage: safeMessage(envelope.message) ?? "VFD reported a failed transfer.",
       occurredAt: now,
     }
   }
 
-  private async send<T,>(request: {
+  private async send<T>(request: {
     readonly method: "GET" | "POST"
     readonly path: string
     readonly query?: Readonly<Record<string, string>>
     readonly body?: unknown
   }): Promise<T> {
-    const url = new URL(
-      `${VFD_WALLET_BASE_URLS[this.auth.mode]}${request.path}`,
-    )
+    const url = new URL(`${VFD_WALLET_BASE_URLS[this.auth.mode]}${request.path}`)
     for (const [key, value] of Object.entries(request.query ?? {})) {
       url.searchParams.set(key, value)
     }
@@ -526,10 +450,7 @@ export class VfdPayoutClient implements VfdPayoutPort {
 
       const token = await this.auth.getToken()
       const controller = new AbortController()
-      const timer = setTimeout(
-        () => controller.abort(),
-        this.options.requestTimeoutMs,
-      )
+      const timer = setTimeout(() => controller.abort(), this.options.requestTimeoutMs)
 
       try {
         const response = await this.fetchImpl(url, {
@@ -545,19 +466,11 @@ export class VfdPayoutClient implements VfdPayoutPort {
 
         if (response.status === 401 || response.status === 403) {
           this.auth.invalidate()
-          throw failure(
-            "PROVIDER_AUTH_FAILED",
-            "VFD rejected the access token.",
-            false,
-          )
+          throw failure("PROVIDER_AUTH_FAILED", "VFD rejected the access token.", false)
         }
 
         if (response.status === 429 || response.status >= 500) {
-          lastError = failure(
-            "PROVIDER_UNAVAILABLE",
-            "VFD is unavailable.",
-            true,
-          )
+          lastError = failure("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
           continue
         }
 
@@ -567,11 +480,7 @@ export class VfdPayoutClient implements VfdPayoutPort {
 
         const payload = (await response.json().catch(() => null)) as T | null
         if (!payload) {
-          throw failure(
-            "PROVIDER_INVALID_PAYLOAD",
-            "VFD returned an unreadable response.",
-            false,
-          )
+          throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned an unreadable response.", false)
         }
         return payload
       } catch (error) {
@@ -581,25 +490,15 @@ export class VfdPayoutClient implements VfdPayoutPort {
           continue
         }
         if (controller.signal.aborted) {
-          lastError = failure(
-            "PROVIDER_TIMEOUT",
-            "VFD did not answer in time.",
-            true,
-          )
+          lastError = failure("PROVIDER_TIMEOUT", "VFD did not answer in time.", true)
           continue
         }
-        lastError = failure(
-          "PROVIDER_UNAVAILABLE",
-          "The VFD request failed.",
-          true,
-        )
+        lastError = failure("PROVIDER_UNAVAILABLE", "The VFD request failed.", true)
       } finally {
         clearTimeout(timer)
       }
     }
 
-    throw (
-      lastError ?? failure("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
-    )
+    throw lastError ?? failure("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
   }
 }

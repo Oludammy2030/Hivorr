@@ -5,11 +5,7 @@ import { Audience } from "../common/audience"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { DatabaseService } from "../db/database.service"
 import { computeCapabilities } from "../domain/capabilities"
-import {
-  loadAdminAuthority,
-  platformPermissions,
-  withPlatformAuthority,
-} from "../modules/admin"
+import { loadAdminAuthority, platformPermissions, withPlatformAuthority } from "../modules/admin"
 import {
   GrantsService,
   IdentityService,
@@ -56,13 +52,8 @@ export class ControlAuthorityController {
           audience: context.audience,
           environment: context.environment,
         })
-        const authority = await loadAdminAuthority(
-          transaction.client,
-          session.userId,
-        )
-        const capabilities = [
-          ...computeCapabilities(withPlatformAuthority(access, authority)),
-        ]
+        const authority = await loadAdminAuthority(transaction.client, session.userId)
+        const capabilities = [...computeCapabilities(withPlatformAuthority(access, authority))]
 
         return {
           grants: own.grants,

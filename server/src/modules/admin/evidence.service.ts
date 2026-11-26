@@ -60,17 +60,9 @@ function codeOf(error: unknown): string | undefined {
 function mapEvidenceError(error: unknown): never {
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to work with case evidence.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to work with case evidence.", 403)
     case "P0002":
-      throw new ApiError(
-        "NOT_FOUND",
-        "The case or evidence was not found.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The case or evidence was not found.", 404)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -78,23 +70,15 @@ function mapEvidenceError(error: unknown): never {
         409,
       )
     case "22023":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The evidence metadata is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The evidence metadata is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The evidence operation failed.")
+      throw error instanceof Error ? error : new Error("The evidence operation failed.")
   }
 }
 
 @Injectable()
 export class EvidenceService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async list(input: {
     accountId: string
@@ -247,10 +231,11 @@ export class EvidenceService {
       await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
         async (transaction) => {
-          await transaction.query(
-            "select admin.record_evidence_access($1, $2, $3)",
-            [input.userId, input.evidenceId, input.purpose],
-          )
+          await transaction.query("select admin.record_evidence_access($1, $2, $3)", [
+            input.userId,
+            input.evidenceId,
+            input.purpose,
+          ])
         },
       )
     } catch (error) {

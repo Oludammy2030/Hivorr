@@ -76,19 +76,13 @@ describe("EP-02 shared verification contracts", () => {
       objectKey: "private-documents/kyc/abc.pdf",
       contentType: "application/pdf",
       sizeBytes: 1024,
-      sha256:
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       scanState: "CLEAN" as const,
       uploadedAt: "2026-11-15T00:00:00.000Z",
     }
     expect(evidenceReferenceSchema.safeParse(base).success).toBe(true)
-    expect(
-      evidenceReferenceSchema.safeParse({ ...base, sha256: "abc" }).success,
-    ).toBe(false)
-    expect(
-      evidenceReferenceSchema.safeParse({ ...base, scanState: "UNKNOWN" })
-        .success,
-    ).toBe(false)
+    expect(evidenceReferenceSchema.safeParse({ ...base, sha256: "abc" }).success).toBe(false)
+    expect(evidenceReferenceSchema.safeParse({ ...base, scanState: "UNKNOWN" }).success).toBe(false)
   })
 })
 
@@ -124,9 +118,7 @@ describe("EP-02 shared finance contracts", () => {
       withdrawable: "20000.0000",
     }
     expect(walletBalanceViewSchema.safeParse(view).success).toBe(true)
-    expect(
-      walletBalanceViewSchema.safeParse({ ...view, available: 20000 }).success,
-    ).toBe(false)
+    expect(walletBalanceViewSchema.safeParse({ ...view, available: 20000 }).success).toBe(false)
     const { withdrawable: _withdrawable, ...missing } = view
     expect(walletBalanceViewSchema.safeParse(missing).success).toBe(false)
   })
@@ -210,10 +202,7 @@ describe("EP-02 shared finance contracts", () => {
     expect(
       journalEntrySchema.safeParse({
         ...entry,
-        postings: [
-          entry.postings[0],
-          { ...entry.postings[1], currency: "USD" },
-        ],
+        postings: [entry.postings[0], { ...entry.postings[1], currency: "USD" }],
       }).success,
     ).toBe(false)
   })
@@ -272,23 +261,15 @@ describe("EP-02 shared finance contracts", () => {
       rule: { policy: "BD-D03" },
     })
     expect(evaluateEscrowTransition("held", "refunded").status).toBe("disabled")
-    expect(evaluateEscrowTransition("held", "cancelled").status).toBe(
-      "disabled",
-    )
-    expect(evaluateEscrowTransition("disputed", "released").status).toBe(
-      "disabled",
-    )
+    expect(evaluateEscrowTransition("held", "cancelled").status).toBe("disabled")
+    expect(evaluateEscrowTransition("disputed", "released").status).toBe("disabled")
     expect(evaluateEscrowTransition("held", "held").status).toBe("invalid")
     expect(evaluateEscrowTransition("released", "held").status).toBe("invalid")
     expect(ESCROW_TRANSITIONS.filter((rule) => rule.policy)).toHaveLength(5)
   })
 
   it("defines dispute statuses without an outcome state", () => {
-    expect(DISPUTE_STATUSES).toEqual([
-      "OPENED",
-      "UNDER_REVIEW",
-      "AWAITING_EVIDENCE",
-    ])
+    expect(DISPUTE_STATUSES).toEqual(["OPENED", "UNDER_REVIEW", "AWAITING_EVIDENCE"])
     const dispute = {
       id: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7b",
       reference: "DSP-ABC123456",
@@ -307,12 +288,8 @@ describe("EP-02 shared finance contracts", () => {
       updatedAt: "2026-11-19T00:00:00.000Z",
     }
     expect(disputeSchema.safeParse(dispute).success).toBe(true)
-    expect(
-      disputeSchema.safeParse({ ...dispute, status: "RESOLVED" }).success,
-    ).toBe(false)
-    expect(
-      disputeSchema.safeParse({ ...dispute, claimedAmount: -1 }).success,
-    ).toBe(false)
+    expect(disputeSchema.safeParse({ ...dispute, status: "RESOLVED" }).success).toBe(false)
+    expect(disputeSchema.safeParse({ ...dispute, claimedAmount: -1 }).success).toBe(false)
   })
 
   it("keeps the new API error codes stable", () => {

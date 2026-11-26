@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  OutboxHandlers,
-  type OutboxEvent,
-  type OutboxLogger,
-} from "../server/src/worker/outbox"
+import { OutboxHandlers, type OutboxEvent, type OutboxLogger } from "../server/src/worker/outbox"
 import type { OutboxRepository } from "../server/src/worker/outbox-repository"
 import { OutboxWorker } from "../server/src/worker/outbox-worker"
 
@@ -44,7 +40,10 @@ class FakeRepository {
     return !this.loseLease
   }
 
-  async fail(failedEvent: OutboxEvent, message: string): Promise<{
+  async fail(
+    failedEvent: OutboxEvent,
+    message: string,
+  ): Promise<{
     attempts: number
     deadLettered: boolean
   }> {
@@ -59,10 +58,7 @@ class FakeRepository {
   }
 }
 
-function workerWith(
-  repository: FakeRepository,
-  handlers: OutboxHandlers,
-): OutboxWorker {
+function workerWith(repository: FakeRepository, handlers: OutboxHandlers): OutboxWorker {
   return new OutboxWorker(repository as unknown as OutboxRepository, handlers, {
     batchSize: 10,
     pollIntervalMs: 1_000,
@@ -74,10 +70,7 @@ describe("outbox worker loop", () => {
   it("claims, dispatches and completes an event", async () => {
     const repository = new FakeRepository()
     repository.claimed = [event()]
-    const handlers = new OutboxHandlers().register(
-      "test.event",
-      async () => undefined,
-    )
+    const handlers = new OutboxHandlers().register("test.event", async () => undefined)
     const worker = workerWith(repository, handlers)
 
     const result = await worker.runOnce()
@@ -93,12 +86,9 @@ describe("outbox worker loop", () => {
   it("replays a redelivered event without duplicating its effect", async () => {
     const repository = new FakeRepository()
     const effects = new Set<string>()
-    const handlers = new OutboxHandlers().register(
-      "test.event",
-      async (event) => {
-        effects.add(event.id)
-      },
-    )
+    const handlers = new OutboxHandlers().register("test.event", async (event) => {
+      effects.add(event.id)
+    })
     const worker = workerWith(repository, handlers)
 
     repository.claimed = [event()]
@@ -144,10 +134,7 @@ describe("outbox worker loop", () => {
     const repository = new FakeRepository()
     repository.loseLease = true
     repository.claimed = [event()]
-    const handlers = new OutboxHandlers().register(
-      "test.event",
-      async () => undefined,
-    )
+    const handlers = new OutboxHandlers().register("test.event", async () => undefined)
     const worker = workerWith(repository, handlers)
 
     const result = await worker.runOnce()

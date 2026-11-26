@@ -28,11 +28,7 @@ export interface AppProvidersProps {
   readonly queryClient?: QueryClient
 }
 
-export function AppProviders({
-  client,
-  children,
-  queryClient,
-}: AppProvidersProps) {
+export function AppProviders({ client, children, queryClient }: AppProvidersProps) {
   const [fallbackClient] = useState(() => queryClient ?? createQueryClient())
 
   return (

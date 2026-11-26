@@ -4,8 +4,7 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 
 const root = process.cwd()
-const read = (relative: string) =>
-  readFileSync(path.join(root, relative), "utf8")
+const read = (relative: string) => readFileSync(path.join(root, relative), "utf8")
 
 const service = read("server/src/modules/identity/identity.service.ts")
 const adapter = read("server/src/integrations/email/email.adapter.ts")
@@ -20,9 +19,7 @@ describe("credential and token policy", () => {
 
   it("defines short, explicit recovery token lifetimes", () => {
     expect(service).toMatch(/PASSWORD_RESET_TTL_MS = 30 \* 60 \* 1000/)
-    expect(service).toMatch(
-      /EMAIL_VERIFICATION_TTL_MS = 24 \* 60 \* 60 \* 1000/,
-    )
+    expect(service).toMatch(/EMAIL_VERIFICATION_TTL_MS = 24 \* 60 \* 60 \* 1000/)
   })
 
   it("hashes recovery tokens before storage and never logs them", () => {
@@ -38,8 +35,6 @@ describe("credential and token policy", () => {
   })
 
   it("revokes active sessions when the password changes", () => {
-    expect(service).toMatch(
-      /set revoked_at = now\(\), revoked_reason = 'password_reset'/,
-    )
+    expect(service).toMatch(/set revoked_at = now\(\), revoked_reason = 'password_reset'/)
   })
 })

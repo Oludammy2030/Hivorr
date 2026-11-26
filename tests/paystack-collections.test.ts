@@ -121,9 +121,7 @@ describe("Paystack collections adapter", () => {
   })
 
   it("verifies a transaction with Paystack", async () => {
-    const { client, calls } = harness(async () =>
-      jsonResponse({ status: true, data: event.data }),
-    )
+    const { client, calls } = harness(async () => jsonResponse({ status: true, data: event.data }))
 
     const deposit = await client.verifyTransaction("dep-1")
     expect(deposit.amount).toBe("50.0000")

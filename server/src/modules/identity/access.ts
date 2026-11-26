@@ -1,10 +1,4 @@
-import type {
-  ActivityId,
-  EnvironmentId,
-  GrantId,
-  KycTier,
-  PortalId,
-} from "@hivorr/shared"
+import type { ActivityId, EnvironmentId, GrantId, KycTier, PortalId } from "@hivorr/shared"
 import type { PoolClient } from "pg"
 
 import type { AccessContext } from "../../domain/capabilities"

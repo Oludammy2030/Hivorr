@@ -1,21 +1,9 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
 import { API_CONFIG, type ApiConfig } from "../config"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 import { ProfileService } from "../modules/profile"
 
 /**
@@ -66,10 +54,7 @@ export class ActivityController {
 
   private async loadSession(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { session, context }
   }
 }

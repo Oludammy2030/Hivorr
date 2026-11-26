@@ -2,10 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { StaticRouter } from "react-router"
 import { describe, expect, it } from "vitest"
 
-import {
-  ApiClientError,
-  type SessionResponse,
-} from "../packages/api-client/src/index"
+import { ApiClientError, type SessionResponse } from "../packages/api-client/src/index"
 import {
   ANONYMOUS_SESSION,
   AppProviders,
@@ -103,12 +100,7 @@ describe("slice routes", () => {
   })
 
   it("renders a 404 for an approved route outside the slice", () => {
-    for (const path of [
-      "/wallet",
-      "/messages",
-      "/profile",
-      "/explore/market",
-    ]) {
+    for (const path of ["/wallet", "/messages", "/profile", "/explore/market"]) {
       expect(renderAt(path)).toContain("Page not found")
     }
   })
@@ -202,10 +194,7 @@ describe("session presentation state", () => {
       error: null,
     })
     expect(state.status).toBe("authenticated")
-    expect(state.presentedCapabilities).toEqual([
-      "session.read",
-      "profile.read.self",
-    ])
+    expect(state.presentedCapabilities).toEqual(["session.read", "profile.read.self"])
     expect(state.canPresent("session.read")).toBe(true)
     expect(state.canPresent("admin.grant.manage")).toBe(false)
     expect(Object.isFrozen(state.presentedCapabilities)).toBe(true)
@@ -227,10 +216,7 @@ describe("session presentation state", () => {
     }
 
     const html = renderToStaticMarkup(
-      <AppProviders
-        client={{ session: async () => data }}
-        queryClient={queryClient}
-      >
+      <AppProviders client={{ session: async () => data }} queryClient={queryClient}>
         <Probe />
       </AppProviders>,
     )

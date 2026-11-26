@@ -149,10 +149,7 @@ async function smokeStartup() {
 
   const queue = await fetch(`http://127.0.0.1:${port}/health/queue`)
   if (queue.status !== 503) {
-    fail(
-      "queue health fails closed without a database",
-      `status ${queue.status}`,
-    )
+    fail("queue health fails closed without a database", `status ${queue.status}`)
   } else {
     pass("queue health fails closed without a database")
   }
@@ -166,18 +163,13 @@ async function smokeStartup() {
   }
 
   if (process.platform === "win32") {
-    pass(
-      "SIGTERM stops the worker process (Windows terminates unconditionally)",
-    )
+    pass("SIGTERM stops the worker process (Windows terminates unconditionally)")
     return
   }
   if (exit.code === 0 || exit.signal === "SIGTERM") {
     pass("SIGTERM performs a graceful shutdown")
   } else {
-    fail(
-      "SIGTERM performs a graceful shutdown",
-      `exit code ${exit.code}, signal ${exit.signal}`,
-    )
+    fail("SIGTERM performs a graceful shutdown", `exit code ${exit.code}, signal ${exit.signal}`)
   }
 }
 
@@ -196,10 +188,7 @@ async function smokeInvalidConfiguration() {
     return
   }
   if (result.code !== 1 || !output.includes("failed to start")) {
-    fail(
-      "missing worker configuration exits with code 1",
-      `code ${result.code}; ${output.trim()}`,
-    )
+    fail("missing worker configuration exits with code 1", `code ${result.code}; ${output.trim()}`)
     return
   }
   pass("missing worker configuration exits with code 1")
@@ -212,9 +201,7 @@ async function smokeInvalidConfiguration() {
 }
 
 if (!existsSync(entry)) {
-  console.error(
-    "smoke:worker: server/dist/worker.js is missing; run `pnpm build:server` first",
-  )
+  console.error("smoke:worker: server/dist/worker.js is missing; run `pnpm build:server` first")
   process.exit(2)
 }
 
@@ -230,9 +217,7 @@ try {
 
 console.log("")
 if (failures.length) {
-  console.error(
-    `smoke:worker: FAILED — ${failures.length} check(s) did not pass`,
-  )
+  console.error(`smoke:worker: FAILED — ${failures.length} check(s) did not pass`)
   process.exit(1)
 }
 console.log("smoke:worker: OK — the compiled worker starts, reports and stops")

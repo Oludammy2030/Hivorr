@@ -15,13 +15,7 @@
 
 import { randomBytes } from "node:crypto"
 import { spawnSync } from "node:child_process"
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 
@@ -29,11 +23,7 @@ import { encodePng } from "./lib/png.mjs"
 
 const root = process.cwd()
 const temp = mkdtempSync(path.join(tmpdir(), "hivorr-gates-"))
-const contractFixture = path.join(
-  root,
-  "tests",
-  `__gate_selftest_${process.pid}.test.ts`,
-)
+const contractFixture = path.join(root, "tests", `__gate_selftest_${process.pid}.test.ts`)
 
 const results = []
 
@@ -104,16 +94,8 @@ check("secret gate blocks a committed token", () => {
   const leak = path.join(temp, "secret-leak.txt")
   write(clean, "nothing sensitive here\n")
   write(leak, `token = ghp_${"A".repeat(36)}\n`)
-  expectExit(
-    nodeRun("scripts/secret-scan.mjs", [clean]),
-    0,
-    "secret scan on clean file",
-  )
-  expectExit(
-    nodeRun("scripts/secret-scan.mjs", [leak]),
-    1,
-    "secret scan on leaked token",
-  )
+  expectExit(nodeRun("scripts/secret-scan.mjs", [clean]), 0, "secret scan on clean file")
+  expectExit(nodeRun("scripts/secret-scan.mjs", [leak]), 1, "secret scan on leaked token")
 })
 
 // --- Configuration contract ------------------------------------------------
@@ -215,11 +197,7 @@ check("migration lint blocks a new table without RLS", () => {
     path.join(directory, "20260101000200_platform_create_gadget.sql"),
     "create table platform.gadget (id uuid primary key);\n",
   )
-  expectExit(
-    nodeRun("scripts/lint-migrations.mjs", ["--dir", directory]),
-    1,
-    "table without RLS",
-  )
+  expectExit(nodeRun("scripts/lint-migrations.mjs", ["--dir", directory]), 1, "table without RLS")
 })
 
 check("migration lint accepts a compliant migration", () => {
@@ -229,11 +207,7 @@ check("migration lint accepts a compliant migration", () => {
     "create table platform.widget (id uuid primary key);\n" +
       "alter table platform.widget enable row level security;\n",
   )
-  expectExit(
-    nodeRun("scripts/lint-migrations.mjs", ["--dir", directory]),
-    0,
-    "compliant migration",
-  )
+  expectExit(nodeRun("scripts/lint-migrations.mjs", ["--dir", directory]), 0, "compliant migration")
 })
 
 // --- OpenAPI diff ----------------------------------------------------------
@@ -262,13 +236,7 @@ check("OpenAPI gate blocks a removed operation", () => {
     }),
   )
   expectExit(
-    nodeRun("scripts/openapi-diff.mjs", [
-      "--base",
-      base,
-      "--head",
-      head,
-      "--fail-on-breaking",
-    ]),
+    nodeRun("scripts/openapi-diff.mjs", ["--base", base, "--head", head, "--fail-on-breaking"]),
     1,
     "removed operation",
   )
@@ -291,13 +259,7 @@ check("OpenAPI gate accepts an additive change", () => {
     }),
   )
   expectExit(
-    nodeRun("scripts/openapi-diff.mjs", [
-      "--base",
-      base,
-      "--head",
-      head,
-      "--fail-on-breaking",
-    ]),
+    nodeRun("scripts/openapi-diff.mjs", ["--base", base, "--head", head, "--fail-on-breaking"]),
     0,
     "additive operation",
   )
@@ -394,20 +356,14 @@ function bundleFixture(name, { noindexControl = true, payload } = {}) {
         noindex ? '<meta name="robots" content="noindex, nofollow">' : ""
       }</head><body><script type="module" src="/assets/index.js"></script></body></html>`,
     )
-    write(
-      path.join(directory, "assets", "index.js"),
-      payload ?? `console.log("${app}")`,
-    )
+    write(path.join(directory, "assets", "index.js"), payload ?? `console.log("${app}")`)
   }
   return dist
 }
 
 check("bundle gate accepts four bundles", () => {
   expectExit(
-    nodeRun("scripts/verify-bundles.mjs", [
-      "--dist",
-      bundleFixture("bundles-good"),
-    ]),
+    nodeRun("scripts/verify-bundles.mjs", ["--dist", bundleFixture("bundles-good")]),
     0,
     "four verified bundles",
   )
@@ -442,14 +398,8 @@ check("bundle gate blocks an over-budget initial bundle", () => {
 check("typecheck gate blocks a type error", () => {
   const good = path.join(temp, "types-good")
   const bad = path.join(temp, "types-bad")
-  write(
-    path.join(good, "good.ts"),
-    "const value: number = 1\nexport default value\n",
-  )
-  write(
-    path.join(bad, "bad.ts"),
-    'const value: number = "not a number"\nexport default value\n',
-  )
+  write(path.join(good, "good.ts"), "const value: number = 1\nexport default value\n")
+  write(path.join(bad, "bad.ts"), 'const value: number = "not a number"\nexport default value\n')
 
   expectExit(
     tscRun(["--noEmit", "--strict", "--skipLibCheck", "good.ts"], {
@@ -483,22 +433,14 @@ check("contract gate blocks drifted vocabulary", () => {
     ].join("\n"),
   )
   try {
-    expectExit(
-      vitestRun([path.relative(root, contractFixture)]),
-      1,
-      "drifted contract test",
-    )
+    expectExit(vitestRun([path.relative(root, contractFixture)]), 1, "drifted contract test")
   } finally {
     rmSync(contractFixture, { force: true })
   }
 })
 
 check("contract gate accepts the real vocabulary", () => {
-  expectExit(
-    vitestRun(["tests/workspace-contracts.test.ts"]),
-    0,
-    "real contract suite",
-  )
+  expectExit(vitestRun(["tests/workspace-contracts.test.ts"]), 0, "real contract suite")
 })
 
 // --- Module boundaries -----------------------------------------------------
@@ -519,10 +461,7 @@ const BOUNDARY_MODULES = [
 function boundaryFixture(name) {
   const directory = path.join(temp, name)
   for (const module of BOUNDARY_MODULES) {
-    write(
-      path.join(directory, "server", "src", "modules", module, "index.ts"),
-      "export {}\n",
-    )
+    write(path.join(directory, "server", "src", "modules", module, "index.ts"), "export {}\n")
   }
   return directory
 }
@@ -533,10 +472,7 @@ function modulePath(directory, module, file = "index.ts") {
 
 check("module boundary accepts the ten-module skeleton", () => {
   expectExit(
-    nodeRun("scripts/lint-boundaries.mjs", [
-      "--root",
-      boundaryFixture("boundary-good"),
-    ]),
+    nodeRun("scripts/lint-boundaries.mjs", ["--root", boundaryFixture("boundary-good")]),
     0,
     "ten skeleton modules",
   )
@@ -544,14 +480,8 @@ check("module boundary accepts the ten-module skeleton", () => {
 
 check("module boundary blocks a cross-module internal import", () => {
   const directory = boundaryFixture("boundary-internal")
-  write(
-    modulePath(directory, "platform", "internal.ts"),
-    "export const internal = 1\n",
-  )
-  write(
-    modulePath(directory, "identity"),
-    'export { internal } from "../platform/internal"\n',
-  )
+  write(modulePath(directory, "platform", "internal.ts"), "export const internal = 1\n")
+  write(modulePath(directory, "identity"), 'export { internal } from "../platform/internal"\n')
   expectExit(
     nodeRun("scripts/lint-boundaries.mjs", ["--root", directory]),
     1,
@@ -561,14 +491,8 @@ check("module boundary blocks a cross-module internal import", () => {
 
 check("module boundary blocks a cross-module repository import", () => {
   const directory = boundaryFixture("boundary-repository")
-  write(
-    modulePath(directory, "platform", "repository/audit.ts"),
-    "export const audit = 1\n",
-  )
-  write(
-    modulePath(directory, "identity"),
-    'export { audit } from "../platform/repository/audit"\n',
-  )
+  write(modulePath(directory, "platform", "repository/audit.ts"), "export const audit = 1\n")
+  write(modulePath(directory, "identity"), 'export { audit } from "../platform/repository/audit"\n')
   expectExit(
     nodeRun("scripts/lint-boundaries.mjs", ["--root", directory]),
     1,
@@ -595,10 +519,7 @@ check("module boundary blocks a dependency cycle", () => {
 
 check("module boundary blocks code in an activity module", () => {
   const directory = boundaryFixture("boundary-activity")
-  write(
-    modulePath(directory, "market", "service.ts"),
-    "export const market = 1\n",
-  )
+  write(modulePath(directory, "market", "service.ts"), "export const market = 1\n")
   expectExit(
     nodeRun("scripts/lint-boundaries.mjs", ["--root", directory]),
     1,
@@ -625,13 +546,9 @@ rmSync(temp, { recursive: true, force: true })
 
 const failed = results.filter((result) => !result.ok)
 console.log("")
-console.log(
-  `test:gates: ${results.length - failed.length}/${results.length} proof(s) passed`,
-)
+console.log(`test:gates: ${results.length - failed.length}/${results.length} proof(s) passed`)
 if (failed.length) {
-  console.error(
-    `test:gates: FAILED — ${failed.length} seeded proof(s) did not behave as intended`,
-  )
+  console.error(`test:gates: FAILED — ${failed.length} seeded proof(s) did not behave as intended`)
   process.exit(1)
 }
 if (existsSync(contractFixture)) {

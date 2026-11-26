@@ -9,10 +9,7 @@ const describeIntegration = baseUrl ? describe : describe.skip
 
 const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
 const gateSql = readFileSync(
-  path.join(
-    migrationsDirectory,
-    "20261114001400_admin_alter_case_permission_gates.sql",
-  ),
+  path.join(migrationsDirectory, "20261114001400_admin_alter_case_permission_gates.sql"),
   "utf8",
 )
 
@@ -38,9 +35,7 @@ describe("case permission gates", () => {
   })
 
   it("no longer admits evidence through the case permission", () => {
-    expect(functionBody("list_case_evidence")).not.toMatch(
-      /'admin\.case\.read'/,
-    )
+    expect(functionBody("list_case_evidence")).not.toMatch(/'admin\.case\.read'/)
   })
 })
 
@@ -82,57 +77,52 @@ describeIntegration("case permission enforcement", () => {
     )
   }
 
-  beforeAll(
-    async () => {
-      admin = new Client({ connectionString: baseUrl })
-      await admin.connect()
-      await admin.query(`create database "${databaseName}"`)
+  beforeAll(async () => {
+    admin = new Client({ connectionString: baseUrl })
+    await admin.connect()
+    await admin.query(`create database "${databaseName}"`)
 
-      const url = new URL(baseUrl!)
-      url.pathname = `/${databaseName}`
-      database = new Client({ connectionString: url.toString() })
-      await database.connect()
+    const url = new URL(baseUrl!)
+    url.pathname = `/${databaseName}`
+    database = new Client({ connectionString: url.toString() })
+    await database.connect()
 
-      for (const file of readdirSync(migrationsDirectory)
-        .filter((entry) => entry.endsWith(".sql"))
-        .sort()) {
-        await database.query(
-          readFileSync(path.join(migrationsDirectory, file), "utf8"),
-        )
-      }
+    for (const file of readdirSync(migrationsDirectory)
+      .filter((entry) => entry.endsWith(".sql"))
+      .sort()) {
+      await database.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
+    }
 
-      managerId = await createUser("manager@hivorr.com")
-      supportId = await createUser("support@hivorr.com")
-      reviewerId = await createUser("reviewer@hivorr.com")
+    managerId = await createUser("manager@hivorr.com")
+    supportId = await createUser("support@hivorr.com")
+    reviewerId = await createUser("reviewer@hivorr.com")
 
-      // A case worker: may work cases but was never given evidence access.
-      await grant(managerId, "admin.case.assign")
-      await grant(supportId, "admin.case.read")
-      await grant(supportId, "admin.case.assign")
-      // A reviewer: evidence and recommendation authority, no case assignment.
-      await grant(reviewerId, "admin.case.read")
-      await grant(reviewerId, "admin.evidence.read")
-      await grant(reviewerId, "admin.case.recommend")
+    // A case worker: may work cases but was never given evidence access.
+    await grant(managerId, "admin.case.assign")
+    await grant(supportId, "admin.case.read")
+    await grant(supportId, "admin.case.assign")
+    // A reviewer: evidence and recommendation authority, no case assignment.
+    await grant(reviewerId, "admin.case.read")
+    await grant(reviewerId, "admin.evidence.read")
+    await grant(reviewerId, "admin.case.recommend")
 
-      const created = await database.query<{ id: string }>(
-        `select id from admin.create_case(
+    const created = await database.query<{ id: string }>(
+      `select id from admin.create_case(
          $1, 'support', 'Integration case',
          'A case created to prove the permission gates.',
          'normal', 'low', 'support', 'integration test case')`,
-        [managerId],
-      )
-      caseId = created.rows[0]!.id
+      [managerId],
+    )
+    caseId = created.rows[0]!.id
 
-      await database.query(
-        `select * from admin.add_case_evidence(
+    await database.query(
+      `select * from admin.add_case_evidence(
          $1, $2, 'staging/evidence/integration.pdf', 'integration.pdf',
          'application/pdf', 1024, repeat('a', 64), 'sensitive',
          'attach evidence')`,
-        [managerId, caseId],
-      )
-    },
-    60_000,
-  )
+      [managerId, caseId],
+    )
+  }, 60_000)
 
   afterAll(async () => {
     await database?.end()
@@ -144,16 +134,11 @@ describeIntegration("case permission enforcement", () => {
 
   it("refuses evidence to a case worker without the evidence permission", async () => {
     const error = await database
-      .query("select * from admin.list_case_evidence($1, $2)", [
-        supportId,
-        caseId,
-      ])
+      .query("select * from admin.list_case_evidence($1, $2)", [supportId, caseId])
       .catch((value: unknown) => value)
 
     expect(error).toMatchObject({ code: "42501" })
-    expect(String((error as Error).message)).toContain(
-      "evidence_read_forbidden",
-    )
+    expect(String((error as Error).message)).toContain("evidence_read_forbidden")
   })
 
   it("allows evidence to a holder of the evidence permission", async () => {

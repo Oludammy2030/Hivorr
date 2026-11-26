@@ -17,9 +17,7 @@ import {
 
 describe("identity domain invariants", () => {
   it("normalizes an email before comparison or storage", () => {
-    expect(normalizeEmail("  Founder@Example.Test ")).toBe(
-      "founder@example.test",
-    )
+    expect(normalizeEmail("  Founder@Example.Test ")).toBe("founder@example.test")
   })
 
   it("accepts only a scope that belongs to the grant type", () => {
@@ -40,26 +38,17 @@ describe("identity domain invariants", () => {
   it("treats an expired or revoked grant as inactive", () => {
     const now = new Date("2026-11-09T12:00:00.000Z")
     expect(grantIsActive({ expiresAt: null }, now)).toBe(true)
-    expect(grantIsActive({ expiresAt: "2026-11-10T12:00:00.000Z" }, now)).toBe(
-      true,
-    )
-    expect(grantIsActive({ expiresAt: "2026-11-08T12:00:00.000Z" }, now)).toBe(
-      false,
-    )
+    expect(grantIsActive({ expiresAt: "2026-11-10T12:00:00.000Z" }, now)).toBe(true)
+    expect(grantIsActive({ expiresAt: "2026-11-08T12:00:00.000Z" }, now)).toBe(false)
     expect(
-      grantIsActive(
-        { expiresAt: "2026-11-10T12:00:00.000Z", revokedAt: "2026-11-09" },
-        now,
-      ),
+      grantIsActive({ expiresAt: "2026-11-10T12:00:00.000Z", revokedAt: "2026-11-09" }, now),
     ).toBe(false)
   })
 
   it("allows one owner and rejects two", () => {
     expect(() => assertSingleOwner(["owner", "member"])).not.toThrow()
     expect(() => assertSingleOwner(["member", "member"])).not.toThrow()
-    expect(() => assertSingleOwner(["owner", "owner"])).toThrow(
-      /at most one owner/,
-    )
+    expect(() => assertSingleOwner(["owner", "owner"])).toThrow(/at most one owner/)
   })
 
   it("keeps registration free of grants and activity activation", () => {

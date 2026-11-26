@@ -42,10 +42,7 @@ export function rateLimited(
   })
 }
 
-export function toErrorBody(
-  error: ApiError,
-  correlationId?: string,
-): ApiErrorBody {
+export function toErrorBody(error: ApiError, correlationId?: string): ApiErrorBody {
   return {
     error: {
       code: error.code,
@@ -64,11 +61,7 @@ export function requireCapability(
   capability: CapabilityId,
 ): void {
   if (!capabilities.has(capability)) {
-    throw new ApiError(
-      "FORBIDDEN",
-      "You do not have permission to perform this action.",
-      403,
-    )
+    throw new ApiError("FORBIDDEN", "You do not have permission to perform this action.", 403)
   }
 }
 
@@ -81,9 +74,5 @@ export function requireCapability(
 export function databasePermissionDenial(error: unknown): ApiError | undefined {
   if (typeof error !== "object" || error === null) return undefined
   if ((error as { code?: unknown }).code !== "42501") return undefined
-  return new ApiError(
-    "FORBIDDEN",
-    "You do not have permission to perform this action.",
-    403,
-  )
+  return new ApiError("FORBIDDEN", "You do not have permission to perform this action.", 403)
 }

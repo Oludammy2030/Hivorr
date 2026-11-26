@@ -88,9 +88,7 @@ describe("taxonomy administration contract", () => {
       updatedAt: "2026-11-15T00:00:00.000Z",
     }
     expect(taxonomyNodeView.safeParse(node).success).toBe(true)
-    expect(taxonomyNodeView.safeParse({ ...node, version: 0 }).success).toBe(
-      false,
-    )
+    expect(taxonomyNodeView.safeParse({ ...node, version: 0 }).success).toBe(false)
     expect(
       taxonomyAttributeView.safeParse({
         id: "018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7c",

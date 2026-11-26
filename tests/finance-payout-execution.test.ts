@@ -134,9 +134,7 @@ function harness(
       },
     },
     async query(text: string, values?: readonly unknown[]) {
-      if (
-        text.includes("select financial_hold_reason from identity.accounts")
-      ) {
+      if (text.includes("select financial_hold_reason from identity.accounts")) {
         return { rows: [{ financial_hold_reason: options.hold ?? null }] }
       }
       if (text.includes("from finance.payout_requests pr")) {
@@ -152,9 +150,7 @@ function harness(
       }
       if (text.includes("from finance.payout_accounts")) {
         const destination =
-          options.destination === undefined
-            ? destinationRow()
-            : options.destination
+          options.destination === undefined ? destinationRow() : options.destination
         return { rows: destination ? [destination] : [] }
       }
       if (text.includes("from finance.wallet_balances")) {
@@ -162,9 +158,7 @@ function harness(
       }
       if (text.includes("finance.ensure_ledger_account")) {
         return {
-          rows: [
-            { id: values?.[0] === "user_wallet" ? "wallet-1" : "payable-1" },
-          ],
+          rows: [{ id: values?.[0] === "user_wallet" ? "wallet-1" : "payable-1" }],
         }
       }
       if (text.includes("from finance.postings")) {
@@ -205,8 +199,8 @@ function harness(
             requestRow({
               status: "PROCESSING",
               journal_entry_id: state.journalEntryId,
-              provider: values?.[2] as string | null ?? "fake",
-              provider_reference: values?.[3] as string | null ?? null,
+              provider: (values?.[2] as string | null) ?? "fake",
+              provider_reference: (values?.[3] as string | null) ?? null,
             }),
           ],
         }
@@ -245,10 +239,7 @@ function harness(
   }
 
   const database = {
-    async withTransaction(
-      _options: unknown,
-      work: (tx: unknown) => Promise<unknown>,
-    ) {
+    async withTransaction(_options: unknown, work: (tx: unknown) => Promise<unknown>) {
       return work(transaction)
     },
   }
@@ -320,9 +311,10 @@ describe("payout execution", () => {
   it("refuses a caller below tier_1 before loading the request", async () => {
     const test = harness()
 
-    await expect(
-      test.service.execute(executeInput({ tier: "tier_0" })),
-    ).rejects.toMatchObject({ code: "KYC_REQUIRED", statusCode: 403 })
+    await expect(test.service.execute(executeInput({ tier: "tier_0" }))).rejects.toMatchObject({
+      code: "KYC_REQUIRED",
+      statusCode: 403,
+    })
     expect(test.providerCalls).toHaveLength(0)
     expect(test.ledgerCalls).toHaveLength(0)
   })
@@ -412,9 +404,7 @@ describe("payout execution", () => {
     const view = await test.service.execute(executeInput())
     expect(view.status).toBe("PROCESSING")
     expect(test.ledgerCalls).toHaveLength(1)
-    expect(test.ledgerCalls.some((call) => call.kind === "reversal")).toBe(
-      false,
-    )
+    expect(test.ledgerCalls.some((call) => call.kind === "reversal")).toBe(false)
     const actions = test.audits.map((entry) => entry[4])
     expect(actions).toContain("finance.payout_processing")
   })
@@ -431,20 +421,14 @@ describe("payout execution", () => {
     const view = await test.service.execute(executeInput())
 
     expect(view.status).toBe("FAILED")
-    expect(test.ledgerCalls.map((call) => call.kind)).toEqual([
-      "payout",
-      "reversal",
-    ])
+    expect(test.ledgerCalls.map((call) => call.kind)).toEqual(["payout", "reversal"])
     expect(test.ledgerCalls[1]?.reversesEntryId).toBe("entry-1")
     expect(view.failureCode).toBe("VFD_99")
   })
 
   it("treats a retryable provider error as ambiguous and does not reverse", async () => {
     const test = harness({
-      providerError: new PaymentProviderError(
-        "PROVIDER_TIMEOUT",
-        "VFD did not answer in time.",
-      ),
+      providerError: new PaymentProviderError("PROVIDER_TIMEOUT", "VFD did not answer in time."),
     })
 
     const view = await test.service.execute(executeInput())
@@ -455,10 +439,7 @@ describe("payout execution", () => {
 
   it("treats a duplicate provider reference as ambiguous", async () => {
     const test = harness({
-      providerError: new PaymentProviderError(
-        "PROVIDER_DUPLICATE",
-        "Already exists.",
-      ),
+      providerError: new PaymentProviderError("PROVIDER_DUPLICATE", "Already exists."),
     })
 
     const view = await test.service.execute(executeInput())
@@ -476,10 +457,7 @@ describe("payout execution", () => {
 
     const view = await test.service.execute(executeInput())
     expect(view.status).toBe("FAILED")
-    expect(test.ledgerCalls.map((call) => call.kind)).toEqual([
-      "payout",
-      "reversal",
-    ])
+    expect(test.ledgerCalls.map((call) => call.kind)).toEqual(["payout", "reversal"])
   })
 
   it("returns a final request without calling the provider again", async () => {

@@ -21,11 +21,7 @@ export {
 } from "./config"
 export type { ApiConfig, DeploymentEnvironment } from "./config"
 export { can, computeCapabilities, CAPABILITY_IDS } from "./domain/capabilities"
-export type {
-  AccessContext,
-  CapabilityId,
-  GrantId,
-} from "./domain/capabilities"
+export type { AccessContext, CapabilityId, GrantId } from "./domain/capabilities"
 export { ApiError, toErrorBody } from "./common/errors"
 export type { ApiErrorBody, ApiErrorCode } from "./common/errors"
 export { resolveCorrelationId } from "./common/correlation"
@@ -87,14 +83,7 @@ export type {
   OutboxLogger,
 } from "./worker/outbox"
 export { OutboxRepository } from "./worker/outbox-repository"
-export type {
-  FailResult,
-  OutboxHealth,
-  OutboxRepositoryOptions,
-} from "./worker/outbox-repository"
+export type { FailResult, OutboxHealth, OutboxRepositoryOptions } from "./worker/outbox-repository"
 export { OutboxWorker } from "./worker/outbox-worker"
 export type { OutboxWorkerOptions, RunResult } from "./worker/outbox-worker"
-export {
-  startWorkerHealthServer,
-  stopWorkerHealthServer,
-} from "./worker/health"
+export { startWorkerHealthServer, stopWorkerHealthServer } from "./worker/health"

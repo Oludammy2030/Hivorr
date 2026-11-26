@@ -24,10 +24,7 @@ createRoot(container).render(
     <div data-parity="text-field">
       <TextField label="Email" placeholder="you@example.com" />
     </div>
-    <div
-      data-parity="pill-brand"
-      style={{ display: "flex", alignItems: "center" }}
-    >
+    <div data-parity="pill-brand" style={{ display: "flex", alignItems: "center" }}>
       <Pill tone="brand">One account · Many activities</Pill>
     </div>
   </div>,

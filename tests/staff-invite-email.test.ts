@@ -30,9 +30,7 @@ describe("staff invitation email", () => {
     expect(email.subject).toBe("You're invited to join Hivorr")
     expect(email.html).toContain(`href="${link}"`)
     expect(email.text).toContain(link)
-    expect(email.text).toContain(
-      "You have been invited to join Hivorr as a staff member.",
-    )
+    expect(email.text).toContain("You have been invited to join Hivorr as a staff member.")
   })
 
   it("renders a readable expiry rather than the raw timestamp", () => {

@@ -25,13 +25,9 @@ describe("fixed-window rate limiter", () => {
   it("keeps identifiers and IPs in separate buckets", () => {
     const limiter = new FixedWindowRateLimiter()
     const options = { windowMs: 60_000, max: 1 }
-    expect(limiter.check("id:person@example.test", options, 0).allowed).toBe(
-      true,
-    )
+    expect(limiter.check("id:person@example.test", options, 0).allowed).toBe(true)
     expect(limiter.check("ip:203.0.113.1", options, 0).allowed).toBe(true)
-    expect(limiter.check("id:person@example.test", options, 1).allowed).toBe(
-      false,
-    )
+    expect(limiter.check("id:person@example.test", options, 1).allowed).toBe(false)
   })
 
   it("resets all buckets", () => {

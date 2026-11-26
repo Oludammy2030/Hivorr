@@ -2,11 +2,7 @@ import { Controller, Get, Inject, Query, Req, Res } from "@nestjs/common"
 import type { FastifyReply, FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
-import {
-  ApiError,
-  databasePermissionDenial,
-  requireCapability,
-} from "../common/errors"
+import { ApiError, databasePermissionDenial, requireCapability } from "../common/errors"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { DatabaseService } from "../db/database.service"
 import { computeCapabilities } from "../domain/capabilities"
@@ -21,9 +17,7 @@ import { appendAudit } from "../modules/platform"
 
 const USER_PAGE_SIZE = 50
 
-function parseCursor(
-  value: string | undefined,
-): {
+function parseCursor(value: string | undefined): {
   readonly before: string | null
   readonly beforeId: string | null
 } {
@@ -37,9 +31,7 @@ function parseCursor(
   const beforeId = cursor.slice(separator + 1)
   if (
     Number.isNaN(Date.parse(before)) ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      beforeId,
-    )
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(beforeId)
   ) {
     throw new ApiError("VALIDATION_FAILED", "The cursor is not valid.", 400)
   }
@@ -73,10 +65,7 @@ export class UsersController {
   ) {
     const page = parseCursor(cursor)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.database.withTransaction(
       {
@@ -92,10 +81,7 @@ export class UsersController {
           audience: context.audience,
           environment: context.environment,
         })
-        const authority = await loadAdminAuthority(
-          transaction.client,
-          session.userId,
-        )
+        const authority = await loadAdminAuthority(transaction.client, session.userId)
         requireCapability(
           computeCapabilities(withPlatformAuthority(access, authority)),
           "admin.user.read",

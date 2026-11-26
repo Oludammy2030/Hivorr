@@ -93,10 +93,7 @@ export class IdentityController {
 
   @Post("password-reset/request")
   @HttpCode(202)
-  async requestPasswordReset(
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ): Promise<void> {
+  async requestPasswordReset(@Body() body: unknown, @Req() request: FastifyRequest): Promise<void> {
     const input = parseBody(passwordResetRequest, body)
     const context = requestContext(this.config, request)
     await this.identity.requestPasswordReset(input.email, context)
@@ -115,14 +112,9 @@ export class IdentityController {
 
   @Post("email-verification/request")
   @HttpCode(202)
-  async requestEmailVerification(
-    @Req() request: FastifyRequest,
-  ): Promise<void> {
+  async requestEmailVerification(@Req() request: FastifyRequest): Promise<void> {
     const context = requestContext(this.config, request)
-    await this.identity.requestEmailVerification(
-      accessToken(request, context),
-      context,
-    )
+    await this.identity.requestEmailVerification(accessToken(request, context), context)
   }
 
   @Post("email-verification/complete")

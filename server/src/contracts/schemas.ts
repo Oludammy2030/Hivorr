@@ -33,12 +33,7 @@ import { z } from "zod"
 
 export const portalSchema = z.enum(PORTAL_IDS)
 export const environmentSchema = z.enum(ENVIRONMENT_IDS)
-export const deploymentEnvironmentSchema = z.enum([
-  "development",
-  "test",
-  "staging",
-  "production",
-])
+export const deploymentEnvironmentSchema = z.enum(["development", "test", "staging", "production"])
 export const capabilitySchema = z.enum(CAPABILITY_IDS)
 
 export const errorResponse = apiErrorBodySchema
@@ -83,12 +78,7 @@ export const emailVerificationCompleteRequest = z.strictObject({
   token: z.string().min(20).max(200),
 })
 
-export const GRANT_TYPE_VALUES = [
-  "admin",
-  "staff",
-  "partner",
-  "platform_engineering",
-] as const
+export const GRANT_TYPE_VALUES = ["admin", "staff", "partner", "platform_engineering"] as const
 
 export const createGrantRequest = z.strictObject({
   email: z.string().min(3).max(254),
@@ -113,11 +103,7 @@ export const revokeGrantRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
-export const ROLE_SCOPE_VALUES = [
-  "platform",
-  "department",
-  "organisation",
-] as const
+export const ROLE_SCOPE_VALUES = ["platform", "department", "organisation"] as const
 
 export const assignRoleRequest = z.strictObject({
   email: z.string().min(3).max(254),
@@ -295,10 +281,7 @@ export const sessionActivitySchema = z.object({
   state: z.enum(ACTIVITY_ACTIVATION_STATES),
 })
 
-export const persistedActivationStateSchema = z.enum([
-  "INACTIVE",
-  ...ACTIVITY_ACTIVATION_STATES,
-])
+export const persistedActivationStateSchema = z.enum(["INACTIVE", ...ACTIVITY_ACTIVATION_STATES])
 
 export const activityViewSchema = z.object({
   id: activityIdSchema,
@@ -525,9 +508,7 @@ export const partnerOrganisationResponse = z.object({
   createdAt: z.string(),
 })
 
-export const partnerOrganisationListResponse = z.array(
-  partnerOrganisationResponse,
-)
+export const partnerOrganisationListResponse = z.array(partnerOrganisationResponse)
 
 export const partnerRepresentativeResponse = z.object({
   id: z.string(),
@@ -539,9 +520,7 @@ export const partnerRepresentativeResponse = z.object({
   effectiveTo: z.string().nullable().optional(),
 })
 
-export const partnerRepresentativeListResponse = z.array(
-  partnerRepresentativeResponse,
-)
+export const partnerRepresentativeListResponse = z.array(partnerRepresentativeResponse)
 
 export const ownPartnerOrganisationResponse = z.object({
   organisationId: z.string(),
@@ -552,9 +531,7 @@ export const ownPartnerOrganisationResponse = z.object({
   effectiveFrom: z.string(),
 })
 
-export const ownPartnerOrganisationListResponse = z.array(
-  ownPartnerOrganisationResponse,
-)
+export const ownPartnerOrganisationListResponse = z.array(ownPartnerOrganisationResponse)
 
 export const caseViewResponse = z.object({
   id: z.string(),
@@ -623,9 +600,7 @@ export const verificationReviewResponse = z.object({
   createdAt: z.string(),
 })
 
-export const verificationReviewListResponse = z.array(
-  verificationReviewResponse,
-)
+export const verificationReviewListResponse = z.array(verificationReviewResponse)
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),
@@ -792,20 +767,13 @@ export const createTaxonomyAttributeRequest = z
     label: z.string().min(1).max(120),
     dataType: taxonomyAttributeTypeSchema,
     isRequired: z.boolean().optional(),
-    enumValues: z
-      .array(z.string().min(1).max(80))
-      .max(100)
-      .nullable()
-      .optional(),
+    enumValues: z.array(z.string().min(1).max(80)).max(100).nullable().optional(),
     unit: z.string().max(40).optional(),
     sortOrder: z.number().int().nonnegative().optional(),
     reason: z.string().min(5).max(500),
   })
   .superRefine((value, context) => {
-    if (
-      value.dataType === "enum" &&
-      (!value.enumValues || value.enumValues.length === 0)
-    ) {
+    if (value.dataType === "enum" && (!value.enumValues || value.enumValues.length === 0)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["enumValues"],
@@ -819,20 +787,13 @@ export const updateTaxonomyAttributeRequest = z
     label: z.string().min(1).max(120),
     dataType: taxonomyAttributeTypeSchema,
     isRequired: z.boolean().optional(),
-    enumValues: z
-      .array(z.string().min(1).max(80))
-      .max(100)
-      .nullable()
-      .optional(),
+    enumValues: z.array(z.string().min(1).max(80)).max(100).nullable().optional(),
     unit: z.string().max(40).optional(),
     sortOrder: z.number().int().nonnegative().optional(),
     reason: z.string().min(5).max(500),
   })
   .superRefine((value, context) => {
-    if (
-      value.dataType === "enum" &&
-      (!value.enumValues || value.enumValues.length === 0)
-    ) {
+    if (value.dataType === "enum" && (!value.enumValues || value.enumValues.length === 0)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["enumValues"],
@@ -869,8 +830,7 @@ export const collectionAccountResponse = z.object({
   status: z.string(),
 })
 
-export const collectionAccountOrNullResponse =
-  collectionAccountResponse.nullable()
+export const collectionAccountOrNullResponse = collectionAccountResponse.nullable()
 
 export const withdrawRequest = z.strictObject({
   payoutAccountId: z.string().uuid(),

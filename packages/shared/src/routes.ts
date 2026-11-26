@@ -33,7 +33,7 @@ export const ROUTE_IDS = [
   "admin",
 ] as const
 
-export type RouteId = typeof ROUTE_IDS[number]
+export type RouteId = (typeof ROUTE_IDS)[number]
 
 export interface RouteDefinition {
   readonly id: RouteId

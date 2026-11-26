@@ -120,9 +120,7 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(
-  `design:parity: OK — ${checks} exact comparison(s) across ${WIDTHS.join("/")} px`,
-)
+console.log(`design:parity: OK — ${checks} exact comparison(s) across ${WIDTHS.join("/")} px`)
 
 async function openLogin(width) {
   const page = await context.newPage()
@@ -139,9 +137,7 @@ async function openLogin(width) {
 async function openActivities(width) {
   const page = await openLogin(width)
   await page.getByRole("button", { name: "Sign In" }).click()
-  await page
-    .getByText("How do you want to use Hivorr today?")
-    .waitFor({ timeout: 10_000 })
+  await page.getByText("How do you want to use Hivorr today?").waitFor({ timeout: 10_000 })
   await settle(page)
   await page.mouse.move(0, 0)
   return page
@@ -150,9 +146,7 @@ async function openActivities(width) {
 async function settle(page) {
   await page.evaluate(async () => {
     await document.fonts.ready
-    await new Promise((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve)),
-    )
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   })
   const loaded = await page.evaluate(
     () =>
@@ -182,9 +176,7 @@ async function compare(label, prototypeElement, galleryElement, mode) {
   }
   for (const dimension of ["width", "height"]) {
     if (Math.abs(prototypeBox[dimension] - galleryBox[dimension]) > 0.01) {
-      failures.push(
-        `${label}: ${dimension} ${prototypeBox[dimension]} vs ${galleryBox[dimension]}`,
-      )
+      failures.push(`${label}: ${dimension} ${prototypeBox[dimension]} vs ${galleryBox[dimension]}`)
     }
   }
 
@@ -243,9 +235,7 @@ async function normalise(element, mode, width) {
         "background:var(--hivorr-surface)",
         "z-index:2147483647",
         "box-sizing:border-box",
-        options.mode === "pill"
-          ? "display:flex;align-items:center"
-          : "display:block",
+        options.mode === "pill" ? "display:flex;align-items:center" : "display:block",
       ].join(";")
       host.parentElement.insertBefore(wrapper, host)
       wrapper.appendChild(host)

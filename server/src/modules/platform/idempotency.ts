@@ -19,11 +19,14 @@ export interface IdempotencyClaimInput {
   readonly expiresAt: string
 }
 
-export type IdempotencyClaim = { readonly status: "claimed" } | {
-  readonly status: "replay"
-  readonly responseStatus: number
-  readonly responseBody: unknown
-} | { readonly status: "conflict" }
+export type IdempotencyClaim =
+  | { readonly status: "claimed" }
+  | {
+      readonly status: "replay"
+      readonly responseStatus: number
+      readonly responseBody: unknown
+    }
+  | { readonly status: "conflict" }
 
 interface IdempotencyRow {
   request_hash: string

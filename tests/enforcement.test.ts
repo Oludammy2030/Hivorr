@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { ApiError, requireCapability } from "../server/src/common/errors"
-import {
-  computeCapabilities,
-  type AccessContext,
-} from "../server/src/domain/capabilities"
+import { computeCapabilities, type AccessContext } from "../server/src/domain/capabilities"
 
 const appContext: AccessContext = {
   authenticated: true,
@@ -36,9 +33,9 @@ describe("capability enforcement", () => {
       ...appContext,
       audience: "control",
     }
-    expect(() =>
-      requireCapability(computeCapabilities(withoutGrant), "admin.audit.read"),
-    ).toThrow(ApiError)
+    expect(() => requireCapability(computeCapabilities(withoutGrant), "admin.audit.read")).toThrow(
+      ApiError,
+    )
 
     const withGrant: AccessContext = {
       ...withoutGrant,

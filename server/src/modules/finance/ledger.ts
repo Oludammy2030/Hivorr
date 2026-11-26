@@ -28,12 +28,25 @@ export const MAXIMUM_IDEMPOTENCY_KEY_LENGTH = 200
 
 export const LEDGER_ACTIVITY_IDS = ACTIVITY_IDS
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const CURRENCY_PATTERN = /^[A-Z]{3}$/
 
-export type LedgerValidationCode = "LEDGER_ENTRY_KIND_INVALID" | "LEDGER_REFERENCE_INVALID" | "LEDGER_CURRENCY_INVALID" | "LEDGER_IDEMPOTENCY_KEY_INVALID" | "LEDGER_ACTIVITY_INVALID" | "LEDGER_POSTING_COUNT_INVALID" | "LEDGER_ACCOUNT_INVALID" | "LEDGER_DIRECTION_INVALID" | "LEDGER_AMOUNT_INVALID" | "LEDGER_POSTING_CURRENCY_MISMATCH" | "LEDGER_ENTRY_UNBALANCED" | "LEDGER_REVERSAL_TARGET_MISSING" | "LEDGER_REVERSAL_TARGET_INVALID" | "LEDGER_REVERSAL_MISMATCH"
+export type LedgerValidationCode =
+  | "LEDGER_ENTRY_KIND_INVALID"
+  | "LEDGER_REFERENCE_INVALID"
+  | "LEDGER_CURRENCY_INVALID"
+  | "LEDGER_IDEMPOTENCY_KEY_INVALID"
+  | "LEDGER_ACTIVITY_INVALID"
+  | "LEDGER_POSTING_COUNT_INVALID"
+  | "LEDGER_ACCOUNT_INVALID"
+  | "LEDGER_DIRECTION_INVALID"
+  | "LEDGER_AMOUNT_INVALID"
+  | "LEDGER_POSTING_CURRENCY_MISMATCH"
+  | "LEDGER_ENTRY_UNBALANCED"
+  | "LEDGER_REVERSAL_TARGET_MISSING"
+  | "LEDGER_REVERSAL_TARGET_INVALID"
+  | "LEDGER_REVERSAL_MISMATCH"
 
 export class LedgerValidationError extends Error {
   readonly code: LedgerValidationCode
@@ -128,24 +141,15 @@ function validatePosting(
   index: number,
 ): ValidatedPosting {
   if (!UUID_PATTERN.test(posting.accountId)) {
-    invalid(
-      "LEDGER_ACCOUNT_INVALID",
-      `Posting ${index} does not name a ledger account.`,
-    )
+    invalid("LEDGER_ACCOUNT_INVALID", `Posting ${index} does not name a ledger account.`)
   }
 
   if (!(POSTING_DIRECTIONS as readonly string[]).includes(posting.direction)) {
-    invalid(
-      "LEDGER_DIRECTION_INVALID",
-      `Posting ${index} has an unknown direction.`,
-    )
+    invalid("LEDGER_DIRECTION_INVALID", `Posting ${index} has an unknown direction.`)
   }
 
   if (!CURRENCY_PATTERN.test(posting.currency)) {
-    invalid(
-      "LEDGER_CURRENCY_INVALID",
-      `Posting ${index} does not carry a currency code.`,
-    )
+    invalid("LEDGER_CURRENCY_INVALID", `Posting ${index} does not carry a currency code.`)
   }
 
   if (posting.currency !== entryCurrency) {
@@ -174,12 +178,7 @@ function validatePosting(
 }
 
 function postingKey(posting: ValidatedPosting): string {
-  return [
-    posting.accountId,
-    posting.currency,
-    posting.amount,
-    posting.direction,
-  ].join("|")
+  return [posting.accountId, posting.currency, posting.amount, posting.direction].join("|")
 }
 
 function assertReversalMatches(
@@ -187,10 +186,7 @@ function assertReversalMatches(
   target: LedgerReversalTarget,
 ): void {
   if (target.currency !== entry[0]?.currency) {
-    invalid(
-      "LEDGER_REVERSAL_MISMATCH",
-      "A reversal must use the original entry currency.",
-    )
+    invalid("LEDGER_REVERSAL_MISMATCH", "A reversal must use the original entry currency.")
   }
 
   if (target.postings.length !== entry.length) {
@@ -202,8 +198,7 @@ function assertReversalMatches(
 
   const expected = new Map<string, number>()
   for (const posting of entry) {
-    const opposite: PostingDirection =
-      posting.direction === "debit" ? "credit" : "debit"
+    const opposite: PostingDirection = posting.direction === "debit" ? "credit" : "debit"
     const key = postingKey({ ...posting, direction: opposite })
     expected.set(key, (expected.get(key) ?? 0) + 1)
   }
@@ -211,10 +206,7 @@ function assertReversalMatches(
   for (const targetPosting of target.postings) {
     const minor = moneyToMinorUnits(targetPosting.amount)
     if (minor === null) {
-      invalid(
-        "LEDGER_REVERSAL_TARGET_INVALID",
-        "The original entry contains an invalid amount.",
-      )
+      invalid("LEDGER_REVERSAL_TARGET_INVALID", "The original entry contains an invalid amount.")
     }
     const direction = targetPosting.direction as PostingDirection
     const key = [
@@ -225,10 +217,7 @@ function assertReversalMatches(
     ].join("|")
     const remaining = expected.get(key) ?? 0
     if (remaining === 0) {
-      invalid(
-        "LEDGER_REVERSAL_MISMATCH",
-        "Every reversal posting must mirror the original entry.",
-      )
+      invalid("LEDGER_REVERSAL_MISMATCH", "Every reversal posting must mirror the original entry.")
     }
     expected.set(key, remaining - 1)
   }
@@ -249,10 +238,7 @@ export function validateJournalEntry(
   }
 
   const reference = input.reference.trim()
-  if (
-    reference.length < MINIMUM_REFERENCE_LENGTH ||
-    reference.length > MAXIMUM_REFERENCE_LENGTH
-  ) {
+  if (reference.length < MINIMUM_REFERENCE_LENGTH || reference.length > MAXIMUM_REFERENCE_LENGTH) {
     invalid(
       "LEDGER_REFERENCE_INVALID",
       `A ledger reference is ${MINIMUM_REFERENCE_LENGTH}–${MAXIMUM_REFERENCE_LENGTH} characters.`,
@@ -281,10 +267,7 @@ export function validateJournalEntry(
   const reversesEntryId = input.reversesEntryId?.trim() || null
 
   if (reversesEntryId !== null && !UUID_PATTERN.test(reversesEntryId)) {
-    invalid(
-      "LEDGER_REVERSAL_TARGET_INVALID",
-      "A reversal must name a journal entry.",
-    )
+    invalid("LEDGER_REVERSAL_TARGET_INVALID", "A reversal must name a journal entry.")
   }
 
   if ((input.kind === "reversal") !== (reversesEntryId !== null)) {
@@ -294,10 +277,7 @@ export function validateJournalEntry(
     )
   }
 
-  if (
-    input.postings.length < MINIMUM_POSTINGS ||
-    input.postings.length > MAXIMUM_POSTINGS
-  ) {
+  if (input.postings.length < MINIMUM_POSTINGS || input.postings.length > MAXIMUM_POSTINGS) {
     invalid(
       "LEDGER_POSTING_COUNT_INVALID",
       `An entry carries ${MINIMUM_POSTINGS}–${MAXIMUM_POSTINGS} postings.`,
@@ -316,17 +296,11 @@ export function validateJournalEntry(
   }
 
   if (debits === 0n || credits === 0n) {
-    invalid(
-      "LEDGER_ENTRY_UNBALANCED",
-      "An entry needs at least one debit and one credit.",
-    )
+    invalid("LEDGER_ENTRY_UNBALANCED", "An entry needs at least one debit and one credit.")
   }
 
   if (debits !== credits) {
-    invalid(
-      "LEDGER_ENTRY_UNBALANCED",
-      "An entry must balance to zero per currency.",
-    )
+    invalid("LEDGER_ENTRY_UNBALANCED", "An entry must balance to zero per currency.")
   }
 
   if (input.kind === "reversal") {

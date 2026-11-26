@@ -118,16 +118,15 @@ export function WalletScreen() {
   const [bindOpen, setBindOpen] = useState(false)
 
   async function refresh() {
-    const [nextBalances, nextAccounts, nextCollection, nextStatement] =
-      await Promise.all([
-        apiClient.getWalletBalance(),
+    const [nextBalances, nextAccounts, nextCollection, nextStatement] = await Promise.all([
+      apiClient.getWalletBalance(),
 
-        apiClient.listPayoutAccounts(),
+      apiClient.listPayoutAccounts(),
 
-        apiClient.getCollectionAccount(),
+      apiClient.getCollectionAccount(),
 
-        apiClient.getWalletStatement(),
-      ])
+      apiClient.getWalletStatement(),
+    ])
 
     setBalances(nextBalances as never)
 
@@ -140,9 +139,8 @@ export function WalletScreen() {
     setSelectedAccount(
       (current) =>
         current ||
-        (nextAccounts as readonly PayoutAccount[]).find(
-          (account) => account.state === "verified",
-        )?.id ||
+        (nextAccounts as readonly PayoutAccount[]).find((account) => account.state === "verified")
+          ?.id ||
         "",
     )
   }
@@ -155,7 +153,6 @@ export function WalletScreen() {
     setBusy(true)
 
     refresh()
-
       .catch((value: unknown) => {
         if (active) setError(messageFor(value))
       })
@@ -184,12 +181,9 @@ export function WalletScreen() {
     )
   }
 
-  const balance =
-    balances.find((entry) => entry.currency === "NGN") ?? balances[0]
+  const balance = balances.find((entry) => entry.currency === "NGN") ?? balances[0]
 
-  const verifiedAccounts = accounts.filter(
-    (account) => account.state === "verified",
-  )
+  const verifiedAccounts = accounts.filter((account) => account.state === "verified")
 
   async function createCollection() {
     setBusy(true)
@@ -313,8 +307,7 @@ export function WalletScreen() {
         </p>
         <h1 style={{ fontSize: 30, fontWeight: 800, marginTop: 6 }}>Wallet</h1>
         <p style={{ color: colorTokens.gray, marginTop: 5 }}>
-          Deposit, bind a payout destination and withdraw. Limits follow your
-          KYC tier.
+          Deposit, bind a payout destination and withdraw. Limits follow your KYC tier.
         </p>
       </header>
 
@@ -343,12 +336,8 @@ export function WalletScreen() {
           ["Total", balance?.total ?? "0.0000"],
         ].map(([label, value]) => (
           <div key={label} style={card}>
-            <p style={{ color: colorTokens.mutedText, fontSize: 11 }}>
-              {label}
-            </p>
-            <p style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>
-              {value}
-            </p>
+            <p style={{ color: colorTokens.mutedText, fontSize: 11 }}>{label}</p>
+            <p style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{value}</p>
             <p style={{ color: colorTokens.mutedText, fontSize: 10 }}>NGN</p>
           </div>
         ))}
@@ -387,9 +376,7 @@ export function WalletScreen() {
               <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: 1 }}>
                 {collection.accountNumber}
               </p>
-              <p style={{ color: colorTokens.gray, marginTop: 4 }}>
-                {collection.accountName}
-              </p>
+              <p style={{ color: colorTokens.gray, marginTop: 4 }}>{collection.accountName}</p>
               <p style={{ color: colorTokens.mutedText, fontSize: 12 }}>
                 {collection.bankName ?? "Paystack"} · {collection.currency}
               </p>
@@ -402,8 +389,8 @@ export function WalletScreen() {
                   marginTop: 12,
                 }}
               >
-                Transfer to this account from your bank. The wallet is credited
-                after Paystack confirms the payment.
+                Transfer to this account from your bank. The wallet is credited after Paystack
+                confirms the payment.
               </p>
             </div>
           ) : (
@@ -469,10 +456,7 @@ export function WalletScreen() {
               />
             </div>
             <div style={{ marginTop: 14 }}>
-              <Button
-                type="submit"
-                disabled={busy || verifiedAccounts.length === 0}
-              >
+              <Button type="submit" disabled={busy || verifiedAccounts.length === 0}>
                 {busy ? "Working…" : "Withdraw"}
               </Button>
             </div>
@@ -502,19 +486,14 @@ export function WalletScreen() {
           }}
         >
           <h2 style={{ fontSize: 16, fontWeight: 800 }}>Recent activity</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void refresh()}
-            disabled={busy}
-          >
+          <Button variant="ghost" size="sm" onClick={() => void refresh()} disabled={busy}>
             Refresh
           </Button>
         </div>
         {statement.length === 0 ? (
           <p style={{ color: colorTokens.gray, fontSize: 12, marginTop: 12 }}>
-            No wallet activity yet. A deposit or withdrawal appears here after
-            it is posted to your wallet.
+            No wallet activity yet. A deposit or withdrawal appears here after it is posted to your
+            wallet.
           </p>
         ) : (
           <div style={{ marginTop: 12 }}>
@@ -540,8 +519,7 @@ export function WalletScreen() {
                       {entry.entryKind.replace(/_/g, " ")}
                     </p>
                     <p style={{ color: colorTokens.mutedText, fontSize: 11 }}>
-                      {new Date(entry.occurredAt).toLocaleString()} ·{" "}
-                      {entry.reference}
+                      {new Date(entry.occurredAt).toLocaleString()} · {entry.reference}
                     </p>
                   </div>
                   <p
@@ -571,11 +549,7 @@ export function WalletScreen() {
           }}
         >
           <h2 style={{ fontSize: 16, fontWeight: 800 }}>Payout accounts</h2>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setBindOpen(!bindOpen)}
-          >
+          <Button variant="secondary" size="sm" onClick={() => setBindOpen(!bindOpen)}>
             {bindOpen ? "Cancel" : "Add account"}
           </Button>
         </div>
@@ -643,12 +617,7 @@ export function WalletScreen() {
             >
               <TextField label="Bank code" name="bankCode" required />
               <TextField label="Bank name" name="bankName" required />
-              <TextField
-                label="Account number"
-                name="accountNumber"
-                inputMode="numeric"
-                required
-              />
+              <TextField label="Account number" name="accountNumber" inputMode="numeric" required />
             </div>
             <div style={{ marginTop: 14 }}>
               <Button type="submit" disabled={busy}>

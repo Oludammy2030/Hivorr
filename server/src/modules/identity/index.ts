@@ -45,8 +45,4 @@ export {
   sessionPolicy,
 } from "./session-policy"
 export { GrantsService } from "./grants/grants.service"
-export type {
-  CreateGrantInput,
-  GrantView,
-  OwnGrantsView,
-} from "./grants/grants.service"
+export type { CreateGrantInput, GrantView, OwnGrantsView } from "./grants/grants.service"

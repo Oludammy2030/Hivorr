@@ -1,9 +1,4 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHmac,
-  randomBytes,
-} from "node:crypto"
+import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto"
 
 import { ConfigurationError } from "../../config"
 
@@ -67,10 +62,7 @@ export function normalizeAccountName(value: string): string {
 }
 
 /** True when a resolved bank account name matches a verified legal name. */
-export function accountNamesMatch(
-  resolvedName: string,
-  legalName: string,
-): boolean {
+export function accountNamesMatch(resolvedName: string, legalName: string): boolean {
   const left = normalizeAccountName(resolvedName)
   const right = normalizeAccountName(legalName)
   return left.length > 0 && left === right
@@ -89,14 +81,10 @@ export class PayoutAccountCipher {
    */
   static fromConfig(keys: PayoutAccountKeys): PayoutAccountCipher {
     if (!keys.encryptionKey || !keys.fingerprintKey) {
-      throw new ConfigurationError(
-        "Payout encryption and fingerprint keys are required",
-      )
+      throw new ConfigurationError("Payout encryption and fingerprint keys are required")
     }
     if (keys.encryptionKey === keys.fingerprintKey) {
-      throw new ConfigurationError(
-        "The payout encryption and fingerprint keys must be different",
-      )
+      throw new ConfigurationError("The payout encryption and fingerprint keys must be different")
     }
     return new PayoutAccountCipher(
       decodeKey(keys.encryptionKey, "PAYOUT_ENCRYPTION_KEY"),
@@ -113,19 +101,11 @@ export class PayoutAccountCipher {
 
     const iv = randomBytes(IV_LENGTH)
     const cipher = createCipheriv(ALGORITHM, this.encryptionKey, iv)
-    const encrypted = Buffer.concat([
-      cipher.update(normalized, "utf8"),
-      cipher.final(),
-    ])
+    const encrypted = Buffer.concat([cipher.update(normalized, "utf8"), cipher.final()])
     const tag = cipher.getAuthTag()
 
     return {
-      ciphertext: Buffer.concat([
-        Buffer.from([ENVELOPE_VERSION]),
-        iv,
-        tag,
-        encrypted,
-      ]),
+      ciphertext: Buffer.concat([Buffer.from([ENVELOPE_VERSION]), iv, tag, encrypted]),
       keyId: this.encryptionKeyId,
       last4: normalized.slice(-4),
       fingerprint: this.fingerprint(normalized),
@@ -149,10 +129,7 @@ export class PayoutAccountCipher {
 
     const decipher = createDecipheriv(ALGORITHM, this.encryptionKey, iv)
     decipher.setAuthTag(tag)
-    return Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final(),
-    ]).toString("utf8")
+    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8")
   }
 
   /** HMAC-SHA256 of the normalised account number, hex encoded. */

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  can,
-  computeCapabilities,
-  type AccessContext,
-} from "../server/src/domain/capabilities"
+import { can, computeCapabilities, type AccessContext } from "../server/src/domain/capabilities"
 
 const base: AccessContext = {
   authenticated: true,
@@ -38,38 +34,22 @@ describe("capability computation", () => {
   })
 
   it("allows control audit access only with the control audience and grant", () => {
-    expect(can({ ...base, audience: "control" }, "admin.audit.read")).toBe(
-      false,
-    )
+    expect(can({ ...base, audience: "control" }, "admin.audit.read")).toBe(false)
     expect(
-      can(
-        { ...base, audience: "control", grants: ["admin.audit.read"] },
-        "admin.audit.read",
-      ),
+      can({ ...base, audience: "control", grants: ["admin.audit.read"] }, "admin.audit.read"),
     ).toBe(true)
   })
 
   it("allows control grant access only with the control audience and grant", () => {
-    expect(can({ ...base, audience: "control" }, "admin.grant.read")).toBe(
-      false,
-    )
+    expect(can({ ...base, audience: "control" }, "admin.grant.read")).toBe(false)
     expect(
-      can(
-        { ...base, audience: "control", grants: ["admin.grant.read"] },
-        "admin.grant.read",
-      ),
+      can({ ...base, audience: "control", grants: ["admin.grant.read"] }, "admin.grant.read"),
     ).toBe(true)
     expect(
-      can(
-        { ...base, audience: "control", grants: ["admin.grant.manage"] },
-        "admin.grant.manage",
-      ),
+      can({ ...base, audience: "control", grants: ["admin.grant.manage"] }, "admin.grant.manage"),
     ).toBe(true)
     expect(
-      can(
-        { ...base, audience: "control", grants: ["admin.grant.manage"] },
-        "admin.grant.read",
-      ),
+      can({ ...base, audience: "control", grants: ["admin.grant.manage"] }, "admin.grant.read"),
     ).toBe(false)
   })
 

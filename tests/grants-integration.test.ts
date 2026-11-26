@@ -53,10 +53,7 @@ describeIntegration("grant management integration", () => {
   let adminControlCookie: string
   let staffGrantId: string
 
-  async function registerAndEnroll(
-    email: string,
-    password: string,
-  ): Promise<EnrolledUser> {
+  async function registerAndEnroll(email: string, password: string): Promise<EnrolledUser> {
     const registered = await app.inject({
       method: "POST",
       url: "/v1/auth/register",
@@ -73,10 +70,7 @@ describeIntegration("grant management integration", () => {
       payload: { email, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const appCookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -97,11 +91,7 @@ describeIntegration("grant management integration", () => {
     return { userId, secret }
   }
 
-  async function controlCookie(
-    email: string,
-    password: string,
-    secret: string,
-  ) {
+  async function controlCookie(email: string, password: string, secret: string) {
     const challenge = await app.inject({
       method: "POST",
       url: "/v1/auth/sign-in",
@@ -119,116 +109,96 @@ describeIntegration("grant management integration", () => {
       },
     })
     expect(verified.statusCode).toBe(200)
-    return cookieHeader(
-      readCookies(verified.headers),
-      "__Host-hivorr_control_sid",
-    )
+    return cookieHeader(readCookies(verified.headers), "__Host-hivorr_control_sid")
   }
 
-  beforeAll(
-    async () => {
-      admin = new Client({ connectionString: baseUrl })
-      await admin.connect()
-      await admin.query(`create database "${databaseName}"`)
+  beforeAll(async () => {
+    admin = new Client({ connectionString: baseUrl })
+    await admin.connect()
+    await admin.query(`create database "${databaseName}"`)
 
-      const url = new URL(baseUrl!)
-      url.pathname = `/${databaseName}`
-      const testUrl = url.toString()
+    const url = new URL(baseUrl!)
+    url.pathname = `/${databaseName}`
+    const testUrl = url.toString()
 
-      setup = new Client({ connectionString: testUrl })
-      await setup.connect()
+    setup = new Client({ connectionString: testUrl })
+    await setup.connect()
 
-      const migrationsDirectory = path.join(
-        process.cwd(),
-        "supabase",
-        "migrations",
-      )
-      for (const file of readdirSync(migrationsDirectory)
-        .filter((entry) => entry.endsWith(".sql"))
-        .sort()) {
-        await setup.query(
-          readFileSync(path.join(migrationsDirectory, file), "utf8"),
-        )
-      }
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
+    for (const file of readdirSync(migrationsDirectory)
+      .filter((entry) => entry.endsWith(".sql"))
+      .sort()) {
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
+    }
 
-      const config: ApiConfig = {
-        environment: "staging",
-        backendEnvironment: "staging",
-        supabaseProjectRef: "abcdefghijklmnopqrst",
-        port: 3000,
-        host: "127.0.0.1",
-        logLevel: "silent",
-        sessionIssuer: "hivorr-staging",
-        mfaEncryptionKey: Buffer.alloc(32, 7).toString("base64"),
+    const config: ApiConfig = {
+      environment: "staging",
+      backendEnvironment: "staging",
+      supabaseProjectRef: "abcdefghijklmnopqrst",
+      port: 3000,
+      host: "127.0.0.1",
+      logLevel: "silent",
+      sessionIssuer: "hivorr-staging",
+      mfaEncryptionKey: Buffer.alloc(32, 7).toString("base64"),
+      databaseUrl: testUrl,
+      corsAllowedOrigins: [],
+      trustProxy: false,
+      auth: {
+        rateLimitWindowMs: 60_000,
+        identifierMax: 100,
+        ipMax: 1_000,
+        lockoutAttempts: 5,
+        lockoutMs: 15 * 60 * 1_000,
+      },
+      worker: {
         databaseUrl: testUrl,
-        corsAllowedOrigins: [],
-        trustProxy: false,
-        auth: {
-          rateLimitWindowMs: 60_000,
-          identifierMax: 100,
-          ipMax: 1_000,
-          lockoutAttempts: 5,
-          lockoutMs: 15 * 60 * 1_000,
-        },
-        worker: {
-          databaseUrl: testUrl,
-          pollIntervalMs: 1_000,
-          batchSize: 20,
-          leaseMs: 60_000,
-          maxAttempts: 5,
-          retryBaseMs: 5_000,
-          healthPort: 3001,
-          healthHost: "127.0.0.1",
-          workerId: "grants-test-worker",
-        },
-      }
-      database = new DatabaseService(config)
-      const created = await createApplication(config)
-      app = created.app
-      await app.init()
-      await app.getHttpAdapter().getInstance().ready()
+        pollIntervalMs: 1_000,
+        batchSize: 20,
+        leaseMs: 60_000,
+        maxAttempts: 5,
+        retryBaseMs: 5_000,
+        healthPort: 3001,
+        healthHost: "127.0.0.1",
+        workerId: "grants-test-worker",
+      },
+    }
+    database = new DatabaseService(config)
+    const created = await createApplication(config)
+    app = created.app
+    await app.init()
+    await app.getHttpAdapter().getInstance().ready()
 
-      const adminUser = await registerAndEnroll(
-        "admin@example.test",
-        "admin-test-password",
-      )
-      adminId = adminUser.userId
-      adminSecret = adminUser.secret
+    const adminUser = await registerAndEnroll("admin@example.test", "admin-test-password")
+    adminId = adminUser.userId
+    adminSecret = adminUser.secret
 
-      const workerUser = await registerAndEnroll(
-        "worker@example.test",
-        "worker-test-password",
-      )
-      workerId = workerUser.userId
+    const workerUser = await registerAndEnroll("worker@example.test", "worker-test-password")
+    workerId = workerUser.userId
 
-      // First admin grant is bootstrapped out of band, never by a migration.
-      await setup.query(
-        "insert into identity.grants (user_id, grant_type, scope, environment) values ($1, 'admin', 'admin.grant.manage', 'staging')",
-        [adminId],
-      )
+    // First admin grant is bootstrapped out of band, never by a migration.
+    await setup.query(
+      "insert into identity.grants (user_id, grant_type, scope, environment) values ($1, 'admin', 'admin.grant.manage', 'staging')",
+      [adminId],
+    )
 
-      adminControlCookie = await controlCookie(
-        "admin@example.test",
-        "admin-test-password",
-        adminSecret,
-      )
-      workerControlCookie = await controlCookie(
-        "worker@example.test",
-        "worker-test-password",
-        workerUser.secret,
-      )
-    },
-    60_000,
-  )
+    adminControlCookie = await controlCookie(
+      "admin@example.test",
+      "admin-test-password",
+      adminSecret,
+    )
+    workerControlCookie = await controlCookie(
+      "worker@example.test",
+      "worker-test-password",
+      workerUser.secret,
+    )
+  }, 60_000)
 
   afterAll(async () => {
     if (app) await app.close()
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -408,11 +378,9 @@ describeIntegration("grant management integration", () => {
     })
     expect(own.statusCode).toBe(200)
     const body = own.json()
-    expect(
-      body.grants.some(
-        (g: { environment: string }) => g.environment === "production",
-      ),
-    ).toBe(false)
+    expect(body.grants.some((g: { environment: string }) => g.environment === "production")).toBe(
+      false,
+    )
     expect(body.capabilities).not.toContain("admin.audit.read")
   })
 
@@ -423,9 +391,12 @@ describeIntegration("grant management integration", () => {
       headers: { host: controlHost, cookie: adminControlCookie },
     })
     expect(departments.statusCode).toBe(200)
-    expect(
-      departments.json().map((department: { name: string }) => department.name),
-    ).toEqual(["Customer Care", "Financial", "Governance", "Operations"])
+    expect(departments.json().map((department: { name: string }) => department.name)).toEqual([
+      "Customer Care",
+      "Financial",
+      "Governance",
+      "Operations",
+    ])
 
     const denied = await app.inject({
       method: "PATCH",
@@ -490,9 +461,7 @@ describeIntegration("grant management integration", () => {
     })
     const bootstrap = list
       .json()
-      .find(
-        (g) => g.scope === "admin.grant.manage" && g.environment === "staging",
-      )
+      .find((g) => g.scope === "admin.grant.manage" && g.environment === "staging")
 
     const lastManager = await app.inject({
       method: "POST",
@@ -510,35 +479,23 @@ describeIntegration("grant management integration", () => {
     const actions = rows.rows.map((row) => row.action)
     expect(actions).toContain("identity.grant_created")
     expect(actions).toContain("identity.grant_revoked")
-    expect(
-      rows.rows.every(
-        (row) => row.actor_id === adminId && row.target_type === "grant",
-      ),
-    ).toBe(true)
-    expect(rows.rows.map((row) => row.reason)).toContain(
-      "Support queue coverage",
+    expect(rows.rows.every((row) => row.actor_id === adminId && row.target_type === "grant")).toBe(
+      true,
     )
-    expect(rows.rows.map((row) => row.reason)).toContain(
-      "Support coverage ended",
-    )
-    expect(
-      rows.rows.every((row) => row.capability === "admin.grant.manage"),
-    ).toBe(true)
+    expect(rows.rows.map((row) => row.reason)).toContain("Support queue coverage")
+    expect(rows.rows.map((row) => row.reason)).toContain("Support coverage ended")
+    expect(rows.rows.every((row) => row.capability === "admin.grant.manage")).toBe(true)
     expect(rows.rows.every((row) => row.actor_display_name !== null)).toBe(true)
     // The bootstrap authority here is a grant, not a governance role, so the
     // snapshot has no role keys and the capability is what explains the actor.
     expect(
       rows.rows.every(
-        (row) =>
-          Array.isArray(row.actor_role_keys) &&
-          row.actor_role_keys.length === 0,
+        (row) => Array.isArray(row.actor_role_keys) && row.actor_role_keys.length === 0,
       ),
     ).toBe(true)
     expect(
       rows.rows.every(
-        (row) =>
-          Array.isArray(row.actor_role_scopes) &&
-          row.actor_role_scopes.length === 0,
+        (row) => Array.isArray(row.actor_role_scopes) && row.actor_role_scopes.length === 0,
       ),
     ).toBe(true)
   })

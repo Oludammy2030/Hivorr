@@ -4,16 +4,13 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 
 const root = process.cwd()
-const read = (relative: string) =>
-  readFileSync(path.join(root, relative), "utf8")
-const migrationFiles = readdirSync(
-  path.join(root, "supabase", "migrations"),
-).filter((file) => file.endsWith(".sql"))
+const read = (relative: string) => readFileSync(path.join(root, relative), "utf8")
+const migrationFiles = readdirSync(path.join(root, "supabase", "migrations")).filter((file) =>
+  file.endsWith(".sql"),
+)
 
 const roles = read("supabase/migrations/20261107000300_roles_and_grants.sql")
-const defaults = read(
-  "supabase/migrations/20261109000100_platform_alter_default_privileges.sql",
-)
+const defaults = read("supabase/migrations/20261109000100_platform_alter_default_privileges.sql")
 
 const APPLICATION_ROLES = [
   "hivorr_api",
@@ -48,23 +45,15 @@ describe("database role policy", () => {
   })
 
   it("closes default table, sequence and function privileges", () => {
-    expect(defaults).toMatch(
-      /alter default privileges revoke all on tables from public/,
-    )
-    expect(defaults).toMatch(
-      /alter default privileges revoke all on sequences from public/,
-    )
-    expect(defaults).toMatch(
-      /alter default privileges revoke execute on functions from public/,
-    )
+    expect(defaults).toMatch(/alter default privileges revoke all on tables from public/)
+    expect(defaults).toMatch(/alter default privileges revoke all on sequences from public/)
+    expect(defaults).toMatch(/alter default privileges revoke execute on functions from public/)
   })
 
   it("revokes PUBLIC execution on every module schema", () => {
     for (const schema of MODULE_SCHEMAS) {
       expect(defaults, schema).toMatch(
-        new RegExp(
-          `revoke all on all functions in schema ${schema} from public`,
-        ),
+        new RegExp(`revoke all on all functions in schema ${schema} from public`),
       )
     }
   })
@@ -75,9 +64,7 @@ describe("database role policy", () => {
   })
 
   it("uses a forward-only, correctly named migration", () => {
-    const defaultsFile = migrationFiles.find((file) =>
-      file.includes("alter_default_privileges"),
-    )
+    const defaultsFile = migrationFiles.find((file) => file.includes("alter_default_privileges"))
     expect(defaultsFile).toBeDefined()
     expect(defaultsFile).toMatch(/^\d{14}_platform_alter_[a-z0-9_]+\.sql$/)
     expect(defaults).not.toMatch(/\bdrop\s+table\b/i)
@@ -85,11 +72,7 @@ describe("database role policy", () => {
   })
 
   it("grants API access to audit append but never update", () => {
-    expect(roles).toMatch(
-      /grant select, insert on platform\.audit_log to hivorr_api/,
-    )
-    expect(roles).toMatch(
-      /revoke update, delete on platform\.audit_log from public/,
-    )
+    expect(roles).toMatch(/grant select, insert on platform\.audit_log to hivorr_api/)
+    expect(roles).toMatch(/revoke update, delete on platform\.audit_log from public/)
   })
 })

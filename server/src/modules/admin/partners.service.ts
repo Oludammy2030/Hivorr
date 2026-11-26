@@ -86,17 +86,9 @@ function codeOf(error: unknown): string | undefined {
 function mapPartnerError(error: unknown): never {
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to manage partners.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to manage partners.", 403)
     case "P0002":
-      throw new ApiError(
-        "NOT_FOUND",
-        "The partner organisation or account was not found.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The partner organisation or account was not found.", 404)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -110,23 +102,15 @@ function mapPartnerError(error: unknown): never {
         409,
       )
     case "22023":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The partner request is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The partner request is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The partner operation failed.")
+      throw error instanceof Error ? error : new Error("The partner operation failed.")
   }
 }
 
 @Injectable()
 export class PartnersService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async list(input: {
     accountId: string
@@ -300,13 +284,7 @@ export class PartnersService {
         async (transaction) => {
           const result = await transaction.query<RepresentativeRow>(
             "select * from admin.add_partner_representative($1, $2, $3, $4, $5)",
-            [
-              input.userId,
-              input.organisationId,
-              input.email,
-              input.role,
-              reason,
-            ],
+            [input.userId, input.organisationId, input.email, input.role, reason],
           )
           const row = result.rows[0]
           await appendAudit(transaction.client, {

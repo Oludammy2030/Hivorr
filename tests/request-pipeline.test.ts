@@ -9,21 +9,13 @@ import {
   resolveRequestAudience,
   type RouteAudience,
 } from "../server/src/common/audience"
-import {
-  ApiError,
-  activityInactive,
-  toErrorBody,
-} from "../server/src/common/errors"
+import { ApiError, activityInactive, toErrorBody } from "../server/src/common/errors"
 import {
   IDEMPOTENCY_HEADER,
   requireIdempotencyKey,
   requestFingerprint,
 } from "../server/src/common/idempotency"
-import {
-  decodeCursor,
-  encodeCursor,
-  toPage,
-} from "../server/src/common/pagination"
+import { decodeCursor, encodeCursor, toPage } from "../server/src/common/pagination"
 import { parseBody } from "../server/src/common/validation"
 import { parseConfig, type ApiConfig } from "../server/src/config"
 
@@ -31,8 +23,7 @@ const stagingConfig: ApiConfig = parseConfig({
   HIVORR_ENV: "staging",
   BACKEND_ENVIRONMENT: "staging",
   SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
-  DATABASE_URL:
-    "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+  DATABASE_URL: "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
   SESSION_ISSUER: "hivorr-staging",
   MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
   PAYOUT_ENCRYPTION_KEY: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
@@ -48,10 +39,7 @@ function request(overrides: Partial<FastifyRequest> = {}): FastifyRequest {
   } as unknown as FastifyRequest
 }
 
-function contextFor(
-  handler: (...args: never[]) => unknown,
-  requestValue: FastifyRequest,
-) {
+function contextFor(handler: (...args: never[]) => unknown, requestValue: FastifyRequest) {
   return {
     getHandler: () => handler,
     getClass: () => class TestController {},
@@ -66,7 +54,7 @@ function routeHandler(declared?: readonly RouteAudience[]) {
 }
 
 const reflector = {
-  getAllAndOverride<T,>(key: string, targets: unknown[]): T | undefined {
+  getAllAndOverride<T>(key: string, targets: unknown[]): T | undefined {
     for (const target of targets) {
       const value = Reflect.getMetadata(key, target)
       if (value !== undefined) return value as T
@@ -141,25 +129,19 @@ describe("audience guard", () => {
       headers: { host: "control-staging.hivorr.com" },
     })
     expect(guard.canActivate(contextFor(handler, requestValue))).toBe(true)
-    expect(
-      (requestValue as FastifyRequest & { audience?: string }).audience,
-    ).toBe("control")
+    expect((requestValue as FastifyRequest & { audience?: string }).audience).toBe("control")
   })
 
   it("rejects the wrong portal audience", () => {
     const handler = routeHandler(["control"])
     const requestValue = request({ headers: { host: "staging.hivorr.com" } })
-    expect(() => guard.canActivate(contextFor(handler, requestValue))).toThrow(
-      /may not call/i,
-    )
+    expect(() => guard.canActivate(contextFor(handler, requestValue))).toThrow(/may not call/i)
   })
 
   it("rejects an unrecognised host", () => {
     const handler = routeHandler(["control"])
     const requestValue = request({ headers: { host: "example.test" } })
-    expect(() => guard.canActivate(contextFor(handler, requestValue))).toThrow(
-      /not a recognised/i,
-    )
+    expect(() => guard.canActivate(contextFor(handler, requestValue))).toThrow(/not a recognised/i)
   })
 
   it("rejects a route that declares no audience", () => {
@@ -181,9 +163,7 @@ describe("audience guard", () => {
     const testGuard = new AudienceGuard(reflector, testConfig)
     const handler = routeHandler(["app"])
     const requestValue = request({ headers: { host: "staging.hivorr.com" } })
-    expect(() =>
-      testGuard.canActivate(contextFor(handler, requestValue)),
-    ).toThrow(/not available/i)
+    expect(() => testGuard.canActivate(contextFor(handler, requestValue))).toThrow(/not available/i)
   })
 
   it("honours a forwarded host only when the edge secret matches", () => {
@@ -242,15 +222,9 @@ describe("idempotency primitives", () => {
   it("requires a well-formed Idempotency-Key header", () => {
     expect(() => requireIdempotencyKey(request())).toThrow(/required/i)
     expect(() =>
-      requireIdempotencyKey(
-        request({ headers: { [IDEMPOTENCY_HEADER]: "short" } }),
-      ),
+      requireIdempotencyKey(request({ headers: { [IDEMPOTENCY_HEADER]: "short" } })),
     ).toThrow(/invalid/i)
-    expect(
-      requireIdempotencyKey(
-        request({ headers: { [IDEMPOTENCY_HEADER]: key } }),
-      ),
-    ).toBe(key)
+    expect(requireIdempotencyKey(request({ headers: { [IDEMPOTENCY_HEADER]: key } }))).toBe(key)
   })
 
   it("fingerprints the request independently of object key order", () => {

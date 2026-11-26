@@ -25,7 +25,7 @@ export const API_ERROR_CODES = [
   "INTERNAL_ERROR",
 ] as const
 
-export type ApiErrorCode = typeof API_ERROR_CODES[number]
+export type ApiErrorCode = (typeof API_ERROR_CODES)[number]
 
 export interface ApiErrorBody {
   readonly error: {

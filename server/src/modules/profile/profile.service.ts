@@ -1,10 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import {
-  ACTIVITY_IDS,
-  isActivityId,
-  type ActivityId,
-  type CapabilityId,
-} from "@hivorr/shared"
+import { ACTIVITY_IDS, isActivityId, type ActivityId, type CapabilityId } from "@hivorr/shared"
 
 import { ApiError, requireCapability } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
@@ -38,9 +33,7 @@ interface ActivationRow {
  */
 @Injectable()
 export class ProfileService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async list(accountId: string, userId: string): Promise<ActivityStateView[]> {
     return this.database.withTransaction(
@@ -53,10 +46,7 @@ export class ProfileService {
           [accountId],
         )
         const states = new Map(
-          rows.rows.map((row) => [
-            row.activity_id,
-            row.state as PersistedActivationState,
-          ]),
+          rows.rows.map((row) => [row.activity_id, row.state as PersistedActivationState]),
         )
         return ACTIVITY_IDS.map((id) => ({
           id,

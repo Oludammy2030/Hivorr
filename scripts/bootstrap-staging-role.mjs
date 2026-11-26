@@ -49,9 +49,7 @@ try {
   const userId = user.rows[0].id
   const accountId = user.rows[0].account_id
 
-  const role = await client.query(
-    `select id from admin.roles where key = 'founder'`,
-  )
+  const role = await client.query(`select id from admin.roles where key = 'founder'`)
   if (role.rowCount === 0) {
     throw new Error("The founder role is not seeded")
   }
@@ -109,10 +107,7 @@ try {
   console.log(`role_assignments_inserted=${assignment.rowCount}`)
 } catch (error) {
   await client.query("rollback").catch(() => undefined)
-  console.error(
-    "bootstrap: failed:",
-    error instanceof Error ? error.message : "unknown error",
-  )
+  console.error("bootstrap: failed:", error instanceof Error ? error.message : "unknown error")
   process.exitCode = 1
 } finally {
   await client.end().catch(() => undefined)

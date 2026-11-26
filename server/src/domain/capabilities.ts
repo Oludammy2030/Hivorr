@@ -36,14 +36,21 @@ export const CAPABILITY_DENY_REASONS = [
   "UNKNOWN_CAPABILITY",
 ] as const
 
-export type CapabilityDenyReason = typeof CAPABILITY_DENY_REASONS[number]
+export type CapabilityDenyReason = (typeof CAPABILITY_DENY_REASONS)[number]
 
-export type CapabilityDecision = { readonly allowed: true } | {
-  readonly allowed: false
-  readonly reason: CapabilityDenyReason
-}
+export type CapabilityDecision =
+  | { readonly allowed: true }
+  | {
+      readonly allowed: false
+      readonly reason: CapabilityDenyReason
+    }
 
-export type AdminRole = "verification.review" | "payment.review" | "dispute.resolve" | "account.manage" | "configuration.write"
+export type AdminRole =
+  | "verification.review"
+  | "payment.review"
+  | "dispute.resolve"
+  | "account.manage"
+  | "configuration.write"
 
 export interface AccessContext {
   readonly authenticated: boolean
@@ -91,246 +98,245 @@ const PARTNER = ["partner"] as const
  * The full matrix (`matrix` §9.3). A rule is evaluated only from the typed
  * context; no request body can add a capability.
  */
-export const CAPABILITY_RULES: Readonly<Record<CapabilityId, CapabilityRule>> =
-  {
-    "session.read": { audience: ANY },
-    "profile.read.self": { audience: ANY },
-    "profile.update.self": { audience: ANY },
-    "activity.activate": { audience: APP },
-    "activity.deactivate": { audience: APP },
+export const CAPABILITY_RULES: Readonly<Record<CapabilityId, CapabilityRule>> = {
+  "session.read": { audience: ANY },
+  "profile.read.self": { audience: ANY },
+  "profile.update.self": { audience: ANY },
+  "activity.activate": { audience: APP },
+  "activity.deactivate": { audience: APP },
 
-    "market.catalog.browse": { audience: ANY },
-    "market.cart.manage": { audience: APP, activity: "market.buy" },
-    "market.order.place": {
-      audience: APP,
-      activity: "market.buy",
-      kyc: true,
-    },
-    "market.order.cancel": { audience: APP, activity: "market.buy" },
-    "market.order.dispute": { audience: APP, activity: "market.buy" },
+  "market.catalog.browse": { audience: ANY },
+  "market.cart.manage": { audience: APP, activity: "market.buy" },
+  "market.order.place": {
+    audience: APP,
+    activity: "market.buy",
+    kyc: true,
+  },
+  "market.order.cancel": { audience: APP, activity: "market.buy" },
+  "market.order.dispute": { audience: APP, activity: "market.buy" },
 
-    "services.job.post": { audience: APP, activity: "services.hire" },
-    "services.job.post.business": {
-      audience: APP,
-      activity: "services.hire",
-      verification: "business",
-    },
-    "services.application.review": {
-      audience: APP,
-      activity: "services.hire",
-    },
-    "services.engagement.fund": {
-      audience: APP,
-      activity: "services.hire",
-      kyc: true,
-    },
-    "services.job.apply": {
-      audience: APP,
-      activity: "services.offer",
-      verification: "identity",
-    },
-    "services.service.publish": {
-      audience: APP,
-      activity: "services.offer",
-      verification: "trade",
-    },
-    "services.engagement.deliver": {
-      audience: APP,
-      activity: "services.offer",
-      verification: "identity",
-    },
-    "services.earnings.receive": {
-      audience: APP,
-      activity: "services.offer",
-      verification: "trade",
-      kyc: true,
-    },
+  "services.job.post": { audience: APP, activity: "services.hire" },
+  "services.job.post.business": {
+    audience: APP,
+    activity: "services.hire",
+    verification: "business",
+  },
+  "services.application.review": {
+    audience: APP,
+    activity: "services.hire",
+  },
+  "services.engagement.fund": {
+    audience: APP,
+    activity: "services.hire",
+    kyc: true,
+  },
+  "services.job.apply": {
+    audience: APP,
+    activity: "services.offer",
+    verification: "identity",
+  },
+  "services.service.publish": {
+    audience: APP,
+    activity: "services.offer",
+    verification: "trade",
+  },
+  "services.engagement.deliver": {
+    audience: APP,
+    activity: "services.offer",
+    verification: "identity",
+  },
+  "services.earnings.receive": {
+    audience: APP,
+    activity: "services.offer",
+    verification: "trade",
+    kyc: true,
+  },
 
-    "errands.request.create": { audience: APP, activity: "errands.request" },
-    "errands.request.cancel": { audience: APP, activity: "errands.request" },
-    "errands.request.track": { audience: APP, activity: "errands.request" },
+  "errands.request.create": { audience: APP, activity: "errands.request" },
+  "errands.request.cancel": { audience: APP, activity: "errands.request" },
+  "errands.request.track": { audience: APP, activity: "errands.request" },
 
-    "market.product.draft": { audience: APP, activity: "market.sell" },
-    "market.product.publish": {
-      audience: APP,
-      activity: "market.sell",
-      verification: "seller",
-    },
-    "market.inventory.manage": {
-      audience: APP,
-      activity: "market.sell",
-      verification: "seller",
-    },
-    "market.order.fulfil": {
-      audience: APP,
-      activity: "market.sell",
-      verification: "seller",
-    },
-    "market.invoice.issue": {
-      audience: APP,
-      activity: "market.sell",
-      verification: "seller",
-    },
-    "market.earnings.receive": {
-      audience: APP,
-      activity: "market.sell",
-      verification: "seller",
-      kyc: true,
-    },
+  "market.product.draft": { audience: APP, activity: "market.sell" },
+  "market.product.publish": {
+    audience: APP,
+    activity: "market.sell",
+    verification: "seller",
+  },
+  "market.inventory.manage": {
+    audience: APP,
+    activity: "market.sell",
+    verification: "seller",
+  },
+  "market.order.fulfil": {
+    audience: APP,
+    activity: "market.sell",
+    verification: "seller",
+  },
+  "market.invoice.issue": {
+    audience: APP,
+    activity: "market.sell",
+    verification: "seller",
+  },
+  "market.earnings.receive": {
+    audience: APP,
+    activity: "market.sell",
+    verification: "seller",
+    kyc: true,
+  },
 
-    "logistics.pool.browse": {
-      audience: APP,
-      activity: "logistics.provide",
-    },
-    "logistics.assignment.accept": {
-      audience: APP,
-      activity: "logistics.provide",
-      verification: "logistics",
-      kyc: true,
-    },
-    "logistics.delivery.progress": {
-      audience: APP,
-      activity: "logistics.provide",
-      verification: "logistics",
-    },
-    "logistics.delivery.complete": {
-      audience: APP,
-      activity: "logistics.provide",
-      verification: "logistics",
-    },
-    "logistics.earnings.receive": {
-      audience: APP,
-      activity: "logistics.provide",
-      verification: "logistics",
-      kyc: true,
-    },
+  "logistics.pool.browse": {
+    audience: APP,
+    activity: "logistics.provide",
+  },
+  "logistics.assignment.accept": {
+    audience: APP,
+    activity: "logistics.provide",
+    verification: "logistics",
+    kyc: true,
+  },
+  "logistics.delivery.progress": {
+    audience: APP,
+    activity: "logistics.provide",
+    verification: "logistics",
+  },
+  "logistics.delivery.complete": {
+    audience: APP,
+    activity: "logistics.provide",
+    verification: "logistics",
+  },
+  "logistics.earnings.receive": {
+    audience: APP,
+    activity: "logistics.provide",
+    verification: "logistics",
+    kyc: true,
+  },
 
-    "business.create": { audience: ANY },
-    "business.verification.submit": { audience: ANY, requiresMember: true },
-    "business.update": {
-      audience: ANY,
-      requiresMember: true,
-      requiresBusinessUnapproved: true,
-    },
+  "business.create": { audience: ANY },
+  "business.verification.submit": { audience: ANY, requiresMember: true },
+  "business.update": {
+    audience: ANY,
+    requiresMember: true,
+    requiresBusinessUnapproved: true,
+  },
 
-    "wallet.read": { audience: ANY },
-    "wallet.withdraw": {
-      audience: ANY,
-      kyc: true,
-      requiresPayoutAccount: true,
-    },
-    "wallet.payout_account.bind": { audience: ANY, kyc: true },
-    "wallet.convert": { audience: ANY, kyc: true },
+  "wallet.read": { audience: ANY },
+  "wallet.withdraw": {
+    audience: ANY,
+    kyc: true,
+    requiresPayoutAccount: true,
+  },
+  "wallet.payout_account.bind": { audience: ANY, kyc: true },
+  "wallet.convert": { audience: ANY, kyc: true },
 
-    "messaging.thread.read": { audience: ANY },
-    "messaging.message.send": { audience: ANY },
-    "notification.read": { audience: ANY },
+  "messaging.thread.read": { audience: ANY },
+  "messaging.message.send": { audience: ANY },
+  "notification.read": { audience: ANY },
 
-    "admin.verification.review": {
-      audience: CONTROL,
-      permission: "admin.verification.review",
-    },
-    "admin.payment.review": {
-      audience: CONTROL,
-      permission: "admin.payment.review",
-    },
-    "admin.dispute.resolve": {
-      audience: CONTROL,
-      permission: "admin.dispute.resolve",
-    },
-    "admin.account.suspend": {
-      audience: CONTROL,
-      permission: "admin.account.suspend",
-    },
-    "admin.configuration.write": {
-      audience: CONTROL,
-      permission: "admin.configuration.write",
-    },
-    "admin.configuration.read": {
-      audience: CONTROL,
-      permission: "admin.configuration.read",
-    },
-    "admin.audit.read": {
-      audience: CONTROL,
-      grant: "admin.audit.read",
-    },
-    "admin.grant.read": {
-      audience: CONTROL,
-      grant: "admin.grant.read",
-    },
-    "admin.grant.manage": {
-      audience: CONTROL,
-      grant: "admin.grant.manage",
-    },
-    "admin.user.read": {
-      audience: CONTROL,
-      permission: "admin.user.read",
-    },
-    "admin.user.manage": {
-      audience: CONTROL,
-      permission: "admin.user.manage",
-    },
-    "admin.role.read": {
-      audience: CONTROL,
-      permission: "admin.role.read",
-    },
-    "admin.role.manage": {
-      audience: CONTROL,
-      permission: "admin.role.manage",
-    },
-    "admin.case.read": {
-      audience: CONTROL,
-      permission: "admin.case.read",
-    },
-    "admin.case.assign": {
-      audience: CONTROL,
-      permission: "admin.case.assign",
-    },
-    "admin.case.investigate": {
-      audience: CONTROL,
-      permission: "admin.case.investigate",
-    },
-    "admin.case.recommend": {
-      audience: CONTROL,
-      permission: "admin.case.recommend",
-    },
-    "admin.case.approve": {
-      audience: CONTROL,
-      permission: "admin.case.approve",
-    },
-    "admin.evidence.read": {
-      audience: CONTROL,
-      permission: "admin.evidence.read",
-    },
-    "admin.report.read": {
-      audience: CONTROL,
-      permission: "admin.report.read",
-    },
-    "admin.report.export": {
-      audience: CONTROL,
-      permission: "admin.report.export",
-    },
-    "admin.partner.read": {
-      audience: CONTROL,
-      permission: "admin.partner.read",
-    },
-    "admin.partner.manage": {
-      audience: CONTROL,
-      permission: "admin.partner.manage",
-    },
-    "staff.support.handle": {
-      audience: STAFF,
-      grant: "staff.support.handle",
-    },
-    "partner.referral.read": {
-      audience: PARTNER,
-      grant: "partner.referral.read",
-    },
-    "platform.engineering.access": {
-      audience: CONTROL,
-      grant: "platform.engineering",
-    },
-  }
+  "admin.verification.review": {
+    audience: CONTROL,
+    permission: "admin.verification.review",
+  },
+  "admin.payment.review": {
+    audience: CONTROL,
+    permission: "admin.payment.review",
+  },
+  "admin.dispute.resolve": {
+    audience: CONTROL,
+    permission: "admin.dispute.resolve",
+  },
+  "admin.account.suspend": {
+    audience: CONTROL,
+    permission: "admin.account.suspend",
+  },
+  "admin.configuration.write": {
+    audience: CONTROL,
+    permission: "admin.configuration.write",
+  },
+  "admin.configuration.read": {
+    audience: CONTROL,
+    permission: "admin.configuration.read",
+  },
+  "admin.audit.read": {
+    audience: CONTROL,
+    grant: "admin.audit.read",
+  },
+  "admin.grant.read": {
+    audience: CONTROL,
+    grant: "admin.grant.read",
+  },
+  "admin.grant.manage": {
+    audience: CONTROL,
+    grant: "admin.grant.manage",
+  },
+  "admin.user.read": {
+    audience: CONTROL,
+    permission: "admin.user.read",
+  },
+  "admin.user.manage": {
+    audience: CONTROL,
+    permission: "admin.user.manage",
+  },
+  "admin.role.read": {
+    audience: CONTROL,
+    permission: "admin.role.read",
+  },
+  "admin.role.manage": {
+    audience: CONTROL,
+    permission: "admin.role.manage",
+  },
+  "admin.case.read": {
+    audience: CONTROL,
+    permission: "admin.case.read",
+  },
+  "admin.case.assign": {
+    audience: CONTROL,
+    permission: "admin.case.assign",
+  },
+  "admin.case.investigate": {
+    audience: CONTROL,
+    permission: "admin.case.investigate",
+  },
+  "admin.case.recommend": {
+    audience: CONTROL,
+    permission: "admin.case.recommend",
+  },
+  "admin.case.approve": {
+    audience: CONTROL,
+    permission: "admin.case.approve",
+  },
+  "admin.evidence.read": {
+    audience: CONTROL,
+    permission: "admin.evidence.read",
+  },
+  "admin.report.read": {
+    audience: CONTROL,
+    permission: "admin.report.read",
+  },
+  "admin.report.export": {
+    audience: CONTROL,
+    permission: "admin.report.export",
+  },
+  "admin.partner.read": {
+    audience: CONTROL,
+    permission: "admin.partner.read",
+  },
+  "admin.partner.manage": {
+    audience: CONTROL,
+    permission: "admin.partner.manage",
+  },
+  "staff.support.handle": {
+    audience: STAFF,
+    grant: "staff.support.handle",
+  },
+  "partner.referral.read": {
+    audience: PARTNER,
+    grant: "partner.referral.read",
+  },
+  "platform.engineering.access": {
+    audience: CONTROL,
+    grant: "platform.engineering",
+  },
+}
 
 function deny(reason: CapabilityDenyReason): CapabilityDecision {
   return { allowed: false, reason }
@@ -340,10 +346,7 @@ function deny(reason: CapabilityDenyReason): CapabilityDecision {
  * Pure, default-deny evaluation. The order is stable so a deny reason is
  * predictable and testable.
  */
-export function evaluateCapability(
-  context: AccessContext,
-  capability: string,
-): CapabilityDecision {
+export function evaluateCapability(context: AccessContext, capability: string): CapabilityDecision {
   if (!isCapabilityId(capability)) return deny("UNKNOWN_CAPABILITY")
   const rule = CAPABILITY_RULES[capability]
 
@@ -354,16 +357,10 @@ export function evaluateCapability(
   if (rule.grant && !context.grants.includes(rule.grant)) {
     return deny("MISSING_GRANT")
   }
-  if (
-    rule.permission &&
-    (context.deniedPermissions ?? []).includes(rule.permission)
-  ) {
+  if (rule.permission && (context.deniedPermissions ?? []).includes(rule.permission)) {
     return deny("EXPLICIT_DENY")
   }
-  if (
-    rule.permission &&
-    !(context.adminPermissions ?? []).includes(rule.permission)
-  ) {
+  if (rule.permission && !(context.adminPermissions ?? []).includes(rule.permission)) {
     return deny("MISSING_PERMISSION")
   }
   if (rule.adminRole && !(context.adminRoles ?? []).includes(rule.adminRole)) {
@@ -378,19 +375,14 @@ export function evaluateCapability(
   if (rule.activity && !(context.activities ?? []).includes(rule.activity)) {
     return deny("ACTIVITY_INACTIVE")
   }
-  if (
-    rule.verification &&
-    context.verification?.[rule.verification] !== "APPROVED"
-  ) {
+  if (rule.verification && context.verification?.[rule.verification] !== "APPROVED") {
     return deny("VERIFICATION_REQUIRED")
   }
   if (
     rule.kyc &&
     !(
       context.kycTier &&
-      (FINANCIALLY_ELIGIBLE_KYC_TIERS as readonly string[]).includes(
-        context.kycTier,
-      )
+      (FINANCIALLY_ELIGIBLE_KYC_TIERS as readonly string[]).includes(context.kycTier)
     )
   ) {
     return deny("KYC_REQUIRED")
@@ -402,9 +394,7 @@ export function evaluateCapability(
   return { allowed: true }
 }
 
-export function computeCapabilities(
-  context: AccessContext,
-): ReadonlySet<CapabilityId> {
+export function computeCapabilities(context: AccessContext): ReadonlySet<CapabilityId> {
   const capabilities = new Set<CapabilityId>()
   for (const capability of CAPABILITY_IDS) {
     if (evaluateCapability(context, capability).allowed) {

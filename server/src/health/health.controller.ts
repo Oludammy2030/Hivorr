@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Inject,
-  ServiceUnavailableException,
-} from "@nestjs/common"
+import { Controller, Get, Inject, ServiceUnavailableException } from "@nestjs/common"
 
 import { API_CONFIG, type ApiConfig } from "../config"
 import { Audience } from "../common/audience"

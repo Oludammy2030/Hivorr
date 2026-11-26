@@ -16,9 +16,7 @@ import { appendAudit, listAuditEntries } from "../modules/platform"
 
 const AUDIT_PAGE_SIZE = 50
 
-function parseCursor(
-  value: string | undefined,
-): {
+function parseCursor(value: string | undefined): {
   readonly before: string | null
   readonly beforeId: string | null
 } {
@@ -32,9 +30,7 @@ function parseCursor(
   const beforeId = cursor.slice(separator + 1)
   if (
     Number.isNaN(Date.parse(before)) ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      beforeId,
-    )
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(beforeId)
   ) {
     throw new ApiError("VALIDATION_FAILED", "The cursor is not valid.", 400)
   }
@@ -45,27 +41,18 @@ function optionalDate(value: string | undefined, field: string): string | null {
   const text = (value ?? "").trim()
   if (!text) return null
   if (Number.isNaN(Date.parse(text))) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      `The ${field} filter is not a valid date.`,
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", `The ${field} filter is not a valid date.`, 400)
   }
   return text
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function optionalUuid(value: string | undefined, field: string): string | null {
   const text = (value ?? "").trim()
   if (!text) return null
   if (!UUID_PATTERN.test(text)) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      `The ${field} filter is not a valid identifier.`,
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", `The ${field} filter is not a valid identifier.`, 400)
   }
   return text
 }
@@ -73,11 +60,7 @@ function optionalUuid(value: string | undefined, field: string): string | null {
 function optionalText(value: string | undefined, field: string): string | null {
   const text = (value ?? "").trim()
   if (text.length > 200) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      `The ${field} filter is too long.`,
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", `The ${field} filter is too long.`, 400)
   }
   return text.length > 0 ? text : null
 }
@@ -129,10 +112,7 @@ export class AuditController {
     }
 
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.database.withTransaction(
       {

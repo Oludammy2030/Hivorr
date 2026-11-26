@@ -25,20 +25,12 @@ export class PaystackWebhookController {
   async handle(@Req() request: FastifyRequest) {
     const rawBody = (request as FastifyRequest & { rawBody?: Buffer }).rawBody
     if (!rawBody) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The webhook body is missing.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The webhook body is missing.", 400)
     }
     const header = request.headers["x-paystack-signature"]
     const signature = Array.isArray(header) ? header[0] : header
     if (!signature) {
-      throw new ApiError(
-        "UNAUTHENTICATED",
-        "The webhook signature is missing.",
-        401,
-      )
+      throw new ApiError("UNAUTHENTICATED", "The webhook signature is missing.", 401)
     }
     return this.deposits.handlePaystackWebhook(rawBody, signature)
   }

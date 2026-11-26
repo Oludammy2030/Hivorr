@@ -91,10 +91,7 @@ describe("wallet read model", () => {
 
   it("lists every currency the account holds", async () => {
     const transaction = new FakeTransaction()
-    transaction.balanceRows = [
-      balanceRow(),
-      balanceRow({ currency: "USD", available: "1.0000" }),
-    ]
+    transaction.balanceRows = [balanceRow(), balanceRow({ currency: "USD", available: "1.0000" })]
     const service = serviceWith(transaction)
 
     const result = await service.balances(context())
@@ -182,12 +179,12 @@ describe("wallet read model", () => {
     await expect(service.balance(read, "naira")).rejects.toMatchObject({
       code: "VALIDATION_FAILED",
     })
-    await expect(service.statement(read, { limit: 101 })).rejects.toMatchObject(
-      { code: "VALIDATION_FAILED" },
-    )
-    await expect(
-      service.statement(read, { activityId: "market.discover" }),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
+    await expect(service.statement(read, { limit: 101 })).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
+    await expect(service.statement(read, { activityId: "market.discover" })).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
     await expect(
       service.statement(read, { before: "2026-11-18T00:00:00.000Z" }),
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })

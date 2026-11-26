@@ -112,9 +112,9 @@ describe("ZeptoMail adapter", () => {
       async () => new Response("secret provider detail", { status: 401 }),
     )
 
-    await expect(
-      adapter.send({ to: "x@example.com", subject: "s", text: "t" }),
-    ).rejects.toThrow("zeptomail delivery failed with status 401")
+    await expect(adapter.send({ to: "x@example.com", subject: "s", text: "t" })).rejects.toThrow(
+      "zeptomail delivery failed with status 401",
+    )
   })
 
   it("does not double the auth scheme when the token already has it", async () => {
@@ -133,12 +133,10 @@ describe("ZeptoMail adapter", () => {
   })
 
   it("stays on the capture adapter until a token and sender exist", () => {
-    expect(createEmailAdapter(mailConfig({ token: undefined }))).toBeInstanceOf(
+    expect(createEmailAdapter(mailConfig({ token: undefined }))).toBeInstanceOf(CaptureEmailAdapter)
+    expect(createEmailAdapter(mailConfig({ fromAddress: undefined }))).toBeInstanceOf(
       CaptureEmailAdapter,
     )
-    expect(
-      createEmailAdapter(mailConfig({ fromAddress: undefined })),
-    ).toBeInstanceOf(CaptureEmailAdapter)
     expect(createEmailAdapter(mailConfig())).toBeInstanceOf(ZeptoMailAdapter)
   })
 })

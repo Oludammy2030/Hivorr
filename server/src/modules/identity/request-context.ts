@@ -15,20 +15,12 @@ import { sessionCookieName } from "./session-policy"
  * The audience guard resolves and stores the audience before the handler runs.
  * The fallback keeps direct service-level callers honest.
  */
-export function requestContext(
-  config: ApiConfig,
-  request: FastifyRequest,
-): RequestContext {
-  const attached = (request as FastifyRequest & { audience?: PortalId })
-    .audience
+export function requestContext(config: ApiConfig, request: FastifyRequest): RequestContext {
+  const attached = (request as FastifyRequest & { audience?: PortalId }).audience
   const audience = attached ?? resolveRequestAudience(config, request)
 
   if (!audience) {
-    throw new ApiError(
-      "FORBIDDEN",
-      "This host is not a recognised Hivorr portal.",
-      403,
-    )
+    throw new ApiError("FORBIDDEN", "This host is not a recognised Hivorr portal.", 403)
   }
   if (config.environment !== "staging" && config.environment !== "production") {
     throw new ApiError(
@@ -43,18 +35,12 @@ export function requestContext(
     environment: config.environment,
     ip: request.ip,
     userAgent:
-      typeof request.headers["user-agent"] === "string"
-        ? request.headers["user-agent"]
-        : undefined,
-    correlationId: (request as FastifyRequest & { correlationId?: string })
-      .correlationId,
+      typeof request.headers["user-agent"] === "string" ? request.headers["user-agent"] : undefined,
+    correlationId: (request as FastifyRequest & { correlationId?: string }).correlationId,
   }
 }
 
-export function accessToken(
-  request: FastifyRequest,
-  context: RequestContext,
-): string {
+export function accessToken(request: FastifyRequest, context: RequestContext): string {
   const token = request.cookies?.[sessionCookieName(context.audience)]
   if (!token) {
     throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)

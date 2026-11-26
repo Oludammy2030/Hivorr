@@ -112,30 +112,24 @@ function harness(
     ...(options.sourceAccountNumber === null
       ? {}
       : {
-          sourceAccountNumber:
-            options.sourceAccountNumber ?? SOURCE_ACCOUNT_NUMBER,
+          sourceAccountNumber: options.sourceAccountNumber ?? SOURCE_ACCOUNT_NUMBER,
         }),
     ...(options.signer ? { signer: options.signer } : {}),
   }
 
   const handler = options
-  const client = new VfdPayoutClient(
-    auth as never,
-    accountNames as never,
-    payoutOptions,
-    {
-      fetchImpl: (async (url: string | URL | Request, init?: RequestInit) => {
-        calls.push({ url: String(url), init })
-        return handler.handler
-          ? handler.handler(String(url))
-          : jsonResponse({ status: "00", data: { txnId: "TX-1" } })
-      }) as typeof fetch,
-      sleep: async (milliseconds) => {
-        sleeps.push(milliseconds)
-      },
-      now: () => options.now ?? 1_700_000_000_000,
+  const client = new VfdPayoutClient(auth as never, accountNames as never, payoutOptions, {
+    fetchImpl: (async (url: string | URL | Request, init?: RequestInit) => {
+      calls.push({ url: String(url), init })
+      return handler.handler
+        ? handler.handler(String(url))
+        : jsonResponse({ status: "00", data: { txnId: "TX-1" } })
+    }) as typeof fetch,
+    sleep: async (milliseconds) => {
+      sleeps.push(milliseconds)
     },
-  )
+    now: () => options.now ?? 1_700_000_000_000,
+  })
 
   return {
     client,
@@ -166,9 +160,7 @@ describe("VFD payout adapter", () => {
       failureCode: null,
     })
 
-    const body = JSON.parse(
-      String(test.calls[0]?.init?.body),
-    ) as Record<string, unknown>
+    const body = JSON.parse(String(test.calls[0]?.init?.body)) as Record<string, unknown>
     expect(test.calls[0]?.url).toContain("/transfer")
     expect(body).toMatchObject({
       fromAccount: SOURCE.accountNumber,
@@ -234,8 +226,7 @@ describe("VFD payout adapter", () => {
 
   it("maps the vendor duplicate-reference code", async () => {
     const test = harness({
-      handler: async () =>
-        jsonResponse({ status: "98", message: "Transaction Exist" }),
+      handler: async () => jsonResponse({ status: "98", message: "Transaction Exist" }),
     })
 
     await expect(
@@ -245,8 +236,7 @@ describe("VFD payout adapter", () => {
 
   it("returns a mapped failed result without throwing", async () => {
     const test = harness({
-      handler: async () =>
-        jsonResponse({ status: "99", message: "Failed Transaction" }),
+      handler: async () => jsonResponse({ status: "99", message: "Failed Transaction" }),
     })
 
     const result = await test.client.initiatePayout(payoutInput(), {
@@ -278,8 +268,7 @@ describe("VFD payout adapter", () => {
 
   it("refuses a signature mismatch", async () => {
     const test = harness({
-      handler: async () =>
-        jsonResponse({ status: "02", message: "Signature Mismatch" }),
+      handler: async () => jsonResponse({ status: "02", message: "Signature Mismatch" }),
     })
 
     await expect(
@@ -406,8 +395,7 @@ describe("VFD payout status query", () => {
 
   it("reports an unknown reference as not found", async () => {
     const test = harness({
-      handler: async () =>
-        jsonResponse({ status: "108", message: "No Transaction!" }),
+      handler: async () => jsonResponse({ status: "108", message: "No Transaction!" }),
     })
 
     await expect(

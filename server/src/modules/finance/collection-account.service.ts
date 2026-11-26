@@ -71,10 +71,7 @@ export class CollectionAccountService {
     private readonly settings: PaymentProviderSettingsService,
   ) {}
 
-  async get(input: {
-    accountId: string
-    userId: string
-  }): Promise<CollectionAccountView | null> {
+  async get(input: { accountId: string; userId: string }): Promise<CollectionAccountView | null> {
     return this.database.withTransaction(
       { identity: { accountId: input.accountId, userId: input.userId } },
       async (transaction) => {
@@ -90,9 +87,7 @@ export class CollectionAccountService {
     )
   }
 
-  async create(
-    input: CreateCollectionAccountInput,
-  ): Promise<CollectionAccountView> {
+  async create(input: CreateCollectionAccountInput): Promise<CollectionAccountView> {
     const existing = await this.get(input)
     if (existing) return existing
 
@@ -140,11 +135,7 @@ export class CollectionAccountService {
       )
     } catch (error) {
       if (isPaymentProviderError(error)) {
-        throw new ApiError(
-          "PROVIDER_ERROR",
-          "Paystack could not create a collection account.",
-          502,
-        )
+        throw new ApiError("PROVIDER_ERROR", "Paystack could not create a collection account.", 502)
       }
       throw error
     }
@@ -211,11 +202,7 @@ export class CollectionAccountService {
     } catch (error) {
       if (error instanceof ApiError) throw error
       if (isPaymentProviderError(error)) {
-        throw new ApiError(
-          "PROVIDER_ERROR",
-          "Paystack could not create a collection account.",
-          502,
-        )
+        throw new ApiError("PROVIDER_ERROR", "Paystack could not create a collection account.", 502)
       }
       throw error
     }

@@ -45,8 +45,7 @@ function stubPaystack(): FetchCall[] {
       calls.push({
         url: target,
         authorization: String(
-          (init?.headers as Record<string, string> | undefined)
-            ?.authorization ?? "",
+          (init?.headers as Record<string, string> | undefined)?.authorization ?? "",
         ),
         method: String(init?.method ?? "GET"),
       })
@@ -92,9 +91,7 @@ function harness(
   const vfdCalls: string[] = []
   const vfd = {
     provider: "vfd",
-    initiatePayout: async (input: {
-      reference: string
-    }): Promise<PayoutResult> => {
+    initiatePayout: async (input: { reference: string }): Promise<PayoutResult> => {
       vfdCalls.push("initiatePayout")
       return {
         provider: "vfd",
@@ -118,9 +115,7 @@ function harness(
         occurredAt: "2026-11-26T10:00:00.000Z",
       }
     },
-    resolveAccountName: async (input: {
-      bankCode: string
-    }): Promise<AccountNameEnquiry> => {
+    resolveAccountName: async (input: { bankCode: string }): Promise<AccountNameEnquiry> => {
       vfdCalls.push("resolveAccountName")
       return {
         accountName: "KUTI SEMA",
@@ -178,9 +173,7 @@ describe("payment provider router", () => {
       "https://api.paystack.test/transferrecipient",
       "https://api.paystack.test/transfer",
     ])
-    expect(
-      calls.every((call) => call.authorization === `Bearer ${TEST_KEY}`),
-    ).toBe(true)
+    expect(calls.every((call) => call.authorization === `Bearer ${TEST_KEY}`)).toBe(true)
   })
 
   it("uses the live key when the setting is live", async () => {
@@ -189,9 +182,7 @@ describe("payment provider router", () => {
 
     await router.initiatePayout(payout, { idempotencyKey: "payout-key-2" })
 
-    expect(
-      calls.every((call) => call.authorization === `Bearer ${LIVE_KEY}`),
-    ).toBe(true)
+    expect(calls.every((call) => call.authorization === `Bearer ${LIVE_KEY}`)).toBe(true)
   })
 
   it("routes every operation to VFD when VFD is active", async () => {
@@ -205,11 +196,7 @@ describe("payment provider router", () => {
       accountNumber: "0123456789",
     })
 
-    expect(vfdCalls).toEqual([
-      "initiatePayout",
-      "getPaymentStatus",
-      "resolveAccountName",
-    ])
+    expect(vfdCalls).toEqual(["initiatePayout", "getPaymentStatus", "resolveAccountName"])
     expect(calls).toHaveLength(0)
   })
 

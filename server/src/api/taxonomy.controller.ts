@@ -21,11 +21,7 @@ import {
   updateTaxonomyAttributeRequest,
   updateTaxonomyNodeRequest,
 } from "../contracts/schemas"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 import { TaxonomyAdminService } from "../modules/platform/taxonomy.service"
 
 @Controller()
@@ -39,10 +35,7 @@ export class TaxonomyController {
 
   private async session(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { context, session }
   }
 
@@ -57,10 +50,7 @@ export class TaxonomyController {
 
   @Get("control/taxonomy")
   @Audience("control")
-  async list(
-    @Query("taxonomy") taxonomy: string | undefined,
-    @Req() request: FastifyRequest,
-  ) {
+  async list(@Query("taxonomy") taxonomy: string | undefined, @Req() request: FastifyRequest) {
     const { session } = await this.session(request)
     return this.taxonomy.list({
       accountId: session.accountId,
@@ -94,11 +84,7 @@ export class TaxonomyController {
   @Patch("control/taxonomy/nodes/:id")
   @HttpCode(200)
   @Audience("control")
-  async updateNode(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async updateNode(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(updateTaxonomyNodeRequest, body)
     const { context, session } = await this.session(request)
     return this.taxonomy.updateNode({

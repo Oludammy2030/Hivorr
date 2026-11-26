@@ -69,25 +69,13 @@ describe("CI pipeline contract", () => {
   })
 
   it("keeps the gate scripts wired to their implementations", () => {
-    expect(manifest.scripts["test:contracts"]).toBe(
-      "vitest run tests/workspace-contracts.test.ts",
-    )
-    expect(manifest.scripts["lint:migrations"]).toBe(
-      "node scripts/lint-migrations.mjs",
-    )
-    expect(manifest.scripts["db:snapshot"]).toBe(
-      "node scripts/db-schema-snapshot.mjs",
-    )
+    expect(manifest.scripts["test:contracts"]).toBe("vitest run tests/workspace-contracts.test.ts")
+    expect(manifest.scripts["lint:migrations"]).toBe("node scripts/lint-migrations.mjs")
+    expect(manifest.scripts["db:snapshot"]).toBe("node scripts/db-schema-snapshot.mjs")
     expect(manifest.scripts["db:diff"]).toBe("node scripts/db-schema-diff.mjs")
-    expect(manifest.scripts["openapi:diff"]).toBe(
-      "node scripts/openapi-diff.mjs",
-    )
-    expect(manifest.scripts["visual:check"]).toBe(
-      "node scripts/visual-diff.mjs",
-    )
-    expect(manifest.scripts["test:gates"]).toBe(
-      "node scripts/test-ci-gates.mjs",
-    )
+    expect(manifest.scripts["openapi:diff"]).toBe("node scripts/openapi-diff.mjs")
+    expect(manifest.scripts["visual:check"]).toBe("node scripts/visual-diff.mjs")
+    expect(manifest.scripts["test:gates"]).toBe("node scripts/test-ci-gates.mjs")
   })
 
   it("makes ci-complete depend on every gate job", () => {

@@ -53,8 +53,7 @@ function harness(
   let insertValues: readonly unknown[] | undefined
   let resolverCalls = 0
 
-  const legalName =
-    options.legalName === undefined ? "Kuti Sema" : options.legalName
+  const legalName = options.legalName === undefined ? "Kuti Sema" : options.legalName
 
   const transaction = {
     client: {
@@ -100,10 +99,7 @@ function harness(
   }
 
   const database = {
-    async withTransaction(
-      _options: unknown,
-      work: (tx: unknown) => Promise<unknown>,
-    ) {
+    async withTransaction(_options: unknown, work: (tx: unknown) => Promise<unknown>) {
       return work(transaction)
     },
   }
@@ -115,10 +111,7 @@ function harness(
   }
 
   const resolver = {
-    async resolveAccountName(input: {
-      bankCode: string
-      accountNumber: string
-    }) {
+    async resolveAccountName(input: { bankCode: string; accountNumber: string }) {
       resolverCalls += 1
       if (options.resolverError) throw options.resolverError
       return {
@@ -180,9 +173,10 @@ describe("payout account binding", () => {
   it("refuses a caller below tier_1 before doing any work", async () => {
     const test = harness()
 
-    await expect(
-      test.service.bind(bindInput({ tier: "tier_0" })),
-    ).rejects.toMatchObject({ code: "KYC_REQUIRED", statusCode: 403 })
+    await expect(test.service.bind(bindInput({ tier: "tier_0" }))).rejects.toMatchObject({
+      code: "KYC_REQUIRED",
+      statusCode: 403,
+    })
     expect(test.resolverCalls).toBe(0)
     expect(test.queries).toHaveLength(0)
   })
@@ -348,12 +342,8 @@ describe("payout account encryption", () => {
 
   it("produces a stable fingerprint under a separate key", () => {
     const instance = cipher()
-    expect(instance.fingerprint("0123456789")).toBe(
-      instance.fingerprint("0123 456 789"),
-    )
-    expect(instance.fingerprint("0123456789")).not.toBe(
-      instance.fingerprint("9876543210"),
-    )
+    expect(instance.fingerprint("0123456789")).toBe(instance.fingerprint("0123 456 789"))
+    expect(instance.fingerprint("0123456789")).not.toBe(instance.fingerprint("9876543210"))
     expect(() => instance.decrypt(Buffer.alloc(40), "v2")).toThrow()
   })
 })
@@ -374,9 +364,7 @@ describe("payout account disabling", () => {
 
     expect(view.state).toBe("disabled")
     expect(test.audits).toHaveLength(1)
-    expect(JSON.stringify(test.audits[0])).toContain(
-      "finance.payout_account_disabled",
-    )
+    expect(JSON.stringify(test.audits[0])).toContain("finance.payout_account_disabled")
   })
 
   it("returns not found when the owner has no such destination", async () => {

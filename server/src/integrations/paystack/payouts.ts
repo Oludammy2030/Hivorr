@@ -33,7 +33,10 @@ export const PAYSTACK_BASE_URL = "https://api.paystack.co"
 
 export type PaystackMode = "test" | "live"
 
-export type PaystackPayoutPort = Pick<PaymentProvider, "provider" | "initiatePayout" | "getPaymentStatus" | "resolveAccountName">
+export type PaystackPayoutPort = Pick<
+  PaymentProvider,
+  "provider" | "initiatePayout" | "getPaymentStatus" | "resolveAccountName"
+>
 
 export interface PaystackPayoutOptions {
   readonly baseUrl: string
@@ -110,11 +113,7 @@ function paystackKobo(amount: string): bigint {
     )
   }
   if (minor % 100n !== 0n) {
-    throw failure(
-      "PROVIDER_INVALID_PAYLOAD",
-      "The payout amount has sub-kobo precision.",
-      false,
-    )
+    throw failure("PROVIDER_INVALID_PAYLOAD", "The payout amount has sub-kobo precision.", false)
   }
   return minor / 100n
 }
@@ -135,13 +134,8 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
     this.now = dependencies.now ?? Date.now
   }
 
-  async resolveAccountName(
-    input: AccountNameEnquiryRequest,
-  ): Promise<AccountNameEnquiry> {
-    if (
-      !/^[0-9]{3,10}$/.test(input.bankCode) ||
-      !/^[0-9]{10}$/.test(input.accountNumber)
-    ) {
+  async resolveAccountName(input: AccountNameEnquiryRequest): Promise<AccountNameEnquiry> {
+    if (!/^[0-9]{3,10}$/.test(input.bankCode) || !/^[0-9]{10}$/.test(input.accountNumber)) {
       throw failure(
         "PROVIDER_INVALID_PAYLOAD",
         "A name enquiry needs a bank code and a ten-digit account number.",
@@ -160,11 +154,7 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
 
     const name = envelope.data?.account_name
     if (envelope.status !== true || typeof name !== "string" || !name.trim()) {
-      throw failure(
-        "PROVIDER_NOT_FOUND",
-        "Paystack could not resolve that account.",
-        false,
-      )
+      throw failure("PROVIDER_NOT_FOUND", "Paystack could not resolve that account.", false)
     }
 
     return {
@@ -235,11 +225,7 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
           false,
         )
       }
-      throw failure(
-        "PROVIDER_REJECTED",
-        message ?? "Paystack rejected the transfer.",
-        false,
-      )
+      throw failure("PROVIDER_REJECTED", message ?? "Paystack rejected the transfer.", false)
     }
 
     if (state === "success") {
@@ -254,12 +240,7 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
       }
     }
 
-    if (
-      state === "pending" ||
-      state === "processing" ||
-      state === "otp" ||
-      state === "received"
-    ) {
+    if (state === "pending" || state === "processing" || state === "otp" || state === "received") {
       return {
         provider: this.provider,
         reference: input.reference,
@@ -277,8 +258,7 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
       providerReference,
       status: "failed",
       failureCode: `PAYSTACK_${(state || "UNKNOWN").toUpperCase()}`,
-      failureMessage:
-        safeMessage(transfer.message) ?? "Paystack reported a failed transfer.",
+      failureMessage: safeMessage(transfer.message) ?? "Paystack reported a failed transfer.",
       occurredAt: this.nowIso(),
     }
   }
@@ -286,11 +266,7 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
   async getPaymentStatus(query: PaymentStatusQuery): Promise<PaymentStatus> {
     const reference = query.reference ?? query.providerReference
     if (!reference) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A status query needs a reference.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A status query needs a reference.", false)
     }
 
     const envelope = await this.send<PaystackTransferData>({
@@ -301,17 +277,9 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
     if (envelope.status !== true || !envelope.data) {
       const message = safeMessage(envelope.message)
       if (/not\s*found|no\s*transfer/i.test(message ?? "")) {
-        throw failure(
-          "PROVIDER_NOT_FOUND",
-          "Paystack does not know that reference.",
-          false,
-        )
+        throw failure("PROVIDER_NOT_FOUND", "Paystack does not know that reference.", false)
       }
-      throw failure(
-        "PROVIDER_REJECTED",
-        message ?? "Paystack rejected the status query.",
-        false,
-      )
+      throw failure("PROVIDER_REJECTED", message ?? "Paystack rejected the status query.", false)
     }
 
     const data = envelope.data
@@ -323,20 +291,13 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
           ? BigInt(data.amount)
           : null
     if (amountKobo === null) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "Paystack returned an unreadable amount.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "Paystack returned an unreadable amount.", false)
     }
 
     const status: PaymentStatus["status"] =
       state === "success"
         ? "paid"
-        : state === "pending" ||
-            state === "processing" ||
-            state === "otp" ||
-            state === "received"
+        : state === "pending" || state === "processing" || state === "otp" || state === "received"
           ? "pending"
           : "failed"
 
@@ -365,30 +326,15 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
       )
     }
     if (input.currency !== "NGN") {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "Paystack payouts are NGN only.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "Paystack payouts are NGN only.", false)
     }
     if (!/^[0-9]{3,10}$/.test(input.bankCode)) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A payout bank code is three to ten digits.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A payout bank code is three to ten digits.", false)
     }
     if (!/^[0-9]{10}$/.test(input.accountNumber)) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A payout account number is ten digits.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A payout account number is ten digits.", false)
     }
-    if (
-      input.accountName.trim().length === 0 ||
-      input.accountName.trim().length > 160
-    ) {
+    if (input.accountName.trim().length === 0 || input.accountName.trim().length > 160) {
       throw failure(
         "PROVIDER_INVALID_PAYLOAD",
         "A payout account name is one to 160 characters.",
@@ -409,7 +355,7 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
     return this.nowIso()
   }
 
-  private async send<T,>(request: {
+  private async send<T>(request: {
     readonly method: "GET" | "POST"
     readonly path: string
     readonly query?: Readonly<Record<string, string>>
@@ -441,10 +387,7 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
       }
 
       const controller = new AbortController()
-      const timer = setTimeout(
-        () => controller.abort(),
-        this.options.requestTimeoutMs,
-      )
+      const timer = setTimeout(() => controller.abort(), this.options.requestTimeoutMs)
 
       try {
         const response = await this.fetchImpl(url, {
@@ -459,24 +402,14 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
         })
 
         if (response.status === 401 || response.status === 403) {
-          throw failure(
-            "PROVIDER_AUTH_FAILED",
-            "Paystack rejected the secret key.",
-            false,
-          )
+          throw failure("PROVIDER_AUTH_FAILED", "Paystack rejected the secret key.", false)
         }
         if (response.status === 429 || response.status >= 500) {
-          lastError = failure(
-            "PROVIDER_UNAVAILABLE",
-            "Paystack is unavailable.",
-            true,
-          )
+          lastError = failure("PROVIDER_UNAVAILABLE", "Paystack is unavailable.", true)
           continue
         }
         if (!response.ok) {
-          const payload = (await response
-            .json()
-            .catch(() => null)) as PaystackEnvelope<T> | null
+          const payload = (await response.json().catch(() => null)) as PaystackEnvelope<T> | null
           const message = safeMessage(payload?.message)
           if (/duplicate|already/i.test(message ?? "")) {
             throw failure(
@@ -492,16 +425,10 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
               false,
             )
           }
-          throw failure(
-            "PROVIDER_REJECTED",
-            message ?? "Paystack rejected the request.",
-            false,
-          )
+          throw failure("PROVIDER_REJECTED", message ?? "Paystack rejected the request.", false)
         }
 
-        const payload = (await response
-          .json()
-          .catch(() => null)) as PaystackEnvelope<T> | null
+        const payload = (await response.json().catch(() => null)) as PaystackEnvelope<T> | null
         if (!payload) {
           throw failure(
             "PROVIDER_INVALID_PAYLOAD",
@@ -517,26 +444,15 @@ export class PaystackPayoutClient implements PaystackPayoutPort {
           continue
         }
         if (controller.signal.aborted) {
-          lastError = failure(
-            "PROVIDER_TIMEOUT",
-            "Paystack did not answer in time.",
-            true,
-          )
+          lastError = failure("PROVIDER_TIMEOUT", "Paystack did not answer in time.", true)
           continue
         }
-        lastError = failure(
-          "PROVIDER_UNAVAILABLE",
-          "The Paystack request failed.",
-          true,
-        )
+        lastError = failure("PROVIDER_UNAVAILABLE", "The Paystack request failed.", true)
       } finally {
         clearTimeout(timer)
       }
     }
 
-    throw (
-      lastError ??
-      failure("PROVIDER_UNAVAILABLE", "Paystack is unavailable.", true)
-    )
+    throw lastError ?? failure("PROVIDER_UNAVAILABLE", "Paystack is unavailable.", true)
   }
 }

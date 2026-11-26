@@ -45,9 +45,7 @@ describe("identity session policy", () => {
     })
     expect(sessionPolicy("staff").idleMs).toBe(15 * 60 * 1000)
     expect(sessionPolicy("partner").idleMs).toBe(15 * 60 * 1000)
-    expect(sessionPolicy("app").accessMs).toBeLessThan(
-      sessionPolicy("app").absoluteMs,
-    )
+    expect(sessionPolicy("app").accessMs).toBeLessThan(sessionPolicy("app").absoluteMs)
   })
 
   it("uses host-only cookie names and secure attributes", () => {
@@ -78,13 +76,9 @@ describe("identity session policy", () => {
 describe("portal resolution", () => {
   it("maps production and staging hosts to audiences", () => {
     expect(resolveAudience("hivorr.com", "production")).toBe("app")
-    expect(resolveAudience("control.hivorr.com:443", "production")).toBe(
-      "control",
-    )
+    expect(resolveAudience("control.hivorr.com:443", "production")).toBe("control")
     expect(resolveAudience("staff-staging.hivorr.com", "staging")).toBe("staff")
-    expect(resolveAudience("partner-staging.hivorr.com", "staging")).toBe(
-      "partner",
-    )
+    expect(resolveAudience("partner-staging.hivorr.com", "staging")).toBe("partner")
   })
 
   it("rejects an unknown host or a non-hosted environment", () => {
@@ -95,9 +89,7 @@ describe("portal resolution", () => {
 
 describe("identity primitives", () => {
   it("normalises email and hashes tokens deterministically", () => {
-    expect(normalizeEmail("  Founder@Example.Test ")).toBe(
-      "founder@example.test",
-    )
+    expect(normalizeEmail("  Founder@Example.Test ")).toBe("founder@example.test")
     const token = createSessionToken()
     expect(token.length).toBeGreaterThan(30)
     expect(hashSessionToken(token)).toBe(hashSessionToken(token))
@@ -107,9 +99,7 @@ describe("identity primitives", () => {
   it("hashes and verifies a password with Argon2id", async () => {
     const hash = await hashPassword("a-long-test-password")
     expect(hash.startsWith("$argon2id$")).toBe(true)
-    await expect(verifyPassword(hash, "a-long-test-password")).resolves.toBe(
-      true,
-    )
+    await expect(verifyPassword(hash, "a-long-test-password")).resolves.toBe(true)
     await expect(verifyPassword(hash, "wrong-password")).resolves.toBe(false)
   })
 })
@@ -164,9 +154,7 @@ describe("MFA secret handling", () => {
   })
 
   it("rejects a key that is not 32 bytes", () => {
-    expect(() =>
-      MfaCipher.fromBase64(Buffer.from("too-short").toString("base64")),
-    ).toThrow()
+    expect(() => MfaCipher.fromBase64(Buffer.from("too-short").toString("base64"))).toThrow()
     expect(MfaCipher.fromBase64(undefined)).toBeUndefined()
   })
 

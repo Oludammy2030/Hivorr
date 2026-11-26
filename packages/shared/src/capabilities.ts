@@ -84,7 +84,7 @@ export const CAPABILITY_IDS = [
   "platform.engineering.access",
 ] as const
 
-export type CapabilityId = typeof CAPABILITY_IDS[number]
+export type CapabilityId = (typeof CAPABILITY_IDS)[number]
 
 /**
  * Orthogonal privileged grants. A grant never activates an activity and never
@@ -99,7 +99,7 @@ export const GRANT_IDS = [
   "platform.engineering",
 ] as const
 
-export type GrantId = typeof GRANT_IDS[number]
+export type GrantId = (typeof GRANT_IDS)[number]
 
 export const capabilityIdSchema = z.enum(CAPABILITY_IDS)
 

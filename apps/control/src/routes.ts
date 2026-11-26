@@ -1,4 +1,17 @@
-export type Section = "overview" | "users" | "staff" | "grants" | "audit" | "roles" | "denials" | "approvals" | "partners" | "cases" | "verification" | "taxonomy" | "payments"
+export type Section =
+  | "overview"
+  | "users"
+  | "staff"
+  | "grants"
+  | "audit"
+  | "roles"
+  | "denials"
+  | "approvals"
+  | "partners"
+  | "cases"
+  | "verification"
+  | "taxonomy"
+  | "payments"
 
 export interface SectionLink {
   readonly id: Section
@@ -147,22 +160,14 @@ export function sectionTitle(section: Section): string {
 }
 
 export function sectionFromPath(pathname: string): Section {
-  return (
-    SECTION_PATHS.find((entry) => entry.path === pathname)?.section ??
-    "overview"
-  )
+  return SECTION_PATHS.find((entry) => entry.path === pathname)?.section ?? "overview"
 }
 
 export function isKnownPath(pathname: string): boolean {
   return SECTION_PATHS.some((entry) => entry.path === pathname)
 }
 
-export function canSee(
-  item: SectionLink,
-  capabilities: readonly string[],
-): boolean {
+export function canSee(item: SectionLink, capabilities: readonly string[]): boolean {
   if (!item.capabilities) return true
-  return item.capabilities.some((capability) =>
-    capabilities.includes(capability),
-  )
+  return item.capabilities.some((capability) => capabilities.includes(capability))
 }

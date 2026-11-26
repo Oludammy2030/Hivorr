@@ -2,24 +2,11 @@ import { hostname } from "node:os"
 
 import { z } from "zod"
 
-export const DEPLOYMENT_ENVIRONMENTS = [
-  "development",
-  "test",
-  "staging",
-  "production",
-] as const
+export const DEPLOYMENT_ENVIRONMENTS = ["development", "test", "staging", "production"] as const
 
-export type DeploymentEnvironment = typeof DEPLOYMENT_ENVIRONMENTS[number]
+export type DeploymentEnvironment = (typeof DEPLOYMENT_ENVIRONMENTS)[number]
 
-const logLevels = [
-  "fatal",
-  "error",
-  "warn",
-  "info",
-  "debug",
-  "trace",
-  "silent",
-] as const
+const logLevels = ["fatal", "error", "warn", "info", "debug", "trace", "silent"] as const
 
 const baseConfigSchema = z.object({
   HIVORR_ENV: z.enum(DEPLOYMENT_ENVIRONMENTS),
@@ -45,12 +32,7 @@ const baseConfigSchema = z.object({
   DATABASE_SSL_CA: z.string().min(1).optional(),
   EDGE_SHARED_SECRET: z.string().min(1).optional(),
   WORKER_DATABASE_URL: z.string().min(1).optional(),
-  WORKER_POLL_INTERVAL_MS: z.coerce
-    .number()
-    .int()
-    .min(50)
-    .max(60_000)
-    .default(1_000),
+  WORKER_POLL_INTERVAL_MS: z.coerce.number().int().min(50).max(60_000).default(1_000),
   WORKER_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(20),
   WORKER_LEASE_MS: z.coerce.number().int().min(5_000).default(60_000),
   WORKER_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(50).default(5),
@@ -77,28 +59,11 @@ const baseConfigSchema = z.object({
     .optional(),
   STAFF_EMAIL_DOMAIN: z
     .string()
-    .regex(
-      /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i,
-    )
+    .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i)
     .default("hivorr.com"),
-  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce
-    .number()
-    .int()
-    .min(1_000)
-    .max(3_600_000)
-    .default(60_000),
-  AUTH_RATE_LIMIT_IDENTIFIER_MAX: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(10_000)
-    .default(10),
-  AUTH_RATE_LIMIT_IP_MAX: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(100_000)
-    .default(30),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(60_000),
+  AUTH_RATE_LIMIT_IDENTIFIER_MAX: z.coerce.number().int().min(1).max(10_000).default(10),
+  AUTH_RATE_LIMIT_IP_MAX: z.coerce.number().int().min(1).max(100_000).default(30),
   AUTH_LOCKOUT_ATTEMPTS: z.coerce.number().int().min(1).max(100).default(5),
   AUTH_LOCKOUT_MS: z.coerce
     .number()
@@ -115,18 +80,8 @@ const baseConfigSchema = z.object({
   VFD_MODE: z.enum(["test", "live"]).default("test"),
   VFD_CONSUMER_KEY: z.string().min(1).optional(),
   VFD_CONSUMER_SECRET: z.string().min(1).optional(),
-  VFD_TOKEN_VALIDITY_MINUTES: z.coerce
-    .number()
-    .int()
-    .min(5)
-    .max(60)
-    .default(30),
-  VFD_REQUEST_TIMEOUT_MS: z.coerce
-    .number()
-    .int()
-    .min(500)
-    .max(30_000)
-    .default(5_000),
+  VFD_TOKEN_VALIDITY_MINUTES: z.coerce.number().int().min(5).max(60).default(30),
+  VFD_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(5_000),
   VFD_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
   VFD_RETRY_BASE_MS: z.coerce.number().int().min(50).max(5_000).default(250),
   /**
@@ -178,15 +133,10 @@ const baseConfigSchema = z.object({
  * the configuration contract (EP-01-043); `pnpm config:check` fails when the
  * committed contract and this list drift apart.
  */
-export const CONFIG_ENV_KEYS: readonly string[] = Object.freeze(
-  Object.keys(baseConfigSchema.shape),
-)
+export const CONFIG_ENV_KEYS: readonly string[] = Object.freeze(Object.keys(baseConfigSchema.shape))
 
 const configSchema = baseConfigSchema.superRefine((value, context) => {
-  if (
-    value.BACKEND_ENVIRONMENT &&
-    value.BACKEND_ENVIRONMENT !== value.HIVORR_ENV
-  ) {
+  if (value.BACKEND_ENVIRONMENT && value.BACKEND_ENVIRONMENT !== value.HIVORR_ENV) {
     context.addIssue({
       code: "custom",
       path: ["BACKEND_ENVIRONMENT"],
@@ -209,9 +159,7 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
         message: "VFD live mode requires a consumer key and secret",
       })
     }
-  } else if (
-    Boolean(value.VFD_CONSUMER_KEY) !== Boolean(value.VFD_CONSUMER_SECRET)
-  ) {
+  } else if (Boolean(value.VFD_CONSUMER_KEY) !== Boolean(value.VFD_CONSUMER_SECRET)) {
     context.addIssue({
       code: "custom",
       path: ["VFD_CONSUMER_KEY"],
@@ -219,8 +167,7 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
     })
   }
 
-  if (value.HIVORR_ENV !== "staging" && value.HIVORR_ENV !== "production")
-    return
+  if (value.HIVORR_ENV !== "staging" && value.HIVORR_ENV !== "production") return
 
   if (!value.BACKEND_ENVIRONMENT) {
     context.addIssue({
@@ -293,30 +240,21 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
   // Payout keys are a pair: the encryption key protects the account number and
   // the fingerprint key protects uniqueness. Supplying one without the other is
   // a configuration error, not a mode.
-  if (
-    Boolean(value.PAYOUT_ENCRYPTION_KEY) !==
-    Boolean(value.PAYOUT_FINGERPRINT_KEY)
-  ) {
+  if (Boolean(value.PAYOUT_ENCRYPTION_KEY) !== Boolean(value.PAYOUT_FINGERPRINT_KEY)) {
     context.addIssue({
       code: "custom",
       path: ["PAYOUT_ENCRYPTION_KEY"],
       message: "Payout encryption and fingerprint keys are supplied as a pair",
     })
   }
-  if (
-    value.PAYOUT_ENCRYPTION_KEY &&
-    base64KeyLength(value.PAYOUT_ENCRYPTION_KEY) !== 32
-  ) {
+  if (value.PAYOUT_ENCRYPTION_KEY && base64KeyLength(value.PAYOUT_ENCRYPTION_KEY) !== 32) {
     context.addIssue({
       code: "custom",
       path: ["PAYOUT_ENCRYPTION_KEY"],
       message: "PAYOUT_ENCRYPTION_KEY must be 32 bytes encoded as base64",
     })
   }
-  if (
-    value.PAYOUT_FINGERPRINT_KEY &&
-    base64KeyLength(value.PAYOUT_FINGERPRINT_KEY) !== 32
-  ) {
+  if (value.PAYOUT_FINGERPRINT_KEY && base64KeyLength(value.PAYOUT_FINGERPRINT_KEY) !== 32) {
     context.addIssue({
       code: "custom",
       path: ["PAYOUT_FINGERPRINT_KEY"],
@@ -341,17 +279,13 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
     context.addIssue({
       code: "custom",
       path: ["DATABASE_SSL_CA"],
-      message:
-        "DATABASE_SSL_CA is required in production: the API must verify database TLS",
+      message: "DATABASE_SSL_CA is required in production: the API must verify database TLS",
     })
   }
   if (
     value.WORKER_DATABASE_URL &&
     value.SUPABASE_PROJECT_REF &&
-    !databaseUrlMatchesProjectRef(
-      value.WORKER_DATABASE_URL,
-      value.SUPABASE_PROJECT_REF,
-    )
+    !databaseUrlMatchesProjectRef(value.WORKER_DATABASE_URL, value.SUPABASE_PROJECT_REF)
   ) {
     context.addIssue({
       code: "custom",
@@ -363,10 +297,7 @@ const configSchema = baseConfigSchema.superRefine((value, context) => {
   if (
     value.DATABASE_URL &&
     value.SUPABASE_PROJECT_REF &&
-    !databaseUrlMatchesProjectRef(
-      value.DATABASE_URL,
-      value.SUPABASE_PROJECT_REF,
-    )
+    !databaseUrlMatchesProjectRef(value.DATABASE_URL, value.SUPABASE_PROJECT_REF)
   ) {
     context.addIssue({
       code: "custom",
@@ -386,10 +317,7 @@ export function base64KeyLength(value: string): number {
   return Buffer.from(value, "base64").length
 }
 
-export function databaseUrlMatchesProjectRef(
-  databaseUrl: string,
-  projectRef: string,
-): boolean {
+export function databaseUrlMatchesProjectRef(databaseUrl: string, projectRef: string): boolean {
   try {
     const url = new URL(databaseUrl)
     const ref = projectRef.toLowerCase()
@@ -480,7 +408,7 @@ export interface ApiConfig {
   readonly supabaseProjectRef: string | undefined
   readonly port: number
   readonly host: string
-  readonly logLevel: typeof logLevels[number]
+  readonly logLevel: (typeof logLevels)[number]
   readonly sessionIssuer: string
   readonly mfaEncryptionKey?: string
   /** Commit identity of the running artifact, when the deployment records it. */
@@ -518,12 +446,8 @@ export class ConfigurationError extends Error {
 export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
   const result = configSchema.safeParse(environment)
   if (!result.success) {
-    const fields = result.error.issues.map(
-      (issue) => issue.path.join(".") || "config",
-    )
-    throw new ConfigurationError(
-      `Invalid API configuration: ${[...new Set(fields)].join(", ")}`,
-    )
+    const fields = result.error.issues.map((issue) => issue.path.join(".") || "config")
+    throw new ConfigurationError(`Invalid API configuration: ${[...new Set(fields)].join(", ")}`)
   }
 
   const value = result.data
@@ -571,9 +495,7 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       retryBaseMs: value.WORKER_RETRY_BASE_MS,
       healthPort: value.WORKER_HEALTH_PORT,
       healthHost: value.WORKER_HEALTH_HOST,
-      workerId:
-        value.WORKER_ID ??
-        `hivorr-worker-${value.HIVORR_ENV}-${hostname()}-${process.pid}`,
+      workerId: value.WORKER_ID ?? `hivorr-worker-${value.HIVORR_ENV}-${hostname()}-${process.pid}`,
     },
     vfd: {
       mode: value.VFD_MODE,

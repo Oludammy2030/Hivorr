@@ -2,20 +2,14 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import {
-  CONFIG_ENV_KEYS,
-  ConfigurationError,
-  parseConfig,
-} from "../server/src/config"
+import { CONFIG_ENV_KEYS, ConfigurationError, parseConfig } from "../server/src/config"
 import {
   parseEnvTemplate,
   verifyConfigurationContract,
 } from "../scripts/lib/configuration-contract.mjs"
 
 function readJson(relative: string): unknown {
-  return JSON.parse(
-    readFileSync(new URL(`../${relative}`, import.meta.url), "utf8"),
-  )
+  return JSON.parse(readFileSync(new URL(`../${relative}`, import.meta.url), "utf8"))
 }
 
 interface ContractKey {
@@ -28,21 +22,15 @@ interface ConfigurationContract {
   keys: ContractKey[]
 }
 
-const contract = readJson(
-  "config/configuration-contract.json",
-) as ConfigurationContract
+const contract = readJson("config/configuration-contract.json") as ConfigurationContract
 const environments = readJson("config/environments.json")
-const envExample = readFileSync(
-  new URL("../.env.example", import.meta.url),
-  "utf8",
-)
+const envExample = readFileSync(new URL("../.env.example", import.meta.url), "utf8")
 
 const validStaging = {
   HIVORR_ENV: "staging",
   BACKEND_ENVIRONMENT: "staging",
   SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
-  DATABASE_URL:
-    "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+  DATABASE_URL: "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
   SESSION_ISSUER: "hivorr-staging",
   MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
   PAYOUT_ENCRYPTION_KEY: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
@@ -50,9 +38,7 @@ const validStaging = {
 } as Record<string, string>
 
 function keysOf(source: string) {
-  return contract.keys
-    .filter((entry) => entry.source === source)
-    .map((entry) => entry.name)
+  return contract.keys.filter((entry) => entry.source === source).map((entry) => entry.name)
 }
 
 describe("configuration contract", () => {
@@ -65,10 +51,7 @@ describe("configuration contract", () => {
       contract,
       envExample,
       environments,
-      clientSource: readFileSync(
-        new URL("../src/app/App.tsx", import.meta.url),
-        "utf8",
-      ),
+      clientSource: readFileSync(new URL("../src/app/App.tsx", import.meta.url), "utf8"),
     })
     expect(result.issues).toEqual([])
     expect(result.ok).toBe(true)
@@ -118,15 +101,10 @@ describe("configuration contract", () => {
     expect(
       verifyConfigurationContract({
         contract,
-        envExample: envExample.replace(
-          /^MFA_ENCRYPTION_KEY=.*$/m,
-          "MFA_ENCRYPTION_KEY=not-empty",
-        ),
+        envExample: envExample.replace(/^MFA_ENCRYPTION_KEY=.*$/m, "MFA_ENCRYPTION_KEY=not-empty"),
         environments,
       }).issues,
-    ).toContain(
-      "MFA_ENCRYPTION_KEY: a secret placeholder must be empty in .env.example",
-    )
+    ).toContain("MFA_ENCRYPTION_KEY: a secret placeholder must be empty in .env.example")
 
     expect(
       verifyConfigurationContract({
@@ -145,8 +123,6 @@ describe("configuration contract", () => {
           environments: { staging: { requiredSecrets: ["UNKNOWN_KEY"] } },
         },
       }).issues,
-    ).toContain(
-      "staging.requiredSecrets references UNKNOWN_KEY, which is absent from the contract",
-    )
+    ).toContain("staging.requiredSecrets references UNKNOWN_KEY, which is absent from the contract")
   })
 })

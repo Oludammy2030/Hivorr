@@ -3,10 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { StaticRouter } from "react-router"
 import { describe, expect, it } from "vitest"
 
-import {
-  AppProviders,
-  createQueryClient,
-} from "../packages/app-shell/src/index"
+import { AppProviders, createQueryClient } from "../packages/app-shell/src/index"
 import {
   ForgotPasswordScreen,
   RegisterScreen,

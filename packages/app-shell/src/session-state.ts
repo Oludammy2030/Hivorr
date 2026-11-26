@@ -46,10 +46,7 @@ export function sessionStateFrom(snapshot: SessionQuerySnapshot): SessionState {
   if (snapshot.isPending) return LOADING_SESSION
 
   if (snapshot.isError) {
-    if (
-      snapshot.error instanceof ApiClientError &&
-      snapshot.error.status === 401
-    ) {
+    if (snapshot.error instanceof ApiClientError && snapshot.error.status === 401) {
       return ANONYMOUS_SESSION
     }
     return {

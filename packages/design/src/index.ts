@@ -23,11 +23,6 @@ export {
   type ColorToken,
   type PillTone,
 } from "./tokens"
-export {
-  Button,
-  type ButtonProps,
-  type ButtonSize,
-  type ButtonVariant,
-} from "./primitives/button"
+export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from "./primitives/button"
 export { TextField, type TextFieldProps } from "./primitives/text-field"
 export { Pill, type PillProps } from "./primitives/pill"

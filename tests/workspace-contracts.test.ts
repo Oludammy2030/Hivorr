@@ -54,9 +54,7 @@ describe("four portals, two environments", () => {
 
   it("uses the approved partner hostnames", () => {
     expect(getPortal("partner").hosts.production).toBe("partner.hivorr.com")
-    expect(getPortal("partner").hosts.staging).toBe(
-      "partner-staging.hivorr.com",
-    )
+    expect(getPortal("partner").hosts.staging).toBe("partner-staging.hivorr.com")
   })
 
   it("keeps one audience per portal and never shares it", () => {
@@ -74,12 +72,8 @@ describe("four portals, two environments", () => {
 
   it("resolves a host to its portal and environment", () => {
     expect(getPortalByHost("hivorr.com", "production")?.id).toBe("app")
-    expect(getPortalByHost("control-staging.hivorr.com", "staging")?.id).toBe(
-      "control",
-    )
-    expect(
-      getPortalByHost("control-staging.hivorr.com", "production"),
-    ).toBeUndefined()
+    expect(getPortalByHost("control-staging.hivorr.com", "staging")?.id).toBe("control")
+    expect(getPortalByHost("control-staging.hivorr.com", "production")).toBeUndefined()
   })
 
   it("distinguishes a production host from a staging host", () => {
@@ -116,12 +110,16 @@ describe("activity registry contract", () => {
   })
 
   it("keeps the explore and earn split exact", () => {
-    expect(
-      ACTIVITY_IDS.filter((id) => ACTIVITIES[id].direction === "explore"),
-    ).toEqual(["market.buy", "services.hire", "errands.request"])
-    expect(
-      ACTIVITY_IDS.filter((id) => ACTIVITIES[id].direction === "earn"),
-    ).toEqual(["market.sell", "services.offer", "logistics.provide"])
+    expect(ACTIVITY_IDS.filter((id) => ACTIVITIES[id].direction === "explore")).toEqual([
+      "market.buy",
+      "services.hire",
+      "errands.request",
+    ])
+    expect(ACTIVITY_IDS.filter((id) => ACTIVITIES[id].direction === "earn")).toEqual([
+      "market.sell",
+      "services.offer",
+      "logistics.provide",
+    ])
   })
 })
 
@@ -210,16 +208,12 @@ describe("pagination contract", () => {
     })
     expect(DEFAULT_PAGE_SIZE).toBe(20)
     expect(MAX_PAGE_SIZE).toBe(100)
-    expect(paginationQuerySchema.safeParse({ limit: "101" }).success).toBe(
-      false,
-    )
+    expect(paginationQuerySchema.safeParse({ limit: "101" }).success).toBe(false)
     expect(paginationQuerySchema.safeParse({ limit: "0" }).success).toBe(false)
   })
 
   it("rejects an unknown query field", () => {
-    expect(
-      paginationQuerySchema.safeParse({ limit: "10", offset: "20" }).success,
-    ).toBe(false)
+    expect(paginationQuerySchema.safeParse({ limit: "10", offset: "20" }).success).toBe(false)
   })
 })
 
@@ -252,9 +246,7 @@ describe("route manifest contract", () => {
   })
 
   it("keeps portal and path pairs unique", () => {
-    const pairs = ROUTE_IDS.map(
-      (id) => `${ROUTES[id].portal}:${ROUTES[id].path}`,
-    )
+    const pairs = ROUTE_IDS.map((id) => `${ROUTES[id].portal}:${ROUTES[id].path}`)
     expect(new Set(pairs).size).toBe(pairs.length)
     for (const id of ROUTE_IDS) {
       expect(ROUTES[id].path.startsWith("/")).toBe(true)
@@ -263,18 +255,16 @@ describe("route manifest contract", () => {
 
   it("belongs the admin route to the control portal only", () => {
     expect(ROUTES.admin.portal).toBe("control")
-    const controlRoutes = ROUTE_IDS.filter(
-      (id) => ROUTES[id].portal === "control",
-    )
+    const controlRoutes = ROUTE_IDS.filter((id) => ROUTES[id].portal === "control")
     expect(controlRoutes).toEqual(["admin"])
   })
 
   it("indexes only the URLs the architecture makes crawlable", () => {
-    expect(
-      ROUTE_IDS.filter((id) => ROUTES[id].indexable).map(
-        (id) => ROUTES[id].path,
-      ),
-    ).toEqual(["/", "/p/:slug", "/store/:slug"])
+    expect(ROUTE_IDS.filter((id) => ROUTES[id].indexable).map((id) => ROUTES[id].path)).toEqual([
+      "/",
+      "/p/:slug",
+      "/store/:slug",
+    ])
   })
 
   it("rejects an unknown route id", () => {
@@ -304,8 +294,7 @@ describe("shared enum schemas", () => {
 })
 
 describe("no duplicate vocabulary", () => {
-  const read = (relative: string) =>
-    readFileSync(path.join(process.cwd(), relative), "utf8")
+  const read = (relative: string) => readFileSync(path.join(process.cwd(), relative), "utf8")
 
   it("keeps capability and grant lists out of the server", () => {
     const source = read("server/src/domain/capabilities.ts")

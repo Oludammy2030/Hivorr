@@ -65,9 +65,9 @@ class FakeTransaction {
     }
 
     if (this.failCode) {
-      const error = new Error(
-        this.failMessage ?? "admin function failed",
-      ) as Error & { code?: string }
+      const error = new Error(this.failMessage ?? "admin function failed") as Error & {
+        code?: string
+      }
       error.code = this.failCode
       throw error
     }
@@ -120,9 +120,7 @@ const requestContext = {
   correlationId: "corr-dispute-1",
 }
 
-function openInput(
-  overrides: Partial<OpenDisputeInput> = {},
-): OpenDisputeInput {
+function openInput(overrides: Partial<OpenDisputeInput> = {}): OpenDisputeInput {
   return {
     accountId: randomUUID(),
     userId: randomUUID(),
@@ -152,9 +150,7 @@ describe("dispute service", () => {
     expect(result.status).toBe("OPENED")
     expect(result.caseReference).toBe("CASE-ABC123456")
 
-    const call = transaction.calls.find((entry) =>
-      entry.text.includes("admin.open_dispute"),
-    )
+    const call = transaction.calls.find((entry) => entry.text.includes("admin.open_dispute"))
     expect(call?.values?.[1]).toBe(input.caseId)
     expect(call?.values?.[9]).toBe(input.reason)
 
@@ -227,9 +223,10 @@ describe("dispute service", () => {
 
     const duplicate = new FakeTransaction()
     duplicate.failCode = "23505"
-    await expect(
-      serviceWith(duplicate).open(openInput()),
-    ).rejects.toMatchObject({ code: "CONFLICT", statusCode: 409 })
+    await expect(serviceWith(duplicate).open(openInput())).rejects.toMatchObject({
+      code: "CONFLICT",
+      statusCode: 409,
+    })
   })
 
   it("reads evidence metadata for the dispute's case", async () => {

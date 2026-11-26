@@ -1,9 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import {
-  currencyCodeSchema,
-  minorUnitsToMoney,
-  moneyToMinorUnits,
-} from "@hivorr/shared"
+import { currencyCodeSchema, minorUnitsToMoney, moneyToMinorUnits } from "@hivorr/shared"
 
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
@@ -108,10 +104,7 @@ export class DepositEligibilityService {
       return { allowed: false, reason: "kyc_required", cap: null }
     }
 
-    const hold = await this.identity.readFinancialHoldInTransaction(
-      transaction,
-      input.accountId,
-    )
+    const hold = await this.identity.readFinancialHoldInTransaction(transaction, input.accountId)
     if (hold) {
       return {
         allowed: false,
@@ -134,9 +127,7 @@ export class DepositEligibilityService {
       return {
         allowed: true,
         reason: "within_limit",
-        cap: decision.rule.isUnlimited
-          ? null
-          : minorUnitsToMoney(decision.rule.amountMinor),
+        cap: decision.rule.isUnlimited ? null : minorUnitsToMoney(decision.rule.amountMinor),
       }
     }
 
@@ -147,13 +138,8 @@ export class DepositEligibilityService {
       return { allowed: false, reason: "not_configured", cap: null }
     }
 
-    const cap = decision.rule
-      ? minorUnitsToMoney(decision.rule.amountMinor)
-      : null
-    await this.identity.holdForKycUpgradeInTransaction(
-      transaction,
-      input.accountId,
-    )
+    const cap = decision.rule ? minorUnitsToMoney(decision.rule.amountMinor) : null
+    await this.identity.holdForKycUpgradeInTransaction(transaction, input.accountId)
     await appendAudit(transaction.client, {
       actorType: "user",
       actorId: input.userId,
@@ -192,16 +178,8 @@ export class DepositEligibilityService {
       )
     }
     if (decision.reason === "kyc_required") {
-      throw new ApiError(
-        "KYC_REQUIRED",
-        "A deposit requires KYC tier_1 or above.",
-        403,
-      )
+      throw new ApiError("KYC_REQUIRED", "A deposit requires KYC tier_1 or above.", 403)
     }
-    throw new ApiError(
-      "LIMIT_EXCEEDED",
-      "No deposit limit is configured for this tier.",
-      403,
-    )
+    throw new ApiError("LIMIT_EXCEEDED", "No deposit limit is configured for this tier.", 403)
   }
 }

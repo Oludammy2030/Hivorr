@@ -1,21 +1,9 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from "react"
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react"
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router"
 import { Zap } from "lucide-react"
 
 import { ApiClientError } from "@hivorr/api-client"
-import {
-  Button,
-  TextField,
-  colorTokens,
-  fontTokens,
-  gradientTokens,
-} from "@hivorr/design"
+import { Button, TextField, colorTokens, fontTokens, gradientTokens } from "@hivorr/design"
 
 import { apiClient } from "./client"
 import { useSession } from "@hivorr/app-shell"
@@ -87,10 +75,7 @@ function BrandMark({ tone = "ink" }: { tone?: "ink" | "brand" }) {
 
 function ErrorText({ children }: { children: string }) {
   return (
-    <p
-      role="alert"
-      style={{ color: colorTokens.danger, fontSize: 13, fontWeight: 600 }}
-    >
+    <p role="alert" style={{ color: colorTokens.danger, fontSize: 13, fontWeight: 600 }}>
       {children}
     </p>
   )
@@ -193,8 +178,7 @@ export function SignInScreen() {
                   lineHeight: 1.6,
                 }}
               >
-                Join 50,000+ professionals and employers building Africa's
-                future together.
+                Join 50,000+ professionals and employers building Africa's future together.
               </p>
             </div>
             <div style={{ display: "flex", gap: 24 }}>
@@ -241,9 +225,7 @@ export function SignInScreen() {
               >
                 {challenge ? "Verify your sign-in" : "Welcome back 👋"}
               </h1>
-              <p
-                style={{ color: colorTokens.gray, fontSize: 15, marginTop: 4 }}
-              >
+              <p style={{ color: colorTokens.gray, fontSize: 15, marginTop: 4 }}>
                 {challenge
                   ? "Enter the six-digit code from your authenticator."
                   : "Sign in to your account"}
@@ -251,10 +233,7 @@ export function SignInScreen() {
             </div>
 
             {challenge ? (
-              <form
-                onSubmit={verify}
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
+              <form onSubmit={verify} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <TextField
                   label="Authentication code"
                   inputMode="numeric"
@@ -284,10 +263,7 @@ export function SignInScreen() {
                 </button>
               </form>
             ) : (
-              <form
-                onSubmit={submit}
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
+              <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <TextField
                   label="Email"
                   type="email"
@@ -331,10 +307,7 @@ export function SignInScreen() {
               }}
             >
               New to Hivorr?{" "}
-              <Link
-                to="/signup"
-                style={{ color: colorTokens.brand, fontWeight: 700 }}
-              >
+              <Link to="/signup" style={{ color: colorTokens.brand, fontWeight: 700 }}>
                 Create account
               </Link>
             </p>
@@ -426,10 +399,7 @@ export function RegisterScreen() {
             </Link>
           </div>
         ) : (
-          <form
-            onSubmit={submit}
-            style={{ display: "flex", flexDirection: "column", gap: 12 }}
-          >
+          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <TextField
               label="Full name"
               autoComplete="name"
@@ -471,10 +441,7 @@ export function RegisterScreen() {
           }}
         >
           Already have an account?{" "}
-          <Link
-            to="/login"
-            style={{ color: colorTokens.brand, fontWeight: 700 }}
-          >
+          <Link to="/login" style={{ color: colorTokens.brand, fontWeight: 700 }}>
             Sign in
           </Link>
         </p>
@@ -543,10 +510,7 @@ export function ForgotPasswordScreen() {
             Check your email for the reset link.
           </p>
         ) : (
-          <form
-            onSubmit={submit}
-            style={{ display: "flex", flexDirection: "column", gap: 12 }}
-          >
+          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <TextField
               label="Email"
               type="email"
@@ -569,10 +533,7 @@ export function ForgotPasswordScreen() {
             marginTop: 16,
           }}
         >
-          <Link
-            to="/login"
-            style={{ color: colorTokens.brand, fontWeight: 700 }}
-          >
+          <Link to="/login" style={{ color: colorTokens.brand, fontWeight: 700 }}>
             Back to sign in
           </Link>
         </p>
@@ -644,10 +605,7 @@ export function ResetPasswordScreen() {
         ) : done ? (
           <p role="status" style={{ color: colorTokens.body, marginTop: 12 }}>
             Your password was changed.{" "}
-            <Link
-              to="/login"
-              style={{ color: colorTokens.brand, fontWeight: 700 }}
-            >
+            <Link to="/login" style={{ color: colorTokens.brand, fontWeight: 700 }}>
               Sign in
             </Link>
           </p>
@@ -689,9 +647,7 @@ export function ResetPasswordScreen() {
 export function VerifyEmailScreen() {
   const [params] = useSearchParams()
   const [token] = useState(() => tokenFromSearch(params))
-  const [status, setStatus] = useState<"idle" | "busy" | "done" | "error">(
-    token ? "idle" : "error",
-  )
+  const [status, setStatus] = useState<"idle" | "busy" | "done" | "error">(token ? "idle" : "error")
   const [error, setError] = useState<string | null>(
     token ? null : "This verification link is missing its token.",
   )
@@ -748,10 +704,7 @@ export function VerifyEmailScreen() {
               ? "Your email is verified. You can sign in."
               : (error ?? "This link is invalid or has expired.")}
         </p>
-        <Link
-          to="/login"
-          style={{ color: colorTokens.brand, fontWeight: 700, fontSize: 15 }}
-        >
+        <Link to="/login" style={{ color: colorTokens.brand, fontWeight: 700, fontSize: 15 }}>
           Go to sign in
         </Link>
       </div>
@@ -789,10 +742,7 @@ export function SessionBootstrap() {
         }}
       >
         <div style={{ textAlign: "center", maxWidth: 420 }}>
-          <p
-            role="alert"
-            style={{ color: colorTokens.danger, marginBottom: 12 }}
-          >
+          <p role="alert" style={{ color: colorTokens.danger, marginBottom: 12 }}>
             We could not load your session.
           </p>
           <Button onClick={session.refresh}>Try again</Button>
@@ -800,10 +750,5 @@ export function SessionBootstrap() {
       </main>
     )
   }
-  return (
-    <Navigate
-      to={session.status === "authenticated" ? "/activities" : "/login"}
-      replace
-    />
-  )
+  return <Navigate to={session.status === "authenticated" ? "/activities" : "/login"} replace />
 }

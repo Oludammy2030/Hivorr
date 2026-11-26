@@ -32,13 +32,10 @@ import {
  * and are not called from here.
  */
 export interface PayoutAccountNameResolver {
-  resolveAccountName(
-    input: AccountNameEnquiryRequest,
-  ): Promise<AccountNameEnquiry>
+  resolveAccountName(input: AccountNameEnquiryRequest): Promise<AccountNameEnquiry>
 }
 
-export const PAYOUT_ACCOUNT_NAME_RESOLVER =
-  "HIVORR_PAYOUT_ACCOUNT_NAME_RESOLVER" as const
+export const PAYOUT_ACCOUNT_NAME_RESOLVER = "HIVORR_PAYOUT_ACCOUNT_NAME_RESOLVER" as const
 
 export interface BindPayoutAccountInput {
   readonly accountId: string
@@ -87,8 +84,7 @@ interface PayoutAccountRow {
   created_at: string | Date
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function toIso(value: string | Date): string {
   return value instanceof Date ? value.toISOString() : value
@@ -124,17 +120,9 @@ function mapWriteError(error: unknown): never {
         403,
       )
     case "23505":
-      throw new ApiError(
-        "CONFLICT",
-        "That payout destination is already bound.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "That payout destination is already bound.", 409)
     case "23503":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The account does not exist.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The account does not exist.", 400)
     case "23514":
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -142,9 +130,7 @@ function mapWriteError(error: unknown): never {
         400,
       )
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The payout destination operation failed.")
+      throw error instanceof Error ? error : new Error("The payout destination operation failed.")
   }
 }
 
@@ -159,10 +145,7 @@ export class PayoutAccountService {
   ) {}
 
   /** Lists the caller's destinations without any bank-detail material. */
-  async list(input: {
-    accountId: string
-    userId: string
-  }): Promise<PayoutAccountView[]> {
+  async list(input: { accountId: string; userId: string }): Promise<PayoutAccountView[]> {
     try {
       return await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
@@ -200,26 +183,14 @@ export class PayoutAccountService {
 
     const bankCode = input.bankCode.trim()
     if (!PAYOUT_BANK_CODE_PATTERN.test(bankCode)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A bank code is three to ten digits.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A bank code is three to ten digits.", 400)
     }
     const bankName = input.bankName.trim()
     if (bankName.length < 1 || bankName.length > 120) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A bank name is one to 120 characters.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A bank name is one to 120 characters.", 400)
     }
     if (!PAYOUT_ACCOUNT_NUMBER_PATTERN.test(input.accountNumber)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A payout account number is ten digits.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A payout account number is ten digits.", 400)
     }
 
     // The approved destination count is not decided. Unset config means the
@@ -232,22 +203,12 @@ export class PayoutAccountService {
         503,
       )
     }
-    if (
-      !this.config.payout.encryptionKey ||
-      !this.config.payout.fingerprintKey
-    ) {
-      throw new ApiError(
-        "SERVICE_UNAVAILABLE",
-        "Payout account protection is not configured.",
-        503,
-      )
+    if (!this.config.payout.encryptionKey || !this.config.payout.fingerprintKey) {
+      throw new ApiError("SERVICE_UNAVAILABLE", "Payout account protection is not configured.", 503)
     }
     const cipher = PayoutAccountCipher.fromConfig(this.config.payout)
 
-    const legalName = await this.identity.getAccountLegalName(
-      input.accountId,
-      input.userId,
-    )
+    const legalName = await this.identity.getAccountLegalName(input.accountId, input.userId)
     if (!legalName || normalizeAccountName(legalName).length === 0) {
       throw new ApiError(
         "KYC_REQUIRED",
@@ -264,11 +225,7 @@ export class PayoutAccountService {
       })
     } catch (error) {
       if (isPaymentProviderError(error)) {
-        throw new ApiError(
-          "PROVIDER_ERROR",
-          "The bank could not confirm that account name.",
-          502,
-        )
+        throw new ApiError("PROVIDER_ERROR", "The bank could not confirm that account name.", 502)
       }
       throw error
     }
@@ -292,10 +249,9 @@ export class PayoutAccountService {
         async (transaction) => {
           // Serialise cap checks for this owner so two concurrent binds cannot
           // both observe room for one more destination.
-          await transaction.query(
-            "select pg_advisory_xact_lock(hashtextextended($1, 0))",
-            [input.accountId],
-          )
+          await transaction.query("select pg_advisory_xact_lock(hashtextextended($1, 0))", [
+            input.accountId,
+          ])
 
           const counted = await transaction.query<{ active: string }>(
             `select count(*)::text as active
@@ -334,8 +290,7 @@ export class PayoutAccountService {
             ],
           )
           const row = result.rows[0]
-          if (!row)
-            throw new Error("The payout destination insert returned no row.")
+          if (!row) throw new Error("The payout destination insert returned no row.")
           const view = toView(row)
 
           await appendAudit(transaction.client, {
@@ -374,11 +329,7 @@ export class PayoutAccountService {
    */
   async disable(input: DisablePayoutAccountInput): Promise<PayoutAccountView> {
     if (!UUID_PATTERN.test(input.id)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The payout destination identifier is invalid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The payout destination identifier is invalid.", 400)
     }
     if (input.reason.trim().length < 5) {
       throw new ApiError(
@@ -404,11 +355,7 @@ export class PayoutAccountService {
           )
           const row = result.rows[0]
           if (!row) {
-            throw new ApiError(
-              "NOT_FOUND",
-              "That payout destination does not exist.",
-              404,
-            )
+            throw new ApiError("NOT_FOUND", "That payout destination does not exist.", 404)
           }
           const view = toView(row)
 

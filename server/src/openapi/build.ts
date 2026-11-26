@@ -2,11 +2,7 @@ import { z } from "zod"
 
 import { errorResponse } from "../contracts/schemas"
 import { API_OPERATIONS, type ApiOperation } from "./operations"
-import type {
-  OpenApiDocument,
-  OpenApiOperation,
-  OpenApiResponse,
-} from "./types"
+import type { OpenApiDocument, OpenApiOperation, OpenApiResponse } from "./types"
 
 const ERROR_RESPONSES: Readonly<Record<number, string>> = {
   400: "The request is invalid",

@@ -8,18 +8,10 @@ import type {
   PayoutResult,
   ProviderOperationContext,
 } from "../../integrations/payments/payment-provider"
-import {
-  PaystackPayoutClient,
-  type PaystackMode,
-} from "../../integrations/paystack"
+import { PaystackPayoutClient, type PaystackMode } from "../../integrations/paystack"
 import { VFD_PAYOUTS } from "../../integrations/vfd"
 import type { VfdPayoutClient } from "../../integrations/vfd"
-import {
-  API_CONFIG,
-  type ApiConfig,
-  type PaymentMode,
-  type PaymentProviderKey,
-} from "../../config"
+import { API_CONFIG, type ApiConfig, type PaymentMode, type PaymentProviderKey } from "../../config"
 import { PaymentProviderSettingsService } from "../platform"
 import type { PayoutProviderPort } from "./payout-execution.service"
 
@@ -65,9 +57,7 @@ export class PaymentProviderRouter implements PayoutProviderPort {
     return this.paystack(active.mode).getPaymentStatus(query)
   }
 
-  async resolveAccountName(
-    input: AccountNameEnquiryRequest,
-  ): Promise<AccountNameEnquiry> {
+  async resolveAccountName(input: AccountNameEnquiryRequest): Promise<AccountNameEnquiry> {
     const active = await this.activeSetting()
     if (active.provider === "vfd") {
       return this.vfd.resolveAccountName(input)
@@ -87,8 +77,7 @@ export class PaymentProviderRouter implements PayoutProviderPort {
     return new PaystackPayoutClient({
       baseUrl: paystack.baseUrl,
       mode,
-      secretKey:
-        mode === "live" ? paystack.secretKeyLive : paystack.secretKeyTest,
+      secretKey: mode === "live" ? paystack.secretKeyLive : paystack.secretKeyTest,
       requestTimeoutMs: this.config.vfd.requestTimeoutMs,
       maxRetries: this.config.vfd.maxRetries,
       retryBaseMs: this.config.vfd.retryBaseMs,

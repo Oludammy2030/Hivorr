@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { DepositEligibilityService } from "../server/src/modules/finance/deposit-eligibility.service"
-import type {
-  FinanceLimitDecision,
-  FinanceLimitRule,
-} from "../server/src/modules/finance/limits"
+import type { FinanceLimitDecision, FinanceLimitRule } from "../server/src/modules/finance/limits"
 
 const ACCOUNT_ID = "11111111-1111-4111-8111-111111111111"
 const USER_ID = "22222222-2222-4222-8222-222222222222"
@@ -68,10 +65,7 @@ function harness(
   }
 
   const database = {
-    async withTransaction(
-      _options: unknown,
-      work: (tx: unknown) => Promise<unknown>,
-    ) {
+    async withTransaction(_options: unknown, work: (tx: unknown) => Promise<unknown>) {
       return work(transaction)
     },
   }
@@ -162,9 +156,7 @@ describe("deposit eligibility", () => {
     expect(test.updates).toHaveLength(1)
     expect(test.updates[0]?.text).toContain("financial_hold_reason")
     expect(test.audits).toHaveLength(1)
-    expect(JSON.stringify(test.audits[0])).toContain(
-      "finance.deposit_blocked_kyc_upgrade",
-    )
+    expect(JSON.stringify(test.audits[0])).toContain("finance.deposit_blocked_kyc_upgrade")
   })
 
   it("throws the KYC_REQUIRED denial from the assertion path", async () => {
@@ -172,9 +164,9 @@ describe("deposit eligibility", () => {
       decision: { allowed: false, reason: "exceeded", rule: rule() },
     })
 
-    await expect(
-      test.service.assertAllowed(input({ amount: "25000.0000" })),
-    ).rejects.toMatchObject({ code: "KYC_REQUIRED", statusCode: 403 })
+    await expect(test.service.assertAllowed(input({ amount: "25000.0000" }))).rejects.toMatchObject(
+      { code: "KYC_REQUIRED", statusCode: 403 },
+    )
   })
 
   it("refuses a deposit while the account is already held", async () => {
@@ -208,8 +200,8 @@ describe("deposit eligibility", () => {
   it("rejects a malformed amount", async () => {
     const test = harness()
 
-    await expect(
-      test.service.check(input({ amount: "0.0000" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
+    await expect(test.service.check(input({ amount: "0.0000" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
   })
 })

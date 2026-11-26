@@ -17,9 +17,6 @@ export function mainPortalOrigin(location: PortalLocation): string {
   return `${location.protocol}//${mainHostname}`
 }
 
-export function staffInviteLink(
-  location: PortalLocation,
-  token: string,
-): string {
+export function staffInviteLink(location: PortalLocation, token: string): string {
   return `${mainPortalOrigin(location)}/invite.html?token=${encodeURIComponent(token)}`
 }

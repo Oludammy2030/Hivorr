@@ -1,7 +1,4 @@
-import {
-  PaymentProviderError,
-  type PaymentProviderErrorCode,
-} from "../payments/payment-provider"
+import { PaymentProviderError, type PaymentProviderErrorCode } from "../payments/payment-provider"
 
 /**
  * VFD access-token client (EP-02-041).
@@ -60,11 +57,7 @@ function defaultSleep(milliseconds: number): Promise<void> {
 }
 
 class VfdTokenError extends PaymentProviderError {
-  constructor(
-    code: PaymentProviderErrorCode,
-    message: string,
-    retryable: boolean,
-  ) {
+  constructor(code: PaymentProviderErrorCode, message: string, retryable: boolean) {
     super(code, message, { retryable })
   }
 }
@@ -121,11 +114,7 @@ export class VfdAuthClient {
     const key = this.options.consumerKey
     const secret = this.options.consumerSecret
     if (!key || !secret) {
-      throw new VfdTokenError(
-        "PROVIDER_AUTH_FAILED",
-        "VFD credentials are not configured.",
-        false,
-      )
+      throw new VfdTokenError("PROVIDER_AUTH_FAILED", "VFD credentials are not configured.", false)
     }
 
     const url = VFD_TOKEN_URLS[this.options.mode]
@@ -147,10 +136,7 @@ export class VfdAuthClient {
       }
 
       const controller = new AbortController()
-      const timer = setTimeout(
-        () => controller.abort(),
-        this.options.requestTimeoutMs,
-      )
+      const timer = setTimeout(() => controller.abort(), this.options.requestTimeoutMs)
 
       try {
         const response = await this.fetchImpl(url, {
@@ -164,33 +150,19 @@ export class VfdAuthClient {
         })
 
         if (response.status === 401 || response.status === 403) {
-          throw new VfdTokenError(
-            "PROVIDER_AUTH_FAILED",
-            "VFD rejected the credentials.",
-            false,
-          )
+          throw new VfdTokenError("PROVIDER_AUTH_FAILED", "VFD rejected the credentials.", false)
         }
 
         if (response.status === 429 || response.status >= 500) {
-          lastError = new VfdTokenError(
-            "PROVIDER_UNAVAILABLE",
-            "VFD is unavailable.",
-            true,
-          )
+          lastError = new VfdTokenError("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
           continue
         }
 
         if (!response.ok) {
-          throw new VfdTokenError(
-            "PROVIDER_REJECTED",
-            "VFD rejected the token request.",
-            false,
-          )
+          throw new VfdTokenError("PROVIDER_REJECTED", "VFD rejected the token request.", false)
         }
 
-        const payload = (await response
-          .json()
-          .catch(() => null)) as VfdTokenEnvelope | null
+        const payload = (await response.json().catch(() => null)) as VfdTokenEnvelope | null
         if (!payload) {
           throw new VfdTokenError(
             "PROVIDER_INVALID_PAYLOAD",
@@ -199,11 +171,7 @@ export class VfdAuthClient {
           )
         }
         if (payload.status !== "00") {
-          throw new VfdTokenError(
-            "PROVIDER_AUTH_FAILED",
-            "VFD did not issue a token.",
-            false,
-          )
+          throw new VfdTokenError("PROVIDER_AUTH_FAILED", "VFD did not issue a token.", false)
         }
 
         const token = payload.data?.access_token
@@ -224,10 +192,7 @@ export class VfdAuthClient {
             ? expiresIn
             : this.options.tokenValidityMinutes * 60
 
-        const lifetimeMs = Math.max(
-          seconds * 1_000 - 60_000,
-          MINIMUM_CACHED_LIFETIME_MS,
-        )
+        const lifetimeMs = Math.max(seconds * 1_000 - 60_000, MINIMUM_CACHED_LIFETIME_MS)
 
         return {
           token,
@@ -240,26 +205,15 @@ export class VfdAuthClient {
           continue
         }
         if (controller.signal.aborted) {
-          lastError = new VfdTokenError(
-            "PROVIDER_TIMEOUT",
-            "VFD did not answer in time.",
-            true,
-          )
+          lastError = new VfdTokenError("PROVIDER_TIMEOUT", "VFD did not answer in time.", true)
           continue
         }
-        lastError = new VfdTokenError(
-          "PROVIDER_UNAVAILABLE",
-          "The VFD request failed.",
-          true,
-        )
+        lastError = new VfdTokenError("PROVIDER_UNAVAILABLE", "The VFD request failed.", true)
       } finally {
         clearTimeout(timer)
       }
     }
 
-    throw (
-      lastError ??
-      new VfdTokenError("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
-    )
+    throw lastError ?? new VfdTokenError("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
   }
 }

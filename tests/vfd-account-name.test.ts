@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  VfdAccountNameClient,
-  type VfdAccountNameOptions,
-} from "../server/src/integrations/vfd"
+import { VfdAccountNameClient, type VfdAccountNameOptions } from "../server/src/integrations/vfd"
 import {
   PaymentProviderError,
   isPaymentProviderError,
@@ -23,9 +20,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-function options(
-  overrides: Partial<VfdAccountNameOptions> = {},
-): VfdAccountNameOptions {
+function options(overrides: Partial<VfdAccountNameOptions> = {}): VfdAccountNameOptions {
   return {
     requestTimeoutMs: 1_000,
     maxRetries: 0,
@@ -112,9 +107,7 @@ describe("VFD account-name enquiry", () => {
     expect(url.searchParams.get("accountNo")).toBe(ACCOUNT_NUMBER)
     expect(url.searchParams.get("bank")).toBe("999")
     expect(url.searchParams.get("transfer_type")).toBe("inter")
-    expect(
-      (calls[0]?.init?.headers as Record<string, string>).AccessToken,
-    ).toBe("access-token")
+    expect((calls[0]?.init?.headers as Record<string, string>).AccessToken).toBe("access-token")
   })
 
   it("maps an account-not-found envelope without retrying", async () => {
@@ -134,10 +127,9 @@ describe("VFD account-name enquiry", () => {
   })
 
   it("invalidates the token when the provider rejects it", async () => {
-    const { client, authCalls } = harness(
-      async () => jsonResponse({ status: "401" }, 401),
-      { maxRetries: 2 },
-    )
+    const { client, authCalls } = harness(async () => jsonResponse({ status: "401" }, 401), {
+      maxRetries: 2,
+    })
 
     await expect(
       codeOf(
@@ -175,9 +167,7 @@ describe("VFD account-name enquiry", () => {
   })
 
   it("refuses a payload without a name", async () => {
-    const { client } = harness(async () =>
-      jsonResponse({ status: "00", data: {} }),
-    )
+    const { client } = harness(async () => jsonResponse({ status: "00", data: {} }))
 
     await expect(
       codeOf(

@@ -24,9 +24,7 @@ function flag(name, fallback) {
 
 const base = flag("--base", "https://staging.hivorr.com").replace(/\/+$/, "")
 const expectSha = flag("--expect-sha", "")
-const topology = JSON.parse(
-  readFileSync(path.resolve("config/environments.json"), "utf8"),
-)
+const topology = JSON.parse(readFileSync(path.resolve("config/environments.json"), "utf8"))
 const hosts = topology.environments.staging.hosts
 const protectedApplications = ["control", "staff", "partner"]
 const failures = []
@@ -53,13 +51,11 @@ async function request(url, init) {
       })
       let body = null
       const type = response.headers.get("content-type") ?? ""
-      if (type.includes("application/json"))
-        body = await response.json().catch(() => null)
+      if (type.includes("application/json")) body = await response.json().catch(() => null)
       return { response, body }
     } catch (error) {
       lastError = error
-      if (attempt < 3)
-        await new Promise((resolve) => setTimeout(resolve, 1_500))
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 1_500))
     }
   }
   throw lastError
@@ -71,9 +67,7 @@ try {
   if (response.status !== 200) fail(`health/live returned ${response.status}`)
   else if (body?.environment !== "staging") fail("health/live is not staging")
   else if (expectSha && body?.releaseSha !== expectSha)
-    fail(
-      `health/live reports ${body?.releaseSha ?? "no release"}, expected ${expectSha}`,
-    )
+    fail(`health/live reports ${body?.releaseSha ?? "no release"}, expected ${expectSha}`)
   else pass(`health/live 200 (release ${body?.releaseSha ?? "unrecorded"})`)
 } catch (error) {
   fail(`health/live failed: ${error instanceof Error ? error.message : error}`)
@@ -94,8 +88,7 @@ try {
 for (const route of ["/api/v1/session", "/api/v1/activities"]) {
   try {
     const { response } = await request(`${base}${route}`)
-    if ([401, 403].includes(response.status))
-      pass(`${route} denies anonymously`)
+    if ([401, 403].includes(response.status)) pass(`${route} denies anonymously`)
     else fail(`${route} returned ${response.status}, expected 401 or 403`)
   } catch (error) {
     fail(`${route} failed: ${error instanceof Error ? error.message : error}`)
@@ -109,8 +102,7 @@ try {
     headers: { "content-type": "application/json" },
     body: "{}",
   })
-  if ([400, 401, 422].includes(response.status))
-    pass("sign-in validates an empty body")
+  if ([400, 401, 422].includes(response.status)) pass("sign-in validates an empty body")
   else fail(`sign-in returned ${response.status}, expected 400/401/422`)
 } catch (error) {
   fail(`sign-in failed: ${error instanceof Error ? error.message : error}`)
@@ -123,12 +115,10 @@ for (const [application, host] of Object.entries(hosts)) {
     if (protectedApplications.includes(application)) {
       const location = response.headers.get("location") ?? ""
       const challenged =
-        (response.status >= 300 && response.status < 400) ||
-        response.status === 403
+        (response.status >= 300 && response.status < 400) || response.status === 403
       if (challenged && location.includes("cloudflareaccess.com"))
         pass(`${host} challenges through Access`)
-      else
-        fail(`${host} did not produce an Access challenge (${response.status})`)
+      else fail(`${host} did not produce an Access challenge (${response.status})`)
     } else if (response.status === 200) {
       pass(`${host} serves`)
     } else {
@@ -152,15 +142,10 @@ try {
   else fail("CSP does not record the approved style-src exception")
   if (response.headers.get("strict-transport-security")) pass("HSTS is served")
   else fail("HSTS is missing")
-  if (response.headers.get("x-content-type-options") === "nosniff")
-    pass("nosniff is served")
+  if (response.headers.get("x-content-type-options") === "nosniff") pass("nosniff is served")
   else fail("nosniff is missing")
 } catch (error) {
-  fail(
-    `security headers failed: ${
-      error instanceof Error ? error.message : error
-    }`,
-  )
+  fail(`security headers failed: ${error instanceof Error ? error.message : error}`)
 }
 
 if (failures.length) {

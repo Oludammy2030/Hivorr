@@ -24,10 +24,7 @@ const root =
   rootArgument >= 0
     ? path.resolve(args[rootArgument + 1] ?? "")
     : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
-const planDirectory = path.join(
-  root,
-  "documents/Engineering-Execution/Engineering-Phase-Plan",
-)
+const planDirectory = path.join(root, "documents/Engineering-Execution/Engineering-Phase-Plan")
 const taskDirectory = path.join(root, "documents/Task-Implementation")
 
 // EP-00 predates the block scheme and was allocated contiguously. EP-01 and
@@ -86,14 +83,10 @@ for (const file of markdownFiles(planDirectory)) {
     const id = itemMatch[1]
     const idPhase = id.slice(0, 5)
     if (idPhase !== phase)
-      fail(
-        `${relative(file)}:${index + 1}: ${id} belongs to ${idPhase}, not ${phase}`,
-      )
+      fail(`${relative(file)}:${index + 1}: ${id} belongs to ${idPhase}, not ${phase}`)
     if (planIds.has(id))
       fail(
-        `${relative(file)}:${index + 1}: duplicate ${id}, already in ${relative(
-          planIds.get(id),
-        )}`,
+        `${relative(file)}:${index + 1}: duplicate ${id}, already in ${relative(planIds.get(id))}`,
       )
 
     planIds.set(id, file)
@@ -105,17 +98,14 @@ for (const file of markdownFiles(planDirectory)) {
     })
   })
 
-  if (entries.length === 0)
-    fail(`${relative(file)}: no work-package headings found`)
+  if (entries.length === 0) fail(`${relative(file)}: no work-package headings found`)
 
   phasePlans.set(phase, { file, entries })
 }
 
 for (const [phase, { file, entries }] of phasePlans) {
   const scheme = schemes.get(phase) ?? "contiguous"
-  const numbers = [...new Set(entries.map((entry) => entry.number))].sort(
-    (a, b) => a - b,
-  )
+  const numbers = [...new Set(entries.map((entry) => entry.number))].sort((a, b) => a - b)
 
   if (scheme === "contiguous") {
     const min = numbers[0]
@@ -126,17 +116,13 @@ for (const [phase, { file, entries }] of phasePlans) {
       if (!present.has(number)) missing.push(padding(number))
 
     if (missing.length)
-      fail(
-        `${relative(file)}: ${phase} is contiguous but missing ${missing.join(", ")}`,
-      )
+      fail(`${relative(file)}: ${phase} is contiguous but missing ${missing.join(", ")}`)
     continue
   }
 
   for (const entry of entries) {
     if (!entry.stage) {
-      fail(
-        `${relative(file)}:${entry.line}: ${entry.id} is outside a Stage heading`,
-      )
+      fail(`${relative(file)}:${entry.line}: ${entry.id} is outside a Stage heading`)
       continue
     }
 
@@ -166,8 +152,7 @@ for (const file of walk(taskDirectory)) {
   if (!match) continue
 
   const id = match[1]
-  if (!planIds.has(id))
-    fail(`${relative(file)}: ${id} has no heading in its phase plan`)
+  if (!planIds.has(id)) fail(`${relative(file)}: ${id} has no heading in its phase plan`)
 }
 
 if (errors.length) {
@@ -176,10 +161,7 @@ if (errors.length) {
   process.exit(1)
 }
 
-const total = [...phasePlans.values()].reduce(
-  (sum, plan) => sum + plan.entries.length,
-  0,
-)
+const total = [...phasePlans.values()].reduce((sum, plan) => sum + plan.entries.length, 0)
 console.log(
   `work-package governance: PASS (${phasePlans.size} phase plans, ${total} allocated identifiers)`,
 )

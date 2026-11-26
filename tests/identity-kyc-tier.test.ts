@@ -49,18 +49,12 @@ function harness(
   }
 
   const database = {
-    async withTransaction(
-      _options: unknown,
-      work: (tx: unknown) => Promise<unknown>,
-    ) {
+    async withTransaction(_options: unknown, work: (tx: unknown) => Promise<unknown>) {
       return work(transaction)
     },
   }
 
-  const service = new IdentityService(
-    database as never,
-    parseConfig({ HIVORR_ENV: "test" }),
-  )
+  const service = new IdentityService(database as never, parseConfig({ HIVORR_ENV: "test" }))
 
   return { service, audits }
 }
@@ -96,18 +90,20 @@ describe("KYC tier assignment", () => {
   it("refuses a tier outside the approved contract", async () => {
     const test = harness()
 
-    await expect(
-      test.service.setKycTier(input({ tier: "tier_4" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
+    await expect(test.service.setKycTier(input({ tier: "tier_4" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      statusCode: 400,
+    })
     expect(test.audits).toHaveLength(0)
   })
 
   it("requires a reason", async () => {
     const test = harness()
 
-    await expect(
-      test.service.setKycTier(input({ reason: "no" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
+    await expect(test.service.setKycTier(input({ reason: "no" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      statusCode: 400,
+    })
   })
 
   it("maps a missing verifier permission to forbidden", async () => {

@@ -122,49 +122,25 @@ function codeOf(error: unknown): string | undefined {
 function mapTaxonomyError(error: unknown): never {
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to change the taxonomy.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to change the taxonomy.", 403)
     case "P0002":
       throw new ApiError("NOT_FOUND", "The taxonomy record was not found.", 404)
     case "23514":
-      throw new ApiError(
-        "CONFLICT",
-        "The taxonomy change is not valid for this hierarchy.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The taxonomy change is not valid for this hierarchy.", 409)
     case "23503":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The parent taxonomy node does not exist.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The parent taxonomy node does not exist.", 400)
     case "23505":
-      throw new ApiError(
-        "CONFLICT",
-        "That slug or attribute key already exists.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "That slug or attribute key already exists.", 409)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The taxonomy operation failed.")
+      throw error instanceof Error ? error : new Error("The taxonomy operation failed.")
   }
 }
 
 @Injectable()
 export class TaxonomyAdminService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
-  async list(input: {
-    accountId: string
-    userId: string
-    taxonomy?: string
-  }): Promise<{
+  async list(input: { accountId: string; userId: string; taxonomy?: string }): Promise<{
     readonly nodes: readonly TaxonomyNodeView[]
     readonly attributes: readonly TaxonomyAttributeView[]
   }> {

@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Query,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
@@ -16,15 +6,8 @@ import { requireIdempotencyKey } from "../common/idempotency"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { withdrawRequest } from "../contracts/schemas"
-import {
-  bindPayoutAccountRequest,
-  disablePayoutAccountRequest,
-} from "../contracts/schemas"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { bindPayoutAccountRequest, disablePayoutAccountRequest } from "../contracts/schemas"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 import {
   PayoutAccountService,
   PayoutExecutionService,
@@ -113,10 +96,7 @@ export class WalletController {
 
   @Post("payout-accounts")
   @HttpCode(201)
-  async bindPayoutAccount(
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async bindPayoutAccount(@Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(bindPayoutAccountRequest, body)
     const { session, context } = await this.loadSession(request)
     return this.payoutAccounts.bind({
@@ -200,10 +180,7 @@ export class WalletController {
 
   private async loadSession(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { session, context }
   }
 }

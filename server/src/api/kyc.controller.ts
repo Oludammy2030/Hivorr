@@ -1,23 +1,11 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { assignKycTierRequest } from "../contracts/schemas"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
 /**
  * Control-portal KYC tier assignment (EP-02-014, minimal increment).
@@ -35,17 +23,10 @@ export class KycController {
 
   @Post(":id/kyc-tier")
   @HttpCode(200)
-  async assign(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async assign(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(assignKycTierRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.identity.setKycTier({
       actorUserId: session.userId,

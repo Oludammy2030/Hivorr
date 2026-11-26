@@ -68,10 +68,7 @@ import {
   PAYOUT_ACCOUNT_NAME_RESOLVER,
 } from "./modules/finance/payout-account.service"
 import { PayoutRequestService } from "./modules/finance/payout-request.service"
-import {
-  PAYOUT_PROVIDER,
-  PayoutExecutionService,
-} from "./modules/finance/payout-execution.service"
+import { PAYOUT_PROVIDER, PayoutExecutionService } from "./modules/finance/payout-execution.service"
 import { PaymentProviderRouter } from "./modules/finance/payment-provider-router.service"
 import { ProviderReferenceService } from "./modules/finance/provider-reference.service"
 import { WalletService } from "./modules/finance/wallet.service"
@@ -113,8 +110,7 @@ export class AppModule {
         { provide: API_CONFIG, useValue: config },
         {
           provide: APP_GUARD,
-          useFactory: (apiConfig: ApiConfig) =>
-            new AudienceGuard(new Reflector(), apiConfig),
+          useFactory: (apiConfig: ApiConfig) => new AudienceGuard(new Reflector(), apiConfig),
           inject: [API_CONFIG],
         },
         { provide: APP_FILTER, useClass: ApiErrorFilter },
@@ -140,14 +136,12 @@ export class AppModule {
         },
         {
           provide: EMAIL_ADAPTER,
-          useFactory: (apiConfig: ApiConfig) =>
-            createEmailAdapter(apiConfig.mail),
+          useFactory: (apiConfig: ApiConfig) => createEmailAdapter(apiConfig.mail),
           inject: [API_CONFIG],
         },
         {
           provide: VFD_AUTH,
-          useFactory: (apiConfig: ApiConfig) =>
-            new VfdAuthClient(apiConfig.vfd),
+          useFactory: (apiConfig: ApiConfig) => new VfdAuthClient(apiConfig.vfd),
           inject: [API_CONFIG],
         },
         {

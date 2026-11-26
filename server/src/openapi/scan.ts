@@ -24,31 +24,21 @@ export interface ScannedRoute {
   readonly path: string
 }
 
-export function scanControllerRoutes(
-  controller: Function,
-  prefix = "/v1",
-): ScannedRoute[] {
-  const controllerPaths = asPaths(
-    Reflect.getMetadata(PATH_METADATA, controller),
-  )
+export function scanControllerRoutes(controller: Function, prefix = "/v1"): ScannedRoute[] {
+  const controllerPaths = asPaths(Reflect.getMetadata(PATH_METADATA, controller))
   const routes: ScannedRoute[] = []
 
   for (const name of Object.getOwnPropertyNames(controller.prototype)) {
     if (name === "constructor") continue
-    const descriptor = Object.getOwnPropertyDescriptor(
-      controller.prototype,
-      name,
-    )
+    const descriptor = Object.getOwnPropertyDescriptor(controller.prototype, name)
     if (!descriptor || typeof descriptor.value !== "function") continue
 
     const methodPaths = Reflect.getMetadata(PATH_METADATA, descriptor.value)
     if (methodPaths === undefined) continue
-    const requestMethod = Reflect.getMetadata(
-      METHOD_METADATA,
-      descriptor.value,
-    ) as number | undefined
-    const method =
-      requestMethod === undefined ? undefined : METHOD_NAMES[requestMethod]
+    const requestMethod = Reflect.getMetadata(METHOD_METADATA, descriptor.value) as
+      | number
+      | undefined
+    const method = requestMethod === undefined ? undefined : METHOD_NAMES[requestMethod]
     if (!method) continue
 
     for (const controllerPath of controllerPaths) {

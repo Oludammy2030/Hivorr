@@ -10,10 +10,7 @@ import {
   type PaymentProviderErrorCode,
   type ProviderOperationContext,
 } from "../payments/payment-provider"
-import type {
-  PaystackPayoutDependencies,
-  PaystackPayoutOptions,
-} from "./payouts"
+import type { PaystackPayoutDependencies, PaystackPayoutOptions } from "./payouts"
 
 /**
  * Paystack collections adapter (EP-02-042/044, provider switch 2026-11-26).
@@ -107,11 +104,7 @@ function koboToMoney(value: unknown): string {
         ? BigInt(value)
         : null
   if (kobo === null) {
-    throw failure(
-      "PROVIDER_INVALID_PAYLOAD",
-      "Paystack returned an unreadable amount.",
-      false,
-    )
+    throw failure("PROVIDER_INVALID_PAYLOAD", "Paystack returned an unreadable amount.", false)
   }
   // 1 NGN = 100 kobo; the port uses 1/10,000 NGN.
   return minorUnitsToMoney(kobo * 100n)
@@ -156,11 +149,7 @@ export class PaystackCollectionsClient implements PaystackCollections {
       )
     }
     if (!input.reference.trim()) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A collection account needs a reference.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A collection account needs a reference.", false)
     }
 
     const customer = await this.send<PaystackCustomerData>({
@@ -173,11 +162,7 @@ export class PaystackCollectionsClient implements PaystackCollections {
     })
     const customerCode = valueOf(customer.data?.customer_code)
     if (customer.status !== true || !customerCode) {
-      throw failure(
-        "PROVIDER_REJECTED",
-        "Paystack did not create a customer.",
-        false,
-      )
+      throw failure("PROVIDER_REJECTED", "Paystack did not create a customer.", false)
     }
 
     const account = await this.send<PaystackDedicatedAccountData>({
@@ -211,11 +196,7 @@ export class PaystackCollectionsClient implements PaystackCollections {
 
   normaliseDepositEvent(payload: unknown): DepositEvent {
     if (!payload || typeof payload !== "object") {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A deposit event must be an object.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A deposit event must be an object.", false)
     }
     const envelope = payload as {
       event?: unknown
@@ -257,8 +238,7 @@ export class PaystackCollectionsClient implements PaystackCollections {
           ? "failed"
           : "pending"
     const last4Raw = valueOf(data.authorization?.sender_bank_account_number)
-    const payerAccountLast4 =
-      last4Raw && /^[0-9]{4,}$/.test(last4Raw) ? last4Raw.slice(-4) : null
+    const payerAccountLast4 = last4Raw && /^[0-9]{4,}$/.test(last4Raw) ? last4Raw.slice(-4) : null
 
     return {
       provider: this.provider,
@@ -272,31 +252,20 @@ export class PaystackCollectionsClient implements PaystackCollections {
         "PAYSTACK CUSTOMER",
       payerAccountLast4,
       status,
-      occurredAt:
-        valueOf(data.paid_at) ??
-        valueOf(data.created_at) ??
-        new Date().toISOString(),
+      occurredAt: valueOf(data.paid_at) ?? valueOf(data.created_at) ?? new Date().toISOString(),
     }
   }
 
   async verifyTransaction(reference: string): Promise<DepositEvent> {
     if (!reference.trim()) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A transaction reference is required.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A transaction reference is required.", false)
     }
     const envelope = await this.send<PaystackTransactionData>({
       method: "GET",
       path: `/transaction/verify/${encodeURIComponent(reference)}`,
     })
     if (envelope.status !== true || !envelope.data) {
-      throw failure(
-        "PROVIDER_NOT_FOUND",
-        "Paystack could not verify that transaction.",
-        false,
-      )
+      throw failure("PROVIDER_NOT_FOUND", "Paystack could not verify that transaction.", false)
     }
     return this.normaliseDepositEvent({
       event: "charge.success",
@@ -304,7 +273,7 @@ export class PaystackCollectionsClient implements PaystackCollections {
     })
   }
 
-  private async send<T,>(request: {
+  private async send<T>(request: {
     readonly method: "GET" | "POST"
     readonly path: string
     readonly body?: unknown
@@ -331,10 +300,7 @@ export class PaystackCollectionsClient implements PaystackCollections {
       }
 
       const controller = new AbortController()
-      const timer = setTimeout(
-        () => controller.abort(),
-        this.options.requestTimeoutMs,
-      )
+      const timer = setTimeout(() => controller.abort(), this.options.requestTimeoutMs)
 
       try {
         const response = await this.fetchImpl(url, {
@@ -349,43 +315,22 @@ export class PaystackCollectionsClient implements PaystackCollections {
         })
 
         if (response.status === 401 || response.status === 403) {
-          throw failure(
-            "PROVIDER_AUTH_FAILED",
-            "Paystack rejected the secret key.",
-            false,
-          )
+          throw failure("PROVIDER_AUTH_FAILED", "Paystack rejected the secret key.", false)
         }
         if (response.status === 429 || response.status >= 500) {
-          lastError = failure(
-            "PROVIDER_UNAVAILABLE",
-            "Paystack is unavailable.",
-            true,
-          )
+          lastError = failure("PROVIDER_UNAVAILABLE", "Paystack is unavailable.", true)
           continue
         }
         if (!response.ok) {
-          const payload = (await response
-            .json()
-            .catch(() => null)) as PaystackEnvelope<T> | null
-          const message =
-            typeof payload?.message === "string" ? payload.message : undefined
+          const payload = (await response.json().catch(() => null)) as PaystackEnvelope<T> | null
+          const message = typeof payload?.message === "string" ? payload.message : undefined
           if (/duplicate|already/i.test(message ?? "")) {
-            throw failure(
-              "PROVIDER_DUPLICATE",
-              "Paystack already has that record.",
-              false,
-            )
+            throw failure("PROVIDER_DUPLICATE", "Paystack already has that record.", false)
           }
-          throw failure(
-            "PROVIDER_REJECTED",
-            message ?? "Paystack rejected the request.",
-            false,
-          )
+          throw failure("PROVIDER_REJECTED", message ?? "Paystack rejected the request.", false)
         }
 
-        const payload = (await response
-          .json()
-          .catch(() => null)) as PaystackEnvelope<T> | null
+        const payload = (await response.json().catch(() => null)) as PaystackEnvelope<T> | null
         if (!payload) {
           throw failure(
             "PROVIDER_INVALID_PAYLOAD",
@@ -401,26 +346,15 @@ export class PaystackCollectionsClient implements PaystackCollections {
           continue
         }
         if (controller.signal.aborted) {
-          lastError = failure(
-            "PROVIDER_TIMEOUT",
-            "Paystack did not answer in time.",
-            true,
-          )
+          lastError = failure("PROVIDER_TIMEOUT", "Paystack did not answer in time.", true)
           continue
         }
-        lastError = failure(
-          "PROVIDER_UNAVAILABLE",
-          "The Paystack request failed.",
-          true,
-        )
+        lastError = failure("PROVIDER_UNAVAILABLE", "The Paystack request failed.", true)
       } finally {
         clearTimeout(timer)
       }
     }
 
-    throw (
-      lastError ??
-      failure("PROVIDER_UNAVAILABLE", "Paystack is unavailable.", true)
-    )
+    throw lastError ?? failure("PROVIDER_UNAVAILABLE", "Paystack is unavailable.", true)
   }
 }

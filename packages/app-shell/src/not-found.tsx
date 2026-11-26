@@ -1,11 +1,6 @@
 import { Link } from "react-router"
 
-import {
-  colorTokens,
-  fontTokens,
-  radiusTokens,
-  shadowTokens,
-} from "@hivorr/design"
+import { colorTokens, fontTokens, radiusTokens, shadowTokens } from "@hivorr/design"
 
 /**
  * Real 404 for the slice. It is deliberately outside the prototype screens:

@@ -108,10 +108,7 @@ function harness(options: HarnessOptions = {}) {
                 ],
         }
       }
-      if (
-        text.includes("from finance.provider_references") &&
-        text.includes("for update")
-      ) {
+      if (text.includes("from finance.provider_references") && text.includes("for update")) {
         return { rows: options.existing ? [options.existing] : [] }
       }
       if (text.includes("from finance.collection_accounts")) {
@@ -140,24 +137,18 @@ function harness(options: HarnessOptions = {}) {
   } as unknown as IdentityService
 
   const eligibility = {
-    checkInTransaction: async () =>
-      options.decision ?? { allowed: true, reason: "within_limit" },
+    checkInTransaction: async () => options.decision ?? { allowed: true, reason: "within_limit" },
   } as unknown as DepositEligibilityService
 
   const ledger = {
-    postEntryInTransaction: async (
-      _transaction: unknown,
-      input: unknown,
-      _context: unknown,
-    ) => {
+    postEntryInTransaction: async (_transaction: unknown, input: unknown, _context: unknown) => {
       ledgerCalls.push(input)
       return { id: ENTRY_ID }
     },
   } as unknown as LedgerService
 
   const settings = {
-    activeSetting: async () =>
-      options.settings ?? { provider: "paystack", mode: "test" },
+    activeSetting: async () => options.settings ?? { provider: "paystack", mode: "test" },
   } as unknown as PaymentProviderSettingsService
 
   const service = new DepositPostingService(
@@ -229,9 +220,7 @@ describe("deposit posting", () => {
     })
     expect(
       queries.some(
-        (call) =>
-          call.text.includes("set status = 'posted'") &&
-          call.values?.[1] === ENTRY_ID,
+        (call) => call.text.includes("set status = 'posted'") && call.values?.[1] === ENTRY_ID,
       ),
     ).toBe(true)
     expect(audits).toHaveLength(1)
@@ -249,11 +238,9 @@ describe("deposit posting", () => {
     expect(result.status).toBe("replayed")
     expect(result.journalEntryId).toBe(ENTRY_ID)
     expect(ledgerCalls).toHaveLength(0)
-    expect(
-      queries.some((call) =>
-        call.text.includes("update finance.provider_references"),
-      ),
-    ).toBe(false)
+    expect(queries.some((call) => call.text.includes("update finance.provider_references"))).toBe(
+      false,
+    )
   })
 
   it("keeps a held reference blocked without posting it", async () => {
@@ -275,18 +262,14 @@ describe("deposit posting", () => {
       decision: { allowed: false, reason: "kyc_upgrade_required" },
     })
 
-    const result = await service.postDeposit(
-      depositInput({ amount: "90000.0000" }),
-    )
+    const result = await service.postDeposit(depositInput({ amount: "90000.0000" }))
 
     expect(result.status).toBe("blocked")
     expect(result.reason).toBe("kyc_upgrade_required")
     expect(result.journalEntryId).toBeNull()
     expect(ledgerCalls).toHaveLength(0)
     expect(audits).toHaveLength(0)
-    expect(
-      queries.some((call) => call.text.includes("set status = 'failed'")),
-    ).toBe(true)
+    expect(queries.some((call) => call.text.includes("set status = 'failed'"))).toBe(true)
   })
 
   it("refuses a deposit when the account is not KYC verified", async () => {
@@ -374,9 +357,7 @@ describe("Paystack webhook intake", () => {
       response.writeHead(404, { "content-type": "application/json" })
       response.end(JSON.stringify({ status: false }))
     })
-    await new Promise<void>((resolve) =>
-      server.listen(0, "127.0.0.1", () => resolve()),
-    )
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()))
     const address = server.address()
     if (!address || typeof address === "string") {
       throw new Error("the test server did not bind a port")
@@ -415,9 +396,7 @@ describe("Paystack webhook intake", () => {
       settings: { provider: "vfd", mode: "test" },
     })
 
-    await expect(
-      service.handlePaystackWebhook(Buffer.from("{}"), "abc"),
-    ).resolves.toEqual({
+    await expect(service.handlePaystackWebhook(Buffer.from("{}"), "abc")).resolves.toEqual({
       accepted: false,
       posted: false,
       reason: "provider_paused",
@@ -427,9 +406,10 @@ describe("Paystack webhook intake", () => {
   it("refuses to verify a webhook without a configured key", async () => {
     const { service } = webhookHarness({ secretKeyTest: "" })
 
-    await expect(
-      service.handlePaystackWebhook(Buffer.from("{}"), "abc"),
-    ).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE", statusCode: 503 })
+    await expect(service.handlePaystackWebhook(Buffer.from("{}"), "abc")).rejects.toMatchObject({
+      code: "SERVICE_UNAVAILABLE",
+      statusCode: 503,
+    })
   })
 
   it("rejects a signature that does not match the body", async () => {
@@ -454,9 +434,7 @@ describe("Paystack webhook intake", () => {
     const { service } = webhookHarness()
     const body = JSON.stringify({ event: "transfer.success", data: {} })
 
-    await expect(
-      service.handlePaystackWebhook(Buffer.from(body), sign(body)),
-    ).resolves.toEqual({
+    await expect(service.handlePaystackWebhook(Buffer.from(body), sign(body))).resolves.toEqual({
       accepted: false,
       posted: false,
       reason: "not_a_deposit",
@@ -470,10 +448,7 @@ describe("Paystack webhook intake", () => {
       collection: { account_id: ACCOUNT_ID, owner_user_id: USER_ID },
     })
 
-    const result = await service.handlePaystackWebhook(
-      Buffer.from(depositBody),
-      sign(depositBody),
-    )
+    const result = await service.handlePaystackWebhook(Buffer.from(depositBody), sign(depositBody))
 
     expect(result).toEqual({ accepted: true, posted: true })
     expect(verifyCalls).toBe(1)
@@ -491,10 +466,7 @@ describe("Paystack webhook intake", () => {
   it("accepts a deposit it cannot attribute to a collection account", async () => {
     const { service, ledgerCalls } = webhookHarness({ collection: null })
 
-    const result = await service.handlePaystackWebhook(
-      Buffer.from(depositBody),
-      sign(depositBody),
-    )
+    const result = await service.handlePaystackWebhook(Buffer.from(depositBody), sign(depositBody))
 
     expect(result).toEqual({
       accepted: true,

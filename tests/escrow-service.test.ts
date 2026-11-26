@@ -68,10 +68,7 @@ class FakeTransaction {
       return { rows: [row], rowCount: 1 }
     }
 
-    if (
-      text.includes("from finance.escrow_accounts") &&
-      text.includes("for update")
-    ) {
+    if (text.includes("from finance.escrow_accounts") && text.includes("for update")) {
       return {
         rows: this.currentEscrow ? [this.currentEscrow] : [],
         rowCount: this.currentEscrow ? 1 : 0,
@@ -138,11 +135,7 @@ describe("escrow service", () => {
     const ledgerCall = transaction.calls.find((call) =>
       call.text.includes("insert into finance.ledger_accounts"),
     )
-    expect(ledgerCall?.values).toEqual([
-      transaction.ledgerAccountId,
-      expect.any(String),
-      "NGN",
-    ])
+    expect(ledgerCall?.values).toEqual([transaction.ledgerAccountId, expect.any(String), "NGN"])
 
     const auditCall = transaction.calls.find((call) =>
       call.text.includes("insert into platform.audit_log"),
@@ -161,9 +154,9 @@ describe("escrow service", () => {
     await expect(
       service.openEscrow(openInput({ activityRef: "job-1" }), write),
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
-    await expect(
-      service.openEscrow(openInput({ currency: "naira" }), write),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
+    await expect(service.openEscrow(openInput({ currency: "naira" }), write)).rejects.toMatchObject(
+      { code: "VALIDATION_FAILED" },
+    )
 
     expect(transaction.calls).toHaveLength(0)
   })
@@ -192,17 +185,12 @@ describe("escrow service", () => {
 
     for (const toState of ["released", "refunded", "cancelled"]) {
       await expect(
-        service.transition(
-          { escrowId: transaction.currentEscrow!.id, toState },
-          context(),
-        ),
+        service.transition({ escrowId: transaction.currentEscrow!.id, toState }, context()),
       ).rejects.toMatchObject({ code: "CONFLICT", statusCode: 409 })
     }
 
     expect(
-      transaction.calls.some((call) =>
-        call.text.startsWith("update finance.escrow_accounts"),
-      ),
+      transaction.calls.some((call) => call.text.startsWith("update finance.escrow_accounts")),
     ).toBe(false)
   })
 
@@ -212,10 +200,7 @@ describe("escrow service", () => {
     const service = serviceWith(transaction)
 
     await expect(
-      service.transition(
-        { escrowId: transaction.currentEscrow.id, toState: "held" },
-        context(),
-      ),
+      service.transition({ escrowId: transaction.currentEscrow.id, toState: "held" }, context()),
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
   })
 
@@ -225,10 +210,7 @@ describe("escrow service", () => {
     const service = serviceWith(transaction)
 
     await expect(
-      service.transition(
-        { escrowId: randomUUID(), toState: "disputed" },
-        context(),
-      ),
+      service.transition({ escrowId: randomUUID(), toState: "disputed" }, context()),
     ).rejects.toMatchObject({ code: "NOT_FOUND", statusCode: 404 })
   })
 })

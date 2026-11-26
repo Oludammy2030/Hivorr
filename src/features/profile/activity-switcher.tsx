@@ -1,15 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router"
-import {
-  Award,
-  Navigation,
-  ShoppingBag,
-  Store,
-  Truck,
-  Users,
-  Wallet,
-  Zap,
-} from "lucide-react"
+import { Award, Navigation, ShoppingBag, Store, Truck, Users, Wallet, Zap } from "lucide-react"
 
 import { ApiClientError } from "@hivorr/api-client"
 import { Button, Pill, colorTokens, fontTokens } from "@hivorr/design"
@@ -80,7 +71,7 @@ const ACTIVITIES = [
   },
 ] as const
 
-type Activity = typeof ACTIVITIES[number]
+type Activity = (typeof ACTIVITIES)[number]
 
 function useViewport() {
   const [width, setWidth] = useState(() =>
@@ -106,8 +97,7 @@ export function ActivitySwitcher() {
   const [denial, setDenial] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
-  const stateFor = (id: string) =>
-    activities.data?.find((entry) => entry.id === id)?.state
+  const stateFor = (id: string) => activities.data?.find((entry) => entry.id === id)?.state
 
   async function open(activity: Activity) {
     setNotice(null)
@@ -173,11 +163,7 @@ export function ActivitySwitcher() {
               justifyContent: "center",
             }}
           >
-            <Zap
-              size={19}
-              color={colorTokens.surface}
-              fill={colorTokens.surface}
-            />
+            <Zap size={19} color={colorTokens.surface} fill={colorTokens.surface} />
           </div>
           <span
             style={{
@@ -253,8 +239,8 @@ export function ActivitySwitcher() {
               marginTop: 12,
             }}
           >
-            One account gives you access to multiple distinct Hivorr activities.
-            Choose a workspace to continue.
+            One account gives you access to multiple distinct Hivorr activities. Choose a workspace
+            to continue.
           </p>
         </div>
 
@@ -300,99 +286,92 @@ export function ActivitySwitcher() {
                     gap: 14,
                   }}
                 >
-                  {ACTIVITIES.filter((item) => item.section === section).map(
-                    (activity) => {
-                      const state = stateFor(activity.id)
-                      return (
-                        <button
-                          key={activity.id}
-                          type="button"
-                          onClick={() => void open(activity)}
-                          disabled={busy === activity.id}
+                  {ACTIVITIES.filter((item) => item.section === section).map((activity) => {
+                    const state = stateFor(activity.id)
+                    return (
+                      <button
+                        key={activity.id}
+                        type="button"
+                        onClick={() => void open(activity)}
+                        disabled={busy === activity.id}
+                        style={{
+                          background: colorTokens.surface,
+                          border: `1px solid ${colorTokens.border}`,
+                          borderRadius: 20,
+                          padding: isMobile ? 18 : 22,
+                          textAlign: "left",
+                          boxShadow: "0 3px 14px rgba(15,22,38,0.06)",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          minHeight: 210,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div
                           style={{
-                            background: colorTokens.surface,
-                            border: `1px solid ${colorTokens.border}`,
-                            borderRadius: 20,
-                            padding: isMobile ? 18 : 22,
-                            textAlign: "left",
-                            boxShadow: "0 3px 14px rgba(15,22,38,0.06)",
+                            width: 52,
+                            height: 52,
+                            borderRadius: 16,
+                            background: activity.bg,
                             display: "flex",
-                            flexDirection: "column",
-                            alignItems: "flex-start",
-                            minHeight: 210,
-                            cursor: "pointer",
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
                         >
-                          <div
-                            style={{
-                              width: 52,
-                              height: 52,
-                              borderRadius: 16,
-                              background: activity.bg,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <activity.icon size={24} color={activity.color} />
-                          </div>
-                          <h3
-                            style={{
-                              fontFamily: fontTokens.display,
-                              fontSize: 18,
-                              fontWeight: 800,
-                              color: colorTokens.ink,
-                              marginTop: 16,
-                            }}
-                          >
-                            {activity.title}
-                          </h3>
-                          <p
-                            style={{
-                              fontSize: 13,
-                              lineHeight: 1.6,
-                              color: colorTokens.gray,
-                              marginTop: 7,
-                              flex: 1,
-                            }}
-                          >
-                            {activity.sub}
-                          </p>
+                          <activity.icon size={24} color={activity.color} />
+                        </div>
+                        <h3
+                          style={{
+                            fontFamily: fontTokens.display,
+                            fontSize: 18,
+                            fontWeight: 800,
+                            color: colorTokens.ink,
+                            marginTop: 16,
+                          }}
+                        >
+                          {activity.title}
+                        </h3>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            lineHeight: 1.6,
+                            color: colorTokens.gray,
+                            marginTop: 7,
+                            flex: 1,
+                          }}
+                        >
+                          {activity.sub}
+                        </p>
+                        <span
+                          style={{
+                            color: activity.color,
+                            fontSize: 13,
+                            fontWeight: 800,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            marginTop: 16,
+                          }}
+                        >
+                          {busy === activity.id ? "Activating…" : activity.action}{" "}
+                          <span aria-hidden="true">›</span>
+                        </span>
+                        {state ? (
                           <span
                             style={{
-                              color: activity.color,
-                              fontSize: 13,
-                              fontWeight: 800,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 5,
-                              marginTop: 16,
+                              fontSize: 11,
+                              color: state === "ACTIVE" ? colorTokens.success : colorTokens.gray,
+                              fontWeight: 700,
+                              marginTop: 8,
                             }}
                           >
-                            {busy === activity.id
-                              ? "Activating…"
-                              : activity.action}{" "}
-                            <span aria-hidden="true">›</span>
+                            {state}
                           </span>
-                          {state ? (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                color:
-                                  state === "ACTIVE"
-                                    ? colorTokens.success
-                                    : colorTokens.gray,
-                                fontWeight: 700,
-                                marginTop: 8,
-                              }}
-                            >
-                              {state}
-                            </span>
-                          ) : null}
-                        </button>
-                      )
-                    },
-                  )}
+                        ) : null}
+                      </button>
+                    )
+                  })}
                 </div>
               </section>
             ))}
@@ -401,29 +380,19 @@ export function ActivitySwitcher() {
 
         <div aria-live="polite" style={{ marginTop: 24 }}>
           {notice ? (
-            <p
-              role="status"
-              style={{ color: colorTokens.success, fontWeight: 700 }}
-            >
+            <p role="status" style={{ color: colorTokens.success, fontWeight: 700 }}>
               {notice}
             </p>
           ) : null}
           {denial ? (
-            <p
-              role="alert"
-              style={{ color: colorTokens.danger, fontWeight: 700 }}
-            >
+            <p role="alert" style={{ color: colorTokens.danger, fontWeight: 700 }}>
               {denial}
             </p>
           ) : null}
         </div>
 
         <div style={{ marginTop: 24 }}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void activities.refetch()}
-          >
+          <Button variant="ghost" size="sm" onClick={() => void activities.refetch()}>
             Refresh activities
           </Button>
         </div>

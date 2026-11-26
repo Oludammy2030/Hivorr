@@ -17,17 +17,16 @@ describe("activity activation state machine", () => {
   })
 
   it("allows every approved transition", () => {
-    const allowed: Array<[PersistedActivationState, PersistedActivationState]> =
-      [
-        ["INACTIVE", "ACTIVE"],
-        ["ACTIVE", "INACTIVE"],
-        ["ACTIVE", "RESTRICTED"],
-        ["ACTIVE", "SUSPENDED"],
-        ["RESTRICTED", "ACTIVE"],
-        ["RESTRICTED", "INACTIVE"],
-        ["SUSPENDED", "ACTIVE"],
-        ["SUSPENDED", "INACTIVE"],
-      ]
+    const allowed: Array<[PersistedActivationState, PersistedActivationState]> = [
+      ["INACTIVE", "ACTIVE"],
+      ["ACTIVE", "INACTIVE"],
+      ["ACTIVE", "RESTRICTED"],
+      ["ACTIVE", "SUSPENDED"],
+      ["RESTRICTED", "ACTIVE"],
+      ["RESTRICTED", "INACTIVE"],
+      ["SUSPENDED", "ACTIVE"],
+      ["SUSPENDED", "INACTIVE"],
+    ]
     for (const [from, to] of allowed) {
       expect(canTransitionActivation(from, to), `${from} -> ${to}`).toBe(true)
       expect(() => assertActivationTransition(from, to)).not.toThrow()
@@ -35,13 +34,12 @@ describe("activity activation state machine", () => {
   })
 
   it("rejects every unapproved transition", () => {
-    const denied: Array<[PersistedActivationState, PersistedActivationState]> =
-      [
-        ["INACTIVE", "RESTRICTED"],
-        ["INACTIVE", "SUSPENDED"],
-        ["RESTRICTED", "SUSPENDED"],
-        ["SUSPENDED", "RESTRICTED"],
-      ]
+    const denied: Array<[PersistedActivationState, PersistedActivationState]> = [
+      ["INACTIVE", "RESTRICTED"],
+      ["INACTIVE", "SUSPENDED"],
+      ["RESTRICTED", "SUSPENDED"],
+      ["SUSPENDED", "RESTRICTED"],
+    ]
     for (const [from, to] of denied) {
       expect(canTransitionActivation(from, to), `${from} -> ${to}`).toBe(false)
       expect(() => assertActivationTransition(from, to)).toThrow(

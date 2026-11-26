@@ -60,9 +60,7 @@ describe("taxonomy hierarchy domain", () => {
       },
       null,
     )
-    expect(root.map((error) => error.code)).toContain(
-      "TAXONOMY_ROOT_LEVEL_INVALID",
-    )
+    expect(root.map((error) => error.code)).toContain("TAXONOMY_ROOT_LEVEL_INVALID")
 
     const missing = validateTaxonomyNode(
       {
@@ -74,9 +72,7 @@ describe("taxonomy hierarchy domain", () => {
       },
       null,
     )
-    expect(missing.map((error) => error.code)).toContain(
-      "TAXONOMY_PARENT_REQUIRED",
-    )
+    expect(missing.map((error) => error.code)).toContain("TAXONOMY_PARENT_REQUIRED")
 
     const wrongLevel = validateTaxonomyNode(
       {
@@ -88,9 +84,7 @@ describe("taxonomy hierarchy domain", () => {
       },
       { id: "category-1", taxonomy: "product", level: "category" },
     )
-    expect(wrongLevel.map((error) => error.code)).toContain(
-      "TAXONOMY_PARENT_LEVEL_INVALID",
-    )
+    expect(wrongLevel.map((error) => error.code)).toContain("TAXONOMY_PARENT_LEVEL_INVALID")
   })
 
   it("rejects a parent from the other taxonomy and an invalid level", () => {
@@ -104,9 +98,7 @@ describe("taxonomy hierarchy domain", () => {
       },
       { id: "industry-1", taxonomy: "product", level: "industry" },
     )
-    expect(mismatch.map((error) => error.code)).toContain(
-      "TAXONOMY_PARENT_TAXONOMY_MISMATCH",
-    )
+    expect(mismatch.map((error) => error.code)).toContain("TAXONOMY_PARENT_TAXONOMY_MISMATCH")
 
     const invalidLevel = validateTaxonomyNode(
       {
@@ -118,9 +110,7 @@ describe("taxonomy hierarchy domain", () => {
       },
       { id: "industry-1", taxonomy: "profession", level: "industry" },
     )
-    expect(invalidLevel.map((error) => error.code)).toContain(
-      "TAXONOMY_LEVEL_INVALID",
-    )
+    expect(invalidLevel.map((error) => error.code)).toContain("TAXONOMY_LEVEL_INVALID")
   })
 
   it("rejects a bad slug, an empty name and a self-parent cycle", () => {

@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Patch,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../../../common/audience"
@@ -30,9 +20,7 @@ function parseRevokeGrant(body: unknown): { reason?: string } {
   return parseBody(revokeGrantRequest, body) as { reason?: string }
 }
 
-function parseSetDepartment(
-  body: unknown,
-): {
+function parseSetDepartment(body: unknown): {
   departmentKey: string
   reason?: string
 } {
@@ -74,19 +62,10 @@ export class GrantsController {
   @Post("control/grants/:id/revoke")
   @HttpCode(200)
   @Audience("control")
-  async revoke(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async revoke(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseRevokeGrant(body)
     const context = requestContext(this.config, request)
-    return this.grants.revoke(
-      accessToken(request, context),
-      id,
-      input.reason,
-      context,
-    )
+    return this.grants.revoke(accessToken(request, context), id, input.reason, context)
   }
 
   @Get("control/departments")

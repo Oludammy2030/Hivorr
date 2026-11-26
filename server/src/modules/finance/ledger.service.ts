@@ -4,11 +4,7 @@ import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
 import type { TransactionContext } from "../../db/transaction"
 import { claimIdempotency, completeIdempotency, appendAudit } from "../platform"
-import {
-  LEDGER_IDEMPOTENCY_SCOPE,
-  hashLedgerEntry,
-  ledgerIdempotencyKey,
-} from "./idempotency"
+import { LEDGER_IDEMPOTENCY_SCOPE, hashLedgerEntry, ledgerIdempotencyKey } from "./idempotency"
 import {
   LedgerValidationError,
   deriveAccountEffects,
@@ -79,18 +75,10 @@ function toIso(value: string | Date): string {
 function validationToApiError(error: LedgerValidationError): ApiError {
   switch (error.code) {
     case "LEDGER_REVERSAL_TARGET_MISSING":
-      return new ApiError(
-        "NOT_FOUND",
-        "The journal entry to reverse was not found.",
-        404,
-      )
+      return new ApiError("NOT_FOUND", "The journal entry to reverse was not found.", 404)
     case "LEDGER_REVERSAL_MISMATCH":
     case "LEDGER_REVERSAL_TARGET_INVALID":
-      return new ApiError(
-        "CONFLICT",
-        "A reversal must exactly invert the original entry.",
-        409,
-      )
+      return new ApiError("CONFLICT", "A reversal must exactly invert the original entry.", 409)
     default:
       return new ApiError("VALIDATION_FAILED", error.message, 400)
   }
@@ -99,11 +87,7 @@ function validationToApiError(error: LedgerValidationError): ApiError {
 function sqlToApiError(error: unknown): never {
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to post to the ledger.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to post to the ledger.", 403)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -111,11 +95,7 @@ function sqlToApiError(error: unknown): never {
         409,
       )
     case "23514":
-      throw new ApiError(
-        "CONFLICT",
-        "The ledger rejected the entry as invalid.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The ledger rejected the entry as invalid.", 409)
     case "23503":
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -123,17 +103,13 @@ function sqlToApiError(error: unknown): never {
         400,
       )
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The ledger operation failed.")
+      throw error instanceof Error ? error : new Error("The ledger operation failed.")
   }
 }
 
 @Injectable()
 export class LedgerService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async postEntry(
     input: LedgerEntryInput,
@@ -149,8 +125,7 @@ export class LedgerService {
             userId: context.userId,
           },
         },
-        async (transaction) =>
-          this.postWithin(transaction, input, context, prepared),
+        async (transaction) => this.postWithin(transaction, input, context, prepared),
       )
     } catch (error) {
       this.mapPostError(error)
@@ -174,17 +149,10 @@ export class LedgerService {
     }
   }
 
-  private prepare(
-    input: LedgerEntryInput,
-    context: LedgerPostingContext,
-  ): PreparedLedgerEntry {
+  private prepare(input: LedgerEntryInput, context: LedgerPostingContext): PreparedLedgerEntry {
     const clientKey = input.idempotencyKey?.trim()
     if (!clientKey) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "Every money movement needs an idempotency key.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "Every money movement needs an idempotency key.", 400)
     }
 
     return {
@@ -313,11 +281,7 @@ export class LedgerService {
     )
 
     if (result.rows.length === 0) {
-      throw new ApiError(
-        "NOT_FOUND",
-        "The journal entry to reverse was not found.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The journal entry to reverse was not found.", 404)
     }
 
     return {

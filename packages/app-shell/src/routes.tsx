@@ -16,21 +16,15 @@ export function SliceRoutes({ screens }: { readonly screens: SliceScreens }) {
   return (
     <Routes>
       {SLICE_ROUTES.map((route) => {
-        const screen = screens[(route.id as SliceRouteId)]
-        return screen ? (
-          <Route key={route.id} path={route.path} element={screen} />
-        ) : null
+        const screen = screens[route.id as SliceRouteId]
+        return screen ? <Route key={route.id} path={route.path} element={screen} /> : null
       })}
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
 
-export function SliceBrowserRouter({
-  screens,
-}: {
-  readonly screens: SliceScreens
-}) {
+export function SliceBrowserRouter({ screens }: { readonly screens: SliceScreens }) {
   return (
     <BrowserRouter>
       <SliceRoutes screens={screens} />

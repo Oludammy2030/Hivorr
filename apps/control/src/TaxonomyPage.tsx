@@ -18,9 +18,7 @@ function nodeLabel(node: TaxonomyNode): string {
 
 export function TaxonomyPage({ canManage }: TaxonomyPageProps) {
   const [registry, setRegistry] = useState<TaxonomyRegistry | null>(null)
-  const [taxonomy, setTaxonomy] = useState<"profession" | "product">(
-    "profession",
-  )
+  const [taxonomy, setTaxonomy] = useState<"profession" | "product">("profession")
   const [selectedNode, setSelectedNode] = useState("")
   const [error, setError] = useState<string | undefined>()
   const [busy, setBusy] = useState(false)
@@ -61,9 +59,7 @@ export function TaxonomyPage({ canManage }: TaxonomyPageProps) {
     const parentId = String(form.get("parentId") ?? "").trim() || null
     const reason = String(form.get("reason") ?? "").trim()
     if (!name || !slug || !level || reason.length < 5) {
-      setError(
-        "A name, slug, level and reason of at least five characters are required.",
-      )
+      setError("A name, slug, level and reason of at least five characters are required.")
       return
     }
     setBusy(true)
@@ -77,8 +73,7 @@ export function TaxonomyPage({ canManage }: TaxonomyPageProps) {
         name,
         description: String(form.get("description") ?? "").trim() || undefined,
         version: Number(form.get("version") ?? 1) || 1,
-        effectiveFrom:
-          String(form.get("effectiveFrom") ?? "").trim() || undefined,
+        effectiveFrom: String(form.get("effectiveFrom") ?? "").trim() || undefined,
         reason,
       })
       event.currentTarget.reset()
@@ -100,9 +95,7 @@ export function TaxonomyPage({ canManage }: TaxonomyPageProps) {
     const reason = String(form.get("reason") ?? "").trim()
     const enumRaw = String(form.get("enumValues") ?? "").trim()
     if (!nodeId || !key || !label || reason.length < 5) {
-      setError(
-        "A node, key, label and reason of at least five characters are required.",
-      )
+      setError("A node, key, label and reason of at least five characters are required.")
       return
     }
     setBusy(true)
@@ -135,9 +128,7 @@ export function TaxonomyPage({ canManage }: TaxonomyPageProps) {
 
   const nodes = registry?.nodes ?? []
   const attributes = registry?.attributes ?? []
-  const selectedAttributes = attributes.filter(
-    (entry) => entry.nodeId === selectedNode,
-  )
+  const selectedAttributes = attributes.filter((entry) => entry.nodeId === selectedNode)
 
   return (
     <section className="page">
@@ -146,8 +137,8 @@ export function TaxonomyPage({ canManage }: TaxonomyPageProps) {
           <p className="eyebrow">Configuration</p>
           <h1>Taxonomy</h1>
           <p className="muted">
-            Profession and product classifications. Writes are versioned,
-            effective-dated and audited.
+            Profession and product classifications. Writes are versioned, effective-dated and
+            audited.
           </p>
         </div>
         <label className="field field-inline">

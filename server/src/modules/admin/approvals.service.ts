@@ -79,11 +79,7 @@ function mapApprovalError(error: unknown): never {
         403,
       )
     case "P0002":
-      throw new ApiError(
-        "NOT_FOUND",
-        "The request or target was not found.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The request or target was not found.", 404)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -91,11 +87,7 @@ function mapApprovalError(error: unknown): never {
         409,
       )
     case "23514":
-      throw new ApiError(
-        "CONFLICT",
-        "The request has already been decided.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The request has already been decided.", 409)
     case "22023":
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -103,23 +95,15 @@ function mapApprovalError(error: unknown): never {
         400,
       )
     case "22P02":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The target id is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The target id is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The approval action failed.")
+      throw error instanceof Error ? error : new Error("The approval action failed.")
   }
 }
 
 @Injectable()
 export class ApprovalsService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async list(input: {
     accountId: string
@@ -165,13 +149,7 @@ export class ApprovalsService {
         async (transaction) => {
           const result = await transaction.query<ApprovalRow>(
             "select * from admin.request_approval($1, $2, $3, $4, $5)",
-            [
-              input.userId,
-              input.actionType,
-              input.targetType,
-              input.targetId,
-              reason,
-            ],
+            [input.userId, input.actionType, input.targetType, input.targetId, reason],
           )
           const row = result.rows[0]
           await appendAudit(transaction.client, {
@@ -287,10 +265,7 @@ export class ApprovalsService {
             actorId: input.userId,
             actorAudience: input.context.audience,
             environment: input.context.environment,
-            action:
-              input.decision === "approve"
-                ? "approval.approved"
-                : "approval.rejected",
+            action: input.decision === "approve" ? "approval.approved" : "approval.rejected",
             targetType: "user",
             targetId: row.target_id,
             afterSummary: {
@@ -305,10 +280,7 @@ export class ApprovalsService {
             correlationId: input.context.correlationId,
           })
 
-          if (
-            input.decision === "approve" &&
-            row.action_type === "account.closure"
-          ) {
+          if (input.decision === "approve" && row.action_type === "account.closure") {
             await appendAudit(transaction.client, {
               actorType: "admin",
               actorId: input.userId,

@@ -1,12 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common"
 
 import { ApiError } from "../../common/errors"
-import {
-  API_CONFIG,
-  type ApiConfig,
-  type PaymentMode,
-  type PaymentProviderKey,
-} from "../../config"
+import { API_CONFIG, type ApiConfig, type PaymentMode, type PaymentProviderKey } from "../../config"
 import { DatabaseService } from "../../db/database.service"
 import { appendAudit } from "./audit"
 
@@ -82,33 +77,26 @@ export class PaymentProviderSettingsService {
       const result = await transaction.query<{
         active_provider: string
         active_mode: string
-      }>(
-        "select active_provider, active_mode from platform.payment_provider_setting where id",
-      )
+      }>("select active_provider, active_mode from platform.payment_provider_setting where id")
       return result.rows[0]
     })
     return {
       provider: isProvider(row?.active_provider ?? "")
-        ? row?.active_provider as PaymentProviderKey
+        ? (row?.active_provider as PaymentProviderKey)
         : "paystack",
-      mode: isMode(row?.active_mode ?? "")
-        ? row?.active_mode as PaymentMode
-        : "test",
+      mode: isMode(row?.active_mode ?? "") ? (row?.active_mode as PaymentMode) : "test",
     }
   }
 
   async get(actorUserId: string): Promise<PaymentProviderSettingView> {
     try {
-      const row = await this.database.withTransaction(
-        {},
-        async (transaction) => {
-          const result = await transaction.query<SettingRow>(
-            "select * from platform.get_payment_provider($1)",
-            [actorUserId],
-          )
-          return result.rows[0]
-        },
-      )
+      const row = await this.database.withTransaction({}, async (transaction) => {
+        const result = await transaction.query<SettingRow>(
+          "select * from platform.get_payment_provider($1)",
+          [actorUserId],
+        )
+        return result.rows[0]
+      })
       if (!row) {
         throw new Error("The payment provider setting is missing.")
       }
@@ -118,9 +106,7 @@ export class PaymentProviderSettingsService {
     }
   }
 
-  async set(
-    input: SetPaymentProviderInput,
-  ): Promise<PaymentProviderSettingView> {
+  async set(input: SetPaymentProviderInput): Promise<PaymentProviderSettingView> {
     const reason = input.reason.trim()
     if (reason.length < 5) {
       throw new ApiError(
@@ -130,18 +116,10 @@ export class PaymentProviderSettingsService {
       )
     }
     if (!isProvider(input.provider)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The payment provider is not supported.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The payment provider is not supported.", 400)
     }
     if (!isMode(input.mode)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The payment mode is not supported.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The payment mode is not supported.", 400)
     }
     if (input.provider === "vfd" && input.mode !== this.config.vfd.mode) {
       throw new ApiError(
@@ -168,9 +146,7 @@ export class PaymentProviderSettingsService {
         const before = await transaction.query<{
           active_provider: string
           active_mode: string
-        }>(
-          "select active_provider, active_mode from platform.payment_provider_setting where id",
-        )
+        }>("select active_provider, active_mode from platform.payment_provider_setting where id")
         const result = await transaction.query<SettingRow>(
           "select * from platform.set_payment_provider($1, $2, $3)",
           [input.actorUserId, input.provider, input.mode],
@@ -214,13 +190,9 @@ export class PaymentProviderSettingsService {
   }
 
   private toView(row: SettingRow): PaymentProviderSettingView {
-    const vfdConfigured = Boolean(
-      this.config.vfd.consumerKey && this.config.vfd.consumerSecret,
-    )
+    const vfdConfigured = Boolean(this.config.vfd.consumerKey && this.config.vfd.consumerSecret)
     return {
-      provider: isProvider(row.active_provider)
-        ? row.active_provider
-        : "paystack",
+      provider: isProvider(row.active_provider) ? row.active_provider : "paystack",
       mode: isMode(row.active_mode) ? row.active_mode : "test",
       updatedAt: toIso(row.updated_at),
       configured: {
@@ -249,14 +221,8 @@ export class PaymentProviderSettingsService {
       )
     }
     if (code === "22023") {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The payment provider change is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The payment provider change is not valid.", 400)
     }
-    throw error instanceof Error
-      ? error
-      : new Error("The payment provider operation failed.")
+    throw error instanceof Error ? error : new Error("The payment provider operation failed.")
   }
 }

@@ -37,17 +37,11 @@ describeIntegration("outbox worker integration", () => {
   }
 
   async function makeAvailable(id: string): Promise<void> {
-    await setup.query(
-      "update platform.outbox set available_at = now() where id = $1",
-      [id],
-    )
+    await setup.query("update platform.outbox set available_at = now() where id = $1", [id])
   }
 
   async function row(id: string) {
-    const result = await setup.query(
-      "select * from platform.outbox where id = $1",
-      [id],
-    )
+    const result = await setup.query("select * from platform.outbox where id = $1", [id])
     return result.rows[0]
   }
 
@@ -63,17 +57,11 @@ describeIntegration("outbox worker integration", () => {
     setup = new Client({ connectionString: testUrl })
     await setup.connect()
 
-    const migrationsDirectory = path.join(
-      process.cwd(),
-      "supabase",
-      "migrations",
-    )
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
     for (const file of readdirSync(migrationsDirectory)
       .filter((entry) => entry.endsWith(".sql"))
       .sort()) {
-      await setup.query(
-        readFileSync(path.join(migrationsDirectory, file), "utf8"),
-      )
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
     }
 
     pool = new Pool({ connectionString: testUrl, max: 4 })
@@ -89,9 +77,7 @@ describeIntegration("outbox worker integration", () => {
     if (pool) await pool.end()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -119,9 +105,7 @@ describeIntegration("outbox worker integration", () => {
     const first = await repository.fail(event, "provider unavailable")
     expect(first).toEqual({ attempts: 1, deadLettered: false })
     const scheduled = await row(id)
-    expect(new Date(scheduled.available_at).getTime()).toBeGreaterThan(
-      Date.now() + 500,
-    )
+    expect(new Date(scheduled.available_at).getTime()).toBeGreaterThan(Date.now() + 500)
 
     expect((await repository.claim(10)).map((e) => e.id)).not.toContain(id)
 
@@ -178,13 +162,10 @@ describeIntegration("outbox worker integration", () => {
     const id = await insertEvent("test.idempotent")
     let calls = 0
     const effects = new Set<string>()
-    const handlers = new OutboxHandlers().register(
-      "test.idempotent",
-      async (event) => {
-        calls += 1
-        effects.add(event.id)
-      },
-    )
+    const handlers = new OutboxHandlers().register("test.idempotent", async (event) => {
+      calls += 1
+      effects.add(event.id)
+    })
     const worker = new OutboxWorker(repository, handlers, {
       batchSize: 10,
       pollIntervalMs: 1_000,
@@ -210,12 +191,9 @@ describeIntegration("outbox worker integration", () => {
 
   it("retries a throwing handler and dead-letters it at the limit", async () => {
     const id = await insertEvent("test.always_fails")
-    const handlers = new OutboxHandlers().register(
-      "test.always_fails",
-      async () => {
-        throw new Error("handler exploded")
-      },
-    )
+    const handlers = new OutboxHandlers().register("test.always_fails", async () => {
+      throw new Error("handler exploded")
+    })
     const worker = new OutboxWorker(repository, handlers, {
       batchSize: 10,
       pollIntervalMs: 1_000,

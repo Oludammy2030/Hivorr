@@ -117,9 +117,7 @@ if (out) {
 
 if (removed.length || added.length) {
   if (failOnChange) {
-    console.error(
-      `db:diff: schema changed (${removed.length} removed, ${added.length} added)`,
-    )
+    console.error(`db:diff: schema changed (${removed.length} removed, ${added.length} added)`)
     process.exit(1)
   }
   console.log(

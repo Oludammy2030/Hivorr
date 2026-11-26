@@ -47,9 +47,7 @@ const lines = [
 ]
 
 for (const [name, bundle] of Object.entries(manifest.bundles ?? {})) {
-  lines.push(
-    `| ${name} | \`${bundle.path}\` | ${bundle.files} | \`${bundle.digest}\` |`,
-  )
+  lines.push(`| ${name} | \`${bundle.path}\` | ${bundle.files} | \`${bundle.digest}\` |`)
 }
 
 lines.push(

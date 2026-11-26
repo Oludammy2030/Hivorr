@@ -17,7 +17,7 @@ export const VERIFICATION_LANES = [
   "business",
 ] as const
 
-export type VerificationLane = typeof VERIFICATION_LANES[number]
+export type VerificationLane = (typeof VERIFICATION_LANES)[number]
 
 export const VERIFICATION_STATES = [
   "NOT_STARTED",
@@ -29,7 +29,7 @@ export const VERIFICATION_STATES = [
   "EXPIRED",
 ] as const
 
-export type VerificationState = typeof VERIFICATION_STATES[number]
+export type VerificationState = (typeof VERIFICATION_STATES)[number]
 
 /**
  * CBN 3-tier model, decided 23 November 2026. `tier_0` is unverified and cannot
@@ -39,29 +39,20 @@ export type VerificationState = typeof VERIFICATION_STATES[number]
  */
 export const KYC_TIERS = ["tier_0", "tier_1", "tier_2", "tier_3"] as const
 
-export type KycTier = typeof KYC_TIERS[number]
+export type KycTier = (typeof KYC_TIERS)[number]
 
 /** Tiers that may perform a financial action. `tier_0` is always denied. */
-export const FINANCIALLY_ELIGIBLE_KYC_TIERS = [
-  "tier_1",
-  "tier_2",
-  "tier_3",
-] as const
+export const FINANCIALLY_ELIGIBLE_KYC_TIERS = ["tier_1", "tier_2", "tier_3"] as const
 
-export type FinanciallyEligibleKycTier = typeof FINANCIALLY_ELIGIBLE_KYC_TIERS[number]
+export type FinanciallyEligibleKycTier = (typeof FINANCIALLY_ELIGIBLE_KYC_TIERS)[number]
 
 export const VERIFICATION_DECISIONS = ["APPROVED", "REJECTED"] as const
 
-export type VerificationDecision = typeof VERIFICATION_DECISIONS[number]
+export type VerificationDecision = (typeof VERIFICATION_DECISIONS)[number]
 
-export const EVIDENCE_SCAN_STATES = [
-  "PENDING",
-  "CLEAN",
-  "INFECTED",
-  "FAILED",
-] as const
+export const EVIDENCE_SCAN_STATES = ["PENDING", "CLEAN", "INFECTED", "FAILED"] as const
 
-export type EvidenceScanState = typeof EVIDENCE_SCAN_STATES[number]
+export type EvidenceScanState = (typeof EVIDENCE_SCAN_STATES)[number]
 
 export const verificationLaneSchema = z.enum(VERIFICATION_LANES)
 export const verificationStateSchema = z.enum(VERIFICATION_STATES)

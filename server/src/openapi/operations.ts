@@ -128,7 +128,20 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases" | "taxonomy" | "wallet" | "payments"
+  readonly tag:
+    | "health"
+    | "auth"
+    | "grants"
+    | "activities"
+    | "audit"
+    | "users"
+    | "staff"
+    | "roles"
+    | "partners"
+    | "cases"
+    | "taxonomy"
+    | "wallet"
+    | "payments"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -142,12 +155,7 @@ export interface ApiOperation {
   readonly queryParams?: readonly string[]
 }
 
-const ALL_PORTALS: readonly ApiAudience[] = [
-  "app",
-  "control",
-  "staff",
-  "partner",
-]
+const ALL_PORTALS: readonly ApiAudience[] = ["app", "control", "staff", "partner"]
 
 /**
  * Every implemented API endpoint. `tests/openapi-route-coverage.test.ts`
@@ -195,8 +203,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 503,
-        description:
-          "The API is not ready; the database-backed check is not implemented yet",
+        description: "The API is not ready; the database-backed check is not implemented yet",
         schema: readinessResponse,
       },
     ],
@@ -562,9 +569,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     summary: "List grants in the environment",
     tag: "grants",
     audience: ["control"],
-    success: [
-      { status: 200, description: "Grant records", schema: grantListResponse },
-    ],
+    success: [{ status: 200, description: "Grant records", schema: grantListResponse }],
   },
   {
     id: "createGrant",
@@ -678,8 +683,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     audience: ["control"],
     request: {
       schema: attachStaffProfileRequest,
-      description:
-        "Email of an existing account, optional department and job title, and a reason",
+      description: "Email of an existing account, optional department and job title, and a reason",
     },
     success: [
       {
@@ -744,8 +748,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "The offboarded status, revoked sessions and revoked grants",
+        description: "The offboarded status, revoked sessions and revoked grants",
         schema: staffStatusResponse,
       },
     ],
@@ -781,8 +784,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "The official address the invitation reserves, so the page can show it",
+        description: "The official address the invitation reserves, so the page can show it",
         schema: staffInviteDetailsResponse,
       },
     ],
@@ -832,8 +834,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Every role assignment with its holder, scope and lifecycle",
+        description: "Every role assignment with its holder, scope and lifecycle",
         schema: roleAssignmentListResponse,
       },
     ],
@@ -919,8 +920,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Every access denial with its target, permission, scope, reason and lifecycle",
+        description: "Every access denial with its target, permission, scope, reason and lifecycle",
         schema: accessDenialListResponse,
       },
     ],
@@ -934,8 +934,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     audience: ["control"],
     request: {
       schema: createAccessDenialRequest,
-      description:
-        "Holder, permission, scope, optional expiry and the reason for the denial",
+      description: "Holder, permission, scope, optional expiry and the reason for the denial",
     },
     success: [
       {
@@ -1168,8 +1167,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Verification cases with their lane, decision state and evidence count",
+        description: "Verification cases with their lane, decision state and evidence count",
         schema: verificationReviewListResponse,
       },
     ],
@@ -1204,8 +1202,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Active partners first, with representative and agreement counts",
+        description: "Active partners first, with representative and agreement counts",
         schema: partnerOrganisationListResponse,
       },
     ],
@@ -1428,8 +1425,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     pathParams: ["id"],
     request: {
       schema: addEvidenceRequest,
-      description:
-        "Storage key, file name and optional hash; the object lives in private storage",
+      description: "Storage key, file name and optional hash; the object lives in private storage",
     },
     success: [
       {
@@ -1490,8 +1486,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Active nodes effective now, optionally filtered by taxonomy and level",
+        description: "Active nodes effective now, optionally filtered by taxonomy and level",
         schema: taxonomyRegistryResponse,
       },
     ],

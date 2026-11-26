@@ -38,9 +38,7 @@ const out =
     : path.resolve("visual", "current")
 
 if (!existsSync(path.join("dist", "index.html"))) {
-  console.error(
-    "visual:capture: dist/index.html is missing. Run `pnpm build` first.",
-  )
+  console.error("visual:capture: dist/index.html is missing. Run `pnpm build` first.")
   process.exit(2)
 }
 
@@ -95,9 +93,7 @@ try {
   await context.route("**/*", (route) => {
     const url = new URL(route.request().url())
     const local = url.origin === BASE_URL
-    const fonts =
-      url.hostname === "fonts.googleapis.com" ||
-      url.hostname === "fonts.gstatic.com"
+    const fonts = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com"
     if (local || fonts) return route.continue()
     return route.abort()
   })
@@ -124,9 +120,7 @@ try {
     await screenshot(page, `login-${width}`)
 
     await page.getByRole("button", { name: "Sign In" }).click()
-    await page
-      .getByText("How do you want to use Hivorr today?")
-      .waitFor({ timeout: 10_000 })
+    await page.getByText("How do you want to use Hivorr today?").waitFor({ timeout: 10_000 })
     await settle(page)
     await screenshot(page, `activity-select-${width}`)
 
@@ -142,10 +136,7 @@ try {
       {
         platform: process.platform,
         playwright: JSON.parse(
-          readFileSync(
-            path.join("node_modules", "@playwright", "test", "package.json"),
-            "utf8",
-          ),
+          readFileSync(path.join("node_modules", "@playwright", "test", "package.json"), "utf8"),
         ).version,
         chromium: browserVersion,
         viewportHeights: HEIGHT,
@@ -164,9 +155,7 @@ try {
 } catch (error) {
   exitCode = 1
   console.error(
-    `visual:capture: FAILED — ${
-      error instanceof Error ? error.message : String(error)
-    }`,
+    `visual:capture: FAILED — ${error instanceof Error ? error.message : String(error)}`,
   )
 } finally {
   vite.kill()
@@ -177,9 +166,7 @@ process.exit(exitCode)
 async function settle(page) {
   await page.evaluate(async () => {
     await document.fonts.ready
-    await new Promise((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve)),
-    )
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   })
   const loaded = await page.evaluate(
     () =>

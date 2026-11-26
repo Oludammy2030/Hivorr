@@ -20,11 +20,10 @@ import { type VfdAuthClient, type VfdMode } from "./auth"
  * The client returns only the last four account digits for a beneficiary and
  * never logs or echoes a full account number.
  */
-export const VFD_WALLET_BASE_URLS: Readonly<Record<VfdMode, string>> =
-  Object.freeze({
-    test: "https://api-devapps.vfdbank.systems/vtech-wallet/api/v2/wallet2",
-    live: "https://api-apps.vfdbank.systems/vtech-wallet/api/v2/wallet2",
-  })
+export const VFD_WALLET_BASE_URLS: Readonly<Record<VfdMode, string>> = Object.freeze({
+  test: "https://api-devapps.vfdbank.systems/vtech-wallet/api/v2/wallet2",
+  live: "https://api-apps.vfdbank.systems/vtech-wallet/api/v2/wallet2",
+})
 
 const TRANSFER_TYPE = "inter"
 const MAXIMUM_RETRY_DELAY_MS = 2_000
@@ -121,9 +120,7 @@ export class VfdAccountNameClient {
   }
 
   /** The neutral name enquiry the payment port exposes. */
-  async resolveAccountName(
-    input: AccountNameEnquiryRequest,
-  ): Promise<AccountNameEnquiry> {
+  async resolveAccountName(input: AccountNameEnquiryRequest): Promise<AccountNameEnquiry> {
     const recipient = await this.enquireRecipient(input)
     return {
       accountName: recipient.accountName,
@@ -136,15 +133,9 @@ export class VfdAccountNameClient {
    * The full documented recipient record. A payout needs the client and account
    * identifiers; a name-only caller uses `resolveAccountName` instead.
    */
-  async enquireRecipient(
-    input: AccountNameEnquiryRequest,
-  ): Promise<VfdRecipientDetails> {
+  async enquireRecipient(input: AccountNameEnquiryRequest): Promise<VfdRecipientDetails> {
     if (!/^[0-9]{3,10}$/.test(input.bankCode)) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A name enquiry needs a bank code.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "A name enquiry needs a bank code.", false)
     }
     if (!/^[0-9]{10}$/.test(input.accountNumber)) {
       throw failure(
@@ -154,38 +145,23 @@ export class VfdAccountNameClient {
       )
     }
 
-    const payload = await this.get<VfdRecipientEnvelope>(
-      "/transfer/recipient",
-      {
-        accountNo: input.accountNumber,
-        bank: input.bankCode,
-        transfer_type: TRANSFER_TYPE,
-      },
-    )
+    const payload = await this.get<VfdRecipientEnvelope>("/transfer/recipient", {
+      accountNo: input.accountNumber,
+      bank: input.bankCode,
+      transfer_type: TRANSFER_TYPE,
+    })
 
     if (payload.status !== "00") {
       const message = typeof payload.message === "string" ? payload.message : ""
       if (payload.status === "104" || /not\s*found/i.test(message)) {
-        throw failure(
-          "PROVIDER_NOT_FOUND",
-          "VFD could not resolve that account.",
-          false,
-        )
+        throw failure("PROVIDER_NOT_FOUND", "VFD could not resolve that account.", false)
       }
-      throw failure(
-        "PROVIDER_REJECTED",
-        "VFD rejected the name enquiry.",
-        false,
-      )
+      throw failure("PROVIDER_REJECTED", "VFD rejected the name enquiry.", false)
     }
 
     const name = payload.data?.name
     if (typeof name !== "string" || name.trim().length === 0) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "VFD returned no account name.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned no account name.", false)
     }
 
     const accountNumber = payload.data?.account?.number
@@ -194,11 +170,7 @@ export class VfdAccountNameClient {
       accountNumber.length >= 4 &&
       accountNumber.slice(-4) !== input.accountNumber.slice(-4)
     ) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "VFD returned a different account number.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned a different account number.", false)
     }
 
     return {
@@ -208,10 +180,7 @@ export class VfdAccountNameClient {
       clientId: identifier(payload.data?.clientId),
       accountId: identifier(payload.data?.account?.id),
       bvn: identifier(payload.data?.bvn),
-      bankName:
-        typeof payload.data?.bank === "string"
-          ? payload.data.bank.trim() || null
-          : null,
+      bankName: typeof payload.data?.bank === "string" ? payload.data.bank.trim() || null : null,
     }
   }
 
@@ -230,25 +199,16 @@ export class VfdAccountNameClient {
     })
 
     if (payload.status !== "00") {
-      throw failure(
-        "PROVIDER_REJECTED",
-        "VFD rejected the source-account enquiry.",
-        false,
-      )
+      throw failure("PROVIDER_REJECTED", "VFD rejected the source-account enquiry.", false)
     }
 
     const returned = identifier(payload.data?.accountNo)
     if (returned && returned !== accountNumber) {
-      throw failure(
-        "PROVIDER_INVALID_PAYLOAD",
-        "VFD returned a different source account.",
-        false,
-      )
+      throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned a different source account.", false)
     }
 
     const clientId = identifier(payload.data?.clientId)
-    const clientName =
-      typeof payload.data?.client === "string" ? payload.data.client.trim() : ""
+    const clientName = typeof payload.data?.client === "string" ? payload.data.client.trim() : ""
     const savingsId = identifier(payload.data?.accountId)
     if (!clientId || !clientName || !savingsId) {
       throw failure(
@@ -266,10 +226,7 @@ export class VfdAccountNameClient {
     }
   }
 
-  private async get<T,>(
-    path: string,
-    query: Readonly<Record<string, string>>,
-  ): Promise<T> {
+  private async get<T>(path: string, query: Readonly<Record<string, string>>): Promise<T> {
     const url = new URL(`${VFD_WALLET_BASE_URLS[this.auth.mode]}${path}`)
     for (const [key, value] of Object.entries(query)) {
       url.searchParams.set(key, value)
@@ -288,10 +245,7 @@ export class VfdAccountNameClient {
 
       const token = await this.auth.getToken()
       const controller = new AbortController()
-      const timer = setTimeout(
-        () => controller.abort(),
-        this.options.requestTimeoutMs,
-      )
+      const timer = setTimeout(() => controller.abort(), this.options.requestTimeoutMs)
 
       try {
         const response = await this.fetchImpl(url, {
@@ -305,19 +259,11 @@ export class VfdAccountNameClient {
 
         if (response.status === 401 || response.status === 403) {
           this.auth.invalidate()
-          throw failure(
-            "PROVIDER_AUTH_FAILED",
-            "VFD rejected the access token.",
-            false,
-          )
+          throw failure("PROVIDER_AUTH_FAILED", "VFD rejected the access token.", false)
         }
 
         if (response.status === 429 || response.status >= 500) {
-          lastError = failure(
-            "PROVIDER_UNAVAILABLE",
-            "VFD is unavailable.",
-            true,
-          )
+          lastError = failure("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
           continue
         }
 
@@ -327,11 +273,7 @@ export class VfdAccountNameClient {
 
         const payload = (await response.json().catch(() => null)) as T | null
         if (!payload) {
-          throw failure(
-            "PROVIDER_INVALID_PAYLOAD",
-            "VFD returned an unreadable enquiry.",
-            false,
-          )
+          throw failure("PROVIDER_INVALID_PAYLOAD", "VFD returned an unreadable enquiry.", false)
         }
         return payload
       } catch (error) {
@@ -341,25 +283,15 @@ export class VfdAccountNameClient {
           continue
         }
         if (controller.signal.aborted) {
-          lastError = failure(
-            "PROVIDER_TIMEOUT",
-            "VFD did not answer the enquiry in time.",
-            true,
-          )
+          lastError = failure("PROVIDER_TIMEOUT", "VFD did not answer the enquiry in time.", true)
           continue
         }
-        lastError = failure(
-          "PROVIDER_UNAVAILABLE",
-          "The VFD enquiry failed.",
-          true,
-        )
+        lastError = failure("PROVIDER_UNAVAILABLE", "The VFD enquiry failed.", true)
       } finally {
         clearTimeout(timer)
       }
     }
 
-    throw (
-      lastError ?? failure("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
-    )
+    throw lastError ?? failure("PROVIDER_UNAVAILABLE", "VFD is unavailable.", true)
   }
 }

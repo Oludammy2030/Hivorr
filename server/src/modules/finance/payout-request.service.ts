@@ -1,10 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common"
 
-import {
-  currencyCodeSchema,
-  minorUnitsToMoney,
-  moneyToMinorUnits,
-} from "@hivorr/shared"
+import { currencyCodeSchema, minorUnitsToMoney, moneyToMinorUnits } from "@hivorr/shared"
 
 import { ApiError } from "../../common/errors"
 
@@ -111,8 +107,7 @@ interface PayoutAccountRow {
   account_number_last4: string
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const PAYOUT_CURRENCY = "NGN"
 
@@ -197,9 +192,7 @@ function mapRequestError(error: unknown): never {
       )
 
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The payout request operation failed.")
+      throw error instanceof Error ? error : new Error("The payout request operation failed.")
   }
 }
 

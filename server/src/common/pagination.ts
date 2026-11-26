@@ -21,11 +21,7 @@ export function decodeCursor(cursor: string): string {
     decoded = ""
   }
   if (!decoded || encodeCursor(decoded) !== cursor) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "The pagination cursor is invalid.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "The pagination cursor is invalid.", 400)
   }
   return decoded
 }
@@ -42,8 +38,7 @@ export function toPage<T>(
     data,
     page: {
       hasMore,
-      nextCursor:
-        hasMore && last !== undefined ? encodeCursor(cursorOf(last)) : null,
+      nextCursor: hasMore && last !== undefined ? encodeCursor(cursorOf(last)) : null,
     },
   }
 }

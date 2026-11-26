@@ -1,32 +1,16 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
 import { ApiError } from "../common/errors"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
-import {
-  accountReasonRequest,
-  addAccountNoteRequest,
-} from "../contracts/schemas"
+import { accountReasonRequest, addAccountNoteRequest } from "../contracts/schemas"
 import {
   AccountGovernanceService,
   type AccountAction,
 } from "../modules/admin/account-governance.service"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
 function parseReason(body: unknown): { reason?: string } {
   return parseBody(accountReasonRequest, body) as { reason?: string }
@@ -47,10 +31,7 @@ export class AccountGovernanceController {
 
   private async session(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { context, session }
   }
 
@@ -75,22 +56,14 @@ export class AccountGovernanceController {
   @Post("control/users/:id/suspend")
   @HttpCode(200)
   @Audience("control")
-  async suspend(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async suspend(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     return this.action(request, id, "suspend", body)
   }
 
   @Post("control/users/:id/reactivate")
   @HttpCode(200)
   @Audience("control")
-  async reactivate(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async reactivate(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     return this.action(request, id, "reactivate", body)
   }
 
@@ -134,11 +107,7 @@ export class AccountGovernanceController {
   @Post("control/users/:id/notes")
   @HttpCode(201)
   @Audience("control")
-  async addNote(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async addNote(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseNote(body)
     const { context, session } = await this.session(request)
     return this.accounts.addNote({

@@ -8,9 +8,7 @@ export default defineConfig({
   root: appRoot,
   plugins: [react()],
   build: {
-    outDir: fileURLToPath(
-      new URL("../../dist/portals/partner", import.meta.url),
-    ),
+    outDir: fileURLToPath(new URL("../../dist/portals/partner", import.meta.url)),
     emptyOutDir: true,
   },
 })

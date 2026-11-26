@@ -62,7 +62,10 @@ export class DepositPostingService {
   ) {}
 
   /** Handles a raw Paystack webhook. Returns without posting for ignored events. */
-  async handlePaystackWebhook(rawBody: Buffer, signature: string): Promise<{
+  async handlePaystackWebhook(
+    rawBody: Buffer,
+    signature: string,
+  ): Promise<{
     accepted: boolean
     posted: boolean
     reason?: string
@@ -83,22 +86,14 @@ export class DepositPostingService {
       )
     }
     if (!verifyPaystackSignature(rawBody, signature, secretKey)) {
-      throw new ApiError(
-        "UNAUTHENTICATED",
-        "The webhook signature is not valid.",
-        401,
-      )
+      throw new ApiError("UNAUTHENTICATED", "The webhook signature is not valid.", 401)
     }
 
     let parsed: unknown
     try {
       parsed = JSON.parse(rawBody.toString("utf8"))
     } catch {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The webhook body is not valid JSON.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The webhook body is not valid JSON.", 400)
     }
 
     const client = this.client(active.mode, secretKey)
@@ -146,8 +141,7 @@ export class DepositPostingService {
       occurredAt: verified.occurredAt,
       context: {
         audience: "app",
-        environment:
-          this.config.environment === "production" ? "production" : "staging",
+        environment: this.config.environment === "production" ? "production" : "staging",
         correlationId: undefined,
       },
     })
@@ -203,11 +197,7 @@ export class DepositPostingService {
             )
             const row = existing.rows[0]
             if (!row) {
-              throw new ApiError(
-                "CONFLICT",
-                "The provider reference could not be resolved.",
-                409,
-              )
+              throw new ApiError("CONFLICT", "The provider reference could not be resolved.", 409)
             }
             if (
               row.account_id !== input.accountId ||
@@ -245,21 +235,15 @@ export class DepositPostingService {
             referenceId = row.id
           }
 
-          const tier = await this.identity.getKycTierInTransaction(
-            transaction,
-            input.accountId,
-          )
-          const decision = await this.eligibility.checkInTransaction(
-            transaction,
-            {
-              accountId: input.accountId,
-              userId: input.userId,
-              tier,
-              amount: input.amount,
-              currency: input.currency,
-              context: input.context,
-            },
-          )
+          const tier = await this.identity.getKycTierInTransaction(transaction, input.accountId)
+          const decision = await this.eligibility.checkInTransaction(transaction, {
+            accountId: input.accountId,
+            userId: input.userId,
+            tier,
+            amount: input.amount,
+            currency: input.currency,
+            context: input.context,
+          })
           if (!decision.allowed) {
             await transaction.query(
               `update finance.provider_references
@@ -370,29 +354,16 @@ export class DepositPostingService {
           ? (error as { code?: unknown }).code
           : undefined
       if (code === "42501") {
-        throw new ApiError(
-          "FORBIDDEN",
-          "You do not have permission to post this deposit.",
-          403,
-        )
+        throw new ApiError("FORBIDDEN", "You do not have permission to post this deposit.", 403)
       }
       if (code === "23505" || code === "23514") {
-        throw new ApiError(
-          "CONFLICT",
-          "The deposit conflicts with an existing record.",
-          409,
-        )
+        throw new ApiError("CONFLICT", "The deposit conflicts with an existing record.", 409)
       }
-      throw error instanceof Error
-        ? error
-        : new Error("The deposit posting failed.")
+      throw error instanceof Error ? error : new Error("The deposit posting failed.")
     }
   }
 
-  private client(
-    mode: "test" | "live",
-    secretKey: string,
-  ): PaystackCollectionsClient {
+  private client(mode: "test" | "live", secretKey: string): PaystackCollectionsClient {
     const options: PaystackCollectionsOptions = {
       baseUrl: this.config.paystack.baseUrl,
       mode,

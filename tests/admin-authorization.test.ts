@@ -41,10 +41,7 @@ describe("governance authority composition", () => {
     )
 
     expect(authority.roles).toEqual(["investigator"])
-    expect(authority.permissions).toEqual([
-      "admin.case.investigate",
-      "admin.report.read",
-    ])
+    expect(authority.permissions).toEqual(["admin.case.investigate", "admin.report.read"])
     expect(authority.deniedPermissions).toEqual([])
   })
 

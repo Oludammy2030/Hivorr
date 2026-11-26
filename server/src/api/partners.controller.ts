@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
@@ -19,11 +10,7 @@ import {
   partnerStatusRequest,
 } from "../contracts/schemas"
 import { PartnersService } from "../modules/admin/partners.service"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
 @Controller()
 export class PartnersController {
@@ -35,10 +22,7 @@ export class PartnersController {
 
   private async session(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { context, session }
   }
 
@@ -73,11 +57,7 @@ export class PartnersController {
   @Post("control/partners/:id/status")
   @HttpCode(200)
   @Audience("control")
-  async setStatus(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async setStatus(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(partnerStatusRequest, body)
     const { context, session } = await this.session(request)
     return this.partners.setStatus({
@@ -92,10 +72,7 @@ export class PartnersController {
 
   @Get("control/partners/:id/representatives")
   @Audience("control")
-  async representatives(
-    @Param("id") id: string,
-    @Req() request: FastifyRequest,
-  ) {
+  async representatives(@Param("id") id: string, @Req() request: FastifyRequest) {
     const { session } = await this.session(request)
     return this.partners.representatives({
       accountId: session.accountId,

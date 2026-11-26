@@ -7,16 +7,14 @@ const staging = parseConfig({
   HIVORR_ENV: "staging",
   BACKEND_ENVIRONMENT: "staging",
   SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
-  DATABASE_URL:
-    "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+  DATABASE_URL: "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
   SESSION_ISSUER: "hivorr-staging",
   MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
   PAYOUT_ENCRYPTION_KEY: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
   PAYOUT_FINGERPRINT_KEY: "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=",
 })
 
-const certificate =
-  "-----BEGIN CERTIFICATE-----\nMIIBfake\n-----END CERTIFICATE-----"
+const certificate = "-----BEGIN CERTIFICATE-----\nMIIBfake\n-----END CERTIFICATE-----"
 
 interface PoolOptionsInput {
   applicationName: string
@@ -24,10 +22,7 @@ interface PoolOptionsInput {
   databaseUrl?: string
 }
 
-function poolFor(
-  config: ReturnType<typeof parseConfig>,
-  options: PoolOptionsInput,
-) {
+function poolFor(config: ReturnType<typeof parseConfig>, options: PoolOptionsInput) {
   return createDatabasePool(config, options)
 }
 
@@ -50,8 +45,7 @@ describe("database pool configuration", () => {
       HIVORR_ENV: "staging",
       BACKEND_ENVIRONMENT: "staging",
       SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
-      DATABASE_URL:
-        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+      DATABASE_URL: "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
       DATABASE_SSL_CA: certificate,
       SESSION_ISSUER: "hivorr-staging",
       MFA_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",

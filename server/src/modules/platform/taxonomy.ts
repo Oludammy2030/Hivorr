@@ -20,11 +20,7 @@ export {
   TAXONOMY_LEVELS,
   TAXONOMY_LEVELS_BY_KIND,
 } from "@hivorr/shared"
-export type {
-  TaxonomyAttributeType,
-  TaxonomyKind,
-  TaxonomyLevel,
-} from "@hivorr/shared"
+export type { TaxonomyAttributeType, TaxonomyKind, TaxonomyLevel } from "@hivorr/shared"
 
 export type TaxonomyNodeInput = {
   readonly id?: string
@@ -35,7 +31,16 @@ export type TaxonomyNodeInput = {
   readonly name: string
 }
 
-export type TaxonomyValidationCode = "TAXONOMY_UNKNOWN" | "TAXONOMY_LEVEL_INVALID" | "TAXONOMY_ROOT_LEVEL_INVALID" | "TAXONOMY_PARENT_REQUIRED" | "TAXONOMY_PARENT_LEVEL_INVALID" | "TAXONOMY_PARENT_TAXONOMY_MISMATCH" | "TAXONOMY_CYCLE" | "TAXONOMY_SLUG_INVALID" | "TAXONOMY_NAME_REQUIRED"
+export type TaxonomyValidationCode =
+  | "TAXONOMY_UNKNOWN"
+  | "TAXONOMY_LEVEL_INVALID"
+  | "TAXONOMY_ROOT_LEVEL_INVALID"
+  | "TAXONOMY_PARENT_REQUIRED"
+  | "TAXONOMY_PARENT_LEVEL_INVALID"
+  | "TAXONOMY_PARENT_TAXONOMY_MISMATCH"
+  | "TAXONOMY_CYCLE"
+  | "TAXONOMY_SLUG_INVALID"
+  | "TAXONOMY_NAME_REQUIRED"
 
 export interface TaxonomyValidationError {
   readonly code: TaxonomyValidationCode
@@ -199,7 +204,11 @@ export interface TaxonomyAttributeInput {
   readonly enumValues?: readonly string[]
 }
 
-export type TaxonomyAttributeValidationCode = "TAXONOMY_ATTRIBUTE_LEVEL_INVALID" | "TAXONOMY_ATTRIBUTE_KEY_INVALID" | "TAXONOMY_ATTRIBUTE_LABEL_REQUIRED" | "TAXONOMY_ATTRIBUTE_ENUM_REQUIRED"
+export type TaxonomyAttributeValidationCode =
+  | "TAXONOMY_ATTRIBUTE_LEVEL_INVALID"
+  | "TAXONOMY_ATTRIBUTE_KEY_INVALID"
+  | "TAXONOMY_ATTRIBUTE_LABEL_REQUIRED"
+  | "TAXONOMY_ATTRIBUTE_ENUM_REQUIRED"
 
 export interface TaxonomyAttributeValidationError {
   readonly code: TaxonomyAttributeValidationCode
@@ -234,10 +243,7 @@ export function validateTaxonomyAttribute(
     })
   }
 
-  if (
-    input.dataType === "enum" &&
-    (!input.enumValues || input.enumValues.length === 0)
-  ) {
+  if (input.dataType === "enum" && (!input.enumValues || input.enumValues.length === 0)) {
     errors.push({
       code: "TAXONOMY_ATTRIBUTE_ENUM_REQUIRED",
       message: "An enum attribute needs at least one value.",

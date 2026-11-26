@@ -64,10 +64,7 @@ describeIntegration("partner isolation integration", () => {
       payload: { email, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const appCookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -104,10 +101,7 @@ describeIntegration("partner isolation integration", () => {
     expect(verified.statusCode).toBe(200)
     return {
       userId,
-      cookie: cookieHeader(
-        readCookies(verified.headers),
-        "__Host-hivorr_partner_sid",
-      ),
+      cookie: cookieHeader(readCookies(verified.headers), "__Host-hivorr_partner_sid"),
     }
   }
 
@@ -123,17 +117,11 @@ describeIntegration("partner isolation integration", () => {
     setup = new Client({ connectionString: testUrl })
     await setup.connect()
 
-    const migrationsDirectory = path.join(
-      process.cwd(),
-      "supabase",
-      "migrations",
-    )
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
     for (const file of readdirSync(migrationsDirectory)
       .filter((entry) => entry.endsWith(".sql"))
       .sort()) {
-      await setup.query(
-        readFileSync(path.join(migrationsDirectory, file), "utf8"),
-      )
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
     }
 
     const config: ApiConfig = {
@@ -173,14 +161,8 @@ describeIntegration("partner isolation integration", () => {
     await app.init()
     await app.getHttpAdapter().getInstance().ready()
 
-    const a = await registerAndEnroll(
-      "partner-a@example.test",
-      "partner-a-password",
-    )
-    const b = await registerAndEnroll(
-      "partner-b@example.test",
-      "partner-b-password",
-    )
+    const a = await registerAndEnroll("partner-a@example.test", "partner-a-password")
+    const b = await registerAndEnroll("partner-b@example.test", "partner-b-password")
     partnerACookie = a.cookie
     partnerBCookie = b.cookie
 
@@ -208,9 +190,7 @@ describeIntegration("partner isolation integration", () => {
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -223,9 +203,7 @@ describeIntegration("partner isolation integration", () => {
     })
     expect(a.statusCode).toBe(200)
     expect(
-      (a.json() as Array<{ organisationId: string }>).map(
-        (row) => row.organisationId,
-      ),
+      (a.json() as Array<{ organisationId: string }>).map((row) => row.organisationId),
     ).toEqual([organisationA])
 
     const b = await app.inject({
@@ -235,9 +213,7 @@ describeIntegration("partner isolation integration", () => {
     })
     expect(b.statusCode).toBe(200)
     expect(
-      (b.json() as Array<{ organisationId: string }>).map(
-        (row) => row.organisationId,
-      ),
+      (b.json() as Array<{ organisationId: string }>).map((row) => row.organisationId),
     ).toEqual([organisationB])
   })
 

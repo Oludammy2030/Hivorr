@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  ApiClientError,
-  createHivorrClient,
-} from "../packages/api-client/src/index"
+import { ApiClientError, createHivorrClient } from "../packages/api-client/src/index"
 
 interface CapturedCall {
   readonly url: string

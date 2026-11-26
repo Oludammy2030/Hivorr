@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Post,
-  Query,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Post, Query, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
@@ -36,16 +27,9 @@ export class StaffInviteController {
    * personal address. Only a live token resolves.
    */
   @Get("staff-invite")
-  async details(
-    @Query("token") token: string | undefined,
-    @Req() request: FastifyRequest,
-  ) {
+  async details(@Query("token") token: string | undefined, @Req() request: FastifyRequest) {
     if (!token || token.length < 20 || token.length > 200) {
-      throw new ApiError(
-        "NOT_FOUND",
-        "This invitation is no longer valid.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "This invitation is no longer valid.", 404)
     }
 
     return this.staff.inviteDetails(token, request.ip)
@@ -66,8 +50,7 @@ export class StaffInviteController {
         typeof request.headers["user-agent"] === "string"
           ? request.headers["user-agent"]
           : undefined,
-      correlationId: (request as FastifyRequest & { correlationId?: string })
-        .correlationId,
+      correlationId: (request as FastifyRequest & { correlationId?: string }).correlationId,
     })
   }
 }

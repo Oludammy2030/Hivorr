@@ -88,9 +88,9 @@ describe("Paystack payout adapter", () => {
     expect(url.pathname).toBe("/bank/resolve")
     expect(url.searchParams.get("account_number")).toBe(ACCOUNT_NUMBER)
     expect(url.searchParams.get("bank_code")).toBe("058")
-    expect(
-      (calls[0]?.init?.headers as Record<string, string>).authorization,
-    ).toBe(`Bearer ${SECRET}`)
+    expect((calls[0]?.init?.headers as Record<string, string>).authorization).toBe(
+      `Bearer ${SECRET}`,
+    )
   })
 
   it("creates a recipient, sends kobo and maps a successful transfer", async () => {
@@ -119,9 +119,7 @@ describe("Paystack payout adapter", () => {
       status: "paid",
     })
 
-    const recipient = JSON.parse(
-      String(calls[0]?.init?.body),
-    ) as Record<string, unknown>
+    const recipient = JSON.parse(String(calls[0]?.init?.body)) as Record<string, unknown>
     expect(recipient).toMatchObject({
       type: "nuban",
       account_number: ACCOUNT_NUMBER,
@@ -129,9 +127,7 @@ describe("Paystack payout adapter", () => {
       currency: "NGN",
     })
 
-    const transfer = JSON.parse(
-      String(calls[1]?.init?.body),
-    ) as Record<string, unknown>
+    const transfer = JSON.parse(String(calls[1]?.init?.body)) as Record<string, unknown>
     expect(transfer).toMatchObject({
       source: "balance",
       amount: 5000,
@@ -145,10 +141,7 @@ describe("Paystack payout adapter", () => {
       if (url.includes("/transferrecipient")) {
         return jsonResponse({ status: true, data: { recipient_code: "RCP_1" } })
       }
-      return jsonResponse(
-        { status: false, message: "Duplicate transfer reference" },
-        400,
-      )
+      return jsonResponse({ status: false, message: "Duplicate transfer reference" }, 400)
     })
 
     await expect(

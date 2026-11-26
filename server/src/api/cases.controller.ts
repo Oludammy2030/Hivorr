@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Query,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
@@ -21,11 +11,7 @@ import {
   createCaseRequest,
 } from "../contracts/schemas"
 import { CasesService } from "../modules/admin/cases.service"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
 @Controller()
 export class CasesController {
@@ -37,10 +23,7 @@ export class CasesController {
 
   private async session(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { context, session }
   }
 
@@ -96,11 +79,7 @@ export class CasesController {
   @Post("control/cases/:id/events")
   @HttpCode(201)
   @Audience("control")
-  async addEvent(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async addEvent(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(caseNoteRequest, body)
     const { context, session } = await this.session(request)
     return this.cases.addEvent({
@@ -115,11 +94,7 @@ export class CasesController {
   @Post("control/cases/:id/assign")
   @HttpCode(200)
   @Audience("control")
-  async assign(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async assign(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(assignCaseRequest, body)
     const { context, session } = await this.session(request)
     return this.cases.assign({
@@ -135,11 +110,7 @@ export class CasesController {
   @Post("control/cases/:id/status")
   @HttpCode(200)
   @Audience("control")
-  async setStatus(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async setStatus(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(caseStatusRequest, body)
     const { context, session } = await this.session(request)
     return this.cases.setStatus({

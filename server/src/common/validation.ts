@@ -33,19 +33,13 @@ export function invalidRequest(error: z.ZodError): ApiError {
   )
 }
 
-export function parseBody<T extends z.ZodType>(
-  schema: T,
-  body: unknown,
-): z.output<T> {
+export function parseBody<T extends z.ZodType>(schema: T, body: unknown): z.output<T> {
   const result = schema.safeParse(body)
   if (!result.success) throw invalidRequest(result.error)
   return result.data
 }
 
-export function parseQuery<T extends z.ZodType>(
-  schema: T,
-  query: unknown,
-): z.output<T> {
+export function parseQuery<T extends z.ZodType>(schema: T, query: unknown): z.output<T> {
   const result = schema.safeParse(query)
   if (!result.success) throw invalidRequest(result.error)
   return result.data

@@ -18,9 +18,7 @@ const BUDGET_KB = 200
 
 const args = process.argv.slice(2)
 const distIndex = args.indexOf("--dist")
-const dist = path.resolve(
-  distIndex >= 0 && args[distIndex + 1] ? args[distIndex + 1] : "dist",
-)
+const dist = path.resolve(distIndex >= 0 && args[distIndex + 1] ? args[distIndex + 1] : "dist")
 
 const BUNDLES = [
   { name: "main", directory: dist, noindex: false },
@@ -58,27 +56,19 @@ for (const bundle of BUNDLES) {
   }
 
   const html = readFileSync(indexPath, "utf8")
-  const robots = html.match(
-    /<meta[^>]+name=["']robots["'][^>]+content=["']([^"']*)["']/i,
-  )
+  const robots = html.match(/<meta[^>]+name=["']robots["'][^>]+content=["']([^"']*)["']/i)
   const robotsContent = (robots?.[1] ?? "").toLowerCase()
   const hasNoindex = robotsContent.includes("noindex")
 
   if (bundle.noindex && !hasNoindex) {
-    issues.push(
-      `${bundle.name}: privileged bundle must carry noindex, nofollow`,
-    )
+    issues.push(`${bundle.name}: privileged bundle must carry noindex, nofollow`)
   }
   // The root web bundle is the Figma Make preview in EP-01 and is deliberately
   // noindex through `.figma/make/site.json`; only production `060` may flip it.
 
-  const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map(
-    (match) => match[1],
-  )
+  const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((match) => match[1])
   const preloads = [
-    ...html.matchAll(
-      /<link[^>]+rel=["']modulepreload["'][^>]+href=["']([^"']+)["']/gi,
-    ),
+    ...html.matchAll(/<link[^>]+rel=["']modulepreload["'][^>]+href=["']([^"']+)["']/gi),
   ].map((match) => match[1])
   const initialScripts = [...new Set([...scripts, ...preloads])]
   if (scripts.length === 0) {
@@ -117,9 +107,7 @@ if (issues.length) {
   process.exit(1)
 }
 
-console.log(
-  `bundles:check: OK — ${summary.length} bundle(s), budget ${BUDGET_KB} KB gzip`,
-)
+console.log(`bundles:check: OK — ${summary.length} bundle(s), budget ${BUDGET_KB} KB gzip`)
 for (const entry of summary) {
   console.log(
     `  ${entry.name.padEnd(8)} ${entry.files} initial script(s)  ${entry.gzipKb

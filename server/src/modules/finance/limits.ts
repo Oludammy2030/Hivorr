@@ -11,23 +11,13 @@ import { FINANCIALLY_ELIGIBLE_KYC_TIERS } from "@hivorr/shared"
  * The caller performs the check inside the same transaction as the write. The
  * database still owns the effective-dated rows and the permission to add one.
  */
-export const FINANCE_LIMIT_TYPES = [
-  "deposit",
-  "withdrawal",
-  "payout",
-  "wallet_balance",
-] as const
+export const FINANCE_LIMIT_TYPES = ["deposit", "withdrawal", "payout", "wallet_balance"] as const
 
-export type FinanceLimitType = typeof FINANCE_LIMIT_TYPES[number]
+export type FinanceLimitType = (typeof FINANCE_LIMIT_TYPES)[number]
 
-export const FINANCE_LIMIT_PERIODS = [
-  "per_transaction",
-  "daily",
-  "weekly",
-  "monthly",
-] as const
+export const FINANCE_LIMIT_PERIODS = ["per_transaction", "daily", "weekly", "monthly"] as const
 
-export type FinanceLimitPeriod = typeof FINANCE_LIMIT_PERIODS[number]
+export type FinanceLimitPeriod = (typeof FINANCE_LIMIT_PERIODS)[number]
 
 /** The CBN tiers that may move money; `tier_0` is denied. */
 export const FINANCIALLY_ELIGIBLE_TIERS: ReadonlySet<string> = new Set(
@@ -80,8 +70,7 @@ export function selectFinanceLimit(
   const effective = candidates.filter(
     (rule) =>
       rule.effectiveFrom.getTime() <= input.at.getTime() &&
-      (rule.effectiveTo === null ||
-        rule.effectiveTo.getTime() > input.at.getTime()),
+      (rule.effectiveTo === null || rule.effectiveTo.getTime() > input.at.getTime()),
   )
 
   effective.sort((left, right) => {
@@ -98,14 +87,16 @@ export function selectFinanceLimit(
 
 export type FinanceLimitDenialReason = "kyc_required" | "not_configured" | "exceeded"
 
-export type FinanceLimitDecision = {
-  readonly allowed: true
-  readonly rule: FinanceLimitRule
-} | {
-  readonly allowed: false
-  readonly reason: FinanceLimitDenialReason
-  readonly rule: FinanceLimitRule | null
-}
+export type FinanceLimitDecision =
+  | {
+      readonly allowed: true
+      readonly rule: FinanceLimitRule
+    }
+  | {
+      readonly allowed: false
+      readonly reason: FinanceLimitDenialReason
+      readonly rule: FinanceLimitRule | null
+    }
 
 export interface FinanceLimitEvaluation {
   readonly tier: string
@@ -117,9 +108,7 @@ export interface FinanceLimitEvaluation {
   readonly balanceAfterMinor?: bigint
 }
 
-export function evaluateFinanceLimit(
-  input: FinanceLimitEvaluation,
-): FinanceLimitDecision {
+export function evaluateFinanceLimit(input: FinanceLimitEvaluation): FinanceLimitDecision {
   if (!FINANCIALLY_ELIGIBLE_TIERS.has(input.tier)) {
     return { allowed: false, reason: "kyc_required", rule: input.rule }
   }
@@ -148,15 +137,10 @@ export function evaluateFinanceLimit(
 }
 
 /** UTC period start; the ledger stores timestamps in UTC. */
-export function financeLimitPeriodStart(
-  period: FinanceLimitPeriod,
-  at: Date,
-): Date | null {
+export function financeLimitPeriodStart(period: FinanceLimitPeriod, at: Date): Date | null {
   if (period === "per_transaction") return null
 
-  const start = new Date(
-    Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()),
-  )
+  const start = new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()))
 
   if (period === "daily") return start
 

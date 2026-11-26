@@ -80,15 +80,13 @@ function harness(
     async query(text: string, values?: readonly unknown[]) {
       queries.push({ text, values })
       if (text.includes("insert into finance.collection_accounts")) {
-        const row =
-          options.inserted === undefined ? accountRow() : options.inserted
+        const row = options.inserted === undefined ? accountRow() : options.inserted
         return { rows: row ? [row] : [] }
       }
       if (text.includes("from finance.collection_accounts")) {
         const row = options.existing === undefined ? null : options.existing
         if (row) return { rows: [row] }
-        const after =
-          options.afterInsert === undefined ? null : options.afterInsert
+        const after = options.afterInsert === undefined ? null : options.afterInsert
         return { rows: after ? [after] : [] }
       }
       return { rows: [], rowCount: 0 }
@@ -109,11 +107,7 @@ function harness(
     }),
   } as unknown as PaymentProviderSettingsService
 
-  const service = new CollectionAccountService(
-    database,
-    config(options.secretKeyTest),
-    settings,
-  )
+  const service = new CollectionAccountService(database, config(options.secretKeyTest), settings)
 
   return { service, queries, audits }
 }
@@ -137,28 +131,25 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 function stubProvider() {
   const calls: FetchCall[] = []
-  const fetchImpl = vi.fn(
-    async (url: string | URL | Request, init?: RequestInit) => {
-      calls.push({
-        url: String(url),
-        authorization: String(
-          (init?.headers as Record<string, string> | undefined)
-            ?.authorization ?? "",
-        ),
-      })
-      if (String(url).endsWith("/customer")) {
-        return jsonResponse({ status: true, data: { customer_code: "CUS_1" } })
-      }
-      return jsonResponse({
-        status: true,
-        data: {
-          account_number: "1234567890",
-          account_name: "Hivorr / Kuti Sema",
-          bank: { name: "Titan Trust Bank" },
-        },
-      })
-    },
-  )
+  const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+    calls.push({
+      url: String(url),
+      authorization: String(
+        (init?.headers as Record<string, string> | undefined)?.authorization ?? "",
+      ),
+    })
+    if (String(url).endsWith("/customer")) {
+      return jsonResponse({ status: true, data: { customer_code: "CUS_1" } })
+    }
+    return jsonResponse({
+      status: true,
+      data: {
+        account_number: "1234567890",
+        account_name: "Hivorr / Kuti Sema",
+        bank: { name: "Titan Trust Bank" },
+      },
+    })
+  })
   vi.stubGlobal("fetch", fetchImpl)
   return { fetchImpl, calls }
 }
@@ -171,17 +162,13 @@ describe("collection account read", () => {
   it("returns nothing when the account has no virtual account", async () => {
     const { service } = harness()
 
-    await expect(
-      service.get({ accountId: ACCOUNT_ID, userId: USER_ID }),
-    ).resolves.toBeNull()
+    await expect(service.get({ accountId: ACCOUNT_ID, userId: USER_ID })).resolves.toBeNull()
   })
 
   it("projects the stored number and bank to the owner", async () => {
     const { service } = harness({ existing: accountRow() })
 
-    await expect(
-      service.get({ accountId: ACCOUNT_ID, userId: USER_ID }),
-    ).resolves.toEqual({
+    await expect(service.get({ accountId: ACCOUNT_ID, userId: USER_ID })).resolves.toEqual({
       id: COLLECTION_ID,
       provider: "paystack",
       reference: `COL-${ACCOUNT_ID}`,
@@ -237,9 +224,7 @@ describe("collection account creation", () => {
       "https://api.paystack.test/customer",
       "https://api.paystack.test/dedicated_account",
     ])
-    expect(
-      calls.every((call) => call.authorization === `Bearer ${TEST_KEY}`),
-    ).toBe(true)
+    expect(calls.every((call) => call.authorization === `Bearer ${TEST_KEY}`)).toBe(true)
     expect(result).toMatchObject({
       provider: "paystack",
       accountNumber: "1234567890",
@@ -267,9 +252,7 @@ describe("collection account creation", () => {
   it("maps a provider rejection to PROVIDER_ERROR", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        jsonResponse({ status: false, message: "invalid key" }, 401),
-      ),
+      vi.fn(async () => jsonResponse({ status: false, message: "invalid key" }, 401)),
     )
     const { service } = harness()
 

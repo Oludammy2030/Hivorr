@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  VFD_TOKEN_URLS,
-  type VfdAuthOptions,
-  VfdAuthClient,
-} from "../server/src/integrations/vfd"
+import { VFD_TOKEN_URLS, type VfdAuthOptions, VfdAuthClient } from "../server/src/integrations/vfd"
 
 interface FetchCall {
   readonly url: string
@@ -81,9 +77,7 @@ describe("VFD authentication client", () => {
 
     expect(calls).toHaveLength(1)
     expect(calls[0]?.url).toBe(VFD_TOKEN_URLS.test)
-    const body = JSON.parse(
-      String(calls[0]?.init?.body),
-    ) as Record<string, string>
+    const body = JSON.parse(String(calls[0]?.init?.body)) as Record<string, string>
     expect(body).toEqual({
       consumerKey: "test-key",
       consumerSecret: "test-secret",
@@ -133,10 +127,7 @@ describe("VFD authentication client", () => {
     await Promise.resolve()
     resolveResponse?.(jsonResponse(envelope()))
 
-    await expect(Promise.all([first, second])).resolves.toEqual([
-      "token-1",
-      "token-1",
-    ])
+    await expect(Promise.all([first, second])).resolves.toEqual(["token-1", "token-1"])
     expect(calls).toHaveLength(1)
   })
 
@@ -178,9 +169,7 @@ describe("VFD authentication client", () => {
     const { client, calls } = harness(
       (_url, init) =>
         new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener("abort", () =>
-            reject(new Error("aborted")),
-          )
+          init?.signal?.addEventListener("abort", () => reject(new Error("aborted")))
         }),
       { requestTimeoutMs: 10, maxRetries: 1, retryBaseMs: 5 },
     )
@@ -193,9 +182,7 @@ describe("VFD authentication client", () => {
   })
 
   it("rejects a malformed token response", async () => {
-    const { client } = harness(
-      async () => new Response("not json", { status: 200 }),
-    )
+    const { client } = harness(async () => new Response("not json", { status: 200 }))
 
     await expect(client.getToken()).rejects.toMatchObject({
       code: "PROVIDER_INVALID_PAYLOAD",

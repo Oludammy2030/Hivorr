@@ -3,11 +3,7 @@ import type { Pool } from "pg"
 
 import { API_CONFIG, type ApiConfig } from "../config"
 import { createDatabasePool } from "./pool"
-import {
-  withTransaction,
-  type TransactionContext,
-  type TransactionOptions,
-} from "./transaction"
+import { withTransaction, type TransactionContext, type TransactionOptions } from "./transaction"
 
 @Injectable()
 export class DatabaseService implements OnApplicationShutdown {
@@ -20,7 +16,7 @@ export class DatabaseService implements OnApplicationShutdown {
   }
 
   /** One connection, one transaction, one release. */
-  withTransaction<T,>(
+  withTransaction<T>(
     options: TransactionOptions,
     work: (transaction: TransactionContext) => Promise<T>,
   ): Promise<T> {

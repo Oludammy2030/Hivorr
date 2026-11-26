@@ -4,10 +4,7 @@ import { Readable } from "node:stream"
 
 import fastifyCookie from "@fastify/cookie"
 import { NestFactory } from "@nestjs/core"
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify"
+import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify"
 
 import { AppModule } from "./app.module"
 import { resolveCorrelationId } from "./common/correlation"
@@ -62,8 +59,7 @@ export async function createApplication(
     const candidate = Array.isArray(header) ? header[0] : header
     const correlationId = resolveCorrelationId(candidate)
     reply.header("x-correlation-id", correlationId)
-    ;(request as typeof request & { correlationId: string }).correlationId =
-      correlationId
+    ;(request as typeof request & { correlationId: string }).correlationId = correlationId
     done()
   })
 
@@ -80,8 +76,7 @@ export async function createApplication(
         route,
         statusCode: reply.statusCode,
         durationMs: Math.round(reply.elapsedTime),
-        correlationId: (request as typeof request & { correlationId?: string })
-          .correlationId,
+        correlationId: (request as typeof request & { correlationId?: string }).correlationId,
       })
     }
     done()

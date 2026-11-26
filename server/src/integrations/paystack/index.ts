@@ -12,13 +12,7 @@ export type {
   PaystackPayoutOptions,
   PaystackPayoutPort,
 } from "./payouts"
-export {
-  PaystackCollectionsClient,
-  verifyPaystackSignature,
-} from "./collections"
-export type {
-  PaystackCollections,
-  PaystackCollectionsOptions,
-} from "./collections"
+export { PaystackCollectionsClient, verifyPaystackSignature } from "./collections"
+export type { PaystackCollections, PaystackCollectionsOptions } from "./collections"
 
 export const PAYSTACK_PAYOUTS = "HIVORR_PAYSTACK_PAYOUTS" as const

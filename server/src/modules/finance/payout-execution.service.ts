@@ -17,10 +17,7 @@ import { appendAudit } from "../platform"
 import { FINANCIALLY_ELIGIBLE_TIERS } from "./limits"
 import { LedgerService, type LedgerPostingContext } from "./ledger.service"
 import { FinanceLimitService } from "./limit.service"
-import {
-  PayoutAccountCipher,
-  type PayoutAccountKeys,
-} from "./payout-account-crypto"
+import { PayoutAccountCipher, type PayoutAccountKeys } from "./payout-account-crypto"
 import {
   payoutRequestToView,
   type PayoutRequestRow,
@@ -47,10 +44,7 @@ export const PAYOUT_PROVIDER = "HIVORR_PAYOUT_PROVIDER" as const
 
 export interface PayoutProviderPort {
   readonly provider: string
-  initiatePayout(
-    input: PayoutRequest,
-    context: ProviderOperationContext,
-  ): Promise<PayoutResult>
+  initiatePayout(input: PayoutRequest, context: ProviderOperationContext): Promise<PayoutResult>
 }
 
 export interface ExecutePayoutInput {
@@ -83,20 +77,21 @@ interface PostingRow {
   currency: string
 }
 
-type PreparedPayout = {
-  readonly final: true
-  readonly view: PayoutRequestView
-} | {
-  readonly final: false
-  readonly request: ExecutionRow
-  readonly view: PayoutRequestView
-  readonly bankCode: string
-  readonly accountName: string
-  readonly accountNumber: string
-}
+type PreparedPayout =
+  | {
+      readonly final: true
+      readonly view: PayoutRequestView
+    }
+  | {
+      readonly final: false
+      readonly request: ExecutionRow
+      readonly view: PayoutRequestView
+      readonly bankCode: string
+      readonly accountName: string
+      readonly accountNumber: string
+    }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function parseAmount(value: string | undefined): bigint {
   if (!value || /^0(\.0{1,4})?$/.test(value)) return 0n
@@ -113,30 +108,16 @@ function mapExecutionError(error: unknown): never {
   if (typeof error === "object" && error !== null && "code" in error) {
     const code = (error as { code?: unknown }).code
     if (code === "42501") {
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to execute this payout.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to execute this payout.", 403)
     }
     if (code === "23514") {
-      throw new ApiError(
-        "CONFLICT",
-        "The payout request is not in a state that can execute.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The payout request is not in a state that can execute.", 409)
     }
     if (code === "23505") {
-      throw new ApiError(
-        "CONFLICT",
-        "The payout execution already exists.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The payout execution already exists.", 409)
     }
   }
-  throw error instanceof Error
-    ? error
-    : new Error("The payout execution failed.")
+  throw error instanceof Error ? error : new Error("The payout execution failed.")
 }
 
 @Injectable()
@@ -154,18 +135,10 @@ export class PayoutExecutionService {
   async execute(input: ExecutePayoutInput): Promise<PayoutRequestView> {
     const tier = input.tier ?? "tier_0"
     if (!FINANCIALLY_ELIGIBLE_TIERS.has(tier)) {
-      throw new ApiError(
-        "KYC_REQUIRED",
-        "A payout requires KYC tier_1 or above.",
-        403,
-      )
+      throw new ApiError("KYC_REQUIRED", "A payout requires KYC tier_1 or above.", 403)
     }
     if (!UUID_PATTERN.test(input.requestId)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The payout request identifier is invalid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The payout request identifier is invalid.", 400)
     }
 
     const cipher = this.cipher()
@@ -222,17 +195,9 @@ export class PayoutExecutionService {
             )
           }
 
-          const request = await this.loadRequest(
-            transaction,
-            input.requestId,
-            input.accountId,
-          )
+          const request = await this.loadRequest(transaction, input.requestId, input.accountId)
           if (!request) {
-            throw new ApiError(
-              "NOT_FOUND",
-              "That payout request does not exist.",
-              404,
-            )
+            throw new ApiError("NOT_FOUND", "That payout request does not exist.", 404)
           }
 
           if (
@@ -244,11 +209,7 @@ export class PayoutExecutionService {
             return { final: true, view: payoutRequestToView(request) }
           }
           if (request.status !== "REQUESTED" && request.status !== "RESERVED") {
-            throw new ApiError(
-              "CONFLICT",
-              "The payout request is not ready to execute.",
-              409,
-            )
+            throw new ApiError("CONFLICT", "The payout request is not ready to execute.", 409)
           }
 
           const destination = await this.loadDestination(
@@ -284,11 +245,7 @@ export class PayoutExecutionService {
             )
             const amountMinor = moneyToMinorUnits(request.amount)
             if (amountMinor === null) {
-              throw new ApiError(
-                "CONFLICT",
-                "The payout amount is not readable.",
-                409,
-              )
+              throw new ApiError("CONFLICT", "The payout amount is not readable.", 409)
             }
             if (parseAmount(balance.rows[0]?.available) < amountMinor) {
               throw new ApiError(
@@ -338,19 +295,10 @@ export class PayoutExecutionService {
               this.ledgerContext(input),
             )
 
-            current = await this.markReserved(
-              transaction,
-              request,
-              entry.id,
-              null,
-            )
-            await this.audit(
-              transaction,
-              input,
-              "finance.payout_reserved",
-              current,
-              { journalEntryId: entry.id },
-            )
+            current = await this.markReserved(transaction, request, entry.id, null)
+            await this.audit(transaction, input, "finance.payout_reserved", current, {
+              journalEntryId: entry.id,
+            })
           }
 
           const processing = await this.markProcessing(
@@ -359,12 +307,7 @@ export class PayoutExecutionService {
             null,
             current.provider_reference,
           )
-          await this.audit(
-            transaction,
-            input,
-            "finance.payout_execution_started",
-            processing,
-          )
+          await this.audit(transaction, input, "finance.payout_execution_started", processing)
 
           return {
             final: false,
@@ -396,17 +339,9 @@ export class PayoutExecutionService {
           identity: { accountId: input.accountId, userId: input.userId },
         },
         async (transaction) => {
-          const request = await this.loadRequest(
-            transaction,
-            prepared.id,
-            input.accountId,
-          )
+          const request = await this.loadRequest(transaction, prepared.id, input.accountId)
           if (!request) {
-            throw new ApiError(
-              "NOT_FOUND",
-              "That payout request does not exist.",
-              404,
-            )
+            throw new ApiError("NOT_FOUND", "That payout request does not exist.", 404)
           }
           if (request.status !== "PROCESSING") {
             return payoutRequestToView(request)
@@ -423,13 +358,9 @@ export class PayoutExecutionService {
               result.failureMessage,
               reversal.id,
             )
-            await this.audit(
-              transaction,
-              input,
-              "finance.payout_failed",
-              failed,
-              { reversalEntryId: reversal.id },
-            )
+            await this.audit(transaction, input, "finance.payout_failed", failed, {
+              reversalEntryId: reversal.id,
+            })
             return payoutRequestToView(failed)
           }
 
@@ -450,12 +381,7 @@ export class PayoutExecutionService {
             result.provider,
             result.providerReference,
           )
-          await this.audit(
-            transaction,
-            input,
-            "finance.payout_processing",
-            processing,
-          )
+          await this.audit(transaction, input, "finance.payout_processing", processing)
           return payoutRequestToView(processing)
         },
       )
@@ -478,17 +404,9 @@ export class PayoutExecutionService {
           identity: { accountId: input.accountId, userId: input.userId },
         },
         async (transaction) => {
-          const request = await this.loadRequest(
-            transaction,
-            prepared.id,
-            input.accountId,
-          )
+          const request = await this.loadRequest(transaction, prepared.id, input.accountId)
           if (!request) {
-            throw new ApiError(
-              "NOT_FOUND",
-              "That payout request does not exist.",
-              404,
-            )
+            throw new ApiError("NOT_FOUND", "That payout request does not exist.", 404)
           }
           if (request.status !== "PROCESSING") {
             return payoutRequestToView(request)
@@ -501,13 +419,9 @@ export class PayoutExecutionService {
               request.provider,
               request.provider_reference,
             )
-            await this.audit(
-              transaction,
-              input,
-              "finance.payout_processing",
-              processing,
-              { failureCode: error.code },
-            )
+            await this.audit(transaction, input, "finance.payout_processing", processing, {
+              failureCode: error.code,
+            })
             return payoutRequestToView(processing)
           }
 
@@ -521,13 +435,10 @@ export class PayoutExecutionService {
             error.message,
             reversal.id,
           )
-          await this.audit(
-            transaction,
-            input,
-            "finance.payout_failed",
-            failed,
-            { reversalEntryId: reversal.id, failureCode: error.code },
-          )
+          await this.audit(transaction, input, "finance.payout_failed", failed, {
+            reversalEntryId: reversal.id,
+            failureCode: error.code,
+          })
           return payoutRequestToView(failed)
         },
       )
@@ -540,11 +451,7 @@ export class PayoutExecutionService {
   private cipher(): PayoutAccountCipher {
     const keys: PayoutAccountKeys = this.config.payout
     if (!keys.encryptionKey || !keys.fingerprintKey) {
-      throw new ApiError(
-        "SERVICE_UNAVAILABLE",
-        "Payout account protection is not configured.",
-        503,
-      )
+      throw new ApiError("SERVICE_UNAVAILABLE", "Payout account protection is not configured.", 503)
     }
     return PayoutAccountCipher.fromConfig(keys)
   }
@@ -707,10 +614,7 @@ export class PayoutExecutionService {
     return this.mergeLast4(result.rows[0], request)
   }
 
-  private mergeLast4(
-    row: PayoutRequestRow | undefined,
-    source: ExecutionRow,
-  ): ExecutionRow {
+  private mergeLast4(row: PayoutRequestRow | undefined, source: ExecutionRow): ExecutionRow {
     if (!row) {
       throw new Error("The payout request update returned no row.")
     }
@@ -728,11 +632,7 @@ export class PayoutExecutionService {
     input: ExecutePayoutInput,
   ): Promise<{ id: string }> {
     if (!request.journal_entry_id) {
-      throw new ApiError(
-        "CONFLICT",
-        "The payout has no reserve entry to reverse.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The payout has no reserve entry to reverse.", 409)
     }
 
     const original = await transaction.query<PostingRow>(
@@ -743,11 +643,7 @@ export class PayoutExecutionService {
       [request.journal_entry_id],
     )
     if (original.rows.length < 2) {
-      throw new ApiError(
-        "CONFLICT",
-        "The payout reserve entry is incomplete.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The payout reserve entry is incomplete.", 409)
     }
 
     const reversal = await this.ledger.postEntryInTransaction(

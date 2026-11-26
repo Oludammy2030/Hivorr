@@ -10,7 +10,7 @@ import { z } from "zod"
  */
 export const TAXONOMY_KINDS = ["profession", "product"] as const
 
-export type TaxonomyKind = typeof TAXONOMY_KINDS[number]
+export type TaxonomyKind = (typeof TAXONOMY_KINDS)[number]
 
 export const TAXONOMY_LEVELS = [
   "industry",
@@ -21,23 +21,16 @@ export const TAXONOMY_LEVELS = [
   "product_type",
 ] as const
 
-export type TaxonomyLevel = typeof TAXONOMY_LEVELS[number]
+export type TaxonomyLevel = (typeof TAXONOMY_LEVELS)[number]
 
-export const TAXONOMY_LEVELS_BY_KIND: Readonly<Record<TaxonomyKind, readonly TaxonomyLevel[]>> =
-  {
-    profession: ["industry", "profession"],
-    product: ["vertical", "category", "subcategory", "product_type"],
-  }
+export const TAXONOMY_LEVELS_BY_KIND: Readonly<Record<TaxonomyKind, readonly TaxonomyLevel[]>> = {
+  profession: ["industry", "profession"],
+  product: ["vertical", "category", "subcategory", "product_type"],
+}
 
-export const TAXONOMY_ATTRIBUTE_TYPES = [
-  "text",
-  "number",
-  "boolean",
-  "enum",
-  "date",
-] as const
+export const TAXONOMY_ATTRIBUTE_TYPES = ["text", "number", "boolean", "enum", "date"] as const
 
-export type TaxonomyAttributeType = typeof TAXONOMY_ATTRIBUTE_TYPES[number]
+export type TaxonomyAttributeType = (typeof TAXONOMY_ATTRIBUTE_TYPES)[number]
 
 export const taxonomyKindSchema = z.enum(TAXONOMY_KINDS)
 export const taxonomyLevelSchema = z.enum(TAXONOMY_LEVELS)

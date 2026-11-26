@@ -50,9 +50,7 @@ export const WORKER_ENTRY_PATH = "server/src/worker.ts"
 export const MIGRATIONS_PATH = "supabase/migrations"
 
 function isExcluded(relativePath, exclude) {
-  return exclude.some(
-    (entry) => relativePath === entry || relativePath.startsWith(`${entry}/`),
-  )
+  return exclude.some((entry) => relativePath === entry || relativePath.startsWith(`${entry}/`))
 }
 
 /**
@@ -137,9 +135,7 @@ export function createReleaseManifest(options) {
   } = options ?? {}
 
   if (!RELEASE_SHA_PATTERN.test(releaseSha ?? "")) {
-    throw new Error(
-      "releaseSha must be a 40-character lowercase hex commit SHA",
-    )
+    throw new Error("releaseSha must be a 40-character lowercase hex commit SHA")
   }
   if (!RELEASE_REFS.includes(releaseRef)) {
     throw new Error(`releaseRef must be one of: ${RELEASE_REFS.join(", ")}`)
@@ -212,16 +208,12 @@ export function verifyReleaseManifest(manifest, options = {}) {
   if (!RELEASE_SHA_PATTERN.test(manifest.releaseSha ?? "")) {
     issues.push("manifest releaseSha is not a 40-character hex commit SHA")
   } else if (releaseSha && manifest.releaseSha !== releaseSha) {
-    issues.push(
-      `manifest releaseSha ${manifest.releaseSha} does not match requested ${releaseSha}`,
-    )
+    issues.push(`manifest releaseSha ${manifest.releaseSha} does not match requested ${releaseSha}`)
   }
   if (!RELEASE_REFS.includes(manifest.releaseRef)) {
     issues.push(`manifest releaseRef is not one of: ${RELEASE_REFS.join(", ")}`)
   } else if (releaseRef && manifest.releaseRef !== releaseRef) {
-    issues.push(
-      `manifest releaseRef ${manifest.releaseRef} does not match expected ${releaseRef}`,
-    )
+    issues.push(`manifest releaseRef ${manifest.releaseRef} does not match expected ${releaseRef}`)
   }
 
   for (const bundle of BUNDLE_LAYOUT) {
@@ -231,9 +223,7 @@ export function verifyReleaseManifest(manifest, options = {}) {
       continue
     }
     if (recorded.path !== bundle.path) {
-      issues.push(
-        `manifest ${bundle.name} path ${recorded.path} is not ${bundle.path}`,
-      )
+      issues.push(`manifest ${bundle.name} path ${recorded.path} is not ${bundle.path}`)
     }
     try {
       const actual = treeDigest(path.resolve(distDir, bundle.relativeToDist), {
@@ -261,9 +251,7 @@ export function verifyReleaseManifest(manifest, options = {}) {
     issues.push("manifest is missing the backend source record")
   } else {
     if (manifest.backend.path !== BACKEND_PATH) {
-      issues.push(
-        `manifest backend path ${manifest.backend.path} is not ${BACKEND_PATH}`,
-      )
+      issues.push(`manifest backend path ${manifest.backend.path} is not ${BACKEND_PATH}`)
     }
     try {
       const resolvedServer = path.resolve(serverDir)
@@ -283,9 +271,7 @@ export function verifyReleaseManifest(manifest, options = {}) {
       }
     } catch (error) {
       issues.push(
-        `backend source is unreadable: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `backend source is unreadable: ${error instanceof Error ? error.message : String(error)}`,
       )
     }
   }
@@ -294,9 +280,7 @@ export function verifyReleaseManifest(manifest, options = {}) {
     issues.push("manifest is missing the migration record")
   } else {
     if (manifest.migrations.path !== MIGRATIONS_PATH) {
-      issues.push(
-        `manifest migrations path ${manifest.migrations.path} is not ${MIGRATIONS_PATH}`,
-      )
+      issues.push(`manifest migrations path ${manifest.migrations.path} is not ${MIGRATIONS_PATH}`)
     }
     try {
       const actual = treeDigest(path.resolve(migrationsDir))
@@ -312,9 +296,7 @@ export function verifyReleaseManifest(manifest, options = {}) {
       }
     } catch (error) {
       issues.push(
-        `migration set is unreadable: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `migration set is unreadable: ${error instanceof Error ? error.message : String(error)}`,
       )
     }
   }

@@ -1,8 +1,4 @@
-import {
-  taxonomyAttributeSchema,
-  taxonomyNodeSchema,
-  taxonomyRegistrySchema,
-} from "@hivorr/shared"
+import { taxonomyAttributeSchema, taxonomyNodeSchema, taxonomyRegistrySchema } from "@hivorr/shared"
 import { describe, expect, it } from "vitest"
 
 const node = {
@@ -51,20 +47,13 @@ describe("taxonomy read contract", () => {
   })
 
   it("rejects an invalid level and a zero version", () => {
-    expect(
-      taxonomyNodeSchema.safeParse({ ...node, level: "discover" }).success,
-    ).toBe(false)
-    expect(taxonomyNodeSchema.safeParse({ ...node, version: 0 }).success).toBe(
-      false,
-    )
+    expect(taxonomyNodeSchema.safeParse({ ...node, level: "discover" }).success).toBe(false)
+    expect(taxonomyNodeSchema.safeParse({ ...node, version: 0 }).success).toBe(false)
   })
 
   it("accepts an attribute and rejects a negative sort order", () => {
     expect(taxonomyAttributeSchema.safeParse(attribute).success).toBe(true)
-    expect(
-      taxonomyAttributeSchema.safeParse({ ...attribute, sortOrder: -1 })
-        .success,
-    ).toBe(false)
+    expect(taxonomyAttributeSchema.safeParse({ ...attribute, sortOrder: -1 }).success).toBe(false)
   })
 
   it("wraps both taxonomies in one registry response", () => {
@@ -74,9 +63,8 @@ describe("taxonomy read contract", () => {
         attributes: [attribute],
       }).success,
     ).toBe(true)
-    expect(
-      taxonomyRegistrySchema.safeParse({ nodes: [node], attributes: [{}] })
-        .success,
-    ).toBe(false)
+    expect(taxonomyRegistrySchema.safeParse({ nodes: [node], attributes: [{}] }).success).toBe(
+      false,
+    )
   })
 })

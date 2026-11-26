@@ -4,10 +4,7 @@ import { createDatabasePool } from "./db/pool"
 import { OutboxHandlers, type OutboxLogger } from "./worker/outbox"
 import { OutboxRepository } from "./worker/outbox-repository"
 import { OutboxWorker } from "./worker/outbox-worker"
-import {
-  startWorkerHealthServer,
-  stopWorkerHealthServer,
-} from "./worker/health"
+import { startWorkerHealthServer, stopWorkerHealthServer } from "./worker/health"
 
 /**
  * Worker entry point.
@@ -21,9 +18,7 @@ export function createHandlerRegistry(): OutboxHandlers {
   return new OutboxHandlers()
 }
 
-function outboxLoggerFor(
-  logger: ReturnType<typeof createLogger>,
-): OutboxLogger {
+function outboxLoggerFor(logger: ReturnType<typeof createLogger>): OutboxLogger {
   const event = (fallback: string, entry: Record<string, unknown>): string =>
     typeof entry.message === "string" ? entry.message : fallback
 
@@ -37,9 +32,7 @@ function outboxLoggerFor(
 async function bootstrap(): Promise<void> {
   const config = loadConfig()
   if (!config.worker.databaseUrl) {
-    throw new ConfigurationError(
-      "WORKER_DATABASE_URL or DATABASE_URL is required for the worker",
-    )
+    throw new ConfigurationError("WORKER_DATABASE_URL or DATABASE_URL is required for the worker")
   }
 
   const logger = createLogger({
@@ -93,8 +86,7 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((error: unknown) => {
-  const message =
-    error instanceof Error ? error.message : "unknown startup failure"
+  const message = error instanceof Error ? error.message : "unknown startup failure"
   console.error(`hivorr-worker: failed to start: ${message}`)
   process.exit(1)
 })

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  ConfigurationError,
-  databaseUrlMatchesProjectRef,
-  parseConfig,
-} from "../server/src/config"
+import { ConfigurationError, databaseUrlMatchesProjectRef, parseConfig } from "../server/src/config"
 
 const MFA_KEY = `${"A".repeat(43)}=`
 const PAYOUT_KEY = `${"B".repeat(43)}=`
@@ -42,9 +38,9 @@ describe("API configuration", () => {
   })
 
   it("rejects a malformed release identity", () => {
-    expect(() =>
-      parseConfig({ HIVORR_ENV: "test", RELEASE_SHA: "not-a-sha" }),
-    ).toThrow(ConfigurationError)
+    expect(() => parseConfig({ HIVORR_ENV: "test", RELEASE_SHA: "not-a-sha" })).toThrow(
+      ConfigurationError,
+    )
     expect(() =>
       parseConfig({
         HIVORR_ENV: "test",
@@ -54,9 +50,7 @@ describe("API configuration", () => {
   })
 
   it("requires a database and issuer in staging and production", () => {
-    expect(() => parseConfig({ HIVORR_ENV: "staging" })).toThrow(
-      ConfigurationError,
-    )
+    expect(() => parseConfig({ HIVORR_ENV: "staging" })).toThrow(ConfigurationError)
     try {
       parseConfig({ HIVORR_ENV: "production" })
     } catch (error) {
@@ -88,10 +82,8 @@ describe("API configuration", () => {
       HIVORR_ENV: "production",
       BACKEND_ENVIRONMENT: "production",
       SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
-      DATABASE_URL:
-        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
-      DATABASE_SSL_CA:
-        "-----BEGIN CERTIFICATE-----fake-----END CERTIFICATE-----",
+      DATABASE_URL: "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+      DATABASE_SSL_CA: "-----BEGIN CERTIFICATE-----fake-----END CERTIFICATE-----",
       SESSION_ISSUER: "hivorr-production",
       MFA_ENCRYPTION_KEY: MFA_KEY,
       PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
@@ -102,10 +94,7 @@ describe("API configuration", () => {
     expect(config.port).toBe(8080)
     expect(config.backendEnvironment).toBe("production")
     expect(config.supabaseProjectRef).toBe("abcdefghijklmnopqrst")
-    expect(config.corsAllowedOrigins).toEqual([
-      "https://hivorr.com",
-      "https://control.hivorr.com",
-    ])
+    expect(config.corsAllowedOrigins).toEqual(["https://hivorr.com", "https://control.hivorr.com"])
   })
 
   it("refuses a production configuration without a database CA", () => {
@@ -129,8 +118,7 @@ describe("API configuration", () => {
       HIVORR_ENV: "staging",
       BACKEND_ENVIRONMENT: "staging",
       SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
-      DATABASE_URL:
-        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+      DATABASE_URL: "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
       SESSION_ISSUER: "hivorr-staging",
       MFA_ENCRYPTION_KEY: MFA_KEY,
       PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,
@@ -217,8 +205,7 @@ describe("API configuration", () => {
       HIVORR_ENV: "staging",
       BACKEND_ENVIRONMENT: "staging",
       SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
-      DATABASE_URL:
-        "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
+      DATABASE_URL: "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
       WORKER_DATABASE_URL: workerUrl,
       SESSION_ISSUER: "hivorr-staging",
       MFA_ENCRYPTION_KEY: MFA_KEY,
@@ -267,9 +254,9 @@ describe("VFD configuration", () => {
     })
     expect(config.vfd.sourceAccount).toBe("1000000001")
 
-    expect(() =>
-      parseConfig({ HIVORR_ENV: "test", VFD_SOURCE_ACCOUNT: "123" }),
-    ).toThrow(ConfigurationError)
+    expect(() => parseConfig({ HIVORR_ENV: "test", VFD_SOURCE_ACCOUNT: "123" })).toThrow(
+      ConfigurationError,
+    )
   })
 
   it("treats an empty source account placeholder as unset", () => {
@@ -366,8 +353,7 @@ describe("payout configuration", () => {
         SUPABASE_PROJECT_REF: "abcdefghijklmnopqrst",
         DATABASE_URL:
           "postgresql://postgres:fake@db.abcdefghijklmnopqrst.supabase.co:5432/postgres",
-        DATABASE_SSL_CA:
-          "-----BEGIN CERTIFICATE-----fake-----END CERTIFICATE-----",
+        DATABASE_SSL_CA: "-----BEGIN CERTIFICATE-----fake-----END CERTIFICATE-----",
         SESSION_ISSUER: "hivorr-production",
         MFA_ENCRYPTION_KEY: MFA_KEY,
         PAYOUT_ENCRYPTION_KEY: PAYOUT_KEY,

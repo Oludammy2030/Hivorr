@@ -63,18 +63,14 @@ describe("identity repository", () => {
   })
 
   it("rejects SQL that reaches another module's schema", () => {
-    expect(() =>
-      assertIdentitySchemaSql("select * from market.orders"),
-    ).toThrow(/market schema/)
-    expect(() =>
-      assertIdentitySchemaSql("select * from profile.profiles"),
-    ).toThrow(/profile schema/)
+    expect(() => assertIdentitySchemaSql("select * from market.orders")).toThrow(/market schema/)
+    expect(() => assertIdentitySchemaSql("select * from profile.profiles")).toThrow(
+      /profile schema/,
+    )
     expect(() =>
       assertIdentitySchemaSql("select * from identity.users where id = $1"),
     ).not.toThrow()
-    expect(() =>
-      assertIdentitySchemaSql("select platform.uuidv7()"),
-    ).not.toThrow()
+    expect(() => assertIdentitySchemaSql("select platform.uuidv7()")).not.toThrow()
   })
 
   it("maps a user row without leaking snake_case", async () => {
@@ -104,9 +100,7 @@ describe("identity repository", () => {
   it("returns undefined when a lookup finds nothing", async () => {
     const repository = repositoryWith(new FakeTransaction())
     expect(await repository.findAccount("missing")).toBeUndefined()
-    expect(
-      await repository.findUserByEmail("missing@example.test"),
-    ).toBeUndefined()
+    expect(await repository.findUserByEmail("missing@example.test")).toBeUndefined()
   })
 
   it("lists memberships, grants and devices with parameters", async () => {

@@ -163,15 +163,9 @@ describe("finance limit domain", () => {
 
   it("starts periods at UTC boundaries", () => {
     const at2 = new Date("2026-11-19T12:34:56.000Z")
-    expect(financeLimitPeriodStart("daily", at2)?.toISOString()).toBe(
-      "2026-11-19T00:00:00.000Z",
-    )
-    expect(financeLimitPeriodStart("weekly", at2)?.toISOString()).toBe(
-      "2026-11-16T00:00:00.000Z",
-    )
-    expect(financeLimitPeriodStart("monthly", at2)?.toISOString()).toBe(
-      "2026-11-01T00:00:00.000Z",
-    )
+    expect(financeLimitPeriodStart("daily", at2)?.toISOString()).toBe("2026-11-19T00:00:00.000Z")
+    expect(financeLimitPeriodStart("weekly", at2)?.toISOString()).toBe("2026-11-16T00:00:00.000Z")
+    expect(financeLimitPeriodStart("monthly", at2)?.toISOString()).toBe("2026-11-01T00:00:00.000Z")
     expect(financeLimitPeriodStart("per_transaction", at2)).toBeNull()
   })
 })
@@ -264,9 +258,7 @@ const requestContext = {
   environment: "test" as const,
 }
 
-function setInput(
-  overrides: Partial<SetFinanceLimitInput> = {},
-): SetFinanceLimitInput {
+function setInput(overrides: Partial<SetFinanceLimitInput> = {}): SetFinanceLimitInput {
   return {
     actorAccountId: randomUUID(),
     actorUserId: randomUUID(),
@@ -311,9 +303,7 @@ describe("finance limit service", () => {
       statusCode: 403,
     })
     expect(
-      transaction.calls.some((call) =>
-        call.text.startsWith("insert into finance.limits"),
-      ),
+      transaction.calls.some((call) => call.text.startsWith("insert into finance.limits")),
     ).toBe(false)
   })
 
@@ -321,16 +311,14 @@ describe("finance limit service", () => {
     const service = serviceWith(new FakeTransaction())
 
     await expect(
-      service.setLimit(
-        setInput({ targetAccountId: randomUUID(), tier: "tier_1" }),
-      ),
+      service.setLimit(setInput({ targetAccountId: randomUUID(), tier: "tier_1" })),
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
-    await expect(
-      service.setLimit(setInput({ amount: "1.00001" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
-    await expect(
-      service.setLimit(setInput({ reason: "no" })),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
+    await expect(service.setLimit(setInput({ amount: "1.00001" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
+    await expect(service.setLimit(setInput({ reason: "no" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
   })
 
   it("denies tier_0 and an unset limit with stable codes", async () => {
@@ -375,13 +363,11 @@ describe("finance limit service", () => {
       direction: "in" as const,
     }
 
-    await expect(
-      service.check({ ...base, amount: "100" }),
-    ).resolves.toBeUndefined()
+    await expect(service.check({ ...base, amount: "100" })).resolves.toBeUndefined()
 
-    await expect(
-      service.check({ ...base, amount: "100.0001" }),
-    ).rejects.toMatchObject({ code: "LIMIT_EXCEEDED" })
+    await expect(service.check({ ...base, amount: "100.0001" })).rejects.toMatchObject({
+      code: "LIMIT_EXCEEDED",
+    })
   })
 
   it("includes usage already recorded in the period", async () => {
@@ -423,11 +409,9 @@ describe("finance limit service", () => {
       amount: "60",
     }
 
-    await expect(
-      service.check({ ...base, direction: "in" }),
-    ).rejects.toMatchObject({ code: "LIMIT_EXCEEDED" })
-    await expect(
-      service.check({ ...base, direction: "out" }),
-    ).resolves.toBeUndefined()
+    await expect(service.check({ ...base, direction: "in" })).rejects.toMatchObject({
+      code: "LIMIT_EXCEEDED",
+    })
+    await expect(service.check({ ...base, direction: "out" })).resolves.toBeUndefined()
   })
 })

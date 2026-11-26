@@ -66,8 +66,8 @@ export function PaymentsPage({ canManage }: PaymentsPageProps) {
           <p className="eyebrow">Configuration</p>
           <h2>Payments</h2>
           <p className="muted">
-            Switch the active payment provider and mode. Secret keys are held in
-            the deployment secret store and are never entered or shown here.
+            Switch the active payment provider and mode. Secret keys are held in the deployment
+            secret store and are never entered or shown here.
           </p>
         </div>
       </header>
@@ -85,12 +85,9 @@ export function PaymentsPage({ canManage }: PaymentsPageProps) {
           {setting && (
             <>
               <p>
-                <strong>{setting.provider}</strong> in{" "}
-                <strong>{setting.mode}</strong> mode
+                <strong>{setting.provider}</strong> in <strong>{setting.mode}</strong> mode
               </p>
-              <p className="muted">
-                Updated {new Date(setting.updatedAt).toLocaleString()}
-              </p>
+              <p className="muted">Updated {new Date(setting.updatedAt).toLocaleString()}</p>
               <table className="table">
                 <thead>
                   <tr>
@@ -104,25 +101,13 @@ export function PaymentsPage({ canManage }: PaymentsPageProps) {
                     <tr key={key}>
                       <td>{key}</td>
                       <td>
-                        <span
-                          className={configuredChip(
-                            setting.configured[key].test,
-                          )}
-                        >
-                          {setting.configured[key].test
-                            ? "configured"
-                            : "missing"}
+                        <span className={configuredChip(setting.configured[key].test)}>
+                          {setting.configured[key].test ? "configured" : "missing"}
                         </span>
                       </td>
                       <td>
-                        <span
-                          className={configuredChip(
-                            setting.configured[key].live,
-                          )}
-                        >
-                          {setting.configured[key].live
-                            ? "configured"
-                            : "missing"}
+                        <span className={configuredChip(setting.configured[key].live)}>
+                          {setting.configured[key].live ? "configured" : "missing"}
                         </span>
                       </td>
                     </tr>
@@ -139,9 +124,7 @@ export function PaymentsPage({ canManage }: PaymentsPageProps) {
             <span>Provider</span>
             <select
               value={provider}
-              onChange={(event) =>
-                setProvider(event.target.value as "vfd" | "paystack")
-              }
+              onChange={(event) => setProvider(event.target.value as "vfd" | "paystack")}
               disabled={!canManage || busy}
             >
               <option value="paystack">Paystack</option>
@@ -152,9 +135,7 @@ export function PaymentsPage({ canManage }: PaymentsPageProps) {
             <span>Mode</span>
             <select
               value={mode}
-              onChange={(event) =>
-                setMode(event.target.value as "test" | "live")
-              }
+              onChange={(event) => setMode(event.target.value as "test" | "live")}
               disabled={!canManage || busy}
             >
               <option value="test">Test</option>
@@ -172,17 +153,11 @@ export function PaymentsPage({ canManage }: PaymentsPageProps) {
               required
             />
           </label>
-          <button
-            className="button"
-            type="submit"
-            disabled={!canManage || busy}
-          >
+          <button className="button" type="submit" disabled={!canManage || busy}>
             {busy ? "Saving…" : "Save provider"}
           </button>
           {!canManage && (
-            <p className="muted">
-              You need configuration write permission to switch providers.
-            </p>
+            <p className="muted">You need configuration write permission to switch providers.</p>
           )}
         </form>
       </div>

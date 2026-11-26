@@ -68,53 +68,48 @@ describeIntegration("access denial lifecycle", () => {
   let operatorId: string
   let targetId: string
 
-  beforeAll(
-    async () => {
-      admin = new Client({ connectionString: baseUrl })
-      await admin.connect()
-      await admin.query(`create database "${databaseName}"`)
+  beforeAll(async () => {
+    admin = new Client({ connectionString: baseUrl })
+    await admin.connect()
+    await admin.query(`create database "${databaseName}"`)
 
-      const url = new URL(baseUrl!)
-      url.pathname = `/${databaseName}`
-      database = new Client({ connectionString: url.toString() })
-      await database.connect()
+    const url = new URL(baseUrl!)
+    url.pathname = `/${databaseName}`
+    database = new Client({ connectionString: url.toString() })
+    await database.connect()
 
-      for (const file of readdirSync(migrationsDirectory)
-        .filter((entry) => entry.endsWith(".sql"))
-        .sort()) {
-        await database.query(
-          readFileSync(path.join(migrationsDirectory, file), "utf8"),
-        )
-      }
+    for (const file of readdirSync(migrationsDirectory)
+      .filter((entry) => entry.endsWith(".sql"))
+      .sort()) {
+      await database.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
+    }
 
-      const operator = await database.query<{ id: string }>(
-        `with account as (insert into identity.accounts default values returning id)
+    const operator = await database.query<{ id: string }>(
+      `with account as (insert into identity.accounts default values returning id)
        insert into identity.users (account_id, email, display_name)
        select account.id, 'operator@hivorr.com', 'Operator' from account
        returning id`,
-      )
-      operatorId = operator.rows[0]!.id
+    )
+    operatorId = operator.rows[0]!.id
 
-      const target = await database.query<{ id: string }>(
-        `with account as (insert into identity.accounts default values returning id)
+    const target = await database.query<{ id: string }>(
+      `with account as (insert into identity.accounts default values returning id)
        insert into identity.users (account_id, email, display_name)
        select account.id, 'target@hivorr.com', 'Target' from account
        returning id`,
-      )
-      targetId = target.rows[0]!.id
+    )
+    targetId = target.rows[0]!.id
 
-      // Both hold the founder role at platform scope, so denial and revocation
-      // can be exercised in both directions.
-      await database.query(
-        `insert into admin.role_assignments (user_id, role_id, scope_type, granted_by)
+    // Both hold the founder role at platform scope, so denial and revocation
+    // can be exercised in both directions.
+    await database.query(
+      `insert into admin.role_assignments (user_id, role_id, scope_type, granted_by)
        select holder, r.id, 'platform', $1
          from admin.roles r, unnest(array[$1, $2]::uuid[]) as holder
         where r.key = 'founder'`,
-        [operatorId, targetId],
-      )
-    },
-    60_000,
-  )
+      [operatorId, targetId],
+    )
+  }, 60_000)
 
   afterAll(async () => {
     await database?.end()
@@ -177,10 +172,10 @@ describeIntegration("access denial lifecycle", () => {
     )
 
     await expect(
-      database.query(
-        `select * from admin.revoke_access_denial($1, $2, 'self', 'staging')`,
-        [targetId, created.rows[0]!.id],
-      ),
+      database.query(`select * from admin.revoke_access_denial($1, $2, 'self', 'staging')`, [
+        targetId,
+        created.rows[0]!.id,
+      ]),
     ).rejects.toMatchObject({ code: "42501" })
   })
 

@@ -24,9 +24,7 @@ const WIDTHS = [375, 768, 1280]
 const HEIGHT = 900
 
 if (!existsSync(path.join("dist", "slice.html"))) {
-  console.error(
-    "slice:parity: dist/slice.html is missing. Run `pnpm build` first.",
-  )
+  console.error("slice:parity: dist/slice.html is missing. Run `pnpm build` first.")
   process.exit(2)
 }
 
@@ -75,9 +73,7 @@ try {
   await context.route("**/*", (route) => {
     const url = new URL(route.request().url())
     const local = url.origin === BASE_URL
-    const fonts =
-      url.hostname === "fonts.googleapis.com" ||
-      url.hostname === "fonts.gstatic.com"
+    const fonts = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com"
     return local || fonts ? route.continue() : route.abort()
   })
 
@@ -129,9 +125,7 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log(
-  `slice:parity: OK — sign-in matches the prototype at ${WIDTHS.join("/")} px`,
-)
+console.log(`slice:parity: OK — sign-in matches the prototype at ${WIDTHS.join("/")} px`)
 
 async function settle(page) {
   await page.addStyleTag({
@@ -140,9 +134,7 @@ async function settle(page) {
   })
   await page.evaluate(async () => {
     await document.fonts.ready
-    await new Promise((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve)),
-    )
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   })
   const loaded = await page.evaluate(
     () =>

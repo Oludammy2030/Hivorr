@@ -1,23 +1,11 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { paymentProviderSettingRequest } from "../contracts/schemas"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 import { PaymentProviderSettingsService } from "../modules/platform"
 
 /**
@@ -47,10 +35,7 @@ export class PaymentsController {
   async set(@Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(paymentProviderSettingRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.settings.set({
       actorUserId: session.userId,

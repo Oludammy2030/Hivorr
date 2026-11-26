@@ -12,10 +12,7 @@ import {
   EMAIL_ADAPTER,
   type CaptureEmailAdapter,
 } from "../server/src/integrations/email/email.adapter"
-import {
-  hashSessionToken,
-  IdentityService,
-} from "../server/src/modules/identity/identity.service"
+import { hashSessionToken, IdentityService } from "../server/src/modules/identity/identity.service"
 import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
 const baseUrl = process.env.IDENTITY_TEST_DATABASE_URL
@@ -75,17 +72,11 @@ describeIntegration("identity service integration", () => {
     setup = new Client({ connectionString: testUrl })
     await setup.connect()
 
-    const migrationsDirectory = path.join(
-      process.cwd(),
-      "supabase",
-      "migrations",
-    )
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
     for (const file of readdirSync(migrationsDirectory)
       .filter((entry) => entry.endsWith(".sql"))
       .sort()) {
-      await setup.query(
-        readFileSync(path.join(migrationsDirectory, file), "utf8"),
-      )
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
     }
 
     const config: ApiConfig = {
@@ -140,9 +131,7 @@ describeIntegration("identity service integration", () => {
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -180,10 +169,7 @@ describeIntegration("identity service integration", () => {
 
   it("rejects a wrong password", async () => {
     await expect(
-      service.signIn(
-        { email: "founder@example.test", password: "wrong-password" },
-        context,
-      ),
+      service.signIn({ email: "founder@example.test", password: "wrong-password" }, context),
     ).rejects.toBeInstanceOf(ApiError)
   })
 
@@ -217,9 +203,7 @@ describeIntegration("identity service integration", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" })
 
     await service.signOut(issued.token, context)
-    await expect(
-      service.getSession(issued.token, context),
-    ).rejects.toMatchObject({
+    await expect(service.getSession(issued.token, context)).rejects.toMatchObject({
       code: "UNAUTHENTICATED",
     })
   })
@@ -371,9 +355,7 @@ describeIntegration("identity service integration", () => {
     })
     expect(appSessions.statusCode).toBe(200)
     const appSessionList = appSessions.json()
-    expect(
-      appSessionList.some((session: { current: boolean }) => session.current),
-    ).toBe(true)
+    expect(appSessionList.some((session: { current: boolean }) => session.current)).toBe(true)
     const appSessionId = appSessionList.find(
       (session: { current: boolean }) => session.current,
     ).sessionId
@@ -425,10 +407,7 @@ describeIntegration("identity service integration", () => {
       audience: "control",
       environment: "staging",
     })
-    const controlCookie = cookieHeader(
-      readCookies(verified.headers),
-      "__Host-hivorr_control_sid",
-    )
+    const controlCookie = cookieHeader(readCookies(verified.headers), "__Host-hivorr_control_sid")
     expect(controlCookie).toContain("__Host-hivorr_control_sid=")
 
     const replayedChallenge = await app.inject({
@@ -674,10 +653,7 @@ describeIntegration("identity service integration", () => {
       payload: { email: emailAddress, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const cookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const cookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const requested = await app.inject({
       method: "POST",
@@ -775,10 +751,7 @@ describeIntegration("identity service integration", () => {
       payload: { email: emailAddress, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const cookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const cookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const requested = await app.inject({
       method: "POST",
@@ -836,10 +809,7 @@ describeIntegration("identity service integration", () => {
       payload: { email: emailAddress, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const cookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const cookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     await setup.query(
       "insert into profile.activity_activations (account_id, activity_id, state) values ($1, 'market.sell', 'ACTIVE')",
@@ -865,10 +835,7 @@ describeIntegration("identity service integration", () => {
     expect(body.capabilities).toContain("session.read")
     expect(body.capabilities).toContain("activity.activate")
 
-    await setup.query(
-      "update identity.users set status = 'suspended' where id = $1",
-      [userId],
-    )
+    await setup.query("update identity.users set status = 'suspended' where id = $1", [userId])
     const rejected = await app.inject({
       method: "GET",
       url: "/v1/session",
@@ -904,10 +871,7 @@ describeIntegration("identity service integration", () => {
       payload: { email: emailAddress, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const cookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const cookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const activities = [
       "market.buy",
@@ -941,9 +905,7 @@ describeIntegration("identity service integration", () => {
     })
     expect(list.statusCode).toBe(200)
     expect(list.json()).toHaveLength(6)
-    expect(
-      list.json().every((entry: { state: string }) => entry.state === "ACTIVE"),
-    ).toBe(true)
+    expect(list.json().every((entry: { state: string }) => entry.state === "ACTIVE")).toBe(true)
 
     const activationAudit = await setup.query(
       "select before_summary, after_summary from platform.audit_log where action = 'profile.activity_activated' and target_id = 'market.buy' order by occurred_at desc limit 1",
@@ -988,9 +950,7 @@ describeIntegration("identity service integration", () => {
       url: "/v1/activities",
       headers: { host, cookie },
     })
-    const marketBuy = after
-      .json()
-      .find((entry: { id: string }) => entry.id === "market.buy")
+    const marketBuy = after.json().find((entry: { id: string }) => entry.id === "market.buy")
     expect(marketBuy.state).toBe("INACTIVE")
 
     const kept = await setup.query(
