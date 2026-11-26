@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
+import { testProviderConfig } from "./support/api-config"
 import { DatabaseService } from "../server/src/db/database.service"
 import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
@@ -125,6 +126,7 @@ describeIntegration("partner isolation integration", () => {
     }
 
     const config: ApiConfig = {
+      ...testProviderConfig,
       environment: "staging",
       backendEnvironment: "staging",
       supabaseProjectRef: "abcdefghijklmnopqrst",

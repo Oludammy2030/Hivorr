@@ -16,7 +16,7 @@ profile
 public
 services
 
-## tables (65)
+## tables (68)
 admin | access_denials
 admin | approval_decisions
 admin | approval_requests
@@ -86,7 +86,7 @@ platform | taxonomy_nodes
 profile | activity_activations
 profile | profiles
 
-## columns (630)
+## columns (672)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -760,7 +760,7 @@ profile | profiles | timezone | text | text | YES | -
 profile | profiles | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | profiles | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (356)
+## constraints (392)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -1019,7 +1019,7 @@ finance | payout_requests | payout_requests_account_id_idempotency_key_key | u |
 finance | payout_requests | payout_requests_amount_check | c | CHECK (amount > 0::numeric)
 finance | payout_requests | payout_requests_approved_by_fkey | f | FOREIGN KEY (approved_by) REFERENCES identity.users(id) ON DELETE RESTRICT
 finance | payout_requests | payout_requests_check | c | CHECK (approved_by IS NULL OR approved_by <> requested_by)
-finance | payout_requests | payout_requests_check1 | c | CHECK (status <> 'PAID'::text OR (provider_reference IS NOT NULL AND completed_at IS NOT NULL))
+finance | payout_requests | payout_requests_check1 | c | CHECK (status <> 'PAID'::text OR provider_reference IS NOT NULL AND completed_at IS NOT NULL)
 finance | payout_requests | payout_requests_check2 | c | CHECK (status <> 'FAILED'::text OR failure_code IS NOT NULL)
 finance | payout_requests | payout_requests_currency_check | c | CHECK (currency ~ '^[A-Z]{3}$'::text)
 finance | payout_requests | payout_requests_idempotency_key_check | c | CHECK (length(btrim(idempotency_key)) >= 8 AND length(btrim(idempotency_key)) <= 200)
@@ -1063,7 +1063,7 @@ finance | reconciliation_runs | reconciliation_runs_pkey | p | PRIMARY KEY (id)
 finance | reconciliation_runs | reconciliation_runs_provider_check | c | CHECK (provider ~ '^[a-z][a-z0-9_-]{1,39}$'::text)
 finance | reconciliation_runs | reconciliation_runs_provider_period_start_period_end_curren_key | u | UNIQUE (provider, period_start, period_end, currency)
 finance | reconciliation_runs | reconciliation_runs_status_check | c | CHECK (status = ANY (ARRAY['running'::text, 'matched'::text, 'mismatch'::text, 'resolved'::text]))
-identity | accounts | accounts_financial_hold_reason_check | c | CHECK (financial_hold_reason = ANY (ARRAY['kyc_upgrade_required'::text]))
+identity | accounts | accounts_financial_hold_reason_check | c | CHECK (financial_hold_reason = 'kyc_upgrade_required'::text)
 identity | accounts | accounts_kyc_tier_check | c | CHECK (kyc_tier = ANY (ARRAY['tier_0'::text, 'tier_1'::text, 'tier_2'::text, 'tier_3'::text]))
 identity | accounts | accounts_pkey | p | PRIMARY KEY (id)
 identity | accounts | accounts_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text, 'closed'::text]))
@@ -1122,7 +1122,7 @@ platform | outbox | outbox_attempts_check | c | CHECK (attempts >= 0)
 platform | outbox | outbox_pkey | p | PRIMARY KEY (id)
 platform | payment_provider_setting | payment_provider_setting_active_mode_check | c | CHECK (active_mode = ANY (ARRAY['test'::text, 'live'::text]))
 platform | payment_provider_setting | payment_provider_setting_active_provider_check | c | CHECK (active_provider = ANY (ARRAY['vfd'::text, 'paystack'::text]))
-platform | payment_provider_setting | payment_provider_setting_check | c | CHECK (id)
+platform | payment_provider_setting | payment_provider_setting_id_check | c | CHECK (id)
 platform | payment_provider_setting | payment_provider_setting_pkey | p | PRIMARY KEY (id)
 platform | payment_provider_setting | payment_provider_setting_updated_by_fkey | f | FOREIGN KEY (updated_by) REFERENCES identity.users(id) ON DELETE RESTRICT
 platform | reference_counters | reference_counters_pkey | p | PRIMARY KEY (name)
@@ -1154,7 +1154,7 @@ profile | activity_activations | activity_activations_state_check | c | CHECK (s
 profile | profiles | profiles_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | profiles | profiles_pkey | p | PRIMARY KEY (account_id)
 
-## indexes (202)
+## indexes (213)
 admin | access_denials | access_denials_active_unique | CREATE UNIQUE INDEX access_denials_active_unique ON admin.access_denials USING btree (user_id, permission_key, COALESCE(scope_type, ''::text), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
 admin | access_denials | access_denials_pkey | CREATE UNIQUE INDEX access_denials_pkey ON admin.access_denials USING btree (id)
 admin | access_denials | access_denials_user_active_idx | CREATE INDEX access_denials_user_active_idx ON admin.access_denials USING btree (user_id, permission_key) WHERE (revoked_at IS NULL)
@@ -1259,6 +1259,7 @@ admin | verification_reviews | verification_reviews_pkey | CREATE UNIQUE INDEX v
 admin | verification_reviews | verification_reviews_status_idx | CREATE INDEX verification_reviews_status_idx ON admin.verification_reviews USING btree (status, created_at)
 admin | work_items | work_items_pkey | CREATE UNIQUE INDEX work_items_pkey ON admin.work_items USING btree (id)
 admin | work_items | work_items_user_idx | CREATE INDEX work_items_user_idx ON admin.work_items USING btree (user_id, status, due_at)
+finance | collection_accounts | collection_accounts_account_id_provider_key | CREATE UNIQUE INDEX collection_accounts_account_id_provider_key ON finance.collection_accounts USING btree (account_id, provider)
 finance | collection_accounts | collection_accounts_account_idx | CREATE INDEX collection_accounts_account_idx ON finance.collection_accounts USING btree (account_id, status)
 finance | collection_accounts | collection_accounts_account_number_key | CREATE UNIQUE INDEX collection_accounts_account_number_key ON finance.collection_accounts USING btree (account_number)
 finance | collection_accounts | collection_accounts_pkey | CREATE UNIQUE INDEX collection_accounts_pkey ON finance.collection_accounts USING btree (id)
@@ -1285,6 +1286,7 @@ finance | limits | limits_tier_idx | CREATE INDEX limits_tier_idx ON finance.lim
 finance | payout_accounts | payout_accounts_account_idx | CREATE INDEX payout_accounts_account_idx ON finance.payout_accounts USING btree (account_id, status)
 finance | payout_accounts | payout_accounts_active_idx | CREATE UNIQUE INDEX payout_accounts_active_idx ON finance.payout_accounts USING btree (account_id, bank_code, account_number_fingerprint) WHERE (status <> 'disabled'::text)
 finance | payout_accounts | payout_accounts_pkey | CREATE UNIQUE INDEX payout_accounts_pkey ON finance.payout_accounts USING btree (id)
+finance | payout_requests | payout_requests_account_id_idempotency_key_key | CREATE UNIQUE INDEX payout_requests_account_id_idempotency_key_key ON finance.payout_requests USING btree (account_id, idempotency_key)
 finance | payout_requests | payout_requests_account_idx | CREATE INDEX payout_requests_account_idx ON finance.payout_requests USING btree (account_id, created_at DESC)
 finance | payout_requests | payout_requests_pkey | CREATE UNIQUE INDEX payout_requests_pkey ON finance.payout_requests USING btree (id)
 finance | payout_requests | payout_requests_reference_key | CREATE UNIQUE INDEX payout_requests_reference_key ON finance.payout_requests USING btree (reference)
@@ -1367,7 +1369,7 @@ profile | activity_activations | activity_activations_activity_state_idx | CREAT
 profile | activity_activations | activity_activations_pkey | CREATE UNIQUE INDEX activity_activations_pkey ON profile.activity_activations USING btree (id)
 profile | profiles | profiles_pkey | CREATE UNIQUE INDEX profiles_pkey ON profile.profiles USING btree (account_id)
 
-## row-level-security (65)
+## row-level-security (68)
 admin | access_denials | true | true
 admin | approval_decisions | true | true
 admin | approval_requests | true | true
@@ -1437,7 +1439,7 @@ platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
 profile | profiles | true | true
 
-## policies (81)
+## policies (86)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1449,9 +1451,9 @@ admin | role_permissions | role_permissions_select | PERMISSIVE | {hivorr_api,hi
 admin | roles | roles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
 admin | staff_profiles | staff_profiles_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | work_items | work_items_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
-finance | escrow_accounts | escrow_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (payer_account_id = platform.current_account_id())
 finance | collection_accounts | collection_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | ((account_id = platform.current_account_id()) AND (owner_user_id = platform.current_user_id()))
 finance | collection_accounts | collection_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
+finance | escrow_accounts | escrow_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (payer_account_id = platform.current_account_id())
 finance | escrow_accounts | escrow_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (payer_account_id = platform.current_account_id()) | -
 finance | escrow_accounts | escrow_accounts_update | PERMISSIVE | {hivorr_api} | UPDATE | (payer_account_id = platform.current_account_id()) | (payer_account_id = platform.current_account_id())
 finance | journal_entries | journal_entries_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (platform.current_account_id() IS NOT NULL)
@@ -1463,7 +1465,7 @@ finance | limits | limits_select | PERMISSIVE | {hivorr_api} | SELECT | (((platf
 finance | payout_accounts | payout_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 finance | payout_accounts | payout_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 finance | payout_accounts | payout_accounts_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
-finance | payout_requests | payout_requests_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (((account_id = platform.current_account_id()) AND (requested_by = platform.current_user_id()) AND (status = 'REQUESTED'::text) AND (approved_by IS NULL) AND (provider IS NULL) AND (provider_reference IS NULL) AND (journal_entry_id IS NULL) AND (reversal_entry_id IS NULL) AND (completed_at IS NULL)))
+finance | payout_requests | payout_requests_insert | PERMISSIVE | {hivorr_api} | INSERT | - | ((account_id = platform.current_account_id()) AND (requested_by = platform.current_user_id()) AND (status = 'REQUESTED'::text) AND (approved_by IS NULL) AND (provider IS NULL) AND (provider_reference IS NULL) AND (journal_entry_id IS NULL) AND (reversal_entry_id IS NULL) AND (completed_at IS NULL))
 finance | payout_requests | payout_requests_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 finance | payout_requests | payout_requests_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 finance | postings | postings_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (platform.current_account_id() IS NOT NULL)
@@ -1515,8 +1517,8 @@ identity | users | users_definer_select | PERMISSIVE | {hivorr_migrator,postgres
 identity | users | users_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 identity | users | users_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 identity | users | users_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
-platform | taxonomy_attributes | taxonomy_attributes_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
 platform | payment_provider_setting | payment_provider_setting_select | PERMISSIVE | {hivorr_api} | SELECT | true | -
+platform | taxonomy_attributes | taxonomy_attributes_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
 platform | taxonomy_nodes | taxonomy_nodes_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
 profile | activity_activations | activity_activations_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 profile | activity_activations | activity_activations_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
@@ -1525,7 +1527,7 @@ profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | 
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (565)
+## table-grants (594)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -2121,7 +2123,7 @@ profile | profiles | postgres | TRIGGER | YES
 profile | profiles | postgres | TRUNCATE | YES
 profile | profiles | postgres | UPDATE | YES
 
-## functions (91)
+## functions (98)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""

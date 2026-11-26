@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { ApiError } from "../server/src/common/errors"
 import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
+import { testProviderConfig } from "./support/api-config"
 import { DatabaseService } from "../server/src/db/database.service"
 import {
   EMAIL_ADAPTER,
@@ -80,6 +81,7 @@ describeIntegration("identity service integration", () => {
     }
 
     const config: ApiConfig = {
+      ...testProviderConfig,
       environment: "staging",
       backendEnvironment: "staging",
       supabaseProjectRef: "abcdefghijklmnopqrst",
