@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Inject,
+  Param,
   Post,
   Req,
 } from "@nestjs/common"
@@ -15,11 +16,16 @@ import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
 import { withdrawRequest } from "../contracts/schemas"
 import {
+  bindPayoutAccountRequest,
+  disablePayoutAccountRequest,
+} from "../contracts/schemas"
+import {
   IdentityService,
   accessToken,
   requestContext,
 } from "../modules/identity"
 import {
+  PayoutAccountService,
   PayoutExecutionService,
   PayoutRequestService,
 } from "../modules/finance"
@@ -41,6 +47,8 @@ export class WalletController {
     private readonly requests: PayoutRequestService,
     @Inject(PayoutExecutionService)
     private readonly execution: PayoutExecutionService,
+    @Inject(PayoutAccountService)
+    private readonly payoutAccounts: PayoutAccountService,
     @Inject(CollectionAccountService)
     private readonly collections: CollectionAccountService,
     @Inject(API_CONFIG) private readonly config: ApiConfig,
@@ -52,6 +60,53 @@ export class WalletController {
     return this.requests.list({
       accountId: session.accountId,
       userId: session.userId,
+    })
+  }
+
+  @Get("payout-accounts")
+  async listPayoutAccounts(@Req() request: FastifyRequest) {
+    const { session } = await this.loadSession(request)
+    return this.payoutAccounts.list({
+      accountId: session.accountId,
+      userId: session.userId,
+    })
+  }
+
+  @Post("payout-accounts")
+  @HttpCode(201)
+  async bindPayoutAccount(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    const input = parseBody(bindPayoutAccountRequest, body)
+    const { session, context } = await this.loadSession(request)
+    return this.payoutAccounts.bind({
+      accountId: session.accountId,
+      userId: session.userId,
+      tier: session.kycTier,
+      bankCode: input.bankCode,
+      bankName: input.bankName,
+      accountNumber: input.accountNumber,
+      reason: input.reason,
+      context,
+    })
+  }
+
+  @Post("payout-accounts/:id/disable")
+  @HttpCode(200)
+  async disablePayoutAccount(
+    @Param("id") id: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    const input = parseBody(disablePayoutAccountRequest, body)
+    const { session, context } = await this.loadSession(request)
+    return this.payoutAccounts.disable({
+      id,
+      accountId: session.accountId,
+      userId: session.userId,
+      reason: input.reason,
+      context,
     })
   }
 

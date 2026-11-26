@@ -876,6 +876,30 @@ export const withdrawRequest = z.strictObject({
   currency: currencyCodeSchema,
 })
 
+export const bindPayoutAccountRequest = z.strictObject({
+  bankCode: z.string().regex(/^[0-9]{3,10}$/),
+  bankName: z.string().min(1).max(120),
+  accountNumber: z.string().regex(/^[0-9]{10}$/),
+  reason: z.string().min(5).max(500).optional(),
+})
+
+export const disablePayoutAccountRequest = z.strictObject({
+  reason: z.string().min(5).max(500),
+})
+
+export const payoutAccountViewResponse = z.object({
+  id: z.string().uuid(),
+  bankCode: z.string(),
+  bankName: z.string(),
+  accountName: z.string(),
+  accountNumberMasked: z.string(),
+  state: z.enum(["pending", "verified", "rejected", "disabled"]),
+  boundAt: z.string().nullable(),
+  createdAt: z.string(),
+})
+
+export const payoutAccountListResponse = z.array(payoutAccountViewResponse)
+
 export const assignKycTierRequest = z.strictObject({
   tier: z.enum(KYC_TIERS),
   reason: z.string().min(5).max(500),

@@ -289,6 +289,16 @@ export type UpdateTaxonomyAttributeResponse = { "id": string; "nodeId": string; 
 
 export type ListPayoutsResponse = ({ "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null })[]
 
+export type ListPayoutAccountsResponse = ({ "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string })[]
+
+export type BindPayoutAccountRequest = { "bankCode": string; "bankName": string; "accountNumber": string; "reason"?: string }
+
+export type BindPayoutAccountResponse = { "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string }
+
+export type DisablePayoutAccountRequest = { "reason": string }
+
+export type DisablePayoutAccountResponse = { "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string }
+
 export type GetCollectionAccountResponse = { "id": string; "provider": string; "reference": string; "accountNumber": string; "accountName": string; "bankName": string | null; "currency": string; "status": string } | null
 
 export type CreateCollectionAccountResponse = { "id": string; "provider": string; "reference": string; "accountNumber": string; "accountName": string; "bankName": string | null; "currency": string; "status": string }
@@ -950,6 +960,27 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "GET",
         "/v1/wallet/payouts",
         undefined,
+        [200],
+      ),
+    listPayoutAccounts: () =>
+      request<ListPayoutAccountsResponse>(
+        "GET",
+        "/v1/wallet/payout-accounts",
+        undefined,
+        [200],
+      ),
+    bindPayoutAccount: (input: BindPayoutAccountRequest) =>
+      request<BindPayoutAccountResponse>(
+        "POST",
+        "/v1/wallet/payout-accounts",
+        input,
+        [201],
+      ),
+    disablePayoutAccount: (params: { id: string }, input: DisablePayoutAccountRequest) =>
+      request<DisablePayoutAccountResponse>(
+        "POST",
+        `/v1/wallet/payout-accounts/${encodeURIComponent(params.id)}/disable`,
+        input,
         [200],
       ),
     getCollectionAccount: () =>
