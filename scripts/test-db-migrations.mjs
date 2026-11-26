@@ -1532,6 +1532,248 @@ try {
   }
   assert(duplicatePayoutRejected, "duplicate payout destinations are refused")
 
+  // ---- Collection accounts, provider setting and KYC gating (2026-11-26) ----
+  const collectionRls = await testClient.query(
+    "select relrowsecurity from pg_class where oid = 'finance.collection_accounts'::regclass",
+  )
+  assert(
+    collectionRls.rows[0]?.relrowsecurity === true,
+    "collection accounts have row level security",
+  )
+
+  for (const privilege of ["select", "insert"]) {
+    const allowed = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.collection_accounts', '${privilege}') as allowed`,
+    )
+    assert(
+      allowed.rows[0].allowed === true,
+      `api role may ${privilege} collection accounts`,
+    )
+  }
+  for (const privilege of ["update", "delete"]) {
+    const allowed = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.collection_accounts', '${privilege}') as allowed`,
+    )
+    assert(
+      allowed.rows[0].allowed === false,
+      `api role cannot ${privilege} collection accounts`,
+    )
+  }
+
+  const collectionPolicies = await testClient.query(
+    "select cmd from pg_policies where schemaname = 'finance' and tablename = 'collection_accounts'",
+  )
+  assert(
+    JSON.stringify(
+      [...new Set(collectionPolicies.rows.map((row) => row.cmd))].sort(),
+    ) === JSON.stringify(["INSERT", "SELECT"]),
+    "collection accounts expose select and insert policies only",
+  )
+
+  const collectionColumns = await testClient.query(
+    "select column_name from information_schema.columns where table_schema = 'finance' and table_name = 'collection_accounts'",
+  )
+  const collectionColumnNames = new Set(
+    collectionColumns.rows.map((row) => row.column_name),
+  )
+  for (const column of [
+    "account_id",
+    "owner_user_id",
+    "provider",
+    "account_number",
+    "account_name",
+    "bank_name",
+    "currency",
+    "status",
+  ]) {
+    assert(
+      collectionColumnNames.has(column),
+      `collection accounts store ${column}`,
+    )
+  }
+  assert(
+    ![...collectionColumnNames].some((column) =>
+      /secret|token|key/i.test(column),
+    ),
+    "collection accounts hold no provider secret",
+  )
+
+  const collectionInsert = await testClient.query(
+    `insert into finance.collection_accounts
+       (account_id, owner_user_id, provider, reference, account_number,
+        account_name, bank_name)
+     values ($1, $2, 'paystack', $3, '1234567890', 'Hivorr / Test', 'Titan Trust Bank')
+     returning id`,
+    [accountId, userId, `COL-${accountId}`],
+  )
+  assert(
+    collectionInsert.rowCount === 1,
+    "a collection account is stored for the account",
+  )
+
+  let duplicateCollectionRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.collection_accounts
+         (account_id, owner_user_id, provider, reference, account_number,
+          account_name)
+       values ($1, $2, 'paystack', $3, '0987654321', 'Hivorr / Other')`,
+      [accountId, userId, `COL-other-${accountId}`],
+    )
+  } catch (error) {
+    duplicateCollectionRejected = error?.code === "23505"
+  }
+  assert(
+    duplicateCollectionRejected,
+    "one collection account per account and provider",
+  )
+
+  const providerSetting = await testClient.query(
+    "select active_provider, active_mode from platform.payment_provider_setting",
+  )
+  assert(providerSetting.rowCount === 1, "the provider setting is one row")
+  assert(
+    providerSetting.rows[0].active_provider === "paystack",
+    "Paystack is the default active provider",
+  )
+  assert(
+    providerSetting.rows[0].active_mode === "test",
+    "the default provider mode is test",
+  )
+
+  const providerColumns = await testClient.query(
+    "select column_name from information_schema.columns where table_schema = 'platform' and table_name = 'payment_provider_setting'",
+  )
+  assert(
+    !providerColumns.rows.some((row) =>
+      /secret|token|key/i.test(row.column_name),
+    ),
+    "the provider setting holds no secret",
+  )
+
+  const providerDirectUpdate = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'platform.payment_provider_setting', 'update') as allowed",
+  )
+  assert(
+    providerDirectUpdate.rows[0].allowed === false,
+    "the api role cannot update the provider setting directly",
+  )
+
+  const providerReadDenied = await testClient
+    .query("select * from platform.get_payment_provider($1)", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    providerReadDenied,
+    "reading the provider setting requires admin.configuration.read",
+  )
+
+  const providerWriteDenied = await testClient
+    .query("select * from platform.set_payment_provider($1, 'vfd', 'test')", [
+      userId,
+    ])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(
+    providerWriteDenied,
+    "switching the provider requires admin.configuration.write",
+  )
+
+  const accountColumns = await testClient.query(
+    "select column_name, column_default from information_schema.columns where table_schema = 'identity' and table_name = 'accounts'",
+  )
+  const accountColumnNames = new Set(
+    accountColumns.rows.map((row) => row.column_name),
+  )
+  for (const column of [
+    "kyc_tier",
+    "kyc_tier_updated_at",
+    "financial_hold_reason",
+    "financial_hold_at",
+  ]) {
+    assert(accountColumnNames.has(column), `identity.accounts has ${column}`)
+  }
+
+  const defaultTier = await testClient.query(
+    "select kyc_tier from identity.accounts where id = $1",
+    [accountId],
+  )
+  assert(
+    defaultTier.rows[0].kyc_tier === "tier_0",
+    "a new account starts at tier_0",
+  )
+
+  let invalidTierRejected = false
+  try {
+    await testClient.query(
+      "update identity.accounts set kyc_tier = 'tier_9' where id = $1",
+      [accountId],
+    )
+  } catch (error) {
+    invalidTierRejected = error?.code === "23514"
+  }
+  assert(invalidTierRejected, "an unknown KYC tier is refused")
+
+  let invalidHoldRejected = false
+  try {
+    await testClient.query(
+      "update identity.accounts set financial_hold_reason = 'manual' where id = $1",
+      [accountId],
+    )
+  } catch (error) {
+    invalidHoldRejected = error?.code === "23514"
+  }
+  assert(
+    invalidHoldRejected,
+    "only the KYC-upgrade hold reason is representable",
+  )
+
+  const cbnWithdrawal = await testClient.query(
+    `select tier, amount::text as amount, is_unlimited
+       from finance.limits
+      where limit_type = 'withdrawal' and period = 'daily'
+        and currency = 'NGN' and account_id is null
+        and tier in ('tier_1', 'tier_2', 'tier_3')
+        and effective_to is null
+      order by tier`,
+  )
+  assert(
+    JSON.stringify(
+      cbnWithdrawal.rows.map((row) => [row.tier, row.amount, row.is_unlimited]),
+    ) ===
+      JSON.stringify([
+        ["tier_1", "30000.0000", false],
+        ["tier_2", "100000.0000", false],
+        ["tier_3", "1000000.0000", false],
+      ]),
+    "the CBN daily withdrawal caps are seeded per tier",
+  )
+
+  const cbnDeposits = await testClient.query(
+    `select tier, amount::text as amount, is_unlimited
+       from finance.limits
+      where limit_type = 'deposit'
+        and currency = 'NGN' and account_id is null
+        and tier in ('tier_1', 'tier_2', 'tier_3')
+        and effective_to is null
+      order by tier`,
+  )
+  assert(
+    JSON.stringify(
+      cbnDeposits.rows.map((row) => [row.tier, row.amount, row.is_unlimited]),
+    ) ===
+      JSON.stringify([
+        ["tier_1", "20000.0000", false],
+        ["tier_2", "50000.0000", false],
+        ["tier_3", "0.0000", true],
+      ]),
+    "the CBN single-deposit caps are seeded per tier",
+  )
+
   await testClient.query(
     `insert into finance.provider_references
        (account_id, provider, provider_reference, direction, status, amount,
