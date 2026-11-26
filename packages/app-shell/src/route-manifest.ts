@@ -28,6 +28,7 @@ export const SLICE_ROUTE_IDS = [
   "reset-password",
   "verify-email",
   "activities",
+  "wallet",
 ] as const
 
 export type SliceRouteId = typeof SLICE_ROUTE_IDS[number]

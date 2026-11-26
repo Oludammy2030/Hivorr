@@ -16,6 +16,7 @@ import {
   taxonomyLevelSchema,
   taxonomyNodeSchema,
   taxonomyRegistrySchema,
+  walletBalanceViewSchema,
 } from "@hivorr/shared"
 import { z } from "zod"
 
@@ -899,6 +900,8 @@ export const payoutAccountViewResponse = z.object({
 })
 
 export const payoutAccountListResponse = z.array(payoutAccountViewResponse)
+
+export const walletBalanceListResponse = z.array(walletBalanceViewSchema)
 
 export const assignKycTierRequest = z.strictObject({
   tier: z.enum(KYC_TIERS),

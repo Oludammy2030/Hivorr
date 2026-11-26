@@ -28,6 +28,7 @@ import {
   PayoutAccountService,
   PayoutExecutionService,
   PayoutRequestService,
+  WalletService,
 } from "../modules/finance"
 import { CollectionAccountService } from "../modules/finance"
 
@@ -51,6 +52,7 @@ export class WalletController {
     private readonly payoutAccounts: PayoutAccountService,
     @Inject(CollectionAccountService)
     private readonly collections: CollectionAccountService,
+    @Inject(WalletService) private readonly wallet: WalletService,
     @Inject(API_CONFIG) private readonly config: ApiConfig,
   ) {}
 
@@ -58,6 +60,15 @@ export class WalletController {
   async list(@Req() request: FastifyRequest) {
     const { session } = await this.loadSession(request)
     return this.requests.list({
+      accountId: session.accountId,
+      userId: session.userId,
+    })
+  }
+
+  @Get("balance")
+  async balance(@Req() request: FastifyRequest) {
+    const { session } = await this.loadSession(request)
+    return this.wallet.balances({
       accountId: session.accountId,
       userId: session.userId,
     })

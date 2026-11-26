@@ -54,6 +54,7 @@ describe("route manifest", () => {
       "reset-password",
       "verify-email",
       "activities",
+      "wallet",
     ])
     expect(SLICE_ROUTES.map((route) => route.path)).toEqual([
       "/",
@@ -64,6 +65,7 @@ describe("route manifest", () => {
       "/reset-password",
       "/verify-email",
       "/activities",
+      "/wallet",
     ])
   })
 
@@ -71,14 +73,14 @@ describe("route manifest", () => {
     expect(matchSlicePath("/login")?.id).toBe("login")
     expect(matchSlicePath("/login/")?.id).toBe("login")
     expect(matchSlicePath("/")?.id).toBe("home")
-    expect(matchSlicePath("/wallet")).toBeUndefined()
+    expect(matchSlicePath("/wallet")?.id).toBe("wallet")
     expect(matchSlicePath("/p/example")).toBeUndefined()
     expect(matchSlicePath("/login/extra")).toBeUndefined()
   })
 
   it("distinguishes approved-but-unreachable from unknown", () => {
-    expect(isApprovedButUnreachable("/wallet")).toBe(true)
     expect(isApprovedButUnreachable("/p/example")).toBe(true)
+    expect(isApprovedButUnreachable("/wallet")).toBe(false)
     expect(isApprovedButUnreachable("/login")).toBe(false)
     expect(isApprovedButUnreachable("/not-a-route")).toBe(false)
   })

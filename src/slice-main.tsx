@@ -14,6 +14,7 @@ import {
   apiClient,
 } from "./features/identity"
 import { ActivitySwitcher } from "./features/profile"
+import { WalletScreen } from "./features/wallet/screens"
 import "./styles/index.css"
 
 const screens = {
@@ -25,6 +26,7 @@ const screens = {
   "reset-password": <ResetPasswordScreen />,
   "verify-email": <VerifyEmailScreen />,
   activities: <ActivitySwitcher />,
+  wallet: <WalletScreen />,
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

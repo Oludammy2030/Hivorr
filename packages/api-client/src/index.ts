@@ -289,6 +289,8 @@ export type UpdateTaxonomyAttributeResponse = { "id": string; "nodeId": string; 
 
 export type ListPayoutsResponse = ({ "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null })[]
 
+export type GetWalletBalanceResponse = ({ "currency": string; "total": string; "available": string; "pending": string; "withdrawable": string })[]
+
 export type ListPayoutAccountsResponse = ({ "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string })[]
 
 export type BindPayoutAccountRequest = { "bankCode": string; "bankName": string; "accountNumber": string; "reason"?: string }
@@ -959,6 +961,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<ListPayoutsResponse>(
         "GET",
         "/v1/wallet/payouts",
+        undefined,
+        [200],
+      ),
+    getWalletBalance: () =>
+      request<GetWalletBalanceResponse>(
+        "GET",
+        "/v1/wallet/balance",
         undefined,
         [200],
       ),
