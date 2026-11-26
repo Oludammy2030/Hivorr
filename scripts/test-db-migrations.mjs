@@ -1322,7 +1322,7 @@ try {
   )
   assert(payoutAccount.rowCount === 1, "a verified payout account is accepted")
 
-  let duplicatePayoutRejected = false
+  let unverifiedPayoutRejected = false
   try {
     await testClient.query(
       `insert into finance.payout_accounts
@@ -1331,6 +1331,22 @@ try {
           account_number_fingerprint)
        values ($1, '058', 'Test Bank', 'Test Account', 'test account',
                $2, 'test-key-1', '0123', $3)`,
+      [accountId, Buffer.alloc(32, 9), "b".repeat(64)],
+    )
+  } catch (error) {
+    unverifiedPayoutRejected = error?.code === "23514"
+  }
+  assert(unverifiedPayoutRejected, "a payout destination must be verified before it is stored")
+
+  let duplicatePayoutRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.payout_accounts
+         (account_id, bank_code, bank_name, account_name, account_name_normalized,
+          account_number_ciphertext, encryption_key_id, account_number_last4,
+          account_number_fingerprint, status, verified_at)
+       values ($1, '058', 'Test Bank', 'Test Account', 'test account',
+               $2, 'test-key-1', '0123', $3, 'verified', now())`,
       [accountId, Buffer.alloc(32, 8), "a".repeat(64)],
     )
   } catch (error) {
