@@ -132,9 +132,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` |
+| **Execution date** | 2026-11-26 |
+| **Execution record** | `execution-records/EP-02-042.md` |
+| **Blocked by** | — (founder-authorised increment; open items are listed in the record) |
+| **Notes** | Paystack collections adapter, collection-account storage and the owner-facing DVA endpoint are built under the 26 November 2026 provider directive. VFD collections, payer-name matching and sandbox certification are deferred. |
 

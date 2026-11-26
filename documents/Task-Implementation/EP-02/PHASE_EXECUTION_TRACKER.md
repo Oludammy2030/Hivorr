@@ -46,19 +46,19 @@
 | 19 | `EP-02-036` | Dispute case record and evidence linkage | EP-02-030; CP-016, CP-017. | **COMPLETED** — admin-owned typed dispute, procedural statuses, audited evidence access; signed URL pending EP-02-012 | 2026-11-19 | `execution-records/EP-02-036.md` |
 | 20 | `EP-02-040` | PaymentProvider port and adapter contract | EP-02-031, EP-02-034. | **COMPLETED** — provider-neutral port, typed errors, fake adapter, reusable contract suite | 2026-11-19 | `execution-records/EP-02-040.md` |
 | 21 | `EP-02-041` | VFD authentication and resilience client | EP-02-040; VFD sandbox credentials. | **COMPLETED** — bounded token client, cache/refresh, retry/redaction, test/live mode guard | 2026-11-21 | `execution-records/EP-02-041.md` |
-| 22 | `EP-02-042` | VFD collections adapter | EP-02-041, EP-02-050. | **PENDING** | — | — |
+| 22 | `EP-02-042` | VFD collections adapter | EP-02-041, EP-02-050. | **IN PROGRESS** — Paystack collections adapter, DVA storage and owner endpoint built; VFD collections, payer-name matching and sandbox certification deferred | — | `execution-records/EP-02-042.md` |
 | 23 | `EP-02-043` | VFD payouts adapter | EP-02-041, EP-02-053. | **IN PROGRESS** — founder-authorised partial: documented transfer/status/recipient/source adapter with SHA-512 signer and `VFD_PAYOUTS` wiring; sandbox certification, amount unit and bank list deferred | — | `execution-records/EP-02-043.md` |
-| 24 | `EP-02-044` | VFD webhook intake, raw storage and dedupe | EP-02-042, EP-02-043, EP-02-034; founder approval for the new inbound webhook. | **PENDING** | — | — |
+| 24 | `EP-02-044` | VFD webhook intake, raw storage and dedupe | EP-02-042, EP-02-043, EP-02-034; founder approval for the new inbound webhook. | **IN PROGRESS** — signed Paystack webhook, status verification and idempotent posting; raw storage and asynchronous processing deferred (deviation recorded) | — | `execution-records/EP-02-044.md` |
 | 25 | `EP-02-045` | VFD sandbox certification and settlement evidence | EP-02-042/043/044. | **PENDING** | — | — |
 | 26 | `EP-02-050` | Payout account binding, encryption and name enquiry | EP-02-035, EP-02-040, EP-02-043. | **IN PROGRESS** — founder-authorised partial: binding, encryption, name enquiry, disable and audit; payout execution, `043` and `014` deferred; destination count [OPEN] | — | `execution-records/EP-02-050.md` |
 | 27 | `EP-02-051` | Payer-name match rule and manual review path | EP-02-042, EP-02-050; G0 payer-name ruling. | **PENDING** | — | — |
-| 28 | `EP-02-052` | Deposit posting and idempotent ledger flow | EP-02-031, EP-02-034, EP-02-051. | **PENDING** | — | — |
+| 28 | `EP-02-052` | Deposit posting and idempotent ledger flow | EP-02-031, EP-02-034, EP-02-051. | **IN PROGRESS** — exactly-once posting, CBN cap/hold and audit; payer-name matching (`051`) and reconciliation deferred | — | `execution-records/EP-02-052.md` |
 | 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020 (not required for the user path). | **IN PROGRESS** — self-service withdrawal request/eligibility + automatic execution (reserve, provider call, reversal, idempotency, audit); manual approval out of scope per founder; HTTP endpoint and DB certification deferred | — | `execution-records/EP-02-053.md` |
 | 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **PENDING** | — | — |
 | 31 | `EP-02-055` | Reconciliation job and exception reporting | EP-02-043/044/052/053; worker. | **PENDING** | — | — |
 | 32 | `EP-02-056` | Financial audit coverage and traceability | EP-02-015/016/031/052/053/055; EP-01-036; CP-005. | **PENDING** | — | — |
 | 33 | `EP-02-060` | Verification centre UI | EP-02-013/015; design system; EP-01-052. | **PENDING** | — | — |
-| 34 | `EP-02-061` | Wallet and payout account UI | EP-02-032/035/050; design system. | **PENDING** | — | — |
+| 34 | `EP-02-061` | Wallet and payout account UI | EP-02-032/035/050; design system. | **IN PROGRESS** — connected wallet screen in the slice (balances, deposit account, payout accounts, withdrawal, activity); `tier_0` state and responsive evidence deferred | — | `execution-records/EP-02-061.md` |
 | 35 | `EP-02-062` | Financial action dialogs and deny-state UX | EP-02-013/050/053; prototype `FinancialActionDialog`. | **PENDING** | — | — |
 | 36 | `EP-02-063` | Visual regression and responsive verification | EP-02-060/061/062; EP-01-050. | **PENDING** | — | — |
 | 37 | `EP-02-070` | EP-02 E2E suite and staging verification | EP-02-015/016/045/052/053/054/055/060/061; staging deployment. | **PENDING** | — | — |
@@ -116,7 +116,11 @@ Still open and blocking specific scopes:
 | 2026-11-23 | `EP-02-043` | `PENDING` | `IN PROGRESS` — partial increment: documented payout/status/recipient adapter | `execution-records/EP-02-043.md` |
 | 2026-11-23 | `EP-02-053` | `PENDING` | `IN PROGRESS` — first increment: payout request and eligibility | `execution-records/EP-02-053.md` |
 | 2026-11-23 | `EP-02-014` | `PENDING` | `IN PROGRESS` — minimal tier source and capability input | `execution-records/EP-02-014.md` |
+| 2026-11-26 | `EP-02-042` | `PENDING` | `IN PROGRESS` — Paystack collections under the provider directive | `execution-records/EP-02-042.md` |
+| 2026-11-26 | `EP-02-044` | `PENDING` | `IN PROGRESS` — signed webhook, synchronous posting; raw storage deferred | `execution-records/EP-02-044.md` |
+| 2026-11-26 | `EP-02-052` | `PENDING` | `IN PROGRESS` — exactly-once deposit posting and cap/hold | `execution-records/EP-02-052.md` |
+| 2026-11-26 | `EP-02-061` | `PENDING` | `IN PROGRESS` — connected wallet screen in the slice | `execution-records/EP-02-061.md` |
 
 ---
 
-**Tracker status:** current to 2026-11-23. Every later status change requires a task document, an execution record and this table.
+**Tracker status:** current to 2026-11-26. Every later status change requires a task document, an execution record and this table.
