@@ -278,12 +278,19 @@ function harness(
     },
   }
 
+  const identity = {
+    async readFinancialHoldInTransaction() {
+      return options.hold ?? null
+    },
+  }
+
   const service = new PayoutExecutionService(
     database as never,
     options.apiConfig ?? apiConfig(),
     ledger as never,
     limits as never,
     provider as never,
+    identity as never,
   )
 
   return {

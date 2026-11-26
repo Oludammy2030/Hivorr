@@ -22,6 +22,7 @@ import {
 import { HealthController } from "./health/health.controller"
 import { WalletController } from "./api/wallet.controller"
 import { KycController } from "./api/kyc.controller"
+import { PaymentsController } from "./api/payments.controller"
 import { GrantsController } from "./modules/identity/grants/grants.controller"
 import { GrantsService } from "./modules/identity/grants/grants.service"
 import { IdentityController } from "./modules/identity/identity.controller"
@@ -68,9 +69,11 @@ import {
   PAYOUT_PROVIDER,
   PayoutExecutionService,
 } from "./modules/finance/payout-execution.service"
+import { PaymentProviderRouter } from "./modules/finance/payment-provider-router.service"
 import { ProviderReferenceService } from "./modules/finance/provider-reference.service"
 import { WalletService } from "./modules/finance/wallet.service"
 import { TaxonomyAdminService } from "./modules/platform/taxonomy.service"
+import { PaymentProviderSettingsService } from "./modules/platform/payment-provider-settings.service"
 
 @Module({})
 export class AppModule {
@@ -100,6 +103,7 @@ export class AppModule {
         GrantsController,
         WalletController,
         KycController,
+        PaymentsController,
       ],
       providers: [
         { provide: API_CONFIG, useValue: config },
@@ -158,7 +162,12 @@ export class AppModule {
         },
         {
           provide: PAYOUT_PROVIDER,
-          useExisting: VFD_PAYOUTS,
+          useFactory: (
+            settings: PaymentProviderSettingsService,
+            apiConfig: ApiConfig,
+            vfd: VfdPayoutClient,
+          ) => new PaymentProviderRouter(settings, apiConfig, vfd),
+          inject: [PaymentProviderSettingsService, API_CONFIG, VFD_PAYOUTS],
         },
         {
           provide: VFD_PAYOUTS,
@@ -192,6 +201,7 @@ export class AppModule {
         VerificationService,
         DisputeService,
         TaxonomyAdminService,
+        PaymentProviderSettingsService,
         LedgerService,
         WalletService,
         EscrowService,

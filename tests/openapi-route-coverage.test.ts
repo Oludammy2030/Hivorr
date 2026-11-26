@@ -22,6 +22,7 @@ import { VerificationController } from "../server/src/api/verification.controlle
 import { TaxonomyController } from "../server/src/api/taxonomy.controller"
 import { WalletController } from "../server/src/api/wallet.controller"
 import { KycController } from "../server/src/api/kyc.controller"
+import { PaymentsController } from "../server/src/api/payments.controller"
 import { buildDocument } from "../server/src/openapi/build"
 import { scanControllerRoutes } from "../server/src/openapi/scan"
 
@@ -54,6 +55,7 @@ describe("OpenAPI route coverage", () => {
       GrantsController,
       WalletController,
       KycController,
+      PaymentsController,
     ]
       .flatMap((controller) => scanControllerRoutes(controller))
       .map((route) => `${route.method} ${route.path}`)

@@ -297,6 +297,12 @@ export type AssignKycTierRequest = { "tier": "tier_0" | "tier_1" | "tier_2" | "t
 
 export type AssignKycTierResponse = { "accountId": string; "tier": "tier_0" | "tier_1" | "tier_2" | "tier_3"; "updatedAt": string }
 
+export type GetPaymentProviderResponse = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "updatedAt": string; "configured": { "vfd": { "test": boolean; "live": boolean }; "paystack": { "test": boolean; "live": boolean } } }
+
+export type SetPaymentProviderRequest = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "reason": string }
+
+export type SetPaymentProviderResponse = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "updatedAt": string; "configured": { "vfd": { "test": boolean; "live": boolean }; "paystack": { "test": boolean; "live": boolean } } }
+
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
   const baseUrl = options.baseUrl.replace(/\/+$/, "")
@@ -951,6 +957,20 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<AssignKycTierResponse>(
         "POST",
         `/v1/control/accounts/${encodeURIComponent(params.id)}/kyc-tier`,
+        input,
+        [200],
+      ),
+    getPaymentProvider: () =>
+      request<GetPaymentProviderResponse>(
+        "GET",
+        "/v1/control/payments/provider",
+        undefined,
+        [200],
+      ),
+    setPaymentProvider: (input: SetPaymentProviderRequest) =>
+      request<SetPaymentProviderResponse>(
+        "POST",
+        "/v1/control/payments/provider",
         input,
         [200],
       ),

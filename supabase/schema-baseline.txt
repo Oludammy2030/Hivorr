@@ -77,6 +77,7 @@ platform | audit_log
 platform | feature_flags
 platform | idempotency_keys
 platform | outbox
+platform | payment_provider_setting
 platform | reference_counters
 platform | schema_migrations
 platform | taxonomy_attributes
@@ -692,6 +693,11 @@ platform | outbox | last_error | text | text | YES | -
 platform | outbox | locked_at | timestamp with time zone | timestamptz | YES | -
 platform | outbox | locked_by | text | text | YES | -
 platform | outbox | dead_lettered_at | timestamp with time zone | timestamptz | YES | -
+platform | payment_provider_setting | id | boolean | bool | NO | true
+platform | payment_provider_setting | active_provider | text | text | NO | 'paystack'::text
+platform | payment_provider_setting | active_mode | text | text | NO | 'test'::text
+platform | payment_provider_setting | updated_by | uuid | uuid | YES | -
+platform | payment_provider_setting | updated_at | timestamp with time zone | timestamptz | NO | now()
 platform | reference_counters | name | text | text | NO | -
 platform | reference_counters | value | bigint | int8 | NO | 0
 platform | reference_counters | updated_at | timestamp with time zone | timestamptz | NO | now()
@@ -1088,6 +1094,11 @@ platform | feature_flags | feature_flags_pkey | p | PRIMARY KEY (key)
 platform | idempotency_keys | idempotency_keys_pkey | p | PRIMARY KEY (key)
 platform | outbox | outbox_attempts_check | c | CHECK (attempts >= 0)
 platform | outbox | outbox_pkey | p | PRIMARY KEY (id)
+platform | payment_provider_setting | payment_provider_setting_active_mode_check | c | CHECK (active_mode = ANY (ARRAY['test'::text, 'live'::text]))
+platform | payment_provider_setting | payment_provider_setting_active_provider_check | c | CHECK (active_provider = ANY (ARRAY['vfd'::text, 'paystack'::text]))
+platform | payment_provider_setting | payment_provider_setting_check | c | CHECK (id)
+platform | payment_provider_setting | payment_provider_setting_pkey | p | PRIMARY KEY (id)
+platform | payment_provider_setting | payment_provider_setting_updated_by_fkey | f | FOREIGN KEY (updated_by) REFERENCES identity.users(id) ON DELETE RESTRICT
 platform | reference_counters | reference_counters_pkey | p | PRIMARY KEY (name)
 platform | reference_counters | reference_counters_value_check | c | CHECK (value >= 0)
 platform | schema_migrations | schema_migrations_pkey | p | PRIMARY KEY (filename)
@@ -1310,6 +1321,7 @@ platform | idempotency_keys | idempotency_keys_pkey | CREATE UNIQUE INDEX idempo
 platform | outbox | outbox_claimable_idx | CREATE INDEX outbox_claimable_idx ON platform.outbox USING btree (available_at) WHERE ((processed_at IS NULL) AND (dead_lettered_at IS NULL))
 platform | outbox | outbox_dead_letter_idx | CREATE INDEX outbox_dead_letter_idx ON platform.outbox USING btree (dead_lettered_at DESC) WHERE (dead_lettered_at IS NOT NULL)
 platform | outbox | outbox_pkey | CREATE UNIQUE INDEX outbox_pkey ON platform.outbox USING btree (id)
+platform | payment_provider_setting | payment_provider_setting_pkey | CREATE UNIQUE INDEX payment_provider_setting_pkey ON platform.payment_provider_setting USING btree (id)
 platform | reference_counters | reference_counters_pkey | CREATE UNIQUE INDEX reference_counters_pkey ON platform.reference_counters USING btree (name)
 platform | schema_migrations | schema_migrations_pkey | CREATE UNIQUE INDEX schema_migrations_pkey ON platform.schema_migrations USING btree (filename)
 platform | taxonomy_attributes | taxonomy_attributes_node_id_key_key | CREATE UNIQUE INDEX taxonomy_attributes_node_id_key_key ON platform.taxonomy_attributes USING btree (node_id, key)
@@ -1386,6 +1398,7 @@ platform | audit_log | false | false
 platform | feature_flags | false | false
 platform | idempotency_keys | false | false
 platform | outbox | false | false
+platform | payment_provider_setting | true | false
 platform | reference_counters | false | false
 platform | schema_migrations | false | false
 platform | taxonomy_attributes | true | false
@@ -1393,7 +1406,7 @@ platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
 profile | profiles | true | true
 
-## policies (78)
+## policies (79)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1470,6 +1483,7 @@ identity | users | users_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (acco
 identity | users | users_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 identity | users | users_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 platform | taxonomy_attributes | taxonomy_attributes_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
+platform | payment_provider_setting | payment_provider_setting_select | PERMISSIVE | {hivorr_api} | SELECT | true | -
 platform | taxonomy_nodes | taxonomy_nodes_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | true | -
 profile | activity_activations | activity_activations_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 profile | activity_activations | activity_activations_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
@@ -1999,6 +2013,14 @@ platform | outbox | postgres | SELECT | YES
 platform | outbox | postgres | TRIGGER | YES
 platform | outbox | postgres | TRUNCATE | YES
 platform | outbox | postgres | UPDATE | YES
+platform | payment_provider_setting | hivorr_api | SELECT | NO
+platform | payment_provider_setting | postgres | DELETE | YES
+platform | payment_provider_setting | postgres | INSERT | YES
+platform | payment_provider_setting | postgres | REFERENCES | YES
+platform | payment_provider_setting | postgres | SELECT | YES
+platform | payment_provider_setting | postgres | TRIGGER | YES
+platform | payment_provider_setting | postgres | TRUNCATE | YES
+platform | payment_provider_setting | postgres | UPDATE | YES
 platform | reference_counters | hivorr_api | INSERT | NO
 platform | reference_counters | hivorr_api | SELECT | NO
 platform | reference_counters | hivorr_api | UPDATE | NO
@@ -2131,10 +2153,12 @@ platform | create_taxonomy_attribute | p_actor_user_id uuid, p_node_id uuid, p_k
 platform | create_taxonomy_node | p_actor_user_id uuid, p_taxonomy text, p_level text, p_parent_id uuid, p_slug text, p_name text, p_description text, p_version integer, p_effective_from timestamp with time zone | true | v | search_path=""
 platform | current_account_id |  | true | s | search_path=private, pg_temp
 platform | current_user_id |  | true | s | search_path=private, pg_temp
+platform | get_payment_provider | p_actor_user_id uuid | true | s | search_path=""
 platform | outbox_health |  | true | s | search_path=platform, pg_temp
 platform | reject_append_only_mutation |  | false | v | -
 platform | resolve_audit_actor | p_actor_id text | true | s | search_path=""
 platform | set_identity_context | account_id uuid, user_id uuid | true | v | search_path=private, pg_temp
+platform | set_payment_provider | p_actor_user_id uuid, p_provider text, p_mode text | true | v | search_path=""
 platform | touch_updated_at |  | false | v | -
 platform | update_taxonomy_attribute | p_actor_user_id uuid, p_id uuid, p_label text, p_data_type text, p_is_required boolean, p_enum_values text[], p_unit text, p_sort_order integer | true | v | search_path=""
 platform | update_taxonomy_node | p_actor_user_id uuid, p_id uuid, p_name text, p_description text, p_version integer, p_effective_from timestamp with time zone, p_effective_to timestamp with time zone, p_is_active boolean | true | v | search_path=""

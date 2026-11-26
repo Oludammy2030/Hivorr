@@ -80,6 +80,7 @@ describe("ten-module skeleton", () => {
       "ledger.ts",
       "limit.service.ts",
       "limits.ts",
+      "payment-provider-router.service.ts",
       "payout-account-crypto.ts",
       "payout-account.service.ts",
       "payout-execution.service.ts",

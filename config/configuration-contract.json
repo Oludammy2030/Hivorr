@@ -344,6 +344,27 @@
       "description": "Ten-digit VFD wallet account that funds a payout. Unset refuses to send. Financial data; never committed."
     },
     {
+      "name": "PAYSTACK_BASE_URL",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Paystack API origin. Defaults to https://api.paystack.co."
+    },
+    {
+      "name": "PAYSTACK_SECRET_KEY_TEST",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "Paystack test-mode secret key. Supplied by the deployment secret store; never entered or returned by the control portal."
+    },
+    {
+      "name": "PAYSTACK_SECRET_KEY_LIVE",
+      "source": "config",
+      "classification": "secret",
+      "requiredIn": [],
+      "description": "Paystack live-mode secret key. Supplied by the deployment secret store; never entered or returned by the control portal."
+    },
+    {
       "name": "EXPECTED_SUPABASE_PROJECT_REF",
       "source": "tooling",
       "classification": "public",

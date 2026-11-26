@@ -10,7 +10,7 @@ import { ApiError } from "../../common/errors"
 
 import { DatabaseService } from "../../db/database.service"
 
-import type { RequestContext } from "../identity"
+import { IdentityService, type RequestContext } from "../identity"
 
 import { appendAudit } from "../platform"
 
@@ -216,6 +216,7 @@ export class PayoutRequestService {
 
     @Inject(FinanceLimitService)
     private readonly limits: FinanceLimitService,
+    @Inject(IdentityService) private readonly identity: IdentityService,
   ) {}
 
   /** Lists the caller's payout requests without any bank-detail material. */
@@ -334,13 +335,11 @@ export class PayoutRequestService {
         },
 
         async (transaction) => {
-          const hold = await transaction.query<{
-            financial_hold_reason: string | null
-          }>(
-            "select financial_hold_reason from identity.accounts where id = $1",
-            [input.accountId],
+          const hold = await this.identity.readFinancialHoldInTransaction(
+            transaction,
+            input.accountId,
           )
-          if (hold.rows[0]?.financial_hold_reason) {
+          if (hold) {
             throw new ApiError(
               "KYC_REQUIRED",
               "A deposit above your tier limit requires a KYC upgrade before further fund transactions.",

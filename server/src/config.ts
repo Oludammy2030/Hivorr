@@ -130,6 +130,17 @@ const baseConfigSchema = z.object({
   VFD_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
   VFD_RETRY_BASE_MS: z.coerce.number().int().min(50).max(5_000).default(250),
   /**
+   * Paystack is the active provider for fast integration. Test and live keys
+   * are separate; the provider adapter fails closed when the key for the
+   * active mode is absent. Only the secret key is needed server-side.
+   */
+  PAYSTACK_BASE_URL: z
+    .string()
+    .regex(/^https:\/\/\S+$/)
+    .default("https://api.paystack.co"),
+  PAYSTACK_SECRET_KEY_TEST: z.string().min(1).optional(),
+  PAYSTACK_SECRET_KEY_LIVE: z.string().min(1).optional(),
+  /**
    * The wallet account that funds a payout. Optional: the adapter refuses to
    * send while it is unset. Never a credential, but financial data, so it is
    * classified secret in the configuration contract.
@@ -439,6 +450,15 @@ export interface VfdConfig {
   readonly sourceAccount: string | undefined
 }
 
+export interface PaystackConfig {
+  readonly baseUrl: string
+  readonly secretKeyTest: string | undefined
+  readonly secretKeyLive: string | undefined
+}
+
+export type PaymentProviderKey = "vfd" | "paystack"
+export type PaymentMode = "test" | "live"
+
 /**
  * Payout-account protection. The keys are required in staging and production
  * and are never logged, projected, or returned. The active-destination cap is
@@ -478,6 +498,7 @@ export interface ApiConfig {
   readonly auth: AuthAbuseConfig
   readonly worker: WorkerConfig
   readonly vfd: VfdConfig
+  readonly paystack: PaystackConfig
   readonly payout: PayoutConfig
 }
 
@@ -561,6 +582,11 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       maxRetries: value.VFD_MAX_RETRIES,
       retryBaseMs: value.VFD_RETRY_BASE_MS,
       sourceAccount: value.VFD_SOURCE_ACCOUNT,
+    },
+    paystack: {
+      baseUrl: value.PAYSTACK_BASE_URL,
+      secretKeyTest: value.PAYSTACK_SECRET_KEY_TEST,
+      secretKeyLive: value.PAYSTACK_SECRET_KEY_LIVE,
     },
     payout: {
       encryptionKey: value.PAYOUT_ENCRYPTION_KEY,

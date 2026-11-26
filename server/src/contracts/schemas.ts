@@ -873,6 +873,22 @@ export const kycTierResponse = z.object({
   updatedAt: z.string(),
 })
 
+export const paymentProviderSettingRequest = z.strictObject({
+  provider: z.enum(["vfd", "paystack"]),
+  mode: z.enum(["test", "live"]),
+  reason: z.string().min(5).max(500),
+})
+
+export const paymentProviderSettingResponse = z.object({
+  provider: z.enum(["vfd", "paystack"]),
+  mode: z.enum(["test", "live"]),
+  updatedAt: z.string(),
+  configured: z.object({
+    vfd: z.object({ test: z.boolean(), live: z.boolean() }),
+    paystack: z.object({ test: z.boolean(), live: z.boolean() }),
+  }),
+})
+
 export const healthResponse = z.object({
   status: z.literal("ok"),
   service: z.literal("hivorr-api"),

@@ -7,7 +7,7 @@ import {
 
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
-import type { RequestContext } from "../identity"
+import { IdentityService, type RequestContext } from "../identity"
 import { appendAudit } from "../platform"
 import { FinanceLimitService } from "./limit.service"
 import { FINANCIALLY_ELIGIBLE_TIERS } from "./limits"
@@ -47,6 +47,7 @@ export class DepositEligibilityService {
   constructor(
     @Inject(DatabaseService) private readonly database: DatabaseService,
     @Inject(FinanceLimitService) private readonly limits: FinanceLimitService,
+    @Inject(IdentityService) private readonly identity: IdentityService,
   ) {}
 
   /** Evaluates a deposit without throwing; the caller maps the reason. */
@@ -75,13 +76,11 @@ export class DepositEligibilityService {
     return this.database.withTransaction(
       { identity: { accountId: input.accountId, userId: input.userId } },
       async (transaction) => {
-        const hold = await transaction.query<{
-          financial_hold_reason: string | null
-        }>(
-          "select financial_hold_reason from identity.accounts where id = $1",
-          [input.accountId],
+        const hold = await this.identity.readFinancialHoldInTransaction(
+          transaction,
+          input.accountId,
         )
-        if (hold.rows[0]?.financial_hold_reason) {
+        if (hold) {
           return {
             allowed: false,
             reason: "kyc_upgrade_required",
@@ -119,13 +118,9 @@ export class DepositEligibilityService {
         const cap = decision.rule
           ? minorUnitsToMoney(decision.rule.amountMinor)
           : null
-        await transaction.query(
-          `update identity.accounts
-              set financial_hold_reason = 'kyc_upgrade_required',
-                  financial_hold_at = now(),
-                  updated_at = now()
-            where id = $1 and financial_hold_reason is null`,
-          [input.accountId],
+        await this.identity.holdForKycUpgradeInTransaction(
+          transaction,
+          input.accountId,
         )
         await appendAudit(transaction.client, {
           actorType: "user",

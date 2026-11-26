@@ -98,6 +98,8 @@ import {
   userListResponse,
   assignKycTierRequest,
   kycTierResponse,
+  paymentProviderSettingRequest,
+  paymentProviderSettingResponse,
   payoutRequestListResponse,
   payoutRequestViewResponse,
   withdrawRequest,
@@ -117,7 +119,7 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases" | "taxonomy" | "wallet"
+  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases" | "taxonomy" | "wallet" | "payments"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -1630,6 +1632,40 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The updated tier",
         schema: kycTierResponse,
+      },
+    ],
+  },
+  {
+    id: "getPaymentProvider",
+    method: "get",
+    path: "/v1/control/payments/provider",
+    summary: "Read the active payment provider and configured modes",
+    tag: "payments",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description: "The active provider, mode and configured secrets",
+        schema: paymentProviderSettingResponse,
+      },
+    ],
+  },
+  {
+    id: "setPaymentProvider",
+    method: "post",
+    path: "/v1/control/payments/provider",
+    summary: "Switch the active payment provider and mode",
+    tag: "payments",
+    audience: ["control"],
+    request: {
+      schema: paymentProviderSettingRequest,
+      description: "Provider, mode and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The updated provider setting",
+        schema: paymentProviderSettingResponse,
       },
     ],
   },

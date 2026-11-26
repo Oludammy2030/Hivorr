@@ -144,7 +144,17 @@ function harness(
     },
   }
 
-  const service = new PayoutRequestService(database as never, limits as never)
+  const identity = {
+    async readFinancialHoldInTransaction() {
+      return options.hold ?? null
+    },
+  }
+
+  const service = new PayoutRequestService(
+    database as never,
+    limits as never,
+    identity as never,
+  )
 
   return {
     service,

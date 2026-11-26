@@ -368,6 +368,27 @@ interface ApiErrorDetail {
   message?: string
 }
 
+export interface PaymentProviderModes {
+  readonly test: boolean
+  readonly live: boolean
+}
+
+export interface PaymentProviderSetting {
+  readonly provider: "vfd" | "paystack"
+  readonly mode: "test" | "live"
+  readonly updatedAt: string
+  readonly configured: {
+    readonly vfd: PaymentProviderModes
+    readonly paystack: PaymentProviderModes
+  }
+}
+
+export interface SetPaymentProviderInput {
+  readonly provider: "vfd" | "paystack"
+  readonly mode: "test" | "live"
+  readonly reason: string
+}
+
 interface ApiErrorBody {
   error?: ApiErrorDetail
 }
@@ -825,6 +846,13 @@ export const api = {
         body: JSON.stringify(input),
       },
     ),
+  getPaymentProvider: () =>
+    request<PaymentProviderSetting>("/control/payments/provider"),
+  setPaymentProvider: (input: SetPaymentProviderInput) =>
+    request<PaymentProviderSetting>("/control/payments/provider", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 }
 
 export function isMfaChallenge(

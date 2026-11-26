@@ -38,6 +38,7 @@ import {
 } from "./routes"
 import { StaffPage } from "./StaffPage"
 import { TaxonomyPage } from "./TaxonomyPage"
+import { PaymentsPage } from "./PaymentsPage"
 
 interface LoadingView {
   kind: "loading"
@@ -534,6 +535,9 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
     capabilities.includes("admin.configuration.read") ||
     capabilities.includes("admin.configuration.write")
   const canManageTaxonomy = capabilities.includes("admin.configuration.write")
+  const canReadPayments =
+    capabilities.includes("admin.configuration.read") ||
+    capabilities.includes("admin.configuration.write")
   const canReadGrants =
     capabilities.includes("admin.grant.read") ||
     capabilities.includes("admin.grant.manage")
@@ -1998,6 +2002,10 @@ function Dashboard({ session, onSignOut, signingOut }: DashboardProps) {
 
         {knownPath && section === "taxonomy" && canReadTaxonomy && (
           <TaxonomyPage canManage={canManageTaxonomy} />
+        )}
+
+        {knownPath && section === "payments" && canReadPayments && (
+          <PaymentsPage canManage={canManageTaxonomy} />
         )}
 
         {knownPath && section === "users" && !canReadUsers && (

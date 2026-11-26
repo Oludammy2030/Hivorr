@@ -165,3 +165,17 @@ Planned tests; no run is claimed until the execution record records the result.
 - `EP-02-053` must add the workflow, durable idempotency, dual control and the composition with the
   collections half (`042`), and treat a retried duplicate (`98`) as an unknown outcome requiring TSQ.
 
+## 15. Provider switch amendment — 2026-11-26
+
+The founder directed Paystack as the active provider for fast integration; VFD is paused behind the
+same provider port.
+
+- `PaystackPayoutClient` implements name resolution, recipient creation, single transfer and transfer
+  status; it converts NGN to kobo and refuses sub-kobo precision.
+- `platform.payment_provider_setting` stores the active provider/mode (no secret); the control panel
+  switches it and the router reads it per payout, so no redeploy is needed.
+- Test/live Paystack keys remain in the deployment secret store. The control page only shows whether a
+  key is configured; it never accepts or returns the value.
+- VFD adapters remain in place and selectable; VFD mode must match `VFD_MODE`.
+- Paystack collections and webhook intake remain for `EP-02-042`/`044`.
+

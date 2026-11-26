@@ -76,6 +76,7 @@ No row is decided by this record. `ARCHITECTURE.md` §16.4 remains the single co
 | 12 | KYC/AML applicability | Standards §16 #25 | **OPEN** | No reporting path is built | Founder / counsel |
 | 13 | VFD webhook authentication gap | Standards API-24; VFD webhook documentation | **OPEN** | Requires compensating controls and a recorded deviation | Architect |
 | 14 | Payout approval model — user withdrawals are self-service; no staff approval | Matrix §9.3 `wallet.withdraw`; founder direction 2026-11-23 | **DECIDED 2026-11-23** — a user withdraws their own funds after KYC, a bound verified destination and limits; staff approval is not part of the user path | Removes the manual maker-checker from `EP-02-053`; the task covers the automatic path only | Founder |
+| 15 | Payment provider — Paystack active for fast integration; VFD paused | `ARCHITECTURE.md` §3.1 #10; founder direction 2026-11-26 | **DECIDED 2026-11-26** — Paystack is the active provider; VFD remains behind the provider port but paused. The control panel switches provider and mode; test/live secrets remain in the deployment secret store and are never entered or returned by the portal | Requires an architecture revision; provider adapters stay behind `PaymentProvider`; custody model remains VFD/BD-D01 | Founder |
 
 ---
 

@@ -88,9 +88,19 @@ function harness(
     },
   }
 
+  const identity = {
+    async readFinancialHoldInTransaction() {
+      return options.hold ?? null
+    },
+    async holdForKycUpgradeInTransaction() {
+      updates.push({ text: "financial_hold_reason" })
+    },
+  }
+
   const service = new DepositEligibilityService(
     database as never,
     limits as never,
+    identity as never,
   )
 
   return { service, audits, updates, limitCalls }

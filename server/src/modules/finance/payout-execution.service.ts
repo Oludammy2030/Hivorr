@@ -12,7 +12,7 @@ import {
   type PayoutResult,
   type ProviderOperationContext,
 } from "../../integrations/payments/payment-provider"
-import type { RequestContext } from "../identity"
+import { IdentityService, type RequestContext } from "../identity"
 import { appendAudit } from "../platform"
 import { FINANCIALLY_ELIGIBLE_TIERS } from "./limits"
 import { LedgerService, type LedgerPostingContext } from "./ledger.service"
@@ -147,6 +147,7 @@ export class PayoutExecutionService {
     @Inject(LedgerService) private readonly ledger: LedgerService,
     @Inject(FinanceLimitService) private readonly limits: FinanceLimitService,
     @Inject(PAYOUT_PROVIDER) private readonly provider: PayoutProviderPort,
+    @Inject(IdentityService) private readonly identity: IdentityService,
   ) {}
 
   /** Executes an existing request. A repeat returns the current state. */
@@ -209,13 +210,11 @@ export class PayoutExecutionService {
           identity: { accountId: input.accountId, userId: input.userId },
         },
         async (transaction) => {
-          const hold = await transaction.query<{
-            financial_hold_reason: string | null
-          }>(
-            "select financial_hold_reason from identity.accounts where id = $1",
-            [input.accountId],
+          const hold = await this.identity.readFinancialHoldInTransaction(
+            transaction,
+            input.accountId,
           )
-          if (hold.rows[0]?.financial_hold_reason) {
+          if (hold) {
             throw new ApiError(
               "KYC_REQUIRED",
               "A deposit above your tier limit requires a KYC upgrade before further fund transactions.",
@@ -343,7 +342,7 @@ export class PayoutExecutionService {
               transaction,
               request,
               entry.id,
-              this.provider.provider,
+              null,
             )
             await this.audit(
               transaction,
@@ -357,7 +356,7 @@ export class PayoutExecutionService {
           const processing = await this.markProcessing(
             transaction,
             current,
-            this.provider.provider,
+            null,
             current.provider_reference,
           )
           await this.audit(
@@ -621,7 +620,7 @@ export class PayoutExecutionService {
     transaction: TransactionContext,
     request: ExecutionRow,
     journalEntryId: string,
-    provider: string,
+    provider: string | null,
   ): Promise<ExecutionRow> {
     const result = await transaction.query<PayoutRequestRow>(
       `update finance.payout_requests

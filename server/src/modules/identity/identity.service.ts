@@ -14,6 +14,7 @@ import { ApiError, rateLimited } from "../../common/errors"
 import { FixedWindowRateLimiter } from "../../common/rate-limiter"
 import { API_CONFIG, type ApiConfig } from "../../config"
 import { DatabaseService } from "../../db/database.service"
+import type { TransactionContext } from "../../db/transaction"
 import {
   computeCapabilities,
   type CapabilityId,
@@ -1894,6 +1895,37 @@ export class IdentityService {
         ? error
         : new Error("The KYC tier change failed.")
     }
+  }
+
+  /**
+   * The active fund-transaction hold, read on the caller's transaction so a
+   * financial write and its hold check share one snapshot.
+   */
+  async readFinancialHoldInTransaction(
+    transaction: TransactionContext,
+    accountId: string,
+  ): Promise<string | null> {
+    const result = await transaction.query<{
+      financial_hold_reason: string | null
+    }>("select financial_hold_reason from identity.accounts where id = $1", [
+      accountId,
+    ])
+    return result.rows[0]?.financial_hold_reason ?? null
+  }
+
+  /** Sets the KYC-upgrade hold on the caller's transaction. */
+  async holdForKycUpgradeInTransaction(
+    transaction: TransactionContext,
+    accountId: string,
+  ): Promise<void> {
+    await transaction.query(
+      `update identity.accounts
+          set financial_hold_reason = 'kyc_upgrade_required',
+              financial_hold_at = now(),
+              updated_at = now()
+        where id = $1 and financial_hold_reason is null`,
+      [accountId],
+    )
   }
 
   private cipher(): MfaCipher {
