@@ -114,7 +114,7 @@ function resolve(doc, value) {
   return cursor ?? value
 }
 
-function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
+function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen, mode = "request") {
   const left = resolve(baseDoc, baseValue)
   const right = resolve(headDoc, headValue)
   if (!left || !right || typeof left !== "object" || typeof right !== "object") {
@@ -147,7 +147,7 @@ function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
   }
 
   if (left.type === "array" && right.type === "array") {
-    compareSchema(baseDoc, headDoc, left.items, right.items, `${where}[]`, seen)
+    compareSchema(baseDoc, headDoc, left.items, right.items, `${where}[]`, seen, mode)
   }
 
   if (
@@ -161,7 +161,15 @@ function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
       if (!(name in rightProps)) {
         add("breaking", `${where}.${name}`, "property was removed")
       } else {
-        compareSchema(baseDoc, headDoc, leftProps[name], rightProps[name], `${where}.${name}`, seen)
+        compareSchema(
+          baseDoc,
+          headDoc,
+          leftProps[name],
+          rightProps[name],
+          `${where}.${name}`,
+          seen,
+          mode,
+        )
       }
     }
 
@@ -169,12 +177,27 @@ function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
     const rightRequired = new Set(right.required ?? [])
     for (const name of rightRequired) {
       if (!leftRequired.has(name)) {
-        add("breaking", `${where}.${name}`, "property became required")
+        // A response property becoming required is a stronger guarantee; a
+        // request property becoming required is a new obligation.
+        add(
+          mode === "response" ? "non-breaking" : "breaking",
+          `${where}.${name}`,
+          mode === "response"
+            ? "response property is now always present"
+            : "property became required",
+        )
       }
     }
     for (const name of leftRequired) {
       if (!rightRequired.has(name)) {
-        add("non-breaking", `${where}.${name}`, "property stopped being required")
+        // A response property losing its guarantee can break a client.
+        add(
+          mode === "response" ? "breaking" : "non-breaking",
+          `${where}.${name}`,
+          mode === "response"
+            ? "response property is no longer guaranteed"
+            : "property stopped being required",
+        )
       }
     }
     for (const name of Object.keys(rightProps)) {
@@ -262,6 +285,7 @@ function compareOperation(baseDoc, headDoc, pathName, method, baseOp, headOp) {
           rightContent[mediaType]?.schema,
           `${where} response ${status} ${mediaType}`,
           new Set(),
+          "response",
         )
       }
     }

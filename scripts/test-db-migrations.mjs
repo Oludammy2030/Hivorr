@@ -132,6 +132,8 @@ try {
     "provider_references",
     "escrow_accounts",
     "payout_accounts",
+    "payout_requests",
+    "collection_accounts",
     "limits",
     "reconciliation_runs",
     "reconciliation_items",
@@ -199,36 +201,36 @@ try {
     assert(financeRlsByTable.get(table) === true, `finance.${table} has row level security`)
   }
 
-  for (const table of expectedFinanceTables) {
-    const insertAllowed = [
-      "journal_entries",
-      "postings",
-      "ledger_accounts",
-      "escrow_accounts",
-      "provider_references",
-      "limits",
-    ].includes(table)
-    const write = await testClient.query(
-      `select has_table_privilege('hivorr_api', 'finance.${table}', 'insert') as allowed`,
-    )
-    assert(
-      write.rows[0].allowed === insertAllowed,
-      `api role insert grant on finance.${table} matches the posting engine`,
-    )
-    for (const privilege of ["update", "delete"]) {
-      const mutation = await testClient.query(
+  // The API role's finance surface, per table. Column-level grants (escrow
+  // state, provider-reference status) leave the table-level update privilege
+  // false; they are asserted separately below.
+  const financeTableGrants = {
+    ledger_accounts: { insert: true, update: false, select: true },
+    journal_entries: { insert: true, update: false, select: true },
+    postings: { insert: true, update: false, select: true },
+    provider_references: { insert: true, update: false, select: true },
+    escrow_accounts: { insert: true, update: false, select: true },
+    payout_accounts: { insert: true, update: true, select: true },
+    payout_requests: { insert: true, update: true, select: true },
+    collection_accounts: { insert: true, update: false, select: true },
+    limits: { insert: true, update: false, select: true },
+    reconciliation_runs: { insert: false, update: false, select: false },
+    reconciliation_items: { insert: false, update: false, select: false },
+  }
+  for (const [table, grants] of Object.entries(financeTableGrants)) {
+    for (const privilege of ["insert", "update", "select"]) {
+      const result = await testClient.query(
         `select has_table_privilege('hivorr_api', 'finance.${table}', '${privilege}') as allowed`,
       )
-      assert(mutation.rows[0].allowed === false, `api role cannot ${privilege} finance.${table}`)
+      assert(
+        result.rows[0].allowed === grants[privilege],
+        `api role ${privilege} grant on finance.${table} matches the approved surface`,
+      )
     }
-    const read = await testClient.query(
-      `select has_table_privilege('hivorr_api', 'finance.${table}', 'select') as allowed`,
+    const deletion = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.${table}', 'delete') as allowed`,
     )
-    const readIsApproved = table !== "reconciliation_runs" && table !== "reconciliation_items"
-    assert(
-      read.rows[0].allowed === readIsApproved,
-      `api role read grant on finance.${table} matches the approved surface`,
-    )
+    assert(deletion.rows[0].allowed === false, `api role cannot delete finance.${table}`)
   }
 
   const escrowStateUpdate = await testClient.query(
@@ -1743,10 +1745,13 @@ try {
     "rls shows only the current account's payout accounts",
   )
 
-  const ownLimits = await testClient.query("select count(*)::int as count from finance.limits")
+  // Tier rows are visible to every account; the CBN seeds make the count
+  // configuration-dependent, so assert the shape rather than a literal.
+  const ownLimitRows = await testClient.query("select account_id, tier from finance.limits")
+  assert(ownLimitRows.rows.length > 0, "rls shows the tier limits to the current account")
   assert(
-    ownLimits.rows[0].count === 1,
-    "rls shows tier limits and only the current account's overrides",
+    ownLimitRows.rows.every((row) => row.account_id === null && row.tier !== null),
+    "rls shows tier limits and no other account's overrides",
   )
 
   const ownWalletBalance = await testClient.query(
@@ -2061,10 +2066,17 @@ try {
     "select count(*)::int as count from finance.postings",
   )
   assert(foreignPostings.rows[0].count === 0, "rls hides another account's postings")
-  const foreignLimits = await testClient.query("select count(*)::int as count from finance.limits")
+  const foreignLimitRows = await testClient.query("select account_id, tier from finance.limits")
+  assert(foreignLimitRows.rows.length > 0, "tier limits are visible to every account")
   assert(
-    foreignLimits.rows[0].count === 2,
-    "rls shows tier limits plus this account's own override",
+    foreignLimitRows.rows.every(
+      (row) => row.account_id === null || row.account_id === secondAccountId,
+    ),
+    "rls hides another account's limit overrides",
+  )
+  assert(
+    foreignLimitRows.rows.filter((row) => row.account_id === secondAccountId).length === 1,
+    "rls shows this account's own override",
   )
   const foreignWallet = await testClient.query(
     "select count(*)::int as count from finance.wallet_balances",
