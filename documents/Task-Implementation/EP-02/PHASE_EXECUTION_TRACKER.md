@@ -31,7 +31,7 @@
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** | — | — |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** | — | — |
 | 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **PENDING** | — | — |
-| 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — minimal `tier_0`/`tier_1` source, capability input and audited verifier assignment; CBN ladder and verification wiring deferred | — | `execution-records/EP-02-014.md` |
+| 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — CBN three-tier source, tier-based withdrawal and deposit caps, KYC-upgrade hold and audited verifier assignment; evidence rules and verification wiring deferred | — | `execution-records/EP-02-014.md` |
 | 8 | `EP-02-015` | Control review integration and immutable decision record | EP-02-011/012/013/014; CP-016/017/019; `admin.verification` queue. | **PENDING** | — | — |
 | 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** | — | — |
 | 10 | `EP-02-020` | Taxonomy registry schema and hierarchy domain | EP-02-002; EP-01-021/022/025; G0 ruling on depth. | **COMPLETED** — node/attribute schema, hierarchy triggers, RLS, domain | 2026-11-15 | `execution-records/EP-02-020.md` |
@@ -89,7 +89,7 @@ cluster that needs one founder-authorised entry point:
 Still open and blocking specific scopes:
 
 1. VFD written API/account confirmation — blocks `040`–`045` and dependent deposit/payout tasks.
-2. KYC tier ladder (#6) and verification vendor (#15) — blocks `010`–`016`.
+2. KYC naira thresholds (#6) and verification vendor (#15) — block `010`–`016`.
 3. Second reviewer / renewed `DEV-003` — required for G2 on verification and finance changes.
 4. CP-022 approval workflow — taxonomy writes are permission-gated and audited, not approval-routed.
 

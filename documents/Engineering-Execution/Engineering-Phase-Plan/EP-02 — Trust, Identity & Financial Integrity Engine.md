@@ -241,7 +241,7 @@ Taxonomy (`020–022`), escrow (`033`), limits (`035`), disputes (`036`), overri
 | --- | --- | --- |
 | VFD / PSL sandbox credentials and onboarding | Adapter, certification | Required; not recorded as available |
 | VFD written licence-scope confirmation | Entry gate | **Open** — BD-D11 conditions 1–6 |
-| KYC tier ladder and limits | Tier configuration | **Open** — `ARCHITECTURE.md` §16.4 #6 |
+| KYC tier ladder and limits | Tier configuration | **Decided 2026-11-26** — ladder settled; naira caps provisional pending counsel — `ARCHITECTURE.md` §16.4 #6 |
 | Verification vendor | Identity/KYC lane | **Open** — #15 |
 | NIBSS / bank-account name enquiry through VFD | Payout-account binding | Depends on VFD product scope |
 | Cloudflare R2 private bucket | Evidence | Decided; provisioning required |
@@ -255,7 +255,7 @@ Taxonomy (`020–022`), escrow (`033`), limits (`035`), disputes (`036`), overri
 | Decision | Register | Effect |
 | --- | --- | --- |
 | Funds custody — register must record BD-D01 partner-held | `ARCHITECTURE.md` §16.4 #2 | Entry gate |
-| KYC tier ladder and limits | #6 | Tier configuration and financial gating |
+| KYC tier ladder and limits | #6 — decided 2026-11-26; naira caps provisional | Tier configuration and financial gating |
 | Verification vendor | #15 | Identity lane implementation |
 | Escrow timing and dispute rules (BD-D03) | Roadmap §21 | Release/refund transitions only |
 | Fee model numbers (BD-D02) | Roadmap §21 | Out of scope; no fee computation |

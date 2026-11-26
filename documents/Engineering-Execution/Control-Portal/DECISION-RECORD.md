@@ -49,7 +49,7 @@ were.
 | O-01 | Funds custody and ledger policy (BD-D01) | Requires the recorded business/legal decision and VFD confirmation | `finance` module; CP-030/031 |
 | O-02 | Take rate and fee model (BD-D02) | Commercial decision | Commission, fee reporting |
 | O-03 | Escrow holding period and dispute rules (BD-D03) | Commercial/legal decision | Escrow, refunds, CP-031 |
-| O-04 | KYC tier ladder and limits | Not specified in any approved source | Verification and finance gating |
+| O-04 | KYC tier ladder and limits | Ladder decided 26 November 2026 (`ARCHITECTURE.md` §16.4 #6); the naira thresholds await counsel | Verification and finance gating |
 | O-05 | Verification vendor / standard | Not chosen | CP-019 evidence flow |
 | O-06 | Retention periods and legal hold | Requires founder and counsel | Audit, evidence, documents, deletion |
 | O-07 | Data residency and primary region | Not decided | Hosting and data governance |

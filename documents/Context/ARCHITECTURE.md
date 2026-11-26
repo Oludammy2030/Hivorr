@@ -2312,7 +2312,7 @@ so there is one list, not three.
 | 3 | **MVP activity scope** — all six at launch, or Explore-first | Which modules ship first | Founder | matrix #3 |
 | 4 | **Deactivation with open obligations** — blocked, or allowed | Activity state machine | Founder | matrix #4 |
 | 5 | **Business as account or profile** | `identity.account` cardinality; team features | Founder | matrix #5 |
-| 6 | **KYC tier ladder and limits** | Financial gating; `finance` constraints | Founder | matrix #6 |
+| 6 | **KYC tier ladder and limits** — **DECIDED 26 November 2026:** the CBN-style three-tier ladder is Hivorr's model (`tier_0` carries zero financial limits; `tier_1`–`tier_3` are Levels 1–3), enforced by the effective-dated limit engine in `finance.limits`. The **naira figures are provisional** — ₦30,000/₦100,000/₦1,000,000 daily withdrawal and ₦20,000/₦50,000/unlimited per deposit — until counsel confirms the CBN tier requirements; they are configuration rows, not policy. An over-cap deposit sets a `kyc_upgrade_required` hold and blocks fund transactions. | Financial gating; `finance` constraints | Founder + counsel | matrix #6; EP-02-014 |
 | 7 | **Retention periods** — identity, KYC, chat, disputes | Deletion design; no purge may be built | Founder + counsel | matrix #7 |
 | 8 | **Currency model** — single currency or multi-currency ledger | `finance` schema; wallet presentation | Founder | db rules #9 |
 | 9 | **Switcher form** — hub screen, sidebar section, or account menu | §5.3, §8.6 | Founder | matrix #9 |
@@ -2366,6 +2366,27 @@ that; this revision does not edit the matrix.
 | 18 | **TLS for second-level staging hosts** | The original `*.staging.hivorr.com` names were not covered by standard Cloudflare Universal SSL. | **Resolved 8 November 2026** by flattening the three privileged staging hosts to first-level names. No ACM subscription is required (§16.4 #26). |
 
 ### 16.6 Changelog
+
+#### 26 November 2026 — KYC tier ladder recorded
+
+**Decided by founder instruction**
+
+- The CBN-style three-tier ladder is Hivorr's KYC model: `tier_0` carries zero financial limits,
+  and `tier_1`–`tier_3` are CBN Levels 1–3, enforced through the effective-dated `finance.limits`
+  engine rather than in code.
+- The naira thresholds are **provisional** pending counsel confirmation of the CBN tier
+  requirements: daily withdrawal ₦30,000/₦100,000/₦1,000,000 and single deposit
+  ₦20,000/₦50,000/unlimited for `tier_1`/`tier_2`/`tier_3`. They are configuration, not policy;
+  changing one is a new effective-dated limit row.
+- An over-cap deposit sets `financial_hold_reason = 'kyc_upgrade_required'`, refuses the wallet
+  credit, and blocks fund transactions until a verifier changes the tier.
+- §16.4 #6 is resolved for the ladder and recorded as **provisional** for the figures.
+
+**Not changed**
+
+- No financial control was weakened or removed. No threshold is affirmed as a CBN requirement; the
+  figures remain an **[OPEN]** counsel question. No payment provider change, no new vendor, no
+  production deployment.
 
 #### 11 November 2026 — administrative governance domain
 

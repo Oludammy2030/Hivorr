@@ -99,7 +99,7 @@ EP-02 builds the trust, identity and financial-integrity layer that makes a stra
 | EP-01 G5 signed | **Met** — 2026-11-15 | `EP-01-G5-CLOSURE.md` |
 | Funds-custody model recorded | **Met** — pooled collection/settlement, internal wallets, internal escrow | `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md`; `ARCHITECTURE.md` §16.4 #2 |
 | VFD written licence-scope confirmation | **Open** — blocks provider tasks | BD-D11; VFD docs |
-| KYC tier ladder and limits | **Open** — blocks verification tasks | `ARCHITECTURE.md` §16.4 #6 |
+| KYC tier ladder and limits | **Decided** 2026-11-26 — three-tier ladder settled; naira caps provisional pending counsel | `ARCHITECTURE.md` §16.4 #6 |
 | Verification vendor | **Open** — blocks verification tasks | Architecture register |
 | Reviewer capacity / second reviewer | **Open** — blocks G2 on sensitive changes | Standards §13.3 |
 
