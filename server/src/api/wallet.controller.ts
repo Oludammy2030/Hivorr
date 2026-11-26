@@ -6,6 +6,7 @@ import {
   Inject,
   Param,
   Post,
+  Query,
   Req,
 } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
@@ -72,6 +73,33 @@ export class WalletController {
       accountId: session.accountId,
       userId: session.userId,
     })
+  }
+
+  /**
+   * The caller's own statement, newest first. Filters and the keyset cursor are
+   * optional; the service validates them. The account always comes from the
+   * session, never from the query.
+   */
+  @Get("statement")
+  async statement(
+    @Query("currency") currency: string | undefined,
+    @Query("activityId") activityId: string | undefined,
+    @Query("before") before: string | undefined,
+    @Query("beforeId") beforeId: string | undefined,
+    @Query("limit") limit: string | undefined,
+    @Req() request: FastifyRequest,
+  ) {
+    const { session } = await this.loadSession(request)
+    return this.wallet.statement(
+      { accountId: session.accountId, userId: session.userId },
+      {
+        currency,
+        activityId,
+        before,
+        beforeId,
+        limit: limit === undefined || limit === "" ? undefined : Number(limit),
+      },
+    )
   }
 
   @Get("payout-accounts")

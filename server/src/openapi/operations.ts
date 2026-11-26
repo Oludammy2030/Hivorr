@@ -108,6 +108,7 @@ import {
   payoutAccountListResponse,
   payoutAccountViewResponse,
   walletBalanceListResponse,
+  walletStatementListResponse,
   payoutRequestListResponse,
   payoutRequestViewResponse,
   withdrawRequest,
@@ -1616,6 +1617,22 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The caller's wallet balances by currency",
         schema: walletBalanceListResponse,
+      },
+    ],
+  },
+  {
+    id: "getWalletStatement",
+    method: "get",
+    path: "/v1/wallet/statement",
+    summary: "Read the caller's wallet statement",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description:
+          "The caller's own ledger postings, newest first; supports optional currency and activity filters and a before/beforeId keyset cursor with a limit of 1-100",
+        schema: walletStatementListResponse,
       },
     ],
   },

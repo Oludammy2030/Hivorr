@@ -62,6 +62,24 @@ interface CollectionAccount {
   readonly status: string
 }
 
+interface StatementEntry {
+  readonly postingId: string
+
+  readonly reference: string
+
+  readonly entryKind: string
+
+  readonly currency: string
+
+  readonly direction: "credit" | "debit"
+
+  readonly amount: string
+
+  readonly signedAmount: string
+
+  readonly occurredAt: string
+}
+
 function messageFor(error: unknown): string {
   if (error instanceof ApiClientError) return error.message
 
@@ -87,6 +105,8 @@ export function WalletScreen() {
 
   const [collection, setCollection] = useState<CollectionAccount | null>(null)
 
+  const [statement, setStatement] = useState<readonly StatementEntry[]>([])
+
   const [error, setError] = useState<string | undefined>()
 
   const [busy, setBusy] = useState(false)
@@ -98,19 +118,24 @@ export function WalletScreen() {
   const [bindOpen, setBindOpen] = useState(false)
 
   async function refresh() {
-    const [nextBalances, nextAccounts, nextCollection] = await Promise.all([
-      apiClient.getWalletBalance(),
+    const [nextBalances, nextAccounts, nextCollection, nextStatement] =
+      await Promise.all([
+        apiClient.getWalletBalance(),
 
-      apiClient.listPayoutAccounts(),
+        apiClient.listPayoutAccounts(),
 
-      apiClient.getCollectionAccount(),
-    ])
+        apiClient.getCollectionAccount(),
+
+        apiClient.getWalletStatement(),
+      ])
 
     setBalances(nextBalances as never)
 
     setAccounts(nextAccounts as never)
 
     setCollection(nextCollection as never)
+
+    setStatement(nextStatement as never)
 
     setSelectedAccount(
       (current) =>
@@ -465,6 +490,75 @@ export function WalletScreen() {
           </form>
         </section>
       </div>
+
+      <section style={{ ...card, marginTop: 18 }}>
+        <div
+          style={{
+            display: "flex",
+
+            justifyContent: "space-between",
+
+            alignItems: "center",
+          }}
+        >
+          <h2 style={{ fontSize: 16, fontWeight: 800 }}>Recent activity</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void refresh()}
+            disabled={busy}
+          >
+            Refresh
+          </Button>
+        </div>
+        {statement.length === 0 ? (
+          <p style={{ color: colorTokens.gray, fontSize: 12, marginTop: 12 }}>
+            No wallet activity yet. A deposit or withdrawal appears here after
+            it is posted to your wallet.
+          </p>
+        ) : (
+          <div style={{ marginTop: 12 }}>
+            {statement.map((entry) => {
+              const credit = entry.direction === "credit"
+              return (
+                <div
+                  key={entry.postingId}
+                  style={{
+                    display: "flex",
+
+                    justifyContent: "space-between",
+
+                    gap: 12,
+
+                    padding: "12px 0",
+
+                    borderTop: `1px solid ${colorTokens.border}`,
+                  }}
+                >
+                  <div>
+                    <p style={{ fontWeight: 700, fontSize: 13 }}>
+                      {entry.entryKind.replace(/_/g, " ")}
+                    </p>
+                    <p style={{ color: colorTokens.mutedText, fontSize: 11 }}>
+                      {new Date(entry.occurredAt).toLocaleString()} ·{" "}
+                      {entry.reference}
+                    </p>
+                  </div>
+                  <p
+                    style={{
+                      fontWeight: 800,
+                      fontSize: 13,
+                      color: credit ? colorTokens.success : colorTokens.ink,
+                    }}
+                  >
+                    {entry.signedAmount} {entry.currency}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
 
       <section style={{ ...card, marginTop: 18 }}>
         <div

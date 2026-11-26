@@ -291,6 +291,8 @@ export type ListPayoutsResponse = ({ "id": string; "reference": string; "payoutA
 
 export type GetWalletBalanceResponse = ({ "currency": string; "total": string; "available": string; "pending": string; "withdrawable": string })[]
 
+export type GetWalletStatementResponse = ({ "postingId": string; "entryId": string; "reference": string; "entryKind": "deposit" | "withdrawal" | "escrow_hold" | "escrow_release" | "escrow_refund" | "payout" | "payout_reversal" | "adjustment" | "reversal"; "currency": string; "direction": "debit" | "credit"; "amount": string; "signedAmount": string; "activityId": "market.buy" | "services.hire" | "errands.request" | "market.sell" | "services.offer" | "logistics.provide" | null; "occurredAt": string })[]
+
 export type ListPayoutAccountsResponse = ({ "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string })[]
 
 export type BindPayoutAccountRequest = { "bankCode": string; "bankName": string; "accountNumber": string; "reason"?: string }
@@ -968,6 +970,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<GetWalletBalanceResponse>(
         "GET",
         "/v1/wallet/balance",
+        undefined,
+        [200],
+      ),
+    getWalletStatement: () =>
+      request<GetWalletStatementResponse>(
+        "GET",
+        "/v1/wallet/statement",
         undefined,
         [200],
       ),

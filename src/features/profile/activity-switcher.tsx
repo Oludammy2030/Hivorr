@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Link } from "react-router"
 import {
   Award,
   Navigation,
@@ -6,6 +7,7 @@ import {
   Store,
   Truck,
   Users,
+  Wallet,
   Zap,
 } from "lucide-react"
 
@@ -188,7 +190,27 @@ export function ActivitySwitcher() {
             Hivorr
           </span>
         </div>
-        <Pill tone="brand">One account · Many activities</Pill>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Link
+            to="/wallet"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: `1px solid ${colorTokens.border}`,
+              color: colorTokens.ink,
+              fontSize: 13,
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            <Wallet size={15} color={colorTokens.brand} />
+            Wallet
+          </Link>
+          {!isMobile && <Pill tone="brand">One account · Many activities</Pill>}
+        </div>
       </div>
 
       <main
