@@ -1,5 +1,7 @@
 import "reflect-metadata"
 
+import { Readable } from "node:stream"
+
 import fastifyCookie from "@fastify/cookie"
 import { NestFactory } from "@nestjs/core"
 import {
@@ -43,6 +45,18 @@ export async function createApplication(
   }
 
   const instance = app.getHttpAdapter().getInstance()
+  instance.addHook("preParsing", (request, _reply, payload, done) => {
+    const chunks: Buffer[] = []
+    payload.on("data", (chunk: Buffer | string) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    })
+    payload.on("error", (error) => done(error, undefined))
+    payload.on("end", () => {
+      const rawBody = Buffer.concat(chunks)
+      ;(request as typeof request & { rawBody?: Buffer }).rawBody = rawBody
+      done(null, Readable.from(rawBody))
+    })
+  })
   instance.addHook("onRequest", (request, reply, done) => {
     const header = request.headers["x-correlation-id"]
     const candidate = Array.isArray(header) ? header[0] : header

@@ -365,6 +365,13 @@
       "description": "Paystack live-mode secret key. Supplied by the deployment secret store; never entered or returned by the control portal."
     },
     {
+      "name": "PAYSTACK_DVA_BANK",
+      "source": "config",
+      "classification": "public",
+      "requiredIn": [],
+      "description": "Preferred bank slug for a Paystack dedicated virtual account. Defaults to titan-paystack."
+    },
+    {
       "name": "EXPECTED_SUPABASE_PROJECT_REF",
       "source": "tooling",
       "classification": "public",

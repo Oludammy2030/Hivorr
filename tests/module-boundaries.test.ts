@@ -72,7 +72,9 @@ describe("ten-module skeleton", () => {
 
   it("exposes the finance posting, wallet, escrow, provider and limit domains", () => {
     expect(sourceFiles(path.join(modulesRoot, "finance"))).toEqual([
+      "collection-account.service.ts",
       "deposit-eligibility.service.ts",
+      "deposit-posting.service.ts",
       "escrow.service.ts",
       "idempotency.ts",
       "index.ts",
@@ -137,6 +139,7 @@ describe("ten-module skeleton", () => {
     expect(creators).toEqual([
       "20261118000100_finance_create_ledger_tables.sql",
       "20261123000200_finance_add_payout_requests.sql",
+      "20261126000200_finance_add_collection_accounts.sql",
     ])
   })
 })

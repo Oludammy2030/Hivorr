@@ -84,6 +84,16 @@ export type {
   DepositCheckInput,
   DepositDecision,
 } from "./deposit-eligibility.service"
+export { CollectionAccountService } from "./collection-account.service"
+export type {
+  CollectionAccountView,
+  CreateCollectionAccountInput,
+} from "./collection-account.service"
+export { DepositPostingService } from "./deposit-posting.service"
+export type {
+  DepositPostingView,
+  PostDepositInput,
+} from "./deposit-posting.service"
 export {
   PAYOUT_ACCOUNT_NAME_RESOLVER,
   PayoutAccountService,

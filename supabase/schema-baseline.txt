@@ -51,6 +51,7 @@ admin | staff_profiles
 admin | user_notes
 admin | verification_reviews
 admin | work_items
+finance | collection_accounts
 finance | escrow_accounts
 finance | journal_entries
 finance | ledger_accounts
@@ -413,6 +414,19 @@ admin | work_items | created_by | uuid | uuid | YES | -
 admin | work_items | created_at | timestamp with time zone | timestamptz | NO | now()
 admin | work_items | completed_at | timestamp with time zone | timestamptz | YES | -
 admin | work_items | escalated_at | timestamp with time zone | timestamptz | YES | -
+finance | collection_accounts | id | uuid | uuid | NO | platform.uuidv7()
+finance | collection_accounts | account_id | uuid | uuid | NO | -
+finance | collection_accounts | owner_user_id | uuid | uuid | NO | -
+finance | collection_accounts | provider | text | text | NO | 'paystack'::text
+finance | collection_accounts | reference | text | text | NO | -
+finance | collection_accounts | provider_customer_code | text | text | YES | -
+finance | collection_accounts | account_number | text | text | NO | -
+finance | collection_accounts | account_name | text | text | NO | -
+finance | collection_accounts | bank_name | text | text | YES | -
+finance | collection_accounts | currency | text | text | NO | 'NGN'::text
+finance | collection_accounts | status | text | text | NO | 'active'::text
+finance | collection_accounts | created_at | timestamp with time zone | timestamptz | NO | now()
+finance | collection_accounts | updated_at | timestamp with time zone | timestamptz | NO | now()
 finance | escrow_accounts | id | uuid | uuid | NO | platform.uuidv7()
 finance | escrow_accounts | ledger_account_id | uuid | uuid | NO | -
 finance | escrow_accounts | payer_account_id | uuid | uuid | NO | -
@@ -941,6 +955,18 @@ admin | work_items | work_items_pkey | p | PRIMARY KEY (id)
 admin | work_items | work_items_priority_check | c | CHECK (priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text]))
 admin | work_items | work_items_status_check | c | CHECK (status = ANY (ARRAY['open'::text, 'in_progress'::text, 'blocked'::text, 'done'::text, 'cancelled'::text]))
 admin | work_items | work_items_user_id_fkey | f | FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE
+finance | collection_accounts | collection_accounts_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE RESTRICT
+finance | collection_accounts | collection_accounts_account_id_provider_key | u | UNIQUE (account_id, provider)
+finance | collection_accounts | collection_accounts_account_name_check | c | CHECK (length(btrim(account_name)) >= 1 AND length(btrim(account_name)) <= 160)
+finance | collection_accounts | collection_accounts_account_number_check | c | CHECK (account_number ~ '^[0-9]{10}$'::text)
+finance | collection_accounts | collection_accounts_account_number_key | u | UNIQUE (account_number)
+finance | collection_accounts | collection_accounts_currency_check | c | CHECK (currency ~ '^[A-Z]{3}$'::text)
+finance | collection_accounts | collection_accounts_owner_user_id_fkey | f | FOREIGN KEY (owner_user_id) REFERENCES identity.users(id) ON DELETE RESTRICT
+finance | collection_accounts | collection_accounts_pkey | p | PRIMARY KEY (id)
+finance | collection_accounts | collection_accounts_provider_check | c | CHECK (provider = 'paystack'::text)
+finance | collection_accounts | collection_accounts_reference_check | c | CHECK (length(btrim(reference)) >= 3 AND length(btrim(reference)) <= 120)
+finance | collection_accounts | collection_accounts_reference_key | u | UNIQUE (reference)
+finance | collection_accounts | collection_accounts_status_check | c | CHECK (status = ANY (ARRAY['active'::text, 'disabled'::text]))
 finance | escrow_accounts | escrow_accounts_activity_id_activity_ref_currency_key | u | UNIQUE (activity_id, activity_ref, currency)
 finance | escrow_accounts | escrow_accounts_activity_id_check | c | CHECK (activity_id = ANY (ARRAY['market.buy'::text, 'services.hire'::text, 'errands.request'::text]))
 finance | escrow_accounts | escrow_accounts_check | c | CHECK ((state = ANY (ARRAY['released'::text, 'refunded'::text, 'cancelled'::text])) = (resolved_at IS NOT NULL))
@@ -1233,6 +1259,10 @@ admin | verification_reviews | verification_reviews_pkey | CREATE UNIQUE INDEX v
 admin | verification_reviews | verification_reviews_status_idx | CREATE INDEX verification_reviews_status_idx ON admin.verification_reviews USING btree (status, created_at)
 admin | work_items | work_items_pkey | CREATE UNIQUE INDEX work_items_pkey ON admin.work_items USING btree (id)
 admin | work_items | work_items_user_idx | CREATE INDEX work_items_user_idx ON admin.work_items USING btree (user_id, status, due_at)
+finance | collection_accounts | collection_accounts_account_idx | CREATE INDEX collection_accounts_account_idx ON finance.collection_accounts USING btree (account_id, status)
+finance | collection_accounts | collection_accounts_account_number_key | CREATE UNIQUE INDEX collection_accounts_account_number_key ON finance.collection_accounts USING btree (account_number)
+finance | collection_accounts | collection_accounts_pkey | CREATE UNIQUE INDEX collection_accounts_pkey ON finance.collection_accounts USING btree (id)
+finance | collection_accounts | collection_accounts_reference_key | CREATE UNIQUE INDEX collection_accounts_reference_key ON finance.collection_accounts USING btree (reference)
 finance | escrow_accounts | escrow_accounts_activity_id_activity_ref_currency_key | CREATE UNIQUE INDEX escrow_accounts_activity_id_activity_ref_currency_key ON finance.escrow_accounts USING btree (activity_id, activity_ref, currency)
 finance | escrow_accounts | escrow_accounts_ledger_account_id_key | CREATE UNIQUE INDEX escrow_accounts_ledger_account_id_key ON finance.escrow_accounts USING btree (ledger_account_id)
 finance | escrow_accounts | escrow_accounts_payer_idx | CREATE INDEX escrow_accounts_payer_idx ON finance.escrow_accounts USING btree (payer_account_id, currency)
@@ -1372,6 +1402,7 @@ admin | staff_profiles | true | true
 admin | user_notes | true | true
 admin | verification_reviews | true | true
 admin | work_items | true | true
+finance | collection_accounts | true | false
 finance | escrow_accounts | true | false
 finance | journal_entries | true | false
 finance | ledger_accounts | true | false
@@ -1406,7 +1437,7 @@ platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
 profile | profiles | true | true
 
-## policies (79)
+## policies (81)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1419,6 +1450,8 @@ admin | roles | roles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELEC
 admin | staff_profiles | staff_profiles_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | work_items | work_items_select_self | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 finance | escrow_accounts | escrow_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (payer_account_id = platform.current_account_id())
+finance | collection_accounts | collection_accounts_insert | PERMISSIVE | {hivorr_api} | INSERT | - | ((account_id = platform.current_account_id()) AND (owner_user_id = platform.current_user_id()))
+finance | collection_accounts | collection_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (account_id = platform.current_account_id()) | -
 finance | escrow_accounts | escrow_accounts_select | PERMISSIVE | {hivorr_api} | SELECT | (payer_account_id = platform.current_account_id()) | -
 finance | escrow_accounts | escrow_accounts_update | PERMISSIVE | {hivorr_api} | UPDATE | (payer_account_id = platform.current_account_id()) | (payer_account_id = platform.current_account_id())
 finance | journal_entries | journal_entries_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (platform.current_account_id() IS NOT NULL)
@@ -1745,6 +1778,15 @@ admin | work_items | postgres | SELECT | YES
 admin | work_items | postgres | TRIGGER | YES
 admin | work_items | postgres | TRUNCATE | YES
 admin | work_items | postgres | UPDATE | YES
+finance | collection_accounts | hivorr_api | INSERT | NO
+finance | collection_accounts | hivorr_api | SELECT | NO
+finance | collection_accounts | postgres | DELETE | YES
+finance | collection_accounts | postgres | INSERT | YES
+finance | collection_accounts | postgres | REFERENCES | YES
+finance | collection_accounts | postgres | SELECT | YES
+finance | collection_accounts | postgres | TRIGGER | YES
+finance | collection_accounts | postgres | TRUNCATE | YES
+finance | collection_accounts | postgres | UPDATE | YES
 finance | escrow_accounts | hivorr_api | INSERT | NO
 finance | escrow_accounts | hivorr_api | SELECT | NO
 finance | escrow_accounts | postgres | DELETE | YES

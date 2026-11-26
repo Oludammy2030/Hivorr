@@ -856,6 +856,20 @@ export const payoutRequestViewResponse = z.object({
 
 export const payoutRequestListResponse = z.array(payoutRequestViewResponse)
 
+export const collectionAccountResponse = z.object({
+  id: z.string().uuid(),
+  provider: z.string(),
+  reference: z.string(),
+  accountNumber: z.string(),
+  accountName: z.string(),
+  bankName: z.string().nullable(),
+  currency: z.string(),
+  status: z.string(),
+})
+
+export const collectionAccountOrNullResponse =
+  collectionAccountResponse.nullable()
+
 export const withdrawRequest = z.strictObject({
   payoutAccountId: z.string().uuid(),
   amount: moneyAmountSchema,
@@ -887,6 +901,12 @@ export const paymentProviderSettingResponse = z.object({
     vfd: z.object({ test: z.boolean(), live: z.boolean() }),
     paystack: z.object({ test: z.boolean(), live: z.boolean() }),
   }),
+})
+
+export const webhookAcceptedResponse = z.object({
+  accepted: z.boolean(),
+  posted: z.boolean(),
+  reason: z.string().optional(),
 })
 
 export const healthResponse = z.object({

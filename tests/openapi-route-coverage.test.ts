@@ -23,6 +23,7 @@ import { TaxonomyController } from "../server/src/api/taxonomy.controller"
 import { WalletController } from "../server/src/api/wallet.controller"
 import { KycController } from "../server/src/api/kyc.controller"
 import { PaymentsController } from "../server/src/api/payments.controller"
+import { PaystackWebhookController } from "../server/src/api/paystack-webhook.controller"
 import { buildDocument } from "../server/src/openapi/build"
 import { scanControllerRoutes } from "../server/src/openapi/scan"
 
@@ -56,6 +57,7 @@ describe("OpenAPI route coverage", () => {
       WalletController,
       KycController,
       PaymentsController,
+      PaystackWebhookController,
     ]
       .flatMap((controller) => scanControllerRoutes(controller))
       .map((route) => `${route.method} ${route.path}`)

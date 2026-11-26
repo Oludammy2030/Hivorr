@@ -289,6 +289,10 @@ export type UpdateTaxonomyAttributeResponse = { "id": string; "nodeId": string; 
 
 export type ListPayoutsResponse = ({ "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null })[]
 
+export type GetCollectionAccountResponse = { "id": string; "provider": string; "reference": string; "accountNumber": string; "accountName": string; "bankName": string | null; "currency": string; "status": string } | null
+
+export type CreateCollectionAccountResponse = { "id": string; "provider": string; "reference": string; "accountNumber": string; "accountName": string; "bankName": string | null; "currency": string; "status": string }
+
 export type RequestWithdrawalRequest = { "payoutAccountId": string; "amount": string; "currency": string }
 
 export type RequestWithdrawalResponse = { "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null }
@@ -302,6 +306,8 @@ export type GetPaymentProviderResponse = { "provider": "vfd" | "paystack"; "mode
 export type SetPaymentProviderRequest = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "reason": string }
 
 export type SetPaymentProviderResponse = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "updatedAt": string; "configured": { "vfd": { "test": boolean; "live": boolean }; "paystack": { "test": boolean; "live": boolean } } }
+
+export type PaystackWebhookResponse = { "accepted": boolean; "posted": boolean; "reason"?: string }
 
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
@@ -946,6 +952,20 @@ export function createHivorrClient(options: HivorrClientOptions) {
         undefined,
         [200],
       ),
+    getCollectionAccount: () =>
+      request<GetCollectionAccountResponse>(
+        "GET",
+        "/v1/wallet/collection-account",
+        undefined,
+        [200],
+      ),
+    createCollectionAccount: () =>
+      request<CreateCollectionAccountResponse>(
+        "POST",
+        "/v1/wallet/collection-account",
+        undefined,
+        [201],
+      ),
     requestWithdrawal: (input: RequestWithdrawalRequest) =>
       request<RequestWithdrawalResponse>(
         "POST",
@@ -972,6 +992,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "POST",
         "/v1/control/payments/provider",
         input,
+        [200],
+      ),
+    paystackWebhook: () =>
+      request<PaystackWebhookResponse>(
+        "POST",
+        "/v1/webhooks/paystack",
+        undefined,
         [200],
       ),
   }

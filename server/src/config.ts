@@ -140,6 +140,7 @@ const baseConfigSchema = z.object({
     .default("https://api.paystack.co"),
   PAYSTACK_SECRET_KEY_TEST: z.string().min(1).optional(),
   PAYSTACK_SECRET_KEY_LIVE: z.string().min(1).optional(),
+  PAYSTACK_DVA_BANK: z.string().min(1).max(40).default("titan-paystack"),
   /**
    * The wallet account that funds a payout. Optional: the adapter refuses to
    * send while it is unset. Never a credential, but financial data, so it is
@@ -454,6 +455,7 @@ export interface PaystackConfig {
   readonly baseUrl: string
   readonly secretKeyTest: string | undefined
   readonly secretKeyLive: string | undefined
+  readonly preferredBank: string
 }
 
 export type PaymentProviderKey = "vfd" | "paystack"
@@ -587,6 +589,7 @@ export function parseConfig(environment: NodeJS.ProcessEnv): ApiConfig {
       baseUrl: value.PAYSTACK_BASE_URL,
       secretKeyTest: value.PAYSTACK_SECRET_KEY_TEST,
       secretKeyLive: value.PAYSTACK_SECRET_KEY_LIVE,
+      preferredBank: value.PAYSTACK_DVA_BANK,
     },
     payout: {
       encryptionKey: value.PAYOUT_ENCRYPTION_KEY,

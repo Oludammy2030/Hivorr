@@ -7,6 +7,7 @@ import {
 
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
+import type { TransactionContext } from "../../db/transaction"
 import { IdentityService, type RequestContext } from "../identity"
 import { appendAudit } from "../platform"
 import { FinanceLimitService } from "./limit.service"
@@ -52,11 +53,33 @@ export class DepositEligibilityService {
 
   /** Evaluates a deposit without throwing; the caller maps the reason. */
   async check(input: DepositCheckInput): Promise<DepositDecision> {
-    const tier = input.tier ?? "tier_0"
+    const { tier, amountMinor } = this.validate(input)
     if (!FINANCIALLY_ELIGIBLE_TIERS.has(tier)) {
       return { allowed: false, reason: "kyc_required", cap: null }
     }
+    return this.database.withTransaction(
+      { identity: { accountId: input.accountId, userId: input.userId } },
+      (transaction) => this.evaluate(transaction, input, tier, amountMinor),
+    )
+  }
 
+  /** Evaluates on the caller's transaction, for deposit posting. */
+  async checkInTransaction(
+    transaction: TransactionContext,
+    input: DepositCheckInput,
+  ): Promise<DepositDecision> {
+    const { tier, amountMinor } = this.validate(input)
+    if (!FINANCIALLY_ELIGIBLE_TIERS.has(tier)) {
+      return { allowed: false, reason: "kyc_required", cap: null }
+    }
+    return this.evaluate(transaction, input, tier, amountMinor)
+  }
+
+  private validate(input: DepositCheckInput): {
+    readonly tier: string
+    readonly amountMinor: bigint
+  } {
+    const tier = input.tier ?? "tier_0"
     const amountMinor = moneyToMinorUnits(input.amount)
     if (amountMinor === null) {
       throw new ApiError(
@@ -72,82 +95,89 @@ export class DepositEligibilityService {
         400,
       )
     }
+    return { tier, amountMinor }
+  }
 
-    return this.database.withTransaction(
-      { identity: { accountId: input.accountId, userId: input.userId } },
-      async (transaction) => {
-        const hold = await this.identity.readFinancialHoldInTransaction(
-          transaction,
-          input.accountId,
-        )
-        if (hold) {
-          return {
-            allowed: false,
-            reason: "kyc_upgrade_required",
-            cap: null,
-          }
-        }
+  private async evaluate(
+    transaction: TransactionContext,
+    input: DepositCheckInput,
+    tier: string,
+    amountMinor: bigint,
+  ): Promise<DepositDecision> {
+    if (!FINANCIALLY_ELIGIBLE_TIERS.has(tier)) {
+      return { allowed: false, reason: "kyc_required", cap: null }
+    }
 
-        const decision = await this.limits.evaluateWithin(transaction, {
-          accountId: input.accountId,
-          userId: input.userId,
-          tier,
-          limitType: "deposit",
-          currency: input.currency,
-          amount: minorUnitsToMoney(amountMinor),
-          direction: "in",
-        })
-
-        if (decision.allowed) {
-          return {
-            allowed: true,
-            reason: "within_limit",
-            cap: decision.rule.isUnlimited
-              ? null
-              : minorUnitsToMoney(decision.rule.amountMinor),
-          }
-        }
-
-        if (decision.reason === "kyc_required") {
-          return { allowed: false, reason: "kyc_required", cap: null }
-        }
-        if (decision.reason === "not_configured") {
-          return { allowed: false, reason: "not_configured", cap: null }
-        }
-
-        const cap = decision.rule
-          ? minorUnitsToMoney(decision.rule.amountMinor)
-          : null
-        await this.identity.holdForKycUpgradeInTransaction(
-          transaction,
-          input.accountId,
-        )
-        await appendAudit(transaction.client, {
-          actorType: "user",
-          actorId: input.userId,
-          actorAudience: input.context.audience,
-          environment: input.context.environment,
-          action: "finance.deposit_blocked_kyc_upgrade",
-          targetType: "account",
-          targetId: input.accountId,
-          afterSummary: {
-            amount: minorUnitsToMoney(amountMinor),
-            currency: input.currency,
-            tier,
-            cap,
-            hold: "kyc_upgrade_required",
-          },
-          ip: input.context.ip,
-          userAgent: input.context.userAgent,
-          correlationId: input.context.correlationId,
-        })
-        return {
-          allowed: false,
-          reason: "kyc_upgrade_required",
-          cap,
-        }
-      },
+    const hold = await this.identity.readFinancialHoldInTransaction(
+      transaction,
+      input.accountId,
     )
+    if (hold) {
+      return {
+        allowed: false,
+        reason: "kyc_upgrade_required",
+        cap: null,
+      }
+    }
+
+    const decision = await this.limits.evaluateWithin(transaction, {
+      accountId: input.accountId,
+      userId: input.userId,
+      tier,
+      limitType: "deposit",
+      currency: input.currency,
+      amount: minorUnitsToMoney(amountMinor),
+      direction: "in",
+    })
+
+    if (decision.allowed) {
+      return {
+        allowed: true,
+        reason: "within_limit",
+        cap: decision.rule.isUnlimited
+          ? null
+          : minorUnitsToMoney(decision.rule.amountMinor),
+      }
+    }
+
+    if (decision.reason === "kyc_required") {
+      return { allowed: false, reason: "kyc_required", cap: null }
+    }
+    if (decision.reason === "not_configured") {
+      return { allowed: false, reason: "not_configured", cap: null }
+    }
+
+    const cap = decision.rule
+      ? minorUnitsToMoney(decision.rule.amountMinor)
+      : null
+    await this.identity.holdForKycUpgradeInTransaction(
+      transaction,
+      input.accountId,
+    )
+    await appendAudit(transaction.client, {
+      actorType: "user",
+      actorId: input.userId,
+      actorAudience: input.context.audience,
+      environment: input.context.environment,
+      action: "finance.deposit_blocked_kyc_upgrade",
+      targetType: "account",
+      targetId: input.accountId,
+      afterSummary: {
+        amount: minorUnitsToMoney(amountMinor),
+        currency: input.currency,
+        tier,
+        cap,
+        hold: "kyc_upgrade_required",
+      },
+      ip: input.context.ip,
+      userAgent: input.context.userAgent,
+      correlationId: input.context.correlationId,
+    })
+    return {
+      allowed: false,
+      reason: "kyc_upgrade_required",
+      cap,
+    }
   }
 
   /** Throws the stable error a deposit-posting caller should surface. */

@@ -23,6 +23,7 @@ import { HealthController } from "./health/health.controller"
 import { WalletController } from "./api/wallet.controller"
 import { KycController } from "./api/kyc.controller"
 import { PaymentsController } from "./api/payments.controller"
+import { PaystackWebhookController } from "./api/paystack-webhook.controller"
 import { GrantsController } from "./modules/identity/grants/grants.controller"
 import { GrantsService } from "./modules/identity/grants/grants.service"
 import { IdentityController } from "./modules/identity/identity.controller"
@@ -57,6 +58,8 @@ import { VerificationService } from "./modules/admin/verification.service"
 import { DisputeService } from "./modules/admin/dispute.service"
 import { ProfileService } from "./modules/profile/profile.service"
 import { DepositEligibilityService } from "./modules/finance/deposit-eligibility.service"
+import { CollectionAccountService } from "./modules/finance/collection-account.service"
+import { DepositPostingService } from "./modules/finance/deposit-posting.service"
 import { LedgerService } from "./modules/finance/ledger.service"
 import { EscrowService } from "./modules/finance/escrow.service"
 import { FinanceLimitService } from "./modules/finance/limit.service"
@@ -104,6 +107,7 @@ export class AppModule {
         WalletController,
         KycController,
         PaymentsController,
+        PaystackWebhookController,
       ],
       providers: [
         { provide: API_CONFIG, useValue: config },
@@ -206,6 +210,8 @@ export class AppModule {
         WalletService,
         EscrowService,
         DepositEligibilityService,
+        CollectionAccountService,
+        DepositPostingService,
         ProviderReferenceService,
         FinanceLimitService,
         PayoutAccountService,

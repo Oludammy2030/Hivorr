@@ -1928,6 +1928,18 @@ export class IdentityService {
     )
   }
 
+  /** Reads the effective KYC tier on the caller's transaction. */
+  async getKycTierInTransaction(
+    transaction: TransactionContext,
+    accountId: string,
+  ): Promise<string> {
+    const result = await transaction.query<{ kyc_tier: string }>(
+      "select kyc_tier from identity.accounts where id = $1",
+      [accountId],
+    )
+    return result.rows[0]?.kyc_tier ?? "tier_0"
+  }
+
   private cipher(): MfaCipher {
     const cipher = MfaCipher.fromBase64(this.config.mfaEncryptionKey)
     if (!cipher) {

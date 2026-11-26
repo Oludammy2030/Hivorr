@@ -100,6 +100,9 @@ import {
   kycTierResponse,
   paymentProviderSettingRequest,
   paymentProviderSettingResponse,
+  webhookAcceptedResponse,
+  collectionAccountResponse,
+  collectionAccountOrNullResponse,
   payoutRequestListResponse,
   payoutRequestViewResponse,
   withdrawRequest,
@@ -1597,6 +1600,36 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     ],
   },
   {
+    id: "getCollectionAccount",
+    method: "get",
+    path: "/v1/wallet/collection-account",
+    summary: "Read the caller's dedicated collection account",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description: "The collection account, or null when none exists",
+        schema: collectionAccountOrNullResponse,
+      },
+    ],
+  },
+  {
+    id: "createCollectionAccount",
+    method: "post",
+    path: "/v1/wallet/collection-account",
+    summary: "Create the caller's dedicated collection account",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 201,
+        description: "The created collection account",
+        schema: collectionAccountResponse,
+      },
+    ],
+  },
+  {
     id: "requestWithdrawal",
     method: "post",
     path: "/v1/wallet/withdrawals",
@@ -1666,6 +1699,21 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The updated provider setting",
         schema: paymentProviderSettingResponse,
+      },
+    ],
+  },
+  {
+    id: "paystackWebhook",
+    method: "post",
+    path: "/v1/webhooks/paystack",
+    summary: "Receive a signed Paystack webhook",
+    tag: "payments",
+    audience: ["public"],
+    success: [
+      {
+        status: 200,
+        description: "The event was accepted or ignored",
+        schema: webhookAcceptedResponse,
       },
     ],
   },
