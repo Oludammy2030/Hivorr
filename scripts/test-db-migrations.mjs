@@ -2641,6 +2641,39 @@ try {
   }
   assert(skippedStateRejected, "a lane cannot skip straight to approved")
 
+  // ---- Evidence scan transitions (EP-02-012, scanning slice) ----
+  const scanStates = ["PENDING", "CLEAN", "INFECTED", "FAILED"]
+  const approvedScans = new Set(["PENDING->CLEAN", "PENDING->INFECTED", "PENDING->FAILED"])
+  for (const from of scanStates) {
+    for (const to of scanStates) {
+      const result = await testClient.query(
+        "select profile.evidence_scan_transition_allowed($1, $2) as allowed",
+        [from, to],
+      )
+      assert(
+        result.rows[0].allowed === (from === to || approvedScans.has(`${from}->${to}`)),
+        `scan transition ${from}->${to} matches the approved table`,
+      )
+    }
+  }
+
+  const scanDecision = await testClient.query(
+    "update profile.verification_evidence set scan_state = 'CLEAN' where id = $1 returning scan_state",
+    [evidenceId],
+  )
+  assert(scanDecision.rows[0].scan_state === "CLEAN", "a pending file may be decided clean")
+
+  let rescannedRejected = false
+  try {
+    await testClient.query(
+      "update profile.verification_evidence set scan_state = 'INFECTED' where id = $1",
+      [evidenceId],
+    )
+  } catch (error) {
+    rescannedRejected = error?.code === "23514"
+  }
+  assert(rescannedRejected, "a decided scan cannot be changed")
+
   // A decided attempt must record when it was decided, and nothing else may.
   const businessCase = await testClient.query(
     "insert into profile.verification_cases (account_id, lane) values ($1, 'business') returning id",
