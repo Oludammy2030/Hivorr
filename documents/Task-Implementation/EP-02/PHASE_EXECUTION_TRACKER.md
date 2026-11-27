@@ -54,7 +54,7 @@
 | 27 | `EP-02-051` | Payer-name match rule and manual review path | EP-02-042, EP-02-050; G0 payer-name ruling. | **PENDING** | — | — |
 | 28 | `EP-02-052` | Deposit posting and idempotent ledger flow | EP-02-031, EP-02-034, EP-02-051. | **IN PROGRESS** — exactly-once posting, CBN cap/hold and audit; payer-name matching (`051`) and reconciliation deferred | — | `execution-records/EP-02-052.md` |
 | 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020 (not required for the user path). | **IN PROGRESS** — self-service withdrawal request/eligibility + automatic execution (reserve, provider call, reversal, idempotency, audit); manual approval out of scope per founder; HTTP endpoint and DB certification deferred | — | `execution-records/EP-02-053.md` |
-| 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **PENDING** | — | — |
+| 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **COMPLETED** — RLS refuses disabled, unbound, mismatched, tier_0 and held payouts; service unchanged | 2026-11-27 | `execution-records/EP-02-054.md` |
 | 31 | `EP-02-055` | Reconciliation job and exception reporting | EP-02-043/044/052/053; worker. | **PENDING** | — | — |
 | 32 | `EP-02-056` | Financial audit coverage and traceability | EP-02-015/016/031/052/053/055; EP-01-036; CP-005. | **PENDING** | — | — |
 | 33 | `EP-02-060` | Verification centre UI | EP-02-013/015; design system; EP-01-052. | **PENDING** | — | — |
@@ -127,6 +127,7 @@ Still open and blocking specific scopes:
 | 2026-11-27 | `EP-02-012` | `PENDING` | `IN PROGRESS` — scan state machine; clean-only submission | `execution-records/EP-02-012.md` |
 | 2026-11-27 | `EP-02-015` | `PENDING` | `COMPLETED` — review integration and atomic decision | `execution-records/EP-02-015.md` |
 | 2026-11-27 | `EP-02-016` | `PENDING` | `COMPLETED` — dual-control verification override | `execution-records/EP-02-016.md` |
+| 2026-11-27 | `EP-02-054` | `PENDING` | `COMPLETED` — payout eligibility enforced in RLS | `execution-records/EP-02-054.md` |
 
 ---
 

@@ -132,9 +132,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-27 |
+| **Execution record** | `execution-records/EP-02-054.md` |
+| **Blocked by** | — |
+| **Notes** | RLS now refuses a payout request naming a disabled, unbound or other-account destination, and refuses any payout or binding from a tier_0 or held account. The service gate is unchanged and still owns limits and derived balance. |
 
