@@ -134,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-27 |
+| **Execution record** | `execution-records/EP-02-016.md` |
+| **Blocked by** | — |
+| **Notes** | A decided lane is corrected through the existing approvals spine: a second operator must approve, the requester never can, both actors and the state change are recorded, and a rejected override changes nothing. The control-portal button remains a CP-019 UI change. |
 

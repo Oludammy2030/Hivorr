@@ -2798,6 +2798,222 @@ try {
     "the rejection is recorded as a decision",
   )
 
+  // ---- Verification override with dual control (EP-02-016) ----
+  const approver = await testClient.query(
+    "insert into identity.users (account_id, email, display_name) values ($1, 'approver@example.test', 'Approver') returning id",
+    [accountId],
+  )
+  const approverId = approver.rows[0].id
+  await testClient.query(
+    `insert into admin.role_assignments (user_id, role_id, scope_type)
+     select $1, id, 'platform' from admin.roles where key = 'founder'`,
+    [approverId],
+  )
+
+  const override = await testClient.query(
+    "select * from admin.request_verification_override($1, $2, 'REJECTED', 'licence was misread')",
+    [actorId, seller.reviewCaseId],
+  )
+  const overrideId = override.rows[0].id
+  assert(
+    override.rows[0].action_type === "verification_override" &&
+      override.rows[0].status === "pending" &&
+      override.rows[0].requester_user_id === actorId,
+    "an override request is pending and names its requester",
+  )
+
+  const selfApproval = await testClient
+    .query("select * from admin.decide_approval($1, $2, 'approve', 'self approval')", [
+      actorId,
+      overrideId,
+    ])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(selfApproval, "the requester cannot approve their own override")
+
+  await testClient.query(
+    "select * from admin.decide_approval($1, $2, 'approve', 'misread confirmed')",
+    [approverId, overrideId],
+  )
+  const overriddenCase = await testClient.query(
+    "select state from profile.verification_cases where id = $1",
+    [seller.caseId],
+  )
+  assert(
+    overriddenCase.rows[0].state === "REJECTED",
+    "an approved override moves the lane despite the transition table",
+  )
+  const overrideDecision = await testClient.query(
+    `select decided_by, requested_by, from_state, to_state, reason_code
+       from profile.verification_decisions
+      where submission_id = $1 and reason_code = 'verification_override'`,
+    [seller.submissionId],
+  )
+  assert(
+    overrideDecision.rows[0].decided_by === approverId &&
+      overrideDecision.rows[0].requested_by === actorId &&
+      overrideDecision.rows[0].from_state === "APPROVED" &&
+      overrideDecision.rows[0].to_state === "REJECTED",
+    "the override records both actors and the prior and next state",
+  )
+
+  const secondOverride = await testClient.query(
+    "select * from admin.request_verification_override($1, $2, 'APPROVED', 'appeal upheld')",
+    [actorId, seller.reviewCaseId],
+  )
+  await testClient.query(
+    "select * from admin.decide_approval($1, $2, 'reject', 'not enough evidence')",
+    [approverId, secondOverride.rows[0].id],
+  )
+  const unchangedCase = await testClient.query(
+    "select state from profile.verification_cases where id = $1",
+    [seller.caseId],
+  )
+  assert(
+    unchangedCase.rows[0].state === "REJECTED",
+    "a rejected override leaves the lane unchanged",
+  )
+
+  // ---- Payout eligibility in RLS (EP-02-054) ----
+  const policySources = await testClient.query(
+    "select coalesce(qual, '') || coalesce(with_check, '') as expression from pg_policies",
+  )
+  assert(
+    !policySources.rows.some((row) => row.expression.includes("auth.uid")),
+    "no policy uses auth.uid()",
+  )
+
+  const destination = await testClient.query(
+    "select id from finance.payout_accounts where account_id = $1 and status = 'verified' limit 1",
+    [accountId],
+  )
+  const destinationId = destination.rows[0].id
+
+  async function attemptPayout(destination, suffix) {
+    await testClient.query("begin")
+    try {
+      await testClient.query("set role hivorr_api")
+      await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
+      await testClient.query("savepoint payout_probe")
+      try {
+        await testClient.query(
+          `insert into finance.payout_requests
+             (reference, account_id, payout_account_id, amount, currency,
+              idempotency_key, requested_by)
+           values ($1, $2, $3, 10.0000, 'NGN', $4, $5)`,
+          [`PAY-PROBE${suffix}`, accountId, destination, `idem-probe-${suffix}`, userId],
+        )
+        await testClient.query("rollback to savepoint payout_probe")
+        return { allowed: true, code: null }
+      } catch (error) {
+        await testClient.query("rollback to savepoint payout_probe")
+        return { allowed: false, code: error?.code }
+      }
+    } finally {
+      await testClient.query("rollback")
+    }
+  }
+
+  const eligiblePayout = await attemptPayout(destinationId, "00001")
+  assert(eligiblePayout.allowed, `an eligible payout request passes RLS (${eligiblePayout.code})`)
+
+  // A destination can only be inserted verified; disabling it is the reachable
+  // "not usable" state, and RLS must refuse it.
+  const disabledDestination = await testClient.query(
+    `insert into finance.payout_accounts
+       (account_id, bank_code, bank_name, account_name, account_name_normalized,
+        account_number_ciphertext, encryption_key_id, account_number_last4,
+        account_number_fingerprint, status, verified_at)
+     values ($1, '058', 'Disabled Bank', 'Disabled Account', 'disabled account',
+             $2, 'test-key-1', '2222', $3, 'verified', now())
+     returning id`,
+    [accountId, Buffer.alloc(32, 11), "b".repeat(64)],
+  )
+  const disabledDestinationId = disabledDestination.rows[0].id
+  await testClient.query("update finance.payout_accounts set status = 'disabled' where id = $1", [
+    disabledDestinationId,
+  ])
+  const disabledPayout = await attemptPayout(disabledDestinationId, "00002")
+  assert(
+    !disabledPayout.allowed && disabledPayout.code === "42501",
+    "a disabled destination is refused by RLS",
+  )
+
+  const unboundPayout = await attemptPayout(globalThis.crypto.randomUUID(), "00006")
+  assert(
+    !unboundPayout.allowed && (unboundPayout.code === "23503" || unboundPayout.code === "42501"),
+    "a payout request with no bound destination is refused",
+  )
+
+  const otherDestination = await testClient.query(
+    `insert into finance.payout_accounts
+       (account_id, bank_code, bank_name, account_name, account_name_normalized,
+        account_number_ciphertext, encryption_key_id, account_number_last4,
+        account_number_fingerprint, status, verified_at)
+     values ($1, '058', 'Other Bank', 'Other Account', 'other account',
+             $2, 'test-key-1', '4321', $3, 'verified', now())
+     returning id`,
+    [secondAccountId, Buffer.alloc(32, 9), "e".repeat(64)],
+  )
+  const mismatchedPayout = await attemptPayout(otherDestination.rows[0].id, "00003")
+  assert(
+    !mismatchedPayout.allowed && mismatchedPayout.code === "42501",
+    "a destination owned by another account is refused by RLS",
+  )
+
+  await testClient.query("update identity.accounts set kyc_tier = 'tier_0' where id = $1", [
+    accountId,
+  ])
+  const tierZeroPayout = await attemptPayout(destinationId, "00004")
+  assert(
+    !tierZeroPayout.allowed && tierZeroPayout.code === "42501",
+    "a tier_0 account cannot write a payout request",
+  )
+
+  const tierZeroBinding = await testClient
+    .query("begin")
+    .then(async () => {
+      await testClient.query("set role hivorr_api")
+      await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
+      return testClient
+        .query(
+          `insert into finance.payout_accounts
+             (account_id, bank_code, bank_name, account_name, account_name_normalized,
+              account_number_ciphertext, encryption_key_id, account_number_last4,
+              account_number_fingerprint, status, verified_at)
+           values ($1, '058', 'Tier Zero Bank', 'Tier Zero', 'tier zero',
+                   $2, 'test-key-1', '1111', $3, 'verified', now())`,
+          [accountId, Buffer.alloc(32, 10), "f".repeat(64)],
+        )
+        .then(
+          () => false,
+          (error) => error?.code === "42501",
+        )
+    })
+    .finally(async () => {
+      await testClient.query("rollback")
+    })
+  assert(tierZeroBinding, "a tier_0 account cannot bind a payout destination")
+
+  await testClient.query("update identity.accounts set kyc_tier = 'tier_2' where id = $1", [
+    accountId,
+  ])
+  await testClient.query(
+    "update identity.accounts set financial_hold_reason = 'kyc_upgrade_required', financial_hold_at = now() where id = $1",
+    [accountId],
+  )
+  const heldPayout = await attemptPayout(destinationId, "00005")
+  assert(
+    !heldPayout.allowed && heldPayout.code === "42501",
+    "an account on a financial hold cannot write a payout request",
+  )
+  await testClient.query(
+    "update identity.accounts set financial_hold_reason = null, financial_hold_at = null where id = $1",
+    [accountId],
+  )
+
   // A decided attempt must record when it was decided, and nothing else may.
   const businessCase = await testClient.query(
     "insert into profile.verification_cases (account_id, lane) values ($1, 'business') returning id",

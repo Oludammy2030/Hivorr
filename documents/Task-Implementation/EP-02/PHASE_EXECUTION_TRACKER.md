@@ -33,7 +33,7 @@
 | 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **IN PROGRESS** — status/start/submit/withdraw endpoints with rate limits and idempotency; evidence upload blocked on `012` | — | `execution-records/EP-02-013.md` |
 | 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — CBN three-tier source, tier-based withdrawal and deposit caps, KYC-upgrade hold and audited verifier assignment; evidence rules and verification wiring deferred | — | `execution-records/EP-02-014.md` |
 | 8 | `EP-02-015` | Control review integration and immutable decision record | EP-02-011/012/013/014; CP-016/017/019; `admin.verification` queue. | **COMPLETED** — submission opens a typed case; queue shows lane and evidence; decision moves lane, tier and record atomically | 2026-11-27 | `execution-records/EP-02-015.md` |
-| 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** | — | — |
+| 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **COMPLETED** — override request on the approvals spine; requester cannot approve; both actors and state recorded | 2026-11-27 | `execution-records/EP-02-016.md` |
 | 10 | `EP-02-020` | Taxonomy registry schema and hierarchy domain | EP-02-002; EP-01-021/022/025; G0 ruling on depth. | **COMPLETED** — node/attribute schema, hierarchy triggers, RLS, domain | 2026-11-15 | `execution-records/EP-02-020.md` |
 | 11 | `EP-02-021` | Taxonomy administration API, versioning and control UI | EP-02-020; CP-022 configuration; CP-012 roles. | **COMPLETED** — permission-gated API, audit, control screen | 2026-11-15 | `execution-records/EP-02-021.md` |
 | 12 | `EP-02-022` | Taxonomy seed data and read contracts | EP-02-020, EP-02-021. | **COMPLETED** — shared read contract, active endpoint, no production seed | 2026-11-15 | `execution-records/EP-02-022.md` |
@@ -54,7 +54,7 @@
 | 27 | `EP-02-051` | Payer-name match rule and manual review path | EP-02-042, EP-02-050; G0 payer-name ruling. | **PENDING** | — | — |
 | 28 | `EP-02-052` | Deposit posting and idempotent ledger flow | EP-02-031, EP-02-034, EP-02-051. | **IN PROGRESS** — exactly-once posting, CBN cap/hold and audit; payer-name matching (`051`) and reconciliation deferred | — | `execution-records/EP-02-052.md` |
 | 29 | `EP-02-053` | Payout execution workflow and dual control | EP-02-043, EP-02-050, EP-02-035; CP-020 (not required for the user path). | **IN PROGRESS** — self-service withdrawal request/eligibility + automatic execution (reserve, provider call, reversal, idempotency, audit); manual approval out of scope per founder; HTTP endpoint and DB certification deferred | — | `execution-records/EP-02-053.md` |
-| 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **PENDING** | — | — |
+| 30 | `EP-02-054` | Payout eligibility gate in service and RLS | EP-02-030, EP-02-050, EP-02-053. | **COMPLETED** — RLS refuses disabled, unbound, mismatched, tier_0 and held payouts; service unchanged | 2026-11-27 | `execution-records/EP-02-054.md` |
 | 31 | `EP-02-055` | Reconciliation job and exception reporting | EP-02-043/044/052/053; worker. | **PENDING** | — | — |
 | 32 | `EP-02-056` | Financial audit coverage and traceability | EP-02-015/016/031/052/053/055; EP-01-036; CP-005. | **PENDING** | — | — |
 | 33 | `EP-02-060` | Verification centre UI | EP-02-013/015; design system; EP-01-052. | **PENDING** | — | — |
@@ -126,6 +126,8 @@ Still open and blocking specific scopes:
 | 2026-11-27 | `EP-02-013` | `PENDING` | `IN PROGRESS` — four subject endpoints; upload blocked on `012` | `execution-records/EP-02-013.md` |
 | 2026-11-27 | `EP-02-012` | `PENDING` | `IN PROGRESS` — scan state machine; clean-only submission | `execution-records/EP-02-012.md` |
 | 2026-11-27 | `EP-02-015` | `PENDING` | `COMPLETED` — review integration and atomic decision | `execution-records/EP-02-015.md` |
+| 2026-11-27 | `EP-02-016` | `PENDING` | `COMPLETED` — dual-control verification override | `execution-records/EP-02-016.md` |
+| 2026-11-27 | `EP-02-054` | `PENDING` | `COMPLETED` — payout eligibility enforced in RLS | `execution-records/EP-02-054.md` |
 
 ---
 

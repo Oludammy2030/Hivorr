@@ -35,6 +35,53 @@ interface ReviewRow {
   created_at: string
 }
 
+export interface VerificationOverrideView {
+  readonly id: string
+  readonly reference: string
+  readonly actionType: string
+  readonly targetType: string
+  readonly targetId: string
+  readonly status: string
+  readonly reason: string
+  readonly requesterUserId: string
+  readonly requesterName: string | null
+  readonly requesterEmail: string | null
+  readonly createdAt: string
+  readonly decidedAt: string | null
+}
+
+interface OverrideRow {
+  id: string
+  reference: string
+  action_type: string
+  target_type: string
+  target_id: string
+  status: string
+  reason: string
+  requester_user_id: string
+  requester_name: string | null
+  requester_email: string | null
+  created_at: string
+  decided_at: string | null
+}
+
+function toOverrideView(row: OverrideRow): VerificationOverrideView {
+  return {
+    id: row.id,
+    reference: row.reference,
+    actionType: row.action_type,
+    targetType: row.target_type,
+    targetId: row.target_id,
+    status: row.status,
+    reason: row.reason,
+    requesterUserId: row.requester_user_id,
+    requesterName: row.requester_name,
+    requesterEmail: row.requester_email,
+    createdAt: row.created_at,
+    decidedAt: row.decided_at,
+  }
+}
+
 function toView(row: ReviewRow): VerificationReviewView {
   return {
     caseId: row.case_id,
@@ -76,6 +123,8 @@ function mapVerificationError(error: unknown): never {
         "A verification decision needs at least one active evidence record.",
         409,
       )
+    case "23505":
+      throw new ApiError("CONFLICT", "A request for this case is already pending.", 409)
     case "22023":
       throw new ApiError("VALIDATION_FAILED", "The verification decision is not valid.", 400)
     default:
@@ -155,6 +204,59 @@ export class VerificationService {
             correlationId: input.context.correlationId,
           })
           return toView(row)
+        },
+      )
+    } catch (error) {
+      mapVerificationError(error)
+    }
+  }
+
+  /**
+   * Ask a second operator to override a decided lane. The requester can never
+   * approve it; the approvals spine refuses a self-decision.
+   */
+  async requestOverride(input: {
+    accountId: string
+    userId: string
+    caseId: string
+    requestedState: string
+    reason?: string
+    context: RequestContext
+  }): Promise<VerificationOverrideView> {
+    const reason = input.reason?.trim()
+    if (!reason || reason.length < 5) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A reason of at least five characters is required.",
+        400,
+      )
+    }
+
+    try {
+      return await this.database.withTransaction(
+        { identity: { accountId: input.accountId, userId: input.userId } },
+        async (transaction) => {
+          const result = await transaction.query<OverrideRow>(
+            "select * from admin.request_verification_override($1, $2, $3, $4)",
+            [input.userId, input.caseId, input.requestedState, reason],
+          )
+          const row = result.rows[0]
+          await appendAudit(transaction.client, {
+            actorType: "admin",
+            actorId: input.userId,
+            actorAudience: input.context.audience,
+            environment: input.context.environment,
+            action: "verification.override_requested",
+            targetType: "case",
+            targetId: input.caseId,
+            afterSummary: { requestedState: input.requestedState },
+            reason,
+            capability: "admin.verification.review",
+            ip: input.context.ip,
+            userAgent: input.context.userAgent,
+            correlationId: input.context.correlationId,
+          })
+          return toOverrideView(row)
         },
       )
     } catch (error) {
