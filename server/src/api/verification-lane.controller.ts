@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
+﻿import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { LaneStatus } from "@hivorr/shared"
 import type { FastifyRequest } from "fastify"
 
@@ -6,7 +6,9 @@ import { Audience } from "../common/audience"
 import { ApiError } from "../common/errors"
 import { requestFingerprint, requireIdempotencyKey } from "../common/idempotency"
 import { FixedWindowRateLimiter } from "../common/rate-limiter"
+import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
+import { startVerificationRequest } from "../contracts/schemas"
 import { IdentityService, accessToken, requestContext } from "../modules/identity"
 import { VerificationLaneService, type LaneView } from "../modules/profile"
 
@@ -65,7 +67,12 @@ export class VerificationLaneController {
 
   @Post(":lane/start")
   @HttpCode(200)
-  async start(@Param("lane") lane: string, @Req() request: FastifyRequest): Promise<LaneStatus> {
+  async start(
+    @Param("lane") lane: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ): Promise<LaneStatus> {
+    const input = body === undefined ? {} : parseBody(startVerificationRequest, body)
     const { session, context } = await this.loadSession(request)
     this.limit(session.userId, "start")
     const view = await this.lanes.start({
@@ -73,6 +80,7 @@ export class VerificationLaneController {
       userId: session.userId,
       lane,
       context,
+      requestedTier: input.requestedTier,
     })
     return toStatus(view)
   }

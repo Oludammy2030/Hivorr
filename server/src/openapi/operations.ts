@@ -1,4 +1,4 @@
-import type { PortalId } from "@hivorr/shared"
+﻿import type { PortalId } from "@hivorr/shared"
 import type { z } from "zod"
 
 import {
@@ -110,6 +110,7 @@ import {
   walletBalanceListResponse,
   walletStatementListResponse,
   laneStatusResponse,
+  startVerificationRequest,
   payoutRequestListResponse,
   payoutRequestViewResponse,
   withdrawRequest,
@@ -1657,6 +1658,11 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     tag: "verification",
     audience: ["app"],
     pathParams: ["lane"],
+    request: {
+      schema: startVerificationRequest,
+      description:
+        "The requested KYC tier; required on the kyc lane and refused on every other lane",
+    },
     success: [
       {
         status: 200,

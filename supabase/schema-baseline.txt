@@ -92,7 +92,7 @@ profile | verification_evidence
 profile | verification_lanes
 profile | verification_submissions
 
-## columns (727)
+## columns (732)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -792,6 +792,10 @@ profile | verification_decisions | reason | text | text | NO | -
 profile | verification_decisions | decided_by | uuid | uuid | NO | -
 profile | verification_decisions | decided_at | timestamp with time zone | timestamptz | NO | now()
 profile | verification_decisions | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_decisions | from_state | text | text | NO | 'UNDER_REVIEW'::text
+profile | verification_decisions | to_state | text | text | NO | 'APPROVED'::text
+profile | verification_decisions | evidence_ids | ARRAY | _uuid | NO | '{}'::uuid[]
+profile | verification_decisions | admin_case_id | uuid | uuid | YES | -
 profile | verification_evidence | id | uuid | uuid | NO | platform.uuidv7()
 profile | verification_evidence | submission_id | uuid | uuid | NO | -
 profile | verification_evidence | account_id | uuid | uuid | NO | -
@@ -820,8 +824,9 @@ profile | verification_submissions | decided_at | timestamp with time zone | tim
 profile | verification_submissions | frozen_at | timestamp with time zone | timestamptz | YES | -
 profile | verification_submissions | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | verification_submissions | updated_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_submissions | requested_kyc_tier | text | text | YES | -
 
-## constraints (437)
+## constraints (441)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -1228,14 +1233,17 @@ profile | verification_cases | verification_cases_pkey | p | PRIMARY KEY (id)
 profile | verification_cases | verification_cases_reason_code_check | c | CHECK (reason_code IS NULL OR length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
 profile | verification_cases | verification_cases_state_check | c | CHECK (state = ANY (ARRAY['NOT_STARTED'::text, 'DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
 profile | verification_decisions | verification_decisions_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | verification_decisions | verification_decisions_admin_case_id_fkey | f | FOREIGN KEY (admin_case_id) REFERENCES admin.cases(id) ON DELETE SET NULL
 profile | verification_decisions | verification_decisions_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES profile.verification_cases(id) ON DELETE CASCADE
 profile | verification_decisions | verification_decisions_decided_by_fkey | f | FOREIGN KEY (decided_by) REFERENCES identity.users(id) ON DELETE RESTRICT
 profile | verification_decisions | verification_decisions_decision_check | c | CHECK (decision = ANY (ARRAY['APPROVED'::text, 'REJECTED'::text]))
+profile | verification_decisions | verification_decisions_from_state_check | c | CHECK (from_state = ANY (ARRAY['NOT_STARTED'::text, 'DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
 profile | verification_decisions | verification_decisions_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
 profile | verification_decisions | verification_decisions_pkey | p | PRIMARY KEY (id)
 profile | verification_decisions | verification_decisions_reason_check | c | CHECK (length(btrim(reason)) >= 5 AND length(btrim(reason)) <= 1000)
 profile | verification_decisions | verification_decisions_reason_code_check | c | CHECK (length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
 profile | verification_decisions | verification_decisions_submission_id_fkey | f | FOREIGN KEY (submission_id) REFERENCES profile.verification_submissions(id) ON DELETE SET NULL
+profile | verification_decisions | verification_decisions_to_state_check | c | CHECK (to_state = ANY (ARRAY['NOT_STARTED'::text, 'DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
 profile | verification_evidence | verification_evidence_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | verification_evidence | verification_evidence_content_type_check | c | CHECK (length(btrim(content_type)) >= 1 AND length(btrim(content_type)) <= 120)
 profile | verification_evidence | verification_evidence_object_key_check | c | CHECK (length(btrim(object_key)) >= 1 AND length(btrim(object_key)) <= 512)
@@ -1258,6 +1266,7 @@ profile | verification_submissions | verification_submissions_decision_consisten
 profile | verification_submissions | verification_submissions_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
 profile | verification_submissions | verification_submissions_pkey | p | PRIMARY KEY (id)
 profile | verification_submissions | verification_submissions_reason_code_check | c | CHECK (reason_code IS NULL OR length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
+profile | verification_submissions | verification_submissions_requested_kyc_tier_check | c | CHECK (requested_kyc_tier IS NULL OR (requested_kyc_tier = ANY (ARRAY['tier_1'::text, 'tier_2'::text, 'tier_3'::text])))
 profile | verification_submissions | verification_submissions_state_check | c | CHECK (state = ANY (ARRAY['DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
 
 ## indexes (230)
@@ -2326,7 +2335,7 @@ profile | verification_submissions | postgres | TRIGGER | YES
 profile | verification_submissions | postgres | TRUNCATE | YES
 profile | verification_submissions | postgres | UPDATE | YES
 
-## functions (104)
+## functions (105)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -2367,6 +2376,7 @@ admin | list_user_notes | p_actor_user_id uuid, p_user_id uuid | true | s | sear
 admin | list_users | p_query text, p_status text, p_before timestamp with time zone, p_before_id uuid, p_limit integer | true | s | search_path=""
 admin | list_verification_queue | p_actor_user_id uuid, p_status text | true | s | search_path=""
 admin | open_dispute | p_actor_user_id uuid, p_case_id uuid, p_activity_id text, p_activity_ref uuid, p_opened_by_account_id uuid, p_respondent_account_id uuid, p_currency text, p_claimed_amount numeric, p_escrow_id uuid, p_reason text | true | v | search_path=""
+admin | open_verification_review | p_actor_user_id uuid, p_account_id uuid, p_submission_id uuid, p_title text | true | v | search_path=""
 admin | platform_permission_holders | p_permission text | true | s | search_path=""
 admin | record_dispute_evidence_access | p_actor_user_id uuid, p_dispute_id uuid, p_evidence_id uuid, p_purpose text | true | v | search_path=""
 admin | record_evidence_access | p_actor_user_id uuid, p_evidence_id uuid, p_purpose text | true | v | search_path=""

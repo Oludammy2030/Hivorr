@@ -295,6 +295,8 @@ export type GetWalletStatementResponse = ({ "postingId": string; "entryId": stri
 
 export type GetVerificationLaneResponse = { "lane": "identity" | "kyc" | "trade" | "seller" | "logistics" | "business"; "state": "NOT_STARTED" | "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED"; "reasonCode": string | null; "hasActiveSubmission": boolean; "updatedAt": string }
 
+export type StartVerificationLaneRequest = { "requestedTier"?: "tier_0" | "tier_1" | "tier_2" | "tier_3" }
+
 export type StartVerificationLaneResponse = { "lane": "identity" | "kyc" | "trade" | "seller" | "logistics" | "business"; "state": "NOT_STARTED" | "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED"; "reasonCode": string | null; "hasActiveSubmission": boolean; "updatedAt": string }
 
 export type SubmitVerificationLaneResponse = { "lane": "identity" | "kyc" | "trade" | "seller" | "logistics" | "business"; "state": "NOT_STARTED" | "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED"; "reasonCode": string | null; "hasActiveSubmission": boolean; "updatedAt": string }
@@ -995,11 +997,11 @@ export function createHivorrClient(options: HivorrClientOptions) {
         undefined,
         [200],
       ),
-    startVerificationLane: (params: { lane: string }) =>
+    startVerificationLane: (params: { lane: string }, input: StartVerificationLaneRequest) =>
       request<StartVerificationLaneResponse>(
         "POST",
         `/v1/verification/${encodeURIComponent(params.lane)}/start`,
-        undefined,
+        input,
         [200],
       ),
     submitVerificationLane: (params: { lane: string }) =>

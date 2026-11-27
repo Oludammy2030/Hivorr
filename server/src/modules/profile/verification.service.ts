@@ -41,6 +41,11 @@ export interface LaneInput {
   readonly context: ActivityContext
 }
 
+/** The kyc lane must ask for a tier; every other lane must not. */
+export interface StartInput extends LaneInput {
+  readonly requestedTier?: string | undefined
+}
+
 /** A submit may be retried by a client; the key makes the replay safe. */
 export interface SubmitInput extends LaneInput {
   readonly idempotencyKey?: string | undefined
@@ -134,8 +139,20 @@ export class VerificationLaneService {
    * Start, or restart, an attempt. Refused while another attempt is open and
    * while the lane is approved: an approval is never silently reopened.
    */
-  async start(input: LaneInput): Promise<LaneView> {
+  async start(input: StartInput): Promise<LaneView> {
     const lane = assertLane(input.lane)
+    const requestedTier = input.requestedTier?.trim() || undefined
+    if (lane === "kyc") {
+      if (!requestedTier || !["tier_1", "tier_2", "tier_3"].includes(requestedTier)) {
+        throw new ApiError(
+          "VALIDATION_FAILED",
+          "The kyc lane must name the tier being requested.",
+          400,
+        )
+      }
+    } else if (requestedTier !== undefined) {
+      throw new ApiError("VALIDATION_FAILED", "Only the kyc lane requests a tier.", 400)
+    }
 
     return this.database.withTransaction(
       { identity: { accountId: input.accountId, userId: input.userId } },
@@ -194,9 +211,9 @@ export class VerificationLaneService {
         )
         await transaction.query(
           `insert into profile.verification_submissions
-             (case_id, account_id, lane, state)
-           values ($1, $2, $3, 'DRAFT')`,
-          [row.id, input.accountId, lane],
+             (case_id, account_id, lane, state, requested_kyc_tier)
+           values ($1, $2, $3, 'DRAFT', $4)`,
+          [row.id, input.accountId, lane, requestedTier ?? null],
         )
 
         await this.audit(transaction, input, "profile.verification_started", {
@@ -295,6 +312,13 @@ export class VerificationLaneService {
           to,
           evidence: total,
         })
+
+        await transaction.query("select * from admin.open_verification_review($1, $2, $3, $4)", [
+          input.userId,
+          input.accountId,
+          submission.id,
+          `${lane} verification`,
+        ])
 
         const view = this.viewFromState(lane, to, null, true, total)
         if (idempotencyKey) {

@@ -106,7 +106,7 @@ describe("verification lane API", () => {
   it("starts an attempt for the session account", async () => {
     const { controller, calls } = harness()
 
-    await controller.start("trade", request())
+    await controller.start("trade", undefined, request())
 
     expect(calls[0]?.method).toBe("start")
     expect(calls[0]?.input).toMatchObject({ lane: "trade", accountId: ACCOUNT_ID })
@@ -147,10 +147,10 @@ describe("verification lane API", () => {
     const { controller } = harness()
 
     for (let attempt = 0; attempt < 10; attempt += 1) {
-      await controller.start("identity", request())
+      await controller.start("identity", undefined, request())
     }
 
-    await expect(controller.start("identity", request())).rejects.toMatchObject({
+    await expect(controller.start("identity", undefined, request())).rejects.toMatchObject({
       code: "RATE_LIMITED",
       statusCode: 429,
       headers: { "retry-after": expect.any(String) },
@@ -161,7 +161,7 @@ describe("verification lane API", () => {
     const { controller } = harness()
 
     for (let attempt = 0; attempt < 10; attempt += 1) {
-      await controller.start("identity", request())
+      await controller.start("identity", undefined, request())
     }
 
     const identity = {
@@ -181,6 +181,6 @@ describe("verification lane API", () => {
       logLevel: "silent",
     } as unknown as ApiConfig)
 
-    await expect(other.start("identity", request())).resolves.toBeTruthy()
+    await expect(other.start("identity", undefined, request())).resolves.toBeTruthy()
   })
 })

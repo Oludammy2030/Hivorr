@@ -134,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-27 |
+| **Execution record** | `execution-records/EP-02-015.md` |
+| **Blocked by** | — |
+| **Notes** | A submitted lane opens the existing review case and queue; the reviewer decision moves the lane, the KYC tier and the immutable decision record in one transaction, and a subject cannot approve. Evidence previews wait for the signed read in `EP-02-012`. |
 
