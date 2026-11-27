@@ -4,8 +4,7 @@ import { isVerificationLane, type VerificationLane, type VerificationState } fro
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
 import type { TransactionContext } from "../../db/transaction"
-import { claimIdempotency, completeIdempotency } from "../platform/idempotency"
-import { appendAudit } from "../platform"
+import { appendAudit, claimIdempotency, completeIdempotency } from "../platform"
 import {
   canApplyEvent,
   isOpenSubmission,
