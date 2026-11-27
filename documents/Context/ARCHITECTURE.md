@@ -2311,7 +2311,7 @@ so there is one list, not three.
 | 2 | **Funds custody** — **DECIDED 15 November 2026:** pooled collection and settlement account operated by Hivorr under a VFD-approved banking arrangement, with internal wallets and internal escrow. Counsel must confirm the licensing, safeguarding, segregation and reporting treatment; VFD must confirm the account structure and marketplace escrow use case in writing. | Wallet design; legal structure; launch timeline | Founder + counsel | §9.10; `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md` |
 | 3 | **MVP activity scope** — all six at launch, or Explore-first | Which modules ship first | Founder | matrix #3 |
 | 4 | **Deactivation with open obligations** — blocked, or allowed | Activity state machine | Founder | matrix #4 |
-| 5 | **Business as account or profile** | `identity.account` cardinality; team features | Founder | matrix #5 |
+| 5 | **Business as account or profile** — **DECIDED 27 November 2026:** a business is a verified profile on the account, not a second account, wallet or login. One business per account (`profile.businesses`); the account's `identity.memberships` rows are its members; the `business` lane case is the only status store. | `identity.account` cardinality; team features | Founder | matrix #5; EP-02-010 |
 | 6 | **KYC tier ladder and limits** — **DECIDED 26 November 2026:** the CBN-style three-tier ladder is Hivorr's model (`tier_0` carries zero financial limits; `tier_1`–`tier_3` are Levels 1–3), enforced by the effective-dated limit engine in `finance.limits`. The **naira figures are provisional** — ₦30,000/₦100,000/₦1,000,000 daily withdrawal and ₦20,000/₦50,000/unlimited per deposit — until counsel confirms the CBN tier requirements; they are configuration rows, not policy. An over-cap deposit sets a `kyc_upgrade_required` hold and blocks fund transactions. | Financial gating; `finance` constraints | Founder + counsel | matrix #6; EP-02-014 |
 | 7 | **Retention periods** — identity, KYC, chat, disputes | Deletion design; no purge may be built | Founder + counsel | matrix #7 |
 | 8 | **Currency model** — single currency or multi-currency ledger | `finance` schema; wallet presentation | Founder | db rules #9 |
@@ -2366,6 +2366,24 @@ that; this revision does not edit the matrix.
 | 18 | **TLS for second-level staging hosts** | The original `*.staging.hivorr.com` names were not covered by standard Cloudflare Universal SSL. | **Resolved 8 November 2026** by flattening the three privileged staging hosts to first-level names. No ACM subscription is required (§16.4 #26). |
 
 ### 16.6 Changelog
+
+#### 27 November 2026 — business stays a profile on the account
+
+**Decided by founder instruction**
+
+- A business is a verified profile on the account, not a second account, wallet or login. One
+  account carries at most one business (`profile.businesses`); the account's `identity.memberships`
+  rows are its members, and no second membership model is introduced.
+- The `business` verification lane case is the only status store. "A new business starts PENDING"
+  is the lane case moving from `NOT_STARTED` through `SUBMITTED`, not a second status column.
+- The registered legal name is stored and must never be projected publicly; the trading name is the
+  public one.
+- §16.4 #5 is resolved, and the permission matrix §3.4 and §18 #5 record the same decision.
+
+**Not changed**
+
+- No account-type selection is introduced at registration. No business wallet, no separate login, no
+  multi-account membership. The identity cardinality is unchanged.
 
 #### 26 November 2026 — KYC tier ladder recorded
 

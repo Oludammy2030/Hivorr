@@ -151,10 +151,11 @@ business documents. It is optional; an individual can hire, sell, and offer serv
   membership.
 - The legal name and the public display name are separate fields and are never merged.
 
-**[OPEN]** Whether a business should eventually become its own account, with its own wallet,
-activities, and multiple sign-in users. This revision keeps businesses inside the account because
-the core principle is one account per user, and because the prototype models the store and business
-as profile surfaces rather than separate logins.
+**[DECIDED 27 November 2026]** A business is a **verified profile on the account**, not its own
+account, wallet or login. One account carries at most one business (`profile.businesses`), and the
+account's `identity.memberships` rows are its members; there is no second membership model. The
+`business` lane case is the only status store, so the review outcome cannot drift between two
+records. The decision is recorded in `ARCHITECTURE.md` §16.4 #5.
 
 > **Conflict to reconcile:** `ARCHITECTURE.md` §8.1 defines the Account as "the legal/billing entity
 > — a person or a business". This document reads that as *the account is the legal party*, with a
@@ -1052,7 +1053,7 @@ there first, then here.
 | 2 | **Errand vs logistics** - **DECIDED 3 November 2026:** two separate activities that share a request pool but not a capability namespace (`ARCHITECTURE.md` §16.5 #2). Kept in place so existing cross-references stay valid. | Nothing - settled |
 | 3 | **MVP activity scope** — all six at launch, or Explore-first? | Release scope |
 | 4 | **Deactivation with open obligations** — blocked, or allowed with obligations still actionable? | §12.5 |
-| 5 | **Business as account** — stay a profile on the account, or become its own account with its own wallet and multiple sign-in users? | §3.4; team features |
+| 5 | **Business as account** — **DECIDED 27 November 2026:** a business stays a verified profile on the account, with one business per account and the account's memberships as its members (`ARCHITECTURE.md` §16.4 #5). Kept in place so existing cross-references stay valid. | Nothing — settled |
 | 6 | **KYC tier ladder and limits** — **DECIDED 26 November 2026:** `tier_0` at zero financial limits plus `tier_1`–`tier_3` as CBN Levels 1–3, enforced by the effective-dated limit engine (`ARCHITECTURE.md` §16.4 #6). The naira thresholds are provisional pending counsel. Kept in place so existing cross-references stay valid. | Nothing for the ladder; the thresholds await counsel |
 | 7 | **Retention periods** — identity documents, KYC evidence, chat, disputes | §13.4; deletion design |
 | 8 | **Account closure window** — how long is closure reversible? | §12.6 |
