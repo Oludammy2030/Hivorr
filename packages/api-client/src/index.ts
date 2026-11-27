@@ -293,6 +293,14 @@ export type GetWalletBalanceResponse = ({ "currency": string; "total": string; "
 
 export type GetWalletStatementResponse = ({ "postingId": string; "entryId": string; "reference": string; "entryKind": "deposit" | "withdrawal" | "escrow_hold" | "escrow_release" | "escrow_refund" | "payout" | "payout_reversal" | "adjustment" | "reversal"; "currency": string; "direction": "debit" | "credit"; "amount": string; "signedAmount": string; "activityId": "market.buy" | "services.hire" | "errands.request" | "market.sell" | "services.offer" | "logistics.provide" | null; "occurredAt": string })[]
 
+export type GetVerificationLaneResponse = { "lane": "identity" | "kyc" | "trade" | "seller" | "logistics" | "business"; "state": "NOT_STARTED" | "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED"; "reasonCode": string | null; "hasActiveSubmission": boolean; "updatedAt": string }
+
+export type StartVerificationLaneResponse = { "lane": "identity" | "kyc" | "trade" | "seller" | "logistics" | "business"; "state": "NOT_STARTED" | "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED"; "reasonCode": string | null; "hasActiveSubmission": boolean; "updatedAt": string }
+
+export type SubmitVerificationLaneResponse = { "lane": "identity" | "kyc" | "trade" | "seller" | "logistics" | "business"; "state": "NOT_STARTED" | "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED"; "reasonCode": string | null; "hasActiveSubmission": boolean; "updatedAt": string }
+
+export type WithdrawVerificationLaneResponse = { "lane": "identity" | "kyc" | "trade" | "seller" | "logistics" | "business"; "state": "NOT_STARTED" | "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "EXPIRED"; "reasonCode": string | null; "hasActiveSubmission": boolean; "updatedAt": string }
+
 export type ListPayoutAccountsResponse = ({ "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string })[]
 
 export type BindPayoutAccountRequest = { "bankCode": string; "bankName": string; "accountNumber": string; "reason"?: string }
@@ -977,6 +985,34 @@ export function createHivorrClient(options: HivorrClientOptions) {
       request<GetWalletStatementResponse>(
         "GET",
         "/v1/wallet/statement",
+        undefined,
+        [200],
+      ),
+    getVerificationLane: (params: { lane: string }) =>
+      request<GetVerificationLaneResponse>(
+        "GET",
+        `/v1/verification/${encodeURIComponent(params.lane)}/status`,
+        undefined,
+        [200],
+      ),
+    startVerificationLane: (params: { lane: string }) =>
+      request<StartVerificationLaneResponse>(
+        "POST",
+        `/v1/verification/${encodeURIComponent(params.lane)}/start`,
+        undefined,
+        [200],
+      ),
+    submitVerificationLane: (params: { lane: string }) =>
+      request<SubmitVerificationLaneResponse>(
+        "POST",
+        `/v1/verification/${encodeURIComponent(params.lane)}/submit`,
+        undefined,
+        [200],
+      ),
+    withdrawVerificationLane: (params: { lane: string }) =>
+      request<WithdrawVerificationLaneResponse>(
+        "POST",
+        `/v1/verification/${encodeURIComponent(params.lane)}/withdraw`,
         undefined,
         [200],
       ),

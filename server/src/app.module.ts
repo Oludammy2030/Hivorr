@@ -21,6 +21,7 @@ import {
 } from "./integrations/vfd"
 import { HealthController } from "./health/health.controller"
 import { WalletController } from "./api/wallet.controller"
+import { VerificationLaneController } from "./api/verification-lane.controller"
 import { KycController } from "./api/kyc.controller"
 import { PaymentsController } from "./api/payments.controller"
 import { PaystackWebhookController } from "./api/paystack-webhook.controller"
@@ -57,6 +58,7 @@ import { EvidenceService } from "./modules/admin/evidence.service"
 import { VerificationService } from "./modules/admin/verification.service"
 import { DisputeService } from "./modules/admin/dispute.service"
 import { ProfileService } from "./modules/profile/profile.service"
+import { VerificationLaneService } from "./modules/profile/verification.service"
 import { DepositEligibilityService } from "./modules/finance/deposit-eligibility.service"
 import { CollectionAccountService } from "./modules/finance/collection-account.service"
 import { DepositPostingService } from "./modules/finance/deposit-posting.service"
@@ -102,6 +104,7 @@ export class AppModule {
         TaxonomyController,
         GrantsController,
         WalletController,
+        VerificationLaneController,
         KycController,
         PaymentsController,
         PaystackWebhookController,
@@ -186,6 +189,7 @@ export class AppModule {
         DatabaseService,
         IdentityService,
         ProfileService,
+        VerificationLaneService,
         GrantsService,
         StaffService,
         RolesService,

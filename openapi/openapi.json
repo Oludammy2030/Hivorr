@@ -47566,6 +47566,2130 @@
         }
       }
     },
+    "/v1/verification/{lane}/status": {
+      "get": {
+        "operationId": "getVerificationLane",
+        "summary": "Read one verification lane's state",
+        "tags": [
+          "verification"
+        ],
+        "x-hivorr-audience": [
+          "app"
+        ],
+        "security": [
+          {
+            "appSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lane",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's own lane state, whether an attempt is open, and the reason code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lane": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "kyc",
+                        "trade",
+                        "seller",
+                        "logistics",
+                        "business"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "DRAFT",
+                        "SUBMITTED",
+                        "UNDER_REVIEW",
+                        "APPROVED",
+                        "REJECTED",
+                        "EXPIRED"
+                      ]
+                    },
+                    "reasonCode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasActiveSubmission": {
+                      "type": "boolean"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "lane",
+                    "state",
+                    "reasonCode",
+                    "hasActiveSubmission",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/verification/{lane}/start": {
+      "post": {
+        "operationId": "startVerificationLane",
+        "summary": "Start or restart a verification attempt",
+        "tags": [
+          "verification"
+        ],
+        "x-hivorr-audience": [
+          "app"
+        ],
+        "security": [
+          {
+            "appSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lane",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A draft attempt is open; refused while another attempt is open or the lane is approved; rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lane": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "kyc",
+                        "trade",
+                        "seller",
+                        "logistics",
+                        "business"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "DRAFT",
+                        "SUBMITTED",
+                        "UNDER_REVIEW",
+                        "APPROVED",
+                        "REJECTED",
+                        "EXPIRED"
+                      ]
+                    },
+                    "reasonCode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasActiveSubmission": {
+                      "type": "boolean"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "lane",
+                    "state",
+                    "reasonCode",
+                    "hasActiveSubmission",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/verification/{lane}/submit": {
+      "post": {
+        "operationId": "submitVerificationLane",
+        "summary": "Submit a draft verification attempt",
+        "tags": [
+          "verification"
+        ],
+        "x-hivorr-audience": [
+          "app"
+        ],
+        "security": [
+          {
+            "appSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lane",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attempt is submitted and the lane follows; requires at least one usable evidence reference and an Idempotency-Key header; rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lane": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "kyc",
+                        "trade",
+                        "seller",
+                        "logistics",
+                        "business"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "DRAFT",
+                        "SUBMITTED",
+                        "UNDER_REVIEW",
+                        "APPROVED",
+                        "REJECTED",
+                        "EXPIRED"
+                      ]
+                    },
+                    "reasonCode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasActiveSubmission": {
+                      "type": "boolean"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "lane",
+                    "state",
+                    "reasonCode",
+                    "hasActiveSubmission",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/verification/{lane}/withdraw": {
+      "post": {
+        "operationId": "withdrawVerificationLane",
+        "summary": "Withdraw a submitted verification attempt",
+        "tags": [
+          "verification"
+        ],
+        "x-hivorr-audience": [
+          "app"
+        ],
+        "security": [
+          {
+            "appSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lane",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The submitted attempt returns to draft; refused while under review; rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lane": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "kyc",
+                        "trade",
+                        "seller",
+                        "logistics",
+                        "business"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "DRAFT",
+                        "SUBMITTED",
+                        "UNDER_REVIEW",
+                        "APPROVED",
+                        "REJECTED",
+                        "EXPIRED"
+                      ]
+                    },
+                    "reasonCode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasActiveSubmission": {
+                      "type": "boolean"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "lane",
+                    "state",
+                    "reasonCode",
+                    "hasActiveSubmission",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is not allowed to perform this action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The resource was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The service is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "ACTIVITY_INACTIVE",
+                            "VALIDATION_FAILED",
+                            "VERIFICATION_REQUIRED",
+                            "KYC_REQUIRED",
+                            "PAYOUT_ACCOUNT_REQUIRED",
+                            "INSUFFICIENT_FUNDS",
+                            "LIMIT_EXCEEDED",
+                            "DUPLICATE_REQUEST",
+                            "PROVIDER_ERROR",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "RATE_LIMITED",
+                            "SERVICE_UNAVAILABLE",
+                            "INTERNAL_ERROR"
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/wallet/payout-accounts": {
       "get": {
         "operationId": "listPayoutAccounts",

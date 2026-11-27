@@ -109,6 +109,7 @@ import {
   payoutAccountViewResponse,
   walletBalanceListResponse,
   walletStatementListResponse,
+  laneStatusResponse,
   payoutRequestListResponse,
   payoutRequestViewResponse,
   withdrawRequest,
@@ -141,6 +142,7 @@ export interface ApiOperation {
     | "cases"
     | "taxonomy"
     | "wallet"
+    | "verification"
     | "payments"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
@@ -1628,6 +1630,73 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         description:
           "The caller's own ledger postings, newest first; supports optional currency and activity filters and a before/beforeId keyset cursor with a limit of 1-100",
         schema: walletStatementListResponse,
+      },
+    ],
+  },
+  {
+    id: "getVerificationLane",
+    method: "get",
+    path: "/v1/verification/{lane}/status",
+    summary: "Read one verification lane's state",
+    tag: "verification",
+    audience: ["app"],
+    pathParams: ["lane"],
+    success: [
+      {
+        status: 200,
+        description: "The caller's own lane state, whether an attempt is open, and the reason code",
+        schema: laneStatusResponse,
+      },
+    ],
+  },
+  {
+    id: "startVerificationLane",
+    method: "post",
+    path: "/v1/verification/{lane}/start",
+    summary: "Start or restart a verification attempt",
+    tag: "verification",
+    audience: ["app"],
+    pathParams: ["lane"],
+    success: [
+      {
+        status: 200,
+        description:
+          "A draft attempt is open; refused while another attempt is open or the lane is approved; rate limited",
+        schema: laneStatusResponse,
+      },
+    ],
+  },
+  {
+    id: "submitVerificationLane",
+    method: "post",
+    path: "/v1/verification/{lane}/submit",
+    summary: "Submit a draft verification attempt",
+    tag: "verification",
+    audience: ["app"],
+    pathParams: ["lane"],
+    success: [
+      {
+        status: 200,
+        description:
+          "The attempt is submitted and the lane follows; requires at least one usable evidence reference and an Idempotency-Key header; rate limited",
+        schema: laneStatusResponse,
+      },
+    ],
+  },
+  {
+    id: "withdrawVerificationLane",
+    method: "post",
+    path: "/v1/verification/{lane}/withdraw",
+    summary: "Withdraw a submitted verification attempt",
+    tag: "verification",
+    audience: ["app"],
+    pathParams: ["lane"],
+    success: [
+      {
+        status: 200,
+        description:
+          "The submitted attempt returns to draft; refused while under review; rate limited",
+        schema: laneStatusResponse,
       },
     ],
   },
