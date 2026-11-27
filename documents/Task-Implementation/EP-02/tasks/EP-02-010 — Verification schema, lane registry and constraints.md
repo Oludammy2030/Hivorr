@@ -134,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `IN PROGRESS` |
+| **Status** | `COMPLETED` |
 | **Execution date** | 2026-11-27 |
 | **Execution record** | `execution-records/EP-02-010.md` |
-| **Blocked by** | — (schema increment built; two decisions listed in the record) |
-| **Notes** | Six lanes, cases, submissions, evidence references and append-only decisions are built with forced RLS and allow/deny gate tests. The control-portal lane vocabulary, cross-member business uniqueness and freeze enforcement remain. |
+| **Blocked by** | — |
+| **Notes** | Six lanes, cases, submissions, evidence references, the business profile and append-only decisions are built with forced RLS and allow/deny gate tests. The control-portal review lane now references the same registry. Transitions, scanning, submission API and review path belong to EP-02-011–015. |
 

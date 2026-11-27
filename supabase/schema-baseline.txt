@@ -1007,7 +1007,7 @@ admin | user_notes | user_notes_user_id_fkey | f | FOREIGN KEY (user_id) REFEREN
 admin | verification_reviews | verification_reviews_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE
 admin | verification_reviews | verification_reviews_case_id_key | u | UNIQUE (case_id)
 admin | verification_reviews | verification_reviews_decided_by_fkey | f | FOREIGN KEY (decided_by) REFERENCES identity.users(id) ON DELETE SET NULL
-admin | verification_reviews | verification_reviews_lane_check | c | CHECK (lane = ANY (ARRAY['identity'::text, 'business'::text, 'address'::text, 'phone'::text, 'document'::text]))
+admin | verification_reviews | verification_reviews_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
 admin | verification_reviews | verification_reviews_pkey | p | PRIMARY KEY (id)
 admin | verification_reviews | verification_reviews_status_check | c | CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'information_requested'::text]))
 admin | work_items | work_items_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES admin.cases(id) ON DELETE CASCADE

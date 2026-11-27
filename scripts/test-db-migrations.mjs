@@ -2482,6 +2482,43 @@ try {
     "the api role cannot record a verification decision directly",
   )
 
+  // The control portal shares the lane vocabulary (CP-019): the review table now
+  // references the registry instead of carrying its own list.
+  const reviewCase = await testClient.query(
+    `select * from admin.create_case(
+       $1, 'verification_review', 'Seller verification', 'seller lane review',
+       'normal', 'medium', null, 'control review lane test'
+     )`,
+    [actorId],
+  )
+  await testClient.query(
+    "insert into admin.verification_reviews (case_id, lane) values ($1, 'seller')",
+    [reviewCase.rows[0].id],
+  )
+  const reviewLane = await testClient.query(
+    "select lane from admin.verification_reviews where case_id = $1",
+    [reviewCase.rows[0].id],
+  )
+  assert(reviewLane.rows[0].lane === "seller", "a review records an approved lane")
+
+  const legacyReviewCase = await testClient.query(
+    `select * from admin.create_case(
+       $1, 'verification_review', 'Legacy lane', 'legacy lane review',
+       'normal', 'medium', null, 'legacy lane refusal test'
+     )`,
+    [actorId],
+  )
+  let legacyLaneRejected = false
+  try {
+    await testClient.query(
+      "insert into admin.verification_reviews (case_id, lane) values ($1, 'address')",
+      [legacyReviewCase.rows[0].id],
+    )
+  } catch (error) {
+    legacyLaneRejected = error?.code === "23503"
+  }
+  assert(legacyLaneRejected, "a control review cannot name a lane outside the approved six")
+
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
   await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
