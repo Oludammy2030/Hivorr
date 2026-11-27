@@ -2420,6 +2420,10 @@ try {
   assert(secondOpenRejected, "one active submission per lane is enforced")
 
   await testClient.query(
+    "update profile.verification_submissions set state = 'UNDER_REVIEW' where id = $1",
+    [submissionId],
+  )
+  await testClient.query(
     "update profile.verification_submissions set state = 'REJECTED', decided_at = now() where id = $1",
     [submissionId],
   )
@@ -2518,6 +2522,124 @@ try {
     legacyLaneRejected = error?.code === "23503"
   }
   assert(legacyLaneRejected, "a control review cannot name a lane outside the approved six")
+
+  // ---- Lane transitions, independence and the review freeze (EP-02-011) ----
+  const laneStates = [
+    "NOT_STARTED",
+    "DRAFT",
+    "SUBMITTED",
+    "UNDER_REVIEW",
+    "APPROVED",
+    "REJECTED",
+    "EXPIRED",
+  ]
+  const approvedPairs = new Set([
+    "NOT_STARTED->DRAFT",
+    "DRAFT->SUBMITTED",
+    "DRAFT->NOT_STARTED",
+    "SUBMITTED->UNDER_REVIEW",
+    "SUBMITTED->DRAFT",
+    "SUBMITTED->EXPIRED",
+    "UNDER_REVIEW->APPROVED",
+    "UNDER_REVIEW->REJECTED",
+    "APPROVED->EXPIRED",
+    "REJECTED->DRAFT",
+    "EXPIRED->DRAFT",
+  ])
+  for (const from of laneStates) {
+    for (const to of laneStates) {
+      const result = await testClient.query(
+        "select profile.verification_transition_allowed($1, $2) as allowed",
+        [from, to],
+      )
+      assert(
+        result.rows[0].allowed === (from === to || approvedPairs.has(`${from}->${to}`)),
+        `lane transition ${from}->${to} matches the approved table`,
+      )
+    }
+  }
+
+  const resubmissionId = resubmission.rows[0].id
+  let earlyApprovalRejected = false
+  try {
+    await testClient.query(
+      "update profile.verification_submissions set state = 'APPROVED' where id = $1",
+      [resubmissionId],
+    )
+  } catch (error) {
+    earlyApprovalRejected = error?.code === "23514"
+  }
+  assert(earlyApprovalRejected, "a submission cannot be approved before it is under review")
+
+  await testClient.query(
+    "update profile.verification_submissions set state = 'UNDER_REVIEW' where id = $1",
+    [resubmissionId],
+  )
+
+  let frozenRejected = false
+  try {
+    await testClient.query(
+      "update profile.profiles set display_name = 'Changed During Review' where account_id = $1",
+      [accountId],
+    )
+  } catch (error) {
+    frozenRejected = error?.code === "23514"
+  }
+  assert(frozenRejected, "identity fields are frozen while a submission is under review")
+
+  const bioDuringReview = await testClient.query(
+    "update profile.profiles set bio = 'updated during review' where account_id = $1 returning bio",
+    [accountId],
+  )
+  assert(bioDuringReview.rowCount === 1, "non-identity profile fields stay editable during review")
+
+  await testClient.query(
+    "update profile.verification_submissions set state = 'REJECTED' where id = $1",
+    [resubmissionId],
+  )
+  const afterReject = await testClient.query(
+    "update profile.profiles set display_name = 'Changed After Review' where account_id = $1 returning display_name",
+    [accountId],
+  )
+  assert(afterReject.rowCount === 1, "the freeze lifts after rejection")
+
+  await testClient.query(
+    "insert into profile.verification_cases (account_id, lane) values ($1, 'trade')",
+    [accountId],
+  )
+  for (const state of ["DRAFT", "SUBMITTED", "UNDER_REVIEW", "APPROVED"]) {
+    await testClient.query(
+      "update profile.verification_cases set state = $2 where account_id = $1 and lane = 'identity'",
+      [accountId, state],
+    )
+  }
+  const tradeState = await testClient.query(
+    "select state from profile.verification_cases where account_id = $1 and lane = 'trade'",
+    [accountId],
+  )
+  assert(tradeState.rows[0].state === "NOT_STARTED", "approving one lane leaves another untouched")
+
+  let reopenRejected = false
+  try {
+    await testClient.query(
+      "update profile.verification_cases set state = 'DRAFT' where account_id = $1 and lane = 'identity'",
+      [accountId],
+    )
+  } catch (error) {
+    reopenRejected = error?.code === "23514"
+  }
+  assert(reopenRejected, "an approved lane cannot be reopened")
+
+  let skippedStateRejected = false
+  try {
+    await testClient.query(
+      "update profile.verification_cases set state = 'APPROVED' where account_id = $1 and lane = 'trade'",
+      [accountId],
+    )
+  } catch (error) {
+    skippedStateRejected = error?.code === "23514"
+  }
+  assert(skippedStateRejected, "a lane cannot skip straight to approved")
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")

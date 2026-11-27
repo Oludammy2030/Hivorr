@@ -134,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `COMPLETED` |
+| **Execution date** | 2026-11-27 |
+| **Execution record** | `execution-records/EP-02-011.md` |
+| **Blocked by** | — |
+| **Notes** | The seven-state table is enforced in the domain and by database trigger; start, submit and withdraw are built with evidence, resubmission and freeze rules and audited. Reviewer actions and the HTTP contract belong to EP-02-013/015; expiry has no scheduler yet. |
 

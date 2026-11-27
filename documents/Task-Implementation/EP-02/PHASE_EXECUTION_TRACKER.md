@@ -28,7 +28,7 @@
 | 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder decisions | **COMPLETED** — partial start: EP-01 closed; pooled wallet/escrow model recorded; verification and provider scopes blocked | 2026-11-15 | `execution-records/EP-02-001.md` |
 | 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **COMPLETED** — lane/tier/ledger/payout contracts; capability states | 2026-11-15 | `execution-records/EP-02-002.md` |
 | 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **COMPLETED** — six lanes, cases, submissions, evidence references, business profile and append-only decisions with forced RLS; control-portal lane aligned | 2026-11-27 | `execution-records/EP-02-010.md` |
-| 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** | — | — |
+| 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **COMPLETED** — transition table in domain and database, subject submission domain, review freeze, audit | 2026-11-27 | `execution-records/EP-02-011.md` |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** | — | — |
 | 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **PENDING** | — | — |
 | 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — CBN three-tier source, tier-based withdrawal and deposit caps, KYC-upgrade hold and audited verifier assignment; evidence rules and verification wiring deferred | — | `execution-records/EP-02-014.md` |
@@ -122,6 +122,7 @@ Still open and blocking specific scopes:
 | 2026-11-26 | `EP-02-061` | `PENDING` | `IN PROGRESS` — connected wallet screen in the slice | `execution-records/EP-02-061.md` |
 | 2026-11-27 | `EP-02-010` | `PENDING` | `IN PROGRESS` — verification schema and lane registry; decisions append-only | `execution-records/EP-02-010.md` |
 | 2026-11-27 | `EP-02-010` | `IN PROGRESS` | `COMPLETED` — business profile added; control-portal lane aligned | `execution-records/EP-02-010.md` |
+| 2026-11-27 | `EP-02-011` | `PENDING` | `COMPLETED` — transitions, submission domain and review freeze | `execution-records/EP-02-011.md` |
 
 ---
 

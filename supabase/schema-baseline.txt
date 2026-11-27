@@ -2325,7 +2325,7 @@ profile | verification_submissions | postgres | TRIGGER | YES
 profile | verification_submissions | postgres | TRUNCATE | YES
 profile | verification_submissions | postgres | UPDATE | YES
 
-## functions (98)
+## functions (102)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -2424,6 +2424,10 @@ private | validate_payout_account_write |  | true | v | search_path=""
 private | validate_payout_request_transition |  | true | v | search_path=""
 private | validate_posting |  | true | v | search_path=""
 profile | enforce_activation_transition |  | false | v | -
+profile | enforce_identity_freeze |  | false | v | search_path=""
+profile | enforce_verification_transition |  | false | v | search_path=""
+profile | identity_fields_are_frozen | p_account_id uuid | true | s | search_path=""
+profile | verification_transition_allowed | p_from text, p_to text | false | i | search_path=""
 
 ## roles (6)
 hivorr_api | false | true | false | false | false | false
