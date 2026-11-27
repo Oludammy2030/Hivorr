@@ -48123,7 +48123,7 @@
           }
         ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "description": "The requested KYC tier; required on the kyc lane and refused on every other lane",
           "content": {
             "application/json": {

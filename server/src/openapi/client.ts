@@ -133,7 +133,10 @@ export function buildClient(document: OpenApiDocument): string {
           `params: { ${parameters.map((parameter) => `${parameter.name}: string`).join("; ")} }`,
         )
       }
-      if (request) args.push(`input: ${name}Request`)
+      if (request) {
+        const optional = operation.requestBody?.required === false
+        args.push(`input${optional ? "?" : ""}: ${name}Request`)
+      }
 
       const statuses = responseStatuses(operation).join(", ")
       methods.push(

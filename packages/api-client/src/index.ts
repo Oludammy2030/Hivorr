@@ -997,7 +997,7 @@ export function createHivorrClient(options: HivorrClientOptions) {
         undefined,
         [200],
       ),
-    startVerificationLane: (params: { lane: string }, input: StartVerificationLaneRequest) =>
+    startVerificationLane: (params: { lane: string }, input?: StartVerificationLaneRequest) =>
       request<StartVerificationLaneResponse>(
         "POST",
         `/v1/verification/${encodeURIComponent(params.lane)}/start`,
