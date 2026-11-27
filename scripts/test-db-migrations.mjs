@@ -574,7 +574,7 @@ try {
   const profileTables = await testClient.query(
     "select tablename, rowsecurity from pg_tables where schemaname = 'profile' order by tablename",
   )
-  assert(profileTables.rowCount === 7, "seven profile tables exist")
+  assert(profileTables.rowCount === 8, "eight profile tables exist")
   assert(
     profileTables.rows.every((row) => row.rowsecurity === true),
     "every profile table has row-level security enabled",
@@ -615,7 +615,7 @@ try {
   const forcedRls = await testClient.query(
     "select n.nspname as schema, c.relname as table_name, c.relforcerowsecurity as forced from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('identity', 'profile') and c.relkind = 'r' order by 1, 2",
   )
-  assert(forcedRls.rowCount === 19, "nineteen identity/profile tables exist")
+  assert(forcedRls.rowCount === 20, "twenty identity/profile tables exist")
   assert(
     forcedRls.rows.every((row) => row.forced === true),
     "every identity and profile table forces row-level security",
@@ -636,6 +636,7 @@ try {
     refresh_tokens: ["SELECT", "INSERT", "UPDATE"],
     profiles: ["SELECT", "INSERT", "UPDATE"],
     activity_activations: ["SELECT", "INSERT", "UPDATE"],
+    businesses: ["SELECT", "INSERT", "UPDATE"],
     verification_lanes: ["SELECT"],
     verification_cases: ["SELECT", "INSERT", "UPDATE"],
     verification_submissions: ["SELECT", "INSERT", "UPDATE"],
@@ -2335,6 +2336,41 @@ try {
   )
   assert(laneWrite.rows[0].allowed === false, "the api role cannot add a verification lane")
 
+  const business = await testClient.query(
+    `insert into profile.businesses
+       (account_id, trading_name, legal_name, registration_number)
+     values ($1, 'Kuti Sema Trading', 'Kuti Sema Enterprises Ltd', 'RC-1234567')
+     returning id`,
+    [accountId],
+  )
+  assert(business.rowCount === 1, "a business profile is stored for the account")
+
+  let duplicateBusinessRejected = false
+  try {
+    await testClient.query(
+      `insert into profile.businesses
+         (account_id, trading_name, legal_name, registration_number)
+       values ($1, 'Second Trading', 'Second Legal Ltd', 'RC-7654321')`,
+      [accountId],
+    )
+  } catch (error) {
+    duplicateBusinessRejected = error?.code === "23505"
+  }
+  assert(duplicateBusinessRejected, "one business profile exists per account")
+
+  let invalidBusinessRejected = false
+  try {
+    await testClient.query(
+      `insert into profile.businesses
+         (account_id, trading_name, legal_name, registration_number)
+       values ($1, '   ', 'Legal Ltd', 'RC-1')`,
+      [secondAccountId],
+    )
+  } catch (error) {
+    invalidBusinessRejected = error?.code === "23514"
+  }
+  assert(invalidBusinessRejected, "a business requires a trading name")
+
   let invalidLaneRejected = false
   try {
     await testClient.query(
@@ -2468,6 +2504,10 @@ try {
     "select count(*)::int as count from profile.verification_lanes",
   )
   assert(lanesVisible.rows[0].count === 6, "every authenticated account reads the lane registry")
+  const ownBusiness = await testClient.query(
+    "select count(*)::int as count from profile.businesses",
+  )
+  assert(ownBusiness.rows[0].count === 1, "an account reads its own business profile")
 
   await testClient.query("select platform.set_identity_context($1, $2)", [
     secondAccountId,
@@ -2488,6 +2528,10 @@ try {
     "select count(*)::int as count from profile.verification_decisions",
   )
   assert(foreignDecision.rows[0].count === 0, "rls hides another account's verification decision")
+  const foreignBusiness = await testClient.query(
+    "select count(*)::int as count from profile.businesses",
+  )
+  assert(foreignBusiness.rows[0].count === 0, "rls hides another account's business profile")
 
   let crossAccountInsertRejected = false
   await testClient.query("savepoint verification_insert_guard")

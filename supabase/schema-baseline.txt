@@ -16,7 +16,7 @@ profile
 public
 services
 
-## tables (73)
+## tables (74)
 admin | access_denials
 admin | approval_decisions
 admin | approval_requests
@@ -84,6 +84,7 @@ platform | schema_migrations
 platform | taxonomy_attributes
 platform | taxonomy_nodes
 profile | activity_activations
+profile | businesses
 profile | profiles
 profile | verification_cases
 profile | verification_decisions
@@ -91,7 +92,7 @@ profile | verification_evidence
 profile | verification_lanes
 profile | verification_submissions
 
-## columns (719)
+## columns (727)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -756,6 +757,14 @@ profile | activity_activations | deactivated_at | timestamp with time zone | tim
 profile | activity_activations | state_changed_at | timestamp with time zone | timestamptz | NO | now()
 profile | activity_activations | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | activity_activations | updated_at | timestamp with time zone | timestamptz | NO | now()
+profile | businesses | id | uuid | uuid | NO | platform.uuidv7()
+profile | businesses | account_id | uuid | uuid | NO | -
+profile | businesses | trading_name | text | text | NO | -
+profile | businesses | legal_name | text | text | NO | -
+profile | businesses | registration_number | text | text | NO | -
+profile | businesses | jurisdiction | text | text | YES | -
+profile | businesses | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | businesses | updated_at | timestamp with time zone | timestamptz | NO | now()
 profile | profiles | account_id | uuid | uuid | NO | -
 profile | profiles | display_name | text | text | YES | -
 profile | profiles | avatar_url | text | text | YES | -
@@ -812,7 +821,7 @@ profile | verification_submissions | frozen_at | timestamp with time zone | time
 profile | verification_submissions | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | verification_submissions | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (429)
+## constraints (436)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -1203,6 +1212,13 @@ profile | activity_activations | activity_activations_account_id_fkey | f | FORE
 profile | activity_activations | activity_activations_activity_id_check | c | CHECK (activity_id = ANY (ARRAY['market.buy'::text, 'services.hire'::text, 'errands.request'::text, 'market.sell'::text, 'services.offer'::text, 'logistics.provide'::text]))
 profile | activity_activations | activity_activations_pkey | p | PRIMARY KEY (id)
 profile | activity_activations | activity_activations_state_check | c | CHECK (state = ANY (ARRAY['INACTIVE'::text, 'ACTIVE'::text, 'RESTRICTED'::text, 'SUSPENDED'::text]))
+profile | businesses | businesses_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | businesses | businesses_account_id_key | u | UNIQUE (account_id)
+profile | businesses | businesses_jurisdiction_check | c | CHECK (jurisdiction IS NULL OR length(btrim(jurisdiction)) >= 2 AND length(btrim(jurisdiction)) <= 80)
+profile | businesses | businesses_legal_name_check | c | CHECK (length(btrim(legal_name)) >= 1 AND length(btrim(legal_name)) <= 160)
+profile | businesses | businesses_pkey | p | PRIMARY KEY (id)
+profile | businesses | businesses_registration_number_check | c | CHECK (length(btrim(registration_number)) >= 2 AND length(btrim(registration_number)) <= 80)
+profile | businesses | businesses_trading_name_check | c | CHECK (length(btrim(trading_name)) >= 1 AND length(btrim(trading_name)) <= 120)
 profile | profiles | profiles_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | profiles | profiles_pkey | p | PRIMARY KEY (account_id)
 profile | verification_cases | verification_cases_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
@@ -1243,7 +1259,7 @@ profile | verification_submissions | verification_submissions_pkey | p | PRIMARY
 profile | verification_submissions | verification_submissions_reason_code_check | c | CHECK (reason_code IS NULL OR length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
 profile | verification_submissions | verification_submissions_state_check | c | CHECK (state = ANY (ARRAY['DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
 
-## indexes (228)
+## indexes (230)
 admin | access_denials | access_denials_active_unique | CREATE UNIQUE INDEX access_denials_active_unique ON admin.access_denials USING btree (user_id, permission_key, COALESCE(scope_type, ''::text), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
 admin | access_denials | access_denials_pkey | CREATE UNIQUE INDEX access_denials_pkey ON admin.access_denials USING btree (id)
 admin | access_denials | access_denials_user_active_idx | CREATE INDEX access_denials_user_active_idx ON admin.access_denials USING btree (user_id, permission_key) WHERE (revoked_at IS NULL)
@@ -1456,6 +1472,8 @@ profile | activity_activations | activity_activations_account_id_activity_id_key
 profile | activity_activations | activity_activations_account_state_idx | CREATE INDEX activity_activations_account_state_idx ON profile.activity_activations USING btree (account_id, state)
 profile | activity_activations | activity_activations_activity_state_idx | CREATE INDEX activity_activations_activity_state_idx ON profile.activity_activations USING btree (activity_id, state)
 profile | activity_activations | activity_activations_pkey | CREATE UNIQUE INDEX activity_activations_pkey ON profile.activity_activations USING btree (id)
+profile | businesses | businesses_account_id_key | CREATE UNIQUE INDEX businesses_account_id_key ON profile.businesses USING btree (account_id)
+profile | businesses | businesses_pkey | CREATE UNIQUE INDEX businesses_pkey ON profile.businesses USING btree (id)
 profile | profiles | profiles_pkey | CREATE UNIQUE INDEX profiles_pkey ON profile.profiles USING btree (account_id)
 profile | verification_cases | verification_cases_account_id_lane_key | CREATE UNIQUE INDEX verification_cases_account_id_lane_key ON profile.verification_cases USING btree (account_id, lane)
 profile | verification_cases | verification_cases_account_state_idx | CREATE INDEX verification_cases_account_state_idx ON profile.verification_cases USING btree (account_id, state)
@@ -1473,7 +1491,7 @@ profile | verification_submissions | verification_submissions_active_lane_idx | 
 profile | verification_submissions | verification_submissions_case_idx | CREATE INDEX verification_submissions_case_idx ON profile.verification_submissions USING btree (case_id, created_at DESC)
 profile | verification_submissions | verification_submissions_pkey | CREATE UNIQUE INDEX verification_submissions_pkey ON profile.verification_submissions USING btree (id)
 
-## row-level-security (73)
+## row-level-security (74)
 admin | access_denials | true | true
 admin | approval_decisions | true | true
 admin | approval_requests | true | true
@@ -1541,6 +1559,7 @@ platform | schema_migrations | false | false
 platform | taxonomy_attributes | true | false
 platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
+profile | businesses | true | true
 profile | profiles | true | true
 profile | verification_cases | true | true
 profile | verification_decisions | true | true
@@ -1548,7 +1567,7 @@ profile | verification_evidence | true | true
 profile | verification_lanes | true | true
 profile | verification_submissions | true | true
 
-## policies (96)
+## policies (99)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1632,6 +1651,9 @@ platform | taxonomy_nodes | taxonomy_nodes_select | PERMISSIVE | {hivorr_api,hiv
 profile | activity_activations | activity_activations_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 profile | activity_activations | activity_activations_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | activity_activations | activity_activations_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+profile | businesses | businesses_insert | PERMISSIVE | {public} | INSERT | - | (account_id = platform.current_account_id())
+profile | businesses | businesses_select | PERMISSIVE | {public} | SELECT | (account_id = platform.current_account_id()) | -
+profile | businesses | businesses_update | PERMISSIVE | {public} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
@@ -1646,7 +1668,7 @@ profile | verification_submissions | verification_submissions_insert | PERMISSIV
 profile | verification_submissions | verification_submissions_select | PERMISSIVE | {public} | SELECT | (account_id = platform.current_account_id()) | -
 profile | verification_submissions | verification_submissions_update | PERMISSIVE | {public} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (644)
+## table-grants (655)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -2230,6 +2252,17 @@ profile | activity_activations | postgres | SELECT | YES
 profile | activity_activations | postgres | TRIGGER | YES
 profile | activity_activations | postgres | TRUNCATE | YES
 profile | activity_activations | postgres | UPDATE | YES
+profile | businesses | hivorr_api | INSERT | NO
+profile | businesses | hivorr_api | SELECT | NO
+profile | businesses | hivorr_api | UPDATE | NO
+profile | businesses | hivorr_readonly | SELECT | NO
+profile | businesses | postgres | DELETE | YES
+profile | businesses | postgres | INSERT | YES
+profile | businesses | postgres | REFERENCES | YES
+profile | businesses | postgres | SELECT | YES
+profile | businesses | postgres | TRIGGER | YES
+profile | businesses | postgres | TRUNCATE | YES
+profile | businesses | postgres | UPDATE | YES
 profile | profiles | hivorr_api | INSERT | NO
 profile | profiles | hivorr_api | SELECT | NO
 profile | profiles | hivorr_api | UPDATE | NO
