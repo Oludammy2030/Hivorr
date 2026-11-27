@@ -2594,7 +2594,7 @@ try {
   assert(bioDuringReview.rowCount === 1, "non-identity profile fields stay editable during review")
 
   await testClient.query(
-    "update profile.verification_submissions set state = 'REJECTED' where id = $1",
+    "update profile.verification_submissions set state = 'REJECTED', decided_at = now() where id = $1",
     [resubmissionId],
   )
   const afterReject = await testClient.query(
@@ -2640,6 +2640,44 @@ try {
     skippedStateRejected = error?.code === "23514"
   }
   assert(skippedStateRejected, "a lane cannot skip straight to approved")
+
+  // A decided attempt must record when it was decided, and nothing else may.
+  const businessCase = await testClient.query(
+    "insert into profile.verification_cases (account_id, lane) values ($1, 'business') returning id",
+    [accountId],
+  )
+  const businessSubmission = await testClient.query(
+    `insert into profile.verification_submissions
+       (case_id, account_id, lane, state, submitted_at)
+     values ($1, $2, 'business', 'SUBMITTED', now()) returning id`,
+    [businessCase.rows[0].id, accountId],
+  )
+  const businessSubmissionId = businessSubmission.rows[0].id
+  await testClient.query(
+    "update profile.verification_submissions set state = 'UNDER_REVIEW' where id = $1",
+    [businessSubmissionId],
+  )
+  let undatedDecisionRejected = false
+  try {
+    await testClient.query(
+      "update profile.verification_submissions set state = 'APPROVED' where id = $1",
+      [businessSubmissionId],
+    )
+  } catch (error) {
+    undatedDecisionRejected = error?.code === "23514"
+  }
+  assert(undatedDecisionRejected, "a decided attempt must record its decision time")
+
+  let strayDecisionTimeRejected = false
+  try {
+    await testClient.query(
+      "update profile.verification_submissions set decided_at = now() where id = $1",
+      [businessSubmissionId],
+    )
+  } catch (error) {
+    strayDecisionTimeRejected = error?.code === "23514"
+  }
+  assert(strayDecisionTimeRejected, "only a decided attempt carries a decision time")
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")

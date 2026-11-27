@@ -821,7 +821,7 @@ profile | verification_submissions | frozen_at | timestamp with time zone | time
 profile | verification_submissions | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | verification_submissions | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (436)
+## constraints (437)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -1254,6 +1254,7 @@ profile | verification_submissions | verification_submissions_account_id_fkey | 
 profile | verification_submissions | verification_submissions_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES profile.verification_cases(id) ON DELETE CASCADE
 profile | verification_submissions | verification_submissions_check | c | CHECK (decided_at IS NULL OR submitted_at IS NOT NULL)
 profile | verification_submissions | verification_submissions_check1 | c | CHECK (frozen_at IS NULL OR (state = ANY (ARRAY['UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text])))
+profile | verification_submissions | verification_submissions_decision_consistent | c | CHECK ( CASE WHEN state = ANY (ARRAY['APPROVED'::text, 'REJECTED'::text]) THEN decided_at IS NOT NULL ELSE decided_at IS NULL END)
 profile | verification_submissions | verification_submissions_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
 profile | verification_submissions | verification_submissions_pkey | p | PRIMARY KEY (id)
 profile | verification_submissions | verification_submissions_reason_code_check | c | CHECK (reason_code IS NULL OR length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
