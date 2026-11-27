@@ -821,7 +821,7 @@ profile | verification_submissions | frozen_at | timestamp with time zone | time
 profile | verification_submissions | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | verification_submissions | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (436)
+## constraints (437)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -1254,6 +1254,7 @@ profile | verification_submissions | verification_submissions_account_id_fkey | 
 profile | verification_submissions | verification_submissions_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES profile.verification_cases(id) ON DELETE CASCADE
 profile | verification_submissions | verification_submissions_check | c | CHECK (decided_at IS NULL OR submitted_at IS NOT NULL)
 profile | verification_submissions | verification_submissions_check1 | c | CHECK (frozen_at IS NULL OR (state = ANY (ARRAY['UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text])))
+profile | verification_submissions | verification_submissions_decision_consistent | c | CHECK ( CASE WHEN state = ANY (ARRAY['APPROVED'::text, 'REJECTED'::text]) THEN decided_at IS NOT NULL ELSE decided_at IS NULL END)
 profile | verification_submissions | verification_submissions_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
 profile | verification_submissions | verification_submissions_pkey | p | PRIMARY KEY (id)
 profile | verification_submissions | verification_submissions_reason_code_check | c | CHECK (reason_code IS NULL OR length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
@@ -2325,7 +2326,7 @@ profile | verification_submissions | postgres | TRIGGER | YES
 profile | verification_submissions | postgres | TRUNCATE | YES
 profile | verification_submissions | postgres | UPDATE | YES
 
-## functions (98)
+## functions (102)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -2424,6 +2425,10 @@ private | validate_payout_account_write |  | true | v | search_path=""
 private | validate_payout_request_transition |  | true | v | search_path=""
 private | validate_posting |  | true | v | search_path=""
 profile | enforce_activation_transition |  | false | v | -
+profile | enforce_identity_freeze |  | false | v | search_path=""
+profile | enforce_verification_transition |  | false | v | search_path=""
+profile | identity_fields_are_frozen | p_account_id uuid | true | s | search_path=""
+profile | verification_transition_allowed | p_from text, p_to text | false | i | search_path=""
 
 ## roles (6)
 hivorr_api | false | true | false | false | false | false
