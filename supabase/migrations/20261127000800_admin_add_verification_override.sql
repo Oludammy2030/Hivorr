@@ -157,6 +157,7 @@ as $$
 declare
   v_request admin.approval_requests%rowtype;
   v_step_id uuid;
+  v_outcome text;
   v_lane_case_id uuid;
   v_override_account uuid;
   v_override_lane text;
@@ -216,6 +217,12 @@ begin
     update admin.approval_requests ar
        set status = 'rejected', decided_at = now(), updated_at = now()
      where ar.id = p_request_id;
+
+    if v_request.action_type = 'case.decision' then
+      insert into admin.case_events (case_id, event_type, actor_user_id, summary)
+      values (v_request.target_id::uuid, 'decision_rejected', p_actor_user_id,
+              'Decision rejected: ' || btrim(p_reason));
+    end if;
   else
     if v_request.action_type = 'account.closure' then
       if not admin.actor_holds_platform_permission(p_actor_user_id, 'admin.user.manage') then
@@ -228,6 +235,23 @@ begin
           'close',
           v_request.reason
         ) g;
+    elsif v_request.action_type = 'case.decision' then
+      if not admin.actor_holds_platform_permission(p_actor_user_id, 'admin.case.approve') then
+        raise exception 'approval_action_permission_required' using errcode = '42501';
+      end if;
+
+      v_outcome := v_request.payload->>'outcome';
+
+      update admin.cases c
+         set status = 'DECIDED',
+             outcome = v_outcome,
+             closure_reason = btrim(p_reason),
+             updated_at = now()
+       where c.id = v_request.target_id::uuid;
+
+      insert into admin.case_events (case_id, event_type, actor_user_id, summary)
+      values (v_request.target_id::uuid, 'decision_recorded', p_actor_user_id,
+              'Decision recorded: ' || coalesce(v_outcome, '—'));
     elsif v_request.action_type = 'verification_override' then
       if not admin.actor_holds_platform_permission(p_actor_user_id, 'admin.verification.review') then
         raise exception 'approval_action_permission_required' using errcode = '42501';
@@ -286,8 +310,8 @@ begin
          evidence_ids, requested_by)
       values
         (v_lane_case_id, v_request.target_id::uuid, v_override_submission,
-         v_override_account, v_override_lane,
-         v_request.requested_state, 'verification_override', btrim(p_reason),
+         v_override_account, v_override_lane, v_request.requested_state,
+         'verification_override', btrim(p_reason),
          p_actor_user_id, now(), v_from_state, v_request.requested_state,
          coalesce(
            (select array_agg(e.id order by e.uploaded_at)
