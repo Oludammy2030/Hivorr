@@ -92,7 +92,7 @@ function operationObject(operation: ApiOperation): OpenApiOperation {
     ...(operation.request
       ? {
           requestBody: {
-            required: true,
+            required: operation.request.required ?? true,
             description: operation.request.description,
             content: content(operation.request.schema),
           },

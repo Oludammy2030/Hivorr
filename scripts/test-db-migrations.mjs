@@ -2674,6 +2674,130 @@ try {
   }
   assert(rescannedRejected, "a decided scan cannot be changed")
 
+  // ---- Review integration and the immutable decision record (EP-02-015) ----
+  async function openLane(lane, options = {}) {
+    const created = await testClient.query(
+      `insert into profile.verification_cases (account_id, lane, state)
+       values ($1, $2, 'SUBMITTED') returning id`,
+      [accountId, lane],
+    )
+    const submission = await testClient.query(
+      `insert into profile.verification_submissions
+         (case_id, account_id, lane, state, submitted_at, requested_kyc_tier)
+       values ($1, $2, $3, 'SUBMITTED', now(), $4) returning id`,
+      [created.rows[0].id, accountId, lane, options.requestedTier ?? null],
+    )
+    return { caseId: created.rows[0].id, submissionId: submission.rows[0].id }
+  }
+
+  async function underReview(lane) {
+    const opened = await openLane(lane, { requestedTier: lane === "kyc" ? "tier_2" : null })
+    const review = await testClient.query(
+      "select * from admin.open_verification_review($1, $2, $3, $4)",
+      [userId, accountId, opened.submissionId, `${lane} verification`],
+    )
+    await testClient.query(
+      "update profile.verification_submissions set state = 'UNDER_REVIEW' where id = $1",
+      [opened.submissionId],
+    )
+    await testClient.query(
+      "update profile.verification_cases set state = 'UNDER_REVIEW' where id = $1",
+      [opened.caseId],
+    )
+    return { ...opened, reviewCaseId: review.rows[0].case_id }
+  }
+
+  const seller = await underReview("seller")
+  await testClient.query(
+    `insert into profile.verification_evidence
+       (submission_id, account_id, object_key, content_type, size_bytes, sha256, scan_state)
+     values ($1, $2, 'seller/proof.pdf', 'application/pdf', 2048, $3, 'CLEAN')`,
+    [seller.submissionId, accountId, "d".repeat(64)],
+  )
+  const queueRow = await testClient.query(
+    "select lane, review_status, evidence_count from admin.list_verification_queue($1, '') q where q.case_id = $2",
+    [actorId, seller.reviewCaseId],
+  )
+  assert(
+    queueRow.rows[0]?.lane === "seller" &&
+      queueRow.rows[0]?.review_status === "pending" &&
+      Number(queueRow.rows[0]?.evidence_count) === 1,
+    "the control queue shows the lane and the lane evidence count",
+  )
+
+  const subjectApprove = await testClient
+    .query(
+      "select * from admin.record_verification_decision($1, $2, 'approve', 'self approval attempt')",
+      [userId, seller.reviewCaseId],
+    )
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(subjectApprove, "a subject cannot approve their own lane")
+
+  await testClient.query(
+    "select * from admin.record_verification_decision($1, $2, 'approve', 'documents verified')",
+    [actorId, seller.reviewCaseId],
+  )
+
+  const approvedSubmission = await testClient.query(
+    "select state, decided_at from profile.verification_submissions where id = $1",
+    [seller.submissionId],
+  )
+  assert(
+    approvedSubmission.rows[0].state === "APPROVED" && approvedSubmission.rows[0].decided_at,
+    "approval moves the attempt and records when it was decided",
+  )
+  const approvedLane = await testClient.query(
+    "select state from profile.verification_cases where id = $1",
+    [seller.caseId],
+  )
+  assert(approvedLane.rows[0].state === "APPROVED", "approval moves the lane")
+  const sellerDecision = await testClient.query(
+    `select from_state, to_state, evidence_ids, decided_by, decision
+       from profile.verification_decisions where submission_id = $1`,
+    [seller.submissionId],
+  )
+  assert(
+    sellerDecision.rows[0].decision === "APPROVED" &&
+      sellerDecision.rows[0].from_state === "UNDER_REVIEW" &&
+      sellerDecision.rows[0].to_state === "APPROVED" &&
+      sellerDecision.rows[0].decided_by === actorId &&
+      sellerDecision.rows[0].evidence_ids.length === 1,
+    "the decision records actor, prior and next state, and the evidence seen",
+  )
+
+  const kyc = await underReview("kyc")
+  await testClient.query(
+    "select * from admin.record_verification_decision($1, $2, 'approve', 'tier two evidence accepted')",
+    [actorId, kyc.reviewCaseId],
+  )
+  const tier = await testClient.query("select kyc_tier from identity.accounts where id = $1", [
+    accountId,
+  ])
+  assert(tier.rows[0].kyc_tier === "tier_2", "approving the kyc lane sets the requested tier")
+
+  const logistics = await underReview("logistics")
+  await testClient.query(
+    "select * from admin.record_verification_decision($1, $2, 'reject', 'licence unreadable')",
+    [actorId, logistics.reviewCaseId],
+  )
+  const rejectedLane = await testClient.query(
+    "select state from profile.verification_cases where id = $1",
+    [logistics.caseId],
+  )
+  assert(rejectedLane.rows[0].state === "REJECTED", "rejection reopens the lane for resubmission")
+  const rejectedDecision = await testClient.query(
+    "select decision, to_state from profile.verification_decisions where submission_id = $1",
+    [logistics.submissionId],
+  )
+  assert(
+    rejectedDecision.rows[0].decision === "REJECTED" &&
+      rejectedDecision.rows[0].to_state === "REJECTED",
+    "the rejection is recorded as a decision",
+  )
+
   // A decided attempt must record when it was decided, and nothing else may.
   const businessCase = await testClient.query(
     "insert into profile.verification_cases (account_id, lane) values ($1, 'business') returning id",

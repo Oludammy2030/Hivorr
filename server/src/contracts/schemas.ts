@@ -1,4 +1,4 @@
-import {
+﻿import {
   ACTIVITY_ACTIVATION_STATES,
   ACTIVITY_IDS,
   CAPABILITY_IDS,
@@ -9,6 +9,7 @@ import {
   activityIdSchema,
   apiErrorBodySchema,
   currencyCodeSchema,
+  kycTierSchema,
   laneStatusSchema,
   moneyAmountSchema,
   taxonomyAttributeSchema,
@@ -868,6 +869,11 @@ export const walletBalanceListResponse = z.array(walletBalanceViewSchema)
 export const walletStatementListResponse = z.array(walletStatementEntrySchema)
 
 export const laneStatusResponse = laneStatusSchema
+
+/** Only the kyc lane carries a tier request. */
+export const startVerificationRequest = z.strictObject({
+  requestedTier: kycTierSchema.optional(),
+})
 
 export const assignKycTierRequest = z.strictObject({
   tier: z.enum(KYC_TIERS),

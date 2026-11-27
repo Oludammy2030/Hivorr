@@ -48122,6 +48122,29 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "description": "The requested KYC tier; required on the kyc lane and refused on every other lane",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "requestedTier": {
+                    "type": "string",
+                    "enum": [
+                      "tier_0",
+                      "tier_1",
+                      "tier_2",
+                      "tier_3"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "A draft attempt is open; refused while another attempt is open or the lane is approved; rate limited",

@@ -156,7 +156,7 @@ function input(overrides: Record<string, unknown> = {}) {
   }
 }
 
-describe("verification lane service â€” start", () => {
+describe("verification lane service — start", () => {
   it("opens a draft attempt and audits the change", async () => {
     const { service, updates, audits } = harness({ caseState: "NOT_STARTED" })
 
@@ -208,7 +208,7 @@ describe("verification lane service â€” start", () => {
   })
 })
 
-describe("verification lane service â€” submit", () => {
+describe("verification lane service — submit", () => {
   it("requires at least one evidence reference", async () => {
     const { service, audits } = harness({
       openSubmission: { id: SUBMISSION_ID, state: "DRAFT" },
@@ -266,7 +266,7 @@ describe("verification lane service â€” submit", () => {
   })
 })
 
-describe("verification lane service â€” withdraw", () => {
+describe("verification lane service — withdraw", () => {
   it("returns a submitted attempt to draft", async () => {
     const { service, updates, audits } = harness({
       openSubmission: { id: SUBMISSION_ID, state: "SUBMITTED" },
@@ -291,7 +291,7 @@ describe("verification lane service â€” withdraw", () => {
   })
 })
 
-describe("verification lane service â€” status", () => {
+describe("verification lane service — status", () => {
   it("reports a lane that was never started", async () => {
     const { service } = harness({ caseState: null })
 
@@ -319,6 +319,48 @@ describe("verification lane service â€” status", () => {
       hasActiveSubmission: true,
       evidenceCount: 3,
     })
+  })
+})
+
+describe("verification lane service — kyc tier request", () => {
+  it("requires a tier on the kyc lane", async () => {
+    const { service, queries } = harness({ caseState: "NOT_STARTED" })
+
+    await expect(service.start(input({ lane: "kyc" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
+    expect(queries).toHaveLength(0)
+  })
+
+  it("refuses a tier on every other lane", async () => {
+    const { service, queries } = harness({ caseState: "NOT_STARTED" })
+
+    await expect(service.start(input({ requestedTier: "tier_2" }))).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
+    expect(queries).toHaveLength(0)
+  })
+
+  it("stores the requested tier on the kyc attempt", async () => {
+    const { service, queries } = harness({ caseState: "NOT_STARTED" })
+
+    await service.start(input({ lane: "kyc", requestedTier: "tier_2" }))
+
+    const insert = queries.find((call) =>
+      call.text.includes("insert into profile.verification_submissions"),
+    )
+    expect(insert?.values).toContain("tier_2")
+  })
+
+  it("opens the control review when an attempt is submitted", async () => {
+    const { service, queries } = harness({
+      openSubmission: { id: SUBMISSION_ID, state: "DRAFT" },
+      evidence: 1,
+    })
+
+    await service.submit(input())
+
+    expect(queries.some((call) => call.text.includes("admin.open_verification_review"))).toBe(true)
   })
 })
 

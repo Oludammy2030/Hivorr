@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Public interface of the profiles and verification module.
  *
  * Other modules call this file only; the `profile` schema stays private to the
@@ -9,4 +9,4 @@ export type { ActivationView } from "./activities"
 export { ProfileService } from "./profile.service"
 export type { ActivityStateView } from "./profile.service"
 export { VerificationLaneService } from "./verification.service"
-export type { LaneInput, LaneView } from "./verification.service"
+export type { LaneInput, LaneView, StartInput, SubmitInput } from "./verification.service"

@@ -110,6 +110,7 @@ import {
   walletBalanceListResponse,
   walletStatementListResponse,
   laneStatusResponse,
+  startVerificationRequest,
   payoutRequestListResponse,
   payoutRequestViewResponse,
   withdrawRequest,
@@ -148,6 +149,8 @@ export interface ApiOperation {
   readonly request?: {
     readonly schema: z.ZodType
     readonly description: string
+    /** Defaults to true; an optional body must never be a breaking addition. */
+    readonly required?: boolean
   }
   readonly success: readonly ApiSuccessResponse[]
   /** Non-2xx statuses the client should treat as a normal response. */
@@ -1657,6 +1660,12 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     tag: "verification",
     audience: ["app"],
     pathParams: ["lane"],
+    request: {
+      schema: startVerificationRequest,
+      description:
+        "The requested KYC tier; required on the kyc lane and refused on every other lane",
+      required: false,
+    },
     success: [
       {
         status: 200,
