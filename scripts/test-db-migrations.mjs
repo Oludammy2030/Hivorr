@@ -574,7 +574,7 @@ try {
   const profileTables = await testClient.query(
     "select tablename, rowsecurity from pg_tables where schemaname = 'profile' order by tablename",
   )
-  assert(profileTables.rowCount === 2, "two profile tables exist")
+  assert(profileTables.rowCount === 7, "seven profile tables exist")
   assert(
     profileTables.rows.every((row) => row.rowsecurity === true),
     "every profile table has row-level security enabled",
@@ -615,7 +615,7 @@ try {
   const forcedRls = await testClient.query(
     "select n.nspname as schema, c.relname as table_name, c.relforcerowsecurity as forced from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('identity', 'profile') and c.relkind = 'r' order by 1, 2",
   )
-  assert(forcedRls.rowCount === 14, "fourteen identity/profile tables exist")
+  assert(forcedRls.rowCount === 19, "nineteen identity/profile tables exist")
   assert(
     forcedRls.rows.every((row) => row.forced === true),
     "every identity and profile table forces row-level security",
@@ -636,6 +636,11 @@ try {
     refresh_tokens: ["SELECT", "INSERT", "UPDATE"],
     profiles: ["SELECT", "INSERT", "UPDATE"],
     activity_activations: ["SELECT", "INSERT", "UPDATE"],
+    verification_lanes: ["SELECT"],
+    verification_cases: ["SELECT", "INSERT", "UPDATE"],
+    verification_submissions: ["SELECT", "INSERT", "UPDATE"],
+    verification_evidence: ["SELECT", "INSERT"],
+    verification_decisions: ["SELECT"],
   }
   const policyRows = await testClient.query(
     "select tablename, cmd from pg_policies where schemaname in ('identity', 'profile')",
@@ -2314,6 +2319,189 @@ try {
     "select has_table_privilege('hivorr_readonly', 'platform.audit_log', 'insert') as allowed",
   )
   assert(readonlyAudit.rows[0].allowed === false, "readonly role cannot append audit records")
+
+  // ---- Verification lanes, cases, submissions, evidence and decisions (EP-02-010) ----
+  const lanes = await testClient.query(
+    "select key from profile.verification_lanes order by sort_order",
+  )
+  assert(
+    JSON.stringify(lanes.rows.map((row) => row.key)) ===
+      JSON.stringify(["identity", "kyc", "trade", "seller", "logistics", "business"]),
+    "the six verification lanes are seeded in display order",
+  )
+
+  const laneWrite = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'profile.verification_lanes', 'insert') as allowed",
+  )
+  assert(laneWrite.rows[0].allowed === false, "the api role cannot add a verification lane")
+
+  let invalidLaneRejected = false
+  try {
+    await testClient.query(
+      "insert into profile.verification_cases (account_id, lane) values ($1, 'address')",
+      [accountId],
+    )
+  } catch (error) {
+    invalidLaneRejected = error?.code === "23503"
+  }
+  assert(invalidLaneRejected, "an unknown verification lane is refused")
+
+  const verificationCase = await testClient.query(
+    "insert into profile.verification_cases (account_id, lane) values ($1, 'identity') returning id",
+    [accountId],
+  )
+  const verificationCaseId = verificationCase.rows[0].id
+
+  let duplicateCaseRejected = false
+  try {
+    await testClient.query(
+      "insert into profile.verification_cases (account_id, lane) values ($1, 'identity')",
+      [accountId],
+    )
+  } catch (error) {
+    duplicateCaseRejected = error?.code === "23505"
+  }
+  assert(duplicateCaseRejected, "one verification case exists per account and lane")
+
+  const openSubmission = await testClient.query(
+    `insert into profile.verification_submissions
+       (case_id, account_id, lane, state, submitted_at)
+     values ($1, $2, 'identity', 'SUBMITTED', now()) returning id`,
+    [verificationCaseId, accountId],
+  )
+  const submissionId = openSubmission.rows[0].id
+
+  let secondOpenRejected = false
+  try {
+    await testClient.query(
+      `insert into profile.verification_submissions (case_id, account_id, lane, state)
+       values ($1, $2, 'identity', 'DRAFT')`,
+      [verificationCaseId, accountId],
+    )
+  } catch (error) {
+    secondOpenRejected = error?.code === "23505"
+  }
+  assert(secondOpenRejected, "one active submission per lane is enforced")
+
+  await testClient.query(
+    "update profile.verification_submissions set state = 'REJECTED', decided_at = now() where id = $1",
+    [submissionId],
+  )
+  const resubmission = await testClient.query(
+    `insert into profile.verification_submissions
+       (case_id, account_id, lane, state, submitted_at)
+     values ($1, $2, 'identity', 'SUBMITTED', now()) returning id`,
+    [verificationCaseId, accountId],
+  )
+  assert(resubmission.rowCount === 1, "a rejected attempt frees the lane for resubmission")
+
+  let badDigestRejected = false
+  try {
+    await testClient.query(
+      `insert into profile.verification_evidence
+         (submission_id, account_id, object_key, content_type, size_bytes, sha256)
+       values ($1, $2, 'kyc/bad.pdf', 'application/pdf', 1024, 'not-a-digest')`,
+      [submissionId, accountId],
+    )
+  } catch (error) {
+    badDigestRejected = error?.code === "23514"
+  }
+  assert(badDigestRejected, "evidence requires a sha-256 digest")
+
+  const evidence = await testClient.query(
+    `insert into profile.verification_evidence
+       (submission_id, account_id, object_key, content_type, size_bytes, sha256)
+     values ($1, $2, 'kyc/id.pdf', 'application/pdf', 2048, $3) returning id`,
+    [submissionId, accountId, "c".repeat(64)],
+  )
+  assert(evidence.rowCount === 1, "evidence stores a private object reference")
+  const evidenceId = evidence.rows[0].id
+
+  const decision = await testClient.query(
+    `insert into profile.verification_decisions
+       (case_id, submission_id, account_id, lane, decision, reason_code, reason, decided_by)
+     values ($1, $2, $3, 'identity', 'APPROVED', 'evidence_verified',
+             'all documents verified', $4)
+     returning id`,
+    [verificationCaseId, submissionId, accountId, actorId],
+  )
+  const decisionId = decision.rows[0].id
+
+  let decisionUpdateRejected = false
+  try {
+    await testClient.query(
+      "update profile.verification_decisions set reason = 'edited' where id = $1",
+      [decisionId],
+    )
+  } catch (error) {
+    decisionUpdateRejected = error?.code === "P0001"
+  }
+  assert(decisionUpdateRejected, "verification decisions are append-only")
+
+  const decisionInsert = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'profile.verification_decisions', 'insert') as allowed",
+  )
+  assert(
+    decisionInsert.rows[0].allowed === false,
+    "the api role cannot record a verification decision directly",
+  )
+
+  await testClient.query("begin")
+  await testClient.query("set role hivorr_api")
+  await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
+  const ownCase = await testClient.query(
+    "select count(*)::int as count from profile.verification_cases where id = $1",
+    [verificationCaseId],
+  )
+  assert(ownCase.rows[0].count === 1, "an account reads its own verification case")
+  const ownEvidence = await testClient.query(
+    "select count(*)::int as count from profile.verification_evidence where id = $1",
+    [evidenceId],
+  )
+  assert(ownEvidence.rows[0].count === 1, "an account reads its own evidence reference")
+  const ownDecision = await testClient.query(
+    "select count(*)::int as count from profile.verification_decisions where id = $1",
+    [decisionId],
+  )
+  assert(ownDecision.rows[0].count === 1, "an account reads its own verification decision")
+  const lanesVisible = await testClient.query(
+    "select count(*)::int as count from profile.verification_lanes",
+  )
+  assert(lanesVisible.rows[0].count === 6, "every authenticated account reads the lane registry")
+
+  await testClient.query("select platform.set_identity_context($1, $2)", [
+    secondAccountId,
+    secondUserId,
+  ])
+  const foreignCase = await testClient.query(
+    "select count(*)::int as count from profile.verification_cases",
+  )
+  assert(foreignCase.rows[0].count === 0, "rls hides another account's verification case")
+  const foreignVerificationEvidence = await testClient.query(
+    "select count(*)::int as count from profile.verification_evidence",
+  )
+  assert(
+    foreignVerificationEvidence.rows[0].count === 0,
+    "rls hides another account's evidence reference",
+  )
+  const foreignDecision = await testClient.query(
+    "select count(*)::int as count from profile.verification_decisions",
+  )
+  assert(foreignDecision.rows[0].count === 0, "rls hides another account's verification decision")
+
+  let crossAccountInsertRejected = false
+  await testClient.query("savepoint verification_insert_guard")
+  try {
+    await testClient.query(
+      "insert into profile.verification_cases (account_id, lane) values ($1, 'trade')",
+      [accountId],
+    )
+  } catch (error) {
+    crossAccountInsertRejected = error?.code === "42501"
+    await testClient.query("rollback to savepoint verification_insert_guard")
+  }
+  assert(crossAccountInsertRejected, "rls refuses a case written for another account")
+  await testClient.query("rollback")
 
   console.log(
     "database: OK — schemas, platform tables, identity spine, roles, and append-only audit verified",

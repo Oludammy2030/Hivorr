@@ -27,7 +27,7 @@
 |---:|---|---|---|---|---|---|
 | 1 | `EP-02-001` | Entry gate closure and decision register | EP-01 G5; founder decisions | **COMPLETED** — partial start: EP-01 closed; pooled wallet/escrow model recorded; verification and provider scopes blocked | 2026-11-15 | `execution-records/EP-02-001.md` |
 | 2 | `EP-02-002` | Shared contracts, capability inputs and error semantics | EP-02-001; EP-01-003; EP-01-034. | **COMPLETED** — lane/tier/ledger/payout contracts; capability states | 2026-11-15 | `execution-records/EP-02-002.md` |
-| 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **PENDING** | — | — |
+| 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **IN PROGRESS** — six lanes, cases, submissions, evidence references and append-only decisions with forced RLS; CP lane vocabulary and business cross-member uniqueness deferred | — | `execution-records/EP-02-010.md` |
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **PENDING** | — | — |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** | — | — |
 | 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **PENDING** | — | — |
@@ -120,7 +120,8 @@ Still open and blocking specific scopes:
 | 2026-11-26 | `EP-02-044` | `PENDING` | `IN PROGRESS` — signed webhook, synchronous posting; raw storage deferred | `execution-records/EP-02-044.md` |
 | 2026-11-26 | `EP-02-052` | `PENDING` | `IN PROGRESS` — exactly-once deposit posting and cap/hold | `execution-records/EP-02-052.md` |
 | 2026-11-26 | `EP-02-061` | `PENDING` | `IN PROGRESS` — connected wallet screen in the slice | `execution-records/EP-02-061.md` |
+| 2026-11-27 | `EP-02-010` | `PENDING` | `IN PROGRESS` — verification schema and lane registry; decisions append-only | `execution-records/EP-02-010.md` |
 
 ---
 
-**Tracker status:** current to 2026-11-26. Every later status change requires a task document, an execution record and this table.
+**Tracker status:** current to 2026-11-27. Every later status change requires a task document, an execution record and this table.

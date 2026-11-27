@@ -16,7 +16,7 @@ profile
 public
 services
 
-## tables (68)
+## tables (73)
 admin | access_denials
 admin | approval_decisions
 admin | approval_requests
@@ -85,8 +85,13 @@ platform | taxonomy_attributes
 platform | taxonomy_nodes
 profile | activity_activations
 profile | profiles
+profile | verification_cases
+profile | verification_decisions
+profile | verification_evidence
+profile | verification_lanes
+profile | verification_submissions
 
-## columns (672)
+## columns (719)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -759,8 +764,55 @@ profile | profiles | locale | text | text | YES | -
 profile | profiles | timezone | text | text | YES | -
 profile | profiles | created_at | timestamp with time zone | timestamptz | NO | now()
 profile | profiles | updated_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_cases | id | uuid | uuid | NO | platform.uuidv7()
+profile | verification_cases | account_id | uuid | uuid | NO | -
+profile | verification_cases | lane | text | text | NO | -
+profile | verification_cases | state | text | text | NO | 'NOT_STARTED'::text
+profile | verification_cases | reason_code | text | text | YES | -
+profile | verification_cases | state_changed_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_cases | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_cases | updated_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_decisions | id | uuid | uuid | NO | platform.uuidv7()
+profile | verification_decisions | case_id | uuid | uuid | NO | -
+profile | verification_decisions | submission_id | uuid | uuid | YES | -
+profile | verification_decisions | account_id | uuid | uuid | NO | -
+profile | verification_decisions | lane | text | text | NO | -
+profile | verification_decisions | decision | text | text | NO | -
+profile | verification_decisions | reason_code | text | text | NO | -
+profile | verification_decisions | reason | text | text | NO | -
+profile | verification_decisions | decided_by | uuid | uuid | NO | -
+profile | verification_decisions | decided_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_decisions | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_evidence | id | uuid | uuid | NO | platform.uuidv7()
+profile | verification_evidence | submission_id | uuid | uuid | NO | -
+profile | verification_evidence | account_id | uuid | uuid | NO | -
+profile | verification_evidence | object_key | text | text | NO | -
+profile | verification_evidence | content_type | text | text | NO | -
+profile | verification_evidence | size_bytes | bigint | int8 | NO | -
+profile | verification_evidence | sha256 | text | text | NO | -
+profile | verification_evidence | scan_state | text | text | NO | 'PENDING'::text
+profile | verification_evidence | uploaded_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_evidence | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_lanes | key | text | text | NO | -
+profile | verification_lanes | title | text | text | NO | -
+profile | verification_lanes | description | text | text | YES | -
+profile | verification_lanes | requires_evidence | boolean | bool | NO | true
+profile | verification_lanes | sort_order | integer | int4 | NO | -
+profile | verification_lanes | active | boolean | bool | NO | true
+profile | verification_lanes | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_submissions | id | uuid | uuid | NO | platform.uuidv7()
+profile | verification_submissions | case_id | uuid | uuid | NO | -
+profile | verification_submissions | account_id | uuid | uuid | NO | -
+profile | verification_submissions | lane | text | text | NO | -
+profile | verification_submissions | state | text | text | NO | 'DRAFT'::text
+profile | verification_submissions | reason_code | text | text | YES | -
+profile | verification_submissions | submitted_at | timestamp with time zone | timestamptz | YES | -
+profile | verification_submissions | decided_at | timestamp with time zone | timestamptz | YES | -
+profile | verification_submissions | frozen_at | timestamp with time zone | timestamptz | YES | -
+profile | verification_submissions | created_at | timestamp with time zone | timestamptz | NO | now()
+profile | verification_submissions | updated_at | timestamp with time zone | timestamptz | NO | now()
 
-## constraints (392)
+## constraints (429)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -1153,8 +1205,45 @@ profile | activity_activations | activity_activations_pkey | p | PRIMARY KEY (id
 profile | activity_activations | activity_activations_state_check | c | CHECK (state = ANY (ARRAY['INACTIVE'::text, 'ACTIVE'::text, 'RESTRICTED'::text, 'SUSPENDED'::text]))
 profile | profiles | profiles_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
 profile | profiles | profiles_pkey | p | PRIMARY KEY (account_id)
+profile | verification_cases | verification_cases_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | verification_cases | verification_cases_account_id_lane_key | u | UNIQUE (account_id, lane)
+profile | verification_cases | verification_cases_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
+profile | verification_cases | verification_cases_pkey | p | PRIMARY KEY (id)
+profile | verification_cases | verification_cases_reason_code_check | c | CHECK (reason_code IS NULL OR length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
+profile | verification_cases | verification_cases_state_check | c | CHECK (state = ANY (ARRAY['NOT_STARTED'::text, 'DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
+profile | verification_decisions | verification_decisions_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | verification_decisions | verification_decisions_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES profile.verification_cases(id) ON DELETE CASCADE
+profile | verification_decisions | verification_decisions_decided_by_fkey | f | FOREIGN KEY (decided_by) REFERENCES identity.users(id) ON DELETE RESTRICT
+profile | verification_decisions | verification_decisions_decision_check | c | CHECK (decision = ANY (ARRAY['APPROVED'::text, 'REJECTED'::text]))
+profile | verification_decisions | verification_decisions_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
+profile | verification_decisions | verification_decisions_pkey | p | PRIMARY KEY (id)
+profile | verification_decisions | verification_decisions_reason_check | c | CHECK (length(btrim(reason)) >= 5 AND length(btrim(reason)) <= 1000)
+profile | verification_decisions | verification_decisions_reason_code_check | c | CHECK (length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
+profile | verification_decisions | verification_decisions_submission_id_fkey | f | FOREIGN KEY (submission_id) REFERENCES profile.verification_submissions(id) ON DELETE SET NULL
+profile | verification_evidence | verification_evidence_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | verification_evidence | verification_evidence_content_type_check | c | CHECK (length(btrim(content_type)) >= 1 AND length(btrim(content_type)) <= 120)
+profile | verification_evidence | verification_evidence_object_key_check | c | CHECK (length(btrim(object_key)) >= 1 AND length(btrim(object_key)) <= 512)
+profile | verification_evidence | verification_evidence_pkey | p | PRIMARY KEY (id)
+profile | verification_evidence | verification_evidence_scan_state_check | c | CHECK (scan_state = ANY (ARRAY['PENDING'::text, 'CLEAN'::text, 'INFECTED'::text, 'FAILED'::text]))
+profile | verification_evidence | verification_evidence_sha256_check | c | CHECK (sha256 ~ '^[a-f0-9]{64}$'::text)
+profile | verification_evidence | verification_evidence_size_bytes_check | c | CHECK (size_bytes > 0 AND size_bytes <= 26214400)
+profile | verification_evidence | verification_evidence_submission_id_fkey | f | FOREIGN KEY (submission_id) REFERENCES profile.verification_submissions(id) ON DELETE CASCADE
+profile | verification_evidence | verification_evidence_submission_id_object_key_key | u | UNIQUE (submission_id, object_key)
+profile | verification_lanes | verification_lanes_key_check | c | CHECK (key = ANY (ARRAY['identity'::text, 'kyc'::text, 'trade'::text, 'seller'::text, 'logistics'::text, 'business'::text]))
+profile | verification_lanes | verification_lanes_pkey | p | PRIMARY KEY (key)
+profile | verification_lanes | verification_lanes_sort_order_check | c | CHECK (sort_order > 0)
+profile | verification_lanes | verification_lanes_sort_order_key | u | UNIQUE (sort_order)
+profile | verification_lanes | verification_lanes_title_check | c | CHECK (length(btrim(title)) >= 1 AND length(btrim(title)) <= 80)
+profile | verification_submissions | verification_submissions_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
+profile | verification_submissions | verification_submissions_case_id_fkey | f | FOREIGN KEY (case_id) REFERENCES profile.verification_cases(id) ON DELETE CASCADE
+profile | verification_submissions | verification_submissions_check | c | CHECK (decided_at IS NULL OR submitted_at IS NOT NULL)
+profile | verification_submissions | verification_submissions_check1 | c | CHECK (frozen_at IS NULL OR (state = ANY (ARRAY['UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text])))
+profile | verification_submissions | verification_submissions_lane_fkey | f | FOREIGN KEY (lane) REFERENCES profile.verification_lanes(key) ON UPDATE CASCADE
+profile | verification_submissions | verification_submissions_pkey | p | PRIMARY KEY (id)
+profile | verification_submissions | verification_submissions_reason_code_check | c | CHECK (reason_code IS NULL OR length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
+profile | verification_submissions | verification_submissions_state_check | c | CHECK (state = ANY (ARRAY['DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
 
-## indexes (213)
+## indexes (228)
 admin | access_denials | access_denials_active_unique | CREATE UNIQUE INDEX access_denials_active_unique ON admin.access_denials USING btree (user_id, permission_key, COALESCE(scope_type, ''::text), COALESCE(scope_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (revoked_at IS NULL)
 admin | access_denials | access_denials_pkey | CREATE UNIQUE INDEX access_denials_pkey ON admin.access_denials USING btree (id)
 admin | access_denials | access_denials_user_active_idx | CREATE INDEX access_denials_user_active_idx ON admin.access_denials USING btree (user_id, permission_key) WHERE (revoked_at IS NULL)
@@ -1368,8 +1457,23 @@ profile | activity_activations | activity_activations_account_state_idx | CREATE
 profile | activity_activations | activity_activations_activity_state_idx | CREATE INDEX activity_activations_activity_state_idx ON profile.activity_activations USING btree (activity_id, state)
 profile | activity_activations | activity_activations_pkey | CREATE UNIQUE INDEX activity_activations_pkey ON profile.activity_activations USING btree (id)
 profile | profiles | profiles_pkey | CREATE UNIQUE INDEX profiles_pkey ON profile.profiles USING btree (account_id)
+profile | verification_cases | verification_cases_account_id_lane_key | CREATE UNIQUE INDEX verification_cases_account_id_lane_key ON profile.verification_cases USING btree (account_id, lane)
+profile | verification_cases | verification_cases_account_state_idx | CREATE INDEX verification_cases_account_state_idx ON profile.verification_cases USING btree (account_id, state)
+profile | verification_cases | verification_cases_lane_state_idx | CREATE INDEX verification_cases_lane_state_idx ON profile.verification_cases USING btree (lane, state)
+profile | verification_cases | verification_cases_pkey | CREATE UNIQUE INDEX verification_cases_pkey ON profile.verification_cases USING btree (id)
+profile | verification_decisions | verification_decisions_case_idx | CREATE INDEX verification_decisions_case_idx ON profile.verification_decisions USING btree (case_id, decided_at DESC)
+profile | verification_decisions | verification_decisions_lane_idx | CREATE INDEX verification_decisions_lane_idx ON profile.verification_decisions USING btree (lane, decision, decided_at DESC)
+profile | verification_decisions | verification_decisions_pkey | CREATE UNIQUE INDEX verification_decisions_pkey ON profile.verification_decisions USING btree (id)
+profile | verification_evidence | verification_evidence_pkey | CREATE UNIQUE INDEX verification_evidence_pkey ON profile.verification_evidence USING btree (id)
+profile | verification_evidence | verification_evidence_submission_id_object_key_key | CREATE UNIQUE INDEX verification_evidence_submission_id_object_key_key ON profile.verification_evidence USING btree (submission_id, object_key)
+profile | verification_evidence | verification_evidence_submission_idx | CREATE INDEX verification_evidence_submission_idx ON profile.verification_evidence USING btree (submission_id, uploaded_at)
+profile | verification_lanes | verification_lanes_pkey | CREATE UNIQUE INDEX verification_lanes_pkey ON profile.verification_lanes USING btree (key)
+profile | verification_lanes | verification_lanes_sort_order_key | CREATE UNIQUE INDEX verification_lanes_sort_order_key ON profile.verification_lanes USING btree (sort_order)
+profile | verification_submissions | verification_submissions_active_lane_idx | CREATE UNIQUE INDEX verification_submissions_active_lane_idx ON profile.verification_submissions USING btree (account_id, lane) WHERE (state = ANY (ARRAY['DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text]))
+profile | verification_submissions | verification_submissions_case_idx | CREATE INDEX verification_submissions_case_idx ON profile.verification_submissions USING btree (case_id, created_at DESC)
+profile | verification_submissions | verification_submissions_pkey | CREATE UNIQUE INDEX verification_submissions_pkey ON profile.verification_submissions USING btree (id)
 
-## row-level-security (68)
+## row-level-security (73)
 admin | access_denials | true | true
 admin | approval_decisions | true | true
 admin | approval_requests | true | true
@@ -1438,8 +1542,13 @@ platform | taxonomy_attributes | true | false
 platform | taxonomy_nodes | true | false
 profile | activity_activations | true | true
 profile | profiles | true | true
+profile | verification_cases | true | true
+profile | verification_decisions | true | true
+profile | verification_evidence | true | true
+profile | verification_lanes | true | true
+profile | verification_submissions | true | true
 
-## policies (86)
+## policies (96)
 admin | access_denials | access_denials_select_own | PERMISSIVE | {hivorr_api} | SELECT | (user_id = platform.current_user_id()) | -
 admin | approval_steps | approval_steps_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
 admin | case_assignments | case_assignments_select_self | PERMISSIVE | {hivorr_api} | SELECT | (assignee_user_id = platform.current_user_id()) | -
@@ -1526,8 +1635,18 @@ profile | activity_activations | activity_activations_update | PERMISSIVE | {hiv
 profile | profiles | profiles_insert | PERMISSIVE | {hivorr_api} | INSERT | - | (account_id = platform.current_account_id())
 profile | profiles | profiles_select | PERMISSIVE | {hivorr_api,hivorr_readonly} | SELECT | (account_id = platform.current_account_id()) | -
 profile | profiles | profiles_update | PERMISSIVE | {hivorr_api} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+profile | verification_cases | verification_cases_insert | PERMISSIVE | {public} | INSERT | - | (account_id = platform.current_account_id())
+profile | verification_cases | verification_cases_select | PERMISSIVE | {public} | SELECT | (account_id = platform.current_account_id()) | -
+profile | verification_cases | verification_cases_update | PERMISSIVE | {public} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
+profile | verification_decisions | verification_decisions_select | PERMISSIVE | {public} | SELECT | (account_id = platform.current_account_id()) | -
+profile | verification_evidence | verification_evidence_insert | PERMISSIVE | {public} | INSERT | - | ((account_id = platform.current_account_id()) AND (EXISTS ( SELECT 1 FROM profile.verification_submissions s WHERE ((s.id = verification_evidence.submission_id) AND (s.account_id = platform.current_account_id())))))
+profile | verification_evidence | verification_evidence_select | PERMISSIVE | {public} | SELECT | (account_id = platform.current_account_id()) | -
+profile | verification_lanes | verification_lanes_select | PERMISSIVE | {public} | SELECT | (platform.current_account_id() IS NOT NULL) | -
+profile | verification_submissions | verification_submissions_insert | PERMISSIVE | {public} | INSERT | - | ((account_id = platform.current_account_id()) AND (EXISTS ( SELECT 1 FROM profile.verification_cases c WHERE ((c.id = verification_submissions.case_id) AND (c.account_id = platform.current_account_id()) AND (c.lane = c.lane)))))
+profile | verification_submissions | verification_submissions_select | PERMISSIVE | {public} | SELECT | (account_id = platform.current_account_id()) | -
+profile | verification_submissions | verification_submissions_update | PERMISSIVE | {public} | UPDATE | (account_id = platform.current_account_id()) | (account_id = platform.current_account_id())
 
-## table-grants (594)
+## table-grants (644)
 admin | access_denials | hivorr_api | SELECT | NO
 admin | access_denials | postgres | DELETE | YES
 admin | access_denials | postgres | INSERT | YES
@@ -2122,6 +2241,56 @@ profile | profiles | postgres | SELECT | YES
 profile | profiles | postgres | TRIGGER | YES
 profile | profiles | postgres | TRUNCATE | YES
 profile | profiles | postgres | UPDATE | YES
+profile | verification_cases | hivorr_api | INSERT | NO
+profile | verification_cases | hivorr_api | SELECT | NO
+profile | verification_cases | hivorr_api | UPDATE | NO
+profile | verification_cases | hivorr_readonly | SELECT | NO
+profile | verification_cases | postgres | DELETE | YES
+profile | verification_cases | postgres | INSERT | YES
+profile | verification_cases | postgres | REFERENCES | YES
+profile | verification_cases | postgres | SELECT | YES
+profile | verification_cases | postgres | TRIGGER | YES
+profile | verification_cases | postgres | TRUNCATE | YES
+profile | verification_cases | postgres | UPDATE | YES
+profile | verification_decisions | hivorr_api | SELECT | NO
+profile | verification_decisions | hivorr_readonly | SELECT | NO
+profile | verification_decisions | postgres | DELETE | YES
+profile | verification_decisions | postgres | INSERT | YES
+profile | verification_decisions | postgres | REFERENCES | YES
+profile | verification_decisions | postgres | SELECT | YES
+profile | verification_decisions | postgres | TRIGGER | YES
+profile | verification_decisions | postgres | TRUNCATE | YES
+profile | verification_decisions | postgres | UPDATE | YES
+profile | verification_evidence | hivorr_api | INSERT | NO
+profile | verification_evidence | hivorr_api | SELECT | NO
+profile | verification_evidence | hivorr_readonly | SELECT | NO
+profile | verification_evidence | postgres | DELETE | YES
+profile | verification_evidence | postgres | INSERT | YES
+profile | verification_evidence | postgres | REFERENCES | YES
+profile | verification_evidence | postgres | SELECT | YES
+profile | verification_evidence | postgres | TRIGGER | YES
+profile | verification_evidence | postgres | TRUNCATE | YES
+profile | verification_evidence | postgres | UPDATE | YES
+profile | verification_lanes | hivorr_api | SELECT | NO
+profile | verification_lanes | hivorr_readonly | SELECT | NO
+profile | verification_lanes | postgres | DELETE | YES
+profile | verification_lanes | postgres | INSERT | YES
+profile | verification_lanes | postgres | REFERENCES | YES
+profile | verification_lanes | postgres | SELECT | YES
+profile | verification_lanes | postgres | TRIGGER | YES
+profile | verification_lanes | postgres | TRUNCATE | YES
+profile | verification_lanes | postgres | UPDATE | YES
+profile | verification_submissions | hivorr_api | INSERT | NO
+profile | verification_submissions | hivorr_api | SELECT | NO
+profile | verification_submissions | hivorr_api | UPDATE | NO
+profile | verification_submissions | hivorr_readonly | SELECT | NO
+profile | verification_submissions | postgres | DELETE | YES
+profile | verification_submissions | postgres | INSERT | YES
+profile | verification_submissions | postgres | REFERENCES | YES
+profile | verification_submissions | postgres | SELECT | YES
+profile | verification_submissions | postgres | TRIGGER | YES
+profile | verification_submissions | postgres | TRUNCATE | YES
+profile | verification_submissions | postgres | UPDATE | YES
 
 ## functions (98)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""

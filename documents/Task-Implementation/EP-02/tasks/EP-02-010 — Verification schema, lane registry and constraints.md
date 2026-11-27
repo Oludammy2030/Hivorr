@@ -134,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` |
+| **Execution date** | 2026-11-27 |
+| **Execution record** | `execution-records/EP-02-010.md` |
+| **Blocked by** | — (schema increment built; two decisions listed in the record) |
+| **Notes** | Six lanes, cases, submissions, evidence references and append-only decisions are built with forced RLS and allow/deny gate tests. The control-portal lane vocabulary, cross-member business uniqueness and freeze enforcement remain. |
 
