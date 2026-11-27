@@ -30,7 +30,7 @@
 | 3 | `EP-02-010` | Verification schema, lane registry and constraints | EP-02-002; EP-01-021/022/025. | **COMPLETED** — six lanes, cases, submissions, evidence references, business profile and append-only decisions with forced RLS; control-portal lane aligned | 2026-11-27 | `execution-records/EP-02-010.md` |
 | 4 | `EP-02-011` | Lane state machines and submission domain | EP-02-010. | **COMPLETED** — transition table in domain and database, subject submission domain, review freeze, audit | 2026-11-27 | `execution-records/EP-02-011.md` |
 | 5 | `EP-02-012` | Evidence storage, scanning and signed access | EP-02-010; EP-01 object-storage interface; R2 provisioning. | **PENDING** | — | — |
-| 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **PENDING** | — | — |
+| 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **IN PROGRESS** — status/start/submit/withdraw endpoints with rate limits and idempotency; evidence upload blocked on `012` | — | `execution-records/EP-02-013.md` |
 | 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — CBN three-tier source, tier-based withdrawal and deposit caps, KYC-upgrade hold and audited verifier assignment; evidence rules and verification wiring deferred | — | `execution-records/EP-02-014.md` |
 | 8 | `EP-02-015` | Control review integration and immutable decision record | EP-02-011/012/013/014; CP-016/017/019; `admin.verification` queue. | **PENDING** | — | — |
 | 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** | — | — |
@@ -123,6 +123,7 @@ Still open and blocking specific scopes:
 | 2026-11-27 | `EP-02-010` | `PENDING` | `IN PROGRESS` — verification schema and lane registry; decisions append-only | `execution-records/EP-02-010.md` |
 | 2026-11-27 | `EP-02-010` | `IN PROGRESS` | `COMPLETED` — business profile added; control-portal lane aligned | `execution-records/EP-02-010.md` |
 | 2026-11-27 | `EP-02-011` | `PENDING` | `COMPLETED` — transitions, submission domain and review freeze | `execution-records/EP-02-011.md` |
+| 2026-11-27 | `EP-02-013` | `PENDING` | `IN PROGRESS` — four subject endpoints; upload blocked on `012` | `execution-records/EP-02-013.md` |
 
 ---
 

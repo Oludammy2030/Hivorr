@@ -9,6 +9,7 @@ import {
   activityIdSchema,
   apiErrorBodySchema,
   currencyCodeSchema,
+  laneStatusSchema,
   moneyAmountSchema,
   taxonomyAttributeSchema,
   taxonomyAttributeTypeSchema,
@@ -865,6 +866,8 @@ export const payoutAccountListResponse = z.array(payoutAccountViewResponse)
 export const walletBalanceListResponse = z.array(walletBalanceViewSchema)
 
 export const walletStatementListResponse = z.array(walletStatementEntrySchema)
+
+export const laneStatusResponse = laneStatusSchema
 
 export const assignKycTierRequest = z.strictObject({
   tier: z.enum(KYC_TIERS),

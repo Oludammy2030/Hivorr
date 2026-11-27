@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+﻿import { describe, expect, it } from "vitest"
 
 import type { DatabaseService } from "../server/src/db/database.service"
 import { VerificationLaneService } from "../server/src/modules/profile/verification.service"
@@ -24,17 +24,38 @@ interface Options {
   readonly openSubmission?: { id: string; state: string } | null
   readonly evidence?: number
   readonly blockedEvidence?: number
+  readonly claim?: "claimed" | "replay" | "conflict"
+  readonly storedHash?: string
+  readonly storedBody?: unknown
 }
 
 function harness(options: Options = {}) {
   const queries: QueryCall[] = []
   const audits: unknown[][] = []
+  const idempotencyWrites: unknown[][] = []
   const updates: { table: string; values?: readonly unknown[] }[] = []
 
   const transaction = {
     client: {
       async query(text: string, values?: readonly unknown[]) {
         if (text.includes("platform.audit_log")) audits.push(values ?? [])
+        if (text.includes("insert into platform.idempotency_keys")) {
+          return { rows: [], rowCount: options.claim === "claimed" ? 1 : 0 }
+        }
+        if (text.includes("from platform.idempotency_keys")) {
+          return {
+            rows: [
+              {
+                request_hash: options.storedHash ?? "",
+                response_status: 200,
+                response_body: options.storedBody ?? null,
+              },
+            ],
+          }
+        }
+        if (text.includes("update platform.idempotency_keys")) {
+          idempotencyWrites.push(values ?? [])
+        }
         return { rows: [], rowCount: 1 }
       },
     },
@@ -124,6 +145,7 @@ function harness(options: Options = {}) {
     service: new VerificationLaneService(database),
     queries,
     audits,
+    idempotencyWrites,
     updates,
   }
 }
@@ -138,7 +160,7 @@ function input(overrides: Record<string, unknown> = {}) {
   }
 }
 
-describe("verification lane service — start", () => {
+describe("verification lane service â€” start", () => {
   it("opens a draft attempt and audits the change", async () => {
     const { service, updates, audits } = harness({ caseState: "NOT_STARTED" })
 
@@ -190,7 +212,7 @@ describe("verification lane service — start", () => {
   })
 })
 
-describe("verification lane service — submit", () => {
+describe("verification lane service â€” submit", () => {
   it("requires at least one evidence reference", async () => {
     const { service, audits } = harness({
       openSubmission: { id: SUBMISSION_ID, state: "DRAFT" },
@@ -248,7 +270,7 @@ describe("verification lane service — submit", () => {
   })
 })
 
-describe("verification lane service — withdraw", () => {
+describe("verification lane service â€” withdraw", () => {
   it("returns a submitted attempt to draft", async () => {
     const { service, updates, audits } = harness({
       openSubmission: { id: SUBMISSION_ID, state: "SUBMITTED" },
@@ -273,7 +295,7 @@ describe("verification lane service — withdraw", () => {
   })
 })
 
-describe("verification lane service — status", () => {
+describe("verification lane service â€” status", () => {
   it("reports a lane that was never started", async () => {
     const { service } = harness({ caseState: null })
 
@@ -301,5 +323,63 @@ describe("verification lane service — status", () => {
       hasActiveSubmission: true,
       evidenceCount: 3,
     })
+  })
+})
+
+describe("verification lane service — submit idempotency", () => {
+  it("settles the key and records the response on a first submit", async () => {
+    const { service, idempotencyWrites } = harness({
+      openSubmission: { id: SUBMISSION_ID, state: "DRAFT" },
+      evidence: 2,
+      claim: "claimed",
+    })
+
+    const view = await service.submit({
+      ...input(),
+      idempotencyKey: "submit-key-0001",
+      requestHash: "hash-1",
+    })
+
+    expect(view.state).toBe("SUBMITTED")
+    expect(idempotencyWrites).toHaveLength(1)
+    expect(idempotencyWrites[0]?.[1]).toBe(200)
+  })
+
+  it("replays the stored response without touching the lane", async () => {
+    const stored = {
+      lane: "identity",
+      state: "SUBMITTED",
+      reasonCode: null,
+      hasActiveSubmission: true,
+      evidenceCount: 1,
+      stateChangedAt: "2026-11-27T00:00:00.000Z",
+    }
+    const { service, updates, audits } = harness({
+      claim: "replay",
+      storedHash: "hash-1",
+      storedBody: stored,
+    })
+
+    const view = await service.submit({
+      ...input(),
+      idempotencyKey: "submit-key-0002",
+      requestHash: "hash-1",
+    })
+
+    expect(view).toEqual(stored)
+    expect(updates).toHaveLength(0)
+    expect(audits).toHaveLength(0)
+  })
+
+  it("refuses a reused key with a different request", async () => {
+    const { service } = harness({ claim: "conflict", storedHash: "other" })
+
+    await expect(
+      service.submit({
+        ...input(),
+        idempotencyKey: "submit-key-0003",
+        requestHash: "hash-1",
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" })
   })
 })

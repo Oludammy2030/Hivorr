@@ -19,6 +19,7 @@ import { PartnerController } from "../server/src/api/partner.controller"
 import { CasesController } from "../server/src/api/cases.controller"
 import { EvidenceController } from "../server/src/api/evidence.controller"
 import { VerificationController } from "../server/src/api/verification.controller"
+import { VerificationLaneController } from "../server/src/api/verification-lane.controller"
 import { TaxonomyController } from "../server/src/api/taxonomy.controller"
 import { WalletController } from "../server/src/api/wallet.controller"
 import { KycController } from "../server/src/api/kyc.controller"
@@ -52,6 +53,7 @@ describe("OpenAPI route coverage", () => {
       CasesController,
       EvidenceController,
       VerificationController,
+      VerificationLaneController,
       TaxonomyController,
       GrantsController,
       WalletController,

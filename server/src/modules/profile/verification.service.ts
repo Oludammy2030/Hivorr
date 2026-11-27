@@ -4,7 +4,7 @@ import { isVerificationLane, type VerificationLane, type VerificationState } fro
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
 import type { TransactionContext } from "../../db/transaction"
-import { appendAudit } from "../platform"
+import { appendAudit, claimIdempotency, completeIdempotency } from "../platform"
 import {
   canApplyEvent,
   isOpenSubmission,
@@ -40,6 +40,15 @@ export interface LaneInput {
   readonly lane: string
   readonly context: ActivityContext
 }
+
+/** A submit may be retried by a client; the key makes the replay safe. */
+export interface SubmitInput extends LaneInput {
+  readonly idempotencyKey?: string | undefined
+  readonly requestHash?: string | undefined
+}
+
+export const VERIFICATION_SUBMIT_SCOPE = "profile.verification.submit"
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1_000
 
 interface CaseRow {
   id: string
@@ -202,12 +211,34 @@ export class VerificationLaneService {
   }
 
   /** Submit a draft attempt. At least one usable evidence reference is required. */
-  async submit(input: LaneInput): Promise<LaneView> {
+  async submit(input: SubmitInput): Promise<LaneView> {
     const lane = assertLane(input.lane)
+    const idempotencyKey = input.idempotencyKey
+      ? `${VERIFICATION_SUBMIT_SCOPE}:${input.accountId}:${input.idempotencyKey}`
+      : undefined
 
     return this.database.withTransaction(
       { identity: { accountId: input.accountId, userId: input.userId } },
       async (transaction) => {
+        if (idempotencyKey) {
+          const claim = await claimIdempotency(transaction.client, {
+            key: idempotencyKey,
+            scope: VERIFICATION_SUBMIT_SCOPE,
+            requestHash: input.requestHash ?? "",
+            expiresAt: new Date(Date.now() + IDEMPOTENCY_TTL_MS).toISOString(),
+          })
+          if (claim.status === "conflict") {
+            throw new ApiError(
+              "CONFLICT",
+              "That idempotency key was used for a different request.",
+              409,
+            )
+          }
+          if (claim.status === "replay") {
+            return claim.responseBody as LaneView
+          }
+        }
+
         const submission = await this.openSubmission(transaction, input.accountId, lane)
         const from = submission.state as VerificationState
         if (from !== "DRAFT" || !canApplyEvent("submit", from)) {
@@ -263,7 +294,15 @@ export class VerificationLaneService {
           evidence: total,
         })
 
-        return this.viewFromState(lane, to, null, true, total)
+        const view = this.viewFromState(lane, to, null, true, total)
+        if (idempotencyKey) {
+          await completeIdempotency(transaction.client, {
+            key: idempotencyKey,
+            responseStatus: 200,
+            responseBody: view,
+          })
+        }
+        return view
       },
     )
   }

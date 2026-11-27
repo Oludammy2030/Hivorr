@@ -134,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` |
+| **Execution date** | 2026-11-27 |
+| **Execution record** | `execution-records/EP-02-013.md` |
+| **Blocked by** | Evidence upload depends on `EP-02-012` (storage port, bucket and scanning decision) |
+| **Notes** | Status, start, submit and withdraw are exposed with rate limits, idempotency and the shared contract. Upload is not built, so a submission cannot pass until `EP-02-012` records evidence. |
 
