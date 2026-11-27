@@ -23,7 +23,7 @@ interface Options {
   readonly caseState?: string | null
   readonly openSubmission?: { id: string; state: string } | null
   readonly evidence?: number
-  readonly blockedEvidence?: number
+  readonly readyEvidence?: number
   readonly claim?: "claimed" | "replay" | "conflict"
   readonly storedHash?: string
   readonly storedBody?: unknown
@@ -113,13 +113,9 @@ function harness(options: Options = {}) {
         return { rows: [{ count: options.evidence ?? 0 }] }
       }
       if (text.includes("from profile.verification_evidence")) {
+        const total = options.evidence ?? 0
         return {
-          rows: [
-            {
-              count: options.evidence ?? 0,
-              blocked: options.blockedEvidence ?? 0,
-            },
-          ],
+          rows: [{ total, ready: options.readyEvidence ?? total }],
         }
       }
       if (text.includes("update profile.verification_submissions")) {
@@ -229,7 +225,7 @@ describe("verification lane service â€” submit", () => {
     const { service } = harness({
       openSubmission: { id: SUBMISSION_ID, state: "DRAFT" },
       evidence: 2,
-      blockedEvidence: 1,
+      readyEvidence: 1,
     })
 
     await expect(service.submit(input())).rejects.toMatchObject({

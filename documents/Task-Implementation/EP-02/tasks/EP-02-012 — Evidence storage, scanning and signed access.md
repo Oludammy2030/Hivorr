@@ -134,9 +134,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` |
+| **Execution date** | 2026-11-27 |
+| **Execution record** | `execution-records/EP-02-012.md` |
+| **Blocked by** | R2 bucket and credentials; retention decision (`ARCHITECTURE.md` §16.4 #7); scanning vendor (`#15`) |
+| **Notes** | The scan state machine and the clean-only submission rule are built and enforced in the domain and database. Upload, signed read, read audit and the retention hold need the blockers above; no stub scanner was invented. |
 

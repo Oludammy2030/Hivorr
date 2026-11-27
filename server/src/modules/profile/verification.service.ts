@@ -246,17 +246,17 @@ export class VerificationLaneService {
         }
 
         const evidence = await transaction.query<{
-          count: number
-          blocked: number
+          total: number
+          ready: number
         }>(
-          `select count(*)::int as count,
-                  count(*) filter (where scan_state in ('INFECTED', 'FAILED'))::int as blocked
+          `select count(*)::int as total,
+                  count(*) filter (where scan_state = 'CLEAN')::int as ready
              from profile.verification_evidence
             where submission_id = $1`,
           [submission.id],
         )
-        const total = evidence.rows[0]?.count ?? 0
-        const blocked = evidence.rows[0]?.blocked ?? 0
+        const total = evidence.rows[0]?.total ?? 0
+        const ready = evidence.rows[0]?.ready ?? 0
         if (total === 0) {
           throw new ApiError(
             "VALIDATION_FAILED",
@@ -264,10 +264,12 @@ export class VerificationLaneService {
             400,
           )
         }
-        if (blocked > 0) {
+        // Only a clean file is usable: a pending or failed scan must not reach a
+        // reviewer, and this is the rule that keeps it out.
+        if (ready !== total) {
           throw new ApiError(
             "VALIDATION_FAILED",
-            "A failed scan must be replaced before submitting.",
+            "Every evidence file must finish scanning clean before submitting.",
             400,
           )
         }
