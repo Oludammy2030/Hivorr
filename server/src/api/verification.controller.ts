@@ -4,7 +4,7 @@ import type { FastifyRequest } from "fastify"
 import { Audience } from "../common/audience"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
-import { verificationDecisionRequest } from "../contracts/schemas"
+import { verificationDecisionRequest, verificationOverrideRequest } from "../contracts/schemas"
 import { VerificationService } from "../modules/admin/verification.service"
 import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
@@ -31,6 +31,22 @@ export class VerificationController {
       accountId: session.accountId,
       userId: session.userId,
       status: status ?? "",
+    })
+  }
+
+  @Post("control/verification/:id/override")
+  @HttpCode(201)
+  @Audience("control")
+  async override(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
+    const input = parseBody(verificationOverrideRequest, body)
+    const { context, session } = await this.session(request)
+    return this.verification.requestOverride({
+      accountId: session.accountId,
+      userId: session.userId,
+      caseId: id,
+      requestedState: input.requestedState,
+      reason: input.reason,
+      context,
     })
   }
 

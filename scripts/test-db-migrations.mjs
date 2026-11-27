@@ -2798,6 +2798,84 @@ try {
     "the rejection is recorded as a decision",
   )
 
+  // ---- Verification override with dual control (EP-02-016) ----
+  const approver = await testClient.query(
+    "insert into identity.users (account_id, email, display_name) values ($1, 'approver@example.test', 'Approver') returning id",
+    [accountId],
+  )
+  const approverId = approver.rows[0].id
+  await testClient.query(
+    `insert into admin.role_assignments (user_id, role_id, scope_type)
+     select $1, id, 'platform' from admin.roles where key = 'founder'`,
+    [approverId],
+  )
+
+  const override = await testClient.query(
+    "select * from admin.request_verification_override($1, $2, 'REJECTED', 'licence was misread')",
+    [actorId, seller.reviewCaseId],
+  )
+  const overrideId = override.rows[0].id
+  assert(
+    override.rows[0].action_type === "verification_override" &&
+      override.rows[0].status === "pending" &&
+      override.rows[0].requester_user_id === actorId,
+    "an override request is pending and names its requester",
+  )
+
+  const selfApproval = await testClient
+    .query("select * from admin.decide_approval($1, $2, 'approve', 'self approval')", [
+      actorId,
+      overrideId,
+    ])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(selfApproval, "the requester cannot approve their own override")
+
+  await testClient.query(
+    "select * from admin.decide_approval($1, $2, 'approve', 'misread confirmed')",
+    [approverId, overrideId],
+  )
+  const overriddenCase = await testClient.query(
+    "select state from profile.verification_cases where id = $1",
+    [seller.caseId],
+  )
+  assert(
+    overriddenCase.rows[0].state === "REJECTED",
+    "an approved override moves the lane despite the transition table",
+  )
+  const overrideDecision = await testClient.query(
+    `select decided_by, requested_by, from_state, to_state, reason_code
+       from profile.verification_decisions
+      where submission_id = $1 and reason_code = 'verification_override'`,
+    [seller.submissionId],
+  )
+  assert(
+    overrideDecision.rows[0].decided_by === approverId &&
+      overrideDecision.rows[0].requested_by === actorId &&
+      overrideDecision.rows[0].from_state === "APPROVED" &&
+      overrideDecision.rows[0].to_state === "REJECTED",
+    "the override records both actors and the prior and next state",
+  )
+
+  const secondOverride = await testClient.query(
+    "select * from admin.request_verification_override($1, $2, 'APPROVED', 'appeal upheld')",
+    [actorId, seller.reviewCaseId],
+  )
+  await testClient.query(
+    "select * from admin.decide_approval($1, $2, 'reject', 'not enough evidence')",
+    [approverId, secondOverride.rows[0].id],
+  )
+  const unchangedCase = await testClient.query(
+    "select state from profile.verification_cases where id = $1",
+    [seller.caseId],
+  )
+  assert(
+    unchangedCase.rows[0].state === "REJECTED",
+    "a rejected override leaves the lane unchanged",
+  )
+
   // A decided attempt must record when it was decided, and nothing else may.
   const businessCase = await testClient.query(
     "insert into profile.verification_cases (account_id, lane) values ($1, 'business') returning id",
