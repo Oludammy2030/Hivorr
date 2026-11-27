@@ -1,4 +1,4 @@
-﻿import {
+import {
   ACTIVITY_ACTIVATION_STATES,
   ACTIVITY_IDS,
   CAPABILITY_IDS,
@@ -497,6 +497,12 @@ export const approvalRequestViewResponse = z.object({
 })
 
 export const approvalRequestListResponse = z.array(approvalRequestViewResponse)
+
+/** A second operator must approve a verification override. */
+export const verificationOverrideRequest = z.strictObject({
+  requestedState: z.enum(["APPROVED", "REJECTED"]),
+  reason: z.string().min(5).max(1000),
+})
 
 export const partnerOrganisationResponse = z.object({
   id: z.string(),

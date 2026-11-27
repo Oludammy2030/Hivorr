@@ -33,7 +33,7 @@
 | 6 | `EP-02-013` | Verification submission and status API | EP-02-011, EP-02-012; EP-01-011/013. | **IN PROGRESS** — status/start/submit/withdraw endpoints with rate limits and idempotency; evidence upload blocked on `012` | — | `execution-records/EP-02-013.md` |
 | 7 | `EP-02-014` | KYC tier model and financial gating inputs | EP-02-010, EP-02-013; entry decision #6. | **IN PROGRESS** — CBN three-tier source, tier-based withdrawal and deposit caps, KYC-upgrade hold and audited verifier assignment; evidence rules and verification wiring deferred | — | `execution-records/EP-02-014.md` |
 | 8 | `EP-02-015` | Control review integration and immutable decision record | EP-02-011/012/013/014; CP-016/017/019; `admin.verification` queue. | **COMPLETED** — submission opens a typed case; queue shows lane and evidence; decision moves lane, tier and record atomically | 2026-11-27 | `execution-records/EP-02-015.md` |
-| 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **PENDING** | — | — |
+| 9 | `EP-02-016` | Verification override and dual control | EP-02-015; CP-020 approvals; CP-012 role administration. | **COMPLETED** — override request on the approvals spine; requester cannot approve; both actors and state recorded | 2026-11-27 | `execution-records/EP-02-016.md` |
 | 10 | `EP-02-020` | Taxonomy registry schema and hierarchy domain | EP-02-002; EP-01-021/022/025; G0 ruling on depth. | **COMPLETED** — node/attribute schema, hierarchy triggers, RLS, domain | 2026-11-15 | `execution-records/EP-02-020.md` |
 | 11 | `EP-02-021` | Taxonomy administration API, versioning and control UI | EP-02-020; CP-022 configuration; CP-012 roles. | **COMPLETED** — permission-gated API, audit, control screen | 2026-11-15 | `execution-records/EP-02-021.md` |
 | 12 | `EP-02-022` | Taxonomy seed data and read contracts | EP-02-020, EP-02-021. | **COMPLETED** — shared read contract, active endpoint, no production seed | 2026-11-15 | `execution-records/EP-02-022.md` |
@@ -126,6 +126,7 @@ Still open and blocking specific scopes:
 | 2026-11-27 | `EP-02-013` | `PENDING` | `IN PROGRESS` — four subject endpoints; upload blocked on `012` | `execution-records/EP-02-013.md` |
 | 2026-11-27 | `EP-02-012` | `PENDING` | `IN PROGRESS` — scan state machine; clean-only submission | `execution-records/EP-02-012.md` |
 | 2026-11-27 | `EP-02-015` | `PENDING` | `COMPLETED` — review integration and atomic decision | `execution-records/EP-02-015.md` |
+| 2026-11-27 | `EP-02-016` | `PENDING` | `COMPLETED` — dual-control verification override | `execution-records/EP-02-016.md` |
 
 ---
 

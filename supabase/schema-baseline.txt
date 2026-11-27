@@ -92,7 +92,7 @@ profile | verification_evidence
 profile | verification_lanes
 profile | verification_submissions
 
-## columns (732)
+## columns (734)
 admin | access_denials | id | uuid | uuid | NO | platform.uuidv7()
 admin | access_denials | user_id | uuid | uuid | NO | -
 admin | access_denials | permission_key | text | text | NO | -
@@ -128,6 +128,7 @@ admin | approval_requests | created_at | timestamp with time zone | timestamptz 
 admin | approval_requests | updated_at | timestamp with time zone | timestamptz | NO | now()
 admin | approval_requests | decided_at | timestamp with time zone | timestamptz | YES | -
 admin | approval_requests | payload | jsonb | jsonb | NO | '{}'::jsonb
+admin | approval_requests | requested_state | text | text | YES | -
 admin | approval_steps | id | uuid | uuid | NO | platform.uuidv7()
 admin | approval_steps | request_id | uuid | uuid | NO | -
 admin | approval_steps | stage | integer | int4 | NO | -
@@ -796,6 +797,7 @@ profile | verification_decisions | from_state | text | text | NO | 'UNDER_REVIEW
 profile | verification_decisions | to_state | text | text | NO | 'APPROVED'::text
 profile | verification_decisions | evidence_ids | ARRAY | _uuid | NO | '{}'::uuid[]
 profile | verification_decisions | admin_case_id | uuid | uuid | YES | -
+profile | verification_decisions | requested_by | uuid | uuid | YES | -
 profile | verification_evidence | id | uuid | uuid | NO | platform.uuidv7()
 profile | verification_evidence | submission_id | uuid | uuid | NO | -
 profile | verification_evidence | account_id | uuid | uuid | NO | -
@@ -826,7 +828,7 @@ profile | verification_submissions | created_at | timestamp with time zone | tim
 profile | verification_submissions | updated_at | timestamp with time zone | timestamptz | NO | now()
 profile | verification_submissions | requested_kyc_tier | text | text | YES | -
 
-## constraints (441)
+## constraints (443)
 admin | access_denials | access_denials_created_by_fkey | f | FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 admin | access_denials | access_denials_expiry_after_creation | c | CHECK (expires_at IS NULL OR expires_at > created_at)
 admin | access_denials | access_denials_permission_key_fkey | f | FOREIGN KEY (permission_key) REFERENCES admin.permissions(key) ON DELETE CASCADE
@@ -846,6 +848,7 @@ admin | approval_requests | approval_requests_currency | c | CHECK (amount IS NU
 admin | approval_requests | approval_requests_current_stage_check | c | CHECK (current_stage >= 1)
 admin | approval_requests | approval_requests_pkey | p | PRIMARY KEY (id)
 admin | approval_requests | approval_requests_reference_key | u | UNIQUE (reference)
+admin | approval_requests | approval_requests_requested_state_check | c | CHECK (requested_state IS NULL OR (requested_state = ANY (ARRAY['APPROVED'::text, 'REJECTED'::text])))
 admin | approval_requests | approval_requests_requester_user_id_fkey | f | FOREIGN KEY (requester_user_id) REFERENCES identity.users(id) ON DELETE RESTRICT
 admin | approval_requests | approval_requests_risk_level_check | c | CHECK (risk_level = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'critical'::text]))
 admin | approval_requests | approval_requests_status_check | c | CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'cancelled'::text, 'expired'::text]))
@@ -1242,6 +1245,7 @@ profile | verification_decisions | verification_decisions_lane_fkey | f | FOREIG
 profile | verification_decisions | verification_decisions_pkey | p | PRIMARY KEY (id)
 profile | verification_decisions | verification_decisions_reason_check | c | CHECK (length(btrim(reason)) >= 5 AND length(btrim(reason)) <= 1000)
 profile | verification_decisions | verification_decisions_reason_code_check | c | CHECK (length(btrim(reason_code)) >= 1 AND length(btrim(reason_code)) <= 64)
+profile | verification_decisions | verification_decisions_requested_by_fkey | f | FOREIGN KEY (requested_by) REFERENCES identity.users(id) ON DELETE SET NULL
 profile | verification_decisions | verification_decisions_submission_id_fkey | f | FOREIGN KEY (submission_id) REFERENCES profile.verification_submissions(id) ON DELETE SET NULL
 profile | verification_decisions | verification_decisions_to_state_check | c | CHECK (to_state = ANY (ARRAY['NOT_STARTED'::text, 'DRAFT'::text, 'SUBMITTED'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text, 'EXPIRED'::text]))
 profile | verification_evidence | verification_evidence_account_id_fkey | f | FOREIGN KEY (account_id) REFERENCES identity.accounts(id) ON DELETE CASCADE
@@ -2335,7 +2339,7 @@ profile | verification_submissions | postgres | TRIGGER | YES
 profile | verification_submissions | postgres | TRUNCATE | YES
 profile | verification_submissions | postgres | UPDATE | YES
 
-## functions (105)
+## functions (106)
 admin | accept_staff_invite | p_token_hash text, p_password_hash text, p_display_name text | true | v | search_path=""
 admin | actor_has_platform_permission | p_permission text | true | s | search_path=""
 admin | actor_holds_platform_permission | p_actor_user_id uuid, p_permission text | true | s | search_path=""
@@ -2383,6 +2387,7 @@ admin | record_evidence_access | p_actor_user_id uuid, p_evidence_id uuid, p_pur
 admin | record_verification_decision | p_actor_user_id uuid, p_case_id uuid, p_decision text, p_reason text | true | v | search_path=""
 admin | request_approval | p_actor_user_id uuid, p_action_type text, p_target_type text, p_target_id text, p_reason text | true | v | search_path=""
 admin | request_case_decision | p_actor_user_id uuid, p_case_id uuid, p_outcome text, p_reason text | true | v | search_path=""
+admin | request_verification_override | p_actor_user_id uuid, p_case_id uuid, p_requested_state text, p_reason text | true | v | search_path=""
 admin | revoke_access_denial | p_actor_user_id uuid, p_denial_id uuid, p_reason text, p_environment text | true | v | search_path=""
 admin | revoke_role | p_actor_user_id uuid, p_assignment_id uuid, p_reason text, p_environment text | true | v | search_path=""
 admin | set_case_status | p_actor_user_id uuid, p_case_id uuid, p_status text, p_reason text | true | v | search_path=""

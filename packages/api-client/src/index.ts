@@ -211,6 +211,10 @@ export type RequestCaseDecisionResponse = { "id": string; "reference": string; "
 
 export type ListVerificationQueueResponse = ({ "caseId": string; "reference": string; "title": string; "lane": string; "reviewStatus": string; "caseStatus": string; "priority": string; "subjectType"?: string | null; "subjectId"?: string | null; "assigneeEmail"?: string | null; "evidenceCount"?: number; "createdAt": string })[]
 
+export type RequestVerificationOverrideRequest = { "requestedState": "APPROVED" | "REJECTED"; "reason": string }
+
+export type RequestVerificationOverrideResponse = { "id": string; "reference": string; "actionType": string; "targetType": string; "targetId": string; "status": string; "reason": string; "requesterUserId": string; "requesterName"?: string | null; "requesterEmail"?: string | null; "createdAt": string; "decidedAt"?: string | null }
+
 export type RecordVerificationDecisionRequest = { "decision": "approve" | "reject" | "request_information"; "reason"?: string }
 
 export type RecordVerificationDecisionResponse = { "caseId": string; "reference": string; "title": string; "lane": string; "reviewStatus": string; "caseStatus": string; "priority": string; "subjectType"?: string | null; "subjectId"?: string | null; "assigneeEmail"?: string | null; "evidenceCount"?: number; "createdAt": string }
@@ -807,6 +811,13 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "/v1/control/verification",
         undefined,
         [200],
+      ),
+    requestVerificationOverride: (params: { id: string }, input: RequestVerificationOverrideRequest) =>
+      request<RequestVerificationOverrideResponse>(
+        "POST",
+        `/v1/control/verification/${encodeURIComponent(params.id)}/override`,
+        input,
+        [201],
       ),
     recordVerificationDecision: (params: { id: string }, input: RecordVerificationDecisionRequest) =>
       request<RecordVerificationDecisionResponse>(
