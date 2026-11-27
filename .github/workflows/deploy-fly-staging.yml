@@ -55,6 +55,38 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Preflight the staging runtime configuration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MFA_ENCRYPTION_KEY: ${{ secrets.MFA_ENCRYPTION_KEY }}
+          PAYOUT_ENCRYPTION_KEY: ${{ secrets.PAYOUT_ENCRYPTION_KEY }}
+          PAYOUT_FINGERPRINT_KEY: ${{ secrets.PAYOUT_FINGERPRINT_KEY }}
+        run: |
+          set -euo pipefail
+          # The API validates these at boot in staging. Without them the deploy
+          # succeeds and the machine never becomes healthy, which used to surface
+          # as a long, silent smoke-test loop. Fail here instead, with names.
+          missing=""
+          for name in DATABASE_URL MFA_ENCRYPTION_KEY PAYOUT_ENCRYPTION_KEY PAYOUT_FINGERPRINT_KEY; do
+            if [ -z "${!name:-}" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Missing staging secrets:$missing"
+            echo "The API refuses to boot in staging without them; refusing to deploy."
+            exit 1
+          fi
+          if [ "$PAYOUT_ENCRYPTION_KEY" = "$PAYOUT_FINGERPRINT_KEY" ]; then
+            echo "PAYOUT_ENCRYPTION_KEY and PAYOUT_FINGERPRINT_KEY must differ."
+            exit 1
+          fi
+          for name in MFA_ENCRYPTION_KEY PAYOUT_ENCRYPTION_KEY PAYOUT_FINGERPRINT_KEY; do
+            length="$(printf '%s' "${!name}" | base64 -d 2>/dev/null | wc -c | tr -d ' ')"
+            if [ "$length" != "32" ]; then
+              echo "$name must be 32 bytes encoded as base64."
+              exit 1
+            fi
+          done
+
       - name: Frozen install
         run: pnpm install --frozen-lockfile
 
@@ -87,6 +119,8 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           WORKER_DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
           MFA_ENCRYPTION_KEY: ${{ secrets.MFA_ENCRYPTION_KEY }}
+          PAYOUT_ENCRYPTION_KEY: ${{ secrets.PAYOUT_ENCRYPTION_KEY }}
+          PAYOUT_FINGERPRINT_KEY: ${{ secrets.PAYOUT_FINGERPRINT_KEY }}
           ZEPTOMAIL_TOKEN: ${{ secrets.ZEPTOMAIL_TOKEN }}
         run: |
           set -euo pipefail
@@ -94,6 +128,8 @@ jobs:
           bash scripts/flyctl-ci.sh secrets set --app hivorr-staging-api --stage \
             DATABASE_URL="$DATABASE_URL" \
             MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY" \
+            PAYOUT_ENCRYPTION_KEY="$PAYOUT_ENCRYPTION_KEY" \
+            PAYOUT_FINGERPRINT_KEY="$PAYOUT_FINGERPRINT_KEY" \
             RELEASE_SHA="$GITHUB_SHA"
           if [ -n "${ZEPTOMAIL_TOKEN:-}" ]; then
             bash scripts/flyctl-ci.sh secrets set --app hivorr-staging-api --stage \
@@ -106,6 +142,8 @@ jobs:
             DATABASE_URL="$DATABASE_URL" \
             WORKER_DATABASE_URL="$worker_db" \
             MFA_ENCRYPTION_KEY="$MFA_ENCRYPTION_KEY" \
+            PAYOUT_ENCRYPTION_KEY="$PAYOUT_ENCRYPTION_KEY" \
+            PAYOUT_FINGERPRINT_KEY="$PAYOUT_FINGERPRINT_KEY" \
             RELEASE_SHA="$GITHUB_SHA"
 
       - name: Build the image once
@@ -133,7 +171,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 20); do
-            body="$(curl -fsS https://hivorr-staging-api.fly.dev/v1/health/live || true)"
+            body="$(curl -fsS --connect-timeout 5 --max-time 15 https://hivorr-staging-api.fly.dev/v1/health/live || true)"
             if printf '%s' "$body" | grep -F "\"releaseSha\":\"$GITHUB_SHA\"" >/dev/null; then
               echo "$body"
               echo "staging API is live and reports release $GITHUB_SHA"
@@ -141,6 +179,7 @@ jobs:
             fi
             sleep 6
           done
+          echo "last response: ${body:-<empty>}"
           echo "staging API did not become healthy with release $GITHUB_SHA"
           exit 1
 
