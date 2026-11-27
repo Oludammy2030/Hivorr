@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
+import { testProviderConfig } from "./support/api-config"
 import { DatabaseService } from "../server/src/db/database.service"
 import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
@@ -61,10 +62,7 @@ describeIntegration("role administration integration", () => {
   let financialDepartmentId: string
   let amaraId: string
 
-  async function registerAndEnroll(
-    email: string,
-    password: string,
-  ): Promise<EnrolledUser> {
+  async function registerAndEnroll(email: string, password: string): Promise<EnrolledUser> {
     const registered = await app.inject({
       method: "POST",
       url: "/v1/auth/register",
@@ -81,10 +79,7 @@ describeIntegration("role administration integration", () => {
       payload: { email, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const appCookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -105,11 +100,7 @@ describeIntegration("role administration integration", () => {
     return { userId, secret }
   }
 
-  async function controlCookie(
-    email: string,
-    password: string,
-    secret: string,
-  ) {
+  async function controlCookie(email: string, password: string, secret: string) {
     const challenge = await app.inject({
       method: "POST",
       url: "/v1/auth/sign-in",
@@ -127,142 +118,118 @@ describeIntegration("role administration integration", () => {
       },
     })
     expect(verified.statusCode).toBe(200)
-    return cookieHeader(
-      readCookies(verified.headers),
-      "__Host-hivorr_control_sid",
-    )
+    return cookieHeader(readCookies(verified.headers), "__Host-hivorr_control_sid")
   }
 
-  beforeAll(
-    async () => {
-      admin = new Client({ connectionString: baseUrl })
-      await admin.connect()
-      await admin.query(`create database "${databaseName}"`)
+  beforeAll(async () => {
+    admin = new Client({ connectionString: baseUrl })
+    await admin.connect()
+    await admin.query(`create database "${databaseName}"`)
 
-      const url = new URL(baseUrl!)
-      url.pathname = `/${databaseName}`
-      const testUrl = url.toString()
+    const url = new URL(baseUrl!)
+    url.pathname = `/${databaseName}`
+    const testUrl = url.toString()
 
-      setup = new Client({ connectionString: testUrl })
-      await setup.connect()
+    setup = new Client({ connectionString: testUrl })
+    await setup.connect()
 
-      const migrationsDirectory = path.join(
-        process.cwd(),
-        "supabase",
-        "migrations",
-      )
-      for (const file of readdirSync(migrationsDirectory)
-        .filter((entry) => entry.endsWith(".sql"))
-        .sort()) {
-        await setup.query(
-          readFileSync(path.join(migrationsDirectory, file), "utf8"),
-        )
-      }
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
+    for (const file of readdirSync(migrationsDirectory)
+      .filter((entry) => entry.endsWith(".sql"))
+      .sort()) {
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
+    }
 
-      const config: ApiConfig = {
-        environment: "staging",
-        backendEnvironment: "staging",
-        supabaseProjectRef: "abcdefghijklmnopqrst",
-        port: 3000,
-        host: "127.0.0.1",
-        logLevel: "silent",
-        sessionIssuer: "hivorr-staging",
-        mfaEncryptionKey: Buffer.alloc(32, 7).toString("base64"),
+    const config: ApiConfig = {
+      ...testProviderConfig,
+      environment: "staging",
+      backendEnvironment: "staging",
+      supabaseProjectRef: "abcdefghijklmnopqrst",
+      port: 3000,
+      host: "127.0.0.1",
+      logLevel: "silent",
+      sessionIssuer: "hivorr-staging",
+      mfaEncryptionKey: Buffer.alloc(32, 7).toString("base64"),
+      databaseUrl: testUrl,
+      corsAllowedOrigins: [],
+      trustProxy: false,
+      auth: {
+        rateLimitWindowMs: 60_000,
+        identifierMax: 100,
+        ipMax: 1_000,
+        lockoutAttempts: 5,
+        lockoutMs: 15 * 60 * 1_000,
+      },
+      worker: {
         databaseUrl: testUrl,
-        corsAllowedOrigins: [],
-        trustProxy: false,
-        auth: {
-          rateLimitWindowMs: 60_000,
-          identifierMax: 100,
-          ipMax: 1_000,
-          lockoutAttempts: 5,
-          lockoutMs: 15 * 60 * 1_000,
-        },
-        worker: {
-          databaseUrl: testUrl,
-          pollIntervalMs: 1_000,
-          batchSize: 20,
-          leaseMs: 60_000,
-          maxAttempts: 5,
-          retryBaseMs: 5_000,
-          healthPort: 3001,
-          healthHost: "127.0.0.1",
-          workerId: "roles-test-worker",
-        },
-      }
-      database = new DatabaseService(config)
-      const created = await createApplication(config)
-      app = created.app
-      await app.init()
-      await app.getHttpAdapter().getInstance().ready()
+        pollIntervalMs: 1_000,
+        batchSize: 20,
+        leaseMs: 60_000,
+        maxAttempts: 5,
+        retryBaseMs: 5_000,
+        healthPort: 3001,
+        healthHost: "127.0.0.1",
+        workerId: "roles-test-worker",
+      },
+    }
+    database = new DatabaseService(config)
+    const created = await createApplication(config)
+    app = created.app
+    await app.init()
+    await app.getHttpAdapter().getInstance().ready()
 
-      const adminUser = await registerAndEnroll(
-        "admin@example.test",
-        "admin-test-password",
-      )
-      adminId = adminUser.userId
-      adminSecret = adminUser.secret
+    const adminUser = await registerAndEnroll("admin@example.test", "admin-test-password")
+    adminId = adminUser.userId
+    adminSecret = adminUser.secret
 
-      const workerUser = await registerAndEnroll(
-        "worker@example.test",
-        "worker-test-password",
-      )
+    const workerUser = await registerAndEnroll("worker@example.test", "worker-test-password")
 
-      const amaraUser = await registerAndEnroll(
-        "amara@example.test",
-        "amara-test-password",
-      )
-      amaraSecret = amaraUser.secret
+    const amaraUser = await registerAndEnroll("amara@example.test", "amara-test-password")
+    amaraSecret = amaraUser.secret
 
-      const amara = await setup.query(
-        "select id from identity.users where email = 'amara@example.test'",
-      )
-      amaraId = amara.rows[0].id
-      await setup.query(
-        "insert into admin.staff_profiles (user_id, engagement_status) values ($1, 'active')",
-        [amaraId],
-      )
+    const amara = await setup.query(
+      "select id from identity.users where email = 'amara@example.test'",
+    )
+    amaraId = amara.rows[0].id
+    await setup.query(
+      "insert into admin.staff_profiles (user_id, engagement_status) values ($1, 'active')",
+      [amaraId],
+    )
 
-      // The first role assignment is bootstrapped out of band, never by a
-      // migration: the founder role carries admin.role.manage.
-      const founder = await setup.query(
-        `insert into admin.role_assignments
+    // The first role assignment is bootstrapped out of band, never by a
+    // migration: the founder role carries admin.role.manage.
+    const founder = await setup.query(
+      `insert into admin.role_assignments
            (user_id, role_id, scope_type, granted_by, reason)
          select $1, r.id, 'platform', $1, 'Test bootstrap'
            from admin.roles r
           where r.key = 'founder'
          returning id`,
-        [adminId],
-      )
-      founderAssignmentId = founder.rows[0].id
+      [adminId],
+    )
+    founderAssignmentId = founder.rows[0].id
 
-      const department = await setup.query(
-        "select id from admin.departments where key = 'financial'",
-      )
-      financialDepartmentId = department.rows[0].id
+    const department = await setup.query("select id from admin.departments where key = 'financial'")
+    financialDepartmentId = department.rows[0].id
 
-      adminControlCookie = await controlCookie(
-        "admin@example.test",
-        "admin-test-password",
-        adminSecret,
-      )
-      workerControlCookie = await controlCookie(
-        "worker@example.test",
-        "worker-test-password",
-        workerUser.secret,
-      )
-    },
-    60_000,
-  )
+    adminControlCookie = await controlCookie(
+      "admin@example.test",
+      "admin-test-password",
+      adminSecret,
+    )
+    workerControlCookie = await controlCookie(
+      "worker@example.test",
+      "worker-test-password",
+      workerUser.secret,
+    )
+  }, 60_000)
 
   afterAll(async () => {
     if (app) await app.close()
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -446,9 +413,9 @@ describeIntegration("role administration integration", () => {
       headers: { host: controlHost, cookie: adminControlCookie },
     })
     expect(departments.statusCode).toBe(200)
-    expect(
-      (departments.json() as Array<{ name: string }>).map((row) => row.name),
-    ).toContain("Financial")
+    expect((departments.json() as Array<{ name: string }>).map((row) => row.name)).toContain(
+      "Financial",
+    )
 
     const organisations = await app.inject({
       method: "GET",
@@ -519,20 +486,10 @@ describeIntegration("role administration integration", () => {
     const rows = await setup.query(
       "select action, reason, capability, after_summary from platform.audit_log where action like 'identity.role_%' order by occurred_at",
     )
-    expect(rows.rows.map((row) => row.action)).toContain(
-      "identity.role_assigned",
-    )
-    expect(rows.rows.map((row) => row.action)).toContain(
-      "identity.role_revoked",
-    )
-    expect(
-      rows.rows.every((row) => row.capability === "admin.role.manage"),
-    ).toBe(true)
-    expect(rows.rows.map((row) => row.reason)).toContain(
-      "Audit engagement ended",
-    )
-    expect(
-      rows.rows.some((row) => row.after_summary?.roleKey === "support_officer"),
-    ).toBe(true)
+    expect(rows.rows.map((row) => row.action)).toContain("identity.role_assigned")
+    expect(rows.rows.map((row) => row.action)).toContain("identity.role_revoked")
+    expect(rows.rows.every((row) => row.capability === "admin.role.manage")).toBe(true)
+    expect(rows.rows.map((row) => row.reason)).toContain("Audit engagement ended")
+    expect(rows.rows.some((row) => row.after_summary?.roleKey === "support_officer")).toBe(true)
   })
 })

@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Inject,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, Inject, Param, Patch, Post, Query, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
@@ -20,11 +10,7 @@ import {
   setStaffDepartmentRequest,
   staffReasonRequest,
 } from "../contracts/schemas"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 import { StaffService } from "../modules/admin/staff.service"
 
 @Controller("control/staff")
@@ -43,10 +29,7 @@ export class StaffController {
     @Req() request: FastifyRequest,
   ) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.staff.list({
       accountId: session.accountId,
@@ -60,10 +43,7 @@ export class StaffController {
   async invite(@Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(createStaffInviteRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.staff.invite({
       accountId: session.accountId,
@@ -81,10 +61,7 @@ export class StaffController {
   async attachExisting(@Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(attachStaffProfileRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.staff.attachExisting({
       accountId: session.accountId,
@@ -132,10 +109,7 @@ export class StaffController {
   ) {
     const input = parseBody(setStaffDepartmentRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.staff.setDepartment({
       accountId: session.accountId,
@@ -155,10 +129,7 @@ export class StaffController {
   ) {
     const input = parseBody(staffReasonRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.staff.setStatus({
       accountId: session.accountId,

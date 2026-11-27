@@ -906,7 +906,7 @@ states what reversing it would cost, so the founder can judge it rather than acc
 | Managed Postgres provider | `ARCHITECTURE.md` §16.4 #1 | EP-01 database work; staging |
 | Hosting platform, DNS, TLS | `ARCHITECTURE.md` §16.4 #17 | EP-01 staging; G3 |
 | Sign-in identifier | `ARCHITECTURE.md` §16.4 #14 | EP-01 authentication |
-| KYC tier ladder and limits | `ARCHITECTURE.md` §16.4 #6 | EP-02 financial gating |
+| KYC tier ladder and limits | `ARCHITECTURE.md` §16.4 #6 | EP-02 financial gating — decided 2026-11-26; caps provisional |
 | Verification vendor | `ARCHITECTURE.md` §16.4 #15 | EP-02 identity lane |
 | Map / geo provider | `ARCHITECTURE.md` §16.4 #18 | EP-04 dispatch and errand |
 | Escrow timing and dispute rules (BD-D03) | roadmap §21 | EP-02 escrow policy; EP-03 exit |

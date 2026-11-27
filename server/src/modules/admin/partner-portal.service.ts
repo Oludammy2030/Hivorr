@@ -26,9 +26,7 @@ interface OwnOrganisationRow {
  */
 @Injectable()
 export class PartnerPortalService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async organisations(input: {
     accountId: string

@@ -6,8 +6,7 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((error: unknown) => {
-  const message =
-    error instanceof Error ? error.message : "unknown startup failure"
+  const message = error instanceof Error ? error.message : "unknown startup failure"
   console.error(`hivorr-api: failed to start: ${message}`)
   process.exit(1)
 })

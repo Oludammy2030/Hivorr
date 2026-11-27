@@ -52,26 +52,24 @@ describe("ten-module skeleton", () => {
 
   it("gives every module one public index.ts", () => {
     for (const module of MODULES) {
-      expect(
-        existsSync(path.join(modulesRoot, module, "index.ts")),
-        `${module}/index.ts`,
-      ).toBe(true)
+      expect(existsSync(path.join(modulesRoot, module, "index.ts")), `${module}/index.ts`).toBe(
+        true,
+      )
     }
   })
 
   it("keeps activity modules without an owning phase as boundaries with no code", () => {
-    const dormantModules = ACTIVITY_MODULES.filter(
-      (module) => module !== "finance",
-    )
+    const dormantModules = ACTIVITY_MODULES.filter((module) => module !== "finance")
     for (const module of dormantModules) {
-      expect(sourceFiles(path.join(modulesRoot, module)), module).toEqual([
-        "index.ts",
-      ])
+      expect(sourceFiles(path.join(modulesRoot, module)), module).toEqual(["index.ts"])
     }
   })
 
   it("exposes the finance posting, wallet, escrow, provider and limit domains", () => {
     expect(sourceFiles(path.join(modulesRoot, "finance"))).toEqual([
+      "collection-account.service.ts",
+      "deposit-eligibility.service.ts",
+      "deposit-posting.service.ts",
       "escrow.service.ts",
       "idempotency.ts",
       "index.ts",
@@ -79,6 +77,11 @@ describe("ten-module skeleton", () => {
       "ledger.ts",
       "limit.service.ts",
       "limits.ts",
+      "payment-provider-router.service.ts",
+      "payout-account-crypto.ts",
+      "payout-account.service.ts",
+      "payout-execution.service.ts",
+      "payout-request.service.ts",
       "provider-reference.service.ts",
       "wallet.service.ts",
     ])
@@ -86,50 +89,43 @@ describe("ten-module skeleton", () => {
 
   it("does not export a controller from a module's public interface", () => {
     for (const module of MODULES) {
-      const index = readFileSync(
-        path.join(modulesRoot, module, "index.ts"),
-        "utf8",
-      )
+      const index = readFileSync(path.join(modulesRoot, module, "index.ts"), "utf8")
       expect(index, `${module}/index.ts`).not.toContain(".controller")
     }
   })
 
   it("exposes the identity and platform public interfaces", () => {
-    expect(
-      readFileSync(path.join(modulesRoot, "identity", "index.ts"), "utf8"),
-    ).toContain("IdentityService")
-    expect(
-      readFileSync(path.join(modulesRoot, "platform", "index.ts"), "utf8"),
-    ).toContain("appendAudit")
+    expect(readFileSync(path.join(modulesRoot, "identity", "index.ts"), "utf8")).toContain(
+      "IdentityService",
+    )
+    expect(readFileSync(path.join(modulesRoot, "platform", "index.ts"), "utf8")).toContain(
+      "appendAudit",
+    )
   })
 
   it("has no tables in activity schemas that have not reached their owning phase", () => {
     const migrations = path.join(root, "supabase", "migrations")
-    const dormantModules = ACTIVITY_MODULES.filter(
-      (module) => module !== "finance",
-    )
+    const dormantModules = ACTIVITY_MODULES.filter((module) => module !== "finance")
     const pattern = new RegExp(
       `create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?(?:${dormantModules.join("|")})\\.`,
       "i",
     )
-    for (const file of readdirSync(migrations).filter((entry) =>
-      entry.endsWith(".sql"),
-    )) {
+    for (const file of readdirSync(migrations).filter((entry) => entry.endsWith(".sql"))) {
       const sql = readFileSync(path.join(migrations, file), "utf8")
       expect(sql, file).not.toMatch(pattern)
     }
   })
 
-  it("creates finance tables only in the approved EP-02 ledger migration", () => {
+  it("creates finance tables only in the approved EP-02 migrations", () => {
     const migrations = path.join(root, "supabase", "migrations")
     const pattern = /create\s+table\s+(?:if\s+not\s+exists\s+)?finance\./i
     const creators = readdirSync(migrations)
       .filter((entry) => entry.endsWith(".sql"))
-      .filter((file) =>
-        pattern.test(readFileSync(path.join(migrations, file), "utf8")),
-      )
+      .filter((file) => pattern.test(readFileSync(path.join(migrations, file), "utf8")))
     expect(creators).toEqual([
       "20261118000100_finance_create_ledger_tables.sql",
+      "20261123000200_finance_add_payout_requests.sql",
+      "20261126000200_finance_add_collection_accounts.sql",
     ])
   })
 })

@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
@@ -19,11 +10,7 @@ import {
   supersedeEvidenceRequest,
 } from "../contracts/schemas"
 import { EvidenceService } from "../modules/admin/evidence.service"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
 @Controller()
 export class EvidenceController {
@@ -35,10 +22,7 @@ export class EvidenceController {
 
   private async session(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { context, session }
   }
 
@@ -56,11 +40,7 @@ export class EvidenceController {
   @Post("control/cases/:id/evidence")
   @HttpCode(201)
   @Audience("control")
-  async add(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async add(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(addEvidenceRequest, body)
     const { context, session } = await this.session(request)
     return this.evidence.add({
@@ -100,11 +80,7 @@ export class EvidenceController {
   @Post("control/evidence/:id/supersede")
   @HttpCode(200)
   @Audience("control")
-  async supersede(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async supersede(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(supersedeEvidenceRequest, body)
     const { context, session } = await this.session(request)
     return this.evidence.supersede({

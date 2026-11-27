@@ -2,16 +2,9 @@ import { Inject, Injectable } from "@nestjs/common"
 
 import { ApiError, rateLimited } from "../../common/errors"
 import { FixedWindowRateLimiter } from "../../common/rate-limiter"
-import {
-  API_CONFIG,
-  type ApiConfig,
-  type DeploymentEnvironment,
-} from "../../config"
+import { API_CONFIG, type ApiConfig, type DeploymentEnvironment } from "../../config"
 import { DatabaseService } from "../../db/database.service"
-import {
-  EMAIL_ADAPTER,
-  type EmailAdapter,
-} from "../../integrations/email/email.adapter"
+import { EMAIL_ADAPTER, type EmailAdapter } from "../../integrations/email/email.adapter"
 import { buildStaffInviteEmail } from "../../integrations/email/templates/staff-invite"
 import { hivorrMarkAttachment } from "../../integrations/email/assets/hivorr-mark"
 import {
@@ -89,17 +82,10 @@ interface DatabaseErrorMessages {
   readonly conflict?: string
 }
 
-function mapDatabaseError(
-  error: unknown,
-  messages: DatabaseErrorMessages = {},
-): never {
+function mapDatabaseError(error: unknown, messages: DatabaseErrorMessages = {}): never {
   switch (pgCode(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to manage staff.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to manage staff.", 403)
     case "P0002":
       throw new ApiError(
         "NOT_FOUND",
@@ -109,8 +95,7 @@ function mapDatabaseError(
     case "23505":
       throw new ApiError(
         "CONFLICT",
-        messages.conflict ??
-          "A pending invitation or account already exists for this email.",
+        messages.conflict ?? "A pending invitation or account already exists for this email.",
         409,
       )
     case "22023":
@@ -200,9 +185,7 @@ export class StaffService {
     const token = createSessionToken()
     const tokenHash = hashSessionToken(token)
     const officialEmail = this.requireOfficialAddress(input.email)
-    const deliveryEmail = (input.deliveryEmail ?? input.email)
-      .trim()
-      .toLowerCase()
+    const deliveryEmail = (input.deliveryEmail ?? input.email).trim().toLowerCase()
     const domain = this.config.mail.staffEmailDomain
     try {
       const created = await this.database.withTransaction(
@@ -214,18 +197,15 @@ export class StaffService {
             delivery_email: string
             department_key: string | null
             expires_at: string
-          }>(
-            "select * from admin.create_staff_invite($1, $2, $3, $4, $5, $6, null, $7)",
-            [
-              officialEmail,
-              deliveryEmail,
-              input.departmentKey ?? null,
-              input.jobTitle ?? null,
-              tokenHash,
-              input.reason,
-              domain,
-            ],
-          )
+          }>("select * from admin.create_staff_invite($1, $2, $3, $4, $5, $6, null, $7)", [
+            officialEmail,
+            deliveryEmail,
+            input.departmentKey ?? null,
+            input.jobTitle ?? null,
+            tokenHash,
+            input.reason,
+            domain,
+          ])
           const row = result.rows[0]
 
           await appendAudit(transaction.client, {
@@ -281,11 +261,7 @@ export class StaffService {
     })
 
     if (!row) {
-      throw new ApiError(
-        "NOT_FOUND",
-        "This invitation is no longer valid.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "This invitation is no longer valid.", 404)
     }
 
     return {
@@ -581,13 +557,10 @@ export class StaffService {
    * expensive work. Apply the same per-IP authentication budget as sign-in.
    */
   private limitInviteTraffic(scope: string, ip: string | undefined): void {
-    const result = this.limiter.check(
-      `staff-invite:${scope}:ip:${ip ?? "unknown"}`,
-      {
-        windowMs: this.config.auth.rateLimitWindowMs,
-        max: this.config.auth.ipMax,
-      },
-    )
+    const result = this.limiter.check(`staff-invite:${scope}:ip:${ip ?? "unknown"}`, {
+      windowMs: this.config.auth.rateLimitWindowMs,
+      max: this.config.auth.ipMax,
+    })
     if (!result.allowed) {
       throw rateLimited(result.retryAfterSeconds)
     }

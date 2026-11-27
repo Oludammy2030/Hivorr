@@ -88,8 +88,6 @@ describe("API runtime configuration", () => {
   it("closes the HTTP listener and its dependencies on shutdown", async () => {
     const { app, instance } = await boot()
     await app.close()
-    await expect(
-      instance.inject({ method: "GET", url: "/v1/health" }),
-    ).rejects.toThrow()
+    await expect(instance.inject({ method: "GET", url: "/v1/health" })).rejects.toThrow()
   })
 })

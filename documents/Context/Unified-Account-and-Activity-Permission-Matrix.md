@@ -380,8 +380,11 @@ Rules:
 | `tier_0` | Unverified | Zero limits on all financial actions: no withdrawal, no payout, no conversion, no receiving earnings |
 | `tier_1` and above | Verified | Transactions, withdrawals, payouts, conversions, and earnings subject to the tier's configured limits |
 
-- Tier thresholds and limits are configuration, not code. They are **not** defined by any approved
-  source and must not be invented here. **[OPEN]** the exact tier ladder and per-tier limits.
+- Tier thresholds and limits are configuration, not code. **Decided 26 November 2026**
+  (`ARCHITECTURE.md` §16.4 #6): the ladder is `tier_0` — zero financial limits — plus `tier_1`,
+  `tier_2` and `tier_3` as CBN Levels 1–3, enforced by the effective-dated `finance.limits` engine.
+  The naira thresholds are **provisional** pending counsel confirmation of the CBN tier
+  requirements; they are configuration rows, not policy, and this section does not define them.
 - Tier state is account-level. It does not vary by activity.
 - Dashboard access is never removed because of a low tier; only financial writes are blocked.
 
@@ -1050,7 +1053,7 @@ there first, then here.
 | 3 | **MVP activity scope** — all six at launch, or Explore-first? | Release scope |
 | 4 | **Deactivation with open obligations** — blocked, or allowed with obligations still actionable? | §12.5 |
 | 5 | **Business as account** — stay a profile on the account, or become its own account with its own wallet and multiple sign-in users? | §3.4; team features |
-| 6 | **KYC tier ladder and limits** — how many tiers, what limits, what evidence per tier? | §7.4; financial gating |
+| 6 | **KYC tier ladder and limits** — **DECIDED 26 November 2026:** `tier_0` at zero financial limits plus `tier_1`–`tier_3` as CBN Levels 1–3, enforced by the effective-dated limit engine (`ARCHITECTURE.md` §16.4 #6). The naira thresholds are provisional pending counsel. Kept in place so existing cross-references stay valid. | Nothing for the ladder; the thresholds await counsel |
 | 7 | **Retention periods** — identity documents, KYC evidence, chat, disputes | §13.4; deletion design |
 | 8 | **Account closure window** — how long is closure reversible? | §12.6 |
 | 9 | **Switcher form** — hub screen, sidebar section, or account menu? | §10.3 |

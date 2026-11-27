@@ -112,16 +112,11 @@ export interface PaymentProvider {
   /** Maps a raw provider event into the neutral deposit shape, or throws. */
   normaliseDepositEvent(payload: unknown): DepositEvent
 
-  initiatePayout(
-    input: PayoutRequest,
-    context: ProviderOperationContext,
-  ): Promise<PayoutResult>
+  initiatePayout(input: PayoutRequest, context: ProviderOperationContext): Promise<PayoutResult>
 
   getPaymentStatus(query: PaymentStatusQuery): Promise<PaymentStatus>
 
-  resolveAccountName(
-    input: AccountNameEnquiryRequest,
-  ): Promise<AccountNameEnquiry>
+  resolveAccountName(input: AccountNameEnquiryRequest): Promise<AccountNameEnquiry>
 }
 
 export const PAYMENT_PROVIDER_ERROR_CODES = [
@@ -134,7 +129,7 @@ export const PAYMENT_PROVIDER_ERROR_CODES = [
   "PROVIDER_INVALID_PAYLOAD",
 ] as const
 
-export type PaymentProviderErrorCode = typeof PAYMENT_PROVIDER_ERROR_CODES[number]
+export type PaymentProviderErrorCode = (typeof PAYMENT_PROVIDER_ERROR_CODES)[number]
 
 const RETRYABLE: ReadonlySet<PaymentProviderErrorCode> = new Set([
   "PROVIDER_UNAVAILABLE",
@@ -169,8 +164,6 @@ export class PaymentProviderError extends Error {
   }
 }
 
-export function isPaymentProviderError(
-  value: unknown,
-): value is PaymentProviderError {
+export function isPaymentProviderError(value: unknown): value is PaymentProviderError {
   return value instanceof PaymentProviderError
 }

@@ -7,10 +7,7 @@ import { ACTIVITY_ACTIVATION_STATES, ACTIVITY_IDS } from "@hivorr/shared"
 
 const root = process.cwd()
 const sql = readFileSync(
-  path.join(
-    root,
-    "supabase/migrations/20261109000300_profile_create_profile_tables.sql",
-  ),
+  path.join(root, "supabase/migrations/20261109000300_profile_create_profile_tables.sql"),
   "utf8",
 )
 
@@ -22,9 +19,7 @@ describe("profile and activity schema", () => {
   it("creates one shared profile and one activation table", () => {
     expect(sql).toMatch(/create table profile\.profiles/)
     expect(sql).toMatch(/create table profile\.activity_activations/)
-    expect(sql).toMatch(
-      /account_id uuid primary key references identity\.accounts/,
-    )
+    expect(sql).toMatch(/account_id uuid primary key references identity\.accounts/)
   })
 
   it("constrains exactly the six shared activity IDs", () => {
@@ -36,10 +31,7 @@ describe("profile and activity schema", () => {
   it("constrains the four activation states", () => {
     const match = sql.match(/state in \(([\s\S]*?)\)/)
     expect(match).not.toBeNull()
-    expect(quotedList(match![1])).toEqual([
-      "INACTIVE",
-      ...ACTIVITY_ACTIVATION_STATES,
-    ])
+    expect(quotedList(match![1])).toEqual(["INACTIVE", ...ACTIVITY_ACTIVATION_STATES])
   })
 
   it("makes activation idempotent at the database level", () => {
@@ -67,29 +59,19 @@ describe("profile and activity schema", () => {
       expect(sql, table).toMatch(
         new RegExp(`alter table profile\\.${table} enable row level security`),
       )
-      expect(sql, table).toMatch(
-        new RegExp(`${table}_select on profile\\.${table}`),
-      )
-      expect(sql, table).toMatch(
-        new RegExp(`${table}_insert on profile\\.${table}`),
-      )
-      expect(sql, table).toMatch(
-        new RegExp(`${table}_update on profile\\.${table}`),
-      )
+      expect(sql, table).toMatch(new RegExp(`${table}_select on profile\\.${table}`))
+      expect(sql, table).toMatch(new RegExp(`${table}_insert on profile\\.${table}`))
+      expect(sql, table).toMatch(new RegExp(`${table}_update on profile\\.${table}`))
     }
     expect(sql).toMatch(/platform\.current_account_id\(\)/)
   })
 
   it("grants the API write access and readonly read access", () => {
-    expect(sql).toMatch(
-      /grant select, insert, update on profile\.profiles to hivorr_api/,
-    )
+    expect(sql).toMatch(/grant select, insert, update on profile\.profiles to hivorr_api/)
     expect(sql).toMatch(
       /grant select, insert, update on profile\.activity_activations to hivorr_api/,
     )
-    expect(sql).toMatch(
-      /grant select on profile\.activity_activations to hivorr_readonly/,
-    )
+    expect(sql).toMatch(/grant select on profile\.activity_activations to hivorr_readonly/)
     expect(sql).toMatch(
       /grant execute on function platform\.current_account_id\(\) to hivorr_readonly/,
     )

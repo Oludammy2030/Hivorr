@@ -27,10 +27,7 @@ export interface OutboxHandlerContext {
   readonly attempt: number
 }
 
-export type OutboxHandler = (
-  event: OutboxEvent,
-  context: OutboxHandlerContext,
-) => Promise<void>
+export type OutboxHandler = (event: OutboxEvent, context: OutboxHandlerContext) => Promise<void>
 
 export interface OutboxLogger {
   info(entry: Record<string, unknown>): void
@@ -68,11 +65,7 @@ export class OutboxHandlers implements HandlerRegistry {
  * Exponential backoff without jitter, so retries are deterministic and their
  * timing can be asserted. `attempts` is the number already consumed.
  */
-export function retryDelayMs(
-  attempts: number,
-  baseMs: number,
-  capMs = 60 * 60 * 1000,
-): number {
+export function retryDelayMs(attempts: number, baseMs: number, capMs = 60 * 60 * 1000): number {
   const exponent = Math.max(0, attempts)
   const delay = baseMs * 2 ** Math.min(exponent, 20)
   return Math.min(delay, capMs)

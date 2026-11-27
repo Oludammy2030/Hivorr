@@ -19,9 +19,7 @@ export interface StaffInviteEmail {
   readonly html: string
 }
 
-export function buildStaffInviteEmail(
-  input: StaffInviteEmailInput,
-): StaffInviteEmail {
+export function buildStaffInviteEmail(input: StaffInviteEmailInput): StaffInviteEmail {
   const expiry = formatExpiryDate(input.expiresAt)
   const role = input.jobTitle?.trim()
   const intro = role

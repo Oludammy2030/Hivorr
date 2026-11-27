@@ -35,10 +35,7 @@ export class SessionController {
   @Get("session")
   async session(@Req() request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
 
     return this.database.withTransaction(
       {
@@ -54,15 +51,10 @@ export class SessionController {
           audience: context.audience,
           environment: context.environment,
         })
-        const authority = await loadAdminAuthority(
-          transaction.client,
-          session.userId,
-        )
+        const authority = await loadAdminAuthority(transaction.client, session.userId)
         return {
           ...session,
-          capabilities: [
-            ...computeCapabilities(withPlatformAuthority(access, authority)),
-          ],
+          capabilities: [...computeCapabilities(withPlatformAuthority(access, authority))],
         }
       },
     )

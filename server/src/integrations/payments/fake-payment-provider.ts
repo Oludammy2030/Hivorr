@@ -1,8 +1,4 @@
-import {
-  currencyCodeSchema,
-  minorUnitsToMoney,
-  moneyToMinorUnits,
-} from "@hivorr/shared"
+import { currencyCodeSchema, minorUnitsToMoney, moneyToMinorUnits } from "@hivorr/shared"
 
 import {
   PaymentProviderError,
@@ -32,10 +28,13 @@ export class FakePaymentProvider implements PaymentProvider {
   readonly provider: string
 
   private readonly accounts = new Map<string, CollectionAccount>()
-  private readonly payouts = new Map<string, {
-    readonly fingerprint: string
-    readonly result: PayoutResult
-  }>()
+  private readonly payouts = new Map<
+    string,
+    {
+      readonly fingerprint: string
+      readonly result: PayoutResult
+    }
+  >()
   private readonly statuses = new Map<string, PaymentStatus>()
   private sequence = 0
   private pendingFailure: PaymentProviderErrorCode | null = null
@@ -115,10 +114,7 @@ export class FakePaymentProvider implements PaymentProvider {
     }
 
     if (record.event !== undefined && record.event !== "deposit") {
-      throw new PaymentProviderError(
-        "PROVIDER_INVALID_PAYLOAD",
-        "That event is not a deposit.",
-      )
+      throw new PaymentProviderError("PROVIDER_INVALID_PAYLOAD", "That event is not a deposit.")
     }
 
     const amount = moneyToMinorUnits(record.amount as string)
@@ -129,20 +125,12 @@ export class FakePaymentProvider implements PaymentProvider {
       )
     }
     if (!currencyCodeSchema.safeParse(record.currency).success) {
-      throw new PaymentProviderError(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A deposit currency is invalid.",
-      )
+      throw new PaymentProviderError("PROVIDER_INVALID_PAYLOAD", "A deposit currency is invalid.")
     }
 
     const status = record.status ?? "received"
-    if (
-      !["received", "pending", "failed", "reversed"].includes(String(status))
-    ) {
-      throw new PaymentProviderError(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A deposit status is invalid.",
-      )
+    if (!["received", "pending", "failed", "reversed"].includes(String(status))) {
+      throw new PaymentProviderError("PROVIDER_INVALID_PAYLOAD", "A deposit status is invalid.")
     }
 
     const last4 = record.payerAccountLast4
@@ -164,7 +152,7 @@ export class FakePaymentProvider implements PaymentProvider {
       amount: minorUnitsToMoney(amount),
       currency: record.currency as string,
       payerName: record.payerName as string,
-      payerAccountLast4: last4 as string | null | undefined ?? null,
+      payerAccountLast4: (last4 as string | null | undefined) ?? null,
       status: status as DepositEvent["status"],
       occurredAt: record.occurredAt as string,
     }
@@ -188,10 +176,7 @@ export class FakePaymentProvider implements PaymentProvider {
       )
     }
     if (!currencyCodeSchema.safeParse(input.currency).success) {
-      throw new PaymentProviderError(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A payout currency is invalid.",
-      )
+      throw new PaymentProviderError("PROVIDER_INVALID_PAYLOAD", "A payout currency is invalid.")
     }
     if (!/^[0-9]{10}$/.test(input.accountNumber)) {
       throw new PaymentProviderError(
@@ -200,10 +185,7 @@ export class FakePaymentProvider implements PaymentProvider {
       )
     }
     if (!/^[0-9]{3,10}$/.test(input.bankCode)) {
-      throw new PaymentProviderError(
-        "PROVIDER_INVALID_PAYLOAD",
-        "A payout bank code is invalid.",
-      )
+      throw new PaymentProviderError("PROVIDER_INVALID_PAYLOAD", "A payout bank code is invalid.")
     }
 
     const fingerprint = JSON.stringify({
@@ -265,23 +247,15 @@ export class FakePaymentProvider implements PaymentProvider {
     return status
   }
 
-  async resolveAccountName(
-    input: AccountNameEnquiryRequest,
-  ): Promise<AccountNameEnquiry> {
-    if (
-      !/^[0-9]{3,10}$/.test(input.bankCode) ||
-      !/^[0-9]{10}$/.test(input.accountNumber)
-    ) {
+  async resolveAccountName(input: AccountNameEnquiryRequest): Promise<AccountNameEnquiry> {
+    if (!/^[0-9]{3,10}$/.test(input.bankCode) || !/^[0-9]{10}$/.test(input.accountNumber)) {
       throw new PaymentProviderError(
         "PROVIDER_INVALID_PAYLOAD",
         "A name enquiry needs a bank code and a ten-digit account number.",
       )
     }
     if (input.accountNumber === "0000000000") {
-      throw new PaymentProviderError(
-        "PROVIDER_NOT_FOUND",
-        "The account could not be resolved.",
-      )
+      throw new PaymentProviderError("PROVIDER_NOT_FOUND", "The account could not be resolved.")
     }
 
     return {

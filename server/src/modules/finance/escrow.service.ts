@@ -1,9 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import {
-  currencyCodeSchema,
-  evaluateEscrowTransition,
-  type EscrowState,
-} from "@hivorr/shared"
+import { currencyCodeSchema, evaluateEscrowTransition, type EscrowState } from "@hivorr/shared"
 
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
@@ -63,14 +59,9 @@ interface EscrowRow {
   resolved_at: string | Date | null
 }
 
-export const ESCROW_ACTIVITIES = [
-  "market.buy",
-  "services.hire",
-  "errands.request",
-] as const
+export const ESCROW_ACTIVITIES = ["market.buy", "services.hire", "errands.request"] as const
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const TERMINAL_STATES = new Set(["released", "refunded", "cancelled"])
 
@@ -107,11 +98,7 @@ function toView(row: EscrowRow): EscrowView {
 
 function validateOpenInput(input: OpenEscrowInput): OpenEscrowInput {
   if (!(ESCROW_ACTIVITIES as readonly string[]).includes(input.activityId)) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "Escrow is reserved against Buy, Hire or Errand.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "Escrow is reserved against Buy, Hire or Errand.", 400)
   }
   if (!UUID_PATTERN.test(input.activityRef)) {
     throw new ApiError(
@@ -140,19 +127,11 @@ function mapEscrowError(error: unknown): never {
     )
   }
   if (message?.includes("escrow_transition_invalid")) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "That escrow state transition is not defined.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "That escrow state transition is not defined.", 400)
   }
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to change this escrow.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to change this escrow.", 403)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -166,29 +145,18 @@ function mapEscrowError(error: unknown): never {
         400,
       )
     case "23503":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The account or activity record does not exist.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The account or activity record does not exist.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The escrow operation failed.")
+      throw error instanceof Error ? error : new Error("The escrow operation failed.")
   }
 }
 
 @Injectable()
 export class EscrowService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   /** Creates the escrow ledger account and its held reservation together. */
-  async openEscrow(
-    input: OpenEscrowInput,
-    context: EscrowWriteContext,
-  ): Promise<EscrowView> {
+  async openEscrow(input: OpenEscrowInput, context: EscrowWriteContext): Promise<EscrowView> {
     const validated = validateOpenInput(input)
 
     try {
@@ -272,16 +240,9 @@ export class EscrowService {
    * Applies one defined transition. A disabled transition is a conflict, not a
    * validation error: the request is well formed but the policy is not approved.
    */
-  async transition(
-    input: EscrowTransitionInput,
-    context: EscrowWriteContext,
-  ): Promise<EscrowView> {
+  async transition(input: EscrowTransitionInput, context: EscrowWriteContext): Promise<EscrowView> {
     if (!UUID_PATTERN.test(input.escrowId)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The escrow reservation was not found.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The escrow reservation was not found.", 400)
     }
 
     try {
@@ -304,17 +265,10 @@ export class EscrowService {
           )
           const existing = current.rows[0]
           if (!existing) {
-            throw new ApiError(
-              "NOT_FOUND",
-              "The escrow reservation was not found.",
-              404,
-            )
+            throw new ApiError("NOT_FOUND", "The escrow reservation was not found.", 404)
           }
 
-          const evaluation = evaluateEscrowTransition(
-            existing.state,
-            input.toState,
-          )
+          const evaluation = evaluateEscrowTransition(existing.state, input.toState)
           if (evaluation.status === "disabled") {
             throw new ApiError(
               "CONFLICT",

@@ -2,17 +2,15 @@ import { createHash, randomBytes } from "node:crypto"
 
 import { Inject, Injectable } from "@nestjs/common"
 import { hash, verify } from "@node-rs/argon2"
-import type { EnvironmentId, PortalId } from "@hivorr/shared"
+import { kycTierSchema, type EnvironmentId, type KycTier, type PortalId } from "@hivorr/shared"
 import type { PoolClient } from "pg"
 
 import { ApiError, rateLimited } from "../../common/errors"
 import { FixedWindowRateLimiter } from "../../common/rate-limiter"
 import { API_CONFIG, type ApiConfig } from "../../config"
 import { DatabaseService } from "../../db/database.service"
-import {
-  computeCapabilities,
-  type CapabilityId,
-} from "../../domain/capabilities"
+import type { TransactionContext } from "../../db/transaction"
+import { computeCapabilities, type CapabilityId } from "../../domain/capabilities"
 import {
   EMAIL_ADAPTER,
   CaptureEmailAdapter,
@@ -26,11 +24,7 @@ import { listActiveActivities } from "../profile"
 import { buildAccessContext } from "./access"
 import { normalizeEmail } from "./domain/identity"
 import { IdentityRepository } from "./repositories/identity.repository"
-import {
-  generateRecoveryCodes,
-  hashRecoveryCode,
-  MfaCipher,
-} from "./mfa-crypto"
+import { generateRecoveryCodes, hashRecoveryCode, MfaCipher } from "./mfa-crypto"
 import { sessionPolicy } from "./session-policy"
 import { generateTotpSecret, totpUri, verifyTotp } from "./totp"
 
@@ -43,10 +37,7 @@ const ARGON2_OPTIONS = {
   algorithm: 2,
 } as const
 
-const DUMMY_PASSWORD_HASH = hash(
-  "hivorr-dummy-password-not-a-real-account",
-  ARGON2_OPTIONS,
-)
+const DUMMY_PASSWORD_HASH = hash("hivorr-dummy-password-not-a-real-account", ARGON2_OPTIONS)
 
 export interface RequestContext {
   readonly audience: PortalId
@@ -90,6 +81,20 @@ export interface SessionActivityView {
   readonly state: string
 }
 
+export interface SetKycTierInput {
+  readonly actorUserId: string
+  readonly accountId: string
+  readonly tier: string
+  readonly reason: string
+  readonly context: RequestContext
+}
+
+export interface KycTierView {
+  readonly accountId: string
+  readonly tier: KycTier
+  readonly updatedAt: string
+}
+
 export interface CurrentSession extends SessionResult {
   readonly account: {
     readonly id: string
@@ -99,10 +104,10 @@ export interface CurrentSession extends SessionResult {
   }
   readonly activities: readonly SessionActivityView[]
   readonly capabilities: readonly CapabilityId[]
+  readonly kycTier: KycTier
 }
 
-export interface IssuedSession
-  extends SessionResult {
+export interface IssuedSession extends SessionResult {
   /** Short-lived access token, sent in the host-only session cookie. */
   /** Long-lived refresh token, sent only to the auth endpoints. */
   readonly token: string
@@ -226,10 +231,7 @@ export async function hashPassword(password: string): Promise<string> {
   return hash(password, ARGON2_OPTIONS)
 }
 
-export async function verifyPassword(
-  passwordHash: string,
-  password: string,
-): Promise<boolean> {
+export async function verifyPassword(passwordHash: string, password: string): Promise<boolean> {
   try {
     return await verify(passwordHash, password)
   } catch {
@@ -268,10 +270,7 @@ export class IdentityService {
     return `${origin.replace(/\/$/, "")}/${page}?token=${encodeURIComponent(token)}`
   }
 
-  async register(
-    input: RegisterInput,
-    context: RequestContext,
-  ): Promise<RegistrationResult> {
+  async register(input: RegisterInput, context: RequestContext): Promise<RegistrationResult> {
     const email = normalizeEmail(input.email)
     const passwordHash = await hashPassword(input.password)
 
@@ -280,9 +279,7 @@ export class IdentityService {
         const ids = await transaction.query<{
           account_id: string
           user_id: string
-        }>(
-          "select platform.uuidv7() as account_id, platform.uuidv7() as user_id",
-        )
+        }>("select platform.uuidv7() as account_id, platform.uuidv7() as user_id")
         const accountId = ids.rows[0].account_id
         const userId = ids.rows[0].user_id
 
@@ -310,57 +307,44 @@ export class IdentityService {
       })
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ApiError(
-          "CONFLICT",
-          "An account with this email already exists.",
-          409,
-        )
+        throw new ApiError("CONFLICT", "An account with this email already exists.", 409)
       }
       throw error
     }
   }
 
-  async requestPasswordReset(
-    email: string,
-    context: RequestContext,
-  ): Promise<void> {
+  async requestPasswordReset(email: string, context: RequestContext): Promise<void> {
     const normalized = normalizeEmail(email)
     this.limitReset(normalized, context)
     const token = createSessionToken()
     const tokenHash = hashSessionToken(token)
 
-    const recipient = await this.database.withTransaction(
-      {},
-      async (transaction) => {
-        const lookup = await transaction.query<{
-          user_id: string
-          account_id: string
-        }>(
-          "select user_id, account_id from identity.find_login_credential($1)",
-          [normalized],
-        )
-        const row = lookup.rows[0]
-        if (!row) return undefined
+    const recipient = await this.database.withTransaction({}, async (transaction) => {
+      const lookup = await transaction.query<{
+        user_id: string
+        account_id: string
+      }>("select user_id, account_id from identity.find_login_credential($1)", [normalized])
+      const row = lookup.rows[0]
+      if (!row) return undefined
 
-        await transaction.setIdentity({
-          accountId: row.account_id,
-          userId: row.user_id,
-        })
-        await transaction.query(
-          `insert into identity.tokens (user_id, purpose, token_hash, expires_at)
+      await transaction.setIdentity({
+        accountId: row.account_id,
+        userId: row.user_id,
+      })
+      await transaction.query(
+        `insert into identity.tokens (user_id, purpose, token_hash, expires_at)
            values ($1, 'password_reset', $2, now() + ($3::int * interval '1 millisecond'))`,
-          [row.user_id, tokenHash, PASSWORD_RESET_TTL_MS],
-        )
-        await this.audit(transaction.client, context, {
-          actorType: "user",
-          actorId: row.user_id,
-          action: "identity.password_reset_requested",
-          targetType: "user",
-          targetId: row.user_id,
-        })
-        return normalized
-      },
-    )
+        [row.user_id, tokenHash, PASSWORD_RESET_TTL_MS],
+      )
+      await this.audit(transaction.client, context, {
+        actorType: "user",
+        actorId: row.user_id,
+        action: "identity.password_reset_requested",
+        targetType: "user",
+        targetId: row.user_id,
+      })
+      return normalized
+    })
 
     if (!recipient) return
 
@@ -388,75 +372,61 @@ export class IdentityService {
     })
   }
 
-  async resetPassword(
-    token: string,
-    password: string,
-    context: RequestContext,
-  ): Promise<void> {
+  async resetPassword(token: string, password: string, context: RequestContext): Promise<void> {
     const tokenHash = hashSessionToken(token)
     const passwordHash = await hashPassword(password)
 
-    const completed = await this.database.withTransaction(
-      {},
-      async (transaction) => {
-        const lookup = await transaction.query<RecoveryRow>(
-          "select * from identity.find_password_reset_token($1)",
-          [tokenHash],
-        )
-        const row = lookup.rows[0]
-        if (!row) return false
+    const completed = await this.database.withTransaction({}, async (transaction) => {
+      const lookup = await transaction.query<RecoveryRow>(
+        "select * from identity.find_password_reset_token($1)",
+        [tokenHash],
+      )
+      const row = lookup.rows[0]
+      if (!row) return false
 
-        await transaction.setIdentity({
-          accountId: row.account_id,
-          userId: row.user_id,
-        })
-        const consumed = await transaction.query(
-          `update identity.tokens
+      await transaction.setIdentity({
+        accountId: row.account_id,
+        userId: row.user_id,
+      })
+      const consumed = await transaction.query(
+        `update identity.tokens
            set consumed_at = now()
            where token_hash = $1 and purpose = 'password_reset'
              and consumed_at is null and expires_at > now()
            returning id`,
-          [tokenHash],
-        )
-        if ((consumed.rowCount ?? 0) !== 1) return false
+        [tokenHash],
+      )
+      if ((consumed.rowCount ?? 0) !== 1) return false
 
-        await transaction.query(
-          `update identity.credentials
+      await transaction.query(
+        `update identity.credentials
            set password_hash = $1, password_updated_at = now(),
                failed_attempts = 0, locked_until = null
            where user_id = $2`,
-          [passwordHash, row.user_id],
-        )
-        await transaction.query(
-          `update identity.sessions
+        [passwordHash, row.user_id],
+      )
+      await transaction.query(
+        `update identity.sessions
            set revoked_at = now(), revoked_reason = 'password_reset'
            where user_id = $1 and revoked_at is null`,
-          [row.user_id],
-        )
-        await this.audit(transaction.client, context, {
-          actorType: "user",
-          actorId: row.user_id,
-          action: "identity.password_reset_completed",
-          targetType: "user",
-          targetId: row.user_id,
-        })
-        return true
-      },
-    )
+        [row.user_id],
+      )
+      await this.audit(transaction.client, context, {
+        actorType: "user",
+        actorId: row.user_id,
+        action: "identity.password_reset_completed",
+        targetType: "user",
+        targetId: row.user_id,
+      })
+      return true
+    })
 
     if (!completed) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "This reset token is invalid or has expired.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "This reset token is invalid or has expired.", 400)
     }
   }
 
-  async requestEmailVerification(
-    accessToken: string,
-    context: RequestContext,
-  ): Promise<void> {
+  async requestEmailVerification(accessToken: string, context: RequestContext): Promise<void> {
     const session = await this.getSession(accessToken, context)
     const token = createSessionToken()
     const tokenHash = hashSessionToken(token)
@@ -508,44 +478,40 @@ export class IdentityService {
   async verifyEmail(token: string, context: RequestContext): Promise<void> {
     const tokenHash = hashSessionToken(token)
 
-    const completed = await this.database.withTransaction(
-      {},
-      async (transaction) => {
-        const lookup = await transaction.query<RecoveryRow>(
-          "select * from identity.find_email_verification_token($1)",
-          [tokenHash],
-        )
-        const row = lookup.rows[0]
-        if (!row) return false
+    const completed = await this.database.withTransaction({}, async (transaction) => {
+      const lookup = await transaction.query<RecoveryRow>(
+        "select * from identity.find_email_verification_token($1)",
+        [tokenHash],
+      )
+      const row = lookup.rows[0]
+      if (!row) return false
 
-        await transaction.setIdentity({
-          accountId: row.account_id,
-          userId: row.user_id,
-        })
-        const consumed = await transaction.query(
-          `update identity.tokens
+      await transaction.setIdentity({
+        accountId: row.account_id,
+        userId: row.user_id,
+      })
+      const consumed = await transaction.query(
+        `update identity.tokens
            set consumed_at = now()
            where token_hash = $1 and purpose = 'email_verification'
              and consumed_at is null and expires_at > now()
            returning id`,
-          [tokenHash],
-        )
-        if ((consumed.rowCount ?? 0) !== 1) return false
+        [tokenHash],
+      )
+      if ((consumed.rowCount ?? 0) !== 1) return false
 
-        await transaction.query(
-          "update identity.users set email_verified_at = now() where id = $1",
-          [row.user_id],
-        )
-        await this.audit(transaction.client, context, {
-          actorType: "user",
-          actorId: row.user_id,
-          action: "identity.email_verified",
-          targetType: "user",
-          targetId: row.user_id,
-        })
-        return true
-      },
-    )
+      await transaction.query("update identity.users set email_verified_at = now() where id = $1", [
+        row.user_id,
+      ])
+      await this.audit(transaction.client, context, {
+        actorType: "user",
+        actorId: row.user_id,
+        action: "identity.email_verified",
+        targetType: "user",
+        targetId: row.user_id,
+      })
+      return true
+    })
 
     if (!completed) {
       throw new ApiError(
@@ -556,10 +522,7 @@ export class IdentityService {
     }
   }
 
-  async signIn(
-    input: SignInInput,
-    context: RequestContext,
-  ): Promise<SignInResult> {
+  async signIn(input: SignInInput, context: RequestContext): Promise<SignInResult> {
     const email = normalizeEmail(input.email)
     this.limitSignIn(email, context)
     const client = await this.database.pool.connect()
@@ -575,19 +538,14 @@ export class IdentityService {
       const row = lookup.rows[0]
 
       if (!row) {
-        await verifyPassword(await DUMMY_PASSWORD_HASH, input.password).catch(
-          () => false,
-        )
+        await verifyPassword(await DUMMY_PASSWORD_HASH, input.password).catch(() => false)
         throw new ApiError("UNAUTHENTICATED", "Invalid email or password.", 401)
       }
 
       if (row.user_status !== "active") {
         throw new ApiError("UNAUTHENTICATED", "Invalid email or password.", 401)
       }
-      if (
-        row.locked_until &&
-        new Date(row.locked_until).getTime() > Date.now()
-      ) {
+      if (row.locked_until && new Date(row.locked_until).getTime() > Date.now()) {
         throw rateLimited(
           (new Date(row.locked_until).getTime() - Date.now()) / 1_000,
           "Too many sign-in attempts.",
@@ -666,10 +624,7 @@ export class IdentityService {
 
     await client.query("begin")
     try {
-      await client.query("select platform.set_identity_context($1, $2)", [
-        accountId,
-        userId,
-      ])
+      await client.query("select platform.set_identity_context($1, $2)", [accountId, userId])
 
       const factor = await client.query(
         `select 1 from identity.mfa_factors
@@ -741,9 +696,7 @@ export class IdentityService {
     const now = Date.now()
     const expiresAt = new Date(now + policy.absoluteMs)
     const idleExpiresAt = new Date(now + policy.idleMs)
-    const accessExpiresAt = new Date(
-      Math.min(now + policy.accessMs, expiresAt.getTime()),
-    )
+    const accessExpiresAt = new Date(Math.min(now + policy.accessMs, expiresAt.getTime()))
 
     let deviceId: string | null = null
     if (input.deviceName) {
@@ -797,10 +750,7 @@ export class IdentityService {
     }
   }
 
-  async getSession(
-    token: string,
-    context: RequestContext,
-  ): Promise<CurrentSession> {
+  async getSession(token: string, context: RequestContext): Promise<CurrentSession> {
     const tokenHash = hashSessionToken(token)
     const client = await this.database.pool.connect()
 
@@ -818,18 +768,12 @@ export class IdentityService {
       }>("select * from identity.find_session_by_access($1)", [tokenHash])
       const session = lookup.rows[0]
       if (!session) {
-        throw new ApiError(
-          "UNAUTHENTICATED",
-          "A valid session is required.",
-          401,
-        )
+        throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)
       }
       this.assertSessionIsUsable(session, context)
 
       const now = Date.now()
-      const idleExpiresAt = new Date(
-        now + sessionPolicy(context.audience).idleMs,
-      )
+      const idleExpiresAt = new Date(now + sessionPolicy(context.audience).idleMs)
 
       await client.query("begin")
       try {
@@ -843,9 +787,10 @@ export class IdentityService {
           account_status: string
           display_name: string | null
           email: string
+          kyc_tier: KycTier
         }>(
           `select u.status as user_status, a.status as account_status,
-                  u.display_name, u.email
+                  u.display_name, u.email, a.kyc_tier
            from identity.users u
            join identity.accounts a on a.id = u.account_id
            where u.id = $1`,
@@ -853,11 +798,7 @@ export class IdentityService {
         )
         const profile = status.rows[0]
 
-        if (
-          !profile ||
-          profile.user_status !== "active" ||
-          profile.account_status !== "active"
-        ) {
+        if (!profile || profile.user_status !== "active" || profile.account_status !== "active") {
           await client.query(
             `update identity.sessions
              set revoked_at = now(), revoked_reason = 'user_suspended'
@@ -865,11 +806,7 @@ export class IdentityService {
             [session.user_id],
           )
           await client.query("commit")
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "A valid session is required.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)
         }
 
         await client.query(
@@ -877,10 +814,7 @@ export class IdentityService {
           [idleExpiresAt.toISOString(), session.session_id],
         )
 
-        const activities = await listActiveActivities(
-          client,
-          session.account_id,
-        )
+        const activities = await listActiveActivities(client, session.account_id)
 
         const grants = await client.query<{
           scope: string
@@ -900,6 +834,7 @@ export class IdentityService {
               environment: context.environment,
               activities,
               grants: grants.rows,
+              kycTier: profile.kyc_tier,
             }),
           ),
         ]
@@ -926,6 +861,7 @@ export class IdentityService {
             state: activity.state,
           })),
           capabilities,
+          kycTier: profile.kyc_tier,
         }
       } catch (error) {
         await client.query("rollback").catch(() => undefined)
@@ -983,10 +919,7 @@ export class IdentityService {
    * Revokes the session that owns a refresh token. Used by sign-out when the
    * access cookie has already expired but the refresh cookie is still present.
    */
-  async signOutByRefresh(
-    refreshToken: string,
-    context: RequestContext,
-  ): Promise<void> {
+  async signOutByRefresh(refreshToken: string, context: RequestContext): Promise<void> {
     const client = await this.database.pool.connect()
 
     try {
@@ -996,10 +929,7 @@ export class IdentityService {
       )
       const found = lookup.rows[0]
       if (!found) return
-      if (
-        found.audience !== context.audience ||
-        found.environment !== context.environment
-      ) {
+      if (found.audience !== context.audience || found.environment !== context.environment) {
         return
       }
       if (found.session_revoked_at) return
@@ -1039,10 +969,7 @@ export class IdentityService {
    * impossible. A spent token presented outside the retry leeway is treated as
    * theft: the whole session is revoked and the event is audited.
    */
-  async refresh(
-    refreshToken: string,
-    context: RequestContext,
-  ): Promise<IssuedSession> {
+  async refresh(refreshToken: string, context: RequestContext): Promise<IssuedSession> {
     const client = await this.database.pool.connect()
 
     try {
@@ -1052,21 +979,10 @@ export class IdentityService {
       )
       const found = lookup.rows[0]
       if (!found) {
-        throw new ApiError(
-          "UNAUTHENTICATED",
-          "The refresh token is invalid or has expired.",
-          401,
-        )
+        throw new ApiError("UNAUTHENTICATED", "The refresh token is invalid or has expired.", 401)
       }
-      if (
-        found.audience !== context.audience ||
-        found.environment !== context.environment
-      ) {
-        throw new ApiError(
-          "FORBIDDEN",
-          "This refresh token belongs to another portal.",
-          403,
-        )
+      if (found.audience !== context.audience || found.environment !== context.environment) {
+        throw new ApiError("FORBIDDEN", "This refresh token belongs to another portal.", 403)
       }
 
       let committed = false
@@ -1101,33 +1017,23 @@ export class IdentityService {
           )
           await client.query("commit")
           committed = true
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "A valid session is required.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)
         }
 
         const locked = await client.query<{
           used_at: string | null
           expires_at: string
-        }>(
-          "select used_at, expires_at from identity.refresh_tokens where id = $1 for update",
-          [found.refresh_id],
-        )
+        }>("select used_at, expires_at from identity.refresh_tokens where id = $1 for update", [
+          found.refresh_id,
+        ])
         const token = locked.rows[0]
         if (!token) {
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "The refresh token is invalid or has expired.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "The refresh token is invalid or has expired.", 401)
         }
 
         if (token.used_at) {
           const withinLeeway =
-            Date.now() - new Date(token.used_at).getTime() <=
-            REFRESH_REUSE_LEEWAY_MS
+            Date.now() - new Date(token.used_at).getTime() <= REFRESH_REUSE_LEEWAY_MS
           if (!withinLeeway) {
             await client.query(
               `update identity.sessions
@@ -1145,11 +1051,7 @@ export class IdentityService {
           }
           await client.query("commit")
           committed = true
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "The refresh token has already been used.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "The refresh token has already been used.", 401)
         }
 
         const now = Date.now()
@@ -1170,11 +1072,7 @@ export class IdentityService {
           new Date(current.idle_expires_at).getTime() <= now ||
           new Date(token.expires_at).getTime() <= now
         ) {
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "The refresh token is invalid or has expired.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "The refresh token is invalid or has expired.", 401)
         }
 
         const policy = sessionPolicy(context.audience)
@@ -1183,10 +1081,7 @@ export class IdentityService {
         const nextRefreshToken = createSessionToken()
         const nextRefreshTokenHash = hashSessionToken(nextRefreshToken)
         const accessExpiresAt = new Date(
-          Math.min(
-            now + policy.accessMs,
-            new Date(current.expires_at).getTime(),
-          ),
+          Math.min(now + policy.accessMs, new Date(current.expires_at).getTime()),
         )
         const idleExpiresAt = new Date(
           Math.min(now + policy.idleMs, new Date(current.expires_at).getTime()),
@@ -1257,16 +1152,9 @@ export class IdentityService {
     }
   }
 
-  async enrollTotp(
-    token: string,
-    context: RequestContext,
-  ): Promise<MfaEnrollment> {
+  async enrollTotp(token: string, context: RequestContext): Promise<MfaEnrollment> {
     if (context.audience !== "app") {
-      throw new ApiError(
-        "FORBIDDEN",
-        "Enrol an authenticator on the main portal.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "Enrol an authenticator on the main portal.", 403)
     }
     const cipher = this.cipher()
     const client = await this.database.pool.connect()
@@ -1318,11 +1206,7 @@ export class IdentityService {
     context: RequestContext,
   ): Promise<RecoveryCodeSet> {
     if (context.audience !== "app") {
-      throw new ApiError(
-        "FORBIDDEN",
-        "Enrol an authenticator on the main portal.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "Enrol an authenticator on the main portal.", 403)
     }
     const cipher = this.cipher()
     const client = await this.database.pool.connect()
@@ -1349,11 +1233,7 @@ export class IdentityService {
 
         const secret = cipher.decrypt(pending.secret_ciphertext)
         if (!verifyTotp(secret, input.code)) {
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "The verification code is not valid.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "The verification code is not valid.", 401)
         }
 
         const recoveryCodes = generateRecoveryCodes()
@@ -1361,20 +1241,18 @@ export class IdentityService {
           "update identity.mfa_factors set confirmed_at = now(), last_used_at = now() where id = $1",
           [input.factorId],
         )
-        await client.query(
-          "delete from identity.recovery_codes where user_id = $1",
-          [session.user_id],
-        )
+        await client.query("delete from identity.recovery_codes where user_id = $1", [
+          session.user_id,
+        ])
         for (const code of recoveryCodes) {
           await client.query(
             "insert into identity.recovery_codes (user_id, code_hash) values ($1, $2)",
             [session.user_id, hashRecoveryCode(code)],
           )
         }
-        await client.query(
-          "update identity.sessions set mfa_satisfied_at = now() where id = $1",
-          [session.session_id],
-        )
+        await client.query("update identity.sessions set mfa_satisfied_at = now() where id = $1", [
+          session.session_id,
+        ])
         await this.audit(client, context, {
           actorType: "user",
           actorId: session.user_id,
@@ -1394,10 +1272,7 @@ export class IdentityService {
     }
   }
 
-  async verifyMfa(
-    input: MfaVerificationInput,
-    context: RequestContext,
-  ): Promise<IssuedSession> {
+  async verifyMfa(input: MfaVerificationInput, context: RequestContext): Promise<IssuedSession> {
     this.limitOtp(hashSessionToken(input.challengeToken), context)
     const client = await this.database.pool.connect()
 
@@ -1442,10 +1317,9 @@ export class IdentityService {
         const locked = await client.query<{
           attempts: number
           consumed_at: string | null
-        }>(
-          "select attempts, consumed_at from identity.mfa_challenges where id = $1 for update",
-          [challenge.challenge_id],
-        )
+        }>("select attempts, consumed_at from identity.mfa_challenges where id = $1 for update", [
+          challenge.challenge_id,
+        ])
         const current = locked.rows[0]
         if (!current || current.consumed_at) {
           throw new ApiError(
@@ -1458,11 +1332,7 @@ export class IdentityService {
           throw rateLimited(60, "Too many verification attempts.")
         }
 
-        const verified = await this.verifySecondFactor(
-          client,
-          challenge.user_id,
-          input.code,
-        )
+        const verified = await this.verifySecondFactor(client, challenge.user_id, input.code)
         if (!verified) {
           await client.query(
             "update identity.mfa_challenges set attempts = attempts + 1 where id = $1",
@@ -1470,17 +1340,12 @@ export class IdentityService {
           )
           await client.query("commit")
           committed = true
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "The verification code is not valid.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "The verification code is not valid.", 401)
         }
 
-        await client.query(
-          "update identity.mfa_challenges set consumed_at = now() where id = $1",
-          [challenge.challenge_id],
-        )
+        await client.query("update identity.mfa_challenges set consumed_at = now() where id = $1", [
+          challenge.challenge_id,
+        ])
         const user = await client.query<{ email: string }>(
           "select email from identity.users where id = $1",
           [challenge.user_id],
@@ -1500,10 +1365,9 @@ export class IdentityService {
           deviceName: challenge.device_name ?? undefined,
           context,
         })
-        await client.query(
-          "update identity.sessions set mfa_satisfied_at = now() where id = $1",
-          [issued.sessionId],
-        )
+        await client.query("update identity.sessions set mfa_satisfied_at = now() where id = $1", [
+          issued.sessionId,
+        ])
         await this.audit(client, context, {
           actorType: "user",
           actorId: challenge.user_id,
@@ -1536,11 +1400,7 @@ export class IdentityService {
     }
   }
 
-  async stepUp(
-    token: string,
-    code: string,
-    context: RequestContext,
-  ): Promise<SessionResult> {
+  async stepUp(token: string, code: string, context: RequestContext): Promise<SessionResult> {
     this.limitOtp(hashSessionToken(token), context)
     const client = await this.database.pool.connect()
 
@@ -1553,17 +1413,9 @@ export class IdentityService {
           session.account_id,
           session.user_id,
         ])
-        const verified = await this.verifySecondFactor(
-          client,
-          session.user_id,
-          code,
-        )
+        const verified = await this.verifySecondFactor(client, session.user_id, code)
         if (!verified) {
-          throw new ApiError(
-            "UNAUTHENTICATED",
-            "The verification code is not valid.",
-            401,
-          )
+          throw new ApiError("UNAUTHENTICATED", "The verification code is not valid.", 401)
         }
         await client.query(
           "update identity.sessions set mfa_satisfied_at = now(), last_seen_at = now() where id = $1",
@@ -1588,10 +1440,7 @@ export class IdentityService {
     }
   }
 
-  async listSessions(
-    token: string,
-    context: RequestContext,
-  ): Promise<SessionSummary[]> {
+  async listSessions(token: string, context: RequestContext): Promise<SessionSummary[]> {
     const client = await this.database.pool.connect()
 
     try {
@@ -1646,11 +1495,7 @@ export class IdentityService {
     }
   }
 
-  async revokeSession(
-    token: string,
-    sessionId: string,
-    context: RequestContext,
-  ): Promise<void> {
+  async revokeSession(token: string, sessionId: string, context: RequestContext): Promise<void> {
     const client = await this.database.pool.connect()
 
     try {
@@ -1688,10 +1533,7 @@ export class IdentityService {
     }
   }
 
-  async revokeOtherSessions(
-    token: string,
-    context: RequestContext,
-  ): Promise<number> {
+  async revokeOtherSessions(token: string, context: RequestContext): Promise<number> {
     const client = await this.database.pool.connect()
 
     try {
@@ -1725,6 +1567,168 @@ export class IdentityService {
     } finally {
       client.release()
     }
+  }
+
+  /**
+   * The account's verified legal name, or null while it is unset. Finance calls
+   * this to compare a provider-resolved bank account name; it never reads
+   * `identity.accounts` directly.
+   */
+  async getAccountLegalName(accountId: string, userId: string): Promise<string | null> {
+    return this.database.withTransaction(
+      { identity: { accountId, userId } },
+      async (transaction) => {
+        const result = await transaction.query<{ legal_name: string | null }>(
+          "select legal_name from identity.accounts where id = $1",
+          [accountId],
+        )
+        return result.rows[0]?.legal_name ?? null
+      },
+    )
+  }
+
+  /**
+   * The active fund-transaction hold, or null. A deposit above the tier's CBN
+   * cap sets `kyc_upgrade_required`; every fund transaction must check it.
+   */
+  async getFinancialHold(accountId: string, userId: string): Promise<string | null> {
+    return this.database.withTransaction(
+      { identity: { accountId, userId } },
+      async (transaction) => {
+        const result = await transaction.query<{
+          financial_hold_reason: string | null
+        }>("select financial_hold_reason from identity.accounts where id = $1", [accountId])
+        return result.rows[0]?.financial_hold_reason ?? null
+      },
+    )
+  }
+
+  /**
+   * Assigns the effective KYC tier. Only the approved `tier_0`/`tier_1` values
+   * are accepted; the database function re-checks the verifier permission. The
+   * caller must be a control-portal verifier.
+   */
+  async setKycTier(input: SetKycTierInput): Promise<KycTierView> {
+    if (!kycTierSchema.safeParse(input.tier).success) {
+      throw new ApiError("VALIDATION_FAILED", "The KYC tier is not defined.", 400)
+    }
+    const reason = input.reason.trim()
+    if (reason.length < 5) {
+      throw new ApiError(
+        "VALIDATION_FAILED",
+        "A KYC tier change needs a reason of at least five characters.",
+        400,
+      )
+    }
+
+    try {
+      return await this.database.withTransaction(
+        { identity: { accountId: input.accountId, userId: input.actorUserId } },
+        async (transaction) => {
+          const before = await transaction.query<{ kyc_tier: KycTier }>(
+            "select kyc_tier from identity.accounts where id = $1",
+            [input.accountId],
+          )
+          const previous = before.rows[0]?.kyc_tier
+
+          const result = await transaction.query<{
+            account_id: string
+            kyc_tier: KycTier
+            updated_at: string | Date
+          }>("select * from identity.set_kyc_tier($1, $2, $3, $4)", [
+            input.actorUserId,
+            input.accountId,
+            input.tier,
+            reason,
+          ])
+          const row = result.rows[0]
+          if (!row) {
+            throw new Error("The KYC tier update returned no row.")
+          }
+
+          await appendAudit(transaction.client, {
+            actorType: "admin",
+            actorId: input.actorUserId,
+            actorAudience: input.context.audience,
+            environment: input.context.environment,
+            action: "identity.kyc_tier_changed",
+            targetType: "account",
+            targetId: input.accountId,
+            beforeSummary: previous ? { tier: previous } : undefined,
+            afterSummary: { tier: row.kyc_tier },
+            reason,
+            capability: "admin.verification.review",
+            ip: input.context.ip,
+            userAgent: input.context.userAgent,
+            correlationId: input.context.correlationId,
+          })
+
+          return {
+            accountId: row.account_id,
+            tier: row.kyc_tier,
+            updatedAt:
+              row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
+          }
+        },
+      )
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error as { code?: unknown }).code
+          : undefined
+      if (code === "42501") {
+        throw new ApiError("FORBIDDEN", "You do not have permission to change a KYC tier.", 403)
+      }
+      if (code === "P0002") {
+        throw new ApiError("NOT_FOUND", "The account was not found.", 404)
+      }
+      if (code === "22023") {
+        throw new ApiError("VALIDATION_FAILED", "The KYC tier change is not valid.", 400)
+      }
+      throw error instanceof Error ? error : new Error("The KYC tier change failed.")
+    }
+  }
+
+  /**
+   * The active fund-transaction hold, read on the caller's transaction so a
+   * financial write and its hold check share one snapshot.
+   */
+  async readFinancialHoldInTransaction(
+    transaction: TransactionContext,
+    accountId: string,
+  ): Promise<string | null> {
+    const result = await transaction.query<{
+      financial_hold_reason: string | null
+    }>("select financial_hold_reason from identity.accounts where id = $1", [accountId])
+    return result.rows[0]?.financial_hold_reason ?? null
+  }
+
+  /** Sets the KYC-upgrade hold on the caller's transaction. */
+  async holdForKycUpgradeInTransaction(
+    transaction: TransactionContext,
+    accountId: string,
+  ): Promise<void> {
+    await transaction.query(
+      `update identity.accounts
+          set financial_hold_reason = 'kyc_upgrade_required',
+              financial_hold_at = now(),
+              updated_at = now()
+        where id = $1 and financial_hold_reason is null`,
+      [accountId],
+    )
+  }
+
+  /** Reads the effective KYC tier on the caller's transaction. */
+  async getKycTierInTransaction(
+    transaction: TransactionContext,
+    accountId: string,
+  ): Promise<string> {
+    const result = await transaction.query<{ kyc_tier: string }>(
+      "select kyc_tier from identity.accounts where id = $1",
+      [accountId],
+    )
+    return result.rows[0]?.kyc_tier ?? "tier_0"
   }
 
   private cipher(): MfaCipher {
@@ -1775,10 +1779,9 @@ export class IdentityService {
     for (const factor of factors.rows) {
       try {
         if (verifyTotp(cipher.decrypt(factor.secret_ciphertext), code)) {
-          await client.query(
-            "update identity.mfa_factors set last_used_at = now() where id = $1",
-            [factor.id],
-          )
+          await client.query("update identity.mfa_factors set last_used_at = now() where id = $1", [
+            factor.id,
+          ])
           return true
         }
       } catch {
@@ -1793,10 +1796,9 @@ export class IdentityService {
     )
     const match = recovery.rows[0]
     if (match) {
-      await client.query(
-        "update identity.recovery_codes set used_at = now() where id = $1",
-        [match.id],
-      )
+      await client.query("update identity.recovery_codes set used_at = now() where id = $1", [
+        match.id,
+      ])
       return true
     }
     return false
@@ -1830,18 +1832,10 @@ export class IdentityService {
       throw new ApiError("UNAUTHENTICATED", "A valid session is required.", 401)
     }
     if (session.audience !== context.audience) {
-      throw new ApiError(
-        "FORBIDDEN",
-        "This session belongs to another portal.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "This session belongs to another portal.", 403)
     }
     if (session.environment !== context.environment) {
-      throw new ApiError(
-        "FORBIDDEN",
-        "This session belongs to another environment.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "This session belongs to another environment.", 403)
     }
     if (options.includeExpiry === false) return
 
@@ -1863,10 +1857,7 @@ export class IdentityService {
   ): Promise<void> {
     await client.query("begin")
     try {
-      await client.query("select platform.set_identity_context($1, $2)", [
-        accountId,
-        userId,
-      ])
+      await client.query("select platform.set_identity_context($1, $2)", [accountId, userId])
       await client.query(
         `update identity.credentials
          set failed_attempts = failed_attempts + 1,

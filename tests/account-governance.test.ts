@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
+import { testProviderConfig } from "./support/api-config"
 import { DatabaseService } from "../server/src/db/database.service"
 import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
@@ -53,10 +54,7 @@ describeIntegration("account governance integration", () => {
   let amaraId: string
   let amaraSecret: string
 
-  async function registerAndEnroll(
-    email: string,
-    password: string,
-  ): Promise<EnrolledUser> {
+  async function registerAndEnroll(email: string, password: string): Promise<EnrolledUser> {
     const registered = await app.inject({
       method: "POST",
       url: "/v1/auth/register",
@@ -73,10 +71,7 @@ describeIntegration("account governance integration", () => {
       payload: { email, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const appCookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -97,11 +92,7 @@ describeIntegration("account governance integration", () => {
     return { userId, secret }
   }
 
-  async function controlCookie(
-    email: string,
-    password: string,
-    secret: string,
-  ) {
+  async function controlCookie(email: string, password: string, secret: string) {
     const challenge = await app.inject({
       method: "POST",
       url: "/v1/auth/sign-in",
@@ -119,124 +110,102 @@ describeIntegration("account governance integration", () => {
       },
     })
     expect(verified.statusCode).toBe(200)
-    return cookieHeader(
-      readCookies(verified.headers),
-      "__Host-hivorr_control_sid",
-    )
+    return cookieHeader(readCookies(verified.headers), "__Host-hivorr_control_sid")
   }
 
-  beforeAll(
-    async () => {
-      admin = new Client({ connectionString: baseUrl })
-      await admin.connect()
-      await admin.query(`create database "${databaseName}"`)
+  beforeAll(async () => {
+    admin = new Client({ connectionString: baseUrl })
+    await admin.connect()
+    await admin.query(`create database "${databaseName}"`)
 
-      const url = new URL(baseUrl!)
-      url.pathname = `/${databaseName}`
-      const testUrl = url.toString()
+    const url = new URL(baseUrl!)
+    url.pathname = `/${databaseName}`
+    const testUrl = url.toString()
 
-      setup = new Client({ connectionString: testUrl })
-      await setup.connect()
+    setup = new Client({ connectionString: testUrl })
+    await setup.connect()
 
-      const migrationsDirectory = path.join(
-        process.cwd(),
-        "supabase",
-        "migrations",
-      )
-      for (const file of readdirSync(migrationsDirectory)
-        .filter((entry) => entry.endsWith(".sql"))
-        .sort()) {
-        await setup.query(
-          readFileSync(path.join(migrationsDirectory, file), "utf8"),
-        )
-      }
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
+    for (const file of readdirSync(migrationsDirectory)
+      .filter((entry) => entry.endsWith(".sql"))
+      .sort()) {
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
+    }
 
-      const config: ApiConfig = {
-        environment: "staging",
-        backendEnvironment: "staging",
-        supabaseProjectRef: "abcdefghijklmnopqrst",
-        port: 3000,
-        host: "127.0.0.1",
-        logLevel: "silent",
-        sessionIssuer: "hivorr-staging",
-        mfaEncryptionKey: Buffer.alloc(32, 7).toString("base64"),
+    const config: ApiConfig = {
+      ...testProviderConfig,
+      environment: "staging",
+      backendEnvironment: "staging",
+      supabaseProjectRef: "abcdefghijklmnopqrst",
+      port: 3000,
+      host: "127.0.0.1",
+      logLevel: "silent",
+      sessionIssuer: "hivorr-staging",
+      mfaEncryptionKey: Buffer.alloc(32, 7).toString("base64"),
+      databaseUrl: testUrl,
+      corsAllowedOrigins: [],
+      trustProxy: false,
+      auth: {
+        rateLimitWindowMs: 60_000,
+        identifierMax: 100,
+        ipMax: 1_000,
+        lockoutAttempts: 5,
+        lockoutMs: 15 * 60 * 1_000,
+      },
+      worker: {
         databaseUrl: testUrl,
-        corsAllowedOrigins: [],
-        trustProxy: false,
-        auth: {
-          rateLimitWindowMs: 60_000,
-          identifierMax: 100,
-          ipMax: 1_000,
-          lockoutAttempts: 5,
-          lockoutMs: 15 * 60 * 1_000,
-        },
-        worker: {
-          databaseUrl: testUrl,
-          pollIntervalMs: 1_000,
-          batchSize: 20,
-          leaseMs: 60_000,
-          maxAttempts: 5,
-          retryBaseMs: 5_000,
-          healthPort: 3001,
-          healthHost: "127.0.0.1",
-          workerId: "accounts-test-worker",
-        },
-      }
-      database = new DatabaseService(config)
-      const created = await createApplication(config)
-      app = created.app
-      await app.init()
-      await app.getHttpAdapter().getInstance().ready()
+        pollIntervalMs: 1_000,
+        batchSize: 20,
+        leaseMs: 60_000,
+        maxAttempts: 5,
+        retryBaseMs: 5_000,
+        healthPort: 3001,
+        healthHost: "127.0.0.1",
+        workerId: "accounts-test-worker",
+      },
+    }
+    database = new DatabaseService(config)
+    const created = await createApplication(config)
+    app = created.app
+    await app.init()
+    await app.getHttpAdapter().getInstance().ready()
 
-      const adminUser = await registerAndEnroll(
-        "admin@example.test",
-        "admin-test-password",
-      )
-      adminId = adminUser.userId
-      const workerUser = await registerAndEnroll(
-        "worker@example.test",
-        "worker-test-password",
-      )
-      const amaraUser = await registerAndEnroll(
-        "amara@example.test",
-        "amara-test-password",
-      )
-      amaraId = amaraUser.userId
-      amaraSecret = amaraUser.secret
+    const adminUser = await registerAndEnroll("admin@example.test", "admin-test-password")
+    adminId = adminUser.userId
+    const workerUser = await registerAndEnroll("worker@example.test", "worker-test-password")
+    const amaraUser = await registerAndEnroll("amara@example.test", "amara-test-password")
+    amaraId = amaraUser.userId
+    amaraSecret = amaraUser.secret
 
-      // The account-governance permission is bootstrapped out of band.
-      await setup.query(
-        "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.user.manage', 'platform')",
-        [adminId],
-      )
+    // The account-governance permission is bootstrapped out of band.
+    await setup.query(
+      "insert into admin.permission_grants (user_id, permission_key, scope_type) values ($1, 'admin.user.manage', 'platform')",
+      [adminId],
+    )
 
-      adminControlCookie = await controlCookie(
-        "admin@example.test",
-        "admin-test-password",
-        adminUser.secret,
-      )
-      workerControlCookie = await controlCookie(
-        "worker@example.test",
-        "worker-test-password",
-        workerUser.secret,
-      )
-      amaraControlCookie = await controlCookie(
-        "amara@example.test",
-        "amara-test-password",
-        amaraSecret,
-      )
-    },
-    60_000,
-  )
+    adminControlCookie = await controlCookie(
+      "admin@example.test",
+      "admin-test-password",
+      adminUser.secret,
+    )
+    workerControlCookie = await controlCookie(
+      "worker@example.test",
+      "worker-test-password",
+      workerUser.secret,
+    )
+    amaraControlCookie = await controlCookie(
+      "amara@example.test",
+      "amara-test-password",
+      amaraSecret,
+    )
+  }, 60_000)
 
   afterAll(async () => {
     if (app) await app.close()
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -338,9 +307,9 @@ describeIntegration("account governance integration", () => {
       headers: { host: controlHost, cookie: adminControlCookie },
     })
     expect(notes.statusCode).toBe(200)
-    expect(
-      (notes.json() as Array<{ body: string }>).map((row) => row.body),
-    ).toContain("Closure confirmed by email on 13 November")
+    expect((notes.json() as Array<{ body: string }>).map((row) => row.body)).toContain(
+      "Closure confirmed by email on 13 November",
+    )
 
     const timeline = await app.inject({
       method: "GET",
@@ -348,9 +317,7 @@ describeIntegration("account governance integration", () => {
       headers: { host: controlHost, cookie: adminControlCookie },
     })
     expect(timeline.statusCode).toBe(200)
-    const actions = (timeline.json() as Array<{ action: string }>).map(
-      (row) => row.action,
-    )
+    const actions = (timeline.json() as Array<{ action: string }>).map((row) => row.action)
     expect(actions).toContain("account.suspended")
     expect(actions).toContain("account.sessions_revoked")
     expect(actions).toContain("account.note_added")
@@ -359,12 +326,8 @@ describeIntegration("account governance integration", () => {
       "select action, reason, capability from platform.audit_log where target_id = $1 and action like 'account.%' order by occurred_at",
       [amaraId],
     )
-    expect(audit.rows.map((row) => row.action)).toContain(
-      "account.sessions_revoked",
-    )
-    expect(
-      audit.rows.every((row) => row.capability === "admin.user.manage"),
-    ).toBe(true)
+    expect(audit.rows.map((row) => row.action)).toContain("account.sessions_revoked")
+    expect(audit.rows.every((row) => row.capability === "admin.user.manage")).toBe(true)
     expect(audit.rows.map((row) => row.reason)).toContain("Device lost")
   })
 })

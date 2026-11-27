@@ -132,9 +132,62 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` — self-service API, automatic execution and a minimal KYC tier source built; verification wiring and DB certification deferred |
+| **Execution date** | 2026-11-23 |
+| **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-053.md` |
+| **Blocked by** | Per-tier evidence rules and verification-to-tier wiring (`EP-02-015`); `VFD_SOURCE_ACCOUNT`; database integration gate |
+| **Notes** | Founder ruling 2026-11-23: a user must be able to withdraw their own funds without staff approval. `POST /v1/wallet/withdrawals` is self-service; the manual maker-checker is removed from scope. |
+
+## 14. Partial increment record
+
+**Built in this increment**
+
+- `finance.payout_requests` with the approved `PAYOUT_STATES`, owner-scoped RLS, a `REQUESTED`-only
+  insert and a guarded update path (`20261123000200`, `20261123000300`).
+- `PayoutRequestService.request` refuses a missing/sub-`tier_1` tier, an active KYC-upgrade hold, an
+  invalid or non-NGN amount, an unbound or unverified destination, an unmet `withdrawal` limit and an
+  insufficient balance.
+- Unique per-account idempotency; replay returns the first request, a changed amount/destination is a
+  conflict. `list` projects only the last four.
+- `PayoutExecutionService.execute` posts the reserve (wallet credit, payout-payable debit), calls the
+  provider with the request id as the idempotency key, and settles `PAID`/`PROCESSING`/`FAILED`.
+- A definitive failure posts a `reversal` entry in the same transaction as `FAILED`; a timeout or
+  duplicate stays `PROCESSING` without a reversal.
+- `finance.ensure_ledger_account` provisions the wallet and payout-payable accounts transactionally.
+- `LedgerService.postEntryInTransaction` lets the reserve/reversal share the request transaction.
+- Audits: requested, reserved, execution started, processing, paid, failed.
+
+**Open items**
+
+- `EP-02-015` must set the tier from a verification decision; today a verifier assigns it through
+  `POST /v1/control/accounts/{id}/kyc-tier`.
+- The CBN daily withdrawal limits are seeded at ₦30,000/₦100,000/₦1,000,000 for
+  `tier_1`/`tier_2`/`tier_3`; the single-deposit caps are ₦20,000/₦50,000/unlimited. `EP-02-052` must
+  call `DepositEligibilityService`; an over-cap deposit sets a hold that blocks withdrawals.
+  `VFD_SOURCE_ACCOUNT` must still be configured.
+- Provider reference linkage to `finance.provider_references` remains for reconciliation/audit coverage.
+- `pnpm test:db`/`db:snapshot` must run in CI; no local PostgreSQL was available.
+- `EP-02-054` adds the independent RLS eligibility gate.
+
+**Self-service API**
+
+- `POST /v1/wallet/withdrawals` creates and executes a withdrawal for the signed-in account; there is
+  no staff approval.
+- `GET /v1/wallet/payouts` lists the caller's payout requests, last four only.
+- The controller passes the session `kycTier`; a body field cannot raise the tier.
+
+## 15. Founder scope amendment — 2026-11-23
+
+The founder directed that **a user must be able to withdraw their own funds without staff approval**.
+A user who needs money urgently must not wait for an administrator.
+
+This supersedes the manual-payout maker-checker clauses in §3.1, §4 R-07 and §9 DoD-01:
+
+- a user withdrawal is self-service once the account is `tier_1` or above, the destination is bound and
+  verified, the configured limit is met and the balance covers the amount;
+- staff approval is **not** part of the user withdrawal path;
+- the manual-payout approval model is removed from this task's required scope. If an operational
+  correction path is ever needed, it is a separate task with its own decision;
+- the automatic request, reserve, provider call, settlement and reversal path is the authoritative
+  implementation.
 

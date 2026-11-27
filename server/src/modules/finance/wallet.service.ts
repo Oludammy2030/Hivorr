@@ -92,10 +92,7 @@ function toStatementEntry(row: StatementRow): WalletStatementEntry {
     amount: row.amount,
     signedAmount: row.signed_amount,
     activityId: row.activity_id as WalletStatementEntry["activityId"],
-    occurredAt:
-      row.occurred_at instanceof Date
-        ? row.occurred_at.toISOString()
-        : row.occurred_at,
+    occurredAt: row.occurred_at instanceof Date ? row.occurred_at.toISOString() : row.occurred_at,
   }
 }
 
@@ -112,11 +109,7 @@ function requireCurrency(currency: string): string {
 
 function resolveLimit(limit: number | undefined): number {
   if (limit === undefined) return DEFAULT_STATEMENT_LIMIT
-  if (
-    !Number.isInteger(limit) ||
-    limit < 1 ||
-    limit > MAXIMUM_STATEMENT_LIMIT
-  ) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAXIMUM_STATEMENT_LIMIT) {
     throw new ApiError(
       "VALIDATION_FAILED",
       `A statement page is between 1 and ${MAXIMUM_STATEMENT_LIMIT} rows.`,
@@ -128,9 +121,7 @@ function resolveLimit(limit: number | undefined): number {
 
 @Injectable()
 export class WalletService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   /** Every currency the account currently holds a wallet figure for. */
   async balances(context: WalletReadContext): Promise<WalletBalanceView[]> {
@@ -154,10 +145,7 @@ export class WalletService {
    * than "not found": a wallet exists from registration, its ledger account and
    * postings arrive with the first money movement.
    */
-  async balance(
-    context: WalletReadContext,
-    currency: string,
-  ): Promise<WalletBalanceView> {
+  async balance(context: WalletReadContext, currency: string): Promise<WalletBalanceView> {
     const code = requireCurrency(currency)
 
     return this.database.withTransaction(
@@ -184,8 +172,7 @@ export class WalletService {
     query: WalletStatementQuery = {},
   ): Promise<WalletStatementEntry[]> {
     const limit = resolveLimit(query.limit)
-    const currency =
-      query.currency === undefined ? null : requireCurrency(query.currency)
+    const currency = query.currency === undefined ? null : requireCurrency(query.currency)
 
     let activityId: string | null = null
     if (query.activityId !== undefined) {

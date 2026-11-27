@@ -73,20 +73,14 @@ describe("ledger idempotency", () => {
     expect(
       hashLedgerEntry({
         ...input,
-        postings: [
-          { ...input.postings[0]!, amount: "100.2" },
-          input.postings[1]!,
-        ],
+        postings: [{ ...input.postings[0]!, amount: "100.2" }, input.postings[1]!],
       }),
     ).not.toBe(original)
 
     expect(
       hashLedgerEntry({
         ...input,
-        postings: [
-          { ...input.postings[0]!, accountId: randomUUID() },
-          input.postings[1]!,
-        ],
+        postings: [{ ...input.postings[0]!, accountId: randomUUID() }, input.postings[1]!],
       }),
     ).not.toBe(original)
 

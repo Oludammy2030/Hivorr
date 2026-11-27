@@ -53,9 +53,7 @@ export function evaluateFounderApproval(input) {
     issues.push("the founder GitHub login is not configured")
   }
   if (!issue) {
-    issues.push(
-      `no issue labelled ${RELEASE_CANDIDATE_LABEL} was found for this release`,
-    )
+    issues.push(`no issue labelled ${RELEASE_CANDIDATE_LABEL} was found for this release`)
     return { ok: false, issues, approval: null }
   }
   if (issue.pull_request) {
@@ -72,9 +70,7 @@ export function evaluateFounderApproval(input) {
 
   const founder = String(founderLogin ?? "").toLowerCase()
   const founderComments = (comments ?? [])
-    .filter(
-      (comment) => String(comment?.user?.login ?? "").toLowerCase() === founder,
-    )
+    .filter((comment) => String(comment?.user?.login ?? "").toLowerCase() === founder)
     .sort((a, b) => {
       const delta = commentTime(a) - commentTime(b)
       if (delta !== 0) return delta
@@ -90,9 +86,7 @@ export function evaluateFounderApproval(input) {
 
   const latest = commands.at(-1)
   if (!latest) {
-    issues.push(
-      `the founder has not commented ${APPROVAL_COMMAND} <release-sha> on this issue`,
-    )
+    issues.push(`the founder has not commented ${APPROVAL_COMMAND} <release-sha> on this issue`)
     return { ok: false, issues, approval: null }
   }
 
@@ -105,9 +99,7 @@ export function evaluateFounderApproval(input) {
   }
 
   if (latest.sha !== releaseSha) {
-    issues.push(
-      `the latest founder approval is for ${latest.sha}, not the requested ${releaseSha}`,
-    )
+    issues.push(`the latest founder approval is for ${latest.sha}, not the requested ${releaseSha}`)
   }
 
   return { ok: issues.length === 0, issues, approval }

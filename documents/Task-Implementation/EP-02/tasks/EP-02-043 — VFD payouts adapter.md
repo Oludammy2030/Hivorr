@@ -132,9 +132,50 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` — partial increment (documented transfer, status, recipient and source adapter) |
+| **Execution date** | 2026-11-23 |
+| **Execution record** | `documents/Task-Implementation/EP-02/execution-records/EP-02-043.md` |
+| **Blocked by** | `VFD_SOURCE_ACCOUNT` provisioning, amount-unit confirmation, bank-list response schema, sandbox credentials (`EP-02-045`), and `EP-02-053` for the workflow |
+| **Notes** | Founder-authorised entry at `043` to break the recorded `043`/`053` circular dependency. The adapter implements the payout slice of `PaymentProvider` against documented endpoints, uses the documented SHA-512 signature and source enquiry, and is wired as `VFD_PAYOUTS`. No live call was made. |
+
+## 14. Partial increment record
+
+**Built in this increment**
+
+- `VfdAccountNameClient.enquireRecipient` exposes the documented client id, account id, BVN and bank
+  name; `enquireSource` returns the documented sender profile. `resolveAccountName` still returns only
+  the neutral name/bank/last-four.
+- `VfdPayoutClient` implements `initiatePayout`, `getPaymentStatus` and `resolveAccountName` as a
+  `Pick<PaymentProvider, ...>` slice.
+- Documented `/transfer` payload, `transferType=inter`, beneficiary identifiers, source identifiers,
+  the documented `SHA512(fromAccount + toAccount)` signature (verified against the published vector),
+  idempotent replay, duplicate rejection and typed failure mapping.
+- Documented `/transactions?reference=` status query with success/pending/failure mapping, amount
+  normalisation and UTC timestamp handling.
+- `VFD_SOURCE_ACCOUNT` configuration and the `VFD_PAYOUTS` provider.
+- Fail-closed behaviour when the source account, currency, amount or beneficiary identifiers are
+  missing or unsupported.
+
+**Open items**
+
+- `VFD_SOURCE_ACCOUNT` must be provisioned from the deployment secret store before a live payout.
+- The transfer amount unit is unconfirmed; the canonical decimal is sent unchanged.
+- `GET /bank` has no published response schema, so the bank list is not implemented.
+- No sandbox payout was certified; `EP-02-045` owns the evidence.
+- `EP-02-053` must add the workflow, durable idempotency, dual control and the composition with the
+  collections half (`042`), and treat a retried duplicate (`98`) as an unknown outcome requiring TSQ.
+
+## 15. Provider switch amendment — 2026-11-26
+
+The founder directed Paystack as the active provider for fast integration; VFD is paused behind the
+same provider port.
+
+- `PaystackPayoutClient` implements name resolution, recipient creation, single transfer and transfer
+  status; it converts NGN to kobo and refuses sub-kobo precision.
+- `platform.payment_provider_setting` stores the active provider/mode (no secret); the control panel
+  switches it and the router reads it per payout, so no redeploy is needed.
+- Test/live Paystack keys remain in the deployment secret store. The control page only shows whether a
+  key is configured; it never accepts or returns the value.
+- VFD adapters remain in place and selectable; VFD mode must match `VFD_MODE`.
+- Paystack collections and webhook intake remain for `EP-02-042`/`044`.
 

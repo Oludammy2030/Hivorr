@@ -52,14 +52,8 @@ describe("RLS policy pattern", () => {
   })
 
   it("puts the policy helpers in the private schema", () => {
-    for (const helper of [
-      "current_account_id",
-      "current_user_id",
-      "set_identity_context",
-    ]) {
-      expect(migrations, helper).toMatch(
-        new RegExp(`function private\\.${helper}\\(`),
-      )
+    for (const helper of ["current_account_id", "current_user_id", "set_identity_context"]) {
+      expect(migrations, helper).toMatch(new RegExp(`function private\\.${helper}\\(`))
     }
     expect(migrations).toMatch(
       /create or replace function platform\.current_account_id\(\)[\s\S]*?select private\.current_account_id\(\)/,
@@ -110,9 +104,7 @@ describe("RLS policy pattern", () => {
 
   it("fails closed when the identity context is unset", () => {
     // Every policy compares against the helper, which returns null when unset.
-    const policyBlocks = [
-      ...migrations.matchAll(/create policy [\s\S]*?(?=create policy|$)/g),
-    ]
+    const policyBlocks = [...migrations.matchAll(/create policy [\s\S]*?(?=create policy|$)/g)]
       .map((match) => match[0])
       .filter((block) => /on (identity|profile)\./.test(block))
       .join("\n")

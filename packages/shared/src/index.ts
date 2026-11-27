@@ -10,7 +10,7 @@ import { z } from "zod"
 
 export const ENVIRONMENT_IDS = ["production", "staging"] as const
 
-export type EnvironmentId = typeof ENVIRONMENT_IDS[number]
+export type EnvironmentId = (typeof ENVIRONMENT_IDS)[number]
 
 export const environmentIdSchema = z.enum(ENVIRONMENT_IDS)
 
@@ -21,15 +21,14 @@ export interface EnvironmentDefinition {
   readonly live: boolean
 }
 
-export const ENVIRONMENTS: Readonly<Record<EnvironmentId, EnvironmentDefinition>> =
-  {
-    production: { id: "production", label: "Production", live: true },
-    staging: { id: "staging", label: "Staging", live: false },
-  }
+export const ENVIRONMENTS: Readonly<Record<EnvironmentId, EnvironmentDefinition>> = {
+  production: { id: "production", label: "Production", live: true },
+  staging: { id: "staging", label: "Staging", live: false },
+}
 
 export const PORTAL_IDS = ["app", "control", "staff", "partner"] as const
 
-export type PortalId = typeof PORTAL_IDS[number]
+export type PortalId = (typeof PORTAL_IDS)[number]
 
 export const portalIdSchema = z.enum(PORTAL_IDS)
 
@@ -92,9 +91,7 @@ export function getPortalByHost(
   environment: EnvironmentId,
 ): PortalDefinition | undefined {
   const normalized = host.trim().toLowerCase().split(":")[0]
-  return Object.values(PORTALS).find(
-    (portal) => portal.hosts[environment] === normalized,
-  )
+  return Object.values(PORTALS).find((portal) => portal.hosts[environment] === normalized)
 }
 
 export const RELEASE_MANIFEST_VERSION = 1 as const

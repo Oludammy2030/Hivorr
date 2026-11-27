@@ -132,9 +132,9 @@ Planned tests; no run is claimed until the execution record records the result.
 
 | Field | Value |
 |---|---|
-| **Status** | `PENDING` |
-| **Execution date** | — |
-| **Execution record** | — |
-| **Blocked by** | `EP-02-001` and the unresolved EP-02 entry gate |
-| **Notes** | Task documentation issued; implementation has not started. |
+| **Status** | `IN PROGRESS` |
+| **Execution date** | 2026-11-26 |
+| **Execution record** | `execution-records/EP-02-044.md` |
+| **Blocked by** | — (founder-authorised increment; open items are listed in the record) |
+| **Notes** | Signature-authenticated Paystack webhook with transaction verification and idempotent posting is built. Raw-payload storage, asynchronous processing and VFD intake are deferred; the deviation is recorded. |
 

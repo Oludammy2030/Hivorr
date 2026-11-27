@@ -1,4 +1,17 @@
-export type Section = "overview" | "users" | "staff" | "grants" | "audit" | "roles" | "denials" | "approvals" | "partners" | "cases" | "verification" | "taxonomy"
+export type Section =
+  | "overview"
+  | "users"
+  | "staff"
+  | "grants"
+  | "audit"
+  | "roles"
+  | "denials"
+  | "approvals"
+  | "partners"
+  | "cases"
+  | "verification"
+  | "taxonomy"
+  | "payments"
 
 export interface SectionLink {
   readonly id: Section
@@ -24,6 +37,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         id: "taxonomy",
         label: "Taxonomy",
         path: "/taxonomy",
+        capabilities: ["admin.configuration.read", "admin.configuration.write"],
+      },
+      {
+        id: "payments",
+        label: "Payments",
+        path: "/payments",
         capabilities: ["admin.configuration.read", "admin.configuration.write"],
       },
     ],
@@ -102,6 +121,7 @@ interface SectionPath {
 export const SECTION_PATHS: readonly SectionPath[] = [
   { section: "overview", path: "/" },
   { section: "taxonomy", path: "/taxonomy" },
+  { section: "payments", path: "/payments" },
   { section: "users", path: "/users" },
   { section: "staff", path: "/staff" },
   { section: "partners", path: "/partners" },
@@ -122,6 +142,7 @@ export const SECTION_PATHS: readonly SectionPath[] = [
 export const SECTION_TITLES: Readonly<Record<Section, string>> = {
   overview: "Overview",
   taxonomy: "Taxonomy",
+  payments: "Payments",
   users: "Users",
   staff: "Staff",
   partners: "Partners",
@@ -139,22 +160,14 @@ export function sectionTitle(section: Section): string {
 }
 
 export function sectionFromPath(pathname: string): Section {
-  return (
-    SECTION_PATHS.find((entry) => entry.path === pathname)?.section ??
-    "overview"
-  )
+  return SECTION_PATHS.find((entry) => entry.path === pathname)?.section ?? "overview"
 }
 
 export function isKnownPath(pathname: string): boolean {
   return SECTION_PATHS.some((entry) => entry.path === pathname)
 }
 
-export function canSee(
-  item: SectionLink,
-  capabilities: readonly string[],
-): boolean {
+export function canSee(item: SectionLink, capabilities: readonly string[]): boolean {
   if (!item.capabilities) return true
-  return item.capabilities.some((capability) =>
-    capabilities.includes(capability),
-  )
+  return item.capabilities.some((capability) => capabilities.includes(capability))
 }

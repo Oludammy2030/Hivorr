@@ -96,6 +96,22 @@ import {
   staffStatusResponse,
   totpConfirmRequest,
   userListResponse,
+  assignKycTierRequest,
+  kycTierResponse,
+  paymentProviderSettingRequest,
+  paymentProviderSettingResponse,
+  webhookAcceptedResponse,
+  collectionAccountResponse,
+  collectionAccountOrNullResponse,
+  bindPayoutAccountRequest,
+  disablePayoutAccountRequest,
+  payoutAccountListResponse,
+  payoutAccountViewResponse,
+  walletBalanceListResponse,
+  walletStatementListResponse,
+  payoutRequestListResponse,
+  payoutRequestViewResponse,
+  withdrawRequest,
 } from "../contracts/schemas"
 
 export type ApiAudience = PortalId | "public"
@@ -112,7 +128,20 @@ export interface ApiOperation {
   readonly method: ApiMethod
   readonly path: string
   readonly summary: string
-  readonly tag: "health" | "auth" | "grants" | "activities" | "audit" | "users" | "staff" | "roles" | "partners" | "cases" | "taxonomy"
+  readonly tag:
+    | "health"
+    | "auth"
+    | "grants"
+    | "activities"
+    | "audit"
+    | "users"
+    | "staff"
+    | "roles"
+    | "partners"
+    | "cases"
+    | "taxonomy"
+    | "wallet"
+    | "payments"
   readonly audience: readonly ApiAudience[]
   readonly request?: {
     readonly schema: z.ZodType
@@ -126,12 +155,7 @@ export interface ApiOperation {
   readonly queryParams?: readonly string[]
 }
 
-const ALL_PORTALS: readonly ApiAudience[] = [
-  "app",
-  "control",
-  "staff",
-  "partner",
-]
+const ALL_PORTALS: readonly ApiAudience[] = ["app", "control", "staff", "partner"]
 
 /**
  * Every implemented API endpoint. `tests/openapi-route-coverage.test.ts`
@@ -179,8 +203,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 503,
-        description:
-          "The API is not ready; the database-backed check is not implemented yet",
+        description: "The API is not ready; the database-backed check is not implemented yet",
         schema: readinessResponse,
       },
     ],
@@ -546,9 +569,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     summary: "List grants in the environment",
     tag: "grants",
     audience: ["control"],
-    success: [
-      { status: 200, description: "Grant records", schema: grantListResponse },
-    ],
+    success: [{ status: 200, description: "Grant records", schema: grantListResponse }],
   },
   {
     id: "createGrant",
@@ -662,8 +683,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     audience: ["control"],
     request: {
       schema: attachStaffProfileRequest,
-      description:
-        "Email of an existing account, optional department and job title, and a reason",
+      description: "Email of an existing account, optional department and job title, and a reason",
     },
     success: [
       {
@@ -728,8 +748,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "The offboarded status, revoked sessions and revoked grants",
+        description: "The offboarded status, revoked sessions and revoked grants",
         schema: staffStatusResponse,
       },
     ],
@@ -765,8 +784,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "The official address the invitation reserves, so the page can show it",
+        description: "The official address the invitation reserves, so the page can show it",
         schema: staffInviteDetailsResponse,
       },
     ],
@@ -816,8 +834,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Every role assignment with its holder, scope and lifecycle",
+        description: "Every role assignment with its holder, scope and lifecycle",
         schema: roleAssignmentListResponse,
       },
     ],
@@ -903,8 +920,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Every access denial with its target, permission, scope, reason and lifecycle",
+        description: "Every access denial with its target, permission, scope, reason and lifecycle",
         schema: accessDenialListResponse,
       },
     ],
@@ -918,8 +934,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     audience: ["control"],
     request: {
       schema: createAccessDenialRequest,
-      description:
-        "Holder, permission, scope, optional expiry and the reason for the denial",
+      description: "Holder, permission, scope, optional expiry and the reason for the denial",
     },
     success: [
       {
@@ -1152,8 +1167,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Verification cases with their lane, decision state and evidence count",
+        description: "Verification cases with their lane, decision state and evidence count",
         schema: verificationReviewListResponse,
       },
     ],
@@ -1188,8 +1202,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Active partners first, with representative and agreement counts",
+        description: "Active partners first, with representative and agreement counts",
         schema: partnerOrganisationListResponse,
       },
     ],
@@ -1412,8 +1425,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     pathParams: ["id"],
     request: {
       schema: addEvidenceRequest,
-      description:
-        "Storage key, file name and optional hash; the object lives in private storage",
+      description: "Storage key, file name and optional hash; the object lives in private storage",
     },
     success: [
       {
@@ -1474,8 +1486,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     success: [
       {
         status: 200,
-        description:
-          "Active nodes effective now, optionally filtered by taxonomy and level",
+        description: "Active nodes effective now, optionally filtered by taxonomy and level",
         schema: taxonomyRegistryResponse,
       },
     ],
@@ -1571,6 +1582,224 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
         status: 200,
         description: "The updated attribute definition",
         schema: taxonomyAttributeView,
+      },
+    ],
+  },
+  {
+    id: "listPayouts",
+    method: "get",
+    path: "/v1/wallet/payouts",
+    summary: "List the caller's payout requests",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description: "The caller's payout requests",
+        schema: payoutRequestListResponse,
+      },
+    ],
+  },
+  {
+    id: "getWalletBalance",
+    method: "get",
+    path: "/v1/wallet/balance",
+    summary: "Read the caller's derived wallet balances",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description: "The caller's wallet balances by currency",
+        schema: walletBalanceListResponse,
+      },
+    ],
+  },
+  {
+    id: "getWalletStatement",
+    method: "get",
+    path: "/v1/wallet/statement",
+    summary: "Read the caller's wallet statement",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description:
+          "The caller's own ledger postings, newest first; supports optional currency and activity filters and a before/beforeId keyset cursor with a limit of 1-100",
+        schema: walletStatementListResponse,
+      },
+    ],
+  },
+  {
+    id: "listPayoutAccounts",
+    method: "get",
+    path: "/v1/wallet/payout-accounts",
+    summary: "List the caller's payout destinations",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description: "The caller's payout destinations",
+        schema: payoutAccountListResponse,
+      },
+    ],
+  },
+  {
+    id: "bindPayoutAccount",
+    method: "post",
+    path: "/v1/wallet/payout-accounts",
+    summary: "Bind a verified payout destination",
+    tag: "wallet",
+    audience: ["app"],
+    request: {
+      schema: bindPayoutAccountRequest,
+      description: "Bank code, bank name, account number and optional reason",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The bound destination, last four only",
+        schema: payoutAccountViewResponse,
+      },
+    ],
+  },
+  {
+    id: "disablePayoutAccount",
+    method: "post",
+    path: "/v1/wallet/payout-accounts/{id}/disable",
+    summary: "Disable a payout destination",
+    tag: "wallet",
+    audience: ["app"],
+    pathParams: ["id"],
+    request: {
+      schema: disablePayoutAccountRequest,
+      description: "Reason for disabling the destination",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The disabled destination",
+        schema: payoutAccountViewResponse,
+      },
+    ],
+  },
+  {
+    id: "getCollectionAccount",
+    method: "get",
+    path: "/v1/wallet/collection-account",
+    summary: "Read the caller's dedicated collection account",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 200,
+        description: "The collection account, or null when none exists",
+        schema: collectionAccountOrNullResponse,
+      },
+    ],
+  },
+  {
+    id: "createCollectionAccount",
+    method: "post",
+    path: "/v1/wallet/collection-account",
+    summary: "Create the caller's dedicated collection account",
+    tag: "wallet",
+    audience: ["app"],
+    success: [
+      {
+        status: 201,
+        description: "The created collection account",
+        schema: collectionAccountResponse,
+      },
+    ],
+  },
+  {
+    id: "requestWithdrawal",
+    method: "post",
+    path: "/v1/wallet/withdrawals",
+    summary: "Withdraw the caller's funds to a verified payout destination",
+    tag: "wallet",
+    audience: ["app"],
+    request: {
+      schema: withdrawRequest,
+      description: "Destination, amount and currency",
+    },
+    success: [
+      {
+        status: 201,
+        description: "The payout request and its current execution state",
+        schema: payoutRequestViewResponse,
+      },
+    ],
+  },
+  {
+    id: "assignKycTier",
+    method: "post",
+    path: "/v1/control/accounts/{id}/kyc-tier",
+    summary: "Assign the account's KYC tier",
+    tag: "users",
+    audience: ["control"],
+    pathParams: ["id"],
+    request: {
+      schema: assignKycTierRequest,
+      description: "Tier and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The updated tier",
+        schema: kycTierResponse,
+      },
+    ],
+  },
+  {
+    id: "getPaymentProvider",
+    method: "get",
+    path: "/v1/control/payments/provider",
+    summary: "Read the active payment provider and configured modes",
+    tag: "payments",
+    audience: ["control"],
+    success: [
+      {
+        status: 200,
+        description: "The active provider, mode and configured secrets",
+        schema: paymentProviderSettingResponse,
+      },
+    ],
+  },
+  {
+    id: "setPaymentProvider",
+    method: "post",
+    path: "/v1/control/payments/provider",
+    summary: "Switch the active payment provider and mode",
+    tag: "payments",
+    audience: ["control"],
+    request: {
+      schema: paymentProviderSettingRequest,
+      description: "Provider, mode and reason",
+    },
+    success: [
+      {
+        status: 200,
+        description: "The updated provider setting",
+        schema: paymentProviderSettingResponse,
+      },
+    ],
+  },
+  {
+    id: "paystackWebhook",
+    method: "post",
+    path: "/v1/webhooks/paystack",
+    summary: "Receive a signed Paystack webhook",
+    tag: "payments",
+    audience: ["public"],
+    success: [
+      {
+        status: 200,
+        description: "The event was accepted or ignored",
+        schema: webhookAcceptedResponse,
       },
     ],
   },

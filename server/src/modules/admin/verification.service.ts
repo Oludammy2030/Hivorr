@@ -69,11 +69,7 @@ function mapVerificationError(error: unknown): never {
         403,
       )
     case "P0002":
-      throw new ApiError(
-        "NOT_FOUND",
-        "The verification case was not found.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The verification case was not found.", 404)
     case "23514":
       throw new ApiError(
         "CONFLICT",
@@ -81,23 +77,15 @@ function mapVerificationError(error: unknown): never {
         409,
       )
     case "22023":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The verification decision is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The verification decision is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The verification operation failed.")
+      throw error instanceof Error ? error : new Error("The verification operation failed.")
   }
 }
 
 @Injectable()
 export class VerificationService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async queue(input: {
     accountId: string

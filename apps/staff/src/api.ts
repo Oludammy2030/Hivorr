@@ -60,9 +60,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T
   }
 
-  const body = (await response
-    .json()
-    .catch(() => null)) as T & ApiErrorBody | null
+  const body = (await response.json().catch(() => null)) as (T & ApiErrorBody) | null
 
   if (!response.ok) {
     throw new ApiError(
@@ -94,9 +92,7 @@ export const api = {
     }),
 }
 
-export function isMfaChallenge(
-  result: Session | MfaChallenge,
-): result is MfaChallenge {
+export function isMfaChallenge(result: Session | MfaChallenge): result is MfaChallenge {
   return "mfaRequired" in result
 }
 

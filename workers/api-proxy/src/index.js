@@ -28,18 +28,13 @@ export default {
     const upstream = await fetch(target.toString(), {
       method: request.method,
       headers,
-      body:
-        request.method === "GET" || request.method === "HEAD"
-          ? undefined
-          : request.body,
+      body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
       redirect: "manual",
     })
 
     const responseHeaders = new Headers(upstream.headers)
     const cookies =
-      typeof upstream.headers.getSetCookie === "function"
-        ? upstream.headers.getSetCookie()
-        : []
+      typeof upstream.headers.getSetCookie === "function" ? upstream.headers.getSetCookie() : []
     responseHeaders.delete("set-cookie")
     for (const cookie of cookies) {
       responseHeaders.append("set-cookie", cookie)

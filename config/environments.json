@@ -36,6 +36,8 @@
       "requiredSecrets": [
         "DATABASE_URL",
         "MFA_ENCRYPTION_KEY",
+        "PAYOUT_ENCRYPTION_KEY",
+        "PAYOUT_FINGERPRINT_KEY",
         "WORKER_DATABASE_URL",
         "MIGRATOR_DATABASE_URL",
         "FLY_API_TOKEN"
@@ -61,6 +63,8 @@
       "requiredSecrets": [
         "DATABASE_URL",
         "MFA_ENCRYPTION_KEY",
+        "PAYOUT_ENCRYPTION_KEY",
+        "PAYOUT_FINGERPRINT_KEY",
         "WORKER_DATABASE_URL",
         "MIGRATOR_DATABASE_URL",
         "FLY_API_TOKEN"

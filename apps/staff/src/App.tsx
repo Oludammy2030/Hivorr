@@ -1,13 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { capabilityLabel } from "@hivorr/shared"
 
-import {
-  api,
-  errorMessage,
-  isMfaChallenge,
-  type MfaChallenge,
-  type Session,
-} from "./api"
+import { api, errorMessage, isMfaChallenge, type MfaChallenge, type Session } from "./api"
 
 interface LoadingView {
   kind: "loading"
@@ -98,10 +92,7 @@ export function App() {
     }
   }
 
-  async function handleMfa(
-    event: FormEvent<HTMLFormElement>,
-    challenge: MfaChallenge,
-  ) {
+  async function handleMfa(event: FormEvent<HTMLFormElement>, challenge: MfaChallenge) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const code = String(form.get("code") ?? "").trim()
@@ -131,21 +122,14 @@ export function App() {
     }
   }
 
-  const capabilities =
-    view.kind === "signedIn" ? (view.session.capabilities ?? null) : null
+  const capabilities = view.kind === "signedIn" ? (view.session.capabilities ?? null) : null
 
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="portal-title">
         <header className="brand">
           <span className="brand-mark" aria-hidden="true">
-            <svg
-              viewBox="0 0 24 24"
-              width="17"
-              height="17"
-              fill="currentColor"
-              focusable="false"
-            >
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" focusable="false">
               <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
             </svg>
           </span>
@@ -207,16 +191,10 @@ export function App() {
         )}
 
         {view.kind === "mfa" && (
-          <form
-            className="form"
-            onSubmit={(event) => handleMfa(event, view.challenge)}
-            noValidate
-          >
+          <form className="form" onSubmit={(event) => handleMfa(event, view.challenge)} noValidate>
             <div>
               <h1 id="portal-title">Two-factor code</h1>
-              <p className="muted">
-                Enter the current code from your authenticator app.
-              </p>
+              <p className="muted">Enter the current code from your authenticator app.</p>
             </div>
 
             {view.error && (
@@ -258,9 +236,7 @@ export function App() {
           <div className="form">
             <div>
               <h1 id="portal-title">Signed in</h1>
-              <p className="muted">
-                You are authenticated for the staff portal.
-              </p>
+              <p className="muted">You are authenticated for the staff portal.</p>
             </div>
 
             <dl className="details">

@@ -30,7 +30,7 @@ EP-02 §1 defines the entry gate as:
 | 1 | EP-01 G5 signed | **MET** | `EP-01-G5-CLOSURE.md` signed 2026-11-15; EP-01 closed through G5 | Founder |
 | 2 | Funds-custody model recorded | **MET** — founder decision 2026-11-15: pooled collection/settlement account, internal wallets and internal escrow; legal/regulatory confirmation remains open | `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md`; `ARCHITECTURE.md` §16.4 #2 | Founder / counsel |
 | 3 | VFD written licence-scope confirmation | **UNMET — founder directs proceeding (2026-11-21)** | BD-D11 conditions 1–6; onboarding is complete; the written scope and settlement terms are still absent and are an accepted risk | Founder / counsel |
-| 4 | KYC tier ladder and limits decided | **UNMET — CBN direction recorded 2026-11-21** | `ARCHITECTURE.md` §16.4 #6; matrix §7.4 and §18 #6; the CBN tier table and limits still need confirmation | Founder |
+| 4 | KYC tier ladder and limits decided | **MET — ladder decided 2026-11-26; thresholds provisional** | `ARCHITECTURE.md` §16.4 #6 and §16.6: the three-tier ladder is settled; the naira caps are configuration pending counsel confirmation | Founder / counsel |
 | 5 | Verification vendor decided | **UNMET** | `ARCHITECTURE.md` §16.4 #15; matrix §18 #12 | Founder |
 | 6 | Reviewer capacity / second reviewer recorded | **UNMET** | `DEV-003` remains in force; EES §11.2 #2 records the one-person-plus-agents problem | Founder / architect |
 
@@ -64,7 +64,7 @@ No row is decided by this record. `ARCHITECTURE.md` §16.4 remains the single co
 |---|---|---|---|---|---|
 | 1 | Funds custody — pooled collection/settlement account, internal wallets and internal escrow | `ARCHITECTURE.md` §16.4 #2; `PAYMENT-WALLET-ESCROW-ARCHITECTURE.md` | **DECIDED 2026-11-15** — product/custody model approved; legal/regulatory confirmation open | Unblocks ledger, wallet and internal escrow design; provider tasks still need VFD confirmation | Founder / counsel |
 | 2 | VFD written licence scope — marketplace escrow, nationwide operation, third-party release, licence category and limits | BD-D11 conditions 1–6 | **NOT OBTAINED — founder directs proceeding (2026-11-21)** on the basis of completed onboarding; accepted risk | Does not block adapter build; blocks production money movement and any claim of vendor confirmation | Founder / counsel |
-| 3 | KYC tier ladder and per-tier limits | `ARCHITECTURE.md` §16.4 #6; BD-D05 | **PARTIALLY DIRECTED 2026-11-21** — follow the CBN-approved tier model; exact requirements and limits still to be confirmed | Shapes tier configuration and financial gating | Founder |
+| 3 | KYC tier ladder and per-tier limits | `ARCHITECTURE.md` §16.4 #6 and §16.6; BD-D05 | **DECIDED 2026-11-26** — full CBN 3-tier model: `tier_1`/`tier_2`/`tier_3` are CBN Levels 1/2/3. Daily withdrawal caps ₦30,000/₦100,000/₦1,000,000; single-deposit caps ₦20,000/₦50,000/unlimited, all **provisional** pending counsel. An over-cap deposit sets a `kyc_upgrade_required` hold and blocks all fund transactions until a verifier upgrades the tier. Higher-tier evidence requirements remain open | Shapes tier configuration and financial gating | Founder / counsel |
 | 4 | Verification vendor — review queue only, or identity provider | `ARCHITECTURE.md` §16.4 #15 | **OPEN** | Blocks identity/KYC lane implementation | Founder |
 | 5 | Second reviewer / reviewer capacity | EES §11.2 #2; `DEV-003` | **OPEN** | Blocks G2 on verification and finance changes | Founder / architect |
 | 6 | Taxonomy depth — two levels or five-level model | `VISION.md` §10 Q10; EP-02 plan §5.3 | **OPEN** | Shapes the registry and seed data | Founder / architect |
@@ -75,6 +75,8 @@ No row is decided by this record. `ARCHITECTURE.md` §16.4 remains the single co
 | 11 | Retention periods | `ARCHITECTURE.md` §16.4 #7 | **OPEN** | Retain-and-hold; no purge | Founder / counsel |
 | 12 | KYC/AML applicability | Standards §16 #25 | **OPEN** | No reporting path is built | Founder / counsel |
 | 13 | VFD webhook authentication gap | Standards API-24; VFD webhook documentation | **OPEN** | Requires compensating controls and a recorded deviation | Architect |
+| 14 | Payout approval model — user withdrawals are self-service; no staff approval | Matrix §9.3 `wallet.withdraw`; founder direction 2026-11-23 | **DECIDED 2026-11-23** — a user withdraws their own funds after KYC, a bound verified destination and limits; staff approval is not part of the user path | Removes the manual maker-checker from `EP-02-053`; the task covers the automatic path only | Founder |
+| 15 | Payment provider — Paystack active for fast integration; VFD paused | `ARCHITECTURE.md` §3.1 #10; founder direction 2026-11-26 | **DECIDED 2026-11-26** — Paystack is the active provider; VFD remains behind the provider port but paused. The control panel switches provider and mode; test/live secrets remain in the deployment secret store and are never entered or returned by the portal | Requires an architecture revision; provider adapters stay behind `PaymentProvider`; custody model remains VFD/BD-D01 | Founder |
 
 ---
 
@@ -168,7 +170,7 @@ change which tasks are buildable; they are not a claim that the entry gate is me
 | B-01 | EP-01 G5 not signed; `F-49` and `F-50` remain high | Founder / architect | **CLOSED 2026-11-15** — G5 signed; staging current; slice deployed |
 | B-02 | Funds-custody register still open | Founder / architect | `ARCHITECTURE.md` §16.4 #2 updated to record BD-D01 |
 | B-03 | VFD written licence scope missing | Founder / counsel | Written confirmation from VFD MFB covering escrow, nationwide operation, third-party release, licence category and limits |
-| B-04 | KYC tier ladder undecided | Founder | Recorded tier ladder and limits in the owning register |
+| B-04 | KYC naira thresholds unconfirmed | Founder / counsel | Written confirmation of the tier caps; the ladder itself is recorded in `ARCHITECTURE.md` §16.4 #6 |
 | B-05 | Verification vendor undecided | Founder | Recorded decision, including a review-queue-only option |
 | B-06 | Second reviewer not appointed | Founder / architect | Appointment record or a `DEV-003` deviation with compensating controls |
 

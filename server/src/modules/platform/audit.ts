@@ -72,10 +72,7 @@ function hasReason(reason: string | undefined): boolean {
   return (reason ?? "").trim().length >= MINIMUM_REASON_LENGTH
 }
 
-export async function appendAudit(
-  client: PoolClient,
-  entry: AuditEntry,
-): Promise<void> {
+export async function appendAudit(client: PoolClient, entry: AuditEntry): Promise<void> {
   if (requiresReason(entry.action) && !hasReason(entry.reason)) {
     throw new Error(
       `audit reason required for ${entry.action}: a governed change cannot be recorded without one`,
@@ -256,10 +253,7 @@ export async function listAuditEntries(
   return {
     items: visible.map((row) => ({
       id: row.id,
-      occurredAt:
-        row.occurred_at instanceof Date
-          ? row.occurred_at.toISOString()
-          : row.occurred_at,
+      occurredAt: row.occurred_at instanceof Date ? row.occurred_at.toISOString() : row.occurred_at,
       actorType: row.actor_type,
       actorId: row.actor_id,
       actorAudience: row.actor_audience,
@@ -282,9 +276,7 @@ export async function listAuditEntries(
     nextCursor:
       result.rows.length > bounded && last
         ? `${
-            last.occurred_at instanceof Date
-              ? last.occurred_at.toISOString()
-              : last.occurred_at
+            last.occurred_at instanceof Date ? last.occurred_at.toISOString() : last.occurred_at
           }|${last.id}`
         : null,
   }

@@ -37,9 +37,7 @@ describe("four application bundles", () => {
   it("marks every privileged portal noindex, nofollow", () => {
     for (const portal of PORTALS) {
       const html = read(path.join("apps", portal, "index.html"))
-      expect(html).toMatch(
-        /<meta\s+name="robots"\s+content="noindex, nofollow"\s*\/?>/i,
-      )
+      expect(html).toMatch(/<meta\s+name="robots"\s+content="noindex, nofollow"\s*\/?>/i)
     }
   })
 
@@ -54,9 +52,7 @@ describe("four application bundles", () => {
   it("keeps the portal workspace packages distinct and shared", () => {
     const names = new Set<string>()
     for (const portal of PORTALS) {
-      const manifest = JSON.parse(
-        read(path.join("apps", portal, "package.json")),
-      ) as {
+      const manifest = JSON.parse(read(path.join("apps", portal, "package.json"))) as {
         name: string
         dependencies: Record<string, string>
       }
@@ -76,17 +72,13 @@ describe("four application bundles", () => {
 
   it("keeps the Figma Make preview entry", () => {
     expect(read("src/main.tsx")).toContain('import App from "./app/App"')
-    expect(read("package.json")).toContain(
-      "vite build --config vite.figma.config.ts",
-    )
-    expect(read("vite.figma.config.ts")).toContain(
-      "import userConfig from './vite.config'",
-    )
+    expect(read("package.json")).toContain("vite build --config vite.figma.config.ts")
+    expect(read("vite.figma.config.ts")).toContain("import userConfig from './vite.config'")
   })
 
   it("has no fourth portal left unbuilt", () => {
-    expect(
-      readdirSync("apps").filter((entry) => PORTALS.includes(entry as never)),
-    ).toEqual([...PORTALS].sort())
+    expect(readdirSync("apps").filter((entry) => PORTALS.includes(entry as never))).toEqual(
+      [...PORTALS].sort(),
+    )
   })
 })

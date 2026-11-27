@@ -27,9 +27,7 @@ export const AUDIENCE_METADATA = "hivorr:audience"
 export const Audience = (...audiences: readonly RouteAudience[]) =>
   SetMetadata(AUDIENCE_METADATA, Object.freeze([...audiences]))
 
-export function declaredAudiences(
-  target: object,
-): readonly RouteAudience[] | undefined {
+export function declaredAudiences(target: object): readonly RouteAudience[] | undefined {
   return Reflect.getMetadata(AUDIENCE_METADATA, target)
 }
 
@@ -39,10 +37,7 @@ export function declaredAudiences(
  * workspace, which has no server dependency.
  */
 export function isRoutedMethod(value: unknown): boolean {
-  return (
-    typeof value === "function" &&
-    Reflect.getMetadata(PATH_METADATA, value) !== undefined
-  )
+  return typeof value === "function" && Reflect.getMetadata(PATH_METADATA, value) !== undefined
 }
 
 /**
@@ -82,26 +77,19 @@ export class AudienceGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const declared = this.reflector.getAllAndOverride<readonly RouteAudience[]>(
-      AUDIENCE_METADATA,
-      [context.getHandler(), context.getClass()],
-    )
+    const declared = this.reflector.getAllAndOverride<readonly RouteAudience[]>(AUDIENCE_METADATA, [
+      context.getHandler(),
+      context.getClass(),
+    ])
 
     if (!declared || declared.length === 0) {
       // A route without a declaration was never reviewed for audience exposure.
-      throw new ApiError(
-        "INTERNAL_ERROR",
-        "This endpoint does not declare an audience.",
-        500,
-      )
+      throw new ApiError("INTERNAL_ERROR", "This endpoint does not declare an audience.", 500)
     }
 
     if (declared.includes("public")) return true
 
-    if (
-      this.config.environment !== "staging" &&
-      this.config.environment !== "production"
-    ) {
+    if (this.config.environment !== "staging" && this.config.environment !== "production") {
       throw new ApiError(
         "SERVICE_UNAVAILABLE",
         "Session endpoints are not available in this environment.",
@@ -113,18 +101,10 @@ export class AudienceGuard implements CanActivate {
     const audience = resolveRequestAudience(this.config, request)
 
     if (!audience) {
-      throw new ApiError(
-        "FORBIDDEN",
-        "This host is not a recognised Hivorr portal.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "This host is not a recognised Hivorr portal.", 403)
     }
     if (!declared.includes(audience)) {
-      throw new ApiError(
-        "FORBIDDEN",
-        "This audience may not call this endpoint.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "This audience may not call this endpoint.", 403)
     }
     ;(request as FastifyRequest & { audience?: PortalId }).audience = audience
     return true

@@ -35,8 +35,4 @@ export {
   type SessionClient,
   type SessionContextValue,
 } from "./session-context"
-export {
-  AppProviders,
-  createQueryClient,
-  type AppProvidersProps,
-} from "./providers"
+export { AppProviders, createQueryClient, type AppProvidersProps } from "./providers"

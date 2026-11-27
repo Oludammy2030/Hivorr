@@ -78,22 +78,15 @@ export class IdentityRepository {
   constructor(private readonly transaction: TransactionContext) {}
 
   async createAccountWithOwner(record: RegistrationRecord): Promise<void> {
-    await this.query("insert into identity.accounts (id) values ($1)", [
-      record.accountId,
-    ])
+    await this.query("insert into identity.accounts (id) values ($1)", [record.accountId])
     await this.query(
       "insert into identity.users (id, account_id, email, display_name) values ($1, $2, $3, $4)",
-      [
-        record.userId,
-        record.accountId,
-        normalizeEmail(record.email),
-        record.displayName,
-      ],
+      [record.userId, record.accountId, normalizeEmail(record.email), record.displayName],
     )
-    await this.query(
-      "insert into identity.credentials (user_id, password_hash) values ($1, $2)",
-      [record.userId, record.passwordHash],
-    )
+    await this.query("insert into identity.credentials (user_id, password_hash) values ($1, $2)", [
+      record.userId,
+      record.passwordHash,
+    ])
     await this.query(
       "insert into identity.memberships (user_id, account_id, role) values ($1, $2, 'owner')",
       [record.userId, record.accountId],
@@ -130,10 +123,9 @@ export class IdentityRepository {
       email: string
       display_name: string | null
       status: string
-    }>(
-      "select id, account_id, email, display_name, status from identity.users where id = $1",
-      [userId],
-    )
+    }>("select id, account_id, email, display_name, status from identity.users where id = $1", [
+      userId,
+    ])
     const row = result.rows[0]
     return row
       ? {
@@ -237,7 +229,7 @@ export class IdentityRepository {
     }))
   }
 
-  private async query<T extends QueryResultRow = QueryResultRow,>(
+  private async query<T extends QueryResultRow = QueryResultRow>(
     text: string,
     values?: readonly unknown[],
   ): Promise<QueryResult<T>> {

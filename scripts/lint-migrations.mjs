@@ -50,8 +50,7 @@ for (let index = 0; index < args.length; index += 1) {
   }
 }
 
-const isRepositoryMigrations =
-  directory === path.join(root, "supabase", "migrations")
+const isRepositoryMigrations = directory === path.join(root, "supabase", "migrations")
 
 function stripComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/--[^\n\r]*/g, " ")
@@ -67,9 +66,7 @@ try {
     .filter((file) => file.endsWith(".sql"))
     .sort()
 } catch {
-  console.error(
-    `lint:migrations: cannot read ${path.relative(root, directory)}`,
-  )
+  console.error(`lint:migrations: cannot read ${path.relative(root, directory)}`)
   process.exit(2)
 }
 
@@ -99,21 +96,13 @@ for (const file of files) {
     if (legacy) {
       warnings.push(`${file} [legacy] name predates §9.3 and cannot be renamed`)
     } else {
-      fail(
-        file,
-        "naming",
-        "expected <14-digit timestamp>_<module>_<verb>_<object>.sql",
-      )
+      fail(file, "naming", "expected <14-digit timestamp>_<module>_<verb>_<object>.sql")
     }
   } else {
     const timestamp = match[1]
     sequenced.push({ file, timestamp })
     if (timestamps.has(timestamp)) {
-      fail(
-        file,
-        "timestamp",
-        `duplicate timestamp also used by ${timestamps.get(timestamp)}`,
-      )
+      fail(file, "timestamp", `duplicate timestamp also used by ${timestamps.get(timestamp)}`)
     } else {
       timestamps.set(timestamp, file)
     }
@@ -122,11 +111,7 @@ for (const file of files) {
   const approvedComment = /--\s*destructive-approved:\s*\S+/i.test(source)
   for (const rule of DESTRUCTIVE) {
     if (rule.re.test(code) && !approvedComment) {
-      fail(
-        file,
-        rule.id,
-        "destructive statement requires `-- destructive-approved: <reason>`",
-      )
+      fail(file, rule.id, "destructive statement requires `-- destructive-approved: <reason>`")
     }
   }
 
@@ -138,16 +123,11 @@ for (const file of files) {
     ),
   ].map((entry) => entry[1].toLowerCase())
 
-  const unqualified =
-    /create\s+table\s+(?:if\s+not\s+exists\s+)?(?!\w+\.)[a-z_][a-z0-9_]*/i.test(
-      code,
-    )
+  const unqualified = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?!\w+\.)[a-z_][a-z0-9_]*/i.test(
+    code,
+  )
   if (unqualified) {
-    fail(
-      file,
-      "schema-qualified",
-      "every created table must be schema-qualified",
-    )
+    fail(file, "schema-qualified", "every created table must be schema-qualified")
   }
 
   for (const table of creates) {
@@ -165,8 +145,7 @@ for (const file of files) {
     }
   }
 
-  const altersExisting =
-    /\balter\s+table\s+\S+\s+(add|drop|alter|rename)\b/i.test(code)
+  const altersExisting = /\balter\s+table\s+\S+\s+(add|drop|alter|rename)\b/i.test(code)
   if (altersExisting && !/\block_timeout\b/i.test(code)) {
     fail(
       file,
@@ -184,8 +163,7 @@ for (let index = 1; index < sequenced.length; index += 1) {
   }
 }
 
-for (const warning of warnings)
-  console.warn(`lint:migrations: warning: ${warning}`)
+for (const warning of warnings) console.warn(`lint:migrations: warning: ${warning}`)
 
 if (problems.length) {
   console.error(`lint:migrations: FAILED — ${problems.length} problem(s)`)

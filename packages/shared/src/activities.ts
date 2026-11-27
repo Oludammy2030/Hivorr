@@ -18,7 +18,7 @@ export const ACTIVITY_IDS = [
   "logistics.provide",
 ] as const
 
-export type ActivityId = typeof ACTIVITY_IDS[number]
+export type ActivityId = (typeof ACTIVITY_IDS)[number]
 
 export type ActivityDirection = "explore" | "earn"
 
@@ -81,13 +81,9 @@ export const ACTIVITIES: Readonly<Record<ActivityId, ActivityDefinition>> = {
  * Activation states an activity row can hold. The permitted transitions are
  * owned by EP-01-033 and are deliberately not encoded here.
  */
-export const ACTIVITY_ACTIVATION_STATES = [
-  "ACTIVE",
-  "RESTRICTED",
-  "SUSPENDED",
-] as const
+export const ACTIVITY_ACTIVATION_STATES = ["ACTIVE", "RESTRICTED", "SUSPENDED"] as const
 
-export type ActivityActivationState = typeof ACTIVITY_ACTIVATION_STATES[number]
+export type ActivityActivationState = (typeof ACTIVITY_ACTIVATION_STATES)[number]
 
 export const activityIdSchema = z.enum(ACTIVITY_IDS)
 

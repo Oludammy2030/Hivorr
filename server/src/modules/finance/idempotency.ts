@@ -17,16 +17,11 @@ import type { LedgerEntryInput } from "./ledger"
  */
 export const LEDGER_IDEMPOTENCY_SCOPE = "finance.ledger.post"
 
-export function ledgerIdempotencyKey(
-  accountId: string,
-  clientKey: string,
-): string {
+export function ledgerIdempotencyKey(accountId: string, clientKey: string): string {
   return `${LEDGER_IDEMPOTENCY_SCOPE}:${accountId}:${clientKey.trim()}`
 }
 
-function canonicalPosting(
-  posting: LedgerEntryInput["postings"][number],
-): string {
+function canonicalPosting(posting: LedgerEntryInput["postings"][number]): string {
   const minor = moneyToMinorUnits(posting.amount)
   const amount = minor === null ? posting.amount : minorUnitsToMoney(minor)
   return JSON.stringify({

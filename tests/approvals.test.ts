@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
+import { testProviderConfig } from "./support/api-config"
 import { DatabaseService } from "../server/src/db/database.service"
 import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
@@ -66,10 +67,7 @@ describeIntegration("approval integration", () => {
       payload: { email, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const appCookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -106,10 +104,7 @@ describeIntegration("approval integration", () => {
     expect(verified.statusCode).toBe(200)
     return {
       userId,
-      cookie: cookieHeader(
-        readCookies(verified.headers),
-        "__Host-hivorr_control_sid",
-      ),
+      cookie: cookieHeader(readCookies(verified.headers), "__Host-hivorr_control_sid"),
     }
   }
 
@@ -125,20 +120,15 @@ describeIntegration("approval integration", () => {
     setup = new Client({ connectionString: testUrl })
     await setup.connect()
 
-    const migrationsDirectory = path.join(
-      process.cwd(),
-      "supabase",
-      "migrations",
-    )
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
     for (const file of readdirSync(migrationsDirectory)
       .filter((entry) => entry.endsWith(".sql"))
       .sort()) {
-      await setup.query(
-        readFileSync(path.join(migrationsDirectory, file), "utf8"),
-      )
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
     }
 
     const config: ApiConfig = {
+      ...testProviderConfig,
       environment: "staging",
       backendEnvironment: "staging",
       supabaseProjectRef: "abcdefghijklmnopqrst",
@@ -175,35 +165,20 @@ describeIntegration("approval integration", () => {
     await app.init()
     await app.getHttpAdapter().getInstance().ready()
 
-    const requester = await registerAndEnroll(
-      "requester@example.test",
-      "requester-test-password",
-    )
+    const requester = await registerAndEnroll("requester@example.test", "requester-test-password")
     requesterId = requester.userId
     requesterCookie = requester.cookie
 
-    const approver = await registerAndEnroll(
-      "approver@example.test",
-      "approver-test-password",
-    )
+    const approver = await registerAndEnroll("approver@example.test", "approver-test-password")
     approverCookie = approver.cookie
 
-    const worker = await registerAndEnroll(
-      "worker@example.test",
-      "worker-test-password",
-    )
+    const worker = await registerAndEnroll("worker@example.test", "worker-test-password")
     workerCookie = worker.cookie
 
-    const target = await registerAndEnroll(
-      "target@example.test",
-      "target-test-password",
-    )
+    const target = await registerAndEnroll("target@example.test", "target-test-password")
     targetId = target.userId
 
-    const second = await registerAndEnroll(
-      "second@example.test",
-      "second-test-password",
-    )
+    const second = await registerAndEnroll("second@example.test", "second-test-password")
     secondTargetId = second.userId
 
     await setup.query(
@@ -235,9 +210,7 @@ describeIntegration("approval integration", () => {
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -301,16 +274,12 @@ describeIntegration("approval integration", () => {
     expect(approved.statusCode).toBe(200)
     expect(approved.json().status).toBe("approved")
 
-    const status = await setup.query(
-      "select status from identity.users where id = $1",
-      [targetId],
-    )
+    const status = await setup.query("select status from identity.users where id = $1", [targetId])
     expect(status.rows[0].status).toBe("closed")
 
-    const grants = await setup.query(
-      "select revoked_at from identity.grants where user_id = $1",
-      [targetId],
-    )
+    const grants = await setup.query("select revoked_at from identity.grants where user_id = $1", [
+      targetId,
+    ])
     expect(grants.rows[0].revoked_at).not.toBeNull()
     const roles = await setup.query(
       "select revoked_at from admin.role_assignments where user_id = $1",
@@ -352,10 +321,9 @@ describeIntegration("approval integration", () => {
     expect(rejected.statusCode).toBe(200)
     expect(rejected.json().status).toBe("rejected")
 
-    const status = await setup.query(
-      "select status from identity.users where id = $1",
-      [secondTargetId],
-    )
+    const status = await setup.query("select status from identity.users where id = $1", [
+      secondTargetId,
+    ])
     expect(status.rows[0].status).toBe("active")
   })
 
@@ -407,10 +375,9 @@ describeIntegration("approval integration", () => {
     expect(approved.statusCode).toBe(200)
     expect(approved.json().status).toBe("approved")
 
-    const decided = await setup.query(
-      "select status, outcome from admin.cases where id = $1",
-      [caseId],
-    )
+    const decided = await setup.query("select status, outcome from admin.cases where id = $1", [
+      caseId,
+    ])
     expect(decided.rows[0].status).toBe("DECIDED")
     expect(decided.rows[0].outcome).toBe("Refund approved in full")
 

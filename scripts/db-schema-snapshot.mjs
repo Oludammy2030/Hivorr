@@ -32,9 +32,7 @@ for (let index = 0; index < args.length; index += 1) {
 }
 
 if (!url) {
-  console.error(
-    "db:snapshot: DATABASE_URL is not set; point it at a migrated database",
-  )
+  console.error("db:snapshot: DATABASE_URL is not set; point it at a migrated database")
   process.exit(2)
 }
 
@@ -66,15 +64,7 @@ const QUERIES = [
           from information_schema.columns
           where table_schema not in ('pg_catalog','information_schema')
           order by 1, 2, ordinal_position`,
-    columns: [
-      "schema",
-      "table_name",
-      "name",
-      "data_type",
-      "udt",
-      "nullable",
-      "default_value",
-    ],
+    columns: ["schema", "table_name", "name", "data_type", "udt", "nullable", "default_value"],
   },
   {
     section: "constraints",
@@ -148,14 +138,7 @@ const QUERIES = [
           join pg_namespace n on n.oid = p.pronamespace
           where n.nspname not in ('pg_catalog','information_schema')
           order by 1, 2, 3`,
-    columns: [
-      "schema",
-      "name",
-      "arguments",
-      "security_definer",
-      "volatility",
-      "config",
-    ],
+    columns: ["schema", "name", "arguments", "security_definer", "volatility", "config"],
   },
   {
     section: "roles",
@@ -166,15 +149,7 @@ const QUERIES = [
           from pg_roles
           where rolname not like 'pg\\_%'
           order by 1`,
-    columns: [
-      "name",
-      "superuser",
-      "inherit",
-      "create_role",
-      "create_db",
-      "login",
-      "bypass_rls",
-    ],
+    columns: ["name", "superuser", "inherit", "create_role", "create_db", "login", "bypass_rls"],
   },
   {
     section: "extensions",
@@ -210,9 +185,7 @@ try {
     lines.push("")
   }
 } catch (error) {
-  console.error(
-    `db:snapshot: ${error instanceof Error ? error.message : String(error)}`,
-  )
+  console.error(`db:snapshot: ${error instanceof Error ? error.message : String(error)}`)
   process.exitCode = 1
 } finally {
   await client.end().catch(() => {})

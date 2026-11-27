@@ -64,64 +64,53 @@ describeIntegration("case visibility scope", () => {
     return result.rows[0]!.id
   }
 
-  beforeAll(
-    async () => {
-      admin = new Client({ connectionString: baseUrl })
-      await admin.connect()
-      await admin.query(`create database "${databaseName}"`)
+  beforeAll(async () => {
+    admin = new Client({ connectionString: baseUrl })
+    await admin.connect()
+    await admin.query(`create database "${databaseName}"`)
 
-      const url = new URL(baseUrl!)
-      url.pathname = `/${databaseName}`
-      database = new Client({ connectionString: url.toString() })
-      await database.connect()
+    const url = new URL(baseUrl!)
+    url.pathname = `/${databaseName}`
+    database = new Client({ connectionString: url.toString() })
+    await database.connect()
 
-      for (const file of readdirSync(migrationsDirectory)
-        .filter((entry) => entry.endsWith(".sql"))
-        .sort()) {
-        await database.query(
-          readFileSync(path.join(migrationsDirectory, file), "utf8"),
-        )
-      }
+    for (const file of readdirSync(migrationsDirectory)
+      .filter((entry) => entry.endsWith(".sql"))
+      .sort()) {
+      await database.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
+    }
 
-      careId = await createUser("care@hivorr.com")
-      governanceId = await createUser("governance@hivorr.com")
+    careId = await createUser("care@hivorr.com")
+    governanceId = await createUser("governance@hivorr.com")
 
-      await grant(careId, "admin.case.read", "admin.case.assign")
-      await join(careId, "customer_care")
-      await grant(governanceId, "admin.case.read", "admin.case.assign")
-      await join(governanceId, "governance")
+    await grant(careId, "admin.case.read", "admin.case.assign")
+    await join(careId, "customer_care")
+    await grant(governanceId, "admin.case.read", "admin.case.assign")
+    await join(governanceId, "governance")
 
-      careCaseId = await createCase(careId, "Care case")
-      governanceCaseId = await createCase(
-        governanceId,
-        "Governance investigation",
-      )
-      governancePrivateCaseId = await createCase(
-        governanceId,
-        "Governance private case",
-      )
+    careCaseId = await createCase(careId, "Care case")
+    governanceCaseId = await createCase(governanceId, "Governance investigation")
+    governancePrivateCaseId = await createCase(governanceId, "Governance private case")
 
-      // A creator with no department leaves the case unfiled, which is the pool
-      // any case assigner may see.
-      const rootId = await createUser("unfiled@hivorr.com")
-      await grant(rootId, "admin.case.read", "admin.case.assign")
-      unassignedCaseId = await createCase(rootId, "Unfiled case")
+    // A creator with no department leaves the case unfiled, which is the pool
+    // any case assigner may see.
+    const rootId = await createUser("unfiled@hivorr.com")
+    await grant(rootId, "admin.case.read", "admin.case.assign")
+    unassignedCaseId = await createCase(rootId, "Unfiled case")
 
-      await database.query(
-        `update admin.cases set department_id =
+    await database.query(
+      `update admin.cases set department_id =
          (select id from admin.departments where key = 'customer_care')
        where id = $1`,
-        [careCaseId],
-      )
-      await database.query(
-        `update admin.cases set department_id =
+      [careCaseId],
+    )
+    await database.query(
+      `update admin.cases set department_id =
          (select id from admin.departments where key = 'governance')
        where id = any($1::uuid[])`,
-        [[governanceCaseId, governancePrivateCaseId]],
-      )
-    },
-    60_000,
-  )
+      [[governanceCaseId, governancePrivateCaseId]],
+    )
+  }, 60_000)
 
   afterAll(async () => {
     await database?.end()
@@ -155,10 +144,10 @@ describeIntegration("case visibility scope", () => {
   })
 
   it("reveals a case assigned across departments to its assignee", async () => {
-    await database.query(
-      "update admin.cases set assignee_id = $2 where id = $1",
-      [governanceCaseId, careId],
-    )
+    await database.query("update admin.cases set assignee_id = $2 where id = $1", [
+      governanceCaseId,
+      careId,
+    ])
 
     const visible = await visibleCaseIds(careId)
     expect(visible).toContain(governanceCaseId)
@@ -166,10 +155,7 @@ describeIntegration("case visibility scope", () => {
 
   it("answers not-found for the timeline of an invisible case", async () => {
     const error = await database
-      .query("select * from admin.list_case_events($1, $2)", [
-        careId,
-        governancePrivateCaseId,
-      ])
+      .query("select * from admin.list_case_events($1, $2)", [careId, governancePrivateCaseId])
       .catch((value: unknown) => value)
 
     expect(error).toMatchObject({ code: "P0002" })
@@ -180,10 +166,7 @@ describeIntegration("case visibility scope", () => {
     await grant(reviewerId, "admin.evidence.read")
 
     const error = await database
-      .query("select * from admin.list_case_evidence($1, $2)", [
-        reviewerId,
-        careCaseId,
-      ])
+      .query("select * from admin.list_case_evidence($1, $2)", [reviewerId, careCaseId])
       .catch((value: unknown) => value)
 
     expect(error).toMatchObject({ code: "P0002" })
@@ -218,20 +201,20 @@ describeIntegration("case visibility scope", () => {
   it("refuses every write path on a case it cannot see", async () => {
     const attempts = [
       () =>
-        database.query(
-          "select * from admin.add_case_event($1, $2, 'note', 'attempt')",
-          [careId, governancePrivateCaseId],
-        ),
+        database.query("select * from admin.add_case_event($1, $2, 'note', 'attempt')", [
+          careId,
+          governancePrivateCaseId,
+        ]),
       () =>
-        database.query(
-          "select * from admin.assign_case($1, $2, null, 'queue')",
-          [careId, governancePrivateCaseId],
-        ),
+        database.query("select * from admin.assign_case($1, $2, null, 'queue')", [
+          careId,
+          governancePrivateCaseId,
+        ]),
       () =>
-        database.query(
-          "select * from admin.set_case_status($1, $2, 'OPEN', 'trying')",
-          [careId, governancePrivateCaseId],
-        ),
+        database.query("select * from admin.set_case_status($1, $2, 'OPEN', 'trying')", [
+          careId,
+          governancePrivateCaseId,
+        ]),
       () =>
         database.query(
           `select * from admin.add_case_evidence(

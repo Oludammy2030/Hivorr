@@ -75,7 +75,7 @@ export type StepUpResponse = { "sessionId": string; "accountId": string; "userId
 
 export type RefreshResponse = { "sessionId": string; "accountId": string; "userId": string; "email": string; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "expiresAt": string; "idleExpiresAt": string }
 
-export type SessionResponse = { "sessionId": string; "accountId": string; "userId": string; "email": string; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "expiresAt": string; "idleExpiresAt": string; "account": { "id": string; "email": string; "displayName": string | null; "status": string }; "activities": ({ "id": "market.buy" | "services.hire" | "errands.request" | "market.sell" | "services.offer" | "logistics.provide"; "state": "ACTIVE" | "RESTRICTED" | "SUSPENDED" })[]; "capabilities": ("session.read" | "profile.read.self" | "profile.update.self" | "activity.activate" | "activity.deactivate" | "market.catalog.browse" | "market.cart.manage" | "market.order.place" | "market.order.cancel" | "market.order.dispute" | "services.job.post" | "services.job.post.business" | "services.application.review" | "services.engagement.fund" | "services.job.apply" | "services.service.publish" | "services.engagement.deliver" | "services.earnings.receive" | "errands.request.create" | "errands.request.cancel" | "errands.request.track" | "market.product.draft" | "market.product.publish" | "market.inventory.manage" | "market.order.fulfil" | "market.invoice.issue" | "market.earnings.receive" | "logistics.pool.browse" | "logistics.assignment.accept" | "logistics.delivery.progress" | "logistics.delivery.complete" | "logistics.earnings.receive" | "business.create" | "business.verification.submit" | "business.update" | "wallet.read" | "wallet.withdraw" | "wallet.payout_account.bind" | "wallet.convert" | "messaging.thread.read" | "messaging.message.send" | "notification.read" | "admin.verification.review" | "admin.payment.review" | "admin.dispute.resolve" | "admin.account.suspend" | "admin.configuration.write" | "admin.configuration.read" | "admin.audit.read" | "admin.grant.read" | "admin.grant.manage" | "admin.user.read" | "admin.user.manage" | "admin.role.read" | "admin.role.manage" | "admin.case.read" | "admin.case.assign" | "admin.case.investigate" | "admin.case.recommend" | "admin.case.approve" | "admin.evidence.read" | "admin.report.read" | "admin.report.export" | "admin.partner.read" | "admin.partner.manage" | "staff.support.handle" | "partner.referral.read" | "platform.engineering.access")[] }
+export type SessionResponse = { "sessionId": string; "accountId": string; "userId": string; "email": string; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "expiresAt": string; "idleExpiresAt": string; "account": { "id": string; "email": string; "displayName": string | null; "status": string }; "activities": ({ "id": "market.buy" | "services.hire" | "errands.request" | "market.sell" | "services.offer" | "logistics.provide"; "state": "ACTIVE" | "RESTRICTED" | "SUSPENDED" })[]; "capabilities": ("session.read" | "profile.read.self" | "profile.update.self" | "activity.activate" | "activity.deactivate" | "market.catalog.browse" | "market.cart.manage" | "market.order.place" | "market.order.cancel" | "market.order.dispute" | "services.job.post" | "services.job.post.business" | "services.application.review" | "services.engagement.fund" | "services.job.apply" | "services.service.publish" | "services.engagement.deliver" | "services.earnings.receive" | "errands.request.create" | "errands.request.cancel" | "errands.request.track" | "market.product.draft" | "market.product.publish" | "market.inventory.manage" | "market.order.fulfil" | "market.invoice.issue" | "market.earnings.receive" | "logistics.pool.browse" | "logistics.assignment.accept" | "logistics.delivery.progress" | "logistics.delivery.complete" | "logistics.earnings.receive" | "business.create" | "business.verification.submit" | "business.update" | "wallet.read" | "wallet.withdraw" | "wallet.payout_account.bind" | "wallet.convert" | "messaging.thread.read" | "messaging.message.send" | "notification.read" | "admin.verification.review" | "admin.payment.review" | "admin.dispute.resolve" | "admin.account.suspend" | "admin.configuration.write" | "admin.configuration.read" | "admin.audit.read" | "admin.grant.read" | "admin.grant.manage" | "admin.user.read" | "admin.user.manage" | "admin.role.read" | "admin.role.manage" | "admin.case.read" | "admin.case.assign" | "admin.case.investigate" | "admin.case.recommend" | "admin.case.approve" | "admin.evidence.read" | "admin.report.read" | "admin.report.export" | "admin.partner.read" | "admin.partner.manage" | "staff.support.handle" | "partner.referral.read" | "platform.engineering.access")[]; "kycTier": "tier_0" | "tier_1" | "tier_2" | "tier_3" }
 
 export type ListSessionsResponse = ({ "sessionId": string; "current": boolean; "audience": "app" | "control" | "staff" | "partner"; "environment": "production" | "staging"; "deviceName": string | null; "createdAt": string; "lastSeenAt": string; "idleExpiresAt": string; "expiresAt": string; "mfaSatisfied": boolean })[]
 
@@ -286,6 +286,42 @@ export type CreateTaxonomyAttributeResponse = { "id": string; "nodeId": string; 
 export type UpdateTaxonomyAttributeRequest = { "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired"?: boolean; "enumValues"?: (string)[] | null; "unit"?: string; "sortOrder"?: number; "reason": string }
 
 export type UpdateTaxonomyAttributeResponse = { "id": string; "nodeId": string; "key": string; "label": string; "dataType": "text" | "number" | "boolean" | "enum" | "date"; "isRequired": boolean; "enumValues": (string)[] | null; "unit": string | null; "sortOrder": number; "createdAt": string; "updatedAt": string }
+
+export type ListPayoutsResponse = ({ "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null })[]
+
+export type GetWalletBalanceResponse = ({ "currency": string; "total": string; "available": string; "pending": string; "withdrawable": string })[]
+
+export type GetWalletStatementResponse = ({ "postingId": string; "entryId": string; "reference": string; "entryKind": "deposit" | "withdrawal" | "escrow_hold" | "escrow_release" | "escrow_refund" | "payout" | "payout_reversal" | "adjustment" | "reversal"; "currency": string; "direction": "debit" | "credit"; "amount": string; "signedAmount": string; "activityId": "market.buy" | "services.hire" | "errands.request" | "market.sell" | "services.offer" | "logistics.provide" | null; "occurredAt": string })[]
+
+export type ListPayoutAccountsResponse = ({ "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string })[]
+
+export type BindPayoutAccountRequest = { "bankCode": string; "bankName": string; "accountNumber": string; "reason"?: string }
+
+export type BindPayoutAccountResponse = { "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string }
+
+export type DisablePayoutAccountRequest = { "reason": string }
+
+export type DisablePayoutAccountResponse = { "id": string; "bankCode": string; "bankName": string; "accountName": string; "accountNumberMasked": string; "state": "pending" | "verified" | "rejected" | "disabled"; "boundAt": string | null; "createdAt": string }
+
+export type GetCollectionAccountResponse = { "id": string; "provider": string; "reference": string; "accountNumber": string; "accountName": string; "bankName": string | null; "currency": string; "status": string } | null
+
+export type CreateCollectionAccountResponse = { "id": string; "provider": string; "reference": string; "accountNumber": string; "accountName": string; "bankName": string | null; "currency": string; "status": string }
+
+export type RequestWithdrawalRequest = { "payoutAccountId": string; "amount": string; "currency": string }
+
+export type RequestWithdrawalResponse = { "id": string; "reference": string; "payoutAccountId": string; "accountNumberLast4": string; "amount": string; "currency": string; "status": "REQUESTED" | "APPROVED" | "RESERVED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED"; "provider": string | null; "providerReference": string | null; "failureCode": string | null; "createdAt": string; "completedAt": string | null }
+
+export type AssignKycTierRequest = { "tier": "tier_0" | "tier_1" | "tier_2" | "tier_3"; "reason": string }
+
+export type AssignKycTierResponse = { "accountId": string; "tier": "tier_0" | "tier_1" | "tier_2" | "tier_3"; "updatedAt": string }
+
+export type GetPaymentProviderResponse = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "updatedAt": string; "configured": { "vfd": { "test": boolean; "live": boolean }; "paystack": { "test": boolean; "live": boolean } } }
+
+export type SetPaymentProviderRequest = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "reason": string }
+
+export type SetPaymentProviderResponse = { "provider": "vfd" | "paystack"; "mode": "test" | "live"; "updatedAt": string; "configured": { "vfd": { "test": boolean; "live": boolean }; "paystack": { "test": boolean; "live": boolean } } }
+
+export type PaystackWebhookResponse = { "accepted": boolean; "posted": boolean; "reason"?: string }
 
 export function createHivorrClient(options: HivorrClientOptions) {
   const fetchImpl = options.fetch ?? globalThis.fetch
@@ -921,6 +957,97 @@ export function createHivorrClient(options: HivorrClientOptions) {
         "PATCH",
         `/v1/control/taxonomy/attributes/${encodeURIComponent(params.id)}`,
         input,
+        [200],
+      ),
+    listPayouts: () =>
+      request<ListPayoutsResponse>(
+        "GET",
+        "/v1/wallet/payouts",
+        undefined,
+        [200],
+      ),
+    getWalletBalance: () =>
+      request<GetWalletBalanceResponse>(
+        "GET",
+        "/v1/wallet/balance",
+        undefined,
+        [200],
+      ),
+    getWalletStatement: () =>
+      request<GetWalletStatementResponse>(
+        "GET",
+        "/v1/wallet/statement",
+        undefined,
+        [200],
+      ),
+    listPayoutAccounts: () =>
+      request<ListPayoutAccountsResponse>(
+        "GET",
+        "/v1/wallet/payout-accounts",
+        undefined,
+        [200],
+      ),
+    bindPayoutAccount: (input: BindPayoutAccountRequest) =>
+      request<BindPayoutAccountResponse>(
+        "POST",
+        "/v1/wallet/payout-accounts",
+        input,
+        [201],
+      ),
+    disablePayoutAccount: (params: { id: string }, input: DisablePayoutAccountRequest) =>
+      request<DisablePayoutAccountResponse>(
+        "POST",
+        `/v1/wallet/payout-accounts/${encodeURIComponent(params.id)}/disable`,
+        input,
+        [200],
+      ),
+    getCollectionAccount: () =>
+      request<GetCollectionAccountResponse>(
+        "GET",
+        "/v1/wallet/collection-account",
+        undefined,
+        [200],
+      ),
+    createCollectionAccount: () =>
+      request<CreateCollectionAccountResponse>(
+        "POST",
+        "/v1/wallet/collection-account",
+        undefined,
+        [201],
+      ),
+    requestWithdrawal: (input: RequestWithdrawalRequest) =>
+      request<RequestWithdrawalResponse>(
+        "POST",
+        "/v1/wallet/withdrawals",
+        input,
+        [201],
+      ),
+    assignKycTier: (params: { id: string }, input: AssignKycTierRequest) =>
+      request<AssignKycTierResponse>(
+        "POST",
+        `/v1/control/accounts/${encodeURIComponent(params.id)}/kyc-tier`,
+        input,
+        [200],
+      ),
+    getPaymentProvider: () =>
+      request<GetPaymentProviderResponse>(
+        "GET",
+        "/v1/control/payments/provider",
+        undefined,
+        [200],
+      ),
+    setPaymentProvider: (input: SetPaymentProviderRequest) =>
+      request<SetPaymentProviderResponse>(
+        "POST",
+        "/v1/control/payments/provider",
+        input,
+        [200],
+      ),
+    paystackWebhook: () =>
+      request<PaystackWebhookResponse>(
+        "POST",
+        "/v1/webhooks/paystack",
+        undefined,
         [200],
       ),
   }

@@ -16,7 +16,14 @@ import type { AccessContext } from "../../domain/capabilities"
  * This module owns no SQL table outside the `admin` schema. It is read-only for
  * the actor; administrative mutation paths arrive with CP-012.
  */
-export type GovernanceScopeType = "platform" | "department" | "organisation" | "activity" | "case" | "team" | "queue"
+export type GovernanceScopeType =
+  | "platform"
+  | "department"
+  | "organisation"
+  | "activity"
+  | "case"
+  | "team"
+  | "queue"
 
 export interface GovernanceAssignment {
   readonly source: "role" | "grant"
@@ -77,10 +84,7 @@ function denialMatchesAssignment(
 ): boolean {
   if (denial.permissionKey !== assignment.permissionKey) return false
   if (isGlobalDenial(denial)) return true
-  return (
-    denial.scopeType === assignment.scopeType &&
-    denial.scopeId === assignment.scopeId
-  )
+  return denial.scopeType === assignment.scopeType && denial.scopeId === assignment.scopeId
 }
 
 /**
@@ -124,8 +128,7 @@ export function composeAuthority(
 
   for (const [permission, scopedAssignments] of byPermission) {
     const allowed = scopedAssignments.filter(
-      (assignment) =>
-        !denials.some((denial) => denialMatchesAssignment(denial, assignment)),
+      (assignment) => !denials.some((denial) => denialMatchesAssignment(denial, assignment)),
     )
     if (allowed.length > 0) {
       permissions.push(permission)
@@ -222,9 +225,7 @@ export function permissionScopes(
 ): readonly GovernanceAssignment[] {
   return authority.assignments.filter((assignment) => {
     if (assignment.permissionKey !== permission) return false
-    return !authority.denials.some((denial) =>
-      denialMatchesAssignment(denial, assignment),
-    )
+    return !authority.denials.some((denial) => denialMatchesAssignment(denial, assignment))
   })
 }
 
@@ -234,9 +235,7 @@ export function permissionScopes(
  * on purpose: a scoped role must not become a platform-wide capability in the
  * generic session view.
  */
-export function platformPermissions(
-  authority: GovernanceAuthority,
-): readonly string[] {
+export function platformPermissions(authority: GovernanceAuthority): readonly string[] {
   const denied = new Set(
     authority.denials
       .filter((denial) => isGlobalDenial(denial))

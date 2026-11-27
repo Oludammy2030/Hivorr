@@ -86,18 +86,16 @@ describe("unit of work", () => {
     })
 
     expect(
-      client.calls.filter(
-        (call) => call.text === "select platform.set_identity_context($1, $2)",
-      ),
+      client.calls.filter((call) => call.text === "select platform.set_identity_context($1, $2)"),
     ).toHaveLength(1)
   })
 
   it("rolls back when commit fails and still releases", async () => {
     const client = new FakeClient()
     client.failOnCommit = true
-    await expect(
-      withTransaction(poolWith(client), {}, async () => "ignored"),
-    ).rejects.toThrow("commit failed")
+    await expect(withTransaction(poolWith(client), {}, async () => "ignored")).rejects.toThrow(
+      "commit failed",
+    )
 
     expect(texts(client)).toEqual(["begin", "commit", "rollback"])
     expect(client.released).toBe(true)
@@ -106,9 +104,7 @@ describe("unit of work", () => {
   it("passes parameters through without interpolation", async () => {
     const client = new FakeClient()
     await withTransaction(poolWith(client), {}, async (transaction) => {
-      await transaction.query("select * from t where id = $1", [
-        "id'; drop table t; --",
-      ])
+      await transaction.query("select * from t where id = $1", ["id'; drop table t; --"])
     })
 
     const query = client.calls.find((call) => call.text.includes("where id"))
@@ -139,13 +135,13 @@ describe("unit of work", () => {
 
     expect(clients).toHaveLength(2)
     expect(clients[0]).not.toBe(clients[1])
-    expect(
-      clients[0]?.calls.find((call) => call.text.includes("set_identity"))
-        ?.values,
-    ).toEqual(["account-a", "user-a"])
-    expect(
-      clients[1]?.calls.find((call) => call.text.includes("set_identity"))
-        ?.values,
-    ).toEqual(["account-b", "user-b"])
+    expect(clients[0]?.calls.find((call) => call.text.includes("set_identity"))?.values).toEqual([
+      "account-a",
+      "user-a",
+    ])
+    expect(clients[1]?.calls.find((call) => call.text.includes("set_identity"))?.values).toEqual([
+      "account-b",
+      "user-b",
+    ])
   })
 })

@@ -106,11 +106,7 @@ function mapDenialError(error: unknown): never {
       if (message.includes("denial_permission_not_found")) {
         throw new ApiError("NOT_FOUND", "That permission was not found.", 404)
       }
-      throw new ApiError(
-        "NOT_FOUND",
-        "The denial was not found or is already revoked.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The denial was not found or is already revoked.", 404)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -131,23 +127,15 @@ function mapDenialError(error: unknown): never {
           400,
         )
       }
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The permission, scope or expiry is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The permission, scope or expiry is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The access denial operation failed.")
+      throw error instanceof Error ? error : new Error("The access denial operation failed.")
   }
 }
 
 @Injectable()
 export class DenialsService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async list(input: {
     accountId: string

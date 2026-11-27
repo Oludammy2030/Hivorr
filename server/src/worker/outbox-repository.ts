@@ -78,10 +78,7 @@ export class OutboxRepository {
     }
   }
 
-  private async lockClaimable(
-    client: PoolClient,
-    limit: number,
-  ): Promise<OutboxRow[]> {
+  private async lockClaimable(client: PoolClient, limit: number): Promise<OutboxRow[]> {
     const result = await client.query<OutboxRow>(
       `select id, event_type, aggregate_type, aggregate_id, payload,
               occurred_at, attempts
@@ -135,11 +132,7 @@ export class OutboxRepository {
    * Records a failed delivery. The event is rescheduled with exponential
    * backoff, or dead-lettered once it has consumed its attempt budget.
    */
-  async fail(
-    event: OutboxEvent,
-    message: string,
-    now = Date.now(),
-  ): Promise<FailResult> {
+  async fail(event: OutboxEvent, message: string, now = Date.now()): Promise<FailResult> {
     const attempts = event.attempts + 1
     const deadLettered = attempts >= this.options.maxAttempts
     const delayMs = retryDelayMs(event.attempts, this.options.retryBaseMs)
@@ -157,13 +150,7 @@ export class OutboxRepository {
            dead_lettered_at = case when $4 then now() else null end
        where id = $1 and processed_at is null and locked_by = $2
        returning attempts, dead_lettered_at`,
-      [
-        event.id,
-        this.options.workerId,
-        message.slice(0, 2_000),
-        deadLettered,
-        availableAt,
-      ],
+      [event.id, this.options.workerId, message.slice(0, 2_000), deadLettered, availableAt],
     )
     const row = result.rows[0]
     if (!row) return { attempts, deadLettered: false }

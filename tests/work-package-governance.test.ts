@@ -25,15 +25,11 @@ function fixture(files: Record<string, string>): string {
 
 function run(directory: string) {
   try {
-    const stdout = execFileSync(
-      process.execPath,
-      [script, "--root", directory],
-      {
-        cwd: root,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    )
+    const stdout = execFileSync(process.execPath, [script, "--root", directory], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    })
     return { status: 0, stdout, stderr: "" }
   } catch (error) {
     const failure = error as {
@@ -50,8 +46,7 @@ function run(directory: string) {
 }
 
 afterAll(() => {
-  for (const directory of temporaryDirectories)
-    rmSync(directory, { recursive: true, force: true })
+  for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true })
 })
 
 describe("work-package governance", () => {
@@ -96,19 +91,14 @@ describe("work-package governance", () => {
 
   it("blocks a task document whose identifier is not in the plan", () => {
     const directory = fixture({
-      [`${planDirectory}/EP-99 - Fixture.md`]: [
-        "# Fixture",
-        "#### EP-99-001 - One",
-      ].join("\n"),
+      [`${planDirectory}/EP-99 - Fixture.md`]: ["# Fixture", "#### EP-99-001 - One"].join("\n"),
       [`${taskDirectory}/EP-99/EP-99-002 - Orphan.md`]: "# Orphan",
     })
 
     const result = run(directory)
 
     expect(result.status).toBe(1)
-    expect(result.stderr).toContain(
-      "EP-99-002 has no heading in its phase plan",
-    )
+    expect(result.stderr).toContain("EP-99-002 has no heading in its phase plan")
   })
 
   it("blocks the same identifier appearing twice", () => {

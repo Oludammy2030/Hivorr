@@ -7,12 +7,7 @@
  * yet, so it cannot be reached by accident.
  */
 
-import {
-  ROUTES,
-  ROUTE_IDS,
-  type RouteDefinition,
-  type RouteId,
-} from "@hivorr/shared"
+import { ROUTES, ROUTE_IDS, type RouteDefinition, type RouteId } from "@hivorr/shared"
 
 /** Every approved route family, for coverage checks and the future shells. */
 export const APPROVED_ROUTE_IDS = ROUTE_IDS
@@ -28,13 +23,12 @@ export const SLICE_ROUTE_IDS = [
   "reset-password",
   "verify-email",
   "activities",
+  "wallet",
 ] as const
 
-export type SliceRouteId = typeof SLICE_ROUTE_IDS[number]
+export type SliceRouteId = (typeof SLICE_ROUTE_IDS)[number]
 
-export const SLICE_ROUTES: readonly RouteDefinition[] = SLICE_ROUTE_IDS.map(
-  (id) => ROUTES[id],
-)
+export const SLICE_ROUTES: readonly RouteDefinition[] = SLICE_ROUTE_IDS.map((id) => ROUTES[id])
 
 const SLICE_BY_PATH = new Map<string, RouteDefinition>(
   SLICE_ROUTES.map((route) => [route.path, route]),
@@ -50,15 +44,13 @@ export function isSliceRouteId(value: string): value is SliceRouteId {
  * ignored, except for `/` itself.
  */
 export function matchSlicePath(pathname: string): RouteDefinition | undefined {
-  const normalized =
-    pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/"
+  const normalized = pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/"
   return SLICE_BY_PATH.get(normalized)
 }
 
 /** True when the path is a declared route family outside the slice. */
 export function isApprovedButUnreachable(pathname: string): boolean {
-  const normalized =
-    pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/"
+  const normalized = pathname === "/" ? "/" : pathname.replace(/\/+$/, "") || "/"
   if (SLICE_BY_PATH.has(normalized)) return false
   return APPROVED_ROUTE_IDS.some((id) => {
     const pattern = ROUTES[id].path

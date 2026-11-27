@@ -169,10 +169,7 @@ async function smokeStartup() {
   if (exit.signal === "SIGTERM" || exit.code === 0) {
     pass("SIGTERM performs a graceful shutdown")
   } else {
-    fail(
-      "SIGTERM performs a graceful shutdown",
-      `exit code ${exit.code}, signal ${exit.signal}`,
-    )
+    fail("SIGTERM performs a graceful shutdown", `exit code ${exit.code}, signal ${exit.signal}`)
   }
 }
 
@@ -196,10 +193,7 @@ async function smokeInvalidConfiguration() {
     return
   }
   if (result.code !== 1 || !output.includes("failed to start")) {
-    fail(
-      "missing configuration stops startup with code 1",
-      `code ${result.code}; ${output.trim()}`,
-    )
+    fail("missing configuration stops startup with code 1", `code ${result.code}; ${output.trim()}`)
     return
   }
   pass("missing configuration stops startup with code 1")
@@ -218,9 +212,7 @@ async function smokeInvalidConfiguration() {
 }
 
 if (!existsSync(entry)) {
-  console.error(
-    "smoke:api: server/dist/main.js is missing; run `pnpm build:server` first",
-  )
+  console.error("smoke:api: server/dist/main.js is missing; run `pnpm build:server` first")
   process.exit(2)
 }
 

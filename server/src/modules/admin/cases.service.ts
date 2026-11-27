@@ -104,35 +104,19 @@ function codeOf(error: unknown): string | undefined {
 function mapCaseError(error: unknown): never {
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to work with cases.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to work with cases.", 403)
     case "P0002":
-      throw new ApiError(
-        "NOT_FOUND",
-        "The case or the account was not found.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The case or the account was not found.", 404)
     case "22023":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The case request is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The case request is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The case operation failed.")
+      throw error instanceof Error ? error : new Error("The case operation failed.")
   }
 }
 
 @Injectable()
 export class CasesService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async list(input: {
     accountId: string
@@ -253,11 +237,7 @@ export class CasesService {
   }): Promise<CaseEventView> {
     const summary = input.summary.trim()
     if (summary.length < 3) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A case note needs at least three characters.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A case note needs at least three characters.", 400)
     }
 
     try {
@@ -306,12 +286,7 @@ export class CasesService {
         async (transaction) => {
           const result = await transaction.query<CaseRow>(
             "select * from admin.assign_case($1, $2, $3, $4)",
-            [
-              input.userId,
-              input.caseId,
-              input.email ?? null,
-              input.queueKey ?? null,
-            ],
+            [input.userId, input.caseId, input.email ?? null, input.queueKey ?? null],
           )
           const row = result.rows[0]
           await appendAudit(transaction.client, {

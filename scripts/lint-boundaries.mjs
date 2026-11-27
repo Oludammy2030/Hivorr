@@ -43,21 +43,14 @@ const MODULES = [
  * owning phase. Adding code to one of them is a reviewed change to this list,
  * not an accident. `finance` joined the list in EP-02-031, its owning phase.
  */
-const CODE_MODULES = new Set([
-  "identity",
-  "profile",
-  "platform",
-  "admin",
-  "finance",
-])
+const CODE_MODULES = new Set(["identity", "profile", "platform", "admin", "finance"])
 
 const modulesRoot = path.join(root, "server", "src", "modules")
 
 function walk(directory) {
   const entries = readdirSync(directory)
   for (const entry of entries) {
-    if (entry === "node_modules" || entry === "dist" || entry.startsWith("."))
-      continue
+    if (entry === "node_modules" || entry === "dist" || entry.startsWith(".")) continue
     const full = path.join(directory, entry)
     const stat = statSync(full)
     if (stat.isDirectory()) {
@@ -102,8 +95,7 @@ const rules = [
   {
     area: "app",
     pattern: /from\s+['"](?:\.\.?\/)+(?:\.\.\/)*src\//,
-    message:
-      "an app may not import the prototype source by path; use @hivorr/design",
+    message: "an app may not import the prototype source by path; use @hivorr/design",
   },
   {
     area: "server",
@@ -148,10 +140,7 @@ for (const file of files) {
 // --- Server module boundaries ------------------------------------------------
 
 function relativeToModules(absolute) {
-  const relative = path
-    .relative(modulesRoot, absolute)
-    .split(path.sep)
-    .join("/")
+  const relative = path.relative(modulesRoot, absolute).split(path.sep).join("/")
   if (relative.startsWith("..") || path.isAbsolute(relative)) return undefined
   return relative
 }
@@ -168,10 +157,7 @@ function lineOf(contents, index) {
 }
 
 function isModuleIndex(absolute, module) {
-  const relative = path
-    .relative(path.join(modulesRoot, module), absolute)
-    .split(path.sep)
-    .join("/")
+  const relative = path.relative(path.join(modulesRoot, module), absolute).split(path.sep).join("/")
   return relative === "" || relative === "index" || relative === "index.ts"
 }
 
@@ -183,9 +169,7 @@ const SERVER_MODULES_EXIST = existsSync(modulesRoot)
 
 if (existsSync(path.join(root, "server"))) {
   if (!SERVER_MODULES_EXIST) {
-    violations.push(
-      "server/src/modules: missing; the ten module boundaries are required",
-    )
+    violations.push("server/src/modules: missing; the ten module boundaries are required")
   } else {
     const present = readdirSync(modulesRoot).filter((entry) =>
       statSync(path.join(modulesRoot, entry)).isDirectory(),
@@ -270,9 +254,7 @@ if (existsSync(path.join(root, "server"))) {
         }
         for (const match of contents.matchAll(/from\s+["']([^"']+)["']/g)) {
           if (isRepositoryPath(match[1])) {
-            violations.push(
-              `${relativeFile} - a controller may not import a repository`,
-            )
+            violations.push(`${relativeFile} - a controller may not import a repository`)
           }
         }
       }

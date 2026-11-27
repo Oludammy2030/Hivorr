@@ -61,10 +61,7 @@ export function encodePng({ width, height, channels, data }) {
   for (let row = 0; row < height; row += 1) {
     const target = row * (stride + 1)
     raw[target] = 0
-    Buffer.from(data.buffer, data.byteOffset + row * stride, stride).copy(
-      raw,
-      target + 1,
-    )
+    Buffer.from(data.buffer, data.byteOffset + row * stride, stride).copy(raw, target + 1)
   }
 
   return Buffer.concat([
@@ -87,10 +84,7 @@ function paeth(a, b, c) {
 
 export function decodePng(buffer) {
   const source = Buffer.from(buffer)
-  if (
-    source.length < SIGNATURE.length ||
-    !source.subarray(0, SIGNATURE.length).equals(SIGNATURE)
-  ) {
+  if (source.length < SIGNATURE.length || !source.subarray(0, SIGNATURE.length).equals(SIGNATURE)) {
     throw new Error("decodePng: not a PNG file")
   }
 

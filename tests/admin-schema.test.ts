@@ -5,17 +5,11 @@ import { describe, expect, it } from "vitest"
 
 const root = process.cwd()
 const organisation = readFileSync(
-  path.join(
-    root,
-    "supabase/migrations/20261111000500_admin_create_organisation_tables.sql",
-  ),
+  path.join(root, "supabase/migrations/20261111000500_admin_create_organisation_tables.sql"),
   "utf8",
 )
 const cases = readFileSync(
-  path.join(
-    root,
-    "supabase/migrations/20261111000600_admin_create_case_and_approval_tables.sql",
-  ),
+  path.join(root, "supabase/migrations/20261111000600_admin_create_case_and_approval_tables.sql"),
   "utf8",
 )
 
@@ -52,9 +46,7 @@ const CASE_TABLES = [
 describe("administrative organisation schema", () => {
   it("creates the organisation tables", () => {
     for (const table of ORGANISATION_TABLES) {
-      expect(organisation, table).toMatch(
-        new RegExp(`create table admin\\.${table}`),
-      )
+      expect(organisation, table).toMatch(new RegExp(`create table admin\\.${table}`))
     }
   })
 
@@ -82,9 +74,7 @@ describe("administrative organisation schema", () => {
     expect(organisation).toMatch(
       /partner_applications_active_unique[\s\S]*?where status in \('submitted', 'under_review'\)/,
     )
-    expect(organisation).toMatch(
-      /partner_scopes_active_unique[\s\S]*?where revoked_at is null/,
-    )
+    expect(organisation).toMatch(/partner_scopes_active_unique[\s\S]*?where revoked_at is null/)
   })
 
   it("does not grant API write access to organisation tables", () => {
@@ -118,9 +108,7 @@ describe("case, approval and configuration schema", () => {
     expect(cases).toMatch(/case_type text not null check \(case_type in \(/)
     expect(cases).toMatch(/parent_case_id uuid references admin\.cases/)
     expect(cases).toMatch(/case_links/)
-    expect(cases).toMatch(
-      /unique \(case_id, entity_type, entity_id, link_role\)/,
-    )
+    expect(cases).toMatch(/unique \(case_id, entity_type, entity_id, link_role\)/)
   })
 
   it("makes the case timeline, decisions and configuration versions append-only", () => {
@@ -149,9 +137,7 @@ describe("case, approval and configuration schema", () => {
     expect(cases).toMatch(/approval_steps/)
     expect(cases).toMatch(/approval_decisions/)
     expect(cases).toMatch(/requester_user_id uuid not null/)
-    expect(cases).toMatch(
-      /required_permission text not null references admin\.permissions/,
-    )
+    expect(cases).toMatch(/required_permission text not null references admin\.permissions/)
     expect(cases).toMatch(
       /approval_requests_currency check \(\s*amount is null or currency is not null/,
     )

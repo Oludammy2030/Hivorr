@@ -99,9 +99,7 @@ try {
   }
 
   if (process.exitCode) {
-    console.error(
-      `db:check: identity database=${row.database} role=${row.role} tls=${tls}`,
-    )
+    console.error(`db:check: identity database=${row.database} role=${row.role} tls=${tls}`)
   } else {
     console.log(
       `db:check: OK - database=${row.database} role=${row.role} tls=${tls} server=${row.version}`,

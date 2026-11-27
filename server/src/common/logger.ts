@@ -1,16 +1,8 @@
 import type { ApiConfig } from "../config"
 
-export const LOG_LEVELS = [
-  "fatal",
-  "error",
-  "warn",
-  "info",
-  "debug",
-  "trace",
-  "silent",
-] as const
+export const LOG_LEVELS = ["fatal", "error", "warn", "info", "debug", "trace", "silent"] as const
 
-export type LogLevel = typeof LOG_LEVELS[number]
+export type LogLevel = (typeof LOG_LEVELS)[number]
 
 export type LogFields = Record<string, unknown>
 
@@ -104,9 +96,7 @@ export function redact(value: unknown, seen = new WeakSet<object>()): unknown {
   const result: Record<string, unknown> = {}
   for (const [key, entry] of Object.entries(value)) {
     const normalized = key.toLowerCase().replace(/[_-]/g, "")
-    result[key] = SENSITIVE_KEYS.has(normalized)
-      ? REDACTED
-      : redact(entry, seen)
+    result[key] = SENSITIVE_KEYS.has(normalized) ? REDACTED : redact(entry, seen)
   }
   return result
 }
@@ -126,7 +116,7 @@ export function createLogger(options: LoggerOptions): Logger {
   function write(level: LogLevel, event: string, fields?: LogFields): void {
     if (PRIORITY[level] > PRIORITY[options.level]) return
     const record = {
-      ...redact(fields ?? {}) as Record<string, unknown>,
+      ...(redact(fields ?? {}) as Record<string, unknown>),
       timestamp: new Date().toISOString(),
       level,
       service: options.service,

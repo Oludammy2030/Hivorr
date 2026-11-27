@@ -11,13 +11,7 @@
 //   node scripts/visual-diff.mjs --baseline <dir> --current <dir> --fail-on-diff
 //   node scripts/visual-diff.mjs --threshold 0.001 --pixel-tolerance 2
 
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs"
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
 import { decodePng } from "./lib/png.mjs"
@@ -133,10 +127,7 @@ for (const [name, file] of baseline) {
     const offset = index * left.channels
     let different = false
     for (let channel = 0; channel < left.channels; channel += 1) {
-      if (
-        Math.abs(left.data[offset + channel] - right.data[offset + channel]) >
-        pixelTolerance
-      ) {
+      if (Math.abs(left.data[offset + channel] - right.data[offset + channel]) > pixelTolerance) {
         different = true
         break
       }
@@ -188,14 +179,10 @@ reportAndExit(report)
 
 if (differences) {
   if (failOnDiff) {
-    console.error(
-      `visual:check: ${differences} visual difference(s) fail the gate`,
-    )
+    console.error(`visual:check: ${differences} visual difference(s) fail the gate`)
     process.exit(1)
   }
-  console.log(
-    `visual:check: ${differences} visual difference(s) — review required`,
-  )
+  console.log(`visual:check: ${differences} visual difference(s) — review required`)
 } else {
   console.log("visual:check: no visual change")
 }

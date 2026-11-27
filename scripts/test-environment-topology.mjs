@@ -10,9 +10,7 @@ import path from "node:path"
 import { verifyEnvironmentTopology } from "./lib/environment-topology-policy.mjs"
 
 const root = process.cwd()
-const baseline = JSON.parse(
-  readFileSync(path.join(root, "config", "environments.json"), "utf8"),
-)
+const baseline = JSON.parse(readFileSync(path.join(root, "config", "environments.json"), "utf8"))
 const backendProjects = JSON.parse(
   readFileSync(path.join(root, "config", "backend-projects.json"), "utf8"),
 )
@@ -58,8 +56,7 @@ const sharedRef = mutate((topology) => {
 })
 check(
   "a shared Supabase project is refused",
-  !sharedRef.ok &&
-    sharedRef.issues.some((issue) => issue.includes("must not share")),
+  !sharedRef.ok && sharedRef.issues.some((issue) => issue.includes("must not share")),
   sharedRef.issues.join("\n"),
 )
 
@@ -68,8 +65,7 @@ const wrongRef = mutate((topology) => {
 })
 check(
   "a project ref that contradicts the backend manifest is refused",
-  !wrongRef.ok &&
-    wrongRef.issues.some((issue) => issue.includes("backend-projects.json")),
+  !wrongRef.ok && wrongRef.issues.some((issue) => issue.includes("backend-projects.json")),
   wrongRef.issues.join("\n"),
 )
 
@@ -87,8 +83,7 @@ const secondLevel = mutate((topology) => {
 })
 check(
   "a second-level staging host is refused after flattening",
-  !secondLevel.ok &&
-    secondLevel.issues.some((issue) => issue.includes("first-level")),
+  !secondLevel.ok && secondLevel.issues.some((issue) => issue.includes("first-level")),
   secondLevel.issues.join("\n"),
 )
 
@@ -107,8 +102,7 @@ const publicApi = mutate((topology) => {
 })
 check(
   "a public API origin is refused",
-  !publicApi.ok &&
-    publicApi.issues.some((issue) => issue.includes("internal-only")),
+  !publicApi.ok && publicApi.issues.some((issue) => issue.includes("internal-only")),
   publicApi.issues.join("\n"),
 )
 
@@ -117,8 +111,7 @@ const unprotected = mutate((topology) => {
 })
 check(
   "missing Access protection is refused",
-  !unprotected.ok &&
-    unprotected.issues.some((issue) => issue.includes("Access must protect")),
+  !unprotected.ok && unprotected.issues.some((issue) => issue.includes("Access must protect")),
   unprotected.issues.join("\n"),
 )
 
@@ -127,8 +120,7 @@ const sharedBucket = mutate((topology) => {
 })
 check(
   "a storage prefix not scoped to its environment is refused",
-  !sharedBucket.ok &&
-    sharedBucket.issues.some((issue) => issue.includes("environment-scoped")),
+  !sharedBucket.ok && sharedBucket.issues.some((issue) => issue.includes("environment-scoped")),
   sharedBucket.issues.join("\n"),
 )
 
@@ -140,9 +132,7 @@ const prematureProduction = mutate((topology) => {
 check(
   "production cannot be verified before staging",
   !prematureProduction.ok &&
-    prematureProduction.issues.some((issue) =>
-      issue.includes("before staging"),
-    ),
+    prematureProduction.issues.some((issue) => issue.includes("before staging")),
   prematureProduction.issues.join("\n"),
 )
 
@@ -169,19 +159,16 @@ const badRegion = mutate((topology) => {
 })
 check(
   "a malformed Fly.io region is refused",
-  !badRegion.ok &&
-    badRegion.issues.some((issue) => issue.includes("three-letter")),
+  !badRegion.ok && badRegion.issues.some((issue) => issue.includes("three-letter")),
   badRegion.issues.join("\n"),
 )
 
 const badPagesProject = mutate((topology) => {
-  topology.environments.staging.pagesProjects.control =
-    "hivorr-production-control"
+  topology.environments.staging.pagesProjects.control = "hivorr-production-control"
 })
 check(
   "a Pages project outside the environment prefix is refused",
-  !badPagesProject.ok &&
-    badPagesProject.issues.some((issue) => issue.includes("Pages project")),
+  !badPagesProject.ok && badPagesProject.issues.some((issue) => issue.includes("Pages project")),
   badPagesProject.issues.join("\n"),
 )
 
@@ -190,8 +177,7 @@ const badBucket = mutate((topology) => {
 })
 check(
   "an R2 bucket outside the environment prefix is refused",
-  !badBucket.ok &&
-    badBucket.issues.some((issue) => issue.includes("R2 bucket")),
+  !badBucket.ok && badBucket.issues.some((issue) => issue.includes("R2 bucket")),
   badBucket.issues.join("\n"),
 )
 
@@ -200,8 +186,7 @@ const unknownApp = mutate((topology) => {
 })
 check(
   "an undeclared fifth host is refused",
-  !unknownApp.ok &&
-    unknownApp.issues.some((issue) => issue.includes("unknown application")),
+  !unknownApp.ok && unknownApp.issues.some((issue) => issue.includes("unknown application")),
   unknownApp.issues.join("\n"),
 )
 

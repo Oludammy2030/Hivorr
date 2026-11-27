@@ -6,13 +6,13 @@
  */
 
 export const ACCOUNT_STATUSES = ["active", "suspended", "closed"] as const
-export type AccountStatus = typeof ACCOUNT_STATUSES[number]
+export type AccountStatus = (typeof ACCOUNT_STATUSES)[number]
 
 export const USER_STATUSES = ["active", "suspended", "closed"] as const
-export type UserStatus = typeof USER_STATUSES[number]
+export type UserStatus = (typeof USER_STATUSES)[number]
 
 export const MEMBERSHIP_ROLES = ["owner", "member"] as const
-export type MembershipRole = typeof MEMBERSHIP_ROLES[number]
+export type MembershipRole = (typeof MEMBERSHIP_ROLES)[number]
 
 export const GRANT_SCOPES = {
   admin: ["admin.audit.read", "admin.grant.read", "admin.grant.manage"],
@@ -36,14 +36,9 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
-export function grantScopeIsValid(
-  grantType: string,
-  scope: string,
-): grantType is GrantType {
+export function grantScopeIsValid(grantType: string, scope: string): grantType is GrantType {
   if (!(grantType in GRANT_SCOPES)) return false
-  return (GRANT_SCOPES[(grantType as GrantType)] as readonly string[]).includes(
-    scope,
-  )
+  return (GRANT_SCOPES[grantType as GrantType] as readonly string[]).includes(scope)
 }
 
 export interface GrantLifecycle {
@@ -51,10 +46,7 @@ export interface GrantLifecycle {
   readonly expiresAt?: string | null
 }
 
-export function grantIsActive(
-  grant: GrantLifecycle,
-  now: Date = new Date(),
-): boolean {
+export function grantIsActive(grant: GrantLifecycle, now: Date = new Date()): boolean {
   if (grant.revokedAt) return false
   if (!grant.expiresAt) return true
   const expiry = Date.parse(grant.expiresAt)

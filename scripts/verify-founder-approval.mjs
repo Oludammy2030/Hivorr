@@ -11,10 +11,7 @@
 // Optional:
 //   RELEASE_ISSUE_NUMBER — verify one issue instead of searching
 
-import {
-  RELEASE_CANDIDATE_LABEL,
-  evaluateFounderApproval,
-} from "./lib/founder-approval.mjs"
+import { RELEASE_CANDIDATE_LABEL, evaluateFounderApproval } from "./lib/founder-approval.mjs"
 
 const token = process.env.GITHUB_TOKEN
 const repository = process.env.GITHUB_REPOSITORY
@@ -55,15 +52,11 @@ try {
       `/issues?labels=${encodeURIComponent(RELEASE_CANDIDATE_LABEL)}&state=all&per_page=100`,
     )
     issue = (issues || []).find(
-      (candidate) =>
-        !candidate.pull_request &&
-        String(candidate.body ?? "").includes(releaseSha),
+      (candidate) => !candidate.pull_request && String(candidate.body ?? "").includes(releaseSha),
     )
   }
 
-  const comments = issue
-    ? await getJson(`/issues/${issue.number}/comments?per_page=100`)
-    : []
+  const comments = issue ? await getJson(`/issues/${issue.number}/comments?per_page=100`) : []
 
   const result = evaluateFounderApproval({
     issue,
@@ -86,9 +79,7 @@ try {
   )
 } catch (error) {
   console.error(
-    `verify-founder-approval: ERROR — ${
-      error instanceof Error ? error.message : String(error)
-    }`,
+    `verify-founder-approval: ERROR — ${error instanceof Error ? error.message : String(error)}`,
   )
   process.exit(2)
 }

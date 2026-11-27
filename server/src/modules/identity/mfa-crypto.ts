@@ -1,9 +1,4 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-} from "node:crypto"
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto"
 
 import { ConfigurationError } from "../../config"
 
@@ -28,9 +23,7 @@ export class MfaCipher {
     if (!value) return undefined
     const key = Buffer.from(value, "base64")
     if (key.length !== 32) {
-      throw new ConfigurationError(
-        "MFA_ENCRYPTION_KEY must be 32 bytes encoded as base64",
-      )
+      throw new ConfigurationError("MFA_ENCRYPTION_KEY must be 32 bytes encoded as base64")
     }
     return new MfaCipher(key)
   }
@@ -38,10 +31,7 @@ export class MfaCipher {
   encrypt(plaintext: string): EncryptedSecret {
     const iv = randomBytes(12)
     const cipher = createCipheriv(ALGORITHM, this.key, iv)
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, "utf8"),
-      cipher.final(),
-    ])
+    const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
     const tag = cipher.getAuthTag()
     return {
       ciphertext: [
@@ -59,11 +49,7 @@ export class MfaCipher {
     if (version !== KEY_VERSION || !iv || !tag || !encrypted) {
       throw new Error("Unsupported MFA secret format")
     }
-    const decipher = createDecipheriv(
-      ALGORITHM,
-      this.key,
-      Buffer.from(iv, "base64"),
-    )
+    const decipher = createDecipheriv(ALGORITHM, this.key, Buffer.from(iv, "base64"))
     decipher.setAuthTag(Buffer.from(tag, "base64"))
     return Buffer.concat([
       decipher.update(Buffer.from(encrypted, "base64")),
@@ -81,9 +67,7 @@ export function generateRecoveryCodes(count = 10): string[] {
       bytes,
       (byte) => RECOVERY_ALPHABET[byte % RECOVERY_ALPHABET.length],
     )
-    codes.add(
-      `${characters.slice(0, 5).join("")}-${characters.slice(5).join("")}`,
-    )
+    codes.add(`${characters.slice(0, 5).join("")}-${characters.slice(5).join("")}`)
   }
   return [...codes]
 }

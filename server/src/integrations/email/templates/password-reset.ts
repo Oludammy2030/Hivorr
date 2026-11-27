@@ -12,9 +12,7 @@ export interface TransactionalEmail {
   readonly html: string
 }
 
-export function buildPasswordResetEmail(
-  input: PasswordResetEmailInput,
-): TransactionalEmail {
+export function buildPasswordResetEmail(input: PasswordResetEmailInput): TransactionalEmail {
   const subject = "Reset your Hivorr password"
   const window = `${input.expiresInMinutes} minutes`
 

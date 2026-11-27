@@ -10,9 +10,7 @@ export function migrationChecksum(sql) {
 
 export function verifyMigrationHistory({ files, applied }) {
   const issues = []
-  const appliedByFile = new Map(
-    applied.map((row) => [row.filename, row.checksum]),
-  )
+  const appliedByFile = new Map(applied.map((row) => [row.filename, row.checksum]))
   const fileNames = new Set(files.map((file) => file.filename))
 
   for (const file of files) {
@@ -46,13 +44,9 @@ export function verifyMigrationHistory({ files, applied }) {
  */
 export function planMigrations({ files, applied }) {
   const issues = []
-  const appliedByFile = new Map(
-    applied.map((row) => [row.filename, row.checksum]),
-  )
+  const appliedByFile = new Map(applied.map((row) => [row.filename, row.checksum]))
   const fileNames = new Set(files.map((file) => file.filename))
-  const sorted = [...files].sort((left, right) =>
-    left.filename.localeCompare(right.filename),
-  )
+  const sorted = [...files].sort((left, right) => left.filename.localeCompare(right.filename))
 
   for (const row of applied) {
     if (!fileNames.has(row.filename)) {
@@ -76,9 +70,7 @@ export function planMigrations({ files, applied }) {
   if (lastApplied) {
     for (const filename of pending) {
       if (filename.localeCompare(lastApplied) < 0) {
-        issues.push(
-          `pending migration sorts before the last applied migration: ${filename}`,
-        )
+        issues.push(`pending migration sorts before the last applied migration: ${filename}`)
       }
     }
   }

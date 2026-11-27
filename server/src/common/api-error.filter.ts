@@ -34,9 +34,11 @@ export class ApiErrorFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const context = host.switchToHttp()
     const reply = context.getResponse<FastifyReply>()
-    const request = context.getRequest<FastifyRequest & {
-      correlationId?: string
-    }>()
+    const request = context.getRequest<
+      FastifyRequest & {
+        correlationId?: string
+      }
+    >()
     const correlationId = request.correlationId
 
     if (exception instanceof ApiError) {
@@ -44,9 +46,7 @@ export class ApiErrorFilter implements ExceptionFilter {
       if (exception.statusCode >= 500) {
         this.report(exception, request, correlationId, exception.statusCode)
       }
-      reply
-        .status(exception.statusCode)
-        .send(toErrorBody(exception, correlationId))
+      reply.status(exception.statusCode).send(toErrorBody(exception, correlationId))
       return
     }
 
@@ -63,10 +63,7 @@ export class ApiErrorFilter implements ExceptionFilter {
       reply.status(status).send({
         error: {
           code: codeForStatus(status),
-          message:
-            typeof response === "string"
-              ? response
-              : "The request could not be completed.",
+          message: typeof response === "string" ? response : "The request could not be completed.",
           ...(correlationId ? { correlationId } : {}),
         },
       })
@@ -99,8 +96,7 @@ export class ApiErrorFilter implements ExceptionFilter {
     this.tracker.capture(exception, context)
     this.logger.error("http.unhandled_error", {
       ...context,
-      errorName:
-        exception instanceof Error ? exception.name : "UnknownException",
+      errorName: exception instanceof Error ? exception.name : "UnknownException",
     })
   }
 }

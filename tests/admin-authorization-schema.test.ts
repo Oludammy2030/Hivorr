@@ -5,24 +5,15 @@ import { describe, expect, it } from "vitest"
 
 const root = process.cwd()
 const tables = readFileSync(
-  path.join(
-    root,
-    "supabase/migrations/20261111000100_admin_create_authorization_tables.sql",
-  ),
+  path.join(root, "supabase/migrations/20261111000100_admin_create_authorization_tables.sql"),
   "utf8",
 )
 const functions = readFileSync(
-  path.join(
-    root,
-    "supabase/migrations/20261111000200_admin_create_user_read_functions.sql",
-  ),
+  path.join(root, "supabase/migrations/20261111000200_admin_create_user_read_functions.sql"),
   "utf8",
 )
 const seed = readFileSync(
-  path.join(
-    root,
-    "supabase/migrations/20261111000300_admin_seed_governance_roles.sql",
-  ),
+  path.join(root, "supabase/migrations/20261111000300_admin_seed_governance_roles.sql"),
   "utf8",
 )
 
@@ -92,9 +83,7 @@ describe("administrative authorization schema", () => {
   })
 
   it("checks a platform-scoped permission before listing users", () => {
-    expect(functions).toMatch(
-      /admin\.actor_has_platform_permission\('admin\.user\.read'\)/,
-    )
+    expect(functions).toMatch(/admin\.actor_has_platform_permission\('admin\.user\.read'\)/)
     expect(functions).toMatch(/raise exception 'user_directory_forbidden'/i)
     expect(functions).toMatch(/limit v_limit/)
   })

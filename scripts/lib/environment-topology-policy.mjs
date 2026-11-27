@@ -54,17 +54,13 @@ function hostIssues(environmentName, application, host, baseDomain, issues) {
     const main = `staging.${baseDomain}`
     const flattened = new RegExp(`^[a-z0-9-]+-staging\\.${escaped}$`)
     if (host !== main && !flattened.test(host)) {
-      issues.push(
-        `${label}: staging host must be ${main} or a first-level *-staging host`,
-      )
+      issues.push(`${label}: staging host must be ${main} or a first-level *-staging host`)
     }
   }
   if (environmentName === "production") {
     const firstLevel = new RegExp(`^[a-z0-9-]+\\.${escaped}$`)
     if (host !== baseDomain && !firstLevel.test(host)) {
-      issues.push(
-        `${label}: production host must be ${baseDomain} or a first-level subdomain`,
-      )
+      issues.push(`${label}: production host must be ${baseDomain} or a first-level subdomain`)
     }
     if (host.includes("staging")) {
       issues.push(`${label}: a production host must not contain staging`)
@@ -88,17 +84,12 @@ export function verifyEnvironmentTopology(topology, options = {}) {
     applications.length !== TOPOLOGY_APPLICATIONS.length ||
     !TOPOLOGY_APPLICATIONS.every((name) => applications.includes(name))
   ) {
-    issues.push(
-      `applications must be exactly: ${TOPOLOGY_APPLICATIONS.join(", ")}`,
-    )
+    issues.push(`applications must be exactly: ${TOPOLOGY_APPLICATIONS.join(", ")}`)
   }
 
   const environments = topology.environments ?? {}
   const names = Object.keys(environments)
-  if (
-    names.length !== 2 ||
-    !["staging", "production"].every((n) => names.includes(n))
-  ) {
+  if (names.length !== 2 || !["staging", "production"].every((n) => names.includes(n))) {
     issues.push("topology must define staging and production exactly once")
   }
 
@@ -115,9 +106,7 @@ export function verifyEnvironmentTopology(topology, options = {}) {
   for (const name of names) {
     const environment = environments[name] ?? {}
     if (!ENVIRONMENT_STATUSES.includes(environment.status)) {
-      issues.push(
-        `${name}: status must be one of ${ENVIRONMENT_STATUSES.join(", ")}`,
-      )
+      issues.push(`${name}: status must be one of ${ENVIRONMENT_STATUSES.join(", ")}`)
     }
     if (!environment.baseDomain) {
       issues.push(`${name}: baseDomain is required`)
@@ -134,9 +123,7 @@ export function verifyEnvironmentTopology(topology, options = {}) {
         issues.push(`${name}: unknown application host ${application}`)
       }
       if (typeof host === "string" && allHosts.has(host)) {
-        issues.push(
-          `${host} is assigned to both ${allHosts.get(host)} and ${name}`,
-        )
+        issues.push(`${host} is assigned to both ${allHosts.get(host)} and ${name}`)
       }
       allHosts.set(host, name)
       hostIssues(name, application, host, environment.baseDomain, issues)
@@ -146,29 +133,21 @@ export function verifyEnvironmentTopology(topology, options = {}) {
       for (const role of ["api", "worker"]) {
         const app = environment.flyApps[role]
         if (!app || !app.startsWith(`hivorr-${name}-`)) {
-          issues.push(
-            `${name}: Fly app ${role} is not scoped to hivorr-${name}-`,
-          )
+          issues.push(`${name}: Fly app ${role} is not scoped to hivorr-${name}-`)
         }
       }
     }
 
     if (environment.flyRegion !== undefined) {
       if (!/^[a-z]{3}$/.test(environment.flyRegion)) {
-        issues.push(
-          `${name}: flyRegion must be a three-letter Fly.io region code`,
-        )
+        issues.push(`${name}: flyRegion must be a three-letter Fly.io region code`)
       }
     } else if (environment.status === "verified") {
-      issues.push(
-        `${name}: a verified environment must record its Fly.io region`,
-      )
+      issues.push(`${name}: a verified environment must record its Fly.io region`)
     }
 
     if (environment.apiOrigin !== "internal-only") {
-      issues.push(
-        `${name}: the API has no public hostname; apiOrigin must be internal-only`,
-      )
+      issues.push(`${name}: the API has no public hostname; apiOrigin must be internal-only`)
     }
     if (environment.edgeRewrite !== "/api/*") {
       issues.push(`${name}: the edge must rewrite /api/* same-origin`)
@@ -184,19 +163,14 @@ export function verifyEnvironmentTopology(topology, options = {}) {
 
       const expected = backendProjects[name]?.projectRef
       if (expected && environment.supabaseProjectRef !== expected) {
-        issues.push(
-          `${name}: supabaseProjectRef does not match config/backend-projects.json`,
-        )
+        issues.push(`${name}: supabaseProjectRef does not match config/backend-projects.json`)
       }
     }
 
     if (environment.storage?.provider !== "cloudflare-r2") {
       issues.push(`${name}: storage provider must be cloudflare-r2`)
     }
-    if (
-      !environment.storage?.bucketPrefix ||
-      !environment.storage.bucketPrefix.includes(name)
-    ) {
+    if (!environment.storage?.bucketPrefix || !environment.storage.bucketPrefix.includes(name)) {
       issues.push(`${name}: the R2 bucket prefix must be environment-scoped`)
     } else if (Array.isArray(environment.storage.buckets)) {
       for (const bucket of environment.storage.buckets) {
@@ -218,9 +192,7 @@ export function verifyEnvironmentTopology(topology, options = {}) {
           continue
         }
         if (!project.startsWith(`hivorr-${name}-`)) {
-          issues.push(
-            `${name}: Pages project ${project} is not scoped to hivorr-${name}-`,
-          )
+          issues.push(`${name}: Pages project ${project} is not scoped to hivorr-${name}-`)
         }
         if (seen.has(project)) {
           issues.push(`${name}: duplicate Pages project ${project}`)
@@ -237,11 +209,7 @@ export function verifyEnvironmentTopology(topology, options = {}) {
     }
 
     const secrets = environment.requiredSecrets ?? []
-    for (const secret of [
-      "DATABASE_URL",
-      "MFA_ENCRYPTION_KEY",
-      "WORKER_DATABASE_URL",
-    ]) {
+    for (const secret of ["DATABASE_URL", "MFA_ENCRYPTION_KEY", "WORKER_DATABASE_URL"]) {
       if (!secrets.includes(secret)) {
         issues.push(`${name}: requiredSecrets is missing ${secret}`)
       }
@@ -250,9 +218,7 @@ export function verifyEnvironmentTopology(topology, options = {}) {
     if (environment.status === "verified") {
       for (const blocker of blockers) {
         if (blocker.blocks?.includes(name)) {
-          issues.push(
-            `${name}: cannot be verified while blocker ${blocker.id} is open`,
-          )
+          issues.push(`${name}: cannot be verified while blocker ${blocker.id} is open`)
         }
       }
     }

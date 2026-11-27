@@ -1,11 +1,10 @@
 import "reflect-metadata"
 
+import { Readable } from "node:stream"
+
 import fastifyCookie from "@fastify/cookie"
 import { NestFactory } from "@nestjs/core"
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify"
+import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify"
 
 import { AppModule } from "./app.module"
 import { resolveCorrelationId } from "./common/correlation"
@@ -43,13 +42,24 @@ export async function createApplication(
   }
 
   const instance = app.getHttpAdapter().getInstance()
+  instance.addHook("preParsing", (request, _reply, payload, done) => {
+    const chunks: Buffer[] = []
+    payload.on("data", (chunk: Buffer | string) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    })
+    payload.on("error", (error) => done(error, undefined))
+    payload.on("end", () => {
+      const rawBody = Buffer.concat(chunks)
+      ;(request as typeof request & { rawBody?: Buffer }).rawBody = rawBody
+      done(null, Readable.from(rawBody))
+    })
+  })
   instance.addHook("onRequest", (request, reply, done) => {
     const header = request.headers["x-correlation-id"]
     const candidate = Array.isArray(header) ? header[0] : header
     const correlationId = resolveCorrelationId(candidate)
     reply.header("x-correlation-id", correlationId)
-    ;(request as typeof request & { correlationId: string }).correlationId =
-      correlationId
+    ;(request as typeof request & { correlationId: string }).correlationId = correlationId
     done()
   })
 
@@ -66,8 +76,7 @@ export async function createApplication(
         route,
         statusCode: reply.statusCode,
         durationMs: Math.round(reply.elapsedTime),
-        correlationId: (request as typeof request & { correlationId?: string })
-          .correlationId,
+        correlationId: (request as typeof request & { correlationId?: string }).correlationId,
       })
     }
     done()

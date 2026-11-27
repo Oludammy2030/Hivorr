@@ -1,9 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import {
-  currencyCodeSchema,
-  minorUnitsToMoney,
-  moneyToMinorUnits,
-} from "@hivorr/shared"
+import { currencyCodeSchema, minorUnitsToMoney, moneyToMinorUnits } from "@hivorr/shared"
 
 import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
@@ -58,8 +54,7 @@ export interface RecordProviderReferenceResult {
 }
 
 const PROVIDER_PATTERN = /^[a-z][a-z0-9_-]{1,39}$/
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const DIRECTIONS = ["deposit", "payout", "refund"]
 
 interface ProviderReferenceRow {
@@ -113,11 +108,7 @@ function mapProviderError(error: unknown): never {
         403,
       )
     case "23505":
-      throw new ApiError(
-        "CONFLICT",
-        "That provider reference is already recorded.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "That provider reference is already recorded.", 409)
     case "23514":
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -125,26 +116,16 @@ function mapProviderError(error: unknown): never {
         400,
       )
     case "23503":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The account or journal entry does not exist.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The account or journal entry does not exist.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The provider reference operation failed.")
+      throw error instanceof Error ? error : new Error("The provider reference operation failed.")
   }
 }
 
 function validateProvider(provider: string): string {
   const trimmed = provider.trim()
   if (!PROVIDER_PATTERN.test(trimmed)) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "A provider key is 2–40 lowercase characters.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "A provider key is 2–40 lowercase characters.", 400)
   }
   return trimmed
 }
@@ -152,20 +133,14 @@ function validateProvider(provider: string): string {
 function validateReference(reference: string): string {
   const trimmed = reference.trim()
   if (trimmed.length < 1 || trimmed.length > 200) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "A provider reference is 1–200 characters.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "A provider reference is 1–200 characters.", 400)
   }
   return trimmed
 }
 
 @Injectable()
 export class ProviderReferenceService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async record(
     input: RecordProviderReferenceInput,
@@ -213,9 +188,7 @@ export class ProviderReferenceService {
           )
           const id = generated.rows[0]?.id
           if (!id) {
-            throw new Error(
-              "The provider reference identifier was not generated.",
-            )
+            throw new Error("The provider reference identifier was not generated.")
           }
 
           const inserted = await transaction.query<ProviderReferenceRow>(
@@ -273,11 +246,7 @@ export class ProviderReferenceService {
           )
           const row = existing.rows[0]
           if (!row) {
-            throw new ApiError(
-              "CONFLICT",
-              "That provider reference could not be resolved.",
-              409,
-            )
+            throw new ApiError("CONFLICT", "That provider reference could not be resolved.", 409)
           }
 
           const sameMovement =
@@ -337,11 +306,7 @@ export class ProviderReferenceService {
           )
           const row = current.rows[0]
           if (!row) {
-            throw new ApiError(
-              "NOT_FOUND",
-              "The provider reference was not found.",
-              404,
-            )
+            throw new ApiError("NOT_FOUND", "The provider reference was not found.", 404)
           }
 
           if (row.journal_entry_id === input.journalEntryId) {
@@ -361,11 +326,7 @@ export class ProviderReferenceService {
           )
           const entryRow = entry.rows[0]
           if (!entryRow) {
-            throw new ApiError(
-              "NOT_FOUND",
-              "The journal entry was not found.",
-              404,
-            )
+            throw new ApiError("NOT_FOUND", "The journal entry was not found.", 404)
           }
           if (entryRow.currency !== row.currency) {
             throw new ApiError(

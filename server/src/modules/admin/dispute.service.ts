@@ -103,33 +103,17 @@ function messageOf(error: unknown): string | undefined {
 function mapDisputeError(error: unknown): never {
   const message = messageOf(error)
   if (message?.includes("dispute_status_transition_invalid")) {
-    throw new ApiError(
-      "VALIDATION_FAILED",
-      "That dispute status transition is not defined.",
-      400,
-    )
+    throw new ApiError("VALIDATION_FAILED", "That dispute status transition is not defined.", 400)
   }
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to work this dispute.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to work this dispute.", 403)
     case "P0002":
       throw new ApiError("NOT_FOUND", "The dispute was not found.", 404)
     case "22023":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The dispute request is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The dispute request is not valid.", 400)
     case "23505":
-      throw new ApiError(
-        "CONFLICT",
-        "A dispute already exists for this case.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "A dispute already exists for this case.", 409)
     case "23503":
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -137,9 +121,7 @@ function mapDisputeError(error: unknown): never {
         400,
       )
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The dispute operation failed.")
+      throw error instanceof Error ? error : new Error("The dispute operation failed.")
   }
 }
 
@@ -208,11 +190,7 @@ export class DisputeService {
     }
   }
 
-  async list(input: {
-    accountId: string
-    userId: string
-    caseId?: string
-  }): Promise<Dispute[]> {
+  async list(input: { accountId: string; userId: string; caseId?: string }): Promise<Dispute[]> {
     try {
       return await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
@@ -229,11 +207,7 @@ export class DisputeService {
     }
   }
 
-  async get(input: {
-    accountId: string
-    userId: string
-    disputeId: string
-  }): Promise<Dispute> {
+  async get(input: { accountId: string; userId: string; disputeId: string }): Promise<Dispute> {
     try {
       return await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
@@ -319,10 +293,12 @@ export class DisputeService {
       await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
         async (transaction) => {
-          await transaction.query(
-            "select admin.record_dispute_evidence_access($1, $2, $3, $4)",
-            [input.userId, input.disputeId, input.evidenceId, input.purpose],
-          )
+          await transaction.query("select admin.record_dispute_evidence_access($1, $2, $3, $4)", [
+            input.userId,
+            input.disputeId,
+            input.evidenceId,
+            input.purpose,
+          ])
           await appendAudit(transaction.client, {
             actorType: "admin",
             actorId: input.userId,

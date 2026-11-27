@@ -18,6 +18,7 @@ export {
 } from "./identity.service"
 export type {
   IssuedSession,
+  KycTierView,
   MfaChallenge,
   MfaEnrollment,
   RecoveryCodeSet,
@@ -26,6 +27,7 @@ export type {
   RequestContext,
   SessionResult,
   SessionSummary,
+  SetKycTierInput,
   SignInInput,
   SignInResult,
 } from "./identity.service"
@@ -43,8 +45,4 @@ export {
   sessionPolicy,
 } from "./session-policy"
 export { GrantsService } from "./grants/grants.service"
-export type {
-  CreateGrantInput,
-  GrantView,
-  OwnGrantsView,
-} from "./grants/grants.service"
+export type { CreateGrantInput, GrantView, OwnGrantsView } from "./grants/grants.service"

@@ -1,28 +1,12 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
 import { parseBody } from "../common/validation"
 import { API_CONFIG, type ApiConfig } from "../config"
-import {
-  createAccessDenialRequest,
-  roleReasonRequest,
-} from "../contracts/schemas"
+import { createAccessDenialRequest, roleReasonRequest } from "../contracts/schemas"
 import { DenialsService } from "../modules/admin/denials.service"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
 /**
  * Access denials: the negative of a role assignment.
@@ -43,10 +27,7 @@ export class DenialsController {
   @Audience("control")
   async list(@Req() request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return this.denials.list({
       accountId: session.accountId,
       userId: session.userId,
@@ -59,10 +40,7 @@ export class DenialsController {
   async create(@Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(createAccessDenialRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return this.denials.create({
       accountId: session.accountId,
       userId: session.userId,
@@ -80,17 +58,10 @@ export class DenialsController {
   @Post("control/denials/:id/revoke")
   @HttpCode(200)
   @Audience("control")
-  async revoke(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async revoke(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(roleReasonRequest, body)
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return this.denials.revoke({
       accountId: session.accountId,
       userId: session.userId,

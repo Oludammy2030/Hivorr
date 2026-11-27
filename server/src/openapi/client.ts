@@ -1,15 +1,9 @@
-import type {
-  OpenApiDocument,
-  OpenApiOperation,
-  OpenApiParameter,
-} from "./types"
+import type { OpenApiDocument, OpenApiOperation, OpenApiParameter } from "./types"
 
 const METHODS = ["get", "post", "put", "patch", "delete"] as const
 
 function pascal(value: string): string {
-  return value.length > 0
-    ? `${value[0]?.toUpperCase()}${value.slice(1)}`
-    : value
+  return value.length > 0 ? `${value[0]?.toUpperCase()}${value.slice(1)}` : value
 }
 
 /**
@@ -23,9 +17,7 @@ function tsType(schema: unknown): string {
 
   if (value.const !== undefined) return JSON.stringify(value.const)
   if (Array.isArray(value.enum)) {
-    return (
-      value.enum.map((entry) => JSON.stringify(entry)).join(" | ") || "never"
-    )
+    return value.enum.map((entry) => JSON.stringify(entry)).join(" | ") || "never"
   }
   if (Array.isArray(value.anyOf)) {
     return value.anyOf.map(tsType).join(" | ")
@@ -64,33 +56,24 @@ function tsType(schema: unknown): string {
 function objectType(schema: Record<string, unknown>): string {
   const properties =
     schema.properties && typeof schema.properties === "object"
-      ? schema.properties as Record<string, unknown>
+      ? (schema.properties as Record<string, unknown>)
       : {}
-  const required = new Set(
-    Array.isArray(schema.required) ? schema.required as string[] : [],
-  )
+  const required = new Set(Array.isArray(schema.required) ? (schema.required as string[]) : [])
 
   const fields = Object.entries(properties).map(([name, property]) => {
     const optional = required.has(name) ? "" : "?"
     return `${JSON.stringify(name)}${optional}: ${tsType(property)}`
   })
 
-  if (
-    schema.additionalProperties &&
-    typeof schema.additionalProperties === "object"
-  ) {
+  if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
     fields.push(`[key: string]: ${tsType(schema.additionalProperties)}`)
   }
 
-  return fields.length > 0
-    ? `{ ${fields.join("; ")} }`
-    : "Record<string, unknown>"
+  return fields.length > 0 ? `{ ${fields.join("; ")} }` : "Record<string, unknown>"
 }
 
 function responseStatuses(operation: OpenApiOperation): number[] {
-  const statuses = Object.keys(operation.responses).filter((status) =>
-    status.startsWith("2"),
-  )
+  const statuses = Object.keys(operation.responses).filter((status) => status.startsWith("2"))
   for (const expected of operation["x-hivorr-expected"] ?? []) {
     const key = String(expected)
     if (!statuses.includes(key)) statuses.push(key)
@@ -100,11 +83,7 @@ function responseStatuses(operation: OpenApiOperation): number[] {
 
 function responseType(operation: OpenApiOperation): string {
   const types = responseStatuses(operation)
-    .map(
-      (status) =>
-        operation.responses[String(status)]?.content?.["application/json"]
-          ?.schema,
-    )
+    .map((status) => operation.responses[String(status)]?.content?.["application/json"]?.schema)
     .filter((schema): schema is unknown => schema !== undefined)
     .map(tsType)
 
@@ -118,10 +97,7 @@ function requestType(operation: OpenApiOperation): string | undefined {
   return schema === undefined ? undefined : tsType(schema)
 }
 
-function pathExpression(
-  path: string,
-  parameters: readonly OpenApiParameter[],
-): string {
+function pathExpression(path: string, parameters: readonly OpenApiParameter[]): string {
   if (parameters.length === 0) return JSON.stringify(path)
   const expression = path.replace(
     /\{([^}]+)\}/g,
@@ -150,15 +126,11 @@ export function buildClient(document: OpenApiDocument): string {
       }
       aliases.push(`export type ${name}Response = ${responseType(operation)}`)
 
-      const parameters = (operation.parameters ?? []).filter(
-        (parameter) => parameter.in === "path",
-      )
+      const parameters = (operation.parameters ?? []).filter((parameter) => parameter.in === "path")
       const args: string[] = []
       if (parameters.length > 0) {
         args.push(
-          `params: { ${parameters
-            .map((parameter) => `${parameter.name}: string`)
-            .join("; ")} }`,
+          `params: { ${parameters.map((parameter) => `${parameter.name}: string`).join("; ")} }`,
         )
       }
       if (request) args.push(`input: ${name}Request`)

@@ -4,8 +4,7 @@ import { verifyBackendTarget } from "../scripts/lib/backend-target-policy.mjs"
 
 const stagingRef = "abcdefghijklmnopqrst"
 const productionRef = "zyxwvutsrqponmlkjihg"
-const fakeUrl = (ref) =>
-  `postgresql://postgres:fake@db.${ref}.supabase.co:5432/postgres`
+const fakeUrl = (ref) => `postgresql://postgres:fake@db.${ref}.supabase.co:5432/postgres`
 
 const base = {
   HIVORR_ENV: "staging",

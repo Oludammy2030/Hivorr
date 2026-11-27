@@ -1,12 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 
-import {
-  api,
-  errorMessage,
-  type Department,
-  type StaffInvite,
-  type StaffMember,
-} from "./api"
+import { api, errorMessage, type Department, type StaffInvite, type StaffMember } from "./api"
 import { staffInviteLink } from "./portal-links"
 
 interface StaffPageProps {
@@ -84,9 +78,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
     const value = await api.listStaff(query, status)
     setMembers(value)
     if (selectUserId) {
-      setSelected(
-        value.find((member) => member.userId === selectUserId) ?? null,
-      )
+      setSelected(value.find((member) => member.userId === selectUserId) ?? null)
     }
   }
 
@@ -103,9 +95,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
     try {
       const created = await api.inviteStaff({
         email: inviteEmail,
-        ...(inviteDeliveryEmail.trim()
-          ? { deliveryEmail: inviteDeliveryEmail.trim() }
-          : {}),
+        ...(inviteDeliveryEmail.trim() ? { deliveryEmail: inviteDeliveryEmail.trim() } : {}),
         ...(inviteDepartment ? { departmentKey: inviteDepartment } : {}),
         ...(inviteJobTitle.trim() ? { jobTitle: inviteJobTitle.trim() } : {}),
         reason: inviteReason,
@@ -176,11 +166,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
     setError(undefined)
     setBusy(true)
     try {
-      await api.setStaffDepartment(
-        selected.userId,
-        departmentKey,
-        reason.trim(),
-      )
+      await api.setStaffDepartment(selected.userId, departmentKey, reason.trim())
       setReason("")
       await reload(selected.userId)
     } catch (value) {
@@ -190,9 +176,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
     }
   }
 
-  const inviteLink = invite
-    ? staffInviteLink(window.location, invite.token)
-    : null
+  const inviteLink = invite ? staffInviteLink(window.location, invite.token) : null
 
   return (
     <div className="dash-stack">
@@ -255,9 +239,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
                 <input
                   type="email"
                   value={inviteDeliveryEmail}
-                  onChange={(event) =>
-                    setInviteDeliveryEmail(event.target.value)
-                  }
+                  onChange={(event) => setInviteDeliveryEmail(event.target.value)}
                   placeholder="Defaults to the official address"
                   disabled={busy}
                 />
@@ -288,9 +270,8 @@ export function StaffPage({ canManage }: StaffPageProps) {
               </label>
             </div>
             <p className="hint">
-              The invitation is sent to the personal address. The account is
-              created only for the official Hivorr address, which must be on the
-              company domain.
+              The invitation is sent to the personal address. The account is created only for the
+              official Hivorr address, which must be on the company domain.
             </p>
             <label className="field">
               <span>Reason</span>
@@ -333,8 +314,8 @@ export function StaffPage({ canManage }: StaffPageProps) {
         <details className="panel">
           <summary>Add an existing account as staff</summary>
           <p className="muted attach-intro">
-            Use this when the person already signed up at the main portal and
-            should not receive a new-account invitation.
+            Use this when the person already signed up at the main portal and should not receive a
+            new-account invitation.
           </p>
           <form className="form" onSubmit={handleAttach}>
             <div className="form-row">
@@ -397,15 +378,13 @@ export function StaffPage({ canManage }: StaffPageProps) {
       <section className="panel">
         <div className="panel-head">
           <h2>Staff</h2>
-          <span className="muted">
-            {members === null ? "Loading…" : `${members.length} shown`}
-          </span>
+          <span className="muted">{members === null ? "Loading…" : `${members.length} shown`}</span>
         </div>
 
         {members && members.length === 0 && (
           <p className="muted">
-            No staff records match this filter. Invite someone new, or add an
-            existing account as staff.
+            No staff records match this filter. Invite someone new, or add an existing account as
+            staff.
           </p>
         )}
 
@@ -442,9 +421,7 @@ export function StaffPage({ canManage }: StaffPageProps) {
                         {member.engagementStatus}
                       </span>
                     </td>
-                    <td>
-                      {member.confirmedFactors > 0 ? "Enabled" : "Not set"}
-                    </td>
+                    <td>{member.confirmedFactors > 0 ? "Enabled" : "Not set"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -566,9 +543,8 @@ export function StaffPage({ canManage }: StaffPageProps) {
               )}
 
               <p className="hint">
-                Offboarding revokes sessions, grants, role assignments and
-                department membership immediately. The record and audit history
-                are retained.
+                Offboarding revokes sessions, grants, role assignments and department membership
+                immediately. The record and audit history are retained.
               </p>
             </div>
           )}

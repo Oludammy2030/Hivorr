@@ -38,28 +38,21 @@ export function verifyBackendTarget(env, references = {}) {
     issues.push("SUPABASE_PROJECT_REF is required")
   }
 
-  const expectedRef =
-    references[deployment] ?? env.EXPECTED_SUPABASE_PROJECT_REF
+  const expectedRef = references[deployment] ?? env.EXPECTED_SUPABASE_PROJECT_REF
   if (!expectedRef) {
     issues.push("EXPECTED_SUPABASE_PROJECT_REF is required")
   } else if (projectRef && projectRef !== expectedRef) {
-    issues.push(
-      "SUPABASE_PROJECT_REF does not match the expected environment reference",
-    )
+    issues.push("SUPABASE_PROJECT_REF does not match the expected environment reference")
   }
 
   if (!env.DATABASE_URL) {
     issues.push("DATABASE_URL is required")
-  } else if (
-    projectRef &&
-    !databaseUrlMatchesProjectRef(env.DATABASE_URL, projectRef)
-  ) {
+  } else if (projectRef && !databaseUrlMatchesProjectRef(env.DATABASE_URL, projectRef)) {
     issues.push("DATABASE_URL does not belong to SUPABASE_PROJECT_REF")
   }
 
   const stagingRef = references.staging ?? env.STAGING_SUPABASE_PROJECT_REF
-  const productionRef =
-    references.production ?? env.PRODUCTION_SUPABASE_PROJECT_REF
+  const productionRef = references.production ?? env.PRODUCTION_SUPABASE_PROJECT_REF
   if (stagingRef && productionRef && stagingRef === productionRef) {
     issues.push("staging and production must not share a Supabase project")
   }

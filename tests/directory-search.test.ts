@@ -29,55 +29,50 @@ describeIntegration("directory search and staff status reads", () => {
     return result.rows[0]!.id
   }
 
-  beforeAll(
-    async () => {
-      admin = new Client({ connectionString: baseUrl })
-      await admin.connect()
-      await admin.query(`create database "${databaseName}"`)
+  beforeAll(async () => {
+    admin = new Client({ connectionString: baseUrl })
+    await admin.connect()
+    await admin.query(`create database "${databaseName}"`)
 
-      const url = new URL(baseUrl!)
-      url.pathname = `/${databaseName}`
-      database = new Client({ connectionString: url.toString() })
-      await database.connect()
+    const url = new URL(baseUrl!)
+    url.pathname = `/${databaseName}`
+    database = new Client({ connectionString: url.toString() })
+    await database.connect()
 
-      for (const file of readdirSync(migrationsDirectory)
-        .filter((entry) => entry.endsWith(".sql"))
-        .sort()) {
-        await database.query(
-          readFileSync(path.join(migrationsDirectory, file), "utf8"),
-        )
-      }
+    for (const file of readdirSync(migrationsDirectory)
+      .filter((entry) => entry.endsWith(".sql"))
+      .sort()) {
+      await database.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
+    }
 
-      operatorId = await createUser("operator@hivorr.com")
-      targetId = await createUser("target@hivorr.com")
+    operatorId = await createUser("operator@hivorr.com")
+    targetId = await createUser("target@hivorr.com")
 
-      const operator = await database.query<{ account_id: string }>(
-        "select account_id from identity.users where id = $1",
-        [operatorId],
-      )
-      operatorAccountId = operator.rows[0]!.account_id
+    const operator = await database.query<{ account_id: string }>(
+      "select account_id from identity.users where id = $1",
+      [operatorId],
+    )
+    operatorAccountId = operator.rows[0]!.account_id
 
-      await database.query(
-        `insert into admin.staff_profiles (user_id, engagement_status)
+    await database.query(
+      `insert into admin.staff_profiles (user_id, engagement_status)
        values ($1, 'active')`,
-        [targetId],
-      )
-      for (const permission of ["admin.user.read", "admin.user.manage"]) {
-        await database.query(
-          `insert into admin.permission_grants
+      [targetId],
+    )
+    for (const permission of ["admin.user.read", "admin.user.manage"]) {
+      await database.query(
+        `insert into admin.permission_grants
            (user_id, permission_key, scope_type, reason)
          values ($1, $2, 'platform', 'integration test')`,
-          [operatorId, permission],
-        )
-      }
+        [operatorId, permission],
+      )
+    }
 
-      // Fixtures chosen so an unescaped pattern and a literal one disagree.
-      await createUser("betaname@example.test")
-      await createUser("weird%name@example.test")
-      await createUser("underscore_holder@example.test")
-    },
-    60_000,
-  )
+    // Fixtures chosen so an unescaped pattern and a literal one disagree.
+    await createUser("betaname@example.test")
+    await createUser("weird%name@example.test")
+    await createUser("underscore_holder@example.test")
+  }, 60_000)
 
   afterAll(async () => {
     await database?.end()

@@ -368,6 +368,27 @@ interface ApiErrorDetail {
   message?: string
 }
 
+export interface PaymentProviderModes {
+  readonly test: boolean
+  readonly live: boolean
+}
+
+export interface PaymentProviderSetting {
+  readonly provider: "vfd" | "paystack"
+  readonly mode: "test" | "live"
+  readonly updatedAt: string
+  readonly configured: {
+    readonly vfd: PaymentProviderModes
+    readonly paystack: PaymentProviderModes
+  }
+}
+
+export interface SetPaymentProviderInput {
+  readonly provider: "vfd" | "paystack"
+  readonly mode: "test" | "live"
+  readonly reason: string
+}
+
 interface ApiErrorBody {
   error?: ApiErrorDetail
 }
@@ -382,10 +403,7 @@ interface Page<T> {
   nextCursor: string | null
 }
 
-async function requestResponse<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<ApiResponse<T>> {
+async function requestResponse<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
   const response = await fetch(`/api/v1${path}`, {
     ...init,
     credentials: "same-origin",
@@ -399,9 +417,7 @@ async function requestResponse<T>(
     return { body: undefined as T, response }
   }
 
-  const body = (await response
-    .json()
-    .catch(() => null)) as T & ApiErrorBody | null
+  const body = (await response.json().catch(() => null)) as (T & ApiErrorBody) | null
 
   if (!response.ok) {
     throw new ApiError(
@@ -420,10 +436,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body
 }
 
-async function requestPage<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<Page<T>> {
+async function requestPage<T>(path: string, init?: RequestInit): Promise<Page<T>> {
   const { body, response } = await requestResponse<T>(path, init)
   return {
     items: body,
@@ -431,17 +444,9 @@ async function requestPage<T>(
   }
 }
 
-import type {
-  TaxonomyAttribute,
-  TaxonomyNode,
-  TaxonomyRegistry,
-} from "@hivorr/shared"
+import type { TaxonomyAttribute, TaxonomyNode, TaxonomyRegistry } from "@hivorr/shared"
 
-export type {
-  TaxonomyAttribute,
-  TaxonomyNode,
-  TaxonomyRegistry,
-} from "@hivorr/shared"
+export type { TaxonomyAttribute, TaxonomyNode, TaxonomyRegistry } from "@hivorr/shared"
 export const api = {
   session: () => request<Session>("/session"),
   signIn: (email: string, password: string) =>
@@ -466,9 +471,7 @@ export const api = {
     if (status.trim()) params.set("status", status.trim())
     if (cursor) params.set("cursor", cursor)
     const suffix = params.toString()
-    return requestPage<readonly UserSummary[]>(
-      `/control/users${suffix ? `?${suffix}` : ""}`,
-    )
+    return requestPage<readonly UserSummary[]>(`/control/users${suffix ? `?${suffix}` : ""}`)
   },
   suspendUser: (id: string, reason: string) =>
     request<AccountAction>(`/control/users/${encodeURIComponent(id)}/suspend`, {
@@ -476,30 +479,25 @@ export const api = {
       body: JSON.stringify({ reason }),
     }),
   reactivateUser: (id: string, reason: string) =>
-    request<AccountAction>(
-      `/control/users/${encodeURIComponent(id)}/reactivate`,
-      { method: "POST", body: JSON.stringify({ reason }) },
-    ),
+    request<AccountAction>(`/control/users/${encodeURIComponent(id)}/reactivate`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
   revokeUserSessions: (id: string, reason: string) =>
-    request<AccountAction>(
-      `/control/users/${encodeURIComponent(id)}/revoke-sessions`,
-      { method: "POST", body: JSON.stringify({ reason }) },
-    ),
+    request<AccountAction>(`/control/users/${encodeURIComponent(id)}/revoke-sessions`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
   listUserNotes: (id: string) =>
-    request<readonly AccountNote[]>(
-      `/control/users/${encodeURIComponent(id)}/notes`,
-    ),
+    request<readonly AccountNote[]>(`/control/users/${encodeURIComponent(id)}/notes`),
   addUserNote: (id: string, body: string) =>
     request<AccountNote>(`/control/users/${encodeURIComponent(id)}/notes`, {
       method: "POST",
       body: JSON.stringify({ body }),
     }),
   userTimeline: (id: string) =>
-    request<readonly AccountTimelineEntry[]>(
-      `/control/users/${encodeURIComponent(id)}/timeline`,
-    ),
-  listApprovals: () =>
-    request<readonly ApprovalRequest[]>("/control/approvals"),
+    request<readonly AccountTimelineEntry[]>(`/control/users/${encodeURIComponent(id)}/timeline`),
+  listApprovals: () => request<readonly ApprovalRequest[]>("/control/approvals"),
   requestApproval: (input: {
     actionType: string
     targetType: string
@@ -510,17 +508,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  decideApproval: (
-    id: string,
-    decision: "approve" | "reject",
-    reason: string,
-  ) =>
-    request<ApprovalRequest>(
-      `/control/approvals/${encodeURIComponent(id)}/decide`,
-      { method: "POST", body: JSON.stringify({ decision, reason }) },
-    ),
-  listPartners: () =>
-    request<readonly PartnerOrganisation[]>("/control/partners"),
+  decideApproval: (id: string, decision: "approve" | "reject", reason: string) =>
+    request<ApprovalRequest>(`/control/approvals/${encodeURIComponent(id)}/decide`, {
+      method: "POST",
+      body: JSON.stringify({ decision, reason }),
+    }),
+  listPartners: () => request<readonly PartnerOrganisation[]>("/control/partners"),
   createPartner: (input: {
     legalName: string
     tradingName?: string
@@ -533,33 +526,26 @@ export const api = {
       body: JSON.stringify(input),
     }),
   setPartnerStatus: (id: string, status: string, reason: string) =>
-    request<PartnerOrganisation>(
-      `/control/partners/${encodeURIComponent(id)}/status`,
-      { method: "POST", body: JSON.stringify({ status, reason }) },
-    ),
+    request<PartnerOrganisation>(`/control/partners/${encodeURIComponent(id)}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status, reason }),
+    }),
   listPartnerRepresentatives: (id: string) =>
     request<readonly PartnerRepresentative[]>(
       `/control/partners/${encodeURIComponent(id)}/representatives`,
     ),
-  addPartnerRepresentative: (
-    id: string,
-    email: string,
-    role: string,
-    reason: string,
-  ) =>
-    request<PartnerRepresentative>(
-      `/control/partners/${encodeURIComponent(id)}/representatives`,
-      { method: "POST", body: JSON.stringify({ email, role, reason }) },
-    ),
+  addPartnerRepresentative: (id: string, email: string, role: string, reason: string) =>
+    request<PartnerRepresentative>(`/control/partners/${encodeURIComponent(id)}/representatives`, {
+      method: "POST",
+      body: JSON.stringify({ email, role, reason }),
+    }),
   listCases: (status: string, caseType: string, query: string) => {
     const params = new URLSearchParams()
     if (status.trim()) params.set("status", status.trim())
     if (caseType.trim()) params.set("type", caseType.trim())
     if (query.trim()) params.set("q", query.trim())
     const suffix = params.toString()
-    return request<readonly CaseSummary[]>(
-      `/control/cases${suffix ? `?${suffix}` : ""}`,
-    )
+    return request<readonly CaseSummary[]>(`/control/cases${suffix ? `?${suffix}` : ""}`)
   },
   createCase: (input: {
     caseType: string
@@ -575,9 +561,7 @@ export const api = {
       body: JSON.stringify(input),
     }),
   listCaseEvents: (id: string) =>
-    request<readonly CaseEvent[]>(
-      `/control/cases/${encodeURIComponent(id)}/events`,
-    ),
+    request<readonly CaseEvent[]>(`/control/cases/${encodeURIComponent(id)}/events`),
   addCaseEvent: (id: string, summary: string) =>
     request<CaseEvent>(`/control/cases/${encodeURIComponent(id)}/events`, {
       method: "POST",
@@ -597,9 +581,7 @@ export const api = {
       body: JSON.stringify({ status, reason }),
     }),
   listCaseEvidence: (id: string) =>
-    request<readonly CaseEvidence[]>(
-      `/control/cases/${encodeURIComponent(id)}/evidence`,
-    ),
+    request<readonly CaseEvidence[]>(`/control/cases/${encodeURIComponent(id)}/evidence`),
   addCaseEvidence: (
     id: string,
     input: {
@@ -621,33 +603,25 @@ export const api = {
       `/control/cases/${encodeURIComponent(caseId)}/evidence/${encodeURIComponent(evidenceId)}/access`,
       { method: "POST", body: JSON.stringify({ purpose }) },
     ),
-  supersedeEvidence: (
-    evidenceId: string,
-    replacementId: string,
-    reason: string,
-  ) =>
-    request<CaseEvidence>(
-      `/control/evidence/${encodeURIComponent(evidenceId)}/supersede`,
-      { method: "POST", body: JSON.stringify({ replacementId, reason }) },
-    ),
+  supersedeEvidence: (evidenceId: string, replacementId: string, reason: string) =>
+    request<CaseEvidence>(`/control/evidence/${encodeURIComponent(evidenceId)}/supersede`, {
+      method: "POST",
+      body: JSON.stringify({ replacementId, reason }),
+    }),
   requestCaseDecision: (id: string, outcome: string, reason: string) =>
-    request<ApprovalRequest>(
-      `/control/cases/${encodeURIComponent(id)}/decision`,
-      { method: "POST", body: JSON.stringify({ outcome, reason }) },
-    ),
+    request<ApprovalRequest>(`/control/cases/${encodeURIComponent(id)}/decision`, {
+      method: "POST",
+      body: JSON.stringify({ outcome, reason }),
+    }),
   listVerification: (status: string) => {
-    const suffix = status.trim()
-      ? `?status=${encodeURIComponent(status.trim())}`
-      : ""
-    return request<readonly VerificationReview[]>(
-      `/control/verification${suffix}`,
-    )
+    const suffix = status.trim() ? `?status=${encodeURIComponent(status.trim())}` : ""
+    return request<readonly VerificationReview[]>(`/control/verification${suffix}`)
   },
   decideVerification: (caseId: string, decision: string, reason: string) =>
-    request<VerificationReview>(
-      `/control/verification/${encodeURIComponent(caseId)}/decision`,
-      { method: "POST", body: JSON.stringify({ decision, reason }) },
-    ),
+    request<VerificationReview>(`/control/verification/${encodeURIComponent(caseId)}/decision`, {
+      method: "POST",
+      body: JSON.stringify({ decision, reason }),
+    }),
   listGrants: () => request<readonly Grant[]>("/control/grants"),
   listDepartments: () => request<readonly Department[]>("/control/departments"),
   createGrant: (input: CreateGrantInput) =>
@@ -661,27 +635,22 @@ export const api = {
       body: JSON.stringify({ departmentKey, reason }),
     }),
   listRoles: () => request<readonly Role[]>("/control/roles"),
-  listRoleAssignments: () =>
-    request<readonly RoleAssignment[]>("/control/role-assignments"),
+  listRoleAssignments: () => request<readonly RoleAssignment[]>("/control/role-assignments"),
   listRoleScopeTargets: (scopeType: RoleScopeType) =>
     request<readonly RoleScopeTarget[]>(
       `/control/roles/scope-targets?type=${encodeURIComponent(scopeType)}`,
     ),
-  listAssignableStaff: () =>
-    request<readonly AssignableStaff[]>("/control/roles/assignable-staff"),
+  listAssignableStaff: () => request<readonly AssignableStaff[]>("/control/roles/assignable-staff"),
   assignRole: (input: AssignRoleInput) =>
     request<RoleAssignment>("/control/role-assignments", {
       method: "POST",
       body: JSON.stringify(input),
     }),
   revokeRole: (id: string, reason: string) =>
-    request<RoleAssignment>(
-      `/control/role-assignments/${encodeURIComponent(id)}/revoke`,
-      {
-        method: "POST",
-        body: JSON.stringify({ reason }),
-      },
-    ),
+    request<RoleAssignment>(`/control/role-assignments/${encodeURIComponent(id)}/revoke`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
   revokeGrant: (id: string, reason: string) =>
     request<Grant>(`/control/grants/${encodeURIComponent(id)}/revoke`, {
       method: "POST",
@@ -702,18 +671,14 @@ export const api = {
     const params = new URLSearchParams()
     if (cursor) params.set("cursor", cursor)
     const suffix = params.toString()
-    return requestPage<readonly AuditEntry[]>(
-      `/control/audit${suffix ? `?${suffix}` : ""}`,
-    )
+    return requestPage<readonly AuditEntry[]>(`/control/audit${suffix ? `?${suffix}` : ""}`)
   },
   listStaff: (query: string, status: string) => {
     const params = new URLSearchParams()
     if (query.trim()) params.set("q", query.trim())
     if (status.trim()) params.set("status", status.trim())
     const suffix = params.toString()
-    return request<readonly StaffMember[]>(
-      `/control/staff${suffix ? `?${suffix}` : ""}`,
-    )
+    return request<readonly StaffMember[]>(`/control/staff${suffix ? `?${suffix}` : ""}`)
   },
   inviteStaff: (input: {
     email: string
@@ -736,26 +701,16 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  setStaffStatus: (
-    userId: string,
-    action: "suspend" | "reactivate" | "offboard",
-    reason: string,
-  ) =>
-    request<StaffStatusResult>(
-      `/control/staff/${encodeURIComponent(userId)}/${action}`,
-      {
-        method: "POST",
-        body: JSON.stringify({ reason }),
-      },
-    ),
+  setStaffStatus: (userId: string, action: "suspend" | "reactivate" | "offboard", reason: string) =>
+    request<StaffStatusResult>(`/control/staff/${encodeURIComponent(userId)}/${action}`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
   setStaffDepartment: (userId: string, departmentKey: string, reason: string) =>
-    request<StaffDepartmentResult>(
-      `/control/staff/${encodeURIComponent(userId)}/department`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({ departmentKey, reason }),
-      },
-    ),
+    request<StaffDepartmentResult>(`/control/staff/${encodeURIComponent(userId)}/department`, {
+      method: "PATCH",
+      body: JSON.stringify({ departmentKey, reason }),
+    }),
   listTaxonomy: (taxonomy?: "profession" | "product") => {
     const suffix = taxonomy ? `?taxonomy=${taxonomy}` : ""
     return request<TaxonomyRegistry>(`/control/taxonomy${suffix}`)
@@ -818,18 +773,19 @@ export const api = {
       reason: string
     },
   ) =>
-    request<TaxonomyAttribute>(
-      `/control/taxonomy/attributes/${encodeURIComponent(id)}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify(input),
-      },
-    ),
+    request<TaxonomyAttribute>(`/control/taxonomy/attributes/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  getPaymentProvider: () => request<PaymentProviderSetting>("/control/payments/provider"),
+  setPaymentProvider: (input: SetPaymentProviderInput) =>
+    request<PaymentProviderSetting>("/control/payments/provider", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 }
 
-export function isMfaChallenge(
-  result: Session | MfaChallenge,
-): result is MfaChallenge {
+export function isMfaChallenge(result: Session | MfaChallenge): result is MfaChallenge {
   return "mfaRequired" in result
 }
 

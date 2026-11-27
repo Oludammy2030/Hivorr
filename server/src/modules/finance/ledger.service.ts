@@ -4,11 +4,7 @@ import { ApiError } from "../../common/errors"
 import { DatabaseService } from "../../db/database.service"
 import type { TransactionContext } from "../../db/transaction"
 import { claimIdempotency, completeIdempotency, appendAudit } from "../platform"
-import {
-  LEDGER_IDEMPOTENCY_SCOPE,
-  hashLedgerEntry,
-  ledgerIdempotencyKey,
-} from "./idempotency"
+import { LEDGER_IDEMPOTENCY_SCOPE, hashLedgerEntry, ledgerIdempotencyKey } from "./idempotency"
 import {
   LedgerValidationError,
   deriveAccountEffects,
@@ -45,6 +41,11 @@ export interface PostedJournalEntry {
   readonly effects: readonly LedgerAccountEffect[]
 }
 
+interface PreparedLedgerEntry {
+  readonly idempotencyKey: string
+  readonly requestHash: string
+}
+
 interface EntryRow {
   id: string
   created_at: string | Date
@@ -74,18 +75,10 @@ function toIso(value: string | Date): string {
 function validationToApiError(error: LedgerValidationError): ApiError {
   switch (error.code) {
     case "LEDGER_REVERSAL_TARGET_MISSING":
-      return new ApiError(
-        "NOT_FOUND",
-        "The journal entry to reverse was not found.",
-        404,
-      )
+      return new ApiError("NOT_FOUND", "The journal entry to reverse was not found.", 404)
     case "LEDGER_REVERSAL_MISMATCH":
     case "LEDGER_REVERSAL_TARGET_INVALID":
-      return new ApiError(
-        "CONFLICT",
-        "A reversal must exactly invert the original entry.",
-        409,
-      )
+      return new ApiError("CONFLICT", "A reversal must exactly invert the original entry.", 409)
     default:
       return new ApiError("VALIDATION_FAILED", error.message, 400)
   }
@@ -94,11 +87,7 @@ function validationToApiError(error: LedgerValidationError): ApiError {
 function sqlToApiError(error: unknown): never {
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to post to the ledger.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to post to the ledger.", 403)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -106,11 +95,7 @@ function sqlToApiError(error: unknown): never {
         409,
       )
     case "23514":
-      throw new ApiError(
-        "CONFLICT",
-        "The ledger rejected the entry as invalid.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The ledger rejected the entry as invalid.", 409)
     case "23503":
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -118,33 +103,19 @@ function sqlToApiError(error: unknown): never {
         400,
       )
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The ledger operation failed.")
+      throw error instanceof Error ? error : new Error("The ledger operation failed.")
   }
 }
 
 @Injectable()
 export class LedgerService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async postEntry(
     input: LedgerEntryInput,
     context: LedgerPostingContext,
   ): Promise<PostedJournalEntry> {
-    const clientKey = input.idempotencyKey?.trim()
-    if (!clientKey) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "Every money movement needs an idempotency key.",
-        400,
-      )
-    }
-
-    const idempotencyKey = ledgerIdempotencyKey(context.accountId, clientKey)
-    const requestHash = hashLedgerEntry(input)
+    const prepared = this.prepare(input, context)
 
     try {
       return await this.database.withTransaction(
@@ -154,101 +125,141 @@ export class LedgerService {
             userId: context.userId,
           },
         },
-        async (transaction) => {
-          const claim = await claimIdempotency(transaction.client, {
-            key: idempotencyKey,
-            scope: LEDGER_IDEMPOTENCY_SCOPE,
-            requestHash,
-            expiresAt: "infinity",
-          })
-
-          if (claim.status === "conflict") {
-            throw new ApiError(
-              "CONFLICT",
-              "That idempotency key was already used for a different request.",
-              409,
-            )
-          }
-          if (claim.status === "replay") {
-            return claim.responseBody as PostedJournalEntry
-          }
-
-          const reversalTarget = input.reversesEntryId
-            ? await this.loadReversalTarget(transaction, input.reversesEntryId)
-            : undefined
-
-          const entry = validateJournalEntry(input, { reversalTarget })
-
-          const inserted = await transaction.query<EntryRow>(
-            `insert into finance.journal_entries
-               (kind, reference, currency, activity_id, idempotency_key,
-                reverses_entry_id, created_by, correlation_id)
-             values ($1, $2, $3, $4, $5, $6, $7, $8)
-             returning id, created_at`,
-            [
-              entry.kind,
-              entry.reference,
-              entry.currency,
-              entry.activityId,
-              entry.idempotencyKey,
-              entry.reversesEntryId,
-              context.userId,
-              context.correlationId ?? null,
-            ],
-          )
-
-          const row = inserted.rows[0]
-          if (!row) {
-            throw new Error("The ledger entry insert returned no row.")
-          }
-
-          await this.insertPostings(transaction, row.id, entry.postings)
-
-          await appendAudit(transaction.client, {
-            actorType: "user",
-            actorId: context.userId,
-            actorAudience: context.audience,
-            environment: context.environment,
-            action: "finance.entry_posted",
-            targetType: "journal_entry",
-            targetId: row.id,
-            afterSummary: {
-              kind: entry.kind,
-              reference: entry.reference,
-              currency: entry.currency,
-              postingCount: entry.postings.length,
-              reversal: entry.reversesEntryId !== null,
-            },
-            ip: context.ip,
-            userAgent: context.userAgent,
-            correlationId: context.correlationId,
-          })
-
-          const posted = {
-            id: row.id,
-            kind: entry.kind,
-            reference: entry.reference,
-            currency: entry.currency,
-            createdAt: toIso(row.created_at),
-            effects: deriveAccountEffects(entry.postings),
-          }
-
-          await completeIdempotency(transaction.client, {
-            key: idempotencyKey,
-            responseStatus: 201,
-            responseBody: posted,
-          })
-
-          return posted
-        },
+        async (transaction) => this.postWithin(transaction, input, context, prepared),
       )
     } catch (error) {
-      if (error instanceof ApiError) throw error
-      if (error instanceof LedgerValidationError) {
-        throw validationToApiError(error)
-      }
-      sqlToApiError(error)
+      this.mapPostError(error)
     }
+  }
+
+  /**
+   * Posts on the caller's transaction so a financial write and its ledger entry
+   * commit or roll back together. Used by the payout workflow (EP-02-053).
+   */
+  async postEntryInTransaction(
+    transaction: TransactionContext,
+    input: LedgerEntryInput,
+    context: LedgerPostingContext,
+  ): Promise<PostedJournalEntry> {
+    const prepared = this.prepare(input, context)
+    try {
+      return await this.postWithin(transaction, input, context, prepared)
+    } catch (error) {
+      this.mapPostError(error)
+    }
+  }
+
+  private prepare(input: LedgerEntryInput, context: LedgerPostingContext): PreparedLedgerEntry {
+    const clientKey = input.idempotencyKey?.trim()
+    if (!clientKey) {
+      throw new ApiError("VALIDATION_FAILED", "Every money movement needs an idempotency key.", 400)
+    }
+
+    return {
+      idempotencyKey: ledgerIdempotencyKey(context.accountId, clientKey),
+      requestHash: hashLedgerEntry(input),
+    }
+  }
+
+  private mapPostError(error: unknown): never {
+    if (error instanceof ApiError) throw error
+    if (error instanceof LedgerValidationError) {
+      throw validationToApiError(error)
+    }
+    sqlToApiError(error)
+  }
+
+  private async postWithin(
+    transaction: TransactionContext,
+    input: LedgerEntryInput,
+    context: LedgerPostingContext,
+    prepared: PreparedLedgerEntry,
+  ): Promise<PostedJournalEntry> {
+    const claim = await claimIdempotency(transaction.client, {
+      key: prepared.idempotencyKey,
+      scope: LEDGER_IDEMPOTENCY_SCOPE,
+      requestHash: prepared.requestHash,
+      expiresAt: "infinity",
+    })
+
+    if (claim.status === "conflict") {
+      throw new ApiError(
+        "CONFLICT",
+        "That idempotency key was already used for a different request.",
+        409,
+      )
+    }
+    if (claim.status === "replay") {
+      return claim.responseBody as PostedJournalEntry
+    }
+
+    const reversalTarget = input.reversesEntryId
+      ? await this.loadReversalTarget(transaction, input.reversesEntryId)
+      : undefined
+
+    const entry = validateJournalEntry(input, { reversalTarget })
+
+    const inserted = await transaction.query<EntryRow>(
+      `insert into finance.journal_entries
+         (kind, reference, currency, activity_id, idempotency_key,
+          reverses_entry_id, created_by, correlation_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)
+       returning id, created_at`,
+      [
+        entry.kind,
+        entry.reference,
+        entry.currency,
+        entry.activityId,
+        entry.idempotencyKey,
+        entry.reversesEntryId,
+        context.userId,
+        context.correlationId ?? null,
+      ],
+    )
+
+    const row = inserted.rows[0]
+    if (!row) {
+      throw new Error("The ledger entry insert returned no row.")
+    }
+
+    await this.insertPostings(transaction, row.id, entry.postings)
+
+    await appendAudit(transaction.client, {
+      actorType: "user",
+      actorId: context.userId,
+      actorAudience: context.audience,
+      environment: context.environment,
+      action: "finance.entry_posted",
+      targetType: "journal_entry",
+      targetId: row.id,
+      afterSummary: {
+        kind: entry.kind,
+        reference: entry.reference,
+        currency: entry.currency,
+        postingCount: entry.postings.length,
+        reversal: entry.reversesEntryId !== null,
+      },
+      ip: context.ip,
+      userAgent: context.userAgent,
+      correlationId: context.correlationId,
+    })
+
+    const posted = {
+      id: row.id,
+      kind: entry.kind,
+      reference: entry.reference,
+      currency: entry.currency,
+      createdAt: toIso(row.created_at),
+      effects: deriveAccountEffects(entry.postings),
+    }
+
+    await completeIdempotency(transaction.client, {
+      key: prepared.idempotencyKey,
+      responseStatus: 201,
+      responseBody: posted,
+    })
+
+    return posted
   }
 
   private async loadReversalTarget(
@@ -270,11 +281,7 @@ export class LedgerService {
     )
 
     if (result.rows.length === 0) {
-      throw new ApiError(
-        "NOT_FOUND",
-        "The journal entry to reverse was not found.",
-        404,
-      )
+      throw new ApiError("NOT_FOUND", "The journal entry to reverse was not found.", 404)
     }
 
     return {

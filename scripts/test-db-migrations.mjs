@@ -10,9 +10,7 @@ import path from "node:path"
 
 import { Client } from "pg"
 
-const baseUrl =
-  process.env.DATABASE_URL ??
-  "postgres://postgres:postgres@127.0.0.1:54322/postgres"
+const baseUrl = process.env.DATABASE_URL ?? "postgres://postgres:postgres@127.0.0.1:54322/postgres"
 const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
 const databaseName = `hivorr_migration_test_${Date.now()}`
 const admin = new Client({ connectionString: baseUrl })
@@ -58,10 +56,7 @@ try {
     "select nspname from pg_namespace where nspname = any($1::text[])",
     [requiredSchemas],
   )
-  assert(
-    schemas.rowCount === requiredSchemas.length,
-    "all module schemas exist",
-  )
+  assert(schemas.rowCount === requiredSchemas.length, "all module schemas exist")
 
   const tables = await testClient.query(
     "select tablename from pg_tables where schemaname = 'platform'",
@@ -120,9 +115,7 @@ try {
   const platformTables = await testClient.query(
     "select tablename from pg_tables where schemaname = 'platform'",
   )
-  const platformTableNames = new Set(
-    platformTables.rows.map((row) => row.tablename),
-  )
+  const platformTableNames = new Set(platformTables.rows.map((row) => row.tablename))
   for (const table of ["taxonomy_nodes", "taxonomy_attributes"]) {
     assert(platformTableNames.has(table), `platform.${table} exists`)
   }
@@ -131,9 +124,7 @@ try {
   const financeTables = await testClient.query(
     "select tablename from pg_tables where schemaname = 'finance'",
   )
-  const financeTableNames = new Set(
-    financeTables.rows.map((row) => row.tablename),
-  )
+  const financeTableNames = new Set(financeTables.rows.map((row) => row.tablename))
   const expectedFinanceTables = [
     "ledger_accounts",
     "journal_entries",
@@ -141,6 +132,8 @@ try {
     "provider_references",
     "escrow_accounts",
     "payout_accounts",
+    "payout_requests",
+    "collection_accounts",
     "limits",
     "reconciliation_runs",
     "reconciliation_items",
@@ -163,9 +156,7 @@ try {
     "provider_amount",
     "ledger_amount",
   ])
-  const moneyColumns = financeColumns.filter((row) =>
-    moneyColumnNames.has(row.column_name),
-  )
+  const moneyColumns = financeColumns.filter((row) => moneyColumnNames.has(row.column_name))
   assert(moneyColumns.length >= 7, "finance money columns exist")
   for (const column of moneyColumns) {
     assert(
@@ -177,9 +168,7 @@ try {
   }
   assert(
     !financeColumns.some((row) =>
-      ["balance", "available_balance", "wallet_balance"].includes(
-        row.column_name,
-      ),
+      ["balance", "available_balance", "wallet_balance"].includes(row.column_name),
     ),
     "no mutable balance column exists in finance",
   )
@@ -198,8 +187,7 @@ try {
     assert(payoutColumns.has(column), `payout_accounts has ${column}`)
   }
   assert(
-    !payoutColumns.has("account_number") &&
-      !payoutColumns.has("account_number_plaintext"),
+    !payoutColumns.has("account_number") && !payoutColumns.has("account_number_plaintext"),
     "payout account numbers are never stored in plaintext",
   )
 
@@ -208,67 +196,52 @@ try {
        from pg_class
       where relnamespace = 'finance'::regnamespace and relkind = 'r'`,
   )
-  const financeRlsByTable = new Map(
-    financeRls.rows.map((row) => [row.relname, row.relrowsecurity]),
-  )
+  const financeRlsByTable = new Map(financeRls.rows.map((row) => [row.relname, row.relrowsecurity]))
   for (const table of expectedFinanceTables) {
-    assert(
-      financeRlsByTable.get(table) === true,
-      `finance.${table} has row level security`,
-    )
+    assert(financeRlsByTable.get(table) === true, `finance.${table} has row level security`)
   }
 
-  for (const table of expectedFinanceTables) {
-    const insertAllowed = [
-      "journal_entries",
-      "postings",
-      "ledger_accounts",
-      "escrow_accounts",
-      "provider_references",
-      "limits",
-    ].includes(table)
-    const write = await testClient.query(
-      `select has_table_privilege('hivorr_api', 'finance.${table}', 'insert') as allowed`,
-    )
-    assert(
-      write.rows[0].allowed === insertAllowed,
-      `api role insert grant on finance.${table} matches the posting engine`,
-    )
-    for (const privilege of ["update", "delete"]) {
-      const mutation = await testClient.query(
+  // The API role's finance surface, per table. Column-level grants (escrow
+  // state, provider-reference status) leave the table-level update privilege
+  // false; they are asserted separately below.
+  const financeTableGrants = {
+    ledger_accounts: { insert: true, update: false, select: true },
+    journal_entries: { insert: true, update: false, select: true },
+    postings: { insert: true, update: false, select: true },
+    provider_references: { insert: true, update: false, select: true },
+    escrow_accounts: { insert: true, update: false, select: true },
+    payout_accounts: { insert: true, update: true, select: true },
+    payout_requests: { insert: true, update: true, select: true },
+    collection_accounts: { insert: true, update: false, select: true },
+    limits: { insert: true, update: false, select: true },
+    reconciliation_runs: { insert: false, update: false, select: false },
+    reconciliation_items: { insert: false, update: false, select: false },
+  }
+  for (const [table, grants] of Object.entries(financeTableGrants)) {
+    for (const privilege of ["insert", "update", "select"]) {
+      const result = await testClient.query(
         `select has_table_privilege('hivorr_api', 'finance.${table}', '${privilege}') as allowed`,
       )
       assert(
-        mutation.rows[0].allowed === false,
-        `api role cannot ${privilege} finance.${table}`,
+        result.rows[0].allowed === grants[privilege],
+        `api role ${privilege} grant on finance.${table} matches the approved surface`,
       )
     }
-    const read = await testClient.query(
-      `select has_table_privilege('hivorr_api', 'finance.${table}', 'select') as allowed`,
+    const deletion = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.${table}', 'delete') as allowed`,
     )
-    const readIsApproved =
-      table !== "reconciliation_runs" && table !== "reconciliation_items"
-    assert(
-      read.rows[0].allowed === readIsApproved,
-      `api role read grant on finance.${table} matches the approved surface`,
-    )
+    assert(deletion.rows[0].allowed === false, `api role cannot delete finance.${table}`)
   }
 
   const escrowStateUpdate = await testClient.query(
     "select has_column_privilege('hivorr_api', 'finance.escrow_accounts', 'state', 'update') as allowed",
   )
-  assert(
-    escrowStateUpdate.rows[0].allowed === true,
-    "api role may update the escrow state column",
-  )
+  assert(escrowStateUpdate.rows[0].allowed === true, "api role may update the escrow state column")
   for (const column of ["payer_account_id", "ledger_account_id", "currency"]) {
     const mutation = await testClient.query(
       `select has_column_privilege('hivorr_api', 'finance.escrow_accounts', '${column}', 'update') as allowed`,
     )
-    assert(
-      mutation.rows[0].allowed === false,
-      `api role cannot rewrite escrow ${column}`,
-    )
+    assert(mutation.rows[0].allowed === false, `api role cannot rewrite escrow ${column}`)
   }
 
   const financeViews = await testClient.query(
@@ -284,15 +257,10 @@ try {
        from pg_class
       where relnamespace = 'finance'::regnamespace and relkind = 'v'`,
   )
-  const optionsByView = new Map(
-    viewOptions.rows.map((row) => [row.relname, row.reloptions ?? []]),
-  )
+  const optionsByView = new Map(viewOptions.rows.map((row) => [row.relname, row.reloptions ?? []]))
   for (const view of ["wallet_balances", "wallet_statement"]) {
     const options = optionsByView.get(view) ?? []
-    assert(
-      options.includes("security_invoker=true"),
-      `finance.${view} is security_invoker`,
-    )
+    assert(options.includes("security_invoker=true"), `finance.${view} is security_invoker`)
     const read = await testClient.query(
       `select has_table_privilege('hivorr_api', 'finance.${view}', 'select') as allowed`,
     )
@@ -301,10 +269,7 @@ try {
       const write = await testClient.query(
         `select has_table_privilege('hivorr_api', 'finance.${view}', '${privilege}') as allowed`,
       )
-      assert(
-        write.rows[0].allowed === false,
-        `api cannot ${privilege} finance.${view}`,
-      )
+      assert(write.rows[0].allowed === false, `api cannot ${privilege} finance.${view}`)
     }
   }
 
@@ -400,25 +365,16 @@ try {
   } catch {
     attributeLevelRejected = true
   }
-  assert(
-    attributeLevelRejected,
-    "taxonomy rejects an attribute on a category node",
-  )
+  assert(attributeLevelRejected, "taxonomy rejects an attribute on a category node")
 
   const taxonomyWrite = await testClient.query(
     "select has_table_privilege('hivorr_api', 'platform.taxonomy_nodes', 'insert') as allowed",
   )
-  assert(
-    taxonomyWrite.rows[0].allowed === false,
-    "api role cannot write taxonomy nodes directly",
-  )
+  assert(taxonomyWrite.rows[0].allowed === false, "api role cannot write taxonomy nodes directly")
   const taxonomyRead = await testClient.query(
     "select has_table_privilege('hivorr_api', 'platform.taxonomy_nodes', 'select') as allowed",
   )
-  assert(
-    taxonomyRead.rows[0].allowed === true,
-    "api role may read taxonomy nodes",
-  )
+  assert(taxonomyRead.rows[0].allowed === true, "api role may read taxonomy nodes")
 
   await testClient.query(
     "insert into platform.audit_log (actor_type, environment, action) values ('system', 'test', 'test.action')",
@@ -435,9 +391,7 @@ try {
 
   let deleteRejected = false
   try {
-    await testClient.query(
-      "delete from platform.audit_log where action = 'test.action'",
-    )
+    await testClient.query("delete from platform.audit_log where action = 'test.action'")
   } catch {
     deleteRejected = true
   }
@@ -446,9 +400,7 @@ try {
   const auditColumns = await testClient.query(
     "select column_name from information_schema.columns where table_schema = 'platform' and table_name = 'audit_log'",
   )
-  const auditColumnNames = new Set(
-    auditColumns.rows.map((row) => row.column_name),
-  )
+  const auditColumnNames = new Set(auditColumns.rows.map((row) => row.column_name))
   for (const column of [
     "actor_display_name",
     "actor_email",
@@ -484,10 +436,7 @@ try {
      )`,
     [actorId],
   )
-  assert(
-    createdByAdmin.rowCount === 1,
-    "an authorised administrator can create a taxonomy node",
-  )
+  assert(createdByAdmin.rowCount === 1, "an authorised administrator can create a taxonomy node")
   const outsider = await testClient.query(
     "insert into identity.users (account_id, email, display_name) values ($1, 'outsider@example.test', 'Outsider') returning id",
     [snapshotAccount.rows[0].id],
@@ -503,10 +452,7 @@ try {
   } catch {
     outsideWriteRejected = true
   }
-  assert(
-    outsideWriteRejected,
-    "a user without configuration.write cannot create a taxonomy node",
-  )
+  assert(outsideWriteRejected, "a user without configuration.write cannot create a taxonomy node")
 
   const snapshot = await testClient.query(
     "select display_name, email, role_keys, role_scopes from platform.resolve_audit_actor($1)",
@@ -518,8 +464,7 @@ try {
     "resolve_audit_actor returns the display name",
   )
   assert(
-    JSON.stringify(snapshot.rows[0].role_keys) ===
-      JSON.stringify(["founder", "support_officer"]),
+    JSON.stringify(snapshot.rows[0].role_keys) === JSON.stringify(["founder", "support_officer"]),
     "resolve_audit_actor returns the active role keys",
   )
   const scopes = snapshot.rows[0].role_scopes
@@ -534,10 +479,7 @@ try {
   const nonUserActor = await testClient.query(
     "select display_name from platform.resolve_audit_actor('system')",
   )
-  assert(
-    nonUserActor.rows.length === 0,
-    "resolve_audit_actor tolerates a non-user actor id",
-  )
+  assert(nonUserActor.rows.length === 0, "resolve_audit_actor tolerates a non-user actor id")
 
   await testClient.query(
     "insert into platform.outbox (event_type, aggregate_type, aggregate_id) values ('test.event', 'test', 'aggregate')",
@@ -550,63 +492,41 @@ try {
   const outboxColumns = await testClient.query(
     "select column_name from information_schema.columns where table_schema = 'platform' and table_name = 'outbox'",
   )
-  const outboxColumnNames = new Set(
-    outboxColumns.rows.map((row) => row.column_name),
-  )
+  const outboxColumnNames = new Set(outboxColumns.rows.map((row) => row.column_name))
   for (const column of ["locked_at", "locked_by", "dead_lettered_at"]) {
     assert(outboxColumnNames.has(column), `outbox has ${column}`)
   }
   const workerUpdate = await testClient.query(
     "select has_table_privilege('hivorr_worker', 'platform.outbox', 'update') as allowed",
   )
-  assert(
-    workerUpdate.rows[0].allowed === true,
-    "worker role may update outbox delivery state",
-  )
+  assert(workerUpdate.rows[0].allowed === true, "worker role may update outbox delivery state")
   const workerHealth = await testClient.query(
     "select has_function_privilege('hivorr_worker', 'platform.outbox_health()', 'execute') as allowed",
   )
-  assert(
-    workerHealth.rows[0].allowed === true,
-    "worker role may read outbox health",
-  )
+  assert(workerHealth.rows[0].allowed === true, "worker role may read outbox health")
   const workerInsert = await testClient.query(
     "select has_table_privilege('hivorr_worker', 'platform.outbox', 'insert') as allowed",
   )
-  assert(
-    workerInsert.rows[0].allowed === false,
-    "worker role cannot produce outbox events",
-  )
+  assert(workerInsert.rows[0].allowed === false, "worker role cannot produce outbox events")
 
   const apiInsert = await testClient.query(
     "select has_table_privilege('hivorr_api', 'platform.audit_log', 'insert') as allowed",
   )
-  assert(
-    apiInsert.rows[0].allowed === true,
-    "api role may append audit records",
-  )
+  assert(apiInsert.rows[0].allowed === true, "api role may append audit records")
   const apiUpdate = await testClient.query(
     "select has_table_privilege('hivorr_api', 'platform.audit_log', 'update') as allowed",
   )
-  assert(
-    apiUpdate.rows[0].allowed === false,
-    "api role cannot update audit records",
-  )
+  assert(apiUpdate.rows[0].allowed === false, "api role cannot update audit records")
 
   const apiDelete = await testClient.query(
     "select has_table_privilege('hivorr_api', 'platform.audit_log', 'delete') as allowed",
   )
-  assert(
-    apiDelete.rows[0].allowed === false,
-    "api role cannot delete audit records",
-  )
+  assert(apiDelete.rows[0].allowed === false, "api role cannot delete audit records")
 
   const identityTables = await testClient.query(
     "select tablename from pg_tables where schemaname = 'identity'",
   )
-  const identityTableNames = new Set(
-    identityTables.rows.map((row) => row.tablename),
-  )
+  const identityTableNames = new Set(identityTables.rows.map((row) => row.tablename))
   for (const table of [
     "accounts",
     "users",
@@ -644,10 +564,7 @@ try {
   const identityForeignKeys = await testClient.query(
     "select count(*)::int as count from pg_constraint c join pg_class t on t.oid = c.conrelid join pg_namespace n on n.oid = t.relnamespace where n.nspname = 'identity' and c.contype = 'f'",
   )
-  assert(
-    identityForeignKeys.rows[0].count >= 10,
-    "identity tables declare foreign keys",
-  )
+  assert(identityForeignKeys.rows[0].count >= 10, "identity tables declare foreign keys")
 
   const uuidDefaults = await testClient.query(
     "select count(*)::int as count from information_schema.columns where table_schema = 'identity' and column_name = 'id' and column_default like '%uuidv7%'",
@@ -674,9 +591,7 @@ try {
   const profileIndexes = await testClient.query(
     "select indexname from pg_indexes where schemaname = 'profile'",
   )
-  const profileIndexNames = new Set(
-    profileIndexes.rows.map((row) => row.indexname),
-  )
+  const profileIndexNames = new Set(profileIndexes.rows.map((row) => row.indexname))
   for (const index of [
     "activity_activations_account_state_idx",
     "activity_activations_activity_state_idx",
@@ -687,24 +602,15 @@ try {
   const readonlyProfile = await testClient.query(
     "select has_table_privilege('hivorr_readonly', 'profile.profiles', 'select') as allowed",
   )
-  assert(
-    readonlyProfile.rows[0].allowed === true,
-    "readonly role may read profiles",
-  )
+  assert(readonlyProfile.rows[0].allowed === true, "readonly role may read profiles")
   const apiActivationInsert = await testClient.query(
     "select has_table_privilege('hivorr_api', 'profile.activity_activations', 'insert') as allowed",
   )
-  assert(
-    apiActivationInsert.rows[0].allowed === true,
-    "api role may create activations",
-  )
+  assert(apiActivationInsert.rows[0].allowed === true, "api role may create activations")
   const readonlyContext = await testClient.query(
     "select has_function_privilege('hivorr_readonly', 'platform.current_account_id()', 'execute') as allowed",
   )
-  assert(
-    readonlyContext.rows[0].allowed === true,
-    "readonly role may evaluate the account policy",
-  )
+  assert(readonlyContext.rows[0].allowed === true, "readonly role may evaluate the account policy")
 
   const forcedRls = await testClient.query(
     "select n.nspname as schema, c.relname as table_name, c.relforcerowsecurity as forced from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('identity', 'profile') and c.relkind = 'r' order by 1, 2",
@@ -743,8 +649,7 @@ try {
   for (const [table, operations] of Object.entries(expectedPolicies)) {
     assert(
       policiesByTable.get(table) instanceof Set &&
-        [...policiesByTable.get(table)].sort().join(",") ===
-          [...operations].sort().join(","),
+        [...policiesByTable.get(table)].sort().join(",") === [...operations].sort().join(","),
       `${table} has one policy per intended operation`,
     )
   }
@@ -752,35 +657,23 @@ try {
   const privateHelper = await testClient.query(
     "select proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'private' and p.proname = 'current_account_id'",
   )
-  assert(
-    privateHelper.rowCount === 1,
-    "the private account policy helper exists",
-  )
+  assert(privateHelper.rowCount === 1, "the private account policy helper exists")
 
   const publicWrapper = await testClient.query(
     "select p.prosecdef as secdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'platform' and p.proname = 'current_account_id'",
   )
-  assert(
-    publicWrapper.rows[0]?.secdef === true,
-    "the platform policy wrapper is security definer",
-  )
+  assert(publicWrapper.rows[0]?.secdef === true, "the platform policy wrapper is security definer")
 
   const definerPolicies = await testClient.query(
     "select count(*)::int as count from pg_policies where schemaname = 'identity' and policyname like '%_definer_select'",
   )
-  assert(
-    definerPolicies.rows[0].count === 8,
-    "the definer owner has narrow read policies",
-  )
+  assert(definerPolicies.rows[0].count === 8, "the definer owner has narrow read policies")
 
   const uuid = await testClient.query(
     "select substring(platform.uuidv7()::text, 15, 1) as version, substring(platform.uuidv7()::text, 20, 1) as variant",
   )
   assert(uuid.rows[0].version === "7", "uuidv7 version nibble is 7")
-  assert(
-    ["8", "9", "a", "b"].includes(uuid.rows[0].variant),
-    "uuidv7 variant nibble is RFC 9562",
-  )
+  assert(["8", "9", "a", "b"].includes(uuid.rows[0].variant), "uuidv7 variant nibble is RFC 9562")
 
   const account = await testClient.query(
     "insert into identity.accounts default values returning id",
@@ -812,10 +705,7 @@ try {
     "select identity.grant_scope_is_valid('admin', 'admin.grant.manage') as valid, identity.grant_scope_is_valid('staff', 'admin.grant.manage') as invalid",
   )
   assert(validScope.rows[0].valid === true, "admin grant may manage grants")
-  assert(
-    validScope.rows[0].invalid === false,
-    "a staff grant cannot hold an admin scope",
-  )
+  assert(validScope.rows[0].invalid === false, "a staff grant cannot hold an admin scope")
 
   const grantColumns = await testClient.query(
     "select column_name from information_schema.columns where table_schema = 'identity' and table_name = 'grants'",
@@ -825,32 +715,20 @@ try {
     "grants record the owning department",
   )
 
-  const departments = await testClient.query(
-    "select key, name from admin.departments order by key",
-  )
+  const departments = await testClient.query("select key, name from admin.departments order by key")
   assert(
     JSON.stringify(departments.rows.map((row) => row.name)) ===
-      JSON.stringify([
-        "Customer Care",
-        "Financial",
-        "Governance",
-        "Operations",
-      ]),
+      JSON.stringify(["Customer Care", "Financial", "Governance", "Operations"]),
     "the staging departments are seeded",
   )
 
   let departmentListDenied = false
   try {
-    await testClient.query("select * from admin.list_departments($1, 'test')", [
-      userId,
-    ])
+    await testClient.query("select * from admin.list_departments($1, 'test')", [userId])
   } catch (error) {
     departmentListDenied = error?.code === "42501"
   }
-  assert(
-    departmentListDenied,
-    "the department catalogue requires a grant-read capability",
-  )
+  assert(departmentListDenied, "the department catalogue requires a grant-read capability")
 
   let departmentWriteDenied = false
   try {
@@ -861,10 +739,7 @@ try {
   } catch (error) {
     departmentWriteDenied = error?.code === "42501"
   }
-  assert(
-    departmentWriteDenied,
-    "recording a department requires the grant-management capability",
-  )
+  assert(departmentWriteDenied, "recording a department requires the grant-management capability")
 
   const roleCatalogueDenied = await testClient
     .query("select * from admin.list_roles($1, 'test')", [userId])
@@ -872,10 +747,7 @@ try {
       () => false,
       (error) => error?.code === "42501",
     )
-  assert(
-    roleCatalogueDenied,
-    "the role catalogue requires a role-management permission",
-  )
+  assert(roleCatalogueDenied, "the role catalogue requires a role-management permission")
 
   const roleAssignmentDenied = await testClient
     .query(
@@ -894,16 +766,10 @@ try {
       () => false,
       (error) => error?.code === "42501",
     )
-  assert(
-    assignableStaffDenied,
-    "the assignable staff list requires admin.role.manage",
-  )
+  assert(assignableStaffDenied, "the assignable staff list requires admin.role.manage")
 
   const accountGovernDenied = await testClient
-    .query(
-      "select * from admin.govern_user($1, $1, 'suspend', 'test reason')",
-      [userId],
-    )
+    .query("select * from admin.govern_user($1, $1, 'suspend', 'test reason')", [userId])
     .then(
       () => false,
       (error) => error?.code === "42501",
@@ -913,10 +779,7 @@ try {
   const notesTable = await testClient.query(
     "select 1 from information_schema.tables where table_schema = 'admin' and table_name = 'user_notes'",
   )
-  assert(
-    notesTable.rowCount === 1,
-    "operator notes are stored in admin.user_notes",
-  )
+  assert(notesTable.rowCount === 1, "operator notes are stored in admin.user_notes")
 
   const approvalListDenied = await testClient
     .query("select * from admin.list_approval_requests($1)", [userId])
@@ -924,18 +787,12 @@ try {
       () => false,
       (error) => error?.code === "42501",
     )
-  assert(
-    approvalListDenied,
-    "the approval register requires an approval permission",
-  )
+  assert(approvalListDenied, "the approval register requires an approval permission")
 
   const approvalPermission = await testClient.query(
     "select 1 from admin.permissions where key = 'admin.approval.decide'",
   )
-  assert(
-    approvalPermission.rowCount === 1,
-    "the approval decision permission is registered",
-  )
+  assert(approvalPermission.rowCount === 1, "the approval decision permission is registered")
 
   const partnerListDenied = await testClient
     .query("select * from admin.list_partner_organisations($1)", [userId])
@@ -943,26 +800,17 @@ try {
       () => false,
       (error) => error?.code === "42501",
     )
-  assert(
-    partnerListDenied,
-    "the partner register requires a partner permission",
-  )
+  assert(partnerListDenied, "the partner register requires a partner permission")
 
   const partnerPermission = await testClient.query(
     "select 1 from admin.permissions where key = 'admin.partner.manage'",
   )
-  assert(
-    partnerPermission.rowCount === 1,
-    "the partner management permission is registered",
-  )
+  assert(partnerPermission.rowCount === 1, "the partner management permission is registered")
 
   const ownPartner = await testClient.query(
     "select * from admin.list_own_partner_organisations('00000000-0000-7000-8000-000000000000')",
   )
-  assert(
-    ownPartner.rowCount === 0,
-    "the partner read model is scoped to the user id",
-  )
+  assert(ownPartner.rowCount === 0, "the partner read model is scoped to the user id")
 
   const caseListDenied = await testClient
     .query("select * from admin.list_cases($1, '', '', '')", [userId])
@@ -973,10 +821,9 @@ try {
   assert(caseListDenied, "the case register requires a case permission")
 
   const evidenceDenied = await testClient
-    .query(
-      "select * from admin.list_case_evidence($1, '00000000-0000-7000-8000-000000000000')",
-      [userId],
-    )
+    .query("select * from admin.list_case_evidence($1, '00000000-0000-7000-8000-000000000000')", [
+      userId,
+    ])
     .then(
       () => false,
       (error) => error?.code === "42501",
@@ -997,10 +844,7 @@ try {
       () => false,
       (error) => error?.code === "42501",
     )
-  assert(
-    disputeListDenied,
-    "the dispute register requires a dispute permission",
-  )
+  assert(disputeListDenied, "the dispute register requires a dispute permission")
 
   const disputeCase = await testClient.query(
     `select * from admin.create_case(
@@ -1020,13 +864,7 @@ try {
        $1, $2, 'market.buy', $3, $4, $5, 'NGN', 500.0000, null,
        'buyer reports a damaged item'
      )`,
-    [
-      actorId,
-      disputeCaseId,
-      disputeActivityRef,
-      accountId,
-      disputeRespondent.rows[0].id,
-    ],
+    [actorId, disputeCaseId, disputeActivityRef, accountId, disputeRespondent.rows[0].id],
   )
   const disputeId = openedDispute.rows[0].id
   assert(
@@ -1034,25 +872,19 @@ try {
       openedDispute.rows[0].claimed_amount === "500.0000",
     "a dispute opens with a procedural status and the claimed amount",
   )
-  assert(
-    openedDispute.rows[0].reference.startsWith("DSP-"),
-    "a dispute carries its own reference",
-  )
+  assert(openedDispute.rows[0].reference.startsWith("DSP-"), "a dispute carries its own reference")
 
-  const disputeView = await testClient.query(
-    "select * from admin.dispute_view($1, $2)",
-    [actorId, disputeId],
-  )
+  const disputeView = await testClient.query("select * from admin.dispute_view($1, $2)", [
+    actorId,
+    disputeId,
+  ])
   assert(disputeView.rowCount === 1, "a scoped admin can read the dispute")
-  assert(
-    disputeView.rows[0].case_id === disputeCaseId,
-    "the dispute points at its case",
-  )
+  assert(disputeView.rows[0].case_id === disputeCaseId, "the dispute points at its case")
 
-  const disputeList = await testClient.query(
-    "select * from admin.list_disputes($1, $2)",
-    [actorId, disputeCaseId],
-  )
+  const disputeList = await testClient.query("select * from admin.list_disputes($1, $2)", [
+    actorId,
+    disputeCaseId,
+  ])
   assert(disputeList.rowCount === 1, "the dispute register lists the case")
 
   const awaitingEvidence = await testClient.query(
@@ -1090,10 +922,7 @@ try {
       () => false,
       (error) => error?.code === "22023",
     )
-  assert(
-    resolutionStatus,
-    "no resolved outcome status exists while BD-D03 is open",
-  )
+  assert(resolutionStatus, "no resolved outcome status exists while BD-D03 is open")
 
   const disputeEvidence = await testClient.query(
     `select * from admin.add_case_evidence(
@@ -1103,10 +932,11 @@ try {
     [actorId, disputeCaseId, "a".repeat(64)],
   )
   const disputeEvidenceId = disputeEvidence.rows[0].id
-  await testClient.query(
-    "select admin.record_dispute_evidence_access($1, $2, $3, 'review')",
-    [actorId, disputeId, disputeEvidenceId],
-  )
+  await testClient.query("select admin.record_dispute_evidence_access($1, $2, $3, 'review')", [
+    actorId,
+    disputeId,
+    disputeEvidenceId,
+  ])
   const evidenceAccessed = await testClient.query(
     `select count(*)::int as count
        from admin.case_events
@@ -1119,18 +949,16 @@ try {
   )
 
   const foreignEvidence = await testClient
-    .query(
-      "select admin.record_dispute_evidence_access($1, $2, $3, 'review')",
-      [actorId, disputeId, "00000000-0000-7000-8000-00000000e999"],
-    )
+    .query("select admin.record_dispute_evidence_access($1, $2, $3, 'review')", [
+      actorId,
+      disputeId,
+      "00000000-0000-7000-8000-00000000e999",
+    ])
     .then(
       () => false,
       (error) => error?.code === "P0002",
     )
-  assert(
-    foreignEvidence,
-    "evidence outside the dispute's case cannot be accessed",
-  )
+  assert(foreignEvidence, "evidence outside the dispute's case cannot be accessed")
 
   const verificationDenied = await testClient
     .query("select * from admin.list_verification_queue($1, '')", [userId])
@@ -1138,18 +966,10 @@ try {
       () => false,
       (error) => error?.code === "42501",
     )
-  assert(
-    verificationDenied,
-    "the verification queue requires admin.verification.review",
-  )
+  assert(verificationDenied, "the verification queue requires admin.verification.review")
 
-  const seededRoles = await testClient.query(
-    "select count(*)::int as count from admin.roles",
-  )
-  assert(
-    seededRoles.rows[0].count === 11,
-    "the eleven governance roles are seeded",
-  )
+  const seededRoles = await testClient.query("select count(*)::int as count from admin.roles")
+  assert(seededRoles.rows[0].count === 11, "the eleven governance roles are seeded")
 
   await testClient.query(
     "insert into profile.profiles (account_id, display_name) values ($1, $2)",
@@ -1216,17 +1036,14 @@ try {
   } finally {
     await testClient.query("rollback")
   }
-  assert(
-    duplicateActivationRejected,
-    "activating twice is refused by the unique constraint",
-  )
+  assert(duplicateActivationRejected, "activating twice is refused by the unique constraint")
 
   let duplicateEmailRejected = false
   try {
-    await testClient.query(
-      "insert into identity.users (account_id, email) values ($1, $2)",
-      [accountId, "FOUNDER@example.test"],
-    )
+    await testClient.query("insert into identity.users (account_id, email) values ($1, $2)", [
+      accountId,
+      "FOUNDER@example.test",
+    ])
   } catch {
     duplicateEmailRejected = true
   }
@@ -1246,10 +1063,7 @@ try {
   const identityAccess = await testClient.query(
     "select has_table_privilege('hivorr_api', 'identity.users', 'select') as allowed",
   )
-  assert(
-    identityAccess.rows[0].allowed === true,
-    "api role may read identity users",
-  )
+  assert(identityAccess.rows[0].allowed === true, "api role may read identity users")
 
   const secondAccount = await testClient.query(
     "insert into identity.accounts default values returning id",
@@ -1357,10 +1171,7 @@ try {
       where ledger_account_id = $1`,
     [walletLedgerId],
   )
-  assert(
-    derivedBalance.rows[0].balance === "100.0000",
-    "wallet balance is derived from postings",
-  )
+  assert(derivedBalance.rows[0].balance === "100.0000", "wallet balance is derived from postings")
 
   await testClient.query("begin")
   const reversalEntry = await testClient.query(
@@ -1456,10 +1267,9 @@ try {
 
   let postingUpdateRejected = false
   try {
-    await testClient.query(
-      "update finance.postings set amount = 1.0000 where id = $1",
-      [depositPostingId],
-    )
+    await testClient.query("update finance.postings set amount = 1.0000 where id = $1", [
+      depositPostingId,
+    ])
   } catch (error) {
     postingUpdateRejected = error?.code === "42501"
   }
@@ -1467,10 +1277,7 @@ try {
 
   let entryDeleteRejected = false
   try {
-    await testClient.query(
-      "delete from finance.journal_entries where id = $1",
-      [depositEntryId],
-    )
+    await testClient.query("delete from finance.journal_entries where id = $1", [depositEntryId])
   } catch (error) {
     entryDeleteRejected = error?.code === "42501"
   }
@@ -1495,10 +1302,9 @@ try {
 
   let escrowStateRejected = false
   try {
-    await testClient.query(
-      "update finance.escrow_accounts set state = 'lost' where id = $1",
-      [escrowId],
-    )
+    await testClient.query("update finance.escrow_accounts set state = 'lost' where id = $1", [
+      escrowId,
+    ])
   } catch (error) {
     escrowStateRejected = error?.code === "23514"
   }
@@ -1516,7 +1322,7 @@ try {
   )
   assert(payoutAccount.rowCount === 1, "a verified payout account is accepted")
 
-  let duplicatePayoutRejected = false
+  let unverifiedPayoutRejected = false
   try {
     await testClient.query(
       `insert into finance.payout_accounts
@@ -1525,12 +1331,224 @@ try {
           account_number_fingerprint)
        values ($1, '058', 'Test Bank', 'Test Account', 'test account',
                $2, 'test-key-1', '0123', $3)`,
+      [accountId, Buffer.alloc(32, 9), "b".repeat(64)],
+    )
+  } catch (error) {
+    unverifiedPayoutRejected = error?.code === "23514"
+  }
+  assert(unverifiedPayoutRejected, "a payout destination must be verified before it is stored")
+
+  let duplicatePayoutRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.payout_accounts
+         (account_id, bank_code, bank_name, account_name, account_name_normalized,
+          account_number_ciphertext, encryption_key_id, account_number_last4,
+          account_number_fingerprint, status, verified_at)
+       values ($1, '058', 'Test Bank', 'Test Account', 'test account',
+               $2, 'test-key-1', '0123', $3, 'verified', now())`,
       [accountId, Buffer.alloc(32, 8), "a".repeat(64)],
     )
   } catch (error) {
     duplicatePayoutRejected = error?.code === "23505"
   }
   assert(duplicatePayoutRejected, "duplicate payout destinations are refused")
+
+  // ---- Collection accounts, provider setting and KYC gating (2026-11-26) ----
+  const collectionRls = await testClient.query(
+    "select relrowsecurity from pg_class where oid = 'finance.collection_accounts'::regclass",
+  )
+  assert(
+    collectionRls.rows[0]?.relrowsecurity === true,
+    "collection accounts have row level security",
+  )
+
+  for (const privilege of ["select", "insert"]) {
+    const allowed = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.collection_accounts', '${privilege}') as allowed`,
+    )
+    assert(allowed.rows[0].allowed === true, `api role may ${privilege} collection accounts`)
+  }
+  for (const privilege of ["update", "delete"]) {
+    const allowed = await testClient.query(
+      `select has_table_privilege('hivorr_api', 'finance.collection_accounts', '${privilege}') as allowed`,
+    )
+    assert(allowed.rows[0].allowed === false, `api role cannot ${privilege} collection accounts`)
+  }
+
+  const collectionPolicies = await testClient.query(
+    "select cmd from pg_policies where schemaname = 'finance' and tablename = 'collection_accounts'",
+  )
+  assert(
+    JSON.stringify([...new Set(collectionPolicies.rows.map((row) => row.cmd))].sort()) ===
+      JSON.stringify(["INSERT", "SELECT"]),
+    "collection accounts expose select and insert policies only",
+  )
+
+  const collectionColumns = await testClient.query(
+    "select column_name from information_schema.columns where table_schema = 'finance' and table_name = 'collection_accounts'",
+  )
+  const collectionColumnNames = new Set(collectionColumns.rows.map((row) => row.column_name))
+  for (const column of [
+    "account_id",
+    "owner_user_id",
+    "provider",
+    "account_number",
+    "account_name",
+    "bank_name",
+    "currency",
+    "status",
+  ]) {
+    assert(collectionColumnNames.has(column), `collection accounts store ${column}`)
+  }
+  assert(
+    ![...collectionColumnNames].some((column) => /secret|token|key/i.test(column)),
+    "collection accounts hold no provider secret",
+  )
+
+  const collectionInsert = await testClient.query(
+    `insert into finance.collection_accounts
+       (account_id, owner_user_id, provider, reference, account_number,
+        account_name, bank_name)
+     values ($1, $2, 'paystack', $3, '1234567890', 'Hivorr / Test', 'Titan Trust Bank')
+     returning id`,
+    [accountId, userId, `COL-${accountId}`],
+  )
+  assert(collectionInsert.rowCount === 1, "a collection account is stored for the account")
+
+  let duplicateCollectionRejected = false
+  try {
+    await testClient.query(
+      `insert into finance.collection_accounts
+         (account_id, owner_user_id, provider, reference, account_number,
+          account_name)
+       values ($1, $2, 'paystack', $3, '0987654321', 'Hivorr / Other')`,
+      [accountId, userId, `COL-other-${accountId}`],
+    )
+  } catch (error) {
+    duplicateCollectionRejected = error?.code === "23505"
+  }
+  assert(duplicateCollectionRejected, "one collection account per account and provider")
+
+  const providerSetting = await testClient.query(
+    "select active_provider, active_mode from platform.payment_provider_setting",
+  )
+  assert(providerSetting.rowCount === 1, "the provider setting is one row")
+  assert(
+    providerSetting.rows[0].active_provider === "paystack",
+    "Paystack is the default active provider",
+  )
+  assert(providerSetting.rows[0].active_mode === "test", "the default provider mode is test")
+
+  const providerColumns = await testClient.query(
+    "select column_name from information_schema.columns where table_schema = 'platform' and table_name = 'payment_provider_setting'",
+  )
+  assert(
+    !providerColumns.rows.some((row) => /secret|token|key/i.test(row.column_name)),
+    "the provider setting holds no secret",
+  )
+
+  const providerDirectUpdate = await testClient.query(
+    "select has_table_privilege('hivorr_api', 'platform.payment_provider_setting', 'update') as allowed",
+  )
+  assert(
+    providerDirectUpdate.rows[0].allowed === false,
+    "the api role cannot update the provider setting directly",
+  )
+
+  const providerReadDenied = await testClient
+    .query("select * from platform.get_payment_provider($1)", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(providerReadDenied, "reading the provider setting requires admin.configuration.read")
+
+  const providerWriteDenied = await testClient
+    .query("select * from platform.set_payment_provider($1, 'vfd', 'test')", [userId])
+    .then(
+      () => false,
+      (error) => error?.code === "42501",
+    )
+  assert(providerWriteDenied, "switching the provider requires admin.configuration.write")
+
+  const accountColumns = await testClient.query(
+    "select column_name, column_default from information_schema.columns where table_schema = 'identity' and table_name = 'accounts'",
+  )
+  const accountColumnNames = new Set(accountColumns.rows.map((row) => row.column_name))
+  for (const column of [
+    "kyc_tier",
+    "kyc_tier_updated_at",
+    "financial_hold_reason",
+    "financial_hold_at",
+  ]) {
+    assert(accountColumnNames.has(column), `identity.accounts has ${column}`)
+  }
+
+  const defaultTier = await testClient.query(
+    "select kyc_tier from identity.accounts where id = $1",
+    [accountId],
+  )
+  assert(defaultTier.rows[0].kyc_tier === "tier_0", "a new account starts at tier_0")
+
+  let invalidTierRejected = false
+  try {
+    await testClient.query("update identity.accounts set kyc_tier = 'tier_9' where id = $1", [
+      accountId,
+    ])
+  } catch (error) {
+    invalidTierRejected = error?.code === "23514"
+  }
+  assert(invalidTierRejected, "an unknown KYC tier is refused")
+
+  let invalidHoldRejected = false
+  try {
+    await testClient.query(
+      "update identity.accounts set financial_hold_reason = 'manual' where id = $1",
+      [accountId],
+    )
+  } catch (error) {
+    invalidHoldRejected = error?.code === "23514"
+  }
+  assert(invalidHoldRejected, "only the KYC-upgrade hold reason is representable")
+
+  const cbnWithdrawal = await testClient.query(
+    `select tier, amount::text as amount, is_unlimited
+       from finance.limits
+      where limit_type = 'withdrawal' and period = 'daily'
+        and currency = 'NGN' and account_id is null
+        and tier in ('tier_1', 'tier_2', 'tier_3')
+        and effective_to is null
+      order by tier`,
+  )
+  assert(
+    JSON.stringify(cbnWithdrawal.rows.map((row) => [row.tier, row.amount, row.is_unlimited])) ===
+      JSON.stringify([
+        ["tier_1", "30000.0000", false],
+        ["tier_2", "100000.0000", false],
+        ["tier_3", "1000000.0000", false],
+      ]),
+    "the CBN daily withdrawal caps are seeded per tier",
+  )
+
+  const cbnDeposits = await testClient.query(
+    `select tier, amount::text as amount, is_unlimited
+       from finance.limits
+      where limit_type = 'deposit'
+        and currency = 'NGN' and account_id is null
+        and tier in ('tier_1', 'tier_2', 'tier_3')
+        and effective_to is null
+      order by tier`,
+  )
+  assert(
+    JSON.stringify(cbnDeposits.rows.map((row) => [row.tier, row.amount, row.is_unlimited])) ===
+      JSON.stringify([
+        ["tier_1", "20000.0000", false],
+        ["tier_2", "50000.0000", false],
+        ["tier_3", "0.0000", true],
+      ]),
+    "the CBN single-deposit caps are seeded per tier",
+  )
 
   await testClient.query(
     `insert into finance.provider_references
@@ -1552,10 +1570,7 @@ try {
   } catch (error) {
     duplicateProviderReferenceRejected = error?.code === "23505"
   }
-  assert(
-    duplicateProviderReferenceRejected,
-    "provider references are unique per provider",
-  )
+  assert(duplicateProviderReferenceRejected, "provider references are unique per provider")
 
   await testClient.query(
     `insert into finance.limits
@@ -1624,18 +1639,9 @@ try {
     [accountId],
   )
   assert(walletBalance.rowCount === 1, "a wallet balance row is derived")
-  assert(
-    walletBalance.rows[0].available === "7.0000",
-    "available is the net of wallet postings",
-  )
-  assert(
-    walletBalance.rows[0].pending === "3.0000",
-    "pending is the held escrow amount",
-  )
-  assert(
-    walletBalance.rows[0].total === "10.0000",
-    "total is available plus pending",
-  )
+  assert(walletBalance.rows[0].available === "7.0000", "available is the net of wallet postings")
+  assert(walletBalance.rows[0].pending === "3.0000", "pending is the held escrow amount")
+  assert(walletBalance.rows[0].total === "10.0000", "total is available plus pending")
   assert(
     walletBalance.rows[0].withdrawable === "7.0000",
     "withdrawable equals available until payout reservations exist",
@@ -1657,13 +1663,8 @@ try {
     (sum, row) => sum + Number(row.signed_amount),
     0,
   )
-  assert(
-    statementTotal === 7,
-    "the statement's signed amounts reconcile to the derived balance",
-  )
-  const escrowStatement = walletStatement.rows.filter(
-    (row) => row.activity_id === "services.hire",
-  )
+  assert(statementTotal === 7, "the statement's signed amounts reconcile to the derived balance")
+  const escrowStatement = walletStatement.rows.filter((row) => row.activity_id === "services.hire")
   assert(
     escrowStatement.length === 1 &&
       escrowStatement[0].entry_kind === "escrow_hold" &&
@@ -1686,57 +1687,33 @@ try {
   await testClient.query("grant hivorr_api to postgres with set true")
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
-  await testClient.query("select platform.set_identity_context($1, $2)", [
-    accountId,
-    userId,
-  ])
-  const ownUsers = await testClient.query(
-    "select count(*)::int as count from identity.users",
-  )
-  assert(
-    ownUsers.rows[0].count === 1,
-    "rls shows only the current account's users",
-  )
+  await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
+  const ownUsers = await testClient.query("select count(*)::int as count from identity.users")
+  assert(ownUsers.rows[0].count === 1, "rls shows only the current account's users")
   const ownCredentials = await testClient.query(
     "select count(*)::int as count from identity.credentials",
   )
-  assert(
-    ownCredentials.rows[0].count === 1,
-    "rls shows only the current user's credential",
-  )
+  assert(ownCredentials.rows[0].count === 1, "rls shows only the current user's credential")
   const crossAccountUpdate = await testClient.query(
     "update identity.users set display_name = 'blocked' where id = $1",
     [secondUserId],
   )
   assert(crossAccountUpdate.rowCount === 0, "rls blocks a cross-account update")
 
-  const ownProfile = await testClient.query(
-    "select count(*)::int as count from profile.profiles",
-  )
-  assert(
-    ownProfile.rows[0].count === 1,
-    "rls shows only the current account's profile",
-  )
+  const ownProfile = await testClient.query("select count(*)::int as count from profile.profiles")
+  assert(ownProfile.rows[0].count === 1, "rls shows only the current account's profile")
   const ownActivations = await testClient.query(
     "select count(*)::int as count from profile.activity_activations",
   )
-  assert(
-    ownActivations.rows[0].count === 6,
-    "rls shows only the current account's activations",
-  )
+  assert(ownActivations.rows[0].count === 6, "rls shows only the current account's activations")
   const profileUpdate = await testClient.query(
     "update profile.profiles set display_name = 'Updated' where account_id = $1",
     [accountId],
   )
   assert(profileUpdate.rowCount === 1, "api may update its own profile")
 
-  const ownSessions = await testClient.query(
-    "select count(*)::int as count from identity.sessions",
-  )
-  assert(
-    ownSessions.rows[0].count === 1,
-    "rls shows only the current user's sessions",
-  )
+  const ownSessions = await testClient.query("select count(*)::int as count from identity.sessions")
+  assert(ownSessions.rows[0].count === 1, "rls shows only the current user's sessions")
 
   const ownLedgerAccounts = await testClient.query(
     "select count(*)::int as count from finance.ledger_accounts",
@@ -1746,9 +1723,7 @@ try {
     "rls shows only the current account's ledger account",
   )
 
-  const ownPostings = await testClient.query(
-    "select count(*)::int as count from finance.postings",
-  )
+  const ownPostings = await testClient.query("select count(*)::int as count from finance.postings")
   assert(
     ownPostings.rows[0].count === 5,
     "rls shows only postings on the current account's ledger and escrow",
@@ -1786,12 +1761,13 @@ try {
     "rls shows only the current account's payout accounts",
   )
 
-  const ownLimits = await testClient.query(
-    "select count(*)::int as count from finance.limits",
-  )
+  // Tier rows are visible to every account; the CBN seeds make the count
+  // configuration-dependent, so assert the shape rather than a literal.
+  const ownLimitRows = await testClient.query("select account_id, tier from finance.limits")
+  assert(ownLimitRows.rows.length > 0, "rls shows the tier limits to the current account")
   assert(
-    ownLimits.rows[0].count === 1,
-    "rls shows tier limits and only the current account's overrides",
+    ownLimitRows.rows.every((row) => row.account_id === null && row.tier !== null),
+    "rls shows tier limits and no other account's overrides",
   )
 
   const ownWalletBalance = await testClient.query(
@@ -1799,10 +1775,7 @@ try {
        from finance.wallet_balances
       where currency = 'NGN'`,
   )
-  assert(
-    ownWalletBalance.rowCount === 1,
-    "the wallet view shows only the current account",
-  )
+  assert(ownWalletBalance.rowCount === 1, "the wallet view shows only the current account")
   assert(
     ownWalletBalance.rows[0].available === "7.0000" &&
       ownWalletBalance.rows[0].pending === "3.0000" &&
@@ -1821,19 +1794,12 @@ try {
   let reconciliationReadDenied = false
   await testClient.query("savepoint finance_reconciliation_denied")
   try {
-    await testClient.query(
-      "select count(*)::int as count from finance.reconciliation_runs",
-    )
+    await testClient.query("select count(*)::int as count from finance.reconciliation_runs")
   } catch (error) {
     reconciliationReadDenied = error?.code === "42501"
-    await testClient.query(
-      "rollback to savepoint finance_reconciliation_denied",
-    )
+    await testClient.query("rollback to savepoint finance_reconciliation_denied")
   }
-  assert(
-    reconciliationReadDenied,
-    "reconciliation records require an audited administrator read",
-  )
+  assert(reconciliationReadDenied, "reconciliation records require an audited administrator read")
 
   let ledgerInsertDenied = false
   await testClient.query("savepoint finance_insert_denied")
@@ -1860,18 +1826,12 @@ try {
   const unknownLookup = await testClient.query(
     "select * from identity.find_login_credential('nobody@example.test')",
   )
-  assert(
-    unknownLookup.rowCount === 0,
-    "pre-auth lookup returns nothing for an unknown email",
-  )
+  assert(unknownLookup.rowCount === 0, "pre-auth lookup returns nothing for an unknown email")
 
   const closedLookup = await testClient.query(
     "select * from identity.find_login_credential('closed@example.test')",
   )
-  assert(
-    closedLookup.rowCount === 0,
-    "pre-auth lookup refuses a closed account",
-  )
+  assert(closedLookup.rowCount === 0, "pre-auth lookup refuses a closed account")
 
   let crossProfileRejected = false
   await testClient.query("savepoint profile_cross_account")
@@ -1889,9 +1849,7 @@ try {
   let grantListDenied = false
   await testClient.query("savepoint grant_list_denied")
   try {
-    await testClient.query("select * from identity.list_grants($1, 'test')", [
-      userId,
-    ])
+    await testClient.query("select * from identity.list_grants($1, 'test')", [userId])
   } catch (error) {
     grantListDenied = error?.code === "42501"
     await testClient.query("rollback to savepoint grant_list_denied")
@@ -1902,10 +1860,7 @@ try {
     "select user_id, account_id from identity.find_login_credential('founder@example.test')",
   )
   assert(lookup.rowCount === 1, "pre-auth lookup returns one credential")
-  assert(
-    lookup.rows[0].user_id === userId,
-    "pre-auth lookup returns the right user",
-  )
+  assert(lookup.rows[0].user_id === userId, "pre-auth lookup returns the right user")
   await testClient.query("reset role")
   await testClient.query("commit")
 
@@ -1914,13 +1869,8 @@ try {
   // commits once.
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
-  await testClient.query("select platform.set_identity_context($1, $2)", [
-    accountId,
-    userId,
-  ])
-  const writeContext = await testClient.query(
-    "select platform.current_account_id() as account_id",
-  )
+  await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
+  const writeContext = await testClient.query("select platform.current_account_id() as account_id")
   assert(
     writeContext.rows[0].account_id === accountId,
     "the write transaction carries the account context",
@@ -1955,10 +1905,7 @@ try {
   const lifecycleRef = "00000000-0000-7000-8000-0000000000aa"
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
-  await testClient.query("select platform.set_identity_context($1, $2)", [
-    accountId,
-    userId,
-  ])
+  await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
 
   let nonEscrowLedgerDenied = false
   await testClient.query("savepoint ledger_kind_guard")
@@ -1972,14 +1919,9 @@ try {
     nonEscrowLedgerDenied = error?.code === "42501"
     await testClient.query("rollback to savepoint ledger_kind_guard")
   }
-  assert(
-    nonEscrowLedgerDenied,
-    "the api may create an escrow ledger account but no other kind",
-  )
+  assert(nonEscrowLedgerDenied, "the api may create an escrow ledger account but no other kind")
 
-  const lifecycleLedgerId = (
-    await testClient.query("select platform.uuidv7() as id")
-  ).rows[0].id
+  const lifecycleLedgerId = (await testClient.query("select platform.uuidv7() as id")).rows[0].id
   await testClient.query(
     `insert into finance.ledger_accounts
        (id, kind, owner_type, owner_id, currency)
@@ -1994,10 +1936,7 @@ try {
     [lifecycleLedgerId, accountId, lifecycleRef],
   )
   const lifecycleEscrowId = lifecycleEscrow.rows[0].id
-  assert(
-    lifecycleEscrow.rowCount === 1,
-    "the api may open an escrow reservation",
-  )
+  assert(lifecycleEscrow.rowCount === 1, "the api may open an escrow reservation")
 
   const disputed = await testClient.query(
     "update finance.escrow_accounts set state = 'disputed' where id = $1",
@@ -2008,26 +1947,21 @@ try {
   let releaseDenied = false
   await testClient.query("savepoint escrow_release_guard")
   try {
-    await testClient.query(
-      "update finance.escrow_accounts set state = 'released' where id = $1",
-      [lifecycleEscrowId],
-    )
+    await testClient.query("update finance.escrow_accounts set state = 'released' where id = $1", [
+      lifecycleEscrowId,
+    ])
   } catch (error) {
     releaseDenied = error?.code === "42501"
     await testClient.query("rollback to savepoint escrow_release_guard")
   }
-  assert(
-    releaseDenied,
-    "a release is refused while the release policy is undecided",
-  )
+  assert(releaseDenied, "a release is refused while the release policy is undecided")
 
   let invalidTransitionRejected = false
   await testClient.query("savepoint escrow_invalid_transition")
   try {
-    await testClient.query(
-      "update finance.escrow_accounts set state = 'held' where id = $1",
-      [lifecycleEscrowId],
-    )
+    await testClient.query("update finance.escrow_accounts set state = 'held' where id = $1", [
+      lifecycleEscrowId,
+    ])
   } catch (error) {
     invalidTransitionRejected = error?.code === "23514"
     await testClient.query("rollback to savepoint escrow_invalid_transition")
@@ -2114,10 +2048,7 @@ try {
   } catch (error) {
     duplicateIdempotencyKeyRejected = error?.code === "23505"
   }
-  assert(
-    duplicateIdempotencyKeyRejected,
-    "the same creator cannot reuse an idempotency key",
-  )
+  assert(duplicateIdempotencyKeyRejected, "the same creator cannot reuse an idempotency key")
 
   await testClient.query("begin")
   const otherCreatorEntry = await testClient.query(
@@ -2135,10 +2066,7 @@ try {
     [otherCreatorEntry.rows[0].id, clearingLedgerId, adjustmentLedgerId],
   )
   await testClient.query("commit")
-  assert(
-    otherCreatorEntry.rowCount === 1,
-    "two creators may use the same idempotency key",
-  )
+  assert(otherCreatorEntry.rowCount === 1, "two creators may use the same idempotency key")
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
@@ -2149,31 +2077,27 @@ try {
   const foreignLedgerAccounts = await testClient.query(
     "select count(*)::int as count from finance.ledger_accounts",
   )
-  assert(
-    foreignLedgerAccounts.rows[0].count === 0,
-    "rls hides another account's ledger account",
-  )
+  assert(foreignLedgerAccounts.rows[0].count === 0, "rls hides another account's ledger account")
   const foreignPostings = await testClient.query(
     "select count(*)::int as count from finance.postings",
   )
+  assert(foreignPostings.rows[0].count === 0, "rls hides another account's postings")
+  const foreignLimitRows = await testClient.query("select account_id, tier from finance.limits")
+  assert(foreignLimitRows.rows.length > 0, "tier limits are visible to every account")
   assert(
-    foreignPostings.rows[0].count === 0,
-    "rls hides another account's postings",
-  )
-  const foreignLimits = await testClient.query(
-    "select count(*)::int as count from finance.limits",
+    foreignLimitRows.rows.every(
+      (row) => row.account_id === null || row.account_id === secondAccountId,
+    ),
+    "rls hides another account's limit overrides",
   )
   assert(
-    foreignLimits.rows[0].count === 2,
-    "rls shows tier limits plus this account's own override",
+    foreignLimitRows.rows.filter((row) => row.account_id === secondAccountId).length === 1,
+    "rls shows this account's own override",
   )
   const foreignWallet = await testClient.query(
     "select count(*)::int as count from finance.wallet_balances",
   )
-  assert(
-    foreignWallet.rows[0].count === 0,
-    "the wallet view hides another account's figures",
-  )
+  assert(foreignWallet.rows[0].count === 0, "the wallet view hides another account's figures")
   const foreignStatement = await testClient.query(
     "select count(*)::int as count from finance.wallet_statement",
   )
@@ -2185,10 +2109,7 @@ try {
     "update finance.escrow_accounts set state = 'disputed' where id = $1",
     [lifecycleEscrowId],
   )
-  assert(
-    foreignEscrowUpdate.rowCount === 0,
-    "rls blocks another account's escrow transition",
-  )
+  assert(foreignEscrowUpdate.rowCount === 0, "rls blocks another account's escrow transition")
   const foreignProviderReferences = await testClient.query(
     "select count(*)::int as count from finance.provider_references",
   )
@@ -2201,20 +2122,12 @@ try {
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
-  const noContext = await testClient.query(
-    "select count(*)::int as count from identity.users",
-  )
-  assert(
-    noContext.rows[0].count === 0,
-    "rls denies without an identity context",
-  )
+  const noContext = await testClient.query("select count(*)::int as count from identity.users")
+  assert(noContext.rows[0].count === 0, "rls denies without an identity context")
   const noContextProfiles = await testClient.query(
     "select count(*)::int as count from profile.profiles",
   )
-  assert(
-    noContextProfiles.rows[0].count === 0,
-    "profile rls denies without an identity context",
-  )
+  assert(noContextProfiles.rows[0].count === 0, "profile rls denies without an identity context")
   const noContextActivations = await testClient.query(
     "select count(*)::int as count from profile.activity_activations",
   )
@@ -2225,38 +2138,23 @@ try {
   const noContextSessions = await testClient.query(
     "select count(*)::int as count from identity.sessions",
   )
-  assert(
-    noContextSessions.rows[0].count === 0,
-    "session rls denies without an identity context",
-  )
+  assert(noContextSessions.rows[0].count === 0, "session rls denies without an identity context")
   const noContextLedger = await testClient.query(
     "select count(*)::int as count from finance.ledger_accounts",
   )
-  assert(
-    noContextLedger.rows[0].count === 0,
-    "ledger rls denies without an identity context",
-  )
+  assert(noContextLedger.rows[0].count === 0, "ledger rls denies without an identity context")
   const noContextPostings = await testClient.query(
     "select count(*)::int as count from finance.postings",
   )
-  assert(
-    noContextPostings.rows[0].count === 0,
-    "posting rls denies without an identity context",
-  )
+  assert(noContextPostings.rows[0].count === 0, "posting rls denies without an identity context")
   const noContextLimits = await testClient.query(
     "select count(*)::int as count from finance.limits",
   )
-  assert(
-    noContextLimits.rows[0].count === 0,
-    "limit rls denies without an identity context",
-  )
+  assert(noContextLimits.rows[0].count === 0, "limit rls denies without an identity context")
   const noContextWallet = await testClient.query(
     "select count(*)::int as count from finance.wallet_balances",
   )
-  assert(
-    noContextWallet.rows[0].count === 0,
-    "wallet view rls denies without an identity context",
-  )
+  assert(noContextWallet.rows[0].count === 0, "wallet view rls denies without an identity context")
   const noContextStatement = await testClient.query(
     "select count(*)::int as count from finance.wallet_statement",
   )
@@ -2276,19 +2174,13 @@ try {
     noContextEntryDenied = error?.code === "42501"
     await testClient.query("rollback to savepoint finance_no_context_insert")
   }
-  assert(
-    noContextEntryDenied,
-    "the ledger insert policy fails closed without an identity context",
-  )
+  assert(noContextEntryDenied, "the ledger insert policy fails closed without an identity context")
   await testClient.query("reset role")
   await testClient.query("commit")
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
-  await testClient.query("select platform.set_identity_context($1, $2)", [
-    accountId,
-    userId,
-  ])
+  await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
 
   let limitWriteDenied = false
   await testClient.query("savepoint limit_permission_guard")
@@ -2303,20 +2195,14 @@ try {
     limitWriteDenied = error?.code === "42501"
     await testClient.query("rollback to savepoint limit_permission_guard")
   }
-  assert(
-    limitWriteDenied,
-    "a user without configuration.write cannot create a limit",
-  )
+  assert(limitWriteDenied, "a user without configuration.write cannot create a limit")
 
   await testClient.query("reset role")
   await testClient.query("commit")
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
-  await testClient.query("select platform.set_identity_context($1, $2)", [
-    accountId,
-    actorId,
-  ])
+  await testClient.query("select platform.set_identity_context($1, $2)", [accountId, actorId])
   const writtenLimit = await testClient.query(
     `insert into finance.limits
        (account_id, limit_type, currency, amount, period, effective_from,
@@ -2325,10 +2211,7 @@ try {
      returning id`,
     [emptyAccount.rows[0].id, actorId],
   )
-  assert(
-    writtenLimit.rowCount === 1,
-    "a configuration writer may add an effective-dated limit",
-  )
+  assert(writtenLimit.rowCount === 1, "a configuration writer may add an effective-dated limit")
 
   let duplicateLimitRejected = false
   await testClient.query("savepoint limit_duplicate_guard")
@@ -2344,20 +2227,14 @@ try {
     duplicateLimitRejected = error?.code === "23505"
     await testClient.query("rollback to savepoint limit_duplicate_guard")
   }
-  assert(
-    duplicateLimitRejected,
-    "a duplicate limit scope and effective date is refused",
-  )
+  assert(duplicateLimitRejected, "a duplicate limit scope and effective date is refused")
 
   await testClient.query("reset role")
   await testClient.query("commit")
 
   await testClient.query("begin")
   await testClient.query("set role hivorr_api")
-  await testClient.query("select platform.set_identity_context($1, $2)", [
-    accountId,
-    userId,
-  ])
+  await testClient.query("select platform.set_identity_context($1, $2)", [accountId, userId])
   const foreignLimit = await testClient.query(
     "select count(*)::int as count from finance.limits where account_id = $1",
     [emptyAccount.rows[0].id],
@@ -2377,10 +2254,7 @@ try {
     assert(role.rolcanlogin === false, `${role.rolname} cannot log in`)
     assert(role.rolsuper === false, `${role.rolname} is not superuser`)
     assert(role.rolbypassrls === false, `${role.rolname} cannot bypass RLS`)
-    assert(
-      role.rolcreatedb === false,
-      `${role.rolname} cannot create databases`,
-    )
+    assert(role.rolcreatedb === false, `${role.rolname} cannot create databases`)
     assert(role.rolcreaterole === false, `${role.rolname} cannot create roles`)
   }
 
@@ -2401,9 +2275,7 @@ try {
   let alterDenied = false
   await testClient.query("savepoint alter_probe")
   try {
-    await testClient.query(
-      "alter table platform.audit_log add column probe int",
-    )
+    await testClient.query("alter table platform.audit_log add column probe int")
   } catch (error) {
     alterDenied = error?.code === "42501"
     await testClient.query("rollback to savepoint alter_probe")
@@ -2430,27 +2302,18 @@ try {
   const probe = await testClient.query(
     "select has_function_privilege('hivorr_api', 'platform.default_privilege_probe()', 'execute') as allowed",
   )
-  assert(
-    probe.rows[0].allowed === false,
-    "new functions start closed to the api role",
-  )
+  assert(probe.rows[0].allowed === false, "new functions start closed to the api role")
   await testClient.query("drop function platform.default_privilege_probe()")
 
   const workerIdentity = await testClient.query(
     "select has_table_privilege('hivorr_worker', 'identity.users', 'select') as allowed",
   )
-  assert(
-    workerIdentity.rows[0].allowed === false,
-    "worker role cannot read identity users",
-  )
+  assert(workerIdentity.rows[0].allowed === false, "worker role cannot read identity users")
 
   const readonlyAudit = await testClient.query(
     "select has_table_privilege('hivorr_readonly', 'platform.audit_log', 'insert') as allowed",
   )
-  assert(
-    readonlyAudit.rows[0].allowed === false,
-    "readonly role cannot append audit records",
-  )
+  assert(readonlyAudit.rows[0].allowed === false, "readonly role cannot append audit records")
 
   console.log(
     "database: OK — schemas, platform tables, identity spine, roles, and append-only audit verified",

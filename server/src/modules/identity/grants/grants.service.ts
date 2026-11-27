@@ -4,23 +4,10 @@ import type { PoolClient } from "pg"
 
 import { ApiError } from "../../../common/errors"
 import { DatabaseService } from "../../../db/database.service"
-import {
-  computeCapabilities,
-  type CapabilityId,
-  type GrantId,
-} from "../../../domain/capabilities"
+import { computeCapabilities, type CapabilityId, type GrantId } from "../../../domain/capabilities"
 import { appendAudit } from "../../platform"
-import {
-  GRANT_SCOPES,
-  GRANT_TYPES,
-  grantScopeIsValid,
-  type GrantType,
-} from "../domain/identity"
-import {
-  IdentityService,
-  type RequestContext,
-  type SessionResult,
-} from "../identity.service"
+import { GRANT_SCOPES, GRANT_TYPES, grantScopeIsValid, type GrantType } from "../domain/identity"
+import { IdentityService, type RequestContext, type SessionResult } from "../identity.service"
 
 export { GRANT_SCOPES, GRANT_TYPES }
 export type { GrantType }
@@ -141,18 +128,10 @@ function mapGrantError(error: unknown): Error {
       : ""
   switch (code) {
     case "42501":
-      return new ApiError(
-        "FORBIDDEN",
-        "Grant management is not permitted.",
-        403,
-      )
+      return new ApiError("FORBIDDEN", "Grant management is not permitted.", 403)
     case "P0002":
       return message.includes("department_not_found")
-        ? new ApiError(
-            "VALIDATION_FAILED",
-            "The department was not found or is not active.",
-            400,
-          )
+        ? new ApiError("VALIDATION_FAILED", "The department was not found or is not active.", 400)
         : new ApiError("NOT_FOUND", "The user or grant was not found.", 404)
     case "23505":
       return new ApiError(
@@ -161,21 +140,11 @@ function mapGrantError(error: unknown): Error {
         409,
       )
     case "23514":
-      return new ApiError(
-        "CONFLICT",
-        "The last grant-management grant cannot be revoked.",
-        409,
-      )
+      return new ApiError("CONFLICT", "The last grant-management grant cannot be revoked.", 409)
     case "22023":
-      return new ApiError(
-        "VALIDATION_FAILED",
-        "The grant type, scope or expiry is not valid.",
-        400,
-      )
+      return new ApiError("VALIDATION_FAILED", "The grant type, scope or expiry is not valid.", 400)
     default:
-      return error instanceof Error
-        ? error
-        : new Error("The grant operation failed.")
+      return error instanceof Error ? error : new Error("The grant operation failed.")
   }
 }
 
@@ -194,20 +163,14 @@ export class GrantsService {
     }
   }
 
-  async listForAdmin(
-    token: string,
-    context: RequestContext,
-  ): Promise<readonly GrantView[]> {
+  async listForAdmin(token: string, context: RequestContext): Promise<readonly GrantView[]> {
     const access = await this.access(token, context)
-    this.requireAny(context, access.capabilities, [
-      "admin.grant.read",
-      "admin.grant.manage",
-    ])
+    this.requireAny(context, access.capabilities, ["admin.grant.read", "admin.grant.manage"])
 
-    const rows = await this.queryRows(
-      "select * from identity.list_grants($1, $2)",
-      [access.session.userId, context.environment],
-    )
+    const rows = await this.queryRows("select * from identity.list_grants($1, $2)", [
+      access.session.userId,
+      context.environment,
+    ])
     return rows.map(toView)
   }
 
@@ -221,11 +184,7 @@ export class GrantsService {
 
     const reason = input.reason?.trim()
     if (!reason || reason.length < 3) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A reason is required to change a grant.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A reason is required to change a grant.", 400)
     }
 
     if (!grantScopeIsValid(input.grantType, input.scope)) {
@@ -238,11 +197,7 @@ export class GrantsService {
 
     const departmentKey = input.departmentKey?.trim()
     if (!departmentKey) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A department is required to create a grant.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A department is required to create a grant.", 400)
     }
 
     const available = (await this.queryRows(
@@ -250,11 +205,7 @@ export class GrantsService {
       [access.session.userId, context.environment],
     )) as unknown as DepartmentRow[]
     if (!available.some((department) => department.key === departmentKey)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The department was not found or is not active.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The department was not found or is not active.", 400)
     }
 
     try {
@@ -279,12 +230,7 @@ export class GrantsService {
           )
           const placed = await transaction.query<GrantRow>(
             "select * from identity.set_grant_department($1, $2, $3, $4)",
-            [
-              access.session.userId,
-              created.rows[0].id,
-              departmentKey,
-              context.environment,
-            ],
+            [access.session.userId, created.rows[0].id, departmentKey, context.environment],
           )
           await this.audit(
             transaction.client,
@@ -310,20 +256,14 @@ export class GrantsService {
     }
   }
 
-  async departments(
-    token: string,
-    context: RequestContext,
-  ): Promise<readonly DepartmentView[]> {
+  async departments(token: string, context: RequestContext): Promise<readonly DepartmentView[]> {
     const access = await this.access(token, context)
-    this.requireAny(context, access.capabilities, [
-      "admin.grant.read",
-      "admin.grant.manage",
-    ])
+    this.requireAny(context, access.capabilities, ["admin.grant.read", "admin.grant.manage"])
 
-    const rows = (await this.queryRows(
-      "select key, name from admin.list_departments($1, $2)",
-      [access.session.userId, context.environment],
-    )) as unknown as DepartmentRow[]
+    const rows = (await this.queryRows("select key, name from admin.list_departments($1, $2)", [
+      access.session.userId,
+      context.environment,
+    ])) as unknown as DepartmentRow[]
     return rows.map((row) => ({
       key: row.key,
       name: row.name,
@@ -347,11 +287,7 @@ export class GrantsService {
 
     const reason = reasonInput?.trim()
     if (!reason || reason.length < 3) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A reason is required to change a grant.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A reason is required to change a grant.", 400)
     }
 
     try {
@@ -365,12 +301,7 @@ export class GrantsService {
         async (transaction) => {
           const placed = await transaction.query<GrantRow>(
             "select * from identity.set_grant_department($1, $2, $3, $4)",
-            [
-              access.session.userId,
-              grantId,
-              departmentKey,
-              context.environment,
-            ],
+            [access.session.userId, grantId, departmentKey, context.environment],
           )
           await this.audit(
             transaction.client,
@@ -404,11 +335,7 @@ export class GrantsService {
 
     const reason = reasonInput?.trim()
     if (!reason || reason.length < 3) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A reason is required to change a grant.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A reason is required to change a grant.", 400)
     }
 
     try {
@@ -442,10 +369,7 @@ export class GrantsService {
     }
   }
 
-  private async access(
-    token: string,
-    context: RequestContext,
-  ): Promise<Access> {
+  private async access(token: string, context: RequestContext): Promise<Access> {
     const session = await this.identity.getSession(token, context)
     const grants = await this.readOwnGrants(session, context)
     const active = grants
@@ -474,15 +398,9 @@ export class GrantsService {
     capabilities: ReadonlySet<CapabilityId>,
     required: readonly CapabilityId[],
   ): void {
-    const allowed =
-      context.audience === "control" &&
-      required.some((cap) => capabilities.has(cap))
+    const allowed = context.audience === "control" && required.some((cap) => capabilities.has(cap))
     if (!allowed) {
-      throw new ApiError(
-        "FORBIDDEN",
-        "This action requires an active control-portal grant.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "This action requires an active control-portal grant.", 403)
     }
   }
 
@@ -518,10 +436,7 @@ export class GrantsService {
     }
   }
 
-  private async queryRows(
-    text: string,
-    values: readonly unknown[],
-  ): Promise<GrantRow[]> {
+  private async queryRows(text: string, values: readonly unknown[]): Promise<GrantRow[]> {
     const client = await this.database.pool.connect()
     try {
       const result = await client.query<GrantRow>(text, [...values])

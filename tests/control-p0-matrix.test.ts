@@ -81,9 +81,7 @@ describe("P0 control-portal authorization matrix", () => {
   it("denies every admin capability without its requirement", () => {
     for (const capability of CAPABILITY_IDS) {
       if (!capability.startsWith("admin.")) continue
-      expect(evaluateCapability(base, capability).allowed, capability).toBe(
-        false,
-      )
+      expect(evaluateCapability(base, capability).allowed, capability).toBe(false)
     }
   })
 
@@ -153,15 +151,11 @@ describe("P0 control-portal RLS and audit matrix", () => {
     expect(migrationSql).toMatch(/add column reason text/)
     expect(migrationSql).toMatch(/add column approval_reference text/)
     expect(migrationSql).toMatch(/add column session_id uuid/)
-    expect(migrationSql).not.toMatch(
-      /alter table platform\.audit_log[\s\S]*?drop column/,
-    )
+    expect(migrationSql).not.toMatch(/alter table platform\.audit_log[\s\S]*?drop column/)
   })
 
   it("guards the user directory inside the database", () => {
-    expect(migrationSql).toMatch(
-      /admin\.actor_has_platform_permission\('admin\.user\.read'\)/,
-    )
+    expect(migrationSql).toMatch(/admin\.actor_has_platform_permission\('admin\.user\.read'\)/)
     expect(migrationSql).toMatch(/platform\.current_user_id\(\)/)
     expect(migrationSql).toMatch(/set search_path = ''/)
   })

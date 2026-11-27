@@ -43,6 +43,7 @@ export interface SetFinanceLimitInput {
   readonly period: string
   readonly currency: string
   readonly amount: string
+  readonly isUnlimited?: boolean
   readonly effectiveFrom?: string | null
   readonly effectiveTo?: string | null
   readonly reason: string
@@ -68,6 +69,7 @@ export interface FinanceLimitView {
   readonly period: string
   readonly currency: string
   readonly amount: string
+  readonly isUnlimited: boolean
   readonly effectiveFrom: string
   readonly effectiveTo: string | null
   readonly createdAt: string
@@ -81,13 +83,13 @@ interface FinanceLimitRow {
   period: string
   currency: string
   amount: string
+  is_unlimited: boolean
   effective_from: string
   effective_to: string | null
   created_at: string
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function codeOf(error: unknown): string | undefined {
   if (typeof error === "object" && error !== null && "code" in error) {
@@ -111,6 +113,7 @@ function toView(row: FinanceLimitRow): FinanceLimitView {
     period: row.period,
     currency: row.currency,
     amount: row.amount,
+    isUnlimited: row.is_unlimited === true,
     effectiveFrom: row.effective_from,
     effectiveTo: row.effective_to,
     createdAt: row.created_at,
@@ -128,6 +131,7 @@ function toRule(row: FinanceLimitRow): FinanceLimitRule | null {
     period: row.period as FinanceLimitPeriod,
     currency: row.currency,
     amountMinor,
+    isUnlimited: row.is_unlimited === true,
     effectiveFrom: new Date(row.effective_from),
     effectiveTo: row.effective_to === null ? null : new Date(row.effective_to),
   }
@@ -136,11 +140,7 @@ function toRule(row: FinanceLimitRow): FinanceLimitRule | null {
 function mapLimitError(error: unknown): never {
   switch (codeOf(error)) {
     case "42501":
-      throw new ApiError(
-        "FORBIDDEN",
-        "You do not have permission to change financial limits.",
-        403,
-      )
+      throw new ApiError("FORBIDDEN", "You do not have permission to change financial limits.", 403)
     case "23505":
       throw new ApiError(
         "CONFLICT",
@@ -148,11 +148,7 @@ function mapLimitError(error: unknown): never {
         409,
       )
     case "23503":
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The account or staff member does not exist.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The account or staff member does not exist.", 400)
     case "23514":
       throw new ApiError(
         "VALIDATION_FAILED",
@@ -160,9 +156,7 @@ function mapLimitError(error: unknown): never {
         400,
       )
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The financial limit operation failed.")
+      throw error instanceof Error ? error : new Error("The financial limit operation failed.")
   }
 }
 
@@ -171,45 +165,28 @@ function deny(decision: FinanceLimitDecision): never {
     throw new Error("A permitted decision cannot be denied.")
   }
   if (decision.reason === "kyc_required") {
-    throw new ApiError(
-      "KYC_REQUIRED",
-      "This financial action requires KYC tier_1 or above.",
-      403,
-    )
+    throw new ApiError("KYC_REQUIRED", "This financial action requires KYC tier_1 or above.", 403)
   }
   if (decision.reason === "not_configured") {
-    throw new ApiError(
-      "LIMIT_EXCEEDED",
-      "No financial limit is configured for this action.",
-      403,
-    )
+    throw new ApiError("LIMIT_EXCEEDED", "No financial limit is configured for this action.", 403)
   }
-  throw new ApiError(
-    "LIMIT_EXCEEDED",
-    "This amount exceeds the configured financial limit.",
-    403,
-  )
+  throw new ApiError("LIMIT_EXCEEDED", "This amount exceeds the configured financial limit.", 403)
 }
 
 @Injectable()
 export class FinanceLimitService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   /** Lists limits; RLS shows tier rows and own overrides, and all rows to a writer. */
-  async list(input: {
-    accountId: string
-    userId: string
-  }): Promise<FinanceLimitView[]> {
+  async list(input: { accountId: string; userId: string }): Promise<FinanceLimitView[]> {
     try {
       return await this.database.withTransaction(
         { identity: { accountId: input.accountId, userId: input.userId } },
         async (transaction) => {
           const result = await transaction.query<FinanceLimitRow>(
             `select id, tier, account_id, limit_type, period, currency,
-                    amount::text as amount, effective_from, effective_to,
-                    created_at
+                    amount::text as amount, is_unlimited,
+                    effective_from, effective_to, created_at
                from finance.limits
               order by effective_from desc, id desc`,
           )
@@ -236,32 +213,16 @@ export class FinanceLimitService {
       )
     }
     if (hasTier && !kycTierSchema.safeParse(tier).success) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The limit names an unknown KYC tier.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The limit names an unknown KYC tier.", 400)
     }
     if (hasAccount && !UUID_PATTERN.test(targetAccountId)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The limit names an invalid account.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The limit names an invalid account.", 400)
     }
     if (!(FINANCE_LIMIT_TYPES as readonly string[]).includes(input.limitType)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The limit type is not defined.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The limit type is not defined.", 400)
     }
     if (!(FINANCE_LIMIT_PERIODS as readonly string[]).includes(input.period)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The limit period is not defined.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The limit period is not defined.", 400)
     }
     if (!currencyCodeSchema.safeParse(input.currency).success) {
       throw new ApiError(
@@ -310,18 +271,20 @@ export class FinanceLimitService {
           const result = await transaction.query<FinanceLimitRow>(
             `insert into finance.limits
                (tier, account_id, limit_type, currency, amount, period,
-                effective_from, effective_to, created_by)
-             values ($1, $2, $3, $4, $5::numeric, $6, coalesce($7::timestamptz, now()), $8::timestamptz, $9)
+                is_unlimited, effective_from, effective_to, created_by)
+             values ($1, $2, $3, $4, $5::numeric, $6, $7,
+                     coalesce($8::timestamptz, now()), $9::timestamptz, $10)
              returning id, tier, account_id, limit_type, period, currency,
-                       amount::text as amount, effective_from, effective_to,
-                       created_at`,
+                       amount::text as amount, is_unlimited, effective_from,
+                       effective_to, created_at`,
             [
               input.tier ?? null,
               input.targetAccountId ?? null,
               input.limitType,
               input.currency,
-              minorUnitsToMoney(amountMinor),
+              input.isUnlimited ? "0.0000" : minorUnitsToMoney(amountMinor),
               input.period,
+              input.isUnlimited === true,
               input.effectiveFrom ?? null,
               input.effectiveTo ?? null,
               input.actorUserId,
@@ -346,6 +309,7 @@ export class FinanceLimitService {
               period: view.period,
               currency: view.currency,
               amount: view.amount,
+              isUnlimited: view.isUnlimited,
               effectiveFrom: view.effectiveFrom,
               effectiveTo: view.effectiveTo,
             },
@@ -375,6 +339,17 @@ export class FinanceLimitService {
   ): Promise<void> {
     const decision = await this.evaluate(transaction, input)
     if (!decision.allowed) deny(decision)
+  }
+
+  /**
+   * The decision without throwing, for a caller that must branch on the reason
+   * (the deposit cap sets a KYC-upgrade hold instead of only denying).
+   */
+  async evaluateWithin(
+    transaction: TransactionContext,
+    input: FinanceLimitCheckInput,
+  ): Promise<FinanceLimitDecision> {
+    return this.evaluate(transaction, input)
   }
 
   /** Read-only check in its own transaction, for a preflight or a test. */
@@ -413,26 +388,19 @@ export class FinanceLimitService {
       )
     }
     if (!(FINANCE_LIMIT_TYPES as readonly string[]).includes(input.limitType)) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The limit type is not defined.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The limit type is not defined.", 400)
     }
 
     const at = input.at ? new Date(input.at) : new Date()
     if (Number.isNaN(at.getTime())) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The limit check timestamp is not a date.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The limit check timestamp is not a date.", 400)
     }
 
     const tier = input.tier ?? "tier_0"
     const rules = await transaction.query<FinanceLimitRow>(
       `select id, tier, account_id, limit_type, period, currency,
-              amount::text as amount, effective_from, effective_to, created_at
+              amount::text as amount, is_unlimited, effective_from,
+              effective_to, created_at
          from finance.limits
         where currency = $1
           and limit_type = $2
@@ -471,8 +439,7 @@ export class FinanceLimitService {
       )
       const available = parseLimitAmount(balance.rows[0]?.available ?? "0.0000")
       const current = available ?? 0n
-      const after =
-        input.direction === "in" ? current + amountMinor : current - amountMinor
+      const after = input.direction === "in" ? current + amountMinor : current - amountMinor
       return evaluateFinanceLimit({
         tier,
         rule,

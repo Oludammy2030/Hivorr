@@ -20,8 +20,7 @@ export function sessionQueryOptions(client: SessionClient) {
   } as const
 }
 
-export interface SessionContextValue
-  extends SessionState {
+export interface SessionContextValue extends SessionState {
   /** Re-read the session after a sign-in, sign-out or activation change. */
   readonly refresh: () => void
 }

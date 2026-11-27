@@ -90,18 +90,10 @@ function mapAccountError(error: unknown): never {
     case "P0002":
       throw new ApiError("NOT_FOUND", "The account was not found.", 404)
     case "23514":
-      throw new ApiError(
-        "CONFLICT",
-        "The account is not in a state that allows this action.",
-        409,
-      )
+      throw new ApiError("CONFLICT", "The account is not in a state that allows this action.", 409)
     case "22023":
       if (message.includes("account_note_required")) {
-        throw new ApiError(
-          "VALIDATION_FAILED",
-          "A note needs at least three characters.",
-          400,
-        )
+        throw new ApiError("VALIDATION_FAILED", "A note needs at least three characters.", 400)
       }
       if (message.includes("account_reason_required")) {
         throw new ApiError(
@@ -110,23 +102,15 @@ function mapAccountError(error: unknown): never {
           400,
         )
       }
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "The requested account action is not valid.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "The requested account action is not valid.", 400)
     default:
-      throw error instanceof Error
-        ? error
-        : new Error("The account action failed.")
+      throw error instanceof Error ? error : new Error("The account action failed.")
   }
 }
 
 @Injectable()
 export class AccountGovernanceService {
-  constructor(
-    @Inject(DatabaseService) private readonly database: DatabaseService,
-  ) {}
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
   async govern(input: {
     accountId: string
@@ -198,11 +182,7 @@ export class AccountGovernanceService {
   }): Promise<AccountNoteView> {
     const body = input.body.trim()
     if (body.length < 3) {
-      throw new ApiError(
-        "VALIDATION_FAILED",
-        "A note needs at least three characters.",
-        400,
-      )
+      throw new ApiError("VALIDATION_FAILED", "A note needs at least three characters.", 400)
     }
 
     try {

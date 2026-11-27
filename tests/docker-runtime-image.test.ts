@@ -84,8 +84,7 @@ function serverWorkspaceImports(): Set<string> {
   for (const file of filesUnder(path.join(root, "server", "src"))) {
     if (!file.endsWith(".ts")) continue
     const source = readFileSync(file, "utf8")
-    for (const match of source.matchAll(/["'](@hivorr\/[a-z-]+)["']/g))
-      imported.add(match[1])
+    for (const match of source.matchAll(/["'](@hivorr\/[a-z-]+)["']/g)) imported.add(match[1])
   }
   return imported
 }
@@ -95,9 +94,7 @@ describe("container runtime image", () => {
   const packages = workspacePackages()
   // Only packages under packages/ can be shipped into the image; the server
   // itself is shipped as server/dist and frontend packages are bundled by Vite.
-  const imported = [...serverWorkspaceImports()].filter((name) =>
-    packages.has(name),
-  )
+  const imported = [...serverWorkspaceImports()].filter((name) => packages.has(name))
 
   it("finds the runtime stage and the server's workspace imports", () => {
     expect(sources.has("server/dist")).toBe(true)

@@ -1,9 +1,5 @@
 import type { MailConfig } from "../../config"
-import {
-  CaptureEmailAdapter,
-  type EmailAdapter,
-  type EmailMessage,
-} from "./email.adapter"
+import { CaptureEmailAdapter, type EmailAdapter, type EmailMessage } from "./email.adapter"
 
 interface ZeptoMailSettings {
   readonly apiUrl: string
@@ -68,9 +64,7 @@ export class ZeptoMailAdapter implements EmailAdapter {
     })
 
     if (!response.ok) {
-      throw new Error(
-        `zeptomail delivery failed with status ${response.status}`,
-      )
+      throw new Error(`zeptomail delivery failed with status ${response.status}`)
     }
   }
 }
@@ -79,9 +73,7 @@ export class ZeptoMailAdapter implements EmailAdapter {
  * Uses ZeptoMail when a token and sender are configured, and the capture
  * adapter otherwise so local and test runs never reach the network.
  */
-export function createEmailAdapter(
-  config: MailConfig | undefined,
-): EmailAdapter {
+export function createEmailAdapter(config: MailConfig | undefined): EmailAdapter {
   if (!config?.token || !config.fromAddress) {
     return new CaptureEmailAdapter()
   }

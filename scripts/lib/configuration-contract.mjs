@@ -7,12 +7,7 @@
 
 export const CONFIG_SOURCES = ["config", "tooling", "deployment"]
 export const CLASSIFICATIONS = ["public", "secret"]
-export const DEPLOYMENT_ENVIRONMENTS = [
-  "development",
-  "test",
-  "staging",
-  "production",
-]
+export const DEPLOYMENT_ENVIRONMENTS = ["development", "test", "staging", "production"]
 
 const NAME_PATTERN = /^[A-Z][A-Z0-9_]*$/
 
@@ -96,16 +91,11 @@ export function verifyConfigurationContract({
       }
       for (const environment of entry.requiredIn) {
         if (!DEPLOYMENT_ENVIRONMENTS.includes(environment)) {
-          issues.push(
-            `${name}: unknown environment ${JSON.stringify(environment)}`,
-          )
+          issues.push(`${name}: unknown environment ${JSON.stringify(environment)}`)
         }
       }
     }
-    if (
-      typeof entry.description !== "string" ||
-      entry.description.length < 10
-    ) {
+    if (typeof entry.description !== "string" || entry.description.length < 10) {
       issues.push(`${name}: a description is required`)
     }
     // A contract carries names and rules, never values. A default would be a
@@ -120,9 +110,7 @@ export function verifyConfigurationContract({
   for (const [name, entry] of byName) {
     if (entry.source === "deployment") {
       if (template.has(name)) {
-        issues.push(
-          `${name}: a deployment-only key must not appear in .env.example`,
-        )
+        issues.push(`${name}: a deployment-only key must not appear in .env.example`)
       }
       continue
     }
@@ -137,9 +125,7 @@ export function verifyConfigurationContract({
 
   for (const name of template.keys()) {
     if (!byName.has(name)) {
-      issues.push(
-        `${name}: present in .env.example but absent from the contract`,
-      )
+      issues.push(`${name}: present in .env.example but absent from the contract`)
     }
   }
 
@@ -147,10 +133,7 @@ export function verifyConfigurationContract({
     .filter((entry) => entry.classification === "secret")
     .map((entry) => entry.name)
   const runtimeSecretNames = [...byName.values()]
-    .filter(
-      (entry) =>
-        entry.classification === "secret" && entry.source !== "deployment",
-    )
+    .filter((entry) => entry.classification === "secret" && entry.source !== "deployment")
     .map((entry) => entry.name)
 
   for (const name of secretNames) {
@@ -162,19 +145,13 @@ export function verifyConfigurationContract({
   }
 
   const environmentEntries =
-    environments && typeof environments === "object"
-      ? environments.environments
-      : undefined
+    environments && typeof environments === "object" ? environments.environments : undefined
   if (!environmentEntries || typeof environmentEntries !== "object") {
     issues.push("environments manifest is missing an environments object")
   } else {
-    for (const [environment, definition] of Object.entries(
-      environmentEntries,
-    )) {
+    for (const [environment, definition] of Object.entries(environmentEntries)) {
       const requiredSecrets =
-        definition && typeof definition === "object"
-          ? definition.requiredSecrets
-          : undefined
+        definition && typeof definition === "object" ? definition.requiredSecrets : undefined
       if (requiredSecrets === undefined) continue
       if (!Array.isArray(requiredSecrets)) {
         issues.push(`${environment}.requiredSecrets must be an array`)

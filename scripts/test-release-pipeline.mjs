@@ -9,14 +9,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 
-import {
-  createReleaseManifest,
-  verifyReleaseManifest,
-} from "./lib/release-manifest.mjs"
-import {
-  evaluateFounderApproval,
-  parseApprovalCommand,
-} from "./lib/founder-approval.mjs"
+import { createReleaseManifest, verifyReleaseManifest } from "./lib/release-manifest.mjs"
+import { evaluateFounderApproval, parseApprovalCommand } from "./lib/founder-approval.mjs"
 
 const SHA = "0123456789abcdef0123456789abcdef01234567"
 const OTHER_SHA = "fedcba9876543210fedcba9876543210fedcba98"
@@ -41,25 +35,16 @@ function write(relative, contents) {
 function fixture() {
   write("dist/index.html", "<!doctype html><title>Hivorr</title>")
   write("dist/assets/app.js", "console.log('main')\n")
-  write(
-    "dist/portals/control/index.html",
-    "<!doctype html><title>Control</title>",
-  )
+  write("dist/portals/control/index.html", "<!doctype html><title>Control</title>")
   write("dist/portals/control/assets/control.js", "console.log('control')\n")
   write("dist/portals/staff/index.html", "<!doctype html><title>Staff</title>")
   write("dist/portals/staff/assets/staff.js", "console.log('staff')\n")
-  write(
-    "dist/portals/partner/index.html",
-    "<!doctype html><title>Partner</title>",
-  )
+  write("dist/portals/partner/index.html", "<!doctype html><title>Partner</title>")
   write("dist/portals/partner/assets/partner.js", "console.log('partner')\n")
   write("server/src/main.ts", "export const entry = 'api'\n")
   write("server/src/worker.ts", "export const entry = 'worker'\n")
   write("server/src/db/pool.ts", "export const pool = true\n")
-  write(
-    "supabase/migrations/001_init.sql",
-    "create schema if not exists test;\n",
-  )
+  write("supabase/migrations/001_init.sql", "create schema if not exists test;\n")
   write("supabase/migrations/002_more.sql", "create table test.t (id int);\n")
 }
 
@@ -84,14 +69,10 @@ try {
     manifest.bundles.main.files === 2,
     `main had ${manifest.bundles.main.files} file(s)`,
   )
-  check(
-    "portal bundle records its own files",
-    manifest.bundles.control.files === 2,
-  )
+  check("portal bundle records its own files", manifest.bundles.control.files === 2)
   check(
     "migration set is represented",
-    manifest.migrations.files === 2 &&
-      manifest.migrations.digest.startsWith("sha256:"),
+    manifest.migrations.files === 2 && manifest.migrations.digest.startsWith("sha256:"),
   )
 
   const options = {
@@ -102,11 +83,7 @@ try {
   }
 
   const first = verifyReleaseManifest(manifest, options)
-  check(
-    "verification accepts the generated manifest",
-    first.ok,
-    first.issues.join("\n"),
-  )
+  check("verification accepts the generated manifest", first.ok, first.issues.join("\n"))
 
   const second = createReleaseManifest({
     releaseSha: SHA,
@@ -124,8 +101,7 @@ try {
   const tampered = verifyReleaseManifest(manifest, options)
   check(
     "edited portal bundle is refused",
-    !tampered.ok &&
-      tampered.issues.some((issue) => issue.includes("control bundle digest")),
+    !tampered.ok && tampered.issues.some((issue) => issue.includes("control bundle digest")),
     tampered.issues.join("\n"),
   )
   write("dist/portals/control/assets/control.js", "console.log('control')\n")
@@ -134,8 +110,7 @@ try {
   const extra = verifyReleaseManifest(manifest, options)
   check(
     "extra main bundle file is refused",
-    !extra.ok &&
-      extra.issues.some((issue) => issue.includes("main bundle digest")),
+    !extra.ok && extra.issues.some((issue) => issue.includes("main bundle digest")),
     extra.issues.join("\n"),
   )
   rmSync(path.join(temp, "dist", "assets", "extra.js"))
@@ -145,9 +120,7 @@ try {
   check(
     "edited backend source is refused",
     !sourceChanged.ok &&
-      sourceChanged.issues.some((issue) =>
-        issue.includes("backend source digest"),
-      ),
+      sourceChanged.issues.some((issue) => issue.includes("backend source digest")),
     sourceChanged.issues.join("\n"),
   )
   write("server/src/main.ts", "export const entry = 'api'\n")
@@ -157,9 +130,7 @@ try {
   check(
     "extra migration is refused",
     !migrationChanged.ok &&
-      migrationChanged.issues.some((issue) =>
-        issue.includes("migration set digest"),
-      ),
+      migrationChanged.issues.some((issue) => issue.includes("migration set digest")),
     migrationChanged.issues.join("\n"),
   )
   rmSync(path.join(temp, "supabase", "migrations", "003_late.sql"))
@@ -170,10 +141,7 @@ try {
   })
   check(
     "a different requested SHA is refused",
-    !wrongSha.ok &&
-      wrongSha.issues.some((issue) =>
-        issue.includes("does not match requested"),
-      ),
+    !wrongSha.ok && wrongSha.issues.some((issue) => issue.includes("does not match requested")),
   )
 
   const missingBundle = verifyReleaseManifest(manifest, {
@@ -217,11 +185,7 @@ try {
     founderLogin: "founder",
     releaseSha: SHA,
   })
-  check(
-    "founder approval of the exact SHA is accepted",
-    approved.ok,
-    approved.issues.join("\n"),
-  )
+  check("founder approval of the exact SHA is accepted", approved.ok, approved.issues.join("\n"))
 
   const notFounder = evaluateFounderApproval({
     issue: baseIssue,

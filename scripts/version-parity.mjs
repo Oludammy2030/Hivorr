@@ -15,9 +15,7 @@ import { fileURLToPath } from "node:url"
 import path from "node:path"
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
-const manifest = JSON.parse(
-  readFileSync(path.join(root, "package.json"), "utf8"),
-)
+const manifest = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"))
 
 const args = new Map(
   process.argv
@@ -46,8 +44,7 @@ function pnpmVersionValue() {
   const override = args.get("pnpm")
   if (override) return override
 
-  const candidates =
-    process.platform === "win32" ? ["pnpm.cmd", "pnpm"] : ["pnpm"]
+  const candidates = process.platform === "win32" ? ["pnpm.cmd", "pnpm"] : ["pnpm"]
   const failures = []
   for (const command of candidates) {
     try {
@@ -57,9 +54,7 @@ function pnpmVersionValue() {
     }
   }
 
-  console.error(
-    `toolchain: cannot read the pnpm version: ${failures.join("; ")}`,
-  )
+  console.error(`toolchain: cannot read the pnpm version: ${failures.join("; ")}`)
   process.exit(2)
 }
 
@@ -75,9 +70,7 @@ const expectedPnpm = String(manifest.packageManager || "").replace(/^pnpm@/, "")
 const expectedNodeRange = String(manifest.engines?.node || "")
 const nodeMajor = Number(String(nodeVersion).split(".")[0])
 const expectedMajorMatch = /(?:>=|\^)?(\d+)\./.exec(expectedNodeRange)
-const expectedNodeMajor = expectedMajorMatch
-  ? Number(expectedMajorMatch[1])
-  : null
+const expectedNodeMajor = expectedMajorMatch ? Number(expectedMajorMatch[1]) : null
 
 const failures = []
 
@@ -90,21 +83,15 @@ if (!expectedPnpm) {
 if (!parseExact(nodeVersion)) {
   failures.push(`Node version "${nodeVersion}" is not a semver x.y.z value`)
 } else if (expectedNodeMajor !== null && nodeMajor !== expectedNodeMajor) {
-  failures.push(
-    `Node is ${nodeVersion}; engines.node requires ${expectedNodeRange}`,
-  )
+  failures.push(`Node is ${nodeVersion}; engines.node requires ${expectedNodeRange}`)
 }
 
 if (failures.length) {
   console.error("toolchain: FAILED — the pinned contract is not satisfied")
   for (const failure of failures) console.error(`  - ${failure}`)
-  console.error(
-    "Install the pinned toolchain (see DEVELOPER_BOOTSTRAP.md) and retry.",
-  )
+  console.error("Install the pinned toolchain (see DEVELOPER_BOOTSTRAP.md) and retry.")
   process.exit(1)
 }
 
 console.log(`toolchain: OK — node ${nodeVersion}, pnpm ${pnpmVersion}`)
-console.log(
-  `toolchain: contract node ${expectedNodeRange}, pnpm ${expectedPnpm}`,
-)
+console.log(`toolchain: contract node ${expectedNodeRange}, pnpm ${expectedPnpm}`)

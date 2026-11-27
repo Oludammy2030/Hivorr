@@ -3,15 +3,21 @@ import {
   ACTIVITY_IDS,
   CAPABILITY_IDS,
   ENVIRONMENT_IDS,
+  KYC_TIERS,
+  PAYOUT_STATES,
   PORTAL_IDS,
   activityIdSchema,
   apiErrorBodySchema,
+  currencyCodeSchema,
+  moneyAmountSchema,
   taxonomyAttributeSchema,
   taxonomyAttributeTypeSchema,
   taxonomyKindSchema,
   taxonomyLevelSchema,
   taxonomyNodeSchema,
   taxonomyRegistrySchema,
+  walletBalanceViewSchema,
+  walletStatementEntrySchema,
 } from "@hivorr/shared"
 import { z } from "zod"
 
@@ -27,12 +33,7 @@ import { z } from "zod"
 
 export const portalSchema = z.enum(PORTAL_IDS)
 export const environmentSchema = z.enum(ENVIRONMENT_IDS)
-export const deploymentEnvironmentSchema = z.enum([
-  "development",
-  "test",
-  "staging",
-  "production",
-])
+export const deploymentEnvironmentSchema = z.enum(["development", "test", "staging", "production"])
 export const capabilitySchema = z.enum(CAPABILITY_IDS)
 
 export const errorResponse = apiErrorBodySchema
@@ -77,12 +78,7 @@ export const emailVerificationCompleteRequest = z.strictObject({
   token: z.string().min(20).max(200),
 })
 
-export const GRANT_TYPE_VALUES = [
-  "admin",
-  "staff",
-  "partner",
-  "platform_engineering",
-] as const
+export const GRANT_TYPE_VALUES = ["admin", "staff", "partner", "platform_engineering"] as const
 
 export const createGrantRequest = z.strictObject({
   email: z.string().min(3).max(254),
@@ -107,11 +103,7 @@ export const revokeGrantRequest = z.strictObject({
   reason: z.string().min(3).max(500).optional(),
 })
 
-export const ROLE_SCOPE_VALUES = [
-  "platform",
-  "department",
-  "organisation",
-] as const
+export const ROLE_SCOPE_VALUES = ["platform", "department", "organisation"] as const
 
 export const assignRoleRequest = z.strictObject({
   email: z.string().min(3).max(254),
@@ -289,10 +281,7 @@ export const sessionActivitySchema = z.object({
   state: z.enum(ACTIVITY_ACTIVATION_STATES),
 })
 
-export const persistedActivationStateSchema = z.enum([
-  "INACTIVE",
-  ...ACTIVITY_ACTIVATION_STATES,
-])
+export const persistedActivationStateSchema = z.enum(["INACTIVE", ...ACTIVITY_ACTIVATION_STATES])
 
 export const activityViewSchema = z.object({
   id: activityIdSchema,
@@ -343,6 +332,7 @@ export const currentSessionResponse = sessionResponse.extend({
   }),
   activities: z.array(sessionActivitySchema),
   capabilities: z.array(capabilitySchema),
+  kycTier: z.enum(KYC_TIERS),
 })
 
 export const mfaChallengeResponse = z.object({
@@ -518,9 +508,7 @@ export const partnerOrganisationResponse = z.object({
   createdAt: z.string(),
 })
 
-export const partnerOrganisationListResponse = z.array(
-  partnerOrganisationResponse,
-)
+export const partnerOrganisationListResponse = z.array(partnerOrganisationResponse)
 
 export const partnerRepresentativeResponse = z.object({
   id: z.string(),
@@ -532,9 +520,7 @@ export const partnerRepresentativeResponse = z.object({
   effectiveTo: z.string().nullable().optional(),
 })
 
-export const partnerRepresentativeListResponse = z.array(
-  partnerRepresentativeResponse,
-)
+export const partnerRepresentativeListResponse = z.array(partnerRepresentativeResponse)
 
 export const ownPartnerOrganisationResponse = z.object({
   organisationId: z.string(),
@@ -545,9 +531,7 @@ export const ownPartnerOrganisationResponse = z.object({
   effectiveFrom: z.string(),
 })
 
-export const ownPartnerOrganisationListResponse = z.array(
-  ownPartnerOrganisationResponse,
-)
+export const ownPartnerOrganisationListResponse = z.array(ownPartnerOrganisationResponse)
 
 export const caseViewResponse = z.object({
   id: z.string(),
@@ -616,9 +600,7 @@ export const verificationReviewResponse = z.object({
   createdAt: z.string(),
 })
 
-export const verificationReviewListResponse = z.array(
-  verificationReviewResponse,
-)
+export const verificationReviewListResponse = z.array(verificationReviewResponse)
 
 export const assignableStaffResponse = z.object({
   userId: z.string(),
@@ -785,20 +767,13 @@ export const createTaxonomyAttributeRequest = z
     label: z.string().min(1).max(120),
     dataType: taxonomyAttributeTypeSchema,
     isRequired: z.boolean().optional(),
-    enumValues: z
-      .array(z.string().min(1).max(80))
-      .max(100)
-      .nullable()
-      .optional(),
+    enumValues: z.array(z.string().min(1).max(80)).max(100).nullable().optional(),
     unit: z.string().max(40).optional(),
     sortOrder: z.number().int().nonnegative().optional(),
     reason: z.string().min(5).max(500),
   })
   .superRefine((value, context) => {
-    if (
-      value.dataType === "enum" &&
-      (!value.enumValues || value.enumValues.length === 0)
-    ) {
+    if (value.dataType === "enum" && (!value.enumValues || value.enumValues.length === 0)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["enumValues"],
@@ -812,20 +787,13 @@ export const updateTaxonomyAttributeRequest = z
     label: z.string().min(1).max(120),
     dataType: taxonomyAttributeTypeSchema,
     isRequired: z.boolean().optional(),
-    enumValues: z
-      .array(z.string().min(1).max(80))
-      .max(100)
-      .nullable()
-      .optional(),
+    enumValues: z.array(z.string().min(1).max(80)).max(100).nullable().optional(),
     unit: z.string().max(40).optional(),
     sortOrder: z.number().int().nonnegative().optional(),
     reason: z.string().min(5).max(500),
   })
   .superRefine((value, context) => {
-    if (
-      value.dataType === "enum" &&
-      (!value.enumValues || value.enumValues.length === 0)
-    ) {
+    if (value.dataType === "enum" && (!value.enumValues || value.enumValues.length === 0)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["enumValues"],
@@ -833,6 +801,103 @@ export const updateTaxonomyAttributeRequest = z
       })
     }
   })
+
+export const payoutRequestViewResponse = z.object({
+  id: z.string().uuid(),
+  reference: z.string(),
+  payoutAccountId: z.string().uuid(),
+  accountNumberLast4: z.string(),
+  amount: moneyAmountSchema,
+  currency: currencyCodeSchema,
+  status: z.enum(PAYOUT_STATES),
+  provider: z.string().nullable(),
+  providerReference: z.string().nullable(),
+  failureCode: z.string().nullable(),
+  createdAt: z.string(),
+  completedAt: z.string().nullable(),
+})
+
+export const payoutRequestListResponse = z.array(payoutRequestViewResponse)
+
+export const collectionAccountResponse = z.object({
+  id: z.string().uuid(),
+  provider: z.string(),
+  reference: z.string(),
+  accountNumber: z.string(),
+  accountName: z.string(),
+  bankName: z.string().nullable(),
+  currency: z.string(),
+  status: z.string(),
+})
+
+export const collectionAccountOrNullResponse = collectionAccountResponse.nullable()
+
+export const withdrawRequest = z.strictObject({
+  payoutAccountId: z.string().uuid(),
+  amount: moneyAmountSchema,
+  currency: currencyCodeSchema,
+})
+
+export const bindPayoutAccountRequest = z.strictObject({
+  bankCode: z.string().regex(/^[0-9]{3,10}$/),
+  bankName: z.string().min(1).max(120),
+  accountNumber: z.string().regex(/^[0-9]{10}$/),
+  reason: z.string().min(5).max(500).optional(),
+})
+
+export const disablePayoutAccountRequest = z.strictObject({
+  reason: z.string().min(5).max(500),
+})
+
+export const payoutAccountViewResponse = z.object({
+  id: z.string().uuid(),
+  bankCode: z.string(),
+  bankName: z.string(),
+  accountName: z.string(),
+  accountNumberMasked: z.string(),
+  state: z.enum(["pending", "verified", "rejected", "disabled"]),
+  boundAt: z.string().nullable(),
+  createdAt: z.string(),
+})
+
+export const payoutAccountListResponse = z.array(payoutAccountViewResponse)
+
+export const walletBalanceListResponse = z.array(walletBalanceViewSchema)
+
+export const walletStatementListResponse = z.array(walletStatementEntrySchema)
+
+export const assignKycTierRequest = z.strictObject({
+  tier: z.enum(KYC_TIERS),
+  reason: z.string().min(5).max(500),
+})
+
+export const kycTierResponse = z.object({
+  accountId: z.string().uuid(),
+  tier: z.enum(KYC_TIERS),
+  updatedAt: z.string(),
+})
+
+export const paymentProviderSettingRequest = z.strictObject({
+  provider: z.enum(["vfd", "paystack"]),
+  mode: z.enum(["test", "live"]),
+  reason: z.string().min(5).max(500),
+})
+
+export const paymentProviderSettingResponse = z.object({
+  provider: z.enum(["vfd", "paystack"]),
+  mode: z.enum(["test", "live"]),
+  updatedAt: z.string(),
+  configured: z.object({
+    vfd: z.object({ test: z.boolean(), live: z.boolean() }),
+    paystack: z.object({ test: z.boolean(), live: z.boolean() }),
+  }),
+})
+
+export const webhookAcceptedResponse = z.object({
+  accepted: z.boolean(),
+  posted: z.boolean(),
+  reason: z.string().optional(),
+})
 
 export const healthResponse = z.object({
   status: z.literal("ok"),

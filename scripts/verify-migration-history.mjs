@@ -13,10 +13,7 @@ import path from "node:path"
 
 import { Client } from "pg"
 
-import {
-  migrationChecksum,
-  verifyMigrationHistory,
-} from "./lib/migration-history.mjs"
+import { migrationChecksum, verifyMigrationHistory } from "./lib/migration-history.mjs"
 
 const databaseUrl = process.env.DATABASE_URL?.trim()
 if (!databaseUrl) {
@@ -30,14 +27,10 @@ const files = readdirSync(migrationsDirectory)
   .sort()
   .map((filename) => ({
     filename,
-    checksum: migrationChecksum(
-      readFileSync(path.join(migrationsDirectory, filename), "utf8"),
-    ),
+    checksum: migrationChecksum(readFileSync(path.join(migrationsDirectory, filename), "utf8")),
   }))
 
-const local = /^(?:127\.0\.0\.1|localhost)$/i.test(
-  new URL(databaseUrl).hostname,
-)
+const local = /^(?:127\.0\.0\.1|localhost)$/i.test(new URL(databaseUrl).hostname)
 const ca = process.env.DATABASE_SSL_CA?.replace(/\\n/g, "\n")
 const ssl = local
   ? undefined
@@ -64,15 +57,11 @@ try {
     for (const issue of verdict.issues) console.error(`- ${issue}`)
     process.exitCode = 1
   } else {
-    console.log(
-      `migrations:verify: OK - ${verdict.applied} applied, ${verdict.files} file(s)`,
-    )
+    console.log(`migrations:verify: OK - ${verdict.applied} applied, ${verdict.files} file(s)`)
   }
 } catch (error) {
   console.error(
-    `migrations:verify: FAILED - ${
-      error instanceof Error ? error.message : String(error)
-    }`,
+    `migrations:verify: FAILED - ${error instanceof Error ? error.message : String(error)}`,
   )
   process.exitCode = 1
 } finally {

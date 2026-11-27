@@ -352,8 +352,8 @@ pricing idea:
 **[DECIDED 3 November 2026]** The fee *structure* is settled (BD-D02): delivery and errand fees from
 day one, no transaction commission for two quarters, then 8–10% on services and 5–8% seller-side.
 The exact rates remain open until cost data exists. The escrow holding period and dispute rules
-remain undecided (`ARCHITECTURE.md` §16.4 #11, BD-D03). The KYC tier ladder and limits are undecided
-(#6, BD-D05). The currency model is undecided (#8, BD-D07). Nothing may be published or charged
+remain undecided (`ARCHITECTURE.md` §16.4 #11, BD-D03). The KYC three-tier ladder is decided
+(#6, BD-D05) with the naira caps provisional pending counsel. The currency model is undecided (#8, BD-D07). Nothing may be published or charged
 beyond the decided structure until those are settled.
 
 ### 7.2 Revenue streams
@@ -933,7 +933,7 @@ that is not reviewed is a decoration.
 | --- | --- | --- |
 | Funds custody and licensing model | Escrow, wallet, payouts, launch | **[DECIDED 3 Nov 2026]** — VFD as single payment and custody partner (BD-D01, BD-D11) |
 | Platform fee, escrow period, dispute rules | Any published pricing | **Partly decided** — fee structure decided (BD-D02); exact rates and escrow timing still open (BD-D03) |
-| KYC tier ladder and limits | Financial gating, earning activation | **[OPEN]** — BD-D05 |
+| KYC tier ladder and limits | Financial gating, earning activation | **Decided 26 Nov 2026** — three-tier ladder settled; naira caps provisional pending counsel (BD-D05; `ARCHITECTURE.md` §16.4 #6) |
 | Currency model | Multi-currency accounts, cross-border pricing | **[OPEN]** — BD-D07 |
 | MVP activity scope | Launch configuration and supply plan | **[OPEN]** — BD-D04 |
 | Business as account or profile | Enterprise and team offering | **[OPEN]** — BD-D06 |

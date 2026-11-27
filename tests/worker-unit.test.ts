@@ -19,15 +19,11 @@ describe("outbox handler registry", () => {
     handlers.register("identity.user_registered", async () => undefined)
     expect(handlers.get("identity.user_registered")).toBeTypeOf("function")
     expect(handlers.get("unknown.event")).toBeUndefined()
-    expect(() =>
-      handlers.register("identity.user_registered", async () => undefined),
-    ).toThrow()
+    expect(() => handlers.register("identity.user_registered", async () => undefined)).toThrow()
     expect(handlers.types()).toEqual(["identity.user_registered"])
   })
 
   it("rejects an empty event type", () => {
-    expect(() =>
-      new OutboxHandlers().register("  ", async () => undefined),
-    ).toThrow()
+    expect(() => new OutboxHandlers().register("  ", async () => undefined)).toThrow()
   })
 })

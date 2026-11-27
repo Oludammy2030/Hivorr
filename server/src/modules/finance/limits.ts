@@ -1,37 +1,28 @@
+import { FINANCIALLY_ELIGIBLE_KYC_TIERS } from "@hivorr/shared"
+
 /**
  * Financial limit resolution and evaluation (EP-02-035).
  *
  * Configuration holds the numbers; this module holds no threshold. It resolves
  * the effective rule for a tier or account override and decides whether a write
- * fits. `tier_1` is the only financially eligible tier in the approved shared
- * contract; the ladder above it is still open, so anything else is denied rather
- * than guessed.
+ * fits. The CBN tiers `tier_1`–`tier_3` are financially eligible; `tier_0` is
+ * denied. The tier limits are configuration, not code.
  *
  * The caller performs the check inside the same transaction as the write. The
  * database still owns the effective-dated rows and the permission to add one.
  */
-export const FINANCE_LIMIT_TYPES = [
-  "deposit",
-  "withdrawal",
-  "payout",
-  "wallet_balance",
-] as const
+export const FINANCE_LIMIT_TYPES = ["deposit", "withdrawal", "payout", "wallet_balance"] as const
 
-export type FinanceLimitType = typeof FINANCE_LIMIT_TYPES[number]
+export type FinanceLimitType = (typeof FINANCE_LIMIT_TYPES)[number]
 
-export const FINANCE_LIMIT_PERIODS = [
-  "per_transaction",
-  "daily",
-  "weekly",
-  "monthly",
-] as const
+export const FINANCE_LIMIT_PERIODS = ["per_transaction", "daily", "weekly", "monthly"] as const
 
-export type FinanceLimitPeriod = typeof FINANCE_LIMIT_PERIODS[number]
+export type FinanceLimitPeriod = (typeof FINANCE_LIMIT_PERIODS)[number]
 
-/** The approved contract has exactly these tiers today. */
-export const FINANCIALLY_ELIGIBLE_TIERS: ReadonlySet<string> = new Set([
-  "tier_1",
-])
+/** The CBN tiers that may move money; `tier_0` is denied. */
+export const FINANCIALLY_ELIGIBLE_TIERS: ReadonlySet<string> = new Set(
+  FINANCIALLY_ELIGIBLE_KYC_TIERS,
+)
 
 export interface FinanceLimitRule {
   readonly id: string
@@ -41,6 +32,7 @@ export interface FinanceLimitRule {
   readonly period: FinanceLimitPeriod
   readonly currency: string
   readonly amountMinor: bigint
+  readonly isUnlimited: boolean
   readonly effectiveFrom: Date
   readonly effectiveTo: Date | null
 }
@@ -78,8 +70,7 @@ export function selectFinanceLimit(
   const effective = candidates.filter(
     (rule) =>
       rule.effectiveFrom.getTime() <= input.at.getTime() &&
-      (rule.effectiveTo === null ||
-        rule.effectiveTo.getTime() > input.at.getTime()),
+      (rule.effectiveTo === null || rule.effectiveTo.getTime() > input.at.getTime()),
   )
 
   effective.sort((left, right) => {
@@ -96,14 +87,16 @@ export function selectFinanceLimit(
 
 export type FinanceLimitDenialReason = "kyc_required" | "not_configured" | "exceeded"
 
-export type FinanceLimitDecision = {
-  readonly allowed: true
-  readonly rule: FinanceLimitRule
-} | {
-  readonly allowed: false
-  readonly reason: FinanceLimitDenialReason
-  readonly rule: FinanceLimitRule | null
-}
+export type FinanceLimitDecision =
+  | {
+      readonly allowed: true
+      readonly rule: FinanceLimitRule
+    }
+  | {
+      readonly allowed: false
+      readonly reason: FinanceLimitDenialReason
+      readonly rule: FinanceLimitRule | null
+    }
 
 export interface FinanceLimitEvaluation {
   readonly tier: string
@@ -115,15 +108,17 @@ export interface FinanceLimitEvaluation {
   readonly balanceAfterMinor?: bigint
 }
 
-export function evaluateFinanceLimit(
-  input: FinanceLimitEvaluation,
-): FinanceLimitDecision {
+export function evaluateFinanceLimit(input: FinanceLimitEvaluation): FinanceLimitDecision {
   if (!FINANCIALLY_ELIGIBLE_TIERS.has(input.tier)) {
     return { allowed: false, reason: "kyc_required", rule: input.rule }
   }
 
   if (!input.rule) {
     return { allowed: false, reason: "not_configured", rule: null }
+  }
+
+  if (input.rule.isUnlimited) {
+    return { allowed: true, rule: input.rule }
   }
 
   if (input.rule.limitType === "wallet_balance") {
@@ -142,15 +137,10 @@ export function evaluateFinanceLimit(
 }
 
 /** UTC period start; the ledger stores timestamps in UTC. */
-export function financeLimitPeriodStart(
-  period: FinanceLimitPeriod,
-  at: Date,
-): Date | null {
+export function financeLimitPeriodStart(period: FinanceLimitPeriod, at: Date): Date | null {
   if (period === "per_transaction") return null
 
-  const start = new Date(
-    Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()),
-  )
+  const start = new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()))
 
   if (period === "daily") return start
 

@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  appendAudit,
-  listAuditEntries,
-} from "../server/src/modules/platform/audit"
+import { appendAudit, listAuditEntries } from "../server/src/modules/platform/audit"
 
 interface Call {
   readonly text: string
@@ -161,17 +158,7 @@ describe("audit service", () => {
     ]
 
     const page = await listAuditEntries(client as never, { limit: 500 })
-    expect(client.calls[0]?.values).toEqual([
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      101,
-    ])
+    expect(client.calls[0]?.values).toEqual([null, null, null, null, null, null, null, null, 101])
     expect(page.nextCursor).toBeNull()
     expect(page.items).toEqual([
       {
@@ -297,8 +284,6 @@ describe("audit service", () => {
 
     const page = await listAuditEntries(client as never, { limit: 2 })
     expect(page.items).toHaveLength(2)
-    expect(page.nextCursor).toBe(
-      "2026-11-09T00:00:01.000Z|00000000-0000-0000-0000-000000000001",
-    )
+    expect(page.nextCursor).toBe("2026-11-09T00:00:01.000Z|00000000-0000-0000-0000-000000000001")
   })
 })

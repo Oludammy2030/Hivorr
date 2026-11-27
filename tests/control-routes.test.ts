@@ -44,9 +44,7 @@ describe("control portal route manifest", () => {
     expect(isKnownPath("/access/grants")).toBe(true)
     expect(sectionFromPath("/access/grants")).toBe("grants")
     expect(allItems.some((item) => item.id === "grants")).toBe(false)
-    expect(allItems.find((item) => item.id === "roles")?.activePaths).toContain(
-      "/access/grants",
-    )
+    expect(allItems.find((item) => item.id === "roles")?.activePaths).toContain("/access/grants")
   })
 
   it("titles every section independently of the navigation", () => {

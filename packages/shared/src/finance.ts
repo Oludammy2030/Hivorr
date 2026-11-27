@@ -20,11 +20,11 @@ export const LEDGER_ACCOUNT_KINDS = [
   "adjustment",
 ] as const
 
-export type LedgerAccountKind = typeof LEDGER_ACCOUNT_KINDS[number]
+export type LedgerAccountKind = (typeof LEDGER_ACCOUNT_KINDS)[number]
 
 export const POSTING_DIRECTIONS = ["debit", "credit"] as const
 
-export type PostingDirection = typeof POSTING_DIRECTIONS[number]
+export type PostingDirection = (typeof POSTING_DIRECTIONS)[number]
 
 /**
  * Entry kinds the ledger accepts. The list is shared with the `finance`
@@ -42,21 +42,15 @@ export const JOURNAL_ENTRY_KINDS = [
   "reversal",
 ] as const
 
-export type JournalEntryKind = typeof JOURNAL_ENTRY_KINDS[number]
+export type JournalEntryKind = (typeof JOURNAL_ENTRY_KINDS)[number]
 
 /**
  * Escrow states as stored by `finance.escrow_accounts`. Transitions are
  * `EP-02-033`; this list only prevents a second vocabulary.
  */
-export const ESCROW_STATES = [
-  "held",
-  "released",
-  "refunded",
-  "disputed",
-  "cancelled",
-] as const
+export const ESCROW_STATES = ["held", "released", "refunded", "disputed", "cancelled"] as const
 
-export type EscrowState = typeof ESCROW_STATES[number]
+export type EscrowState = (typeof ESCROW_STATES)[number]
 
 /**
  * The defined escrow lifecycle. `enabled` is deliberately false for every
@@ -91,26 +85,16 @@ export interface EscrowTransitionEvaluation {
 }
 
 /** Evaluates one transition against the defined lifecycle. */
-export function evaluateEscrowTransition(
-  from: string,
-  to: string,
-): EscrowTransitionEvaluation {
+export function evaluateEscrowTransition(from: string, to: string): EscrowTransitionEvaluation {
   const rule =
-    ESCROW_TRANSITIONS.find(
-      (candidate) => candidate.from === from && candidate.to === to,
-    ) ?? null
+    ESCROW_TRANSITIONS.find((candidate) => candidate.from === from && candidate.to === to) ?? null
   if (!rule) return { status: "invalid", rule: null }
   return { status: rule.enabled ? "enabled" : "disabled", rule }
 }
 
-export const PAYOUT_ACCOUNT_STATES = [
-  "pending",
-  "verified",
-  "rejected",
-  "disabled",
-] as const
+export const PAYOUT_ACCOUNT_STATES = ["pending", "verified", "rejected", "disabled"] as const
 
-export type PayoutAccountState = typeof PAYOUT_ACCOUNT_STATES[number]
+export type PayoutAccountState = (typeof PAYOUT_ACCOUNT_STATES)[number]
 
 export const PAYOUT_STATES = [
   "REQUESTED",
@@ -122,15 +106,11 @@ export const PAYOUT_STATES = [
   "CANCELLED",
 ] as const
 
-export type PayoutState = typeof PAYOUT_STATES[number]
+export type PayoutState = (typeof PAYOUT_STATES)[number]
 
-export const DEPOSIT_MATCH_STATES = [
-  "MATCHED",
-  "MISMATCH",
-  "PENDING_REVIEW",
-] as const
+export const DEPOSIT_MATCH_STATES = ["MATCHED", "MISMATCH", "PENDING_REVIEW"] as const
 
-export type DepositMatchState = typeof DEPOSIT_MATCH_STATES[number]
+export type DepositMatchState = (typeof DEPOSIT_MATCH_STATES)[number]
 
 export const ledgerAccountKindSchema = z.enum(LEDGER_ACCOUNT_KINDS)
 export const postingDirectionSchema = z.enum(POSTING_DIRECTIONS)
@@ -152,9 +132,7 @@ export type CurrencyCode = z.infer<typeof currencyCodeSchema>
  * `numeric(20,4)`-shaped amount. A string avoids floating-point drift in the
  * contract; the server converts to the database numeric.
  */
-export const moneyAmountSchema = z
-  .string()
-  .regex(/^(0|[1-9]\d{0,19})(\.\d{1,4})?$/)
+export const moneyAmountSchema = z.string().regex(/^(0|[1-9]\d{0,19})(\.\d{1,4})?$/)
 
 export type MoneyAmount = z.infer<typeof moneyAmountSchema>
 
@@ -178,9 +156,7 @@ export function moneyToMinorUnits(amount: string): bigint | null {
   if (!moneyAmountSchema.safeParse(amount).success) return null
   const [whole = "0", fraction = ""] = amount.split(".")
   if (whole.length > 16) return null
-  const minor =
-    BigInt(whole) * MONEY_MINOR_FACTOR +
-    BigInt(fraction.padEnd(MONEY_SCALE, "0"))
+  const minor = BigInt(whole) * MONEY_MINOR_FACTOR + BigInt(fraction.padEnd(MONEY_SCALE, "0"))
   if (minor <= 0n || minor >= MONEY_MINOR_LIMIT) return null
   return minor
 }
@@ -190,9 +166,7 @@ export function minorUnitsToMoney(minor: bigint): MoneyAmount {
   const sign = minor < 0n ? "-" : ""
   const absolute = minor < 0n ? -minor : minor
   const whole = absolute / MONEY_MINOR_FACTOR
-  const fraction = (absolute % MONEY_MINOR_FACTOR)
-    .toString()
-    .padStart(MONEY_SCALE, "0")
+  const fraction = (absolute % MONEY_MINOR_FACTOR).toString().padStart(MONEY_SCALE, "0")
   return `${sign}${whole}.${fraction}`
 }
 
@@ -275,9 +249,7 @@ export type WalletBalanceView = z.infer<typeof walletBalanceViewSchema>
  * A statement amount carries a sign because a wallet credit and a wallet debit
  * are shown as opposite movements of the same figure.
  */
-export const signedMoneyAmountSchema = z
-  .string()
-  .regex(/^-?(0|[1-9]\d{0,19})(\.\d{1,4})?$/)
+export const signedMoneyAmountSchema = z.string().regex(/^-?(0|[1-9]\d{0,19})(\.\d{1,4})?$/)
 
 export type SignedMoneyAmount = z.infer<typeof signedMoneyAmountSchema>
 
@@ -305,13 +277,9 @@ export type WalletStatementEntry = z.infer<typeof walletStatementEntrySchema>
  * Procedural dispute statuses. There is deliberately no resolved, refunded,
  * rejected or closed state: those are BD-D03 outcomes and are not implemented.
  */
-export const DISPUTE_STATUSES = [
-  "OPENED",
-  "UNDER_REVIEW",
-  "AWAITING_EVIDENCE",
-] as const
+export const DISPUTE_STATUSES = ["OPENED", "UNDER_REVIEW", "AWAITING_EVIDENCE"] as const
 
-export type DisputeStatus = typeof DISPUTE_STATUSES[number]
+export type DisputeStatus = (typeof DISPUTE_STATUSES)[number]
 
 export const disputeStatusSchema = z.enum(DISPUTE_STATUSES)
 

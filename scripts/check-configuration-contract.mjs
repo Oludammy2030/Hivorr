@@ -52,17 +52,11 @@ let contract
 let environments
 let envExample
 try {
-  contract = JSON.parse(
-    read(path.join("config", "configuration-contract.json")),
-  )
+  contract = JSON.parse(read(path.join("config", "configuration-contract.json")))
   envExample = read(".env.example")
   environments = JSON.parse(read(path.join("config", "environments.json")))
 } catch (error) {
-  console.error(
-    `config:check: FAILED — ${
-      error instanceof Error ? error.message : String(error)
-    }`,
-  )
+  console.error(`config:check: FAILED — ${error instanceof Error ? error.message : String(error)}`)
   process.exit(2)
 }
 

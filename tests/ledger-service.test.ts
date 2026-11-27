@@ -142,27 +142,14 @@ describe("ledger service", () => {
     expect(result.createdAt).toBe("2026-11-18T00:00:00.000Z")
     expect(result.effects).toHaveLength(2)
 
-    const entryInsert = findCall(
-      transaction.calls,
-      "insert into finance.journal_entries",
-    )
-    expect(entryInsert.values?.slice(0, 3)).toEqual([
-      "deposit",
-      "DEP-SERVICE-1",
-      "NGN",
-    ])
+    const entryInsert = findCall(transaction.calls, "insert into finance.journal_entries")
+    expect(entryInsert.values?.slice(0, 3)).toEqual(["deposit", "DEP-SERVICE-1", "NGN"])
 
-    const postingInsert = findCall(
-      transaction.calls,
-      "insert into finance.postings",
-    )
+    const postingInsert = findCall(transaction.calls, "insert into finance.postings")
     expect(postingInsert.values).toHaveLength(12)
     expect(postingInsert.text).toContain("$12")
 
-    const auditInsert = findCall(
-      transaction.calls,
-      "insert into platform.audit_log",
-    )
+    const auditInsert = findCall(transaction.calls, "insert into platform.audit_log")
     expect(auditInsert.values?.[4]).toBe("finance.entry_posted")
     expect(auditInsert.values?.[2]).toBe("app")
     expect(auditInsert.values?.[3]).toBe("test")
@@ -177,19 +164,14 @@ describe("ledger service", () => {
       service.postEntry(
         {
           ...input,
-          postings: [
-            input.postings[0]!,
-            { ...input.postings[1]!, amount: "99.9999" },
-          ],
+          postings: [input.postings[0]!, { ...input.postings[1]!, amount: "99.9999" }],
         },
         context(),
       ),
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
 
     expect(
-      transaction.calls.some((call) =>
-        call.text.includes("insert into finance.journal_entries"),
-      ),
+      transaction.calls.some((call) => call.text.includes("insert into finance.journal_entries")),
     ).toBe(false)
   })
 
@@ -198,9 +180,10 @@ describe("ledger service", () => {
     transaction.failEntryCode = "23505"
     const service = serviceWith(transaction)
 
-    await expect(
-      service.postEntry(balancedInput(), context()),
-    ).rejects.toMatchObject({ code: "CONFLICT", statusCode: 409 })
+    await expect(service.postEntry(balancedInput(), context())).rejects.toMatchObject({
+      code: "CONFLICT",
+      statusCode: 409,
+    })
   })
 
   it("maps a missing account to a validation failure", async () => {
@@ -208,9 +191,10 @@ describe("ledger service", () => {
     transaction.failEntryCode = "23503"
     const service = serviceWith(transaction)
 
-    await expect(
-      service.postEntry(balancedInput(), context()),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
+    await expect(service.postEntry(balancedInput(), context())).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      statusCode: 400,
+    })
   })
 
   it("posts an exact reversal and refuses a partial one", async () => {
@@ -250,8 +234,7 @@ describe("ledger service", () => {
       idempotencyKey: "idem-reversal-0001",
       postings: originalPostings.map((posting) => ({
         ...posting,
-        direction:
-          posting.direction === "debit" ? "credit" as const : "debit" as const,
+        direction: posting.direction === "debit" ? ("credit" as const) : ("debit" as const),
       })),
     }
 
@@ -327,14 +310,10 @@ describe("ledger service", () => {
 
     expect(result.id).toBe("018f7f5e-7c4a-7c2b-9a1f-2c3d4e5f6a7b")
     expect(
-      transaction.calls.some((call) =>
-        call.text.includes("insert into finance.journal_entries"),
-      ),
+      transaction.calls.some((call) => call.text.includes("insert into finance.journal_entries")),
     ).toBe(false)
     expect(
-      transaction.calls.some((call) =>
-        call.text.includes("insert into finance.postings"),
-      ),
+      transaction.calls.some((call) => call.text.includes("insert into finance.postings")),
     ).toBe(false)
   })
 
@@ -348,14 +327,13 @@ describe("ledger service", () => {
     }
     const service = serviceWith(transaction)
 
-    await expect(
-      service.postEntry(balancedInput(), context()),
-    ).rejects.toMatchObject({ code: "CONFLICT", statusCode: 409 })
+    await expect(service.postEntry(balancedInput(), context())).rejects.toMatchObject({
+      code: "CONFLICT",
+      statusCode: 409,
+    })
 
     expect(
-      transaction.calls.some((call) =>
-        call.text.includes("insert into finance.journal_entries"),
-      ),
+      transaction.calls.some((call) => call.text.includes("insert into finance.journal_entries")),
     ).toBe(false)
   })
 
@@ -364,9 +342,10 @@ describe("ledger service", () => {
     const service = serviceWith(transaction)
     const { idempotencyKey: _key, ...withoutKey } = balancedInput()
 
-    await expect(
-      service.postEntry(withoutKey, context()),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED", statusCode: 400 })
+    await expect(service.postEntry(withoutKey, context())).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      statusCode: 400,
+    })
 
     expect(transaction.calls).toHaveLength(0)
   })

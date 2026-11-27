@@ -52,9 +52,7 @@ export function generateTotpSecret(): string {
 export function totpCode(secret: string, timeStep: number): string {
   const counter = Buffer.alloc(8)
   counter.writeBigUInt64BE(BigInt(timeStep))
-  const digest = createHmac("sha1", base32Decode(secret))
-    .update(counter)
-    .digest()
+  const digest = createHmac("sha1", base32Decode(secret)).update(counter).digest()
   const offset = digest[digest.length - 1] & 0x0f
   const binary =
     (((digest[offset] & 0x7f) << 24) |
@@ -88,21 +86,14 @@ export function verifyTotp(
   let matched = false
   for (let offset = -window; offset <= window; offset += 1) {
     const expected = Buffer.from(totpCode(secret, step + offset))
-    if (
-      expected.length === supplied.length &&
-      timingSafeEqual(expected, supplied)
-    ) {
+    if (expected.length === supplied.length && timingSafeEqual(expected, supplied)) {
       matched = true
     }
   }
   return matched
 }
 
-export function totpUri(
-  secret: string,
-  accountName: string,
-  issuer = "Hivorr",
-): string {
+export function totpUri(secret: string, accountName: string, issuer = "Hivorr"): string {
   const label = encodeURIComponent(`${issuer}:${accountName}`)
   const query = new URLSearchParams({
     secret,

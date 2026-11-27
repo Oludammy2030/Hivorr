@@ -15,16 +15,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
-const HTTP_METHODS = [
-  "get",
-  "put",
-  "post",
-  "delete",
-  "options",
-  "head",
-  "patch",
-  "trace",
-]
+const HTTP_METHODS = ["get", "put", "post", "delete", "options", "head", "patch", "trace"]
 
 const args = process.argv.slice(2)
 let basePath = ""
@@ -123,15 +114,10 @@ function resolve(doc, value) {
   return cursor ?? value
 }
 
-function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
+function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen, mode = "request") {
   const left = resolve(baseDoc, baseValue)
   const right = resolve(headDoc, headValue)
-  if (
-    !left ||
-    !right ||
-    typeof left !== "object" ||
-    typeof right !== "object"
-  ) {
+  if (!left || !right || typeof left !== "object" || typeof right !== "object") {
     return
   }
 
@@ -140,34 +126,20 @@ function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
   seen.add(refKey)
 
   const leftType = Array.isArray(left.type) ? left.type.join("|") : left.type
-  const rightType = Array.isArray(right.type)
-    ? right.type.join("|")
-    : right.type
+  const rightType = Array.isArray(right.type) ? right.type.join("|") : right.type
   if (leftType && rightType && leftType !== rightType) {
-    add(
-      "breaking",
-      where,
-      `type changed from \`${leftType}\` to \`${rightType}\``,
-    )
+    add("breaking", where, `type changed from \`${leftType}\` to \`${rightType}\``)
   }
 
   if (Array.isArray(left.enum) && Array.isArray(right.enum)) {
     for (const value of left.enum) {
       if (!right.enum.some((candidate) => candidate === value)) {
-        add(
-          "breaking",
-          where,
-          `enum value \`${JSON.stringify(value)}\` was removed`,
-        )
+        add("breaking", where, `enum value \`${JSON.stringify(value)}\` was removed`)
       }
     }
     for (const value of right.enum) {
       if (!left.enum.some((candidate) => candidate === value)) {
-        add(
-          "non-breaking",
-          where,
-          `enum value \`${JSON.stringify(value)}\` was added`,
-        )
+        add("non-breaking", where, `enum value \`${JSON.stringify(value)}\` was added`)
       }
     }
   } else if (Array.isArray(left.enum) && !Array.isArray(right.enum)) {
@@ -175,7 +147,7 @@ function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
   }
 
   if (left.type === "array" && right.type === "array") {
-    compareSchema(baseDoc, headDoc, left.items, right.items, `${where}[]`, seen)
+    compareSchema(baseDoc, headDoc, left.items, right.items, `${where}[]`, seen, mode)
   }
 
   if (
@@ -196,6 +168,7 @@ function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
           rightProps[name],
           `${where}.${name}`,
           seen,
+          mode,
         )
       }
     }
@@ -204,15 +177,26 @@ function compareSchema(baseDoc, headDoc, baseValue, headValue, where, seen) {
     const rightRequired = new Set(right.required ?? [])
     for (const name of rightRequired) {
       if (!leftRequired.has(name)) {
-        add("breaking", `${where}.${name}`, "property became required")
+        // A response property becoming required is a stronger guarantee; a
+        // request property becoming required is a new obligation.
+        add(
+          mode === "response" ? "non-breaking" : "breaking",
+          `${where}.${name}`,
+          mode === "response"
+            ? "response property is now always present"
+            : "property became required",
+        )
       }
     }
     for (const name of leftRequired) {
       if (!rightRequired.has(name)) {
+        // A response property losing its guarantee can break a client.
         add(
-          "non-breaking",
+          mode === "response" ? "breaking" : "non-breaking",
           `${where}.${name}`,
-          "property stopped being required",
+          mode === "response"
+            ? "response property is no longer guaranteed"
+            : "property stopped being required",
         )
       }
     }
@@ -274,20 +258,9 @@ function compareOperation(baseDoc, headDoc, pathName, method, baseOp, headOp) {
       const left = baseBody.content[mediaType]?.schema
       const right = headBody.content[mediaType]?.schema
       if (!right) {
-        add(
-          "breaking",
-          where,
-          `request media type \`${mediaType}\` was removed`,
-        )
+        add("breaking", where, `request media type \`${mediaType}\` was removed`)
       } else {
-        compareSchema(
-          baseDoc,
-          headDoc,
-          left,
-          right,
-          `${where} request ${mediaType}`,
-          new Set(),
-        )
+        compareSchema(baseDoc, headDoc, left, right, `${where} request ${mediaType}`, new Set())
       }
     }
   }
@@ -303,11 +276,7 @@ function compareOperation(baseDoc, headDoc, pathName, method, baseOp, headOp) {
     const rightContent = headResponses[status]?.content ?? {}
     for (const mediaType of Object.keys(leftContent)) {
       if (!(mediaType in rightContent)) {
-        add(
-          "breaking",
-          where,
-          `response \`${status}\` media type \`${mediaType}\` was removed`,
-        )
+        add("breaking", where, `response \`${status}\` media type \`${mediaType}\` was removed`)
       } else {
         compareSchema(
           baseDoc,
@@ -316,6 +285,7 @@ function compareOperation(baseDoc, headDoc, pathName, method, baseOp, headOp) {
           rightContent[mediaType]?.schema,
           `${where} response ${status} ${mediaType}`,
           new Set(),
+          "response",
         )
       }
     }
@@ -398,9 +368,7 @@ const report = [
 reportAndExit(report)
 
 if (failOnBreaking && breaking.length) {
-  console.error(
-    `openapi:diff: ${breaking.length} breaking change(s) fail the gate`,
-  )
+  console.error(`openapi:diff: ${breaking.length} breaking change(s) fail the gate`)
   process.exit(1)
 }
 if (failOnAny && findings.length) {

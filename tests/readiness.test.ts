@@ -5,9 +5,7 @@ import path from "node:path"
 import { afterAll, describe, expect, it } from "vitest"
 
 const root = process.cwd()
-const manifest = JSON.parse(
-  readFileSync(path.join(root, "package.json"), "utf8"),
-)
+const manifest = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"))
 
 const temporaryDirectories: string[] = []
 
@@ -21,15 +19,11 @@ function temporaryFixture(name: string, content: string): string {
 
 function runSecretScan(file: string) {
   try {
-    const stdout = execFileSync(
-      process.execPath,
-      ["scripts/secret-scan.mjs", file],
-      {
-        cwd: root,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    )
+    const stdout = execFileSync(process.execPath, ["scripts/secret-scan.mjs", file], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    })
     return { status: 0, stdout, stderr: "" }
   } catch (error) {
     const failure = error as {
@@ -46,8 +40,7 @@ function runSecretScan(file: string) {
 }
 
 afterAll(() => {
-  for (const directory of temporaryDirectories)
-    rmSync(directory, { recursive: true, force: true })
+  for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true })
 })
 
 describe("EP-00 repository contract", () => {
@@ -67,10 +60,7 @@ describe("EP-00 repository contract", () => {
       "test",
       "check:toolchain",
     ]) {
-      expect(
-        manifest.scripts?.[script],
-        `missing script: ${script}`,
-      ).toBeTruthy()
+      expect(manifest.scripts?.[script], `missing script: ${script}`).toBeTruthy()
     }
   })
 
@@ -80,11 +70,7 @@ describe("EP-00 repository contract", () => {
       for (const [name, specifier] of Object.entries(manifest[section] ?? {})) {
         // Internal workspace packages are linked, not downloaded, and have no
         // publishable version range. Every external dependency is still pinned.
-        if (
-          name.startsWith("@hivorr/") &&
-          String(specifier).startsWith("workspace:")
-        )
-          continue
+        if (name.startsWith("@hivorr/") && String(specifier).startsWith("workspace:")) continue
         if (!/^\d+\.\d+\.\d+(?:-[\w.]+)?$/.test(String(specifier))) {
           ranges.push(`${section}/${name}: ${specifier}`)
         }
@@ -94,10 +80,7 @@ describe("EP-00 repository contract", () => {
   })
 
   it("keeps the seven-day supply-chain policy and Linux reference architecture", () => {
-    const workspace = readFileSync(
-      path.join(root, "pnpm-workspace.yaml"),
-      "utf8",
-    )
+    const workspace = readFileSync(path.join(root, "pnpm-workspace.yaml"), "utf8")
     expect(workspace).toMatch(/minimumReleaseAge:\s*10080/)
     expect(workspace).toMatch(/os:\s*\n\s*-\s*linux/)
   })
@@ -118,20 +101,14 @@ describe("secret-scan control", () => {
   })
 
   it("blocks a non-live GitHub-shaped token", () => {
-    const fixture = temporaryFixture(
-      "fake-token.txt",
-      `token = ghp_${"0".repeat(36)}\n`,
-    )
+    const fixture = temporaryFixture("fake-token.txt", `token = ghp_${"0".repeat(36)}\n`)
     const result = runSecretScan(fixture)
     expect(result.status).toBe(1)
     expect(result.stderr).toContain("github-token")
   })
 
   it("blocks a private-key header", () => {
-    const fixture = temporaryFixture(
-      "fake-key.txt",
-      `${"-----BEGIN "}PRIVATE KEY-----\n`,
-    )
+    const fixture = temporaryFixture("fake-key.txt", `${"-----BEGIN "}PRIVATE KEY-----\n`)
     const result = runSecretScan(fixture)
     expect(result.status).toBe(1)
     expect(result.stderr).toContain("private-key-block")

@@ -14,9 +14,7 @@ import { readFileSync } from "node:fs"
 import https from "node:https"
 import path from "node:path"
 
-const topology = JSON.parse(
-  readFileSync(path.resolve("config/environments.json"), "utf8"),
-)
+const topology = JSON.parse(readFileSync(path.resolve("config/environments.json"), "utf8"))
 const staging = topology.environments?.staging
 if (!staging) {
   console.error("staging-hosts: config/environments.json has no staging entry")
@@ -81,15 +79,9 @@ for (const [application, host] of Object.entries(hosts)) {
 
   const protectedApplication = PROTECTED.includes(application)
   if (protectedApplication) {
-    const challenged =
-      (result.status >= 300 && result.status < 400) || result.status === 403
-    if (
-      !challenged ||
-      !result.locationHost?.endsWith(".cloudflareaccess.com")
-    ) {
-      issues.push(
-        `${host}: expected a Cloudflare Access challenge, got ${result.status}`,
-      )
+    const challenged = (result.status >= 300 && result.status < 400) || result.status === 403
+    if (!challenged || !result.locationHost?.endsWith(".cloudflareaccess.com")) {
+      issues.push(`${host}: expected a Cloudflare Access challenge, got ${result.status}`)
     }
   } else if (result.status !== 200) {
     issues.push(`${host}: expected 200, got ${result.status}`)
@@ -109,9 +101,7 @@ const api = await request(hosts.main, "/api/v1/health/live")
 if (api.error) {
   issues.push(`staging API health: ${api.error}`)
 } else if (api.status !== 200 || !/"environment":"staging"/.test(api.body)) {
-  issues.push(
-    `staging API health: expected 200 with environment=staging, got ${api.status}`,
-  )
+  issues.push(`staging API health: expected 200 with environment=staging, got ${api.status}`)
 } else {
   summary.push({
     application: "api",

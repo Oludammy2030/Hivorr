@@ -178,18 +178,18 @@ describe("provider reference model", () => {
     const transaction = new FakeTransaction()
     const service = serviceWith(transaction)
 
-    await expect(
-      service.record(input({ provider: "VFD" }), context()),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
-    await expect(
-      service.record(input({ amount: "0" }), context()),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
-    await expect(
-      service.record(input({ amount: "1.00001" }), context()),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
-    await expect(
-      service.record(input({ currency: "naira" }), context()),
-    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" })
+    await expect(service.record(input({ provider: "VFD" }), context())).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
+    await expect(service.record(input({ amount: "0" }), context())).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
+    await expect(service.record(input({ amount: "1.00001" }), context())).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
+    await expect(service.record(input({ currency: "naira" }), context())).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    })
 
     expect(transaction.calls).toHaveLength(0)
   })
@@ -237,9 +237,7 @@ describe("provider reference model", () => {
 
     expect(result.journalEntryId).toBe(entryId)
     expect(
-      transaction.calls.some((call) =>
-        call.text.startsWith("update finance.provider_references"),
-      ),
+      transaction.calls.some((call) => call.text.startsWith("update finance.provider_references")),
     ).toBe(false)
   })
 

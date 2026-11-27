@@ -4,8 +4,7 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 
 const root = process.cwd()
-const read = (relative: string) =>
-  readFileSync(path.join(root, relative), "utf8")
+const read = (relative: string) => readFileSync(path.join(root, relative), "utf8")
 const readJson = (relative: string) => JSON.parse(read(relative))
 
 describe("environment database contract", () => {
@@ -31,12 +30,8 @@ describe("environment database contract", () => {
       environments: Record<string, { supabaseProjectRef: string }>
     }
 
-    expect(topology.environments.staging.supabaseProjectRef).toBe(
-      projects.staging.projectRef,
-    )
-    expect(topology.environments.production.supabaseProjectRef).toBe(
-      projects.production.projectRef,
-    )
+    expect(topology.environments.staging.supabaseProjectRef).toBe(projects.staging.projectRef)
+    expect(topology.environments.production.supabaseProjectRef).toBe(projects.production.projectRef)
   })
 
   it("declares database and worker credentials per environment", () => {
@@ -46,11 +41,7 @@ describe("environment database contract", () => {
 
     for (const environment of ["staging", "production"]) {
       expect(topology.environments[environment].requiredSecrets).toEqual(
-        expect.arrayContaining([
-          "DATABASE_URL",
-          "WORKER_DATABASE_URL",
-          "MFA_ENCRYPTION_KEY",
-        ]),
+        expect.arrayContaining(["DATABASE_URL", "WORKER_DATABASE_URL", "MFA_ENCRYPTION_KEY"]),
       )
     }
   })
@@ -92,21 +83,13 @@ describe("environment database contract", () => {
       expect(sql, role).toMatch(new RegExp(`create role ${role} nologin`))
     }
 
-    expect(sql).toMatch(
-      /grant select, insert, update on platform\.outbox to hivorr_worker/,
-    )
-    expect(sql).toMatch(
-      /grant select on platform\.audit_log to hivorr_readonly/,
-    )
-    expect(sql).toMatch(
-      /revoke update, delete on platform\.audit_log from public/,
-    )
+    expect(sql).toMatch(/grant select, insert, update on platform\.outbox to hivorr_worker/)
+    expect(sql).toMatch(/grant select on platform\.audit_log to hivorr_readonly/)
+    expect(sql).toMatch(/revoke update, delete on platform\.audit_log from public/)
   })
 
   it("points the staging runbook at the declared project", () => {
-    const runbook = read(
-      "documents/Engineering-Execution/STAGING_PROVISIONING.md",
-    )
+    const runbook = read("documents/Engineering-Execution/STAGING_PROVISIONING.md")
     const projects = readJson("config/backend-projects.json") as {
       staging: { projectRef: string }
     }

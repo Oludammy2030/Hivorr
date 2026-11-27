@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { createApplication } from "../server/src/app"
 import type { ApiConfig } from "../server/src/config"
+import { testProviderConfig } from "./support/api-config"
 import { DatabaseService } from "../server/src/db/database.service"
 import { currentTimeStep, totpCode } from "../server/src/modules/identity/totp"
 
@@ -62,10 +63,7 @@ describeIntegration("case spine integration", () => {
       payload: { email, password },
     })
     expect(signedIn.statusCode).toBe(200)
-    const appCookie = cookieHeader(
-      readCookies(signedIn.headers),
-      "__Host-hivorr_app_sid",
-    )
+    const appCookie = cookieHeader(readCookies(signedIn.headers), "__Host-hivorr_app_sid")
 
     const enrollment = await app.inject({
       method: "POST",
@@ -102,10 +100,7 @@ describeIntegration("case spine integration", () => {
     expect(verified.statusCode).toBe(200)
     return {
       userId,
-      cookie: cookieHeader(
-        readCookies(verified.headers),
-        "__Host-hivorr_control_sid",
-      ),
+      cookie: cookieHeader(readCookies(verified.headers), "__Host-hivorr_control_sid"),
     }
   }
 
@@ -121,20 +116,15 @@ describeIntegration("case spine integration", () => {
     setup = new Client({ connectionString: testUrl })
     await setup.connect()
 
-    const migrationsDirectory = path.join(
-      process.cwd(),
-      "supabase",
-      "migrations",
-    )
+    const migrationsDirectory = path.join(process.cwd(), "supabase", "migrations")
     for (const file of readdirSync(migrationsDirectory)
       .filter((entry) => entry.endsWith(".sql"))
       .sort()) {
-      await setup.query(
-        readFileSync(path.join(migrationsDirectory, file), "utf8"),
-      )
+      await setup.query(readFileSync(path.join(migrationsDirectory, file), "utf8"))
     }
 
     const config: ApiConfig = {
+      ...testProviderConfig,
       environment: "staging",
       backendEnvironment: "staging",
       supabaseProjectRef: "abcdefghijklmnopqrst",
@@ -171,15 +161,9 @@ describeIntegration("case spine integration", () => {
     await app.init()
     await app.getHttpAdapter().getInstance().ready()
 
-    const manager = await registerAndEnroll(
-      "manager@example.test",
-      "manager-test-password",
-    )
+    const manager = await registerAndEnroll("manager@example.test", "manager-test-password")
     managerCookie = manager.cookie
-    const worker = await registerAndEnroll(
-      "worker@example.test",
-      "worker-test-password",
-    )
+    const worker = await registerAndEnroll("worker@example.test", "worker-test-password")
     workerCookie = worker.cookie
 
     await setup.query(
@@ -193,9 +177,7 @@ describeIntegration("case spine integration", () => {
     if (database) await database.onApplicationShutdown()
     if (setup) await setup.end()
     if (admin) {
-      await admin.query(
-        `drop database if exists "${databaseName}" with (force)`,
-      )
+      await admin.query(`drop database if exists "${databaseName}" with (force)`)
       await admin.end()
     }
   })
@@ -236,11 +218,9 @@ describeIntegration("case spine integration", () => {
       headers: { host: controlHost, cookie: managerCookie },
     })
     expect(events.statusCode).toBe(200)
-    expect(
-      (events.json() as Array<{ eventType: string }>).map(
-        (row) => row.eventType,
-      ),
-    ).toContain("created")
+    expect((events.json() as Array<{ eventType: string }>).map((row) => row.eventType)).toContain(
+      "created",
+    )
   })
 
   it("lists cases with filters", async () => {
@@ -250,9 +230,7 @@ describeIntegration("case spine integration", () => {
       headers: { host: controlHost, cookie: managerCookie },
     })
     expect(list.statusCode).toBe(200)
-    expect(
-      (list.json() as Array<{ id: string }>).some((row) => row.id === caseId),
-    ).toBe(true)
+    expect((list.json() as Array<{ id: string }>).some((row) => row.id === caseId)).toBe(true)
 
     const empty = await app.inject({
       method: "GET",
@@ -298,9 +276,7 @@ describeIntegration("case spine integration", () => {
       url: `/v1/control/cases/${caseId}/events`,
       headers: { host: controlHost, cookie: managerCookie },
     })
-    const types = (events.json() as Array<{ eventType: string }>).map(
-      (row) => row.eventType,
-    )
+    const types = (events.json() as Array<{ eventType: string }>).map((row) => row.eventType)
     expect(types).toContain("note")
     expect(types).toContain("assigned")
     expect(types).toContain("status_changed")
@@ -388,9 +364,7 @@ describeIntegration("case spine integration", () => {
       headers: { host: controlHost, cookie: managerCookie },
     })
     expect(list.statusCode).toBe(200)
-    const statuses = (list.json() as Array<{ status: string }>).map(
-      (row) => row.status,
-    )
+    const statuses = (list.json() as Array<{ status: string }>).map((row) => row.status)
     expect(statuses).toContain("active")
     expect(statuses).toContain("superseded")
 
@@ -399,9 +373,7 @@ describeIntegration("case spine integration", () => {
       url: `/v1/control/cases/${caseId}/events`,
       headers: { host: controlHost, cookie: managerCookie },
     })
-    const types = (events.json() as Array<{ eventType: string }>).map(
-      (row) => row.eventType,
-    )
+    const types = (events.json() as Array<{ eventType: string }>).map((row) => row.eventType)
     expect(types).toContain("evidence_added")
     expect(types).toContain("evidence_accessed")
     expect(types).toContain("evidence_superseded")

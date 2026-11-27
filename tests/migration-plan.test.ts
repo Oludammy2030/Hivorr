@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  planMigrations,
-  verifyMigrationHistory,
-} from "../scripts/lib/migration-history.mjs"
+import { planMigrations, verifyMigrationHistory } from "../scripts/lib/migration-history.mjs"
 
 function file(filename: string, checksum = `checksum-${filename}`) {
   return { filename, checksum }

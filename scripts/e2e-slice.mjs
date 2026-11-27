@@ -73,10 +73,7 @@ try {
   await page.getByRole("button", { name: "Sign In" }).click()
   const alert = page.getByRole("alert")
   await alert.waitFor({ timeout: 15_000 })
-  check(
-    (await alert.textContent())?.includes("incorrect"),
-    "invalid sign-in is labelled",
-  )
+  check((await alert.textContent())?.includes("incorrect"), "invalid sign-in is labelled")
 
   await go("/not-a-route")
   await page.getByText("Page not found").waitFor({ timeout: 10_000 })
@@ -84,18 +81,13 @@ try {
 
   await go("/")
   await page.waitForURL("**/login", { timeout: 15_000 })
-  check(
-    new URL(page.url()).pathname === "/login",
-    "anonymous bootstrap redirects to login",
-  )
+  check(new URL(page.url()).pathname === "/login", "anonymous bootstrap redirects to login")
 
   if (email && password) {
     await emailField.fill(email)
     await passwordField.fill(password)
     await page.getByRole("button", { name: "Sign In" }).click()
-    await page
-      .getByText("How do you want to use Hivorr today?")
-      .waitFor({ timeout: 20_000 })
+    await page.getByText("How do you want to use Hivorr today?").waitFor({ timeout: 20_000 })
     check(true, "authenticated session reaches the activity switcher")
     await page.getByRole("button", { name: /I Want to Hire/ }).click()
     await page
@@ -104,9 +96,7 @@ try {
       .waitFor({ timeout: 20_000 })
     check(true, "activity activation answers")
   } else {
-    console.log(
-      "NOTE  E2E_EMAIL/E2E_PASSWORD are not set; authenticated checks skipped",
-    )
+    console.log("NOTE  E2E_EMAIL/E2E_PASSWORD are not set; authenticated checks skipped")
   }
 } catch (error) {
   failures.push(error instanceof Error ? error.message : String(error))

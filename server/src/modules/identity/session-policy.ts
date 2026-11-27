@@ -9,11 +9,7 @@ export interface SessionPolicy {
   readonly accessMs: number
 }
 
-const PRIVILEGED: ReadonlySet<PortalId> = new Set([
-  "control",
-  "staff",
-  "partner",
-])
+const PRIVILEGED: ReadonlySet<PortalId> = new Set(["control", "staff", "partner"])
 
 const REFRESH_COOKIE_PATH = "/v1/auth"
 
@@ -44,19 +40,11 @@ export function refreshCookieName(audience: PortalId): string {
   return `hivorr_${audience}_rt`
 }
 
-export function buildSessionCookie(
-  name: string,
-  token: string,
-  maxAgeSeconds: number,
-): string {
+export function buildSessionCookie(name: string, token: string, maxAgeSeconds: number): string {
   return `${name}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAgeSeconds}`
 }
 
-export function buildRefreshCookie(
-  name: string,
-  token: string,
-  maxAgeSeconds: number,
-): string {
+export function buildRefreshCookie(name: string, token: string, maxAgeSeconds: number): string {
   return `${name}=${token}; Path=${REFRESH_COOKIE_PATH}; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAgeSeconds}`
 }
 

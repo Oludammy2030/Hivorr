@@ -48,10 +48,7 @@ function withDirection(
   return { ...posting, direction }
 }
 
-function expectValidationCode(
-  action: () => unknown,
-  code: LedgerValidationError["code"],
-): void {
+function expectValidationCode(action: () => unknown, code: LedgerValidationError["code"]): void {
   try {
     action()
     throw new Error(`expected ${code}`)
@@ -147,15 +144,10 @@ describe("ledger posting engine", () => {
       ],
     })
 
-    expect(entry.postings.map((posting) => posting.amount)).toEqual([
-      "100.1000",
-      "100.1000",
-    ])
+    expect(entry.postings.map((posting) => posting.amount)).toEqual(["100.1000", "100.1000"])
 
     const effects = deriveAccountEffects(entry.postings)
-    const byAccount = new Map(
-      effects.map((effect) => [effect.accountId, effect]),
-    )
+    const byAccount = new Map(effects.map((effect) => [effect.accountId, effect]))
     expect(byAccount.get(wallet)).toEqual({
       accountId: wallet,
       currency: "NGN",
@@ -437,10 +429,7 @@ describe("ledger posting engine", () => {
       currency: "NGN",
       reversesEntryId: randomUUID(),
       postings: original.postings.map((posting) =>
-        withDirection(
-          posting,
-          posting.direction === "debit" ? "credit" : "debit",
-        ),
+        withDirection(posting, posting.direction === "debit" ? "credit" : "debit"),
       ),
     }
 
@@ -463,12 +452,15 @@ describe("ledger posting engine", () => {
     }))
     expectValidationCode(
       () =>
-        validateJournalEntry({ ...reversalInput, postings: wrongAmount }, {
-          reversalTarget: {
-            currency: original.currency,
-            postings: original.postings,
+        validateJournalEntry(
+          { ...reversalInput, postings: wrongAmount },
+          {
+            reversalTarget: {
+              currency: original.currency,
+              postings: original.postings,
+            },
           },
-        }),
+        ),
       "LEDGER_REVERSAL_MISMATCH",
     )
 
@@ -550,10 +542,7 @@ describe("ledger posting engine", () => {
           currency: original.currency,
           reversesEntryId: randomUUID(),
           postings: original.postings.map((posting) =>
-            withDirection(
-              posting,
-              posting.direction === "debit" ? "credit" : "debit",
-            ),
+            withDirection(posting, posting.direction === "debit" ? "credit" : "debit"),
           ),
         },
         {
@@ -565,20 +554,15 @@ describe("ledger posting engine", () => {
       )
 
       const originalEffects = new Map(
-        deriveAccountEffects(original.postings).map((effect) => [
-          effect.accountId,
-          effect,
-        ]),
+        deriveAccountEffects(original.postings).map((effect) => [effect.accountId, effect]),
       )
       for (const effect of deriveAccountEffects(reversed.postings)) {
         const before = originalEffects.get(effect.accountId)
         expect(before, `seed ${seed}`).toBeDefined()
         const beforeNet =
-          (moneyToMinorUnits(before!.debit) ?? 0n) -
-          (moneyToMinorUnits(before!.credit) ?? 0n)
+          (moneyToMinorUnits(before!.debit) ?? 0n) - (moneyToMinorUnits(before!.credit) ?? 0n)
         const afterNet =
-          (moneyToMinorUnits(effect.debit) ?? 0n) -
-          (moneyToMinorUnits(effect.credit) ?? 0n)
+          (moneyToMinorUnits(effect.debit) ?? 0n) - (moneyToMinorUnits(effect.credit) ?? 0n)
         expect(afterNet, `seed ${seed}`).toBe(-beforeNet)
       }
     }

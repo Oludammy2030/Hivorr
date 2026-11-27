@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  claimIdempotency,
-  completeIdempotency,
-} from "../server/src/modules/platform/idempotency"
+import { claimIdempotency, completeIdempotency } from "../server/src/modules/platform/idempotency"
 
 interface Call {
   readonly text: string
@@ -51,12 +48,7 @@ describe("idempotency store", () => {
     )
 
     expect(result).toEqual({ status: "claimed" })
-    expect(client.calls[0]?.values).toEqual([
-      input.key,
-      input.scope,
-      input.requestHash,
-      "infinity",
-    ])
+    expect(client.calls[0]?.values).toEqual([input.key, input.scope, input.requestHash, "infinity"])
   })
 
   it("replays the stored response for the same request", async () => {
@@ -108,29 +100,19 @@ describe("idempotency store", () => {
     }
 
     await expect(
-      claimIdempotency(
-        client as unknown as Parameters<typeof claimIdempotency>[0],
-        input,
-      ),
+      claimIdempotency(client as unknown as Parameters<typeof claimIdempotency>[0], input),
     ).rejects.toThrow("no completed response")
   })
 
   it("completes the record with the response", async () => {
     const client = new FakeClient()
 
-    await completeIdempotency(
-      client as unknown as Parameters<typeof completeIdempotency>[0],
-      {
-        key: input.key,
-        responseStatus: 201,
-        responseBody: { id: "entry-1" },
-      },
-    )
+    await completeIdempotency(client as unknown as Parameters<typeof completeIdempotency>[0], {
+      key: input.key,
+      responseStatus: 201,
+      responseBody: { id: "entry-1" },
+    })
 
-    expect(client.calls[0]?.values).toEqual([
-      input.key,
-      201,
-      JSON.stringify({ id: "entry-1" }),
-    ])
+    expect(client.calls[0]?.values).toEqual([input.key, 201, JSON.stringify({ id: "entry-1" })])
   })
 })

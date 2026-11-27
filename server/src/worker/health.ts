@@ -77,8 +77,7 @@ export async function startWorkerHealthServer(
   })
 
   const address = server.address()
-  const port =
-    address && typeof address === "object" ? address.port : options.port
+  const port = address && typeof address === "object" ? address.port : options.port
 
   return {
     server,
@@ -86,10 +85,7 @@ export async function startWorkerHealthServer(
   }
 }
 
-export async function stopWorkerHealthServer(
-  server: Server,
-  logger: OutboxLogger,
-): Promise<void> {
+export async function stopWorkerHealthServer(server: Server, logger: OutboxLogger): Promise<void> {
   await new Promise<void>((resolve) => {
     server.close((error) => {
       if (error) {

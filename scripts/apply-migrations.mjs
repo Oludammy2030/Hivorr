@@ -120,13 +120,9 @@ try {
 
   const entries = files.map((filename) => ({
     filename,
-    checksum: migrationChecksum(
-      readFileSync(path.join(migrationsDir, filename), "utf8"),
-    ),
+    checksum: migrationChecksum(readFileSync(path.join(migrationsDir, filename), "utf8")),
   }))
-  const history = await client.query(
-    "select filename, checksum from platform.schema_migrations",
-  )
+  const history = await client.query("select filename, checksum from platform.schema_migrations")
   const plan = planMigrations({ files: entries, applied: history.rows })
 
   if (!plan.ok) {
@@ -134,9 +130,7 @@ try {
   }
 
   if (planOnly) {
-    console.log(
-      `apply-migrations: PLAN — ${plan.pending.length} pending, ${plan.applied} applied`,
-    )
+    console.log(`apply-migrations: PLAN — ${plan.pending.length} pending, ${plan.applied} applied`)
     for (const filename of plan.pending) {
       console.log(`  pending ${filename}`)
     }
@@ -164,17 +158,13 @@ try {
       count += 1
     }
 
-    const after = await client.query(
-      "select filename, checksum from platform.schema_migrations",
-    )
+    const after = await client.query("select filename, checksum from platform.schema_migrations")
     const verified = verifyMigrationHistory({
       files: entries,
       applied: after.rows,
     })
     if (!verified.ok) {
-      throw new Error(
-        `post-apply verification failed: ${verified.issues.join("; ")}`,
-      )
+      throw new Error(`post-apply verification failed: ${verified.issues.join("; ")}`)
     }
 
     console.log(
@@ -183,16 +173,12 @@ try {
   }
 } catch (error) {
   console.error(
-    `apply-migrations: FAILED — ${
-      error instanceof Error ? error.message : String(error)
-    }`,
+    `apply-migrations: FAILED — ${error instanceof Error ? error.message : String(error)}`,
   )
   process.exitCode = 1
 } finally {
   if (locked) {
-    await client
-      .query("select pg_advisory_unlock($1)", [LOCK_KEY])
-      .catch(() => undefined)
+    await client.query("select pg_advisory_unlock($1)", [LOCK_KEY]).catch(() => undefined)
   }
   await client.end().catch(() => undefined)
 }

@@ -6,9 +6,7 @@ describe("presentation labels", () => {
   it("describes the governance capabilities in plain language", () => {
     expect(capabilityLabel("admin.audit.read")).toBe("Read the audit log")
     expect(capabilityLabel("admin.grant.read")).toBe("See grants")
-    expect(capabilityLabel("admin.grant.manage")).toBe(
-      "Create and revoke grants",
-    )
+    expect(capabilityLabel("admin.grant.manage")).toBe("Create and revoke grants")
     expect(capabilityLabel("session.read")).toBe("Use your signed-in session")
   })
 

@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Req,
-} from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req } from "@nestjs/common"
 import type { FastifyRequest } from "fastify"
 
 import { Audience } from "../common/audience"
@@ -19,11 +10,7 @@ import {
   caseDecisionRequest,
 } from "../contracts/schemas"
 import { ApprovalsService } from "../modules/admin/approvals.service"
-import {
-  IdentityService,
-  accessToken,
-  requestContext,
-} from "../modules/identity"
+import { IdentityService, accessToken, requestContext } from "../modules/identity"
 
 @Controller()
 export class ApprovalsController {
@@ -35,10 +22,7 @@ export class ApprovalsController {
 
   private async session(request: FastifyRequest) {
     const context = requestContext(this.config, request)
-    const session = await this.identity.getSession(
-      accessToken(request, context),
-      context,
-    )
+    const session = await this.identity.getSession(accessToken(request, context), context)
     return { context, session }
   }
 
@@ -72,11 +56,7 @@ export class ApprovalsController {
   @Post("control/approvals/:id/decide")
   @HttpCode(200)
   @Audience("control")
-  async decide(
-    @Param("id") id: string,
-    @Body() body: unknown,
-    @Req() request: FastifyRequest,
-  ) {
+  async decide(@Param("id") id: string, @Body() body: unknown, @Req() request: FastifyRequest) {
     const input = parseBody(decideApprovalRequest, body)
     const { context, session } = await this.session(request)
     return this.approvals.decide({

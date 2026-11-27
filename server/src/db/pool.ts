@@ -24,13 +24,9 @@ export interface DatabasePoolOptions {
  * require TLS; a local container on loopback does not. The application name is
  * set so a provider session list shows which process owns a connection.
  */
-export function createDatabasePool(
-  config: ApiConfig,
-  options: DatabasePoolOptions,
-): Pool {
+export function createDatabasePool(config: ApiConfig, options: DatabasePoolOptions): Pool {
   const databaseUrl = options.databaseUrl ?? config.databaseUrl
-  const remote =
-    config.environment === "staging" || config.environment === "production"
+  const remote = config.environment === "staging" || config.environment === "production"
 
   // Supabase's shared pooler presents a chain rooted in a project certificate.
   // When that certificate is supplied, verify it. Otherwise the connection is

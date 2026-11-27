@@ -3,10 +3,7 @@ import path from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import {
-  FakePaymentProvider,
-  type PayoutRequest,
-} from "../server/src/integrations/payments"
+import { FakePaymentProvider, type PayoutRequest } from "../server/src/integrations/payments"
 import {
   describePaymentProviderContract,
   type PaymentProviderContractHarness,
@@ -53,9 +50,7 @@ function harness(providerName = "fake"): PaymentProviderContractHarness {
 
 describePaymentProviderContract("fake payment provider", () => harness())
 
-describePaymentProviderContract("second provider adapter", () =>
-  harness("fake_two"),
-)
+describePaymentProviderContract("second provider adapter", () => harness("fake_two"))
 
 describe("payment provider port", () => {
   const payout: PayoutRequest = {

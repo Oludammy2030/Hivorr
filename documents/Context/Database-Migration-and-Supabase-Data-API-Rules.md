@@ -1775,7 +1775,7 @@ this section, the matrix §18 and the engineering standards §16. Record a decis
 | 4 | **`discover`** - **DECIDED 3 November 2026:** a capability inside Hire, not an activity (permission matrix §4.2). | Nothing - settled | Founder |
 | 5 | **Errand vs logistics** - **DECIDED 3 November 2026:** two separate activities on one shared request pool (`ARCHITECTURE.md` §16.5 #2). | Nothing - settled | Founder |
 | 6 | **MVP activity scope** — all six at launch or Explore-first | Which schemas ship first | Founder |
-| 7 | **KYC tier ladder and limits** | Financial gating; `finance` constraints | Founder |
+| 7 | **KYC tier ladder and limits** — **DECIDED 26 November 2026:** the three-tier ladder is settled; the naira thresholds are provisional pending counsel (`ARCHITECTURE.md` §16.4 #6). | Financial gating; `finance` constraints | Founder + counsel |
 | 8 | **Retention periods** — identity, KYC, chat, disputes | Deletion design; no purge may be built | Founder + counsel |
 | 9 | **Currency model** — single currency or multi-currency ledger | `finance` schema; wallet presentation | Founder |
 | 10 | **Data residency and primary region** | Provider and region choice; latency and compliance | Founder |

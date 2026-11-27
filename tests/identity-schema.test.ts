@@ -4,16 +4,13 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 
 const root = process.cwd()
-const read = (relative: string) =>
-  readFileSync(path.join(root, relative), "utf8")
+const read = (relative: string) => readFileSync(path.join(root, relative), "utf8")
 
 const tables = read("supabase/migrations/20261107000500_identity_tables.sql")
 const rls = read("supabase/migrations/20261107000600_identity_rls.sql")
 const mfa = read("supabase/migrations/20261107000800_mfa_challenges.sql")
 const refresh = read("supabase/migrations/20261107000900_refresh_tokens.sql")
-const comments = read(
-  "supabase/migrations/20261109000200_identity_alter_table_comments.sql",
-)
+const comments = read("supabase/migrations/20261109000200_identity_alter_table_comments.sql")
 const schema = `${tables}\n${rls}\n${mfa}\n${refresh}\n${comments}`
 
 const IDENTITY_TABLES = [
@@ -49,13 +46,9 @@ describe("identity schema", () => {
     for (const table of IDENTITY_TABLES) {
       const block = tableBlock(table)
       if (table === "credentials") {
-        expect(block).toContain(
-          "user_id uuid primary key references identity.users",
-        )
+        expect(block).toContain("user_id uuid primary key references identity.users")
       } else {
-        expect(block, table).toContain(
-          "id uuid primary key default platform.uuidv7()",
-        )
+        expect(block, table).toContain("id uuid primary key default platform.uuidv7()")
       }
       expect(block, table).toContain("timestamptz")
     }
@@ -67,12 +60,8 @@ describe("identity schema", () => {
     expect(tableBlock("memberships")).toMatch(/role .*check \(role in/)
     expect(tableBlock("grants")).toMatch(/grant_type .*check \(grant_type in/)
     expect(tableBlock("sessions")).toMatch(/audience .*check \(audience in/)
-    expect(tableBlock("sessions")).toMatch(
-      /environment .*check \(environment in/,
-    )
-    expect(tableBlock("mfa_factors")).toMatch(
-      /factor_type .*check \(factor_type in/,
-    )
+    expect(tableBlock("sessions")).toMatch(/environment .*check \(environment in/)
+    expect(tableBlock("mfa_factors")).toMatch(/factor_type .*check \(factor_type in/)
     expect(tableBlock("tokens")).toMatch(/purpose .*check \(purpose in/)
   })
 
@@ -85,19 +74,14 @@ describe("identity schema", () => {
   it("enables row-level security on every table", () => {
     for (const table of IDENTITY_TABLES) {
       expect(schema, table).toMatch(
-        new RegExp(
-          `alter table identity\\.${table} enable row level security`,
-          "i",
-        ),
+        new RegExp(`alter table identity\\.${table} enable row level security`, "i"),
       )
     }
   })
 
   it("comments every table", () => {
     for (const table of IDENTITY_TABLES) {
-      expect(schema, table).toMatch(
-        new RegExp(`comment on table identity\\.${table} is`, "i"),
-      )
+      expect(schema, table).toMatch(new RegExp(`comment on table identity\\.${table} is`, "i"))
     }
   })
 

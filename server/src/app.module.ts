@@ -10,8 +10,20 @@ import { API_CONFIG, type ApiConfig } from "./config"
 import { DatabaseService } from "./db/database.service"
 import { EMAIL_ADAPTER } from "./integrations/email/email.adapter"
 import { createEmailAdapter } from "./integrations/email/zeptomail.adapter"
-import { VFD_AUTH, VfdAuthClient } from "./integrations/vfd"
+import {
+  VFD_ACCOUNT_NAME,
+  VFD_AUTH,
+  VFD_PAYOUTS,
+  VfdAccountNameClient,
+  VfdAuthClient,
+  VfdPayoutClient,
+  VfdSha512TransferSigner,
+} from "./integrations/vfd"
 import { HealthController } from "./health/health.controller"
+import { WalletController } from "./api/wallet.controller"
+import { KycController } from "./api/kyc.controller"
+import { PaymentsController } from "./api/payments.controller"
+import { PaystackWebhookController } from "./api/paystack-webhook.controller"
 import { GrantsController } from "./modules/identity/grants/grants.controller"
 import { GrantsService } from "./modules/identity/grants/grants.service"
 import { IdentityController } from "./modules/identity/identity.controller"
@@ -45,12 +57,23 @@ import { EvidenceService } from "./modules/admin/evidence.service"
 import { VerificationService } from "./modules/admin/verification.service"
 import { DisputeService } from "./modules/admin/dispute.service"
 import { ProfileService } from "./modules/profile/profile.service"
+import { DepositEligibilityService } from "./modules/finance/deposit-eligibility.service"
+import { CollectionAccountService } from "./modules/finance/collection-account.service"
+import { DepositPostingService } from "./modules/finance/deposit-posting.service"
 import { LedgerService } from "./modules/finance/ledger.service"
 import { EscrowService } from "./modules/finance/escrow.service"
 import { FinanceLimitService } from "./modules/finance/limit.service"
+import {
+  PayoutAccountService,
+  PAYOUT_ACCOUNT_NAME_RESOLVER,
+} from "./modules/finance/payout-account.service"
+import { PayoutRequestService } from "./modules/finance/payout-request.service"
+import { PAYOUT_PROVIDER, PayoutExecutionService } from "./modules/finance/payout-execution.service"
+import { PaymentProviderRouter } from "./modules/finance/payment-provider-router.service"
 import { ProviderReferenceService } from "./modules/finance/provider-reference.service"
 import { WalletService } from "./modules/finance/wallet.service"
 import { TaxonomyAdminService } from "./modules/platform/taxonomy.service"
+import { PaymentProviderSettingsService } from "./modules/platform/payment-provider-settings.service"
 
 @Module({})
 export class AppModule {
@@ -78,13 +101,16 @@ export class AppModule {
         VerificationController,
         TaxonomyController,
         GrantsController,
+        WalletController,
+        KycController,
+        PaymentsController,
+        PaystackWebhookController,
       ],
       providers: [
         { provide: API_CONFIG, useValue: config },
         {
           provide: APP_GUARD,
-          useFactory: (apiConfig: ApiConfig) =>
-            new AudienceGuard(new Reflector(), apiConfig),
+          useFactory: (apiConfig: ApiConfig) => new AudienceGuard(new Reflector(), apiConfig),
           inject: [API_CONFIG],
         },
         { provide: APP_FILTER, useClass: ApiErrorFilter },
@@ -110,15 +136,52 @@ export class AppModule {
         },
         {
           provide: EMAIL_ADAPTER,
-          useFactory: (apiConfig: ApiConfig) =>
-            createEmailAdapter(apiConfig.mail),
+          useFactory: (apiConfig: ApiConfig) => createEmailAdapter(apiConfig.mail),
           inject: [API_CONFIG],
         },
         {
           provide: VFD_AUTH,
-          useFactory: (apiConfig: ApiConfig) =>
-            new VfdAuthClient(apiConfig.vfd),
+          useFactory: (apiConfig: ApiConfig) => new VfdAuthClient(apiConfig.vfd),
           inject: [API_CONFIG],
+        },
+        {
+          provide: VFD_ACCOUNT_NAME,
+          useFactory: (apiConfig: ApiConfig, auth: VfdAuthClient) =>
+            new VfdAccountNameClient(auth, {
+              requestTimeoutMs: apiConfig.vfd.requestTimeoutMs,
+              maxRetries: apiConfig.vfd.maxRetries,
+              retryBaseMs: apiConfig.vfd.retryBaseMs,
+            }),
+          inject: [API_CONFIG, VFD_AUTH],
+        },
+        {
+          provide: PAYOUT_ACCOUNT_NAME_RESOLVER,
+          useExisting: VFD_ACCOUNT_NAME,
+        },
+        {
+          provide: PAYOUT_PROVIDER,
+          useFactory: (
+            settings: PaymentProviderSettingsService,
+            apiConfig: ApiConfig,
+            vfd: VfdPayoutClient,
+          ) => new PaymentProviderRouter(settings, apiConfig, vfd),
+          inject: [PaymentProviderSettingsService, API_CONFIG, VFD_PAYOUTS],
+        },
+        {
+          provide: VFD_PAYOUTS,
+          useFactory: (
+            apiConfig: ApiConfig,
+            auth: VfdAuthClient,
+            accountNames: VfdAccountNameClient,
+          ) =>
+            new VfdPayoutClient(auth, accountNames, {
+              requestTimeoutMs: apiConfig.vfd.requestTimeoutMs,
+              maxRetries: apiConfig.vfd.maxRetries,
+              retryBaseMs: apiConfig.vfd.retryBaseMs,
+              sourceAccountNumber: apiConfig.vfd.sourceAccount,
+              signer: new VfdSha512TransferSigner(),
+            }),
+          inject: [API_CONFIG, VFD_AUTH, VFD_ACCOUNT_NAME],
         },
         DatabaseService,
         IdentityService,
@@ -136,11 +199,18 @@ export class AppModule {
         VerificationService,
         DisputeService,
         TaxonomyAdminService,
+        PaymentProviderSettingsService,
         LedgerService,
         WalletService,
         EscrowService,
+        DepositEligibilityService,
+        CollectionAccountService,
+        DepositPostingService,
         ProviderReferenceService,
         FinanceLimitService,
+        PayoutAccountService,
+        PayoutRequestService,
+        PayoutExecutionService,
       ],
     }
   }

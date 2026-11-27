@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  mainPortalOrigin,
-  staffInviteLink,
-} from "../apps/control/src/portal-links"
+import { mainPortalOrigin, staffInviteLink } from "../apps/control/src/portal-links"
 
 describe("control portal links", () => {
   it("points staging control at the staging main portal", () => {
@@ -46,8 +43,6 @@ describe("control portal links", () => {
         },
         "token value/with+chars",
       ),
-    ).toBe(
-      "https://staging.hivorr.com/invite.html?token=token%20value%2Fwith%2Bchars",
-    )
+    ).toBe("https://staging.hivorr.com/invite.html?token=token%20value%2Fwith%2Bchars")
   })
 })

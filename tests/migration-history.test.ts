@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  migrationChecksum,
-  verifyMigrationHistory,
-} from "../scripts/lib/migration-history.mjs"
+import { migrationChecksum, verifyMigrationHistory } from "../scripts/lib/migration-history.mjs"
 
 const files = [
   { filename: "001_a.sql", checksum: "aaa" },
@@ -54,17 +51,11 @@ describe("migration history verification", () => {
       ],
     })
     expect(verdict.ok).toBe(false)
-    expect(verdict.issues).toContain(
-      "applied but not in the repository: 003_deleted.sql",
-    )
+    expect(verdict.issues).toContain("applied but not in the repository: 003_deleted.sql")
   })
 
   it("hashes the exact file contents", () => {
-    expect(migrationChecksum("select 1;\n")).toBe(
-      migrationChecksum("select 1;\n"),
-    )
-    expect(migrationChecksum("select 1;\n")).not.toBe(
-      migrationChecksum("select 1;\r\n"),
-    )
+    expect(migrationChecksum("select 1;\n")).toBe(migrationChecksum("select 1;\n"))
+    expect(migrationChecksum("select 1;\n")).not.toBe(migrationChecksum("select 1;\r\n"))
   })
 })

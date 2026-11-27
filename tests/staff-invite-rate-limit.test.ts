@@ -37,9 +37,7 @@ describe("staff invite acceptance rate limit", () => {
   it("rejects further attempts from the same address before hashing", async () => {
     const service = serviceWithIpLimit(1)
 
-    await expect(service.acceptInvite(input)).rejects.toThrow(
-      "the database should not be reached",
-    )
+    await expect(service.acceptInvite(input)).rejects.toThrow("the database should not be reached")
 
     const error = await service.acceptInvite(input).catch((value) => value)
     expect(error).toBeInstanceOf(ApiError)
@@ -53,9 +51,7 @@ describe("staff invite acceptance rate limit", () => {
       "the database should not be reached",
     )
 
-    const error = await service
-      .inviteDetails(input.token, input.ip)
-      .catch((value) => value)
+    const error = await service.inviteDetails(input.token, input.ip).catch((value) => value)
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).statusCode).toBe(429)
   })
